@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2021 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,20 @@
 
 package io.realm.kotlin.internal.interop
 
-import kotlinx.atomicfu.AtomicRef
-import kotlinx.atomicfu.atomic
+import io.realm.kotlin.internal.interop.sync.ErrorCategory
+import io.realm.kotlin.internal.interop.sync.ErrorCode
 
-actual object CoreErrorConverter {
-    private val converter: AtomicRef<((CoreError) -> Throwable)?> = atomic(null)
-    actual fun initialize(coreErrorConverter: (CoreError) -> Throwable) {
-        converter.value = coreErrorConverter
-    }
-
-    fun convertCoreError(coreError: CoreError): Throwable =
-        converter.value!!.invoke(coreError)
+/**
+ * Generic representation of a Realm-Core exception.
+ */
+class CoreError(
+    categories: Int,
+    errorCode: Int,
+    message: String?,
+    val path: String?,
+    val userError: Throwable?
+) {
+    val category = ErrorCategory.of(categories) // TODO multiple categories?
+    val errorCode = ErrorCode.of(errorCode)
+    val message: String = "[$errorCode]: $message" // TODO review message output
 }

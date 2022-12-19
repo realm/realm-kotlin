@@ -67,14 +67,7 @@ internal class ManagedRealmSet<E>(
 
     override fun add(element: E): Boolean {
         operator.realmReference.checkClosed()
-        try {
-            return operator.add(element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not add element to set"
-            )
-        }
+        return operator.add(element)
     }
 
     override fun clear() {

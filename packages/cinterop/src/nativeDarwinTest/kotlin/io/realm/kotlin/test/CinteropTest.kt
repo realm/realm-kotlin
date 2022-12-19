@@ -19,15 +19,14 @@ package io.realm.kotlin.test
 import io.realm.kotlin.internal.interop.ClassFlags
 import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.CoreError
 import io.realm.kotlin.internal.interop.CoreErrorConverter
 import io.realm.kotlin.internal.interop.PropertyFlags
 import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.PropertyType
-import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SchemaValidationMode
-import io.realm.kotlin.internal.interop.coreErrorAsThrowable
 import io.realm.kotlin.internal.interop.set
 import io.realm.kotlin.internal.interop.toKotlinString
 import kotlinx.cinterop.BooleanVar
@@ -82,12 +81,16 @@ import kotlin.test.assertTrue
 // These test are not thought as being exhaustive, but is more to provide a playground for
 // experiments and maybe more relevant for reproduction of C-API issues.
 class CinteropTest {
+    class TestCoreException(
+        override val message: String?
+    ) : Exception()
 
     @BeforeTest
     fun setUp() {
-        CoreErrorConverter.initialize {
-                coreException: RealmCoreException ->
-            coreException
+        CoreErrorConverter.initialize { coreException: CoreError ->
+            TestCoreException(
+                message = coreException.message
+            )
         }
     }
 
@@ -237,17 +240,17 @@ class CinteropTest {
      * Because Darwin does not support reflection we cannot check if there are exceptions
      * with no matching core error, as we do on JVM tests.
      */
-    @Test
-    fun errorTypes_watchdog() {
-        val coreErrorNativeValues = realm_wrapper.realm_errno.values()
-
-        val mappedKotlinClasses = coreErrorNativeValues
-            .map { nativeValue -> coreErrorAsThrowable(nativeValue, null)::class }
-            .toSet()
-
-        // Validate we have a different exception defined for each core native value.
-        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
-    }
+//    @Test
+//    fun errorTypes_watchdog() {
+//        val coreErrorNativeValues = realm_wrapper.realm_errno.values()
+//
+//        val mappedKotlinClasses = coreErrorNativeValues
+//            .map { nativeValue -> coreErrorAsThrowable(nativeValue, null)::class }
+//            .toSet()
+//
+//        // Validate we have a different exception defined for each core native value.
+//        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
+//    }
 }
 
 fun realm_string_t.setRealmString(memScope: MemScope, str: String) {
@@ -265,7 +268,7 @@ fun assertNoError() {
     assertFalse(realmGetLastError)
 
     error.useContents {
-        assertEquals(0, kind.code)
+        assertEquals(0U, categories)
         assertNull(message)
         assertEquals(realm_wrapper.realm_errno.RLM_ERR_NONE, this.error)
     }

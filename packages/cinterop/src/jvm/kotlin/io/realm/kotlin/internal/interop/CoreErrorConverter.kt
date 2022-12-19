@@ -18,12 +18,27 @@ package io.realm.kotlin.internal.interop
 
 actual object CoreErrorConverter {
     @Volatile
-    var converter: ((RealmCoreException) -> Throwable)? = null
-    actual fun initialize(coreErrorConverter: (RealmCoreException) -> Throwable) {
+    var converter: ((CoreError) -> Throwable)? = null
+    actual fun initialize(coreErrorConverter: (CoreError) -> Throwable) {
         converter = coreErrorConverter
     }
 
-    actual fun convertCoreError(coreError: RealmCoreException): Throwable {
-        return converter!!.invoke(coreError)
+    @JvmStatic
+    fun convertCoreError(
+        categories: Int,
+        errorCode: Int,
+        message: String?,
+        path: String?,
+        userError: Throwable?
+    ): Throwable {
+        return converter!!.invoke(
+            CoreError(
+                categories,
+                errorCode,
+                message,
+                path,
+                userError,
+            )
+        )
     }
 }

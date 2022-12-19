@@ -20,14 +20,20 @@ package io.realm.kotlin.internal.interop.sync
  * Wrapper for C-API `realm_app_error_category`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2522
  */
-expect enum class AppErrorCategory : CodeDescription {
-    RLM_APP_ERROR_CATEGORY_HTTP,
-    RLM_APP_ERROR_CATEGORY_JSON,
-    RLM_APP_ERROR_CATEGORY_CLIENT,
-    RLM_APP_ERROR_CATEGORY_SERVICE,
-    RLM_APP_ERROR_CATEGORY_CUSTOM;
+expect enum class ErrorCategory : CodeDescription {
+    RLM_ERR_CAT_LOGIC, // illegalstate
+    RLM_ERR_CAT_RUNTIME, // illegalstate / runtime
+    RLM_ERR_CAT_INVALID_ARG, // invalidargument
+    RLM_ERR_CAT_FILE_ACCESS, // runtime
+    RLM_ERR_CAT_SYSTEM_ERROR, // runtime
+    RLM_ERR_CAT_APP_ERROR, // runtime
+    RLM_ERR_CAT_CLIENT_ERROR, // app error
+    RLM_ERR_CAT_JSON_ERROR, // app error
+    RLM_ERR_CAT_SERVICE_ERROR, // app error
+    RLM_ERR_CAT_HTTP_ERROR, // app error
+    RLM_ERR_CAT_CUSTOM_ERROR; // app error
 
     companion object {
-        internal fun of(nativeValue: Int): AppErrorCategory?
+        internal fun of(nativeValue: Int): ErrorCategory?
     }
 }

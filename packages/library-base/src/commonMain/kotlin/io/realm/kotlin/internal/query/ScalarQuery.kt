@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal.query
 
-import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
@@ -24,8 +23,6 @@ import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.PropertyKey
-import io.realm.kotlin.internal.interop.RealmCoreException
-import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_max
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_min
@@ -127,23 +124,8 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
             .distinctUntilChanged()
     }
 
-    private fun findFromResults(resultsPointer: RealmResultsPointer): T? = try {
+    private fun findFromResults(resultsPointer: RealmResultsPointer): T? =
         computeAggregatedValue(resultsPointer, getPropertyKey(property))
-    } catch (exception: Throwable) {
-        throw CoreExceptionConverter.convertToPublicException(
-            exception,
-            "Invalid query formulation: ${exception.message}",
-        ) { coreException: RealmCoreException ->
-            when (coreException) {
-                is RealmCoreLogicException ->
-                    IllegalArgumentException(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-                else -> null
-            }
-        }
-    }
 
     @Suppress("ComplexMethod")
     private fun computeAggregatedValue(
@@ -190,23 +172,8 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
             .distinctUntilChanged()
     }
 
-    private fun findFromResults(resultsPointer: RealmResultsPointer): T = try {
+    private fun findFromResults(resultsPointer: RealmResultsPointer): T =
         computeAggregatedValue(resultsPointer, getPropertyKey(property))
-    } catch (exception: Throwable) {
-        throw CoreExceptionConverter.convertToPublicException(
-            exception,
-            "Invalid query formulation: ${exception.message}",
-        ) { coreException: RealmCoreException ->
-            when (coreException) {
-                is RealmCoreLogicException ->
-                    IllegalArgumentException(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-                else -> null
-            }
-        }
-    }
 
     private fun computeAggregatedValue(
         resultsPointer: RealmResultsPointer,

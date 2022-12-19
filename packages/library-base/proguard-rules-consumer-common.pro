@@ -17,7 +17,7 @@
 }
 
 # Utils to convert core errors into Kotlin exceptions
--keep class io.realm.kotlin.internal.interop.CoreErrorUtils {
+-keep class io.realm.kotlin.internal.interop.CoreErrorConverter {
     *;
 }
 

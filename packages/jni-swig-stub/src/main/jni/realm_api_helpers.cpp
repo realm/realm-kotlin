@@ -37,24 +37,29 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
 bool throw_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
-        std::string message("[" + std::to_string(error.error) + "]: " + error.message);
-        realm_clear_last_error();
 
-        // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
+        // Invoke CoreErrorConverter.convertCoreError() to retrieve an exception instance that
         // maps to the core error.
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
         static JavaMethod error_type_as_exception(jenv,
                                                   error_type_class,
-                                                  "coreErrorAsThrowable",
-                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+                                                  "convertCoreError",
+                                                  "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
 
-        jstring error_message = (jenv)->NewStringUTF(message.c_str());
+        jstring error_message = (jenv)->NewStringUTF(error.message);
+        jstring error_path = (jenv)->NewStringUTF(error.path);
 
         jobject exception = (jenv)->CallStaticObjectMethod(
                 error_type_class,
                 error_type_as_exception,
+                jint(error.categories),
                 jint(error.error),
-                error_message);
+                error_message,
+                error_path,
+                nullptr
+        );
+
+        realm_clear_last_error();
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
         return true;
     } else {
@@ -763,11 +768,11 @@ void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_
         realm_error_t err;
         realm_get_async_error(error, &err);
         std::string message("[" + std::to_string(err.error) + "]: " + err.message);
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
         static JavaMethod error_type_as_exception(env,
                                                   error_type_class,
-                                                  "coreErrorAsThrowable",
-                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+                                                  "convertCoreError",
+                                                  "(Lio/realm/kotlin/internal/interop/RealmCoreException;)Ljava/lang/Throwable;", true);
         jstring error_message = (env)->NewStringUTF(message.c_str());
         exception = (env)->CallStaticObjectMethod(
                 error_type_class,

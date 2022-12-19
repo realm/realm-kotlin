@@ -184,20 +184,13 @@ public class RealmImpl private constructor(
     }
 
     override suspend fun <R> write(block: MutableRealm.() -> R): R {
-        try {
-            val (reference, result) = this.writer.write(block)
-            // Update the user facing Realm before returning the result.
-            // That way, querying the Realm right after the `write` completes will return
-            // the written data. Otherwise, we would have to wait for the Notifier thread
-            // to detect it and update the user Realm.
-            updateRealmPointer(reference)
-            return result
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not execute the write transaction"
-            )
-        }
+        val (reference, result) = this.writer.write(block)
+        // Update the user facing Realm before returning the result.
+        // That way, querying the Realm right after the `write` completes will return
+        // the written data. Otherwise, we would have to wait for the Notifier thread
+        // to detect it and update the user Realm.
+        updateRealmPointer(reference)
+        return result
     }
 
     override fun <R> writeBlocking(block: MutableRealm.() -> R): R {
@@ -284,14 +277,7 @@ public class RealmImpl private constructor(
 
     internal companion object {
         internal fun create(configuration: InternalConfiguration): RealmImpl {
-            try {
-                return RealmImpl(configuration)
-            } catch (exception: Throwable) {
-                throw CoreExceptionConverter.convertToPublicException(
-                    exception,
-                    "Could not open Realm with the given configuration: ${configuration.debug()}"
-                )
-            }
+            return RealmImpl(configuration)
         }
     }
 }

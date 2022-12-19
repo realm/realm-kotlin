@@ -26,6 +26,5 @@ package io.realm.kotlin.internal.interop
  * `CoreErrorConverter has not been initialized`.
  */
 expect object CoreErrorConverter {
-    fun initialize(coreErrorConverter: (RealmCoreException) -> Throwable)
-    fun convertCoreError(coreError: RealmCoreException): Throwable
+    fun initialize(coreErrorConverter: (CoreError) -> Throwable)
 }

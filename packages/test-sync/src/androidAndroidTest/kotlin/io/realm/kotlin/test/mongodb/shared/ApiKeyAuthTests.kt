@@ -32,7 +32,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 class ApiKeyAuthTests {
     private lateinit var app: TestApp
@@ -196,8 +195,10 @@ class ApiKeyAuthTests {
     fun callMethodWithLoggedOutUser() {
         runBlocking {
             user.logOut()
-            for (method in Method.values()) {
-                try {
+        }
+        for (method in Method.values()) {
+            assertFailsWithMessage<ServiceException>("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).") {
+                runBlocking {
                     when (method) {
                         Method.CREATE -> provider.create("name")
                         Method.FETCH_SINGLE -> provider.fetch(ObjectId.create())
@@ -206,9 +207,6 @@ class ApiKeyAuthTests {
                         Method.ENABLE -> provider.enable(ObjectId.create())
                         Method.DISABLE -> provider.disable(ObjectId.create())
                     }
-                    fail("$method should have thrown an exception")
-                } catch (error: ServiceException) {
-                    assertEquals("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).", error.message)
                 }
             }
         }

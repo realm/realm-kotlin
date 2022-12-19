@@ -16,11 +16,9 @@
 
 package io.realm.kotlin.test.sync
 
-import io.realm.kotlin.internal.interop.realm_app_errno_client_e
-import io.realm.kotlin.internal.interop.realm_app_errno_json_e
-import io.realm.kotlin.internal.interop.realm_app_errno_service_e
-import io.realm.kotlin.internal.interop.realm_app_error_category_e
 import io.realm.kotlin.internal.interop.realm_auth_provider_e
+import io.realm.kotlin.internal.interop.realm_errno_e
+import io.realm.kotlin.internal.interop.realm_error_category_e
 import io.realm.kotlin.internal.interop.realm_sync_client_metadata_mode_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_client_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_connection_e
@@ -28,16 +26,14 @@ import io.realm.kotlin.internal.interop.realm_sync_errno_session_e
 import io.realm.kotlin.internal.interop.realm_sync_error_category_e
 import io.realm.kotlin.internal.interop.realm_sync_session_resync_mode_e
 import io.realm.kotlin.internal.interop.realm_user_state_e
-import io.realm.kotlin.internal.interop.sync.AppErrorCategory
 import io.realm.kotlin.internal.interop.sync.AuthProvider
-import io.realm.kotlin.internal.interop.sync.ClientErrorCode
 import io.realm.kotlin.internal.interop.sync.CoreUserState
-import io.realm.kotlin.internal.interop.sync.JsonErrorCode
+import io.realm.kotlin.internal.interop.sync.ErrorCategory
+import io.realm.kotlin.internal.interop.sync.ErrorCode
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolSessionErrorCode
-import io.realm.kotlin.internal.interop.sync.ServiceErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import org.junit.Test
@@ -60,8 +56,8 @@ class SyncEnumTests {
 
     @Test
     fun appErrorCategory() {
-        checkEnum(realm_app_error_category_e::class) { nativeValue ->
-            AppErrorCategory.of(nativeValue)
+        checkEnum(realm_error_category_e::class) { nativeValue ->
+            ErrorCategory.of(nativeValue)
         }
     }
 
@@ -74,8 +70,8 @@ class SyncEnumTests {
 
     @Test
     fun clientErrorCode() {
-        checkEnum(realm_app_errno_client_e::class) { nativeValue ->
-            ClientErrorCode.of(nativeValue)
+        checkEnum(realm_errno_e::class) { nativeValue ->
+            ErrorCode.of(nativeValue)
         }
     }
 
@@ -115,23 +111,9 @@ class SyncEnumTests {
     }
 
     @Test
-    fun serviceErrorCode() {
-        checkEnum(realm_app_errno_service_e::class) { nativeValue ->
-            ServiceErrorCode.of(nativeValue)
-        }
-    }
-
-    @Test
     fun syncErrorCodeCategory() {
         checkEnum(realm_sync_error_category_e::class) { nativeValue ->
             SyncErrorCodeCategory.of(nativeValue)
-        }
-    }
-
-    @Test
-    fun jsonErrorCode() {
-        checkEnum(realm_app_errno_json_e::class) { nativeValue ->
-            JsonErrorCode.of(nativeValue)
         }
     }
 

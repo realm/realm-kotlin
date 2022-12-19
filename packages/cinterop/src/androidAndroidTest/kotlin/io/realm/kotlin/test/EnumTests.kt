@@ -17,9 +17,8 @@
 package io.realm.kotlin.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.realm.kotlin.internal.interop.CoreErrorUtils
-import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.realm_errno_e
+import io.realm.kotlin.internal.interop.sync.ErrorCode
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.BeforeTest
@@ -43,17 +42,19 @@ class EnumTests {
      */
     @Test
     fun coreExceptionTypes_watchdog() {
-        val coreErrorNativeValues = realm_errno_e::class.java.fields
+        val coreErrorCodesValues: IntArray = realm_errno_e::class.java.fields
             .map { it.getInt(null) }
             .toIntArray()
 
-        val mappedKotlinClasses = coreErrorNativeValues
-            .map { nativeValue -> CoreErrorUtils.coreErrorAsThrowable(nativeValue, null)::class }
-            .toSet()
+        val errorCodeValues = ErrorCode.values().map {
+            it.nativeValue
+        }.toIntArray()
 
         // Validate we have a different exception defined for each core native value.
-        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
+        assertEquals(coreErrorCodesValues.size, errorCodeValues.size)
         // Validate that there is an error defined for each exception.
-        assertEquals(RealmCoreException::class.sealedSubclasses.size, coreErrorNativeValues.size)
+        coreErrorCodesValues.forEach { errorCode ->
+            errorCodeValues.contains(errorCode)
+        }
     }
 }

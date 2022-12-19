@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal.query
 
-import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Flowable
 import io.realm.kotlin.internal.InternalDeleteable
 import io.realm.kotlin.internal.Mediator
@@ -27,10 +26,6 @@ import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.asInternalDeleteable
 import io.realm.kotlin.internal.interop.ClassKey
-import io.realm.kotlin.internal.interop.RealmCoreException
-import io.realm.kotlin.internal.interop.RealmCoreIndexOutOfBoundsException
-import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryException
-import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryStringException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.interop.RealmQueryPointer
@@ -203,27 +198,6 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
             }
         }
 
-        fun <R> tryCatchCoreException(block: () -> R): R =
-            try {
-                block.invoke()
-            } catch (exception: Throwable) {
-                throw CoreExceptionConverter.convertToPublicException(
-                    exception,
-                    customMessage = "Invalid syntax in query: ${exception.message}"
-                ) { coreException: RealmCoreException ->
-                    when (coreException) {
-                        is RealmCoreInvalidQueryStringException ->
-                            IllegalArgumentException("Wrong query string: ${coreException.message}")
-                        is RealmCoreInvalidQueryException ->
-                            IllegalArgumentException("Wrong query field provided or malformed syntax in query: ${coreException.message}")
-                        is RealmCoreIndexOutOfBoundsException ->
-                            IllegalArgumentException("Have you specified all parameters in your query?: ${coreException.message}")
-                        else -> {
-                            // Use default mapping
-                            null
-                        }
-                    }
-                }
-            }
+        fun <R> tryCatchCoreException(block: () -> R): R = block.invoke()
     }
 }

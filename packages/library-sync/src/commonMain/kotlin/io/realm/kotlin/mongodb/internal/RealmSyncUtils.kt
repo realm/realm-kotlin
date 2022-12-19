@@ -2,11 +2,10 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.interop.AppCallback
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.AppErrorCategory
-import io.realm.kotlin.internal.interop.sync.ClientErrorCode
+import io.realm.kotlin.internal.interop.sync.ErrorCategory
+import io.realm.kotlin.internal.interop.sync.ErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolSessionErrorCode
-import io.realm.kotlin.internal.interop.sync.ServiceErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
@@ -136,12 +135,12 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
 internal fun convertAppError(appError: AppError): Throwable {
     val msg = createMessageFromAppError(appError)
     return when (appError.category) {
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
+        ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR -> {
             // Custom errors are only being thrown when executing the network request on the
             // platform side and it failed in a way that didn't produce a HTTP status code.
             ConnectionException(msg)
         }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
+        ErrorCategory.RLM_ERR_CAT_HTTP_ERROR -> {
             // HTTP errors from network requests towards Atlas. Generally we should see
             // errors in these ranges:
             // 300-399: Redirect Codes. Indicate either a misconfiguration in a users network
@@ -160,14 +159,14 @@ internal fun convertAppError(appError: AppError): Throwable {
                 else -> ServiceException(msg)
             }
         }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> {
+        ErrorCategory.RLM_ERR_CAT_JSON_ERROR -> {
             // The JSON response from Atlas could not be parsed as valid JSON. Errors of this kind
             // would indicate a problem on Atlas that should be fixed with no action needed by the
             // client. So retrying the action should generally be safe. Although it might take a
             // while for the server to correct the behavior.
             ConnectionException(msg)
         }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> {
+        ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/object-store/sync/generic_network_transport.hpp#L34
             //
             // `ClientErrorCode::user_not_logged in` is used when the client decides that a login
@@ -183,13 +182,13 @@ internal fun convertAppError(appError: AppError): Throwable {
             // `ClientErrorCode::app_deallocated` should never happen, so is just returned as an
             // AppException.
             when (appError.code) {
-                ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_FOUND -> {
+                ErrorCode.RLM_ERR_CLIENT_USER_NOT_FOUND -> {
                     IllegalStateException(msg)
                 }
-                ClientErrorCode.RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN -> {
+                ErrorCode.RLM_ERR_CLIENT_USER_NOT_LOGGED_IN -> {
                     InvalidCredentialsException(msg)
                 }
-                ClientErrorCode.RLM_APP_ERR_CLIENT_APP_DEALLOCATED -> {
+                ErrorCode.RLM_ERR_CLIENT_APP_DEALLOCATED -> {
                     AppException(msg)
                 }
                 else -> {
@@ -197,14 +196,14 @@ internal fun convertAppError(appError: AppError): Throwable {
                 }
             }
         }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> {
+        ErrorCategory.RLM_ERR_CAT_SERVICE_ERROR -> {
             // This category is response codes from the server, that for some reason didn't
             // accept a request from the client. Most of the error codes in this category
             // can (most likely) be fixed by the client and should have a more granular
             // exception type, but until we understand the details, they will be reported as
             // generic `ServiceException`'s.
             when (appError.code) {
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_INTERNAL_SERVER_ERROR -> {
+                ErrorCode.RLM_ERR_INTERNAL_SERVER_ERROR -> {
                     if (msg.contains("linking an anonymous identity is not allowed") || // Trying to link an anonymous account to a named one.
                         msg.contains("linking a local-userpass identity is not allowed") // Trying to link two email logins with each other
                     ) {
@@ -213,8 +212,8 @@ internal fun convertAppError(appError: AppError): Throwable {
                         ServiceException(msg)
                     }
                 }
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_DISABLED,
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_AUTH_ERROR -> {
+                ErrorCode.RLM_ERR_USER_DISABLED,
+                ErrorCode.RLM_ERR_AUTH_ERROR -> {
                     // Some auth providers return a generic AuthError when
                     // invalid credentials are presented. We make a best effort
                     // to map these to a more sensible `InvalidCredentialsExceptions`
@@ -232,19 +231,19 @@ internal fun convertAppError(appError: AppError): Throwable {
                         AuthException(msg)
                     }
                 }
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_NOT_FOUND -> {
+                ErrorCode.RLM_ERR_USER_NOT_FOUND -> {
                     UserNotFoundException(msg)
                 }
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_ACCOUNT_NAME_IN_USE -> {
+                ErrorCode.RLM_ERR_ACCOUNT_NAME_IN_USE -> {
                     UserAlreadyExistsException(msg)
                 }
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_USER_ALREADY_CONFIRMED -> {
+                ErrorCode.RLM_ERR_USER_ALREADY_CONFIRMED -> {
                     UserAlreadyConfirmedException(msg)
                 }
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_INVALID_EMAIL_PASSWORD -> {
+                ErrorCode.RLM_ERR_INVALID_PASSWORD -> {
                     InvalidCredentialsException(msg)
                 }
-                ServiceErrorCode.RLM_APP_ERR_SERVICE_BAD_REQUEST -> {
+                ErrorCode.RLM_ERR_BAD_REQUEST -> {
                     BadRequestException(msg)
                 }
                 else -> ServiceException(msg)
@@ -292,7 +291,7 @@ private fun createMessageFromAppError(error: AppError): String {
 
     val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
     val errorCodeDesc = error.code.description ?: when (error.category) {
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP -> {
+        ErrorCategory.RLM_ERR_CAT_HTTP_ERROR -> {
             // Source https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
             // Only codes in the 300-599 range is mapped to errors
             when (error.code.nativeValue) {
@@ -346,7 +345,7 @@ private fun createMessageFromAppError(error: AppError): String {
                 else -> "Unknown"
             }
         }
-        AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM -> {
+        ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR -> {
             when (error.code.nativeValue) {
                 KtorNetworkTransport.ERROR_IO -> "IO"
                 KtorNetworkTransport.ERROR_INTERRUPTED -> "Interrupted"

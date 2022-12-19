@@ -38,16 +38,8 @@ data class AppError internal constructor(
             message: String?,
             linkToServerLog: String?
         ): AppError {
-            val category = AppErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
-
-            val code: CodeDescription = when (category) {
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.of(errorCode)
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.of(errorCode)
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.of(errorCode)
-                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM, // no mapping available
-                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP, // no mapping available
-                else -> null
-            } ?: UnknownCodeDescription(errorCode)
+            val category = ErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
+            val code = ErrorCode.of(errorCode) ?: UnknownCodeDescription(errorCode)
 
             return AppError(
                 category,

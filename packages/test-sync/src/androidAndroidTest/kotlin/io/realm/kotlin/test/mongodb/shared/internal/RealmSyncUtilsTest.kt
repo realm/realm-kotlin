@@ -19,7 +19,7 @@
 package io.realm.kotlin.test.mongodb.shared.internal
 
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.AppErrorCategory
+import io.realm.kotlin.internal.interop.sync.ErrorCategory
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.UnknownCodeDescription
@@ -74,7 +74,7 @@ class RealmSyncUtilsTest {
     fun convertAppError_unmappedErrorCode() {
         val appException = convertAppError(
             AppError(
-                category = AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM,
+                category = ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR,
                 code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,

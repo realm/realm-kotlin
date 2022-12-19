@@ -72,25 +72,11 @@ internal class ManagedRealmList<E>(
 
     override fun get(index: Int): E {
         operator.realmReference.checkClosed()
-        try {
-            return operator.get(index)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not get element at list index $index",
-            )
-        }
+        return operator.get(index)
     }
 
     override fun add(index: Int, element: E) {
-        try {
-            operator.insert(index, element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not add element at list index $index",
-            )
-        }
+        operator.insert(index, element)
     }
 
     // We need explicit overrides of these to ensure that we capture duplicate references to the
@@ -111,26 +97,12 @@ internal class ManagedRealmList<E>(
 
     override fun removeAt(index: Int): E = get(index).also {
         operator.realmReference.checkClosed()
-        try {
-            RealmInterop.realm_list_erase(nativePointer, index.toLong())
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not remove element at list index $index",
-            )
-        }
+        RealmInterop.realm_list_erase(nativePointer, index.toLong())
     }
 
     override fun set(index: Int, element: E): E {
         operator.realmReference.checkClosed()
-        try {
-            return operator.set(index, element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not set list element at list index $index",
-            )
-        }
+        return operator.set(index, element)
     }
 
     override fun asFlow(): Flow<ListChange<E>> {
