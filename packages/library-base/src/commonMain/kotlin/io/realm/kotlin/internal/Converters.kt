@@ -377,8 +377,7 @@ internal fun realmAnyConverter(
     realmReference: RealmReference
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
-        override fun fromRealmValue(realmValue: RealmValue): RealmAny? {
-//        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
+        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
             return when (realmValue.isNull()) {
                 true -> null
                 false -> when (val type = realmValue.getType()) {

@@ -122,14 +122,6 @@ class RealmAnyTests {
 
     // There is currently no way for us to instantiate a DynamicRealmObject when getting an object
     // from a RealmAny if the class is not present in the schema unlike in the Java SDK.
-    // We are missing functionality in the C-API to allow something like this:
-    /*
-            const ObjLink& obj_link = java_value.get_object_link();
-            const TableKey& key = obj_link.get_table_key();
-            Group& group = shared_realm->read_group();
-            const TableRef& table = group.get_table(key);
-            const StringData& name = table->get_name();
-     */
     @Test
     fun missingNewClassInOlderSchema_throws() {
         // Open original schema first
