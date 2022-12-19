@@ -65,7 +65,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Gradle 7.6.
 
 
 ## 1.5.1 (2022-12-12)
