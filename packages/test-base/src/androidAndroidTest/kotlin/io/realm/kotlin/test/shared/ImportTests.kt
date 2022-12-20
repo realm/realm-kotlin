@@ -22,6 +22,7 @@ import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor.classifiers
@@ -236,8 +237,36 @@ class ImportTests {
             }
             copyToRealm(container)
         }
+
+        // Now we should have two Sample objects: the container and the INNER
+        assertEquals(2, realm.query<Sample>().count().find())
         val expected = unmanagedObject.stringField
         val actual = managedObject.nullableRealmAnyField
+            ?.asRealmObject<Sample>()
+            ?.stringField
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun importRealmAnyToManagedObjectWithUnmanagedObject() {
+        val unmanagedObject = Sample().apply { stringField = "INNER" }
+        val realmAny = RealmAny.create(unmanagedObject)
+        val managedObject = realm.writeBlocking {
+            val container = Sample().apply {
+                stringField = "OUTER"
+            }
+            copyToRealm(container)
+        }
+        val latestManaged = realm.writeBlocking {
+            val latestContainer = assertNotNull(findLatest(managedObject))
+            latestContainer.nullableRealmAnyField = realmAny
+            latestContainer
+        }
+
+        // Now we should have two Sample objects: the container and the INNER
+        assertEquals(2, realm.query<Sample>().count().find())
+        val expected = unmanagedObject.stringField
+        val actual = latestManaged.nullableRealmAnyField
             ?.asRealmObject<Sample>()
             ?.stringField
         assertEquals(expected, actual)

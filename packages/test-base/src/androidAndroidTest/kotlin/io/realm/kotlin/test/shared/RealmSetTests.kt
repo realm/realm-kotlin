@@ -804,9 +804,9 @@ internal class RealmAnySetTester(
             when (actual) {
                 null -> assertTrue(expectedValues.contains(null))
                 else -> when (actual.type) {
-                    RealmAny.Type.REALM_OBJECT -> {
+                    RealmAny.Type.OBJECT -> {
                         val stringsFromObjects = expectedValues.filter {
-                            it != null && it.type == RealmAny.Type.REALM_OBJECT
+                            it != null && it.type == RealmAny.Type.OBJECT
                         }.map {
                             it?.asRealmObject<RealmSetContainer>()
                                 ?.stringField
@@ -815,9 +815,9 @@ internal class RealmAnySetTester(
                             actual.asRealmObject<RealmSetContainer>().stringField
                         stringsFromObjects.contains(stringFromRealmAny)
                     }
-                    RealmAny.Type.BYTE_ARRAY -> {
+                    RealmAny.Type.BINARY -> {
                         val binaryValues = expectedValues.filter {
-                            it != null && it.type == RealmAny.Type.BYTE_ARRAY
+                            it != null && it.type == RealmAny.Type.BINARY
                         }.map {
                             it!!.asByteArray()
                         }
@@ -837,9 +837,9 @@ internal class RealmAnySetTester(
         return when (actualElement) {
             null -> expectedCollection.contains(null)
             else -> when (actualElement.type) {
-                RealmAny.Type.REALM_OBJECT -> {
+                RealmAny.Type.OBJECT -> {
                     val stringsFromObjects = expectedCollection.filter {
-                        it != null && it.type == RealmAny.Type.REALM_OBJECT
+                        it != null && it.type == RealmAny.Type.OBJECT
                     }.map {
                         it?.asRealmObject<RealmSetContainer>()
                             ?.stringField
@@ -848,9 +848,9 @@ internal class RealmAnySetTester(
                         actualElement.asRealmObject<RealmSetContainer>().stringField
                     stringsFromObjects.contains(stringFromRealmAny)
                 }
-                RealmAny.Type.BYTE_ARRAY -> {
+                RealmAny.Type.BINARY -> {
                     val binaryValues = expectedCollection.filter {
-                        it != null && it.type == RealmAny.Type.BYTE_ARRAY
+                        it != null && it.type == RealmAny.Type.BINARY
                     }.map {
                         it?.asByteArray()
                     }

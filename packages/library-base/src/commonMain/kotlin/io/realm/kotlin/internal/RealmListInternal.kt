@@ -37,7 +37,6 @@ import io.realm.kotlin.notifications.internal.InitialListImpl
 import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
@@ -193,7 +192,7 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
     val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
     return ObjectQuery.tryCatchCoreException {
         val queryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args, operator.mediator, operator.realmReference)
+            val queryArgs = convertToQueryArgs(args)
             RealmInterop.realm_query_parse_for_list(
                 this@query.nativePointer,
                 query,
@@ -274,8 +273,7 @@ internal class PrimitiveListOperator<E>(
         return getterScope {
             val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
-                val publicValue = realmValueToPublic(transport)
-                publicValue as E
+                realmValueToPublic(transport) as E
             }
         }
     }
@@ -314,62 +312,8 @@ internal class PrimitiveListOperator<E>(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmListPointer
-    ): ListOperator<E> = PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
-}
-
-internal class RealmAnyListOperator(
-    override val mediator: Mediator,
-    override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<RealmAny?>,
-    private val nativePointer: RealmListPointer
-) : ListOperator<RealmAny?> {
-
-    @Suppress("UNCHECKED_CAST")
-    override fun get(index: Int): RealmAny? {
-        return getterScope {
-            val transport = realm_list_get(nativePointer, index.toLong())
-            with(converter) {
-                realmValueToPublic(transport)
-            }
-        }
-    }
-
-    override fun insert(
-        index: Int,
-        element: RealmAny?,
-        updatePolicy: UpdatePolicy,
-        cache: UnmanagedToManagedObjectCache
-    ) {
-        inputScope {
-            with(converter) {
-                val transport = publicToRealmValue(element)
-                RealmInterop.realm_list_add(nativePointer, index.toLong(), transport)
-            }
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun set(
-        index: Int,
-        element: RealmAny?,
-        updatePolicy: UpdatePolicy,
-        cache: UnmanagedToManagedObjectCache
-    ): RealmAny? {
-        return inputScope {
-            val originalValue = get(index)
-            with(converter) {
-                val transport = publicToRealmValue(element)
-                RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
-                originalValue
-            }
-        }
-    }
-
-    override fun copy(
-        realmReference: RealmReference,
-        nativePointer: RealmListPointer
-    ): ListOperator<RealmAny?> =
-        RealmAnyListOperator(mediator, realmReference, converter, nativePointer)
+    ): ListOperator<E> =
+        PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
 }
 
 internal abstract class BaseRealmObjectListOperator<E>(

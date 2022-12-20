@@ -74,7 +74,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         key,
         clazz,
         mediator,
-        parseQuery(realmReference, mediator, key, filter, args),
+        parseQuery(realmReference, key, filter, args),
     )
 
     internal constructor(
@@ -98,7 +98,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
                     RealmInterop.realm_query_append_query(
                         queryPointer,
                         filter,
-                        convertToQueryArgs(arguments, mediator, realmReference)
+                        convertToQueryArgs(arguments)
                     )
                 ObjectQuery(appendedQuery, this@ObjectQuery)
             }
@@ -198,13 +198,12 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     companion object {
         private fun parseQuery(
             realmReference: RealmReference,
-            mediator: Mediator,
             classKey: ClassKey,
             filter: String,
             args: Array<out Any?>
         ): RealmQueryPointer = tryCatchCoreException {
             inputScope {
-                val queryArgs = convertToQueryArgs(args, mediator, realmReference)
+                val queryArgs = convertToQueryArgs(args)
                 RealmInterop.realm_query_parse(realmReference.dbPointer, classKey, filter, queryArgs)
             }
         }

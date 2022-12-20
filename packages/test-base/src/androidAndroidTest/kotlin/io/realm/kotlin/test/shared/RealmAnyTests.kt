@@ -30,7 +30,6 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -69,7 +68,6 @@ class RealmAnyTests {
         String::class to "hello",
         Float::class to 10F,
         Double::class to 10.0,
-        ObjectId::class to ObjectId.create(),
         BsonObjectId::class to BsonObjectId(),
         ByteArray::class to byteArrayOf(42, 43, 44),
         RealmInstant::class to RealmInstant.now(),
@@ -186,10 +184,6 @@ class RealmAnyTests {
                     assertThrowsOnInvalidType(Float::class, RealmAny.create(type.second as Float))
                 Double::class ->
                     assertThrowsOnInvalidType(Double::class, RealmAny.create(type.second as Double))
-                ObjectId::class -> assertThrowsOnInvalidType(
-                    ObjectId::class,
-                    RealmAny.create(type.second as ObjectId)
-                )
                 BsonObjectId::class -> assertThrowsOnInvalidType(
                     BsonObjectId::class,
                     RealmAny.create(type.second as BsonObjectId)
@@ -270,7 +264,7 @@ class RealmAnyTests {
                     val realmAny = RealmAny.create(true)
                     assertEquals(true, realmAny.asBoolean())
                     assertEquals(RealmAny.create(true), realmAny)
-                    assertEquals(RealmAny.Type.BOOLEAN, realmAny.type)
+                    assertEquals(RealmAny.Type.BOOL, realmAny.type)
                 }
                 String::class -> {
                     val realmAny = RealmAny.create("Realm")
@@ -290,13 +284,6 @@ class RealmAnyTests {
                     assertEquals(RealmAny.create(42.0), realmAny)
                     assertEquals(RealmAny.Type.DOUBLE, realmAny.type)
                 }
-                ObjectId::class -> {
-                    val objectId = ObjectId.from("000000000000000000000000")
-                    val realmAny = RealmAny.create(objectId)
-                    assertEquals(objectId, realmAny.asRealmObjectId())
-                    assertEquals(RealmAny.create(objectId), realmAny)
-                    assertEquals(RealmAny.Type.OBJECT_ID, realmAny.type)
-                }
                 BsonObjectId::class -> {
                     val objectId = BsonObjectId("000000000000000000000000")
                     val realmAny = RealmAny.create(objectId)
@@ -309,28 +296,28 @@ class RealmAnyTests {
                     val realmAny = RealmAny.create(byteArray)
                     assertContentEquals(byteArray, realmAny.asByteArray())
                     assertEquals(RealmAny.create(byteArray), realmAny)
-                    assertEquals(RealmAny.Type.BYTE_ARRAY, realmAny.type)
+                    assertEquals(RealmAny.Type.BINARY, realmAny.type)
                 }
                 RealmInstant::class -> {
                     val instant = RealmInstant.now()
                     val realmAny = RealmAny.create(instant)
                     assertEquals(instant, realmAny.asRealmInstant())
                     assertEquals(RealmAny.create(instant), realmAny)
-                    assertEquals(RealmAny.Type.REALM_INSTANT, realmAny.type)
+                    assertEquals(RealmAny.Type.TIMESTAMP, realmAny.type)
                 }
                 RealmUUID::class -> {
                     val uuid = RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff")
                     val realmAny = RealmAny.create(uuid)
                     assertEquals(uuid, realmAny.asRealmUUID())
                     assertEquals(RealmAny.create(uuid), realmAny)
-                    assertEquals(RealmAny.Type.REALM_UUID, realmAny.type)
+                    assertEquals(RealmAny.Type.UUID, realmAny.type)
                 }
                 TestParent::class -> {
                     val obj = TestParent()
                     val realmAny = RealmAny.create(obj, TestParent::class)
                     assertEquals(obj, realmAny.asRealmObject<TestParent>())
                     assertEquals(RealmAny.create(obj, TestParent::class), realmAny)
-                    assertEquals(RealmAny.Type.REALM_OBJECT, realmAny.type)
+                    assertEquals(RealmAny.Type.OBJECT, realmAny.type)
                 }
                 else -> throw UnsupportedOperationException("Missing testing for type $type")
             }
@@ -377,10 +364,6 @@ class RealmAnyTests {
                     Double::class,
                     createManagedRealmAny { RealmAny.create(10.0) }!!
                 )
-                ObjectId::class -> assertThrowsOnInvalidType(
-                    ObjectId::class,
-                    createManagedRealmAny { RealmAny.create(ObjectId.create()) }!!
-                )
                 BsonObjectId::class -> assertThrowsOnInvalidType(
                     BsonObjectId::class,
                     createManagedRealmAny { RealmAny.create(BsonObjectId()) }!!
@@ -419,7 +402,6 @@ class RealmAnyTests {
                 String::class -> loopSupportedTypes(createManagedContainer())
                 Float::class -> loopSupportedTypes(createManagedContainer())
                 Double::class -> loopSupportedTypes(createManagedContainer())
-                ObjectId::class -> loopSupportedTypes(createManagedContainer())
                 BsonObjectId::class -> loopSupportedTypes(createManagedContainer())
                 ByteArray::class -> loopSupportedTypes(createManagedContainer())
                 RealmInstant::class -> loopSupportedTypes(createManagedContainer())
@@ -548,13 +530,13 @@ class RealmAnyTests {
 
     private fun assertNumericOverflow(block: ((RealmAny) -> RealmAny)) {
         fun assertNumericCoercionOverflows(managedRealmAny: RealmAny, block: (RealmAny) -> Number) {
-            assertFailsWithMessage<IllegalStateException>("Cannot convert value with") {
+            assertFailsWithMessage<ArithmeticException>("Cannot convert value with") {
                 block(managedRealmAny)
             }
         }
 
         fun assertCharCoercionOverflows(managedRealmAny: RealmAny) {
-            assertFailsWithMessage<IllegalStateException>("Cannot convert value with") {
+            assertFailsWithMessage<ArithmeticException>("Cannot convert value with") {
                 managedRealmAny.asChar()
             }
         }
@@ -616,7 +598,7 @@ class RealmAnyTests {
             assertNotNull(actualManaged)
 
             when (expected.type) {
-                RealmAny.Type.REALM_OBJECT -> assertEquals(
+                RealmAny.Type.OBJECT -> assertEquals(
                     expected.asRealmObject<TestParent>().name,
                     actualManaged.asRealmObject<TestParent>().name
                 )
@@ -643,8 +625,6 @@ class RealmAnyTests {
                         setAndAssert(RealmAny.create(candidate.second as Float), container)
                     Double::class ->
                         setAndAssert(RealmAny.create(candidate.second as Double), container)
-                    ObjectId::class ->
-                        setAndAssert(RealmAny.create(candidate.second as ObjectId), container)
                     BsonObjectId::class ->
                         setAndAssert(RealmAny.create(candidate.second as BsonObjectId), container)
                     ByteArray::class ->
@@ -722,14 +702,8 @@ class RealmAnyTests {
                         assertFailsWith<IllegalStateException> { value.asFloat() }
                     Double::class ->
                         assertFailsWith<IllegalStateException> { value.asDouble() }
-                    // Exclude BsonObjectId as the underlying value is the same
-                    ObjectId::class -> if (excludedType != BsonObjectId::class) {
-                        assertFailsWith<IllegalStateException> { value.asRealmObjectId() }
-                    }
-                    // Exclude ObjectId as the underlying value is the same
-                    BsonObjectId::class -> if (excludedType != ObjectId::class) {
+                    BsonObjectId::class ->
                         assertFailsWith<IllegalStateException> { value.asObjectId() }
-                    }
                     ByteArray::class ->
                         assertFailsWith<IllegalStateException> { value.asByteArray() }
                     RealmInstant::class ->

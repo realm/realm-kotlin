@@ -20,7 +20,6 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
-import io.realm.kotlin.internal.interop.Link
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
@@ -99,12 +98,22 @@ public inline fun realmValueToRealmUUID(transport: RealmValue): RealmUUID = Real
 public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
     transport.getDecimal128Array().let { Decimal128.fromIEEE754BIDEncoding(it[1], it[0]) }
 
-@Suppress("ComplexMethod", "NestedBlockDepth")
 internal inline fun realmValueToRealmAny(
     transport: RealmValue,
     mediator: Mediator,
     owner: RealmReference,
     issueDynamicObject: Boolean = false
+): RealmAny? {
+    return realmValueToRealmAny(transport, mediator, owner, issueDynamicObject, false)
+}
+
+@Suppress("ComplexMethod", "NestedBlockDepth")
+internal inline fun realmValueToRealmAny(
+    transport: RealmValue,
+    mediator: Mediator,
+    owner: RealmReference,
+    issueDynamicObject: Boolean,
+    issueDynamicMutableObject: Boolean,
 ): RealmAny? {
     return when (transport.isNull()) {
         true -> null
@@ -122,11 +131,16 @@ internal inline fun realmValueToRealmAny(
             ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(transport.getUUIDBytes()))
             ValueType.RLM_TYPE_LINK -> {
                 if (issueDynamicObject) {
-                    val realmObject =
-                        realmValueToRealmObject(transport, DynamicRealmObject::class, mediator, owner)
+                    val clazz = when (issueDynamicMutableObject) {
+                        true -> DynamicMutableRealmObject::class
+                        false -> DynamicRealmObject::class
+                    }
+                    val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
                     RealmAny.create(realmObject!!)
                 } else {
-                    val clazz = owner.schemaMetadata.get(transport.getLink().classKey)
+                    val clazz = owner.schemaMetadata
+                        .get(transport.getLink().classKey)
+                        ?.clazz
                         ?: throw IllegalArgumentException("The object class is not present in the current schema - are you using an outdated schema version?")
                     val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
                     RealmAny.create(realmObject!!, clazz)
@@ -316,18 +330,14 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 @Suppress("NestedBlockDepth")
 internal object RealmValueArgumentConverter {
-    fun MemTrackingAllocator.convertArg(
-        value: Any?,
-        mediator: Mediator,
-        realmReference: RealmReference
-    ): RealmValue {
+    fun MemTrackingAllocator.convertArg(value: Any?): RealmValue {
         return value?.let {
             when (value) {
                 is RealmObject -> {
                     val objRef = realmObjectToRealmReferenceOrError(value)
                     realmObjectTransport(objRef)
                 }
-                is RealmAny -> realmAnyToRealmValue(value, mediator, realmReference)
+                is RealmAny -> realmAnyToRealmValue(value)
                 else -> {
                     primitiveTypeConverters[it::class]?.let { converter ->
                         with(converter as RealmValueConverter<Any?>) {
@@ -340,12 +350,10 @@ internal object RealmValueArgumentConverter {
     }
 
     fun MemTrackingAllocator.convertToQueryArgs(
-        queryArgs: Array<out Any?>,
-        mediator: Mediator,
-        realmReference: RealmReference
+        queryArgs: Array<out Any?>
     ): Pair<Int, RealmQueryArgsTransport> {
         return queryArgs.map {
-            convertArg(it, mediator, realmReference)
+            convertArg(it)
         }.toTypedArray().let {
             Pair(queryArgs.size, queryArgsOf(it))
         }
@@ -374,7 +382,9 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
 @Suppress("OVERRIDE_BY_INLINE", "NestedBlockDepth")
 internal fun realmAnyConverter(
     mediator: Mediator,
-    realmReference: RealmReference
+    realmReference: RealmReference,
+    issueDynamicObject: Boolean = false,
+    issueDynamicMutableObject: Boolean = false
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
         override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
@@ -393,9 +403,19 @@ internal fun realmAnyConverter(
                         RealmAny.create(BsonObjectId(realmValue.getObjectIdBytes()))
                     ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDBytes()))
                     ValueType.RLM_TYPE_LINK -> {
-                        val link: Link = realmValue.getLink()
-                        val clazz = realmReference.schemaMetadata.get(link.classKey)
-                            ?: throw IllegalArgumentException("The object class is not present in the current schema - are you using an outdated schema version?")
+                        val link = realmValue.getLink()
+                        val clazz = if (issueDynamicObject) {
+                            if (issueDynamicMutableObject) {
+                                DynamicMutableRealmObject::class
+                            } else {
+                                DynamicRealmObject::class
+                            }
+                        } else {
+                            realmReference.schemaMetadata
+                                .get(link.classKey)
+                                ?.clazz
+                                ?: throw IllegalArgumentException("The object class is not present in the current schema - are you using an outdated schema version?")
+                        }
                         val internalObject = mediator.createInstanceOf(clazz)
                         val obj = internalObject.link(
                             realmReference,
@@ -403,7 +423,7 @@ internal fun realmAnyConverter(
                             clazz,
                             link
                         ) as RealmObject
-                        RealmAny.create(obj, clazz as KClass<out RealmObject>)
+                        RealmAny.create(obj, clazz)
                     }
                     else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
                 }
@@ -411,12 +431,15 @@ internal fun realmAnyConverter(
         }
 
         override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue {
-            return realmAnyToRealmValue(value, mediator, realmReference)
+            return realmAnyToRealmValueWithObjectImport(value, mediator, realmReference)
         }
     }
 }
 
-internal inline fun MemTrackingAllocator.realmAnyToRealmValue(
+/**
+ * Used for converting values to query arguments. Importing objects isn't allowed here.
+ */
+internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithObjectImport(
     value: RealmAny?,
     mediator: Mediator,
     realmReference: RealmReference
@@ -424,21 +447,48 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(
     return when (value) {
         null -> nullTransport()
         else -> when (value.type) {
-            RealmAny.Type.INT -> longTransport(value.asLong())
-            RealmAny.Type.BOOLEAN -> booleanTransport(value.asBoolean())
-            RealmAny.Type.STRING -> stringTransport(value.asString())
-            RealmAny.Type.BYTE_ARRAY -> byteArrayTransport(value.asByteArray())
-            RealmAny.Type.REALM_INSTANT -> timestampTransport(value.asRealmInstant() as RealmInstantImpl)
-            RealmAny.Type.FLOAT -> floatTransport(value.asFloat())
-            RealmAny.Type.DOUBLE -> doubleTransport(value.asDouble())
-            RealmAny.Type.OBJECT_ID -> objectIdTransport(value.asObjectId().toByteArray())
-            RealmAny.Type.REALM_UUID -> uuidTransport(value.asRealmUUID().bytes)
-            RealmAny.Type.REALM_OBJECT -> {
+            RealmAny.Type.OBJECT -> {
                 val obj = value.asRealmObject<BaseRealmObject>()
                 val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference)
                 realmObjectTransport(objRef as RealmObjectInterop)
             }
+            else -> realmAnyPrimitiveToRealmValue(value)
         }
+    }
+}
+
+/**
+ * Used for converting RealmAny values to RealmValues suitable for query arguments.
+ * Importing objects isn't allowed here.
+ */
+internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?): RealmValue {
+    return when (value) {
+        null -> nullTransport()
+        else -> when (value.type) {
+            RealmAny.Type.OBJECT -> {
+                val objRef = realmObjectToRealmReferenceOrError(value.asRealmObject())
+                realmObjectTransport(objRef)
+            }
+            else -> realmAnyPrimitiveToRealmValue(value)
+        }
+    }
+}
+
+/**
+ * Used for converting primitive values to RealmValues.
+ */
+private inline fun MemTrackingAllocator.realmAnyPrimitiveToRealmValue(value: RealmAny): RealmValue {
+    return when (value.type) {
+        RealmAny.Type.INT -> longTransport(value.asLong())
+        RealmAny.Type.BOOL -> booleanTransport(value.asBoolean())
+        RealmAny.Type.STRING -> stringTransport(value.asString())
+        RealmAny.Type.BINARY -> byteArrayTransport(value.asByteArray())
+        RealmAny.Type.TIMESTAMP -> timestampTransport(value.asRealmInstant() as RealmInstantImpl)
+        RealmAny.Type.FLOAT -> floatTransport(value.asFloat())
+        RealmAny.Type.DOUBLE -> doubleTransport(value.asDouble())
+        RealmAny.Type.OBJECT_ID -> objectIdTransport(value.asObjectId().toByteArray())
+        RealmAny.Type.UUID -> uuidTransport(value.asRealmUUID().bytes)
+        else -> throw UnsupportedOperationException("If you want to convert a 'RealmAny' instance containing an object to a 'RealmValue' use 'realmAnyToRealmValue' (when working with 'RealmQuery') or 'realmAnyToRealmValueWithObjectImport' (when using an accessor).")
     }
 }
 
@@ -450,11 +500,7 @@ internal inline fun <T : BaseRealmObject> realmValueToRealmObject(
 ): T? {
     return when {
         transport.isNull() -> null
-        else -> {
-            val link = transport.getLink()
-            val res = link.toRealmObject(clazz, mediator, realmReference)
-            res
-        }
+        else -> transport.getLink().toRealmObject(clazz, mediator, realmReference)
     }
 }
 

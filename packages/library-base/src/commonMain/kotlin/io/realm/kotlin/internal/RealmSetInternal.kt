@@ -32,7 +32,6 @@ import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
 import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmSet
 import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.SendChannel
@@ -220,14 +219,11 @@ internal class PrimitiveSetOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                realm_set_get(nativePointer, index.toLong())
-                    .let { transport ->
-                        when (ValueType.RLM_TYPE_NULL) {
-                            transport.getType() -> null
-                            else -> realmValueToPublic(transport)
-                        }
-                    } as E
-            }
+                val transport = realm_set_get(nativePointer, index.toLong())
+                with(converter) {
+                    realmValueToPublic(transport)
+                }
+            } as E
         }
     }
 
@@ -256,55 +252,8 @@ internal class PrimitiveSetOperator<E>(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
-    ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
-}
-
-internal class RealmAnySetOperator(
-    override val mediator: Mediator,
-    override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<RealmAny?>,
-    private val nativePointer: RealmSetPointer
-) : SetOperator<RealmAny?> {
-
-    @Suppress("UNCHECKED_CAST")
-    override fun get(index: Int): RealmAny? {
-        return getterScope {
-            with(converter) {
-                val transport = realm_set_get(nativePointer, index.toLong())
-                with(converter) {
-                    realmValueToPublic(transport)
-                }
-            }
-        }
-    }
-
-    override fun add(
-        element: RealmAny?,
-        updatePolicy: UpdatePolicy,
-        cache: UnmanagedToManagedObjectCache
-    ): Boolean {
-        return inputScope {
-            with(converter) {
-                val transport = publicToRealmValue(element)
-                RealmInterop.realm_set_insert(nativePointer, transport)
-            }
-        }
-    }
-
-    override fun contains(element: RealmAny?): Boolean {
-        return inputScope {
-            with(converter) {
-                val transport = publicToRealmValue(element)
-                RealmInterop.realm_set_find(nativePointer, transport)
-            }
-        }
-    }
-
-    override fun copy(
-        realmReference: RealmReference,
-        nativePointer: RealmSetPointer
-    ): SetOperator<RealmAny?> =
-        RealmAnySetOperator(mediator, realmReference, converter, nativePointer)
+    ): SetOperator<E> =
+        PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
 }
 
 internal class RealmObjectSetOperator<E>(

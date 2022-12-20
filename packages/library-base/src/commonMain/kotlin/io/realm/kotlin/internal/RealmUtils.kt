@@ -201,7 +201,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
                     realmReference,
                     element::class,
                     className,
-                    convertArg(primaryKey, mediator, realmReference),
+                    convertArg(primaryKey),
                     updatePolicy
                 )
             }

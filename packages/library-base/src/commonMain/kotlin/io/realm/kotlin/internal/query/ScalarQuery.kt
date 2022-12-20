@@ -26,7 +26,6 @@ import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.RealmValueConverter
 import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.interop.ClassKey
-import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmCoreLogicException
@@ -79,11 +78,6 @@ internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
         val liveResultPtr = RealmInterop.realm_results_resolve_in(queryResults, liveDbPointer)
         return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
-
-    // TODO OPTIMIZE Maybe add classKey->ClassMetadata map to realmReference.schemaMetadata
-    //  so that we can get the key directly from a lookup
-    protected fun getPropertyKey(property: String): PropertyKey =
-        RealmInterop.realm_get_col_key(realmReference.dbPointer, classKey, property)
 }
 
 /**
@@ -111,22 +105,12 @@ internal class CountQuery<E : BaseRealmObject> constructor(
 }
 
 /**
- * Representation of a query that needs to get the property name of the queried field as a [String].
- */
-internal interface NamedFieldQuery {
-    val fieldName: String
-}
-
-/**
  * Type-bound query linked to a property. Unlike [CountQuery] this is executed at a table level
  * rather than at a column level.
  */
-internal interface TypeBoundQuery : NamedFieldQuery {
+internal interface TypeBoundQuery {
     val propertyMetadata: PropertyMetadata
     val converter: RealmValueConverter<*>
-
-    override val fieldName: String
-        get() = propertyMetadata.name
 }
 
 /**
@@ -179,10 +163,9 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
         updatedRealmReference: RealmReference? = null
     ): T? = try {
         getterScope {
-            val propertyKey = getPropertyKey(fieldName)
             val transport = when (queryType) {
-                AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyKey)
-                AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyKey)
+                AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyMetadata.key)
+                AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyMetadata.key)
                 AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
             }
 
@@ -255,8 +238,7 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
 
     private fun findFromResults(resultsPointer: RealmResultsPointer): T = try {
         getterScope {
-            val propertyKey = getPropertyKey(fieldName)
-            val transport = realm_results_sum(resultsPointer, propertyKey)
+            val transport = realm_results_sum(resultsPointer, propertyMetadata.key)
 
             when (type) {
                 RealmAny::class -> converter.realmValueToPublic(transport)
@@ -318,6 +300,7 @@ private fun <T : Any> queryTypeValidator(
  * C-API, to a user-specified type in the query, i.e. "coerced type".
  */
 @Suppress("ComplexMethod")
+// TODO optimize: try to move this to query construction
 private fun <T : Any> coerceType(
     converter: RealmValueConverter<*>,
     propertyName: String,

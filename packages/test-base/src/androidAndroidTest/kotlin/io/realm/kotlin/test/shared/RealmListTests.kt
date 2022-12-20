@@ -1311,20 +1311,20 @@ internal class ManagedRealmAnyListTester constructor(
             assertEquals(expected.type, actual.type)
             when (expected.type) {
                 RealmAny.Type.INT -> assertEquals(expected.asInt(), actual.asInt())
-                RealmAny.Type.BOOLEAN -> assertEquals(expected.asBoolean(), actual.asBoolean())
+                RealmAny.Type.BOOL -> assertEquals(expected.asBoolean(), actual.asBoolean())
                 RealmAny.Type.STRING -> assertEquals(expected.asString(), actual.asString())
-                RealmAny.Type.BYTE_ARRAY ->
+                RealmAny.Type.BINARY ->
                     assertContentEquals(expected.asByteArray(), actual.asByteArray())
-                RealmAny.Type.REALM_INSTANT ->
+                RealmAny.Type.TIMESTAMP ->
                     assertEquals(expected.asRealmInstant(), actual.asRealmInstant())
                 RealmAny.Type.FLOAT -> assertEquals(expected.asFloat(), actual.asFloat())
                 RealmAny.Type.DOUBLE -> assertEquals(expected.asDouble(), actual.asDouble())
                 RealmAny.Type.OBJECT_ID -> assertEquals(expected.asObjectId(), actual.asObjectId())
-                RealmAny.Type.REALM_UUID -> assertEquals(
+                RealmAny.Type.UUID -> assertEquals(
                     expected.asRealmUUID(),
                     actual.asRealmUUID()
                 )
-                RealmAny.Type.REALM_OBJECT -> assertEquals(
+                RealmAny.Type.OBJECT -> assertEquals(
                     expected.asRealmObject<RealmListContainer>().stringField,
                     actual.asRealmObject<RealmListContainer>().stringField
                 )

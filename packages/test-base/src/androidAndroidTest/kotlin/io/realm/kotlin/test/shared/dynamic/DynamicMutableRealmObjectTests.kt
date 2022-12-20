@@ -258,43 +258,47 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.set(name, null)
                                 assertEquals(null, dynamicSample.getNullableValue<RealmAny>(name))
 
-                                // ... and both primitives...
+                                // ... and primitives...
                                 val value = RealmAny.create(42)
                                 dynamicSample.set(name, value)
                                 assertEquals(value, dynamicSample.getNullableValue(name))
 
                                 // ... and dynamic mutable unmanaged objects ...
                                 DynamicMutableRealmObject.create(
-                                    "PrimaryKeyString",
-                                    mapOf("primaryKey" to "Custom1")
+                                    "Sample",
+                                    mapOf("stringField" to "Custom1")
                                 ).also { dynamicMutableUnmanagedObject ->
                                     val dynamicRealmAny =
                                         RealmAny.create(dynamicMutableUnmanagedObject)
                                     dynamicSample.set(name, dynamicRealmAny)
                                     val expectedValue =
-                                        dynamicMutableUnmanagedObject.getValue<String>("primaryKey")
+                                        dynamicMutableUnmanagedObject.getValue<String>("stringField")
                                     val actualValue = dynamicSample.getNullableValue<RealmAny>(name)
-                                        ?.asRealmObject<DynamicRealmObject>()
-                                        ?.getValue<String>("primaryKey")
+                                        ?.asRealmObject<DynamicMutableRealmObject>()
+                                        ?.getValue<String>("stringField")
                                     assertEquals(expectedValue, actualValue)
                                 }
 
                                 // ... and dynamic mutable managed objects
                                 dynamicMutableRealm.copyToRealm(
                                     DynamicMutableRealmObject.create(
-                                        "PrimaryKeyString",
-                                        mapOf("primaryKey" to "Custom2")
+                                        "Sample",
+                                        mapOf("stringField" to "Custom2")
                                     )
                                 ).also { dynamicMutableManagedObject ->
                                     val dynamicRealmAny =
                                         RealmAny.create(dynamicMutableManagedObject)
                                     dynamicSample.set(name, dynamicRealmAny)
                                     val expectedValue =
-                                        dynamicMutableManagedObject.getValue<String>("primaryKey")
-                                    val actualValue = dynamicSample.getNullableValue<RealmAny>(name)
-                                        ?.asRealmObject<DynamicRealmObject>()
-                                        ?.getValue<String>("primaryKey")
+                                        dynamicMutableManagedObject.getValue<String>("stringField")
+                                    val managedDynamicMutableObject = dynamicSample.getNullableValue<RealmAny>(name)
+                                        ?.asRealmObject<DynamicMutableRealmObject>()
+                                    val actualValue = managedDynamicMutableObject?.getValue<String>("stringField")
                                     assertEquals(expectedValue, actualValue)
+
+                                    // Check we did indeed get a dynamic mutable object
+                                    managedDynamicMutableObject?.set("stringField", "NEW")
+                                    assertEquals("NEW", managedDynamicMutableObject?.getValue("stringField"))
                                 }
                             }
                             else -> error("Model contains untested properties: $property")

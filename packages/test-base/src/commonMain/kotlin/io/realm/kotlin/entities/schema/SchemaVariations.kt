@@ -57,7 +57,7 @@ class SchemaVariations : RealmObject {
     @Index
     var nullableString: String? = "Realm"
     var nullableRealmObject: Sample? = null
-    var realmAny: RealmAny? = RealmAny.create(42)
+    var nullableRealmAny: RealmAny? = RealmAny.create(42)
 
     // List properties
     var boolList: RealmList<Boolean> = realmListOf()

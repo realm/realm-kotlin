@@ -118,8 +118,6 @@ public open class ConfigurationImpl constructor(
 
     private val configInitializer: (RealmConfigurationPointer) -> RealmConfigurationPointer
 
-    private val mapOfClassNameWithCompanion: Map<String?, RealmObjectCompanion>
-
     init {
         this.path = normalizePath(directory, name)
         this.name = name
@@ -134,8 +132,6 @@ public open class ConfigurationImpl constructor(
         this.compactOnLaunchCallback = compactOnLaunchCallback
         this.initialDataCallback = initialDataCallback
         this.inMemory = inMemory
-        this.mapOfClassNameWithCompanion = mapOfKClassWithCompanion.entries
-            .associate { it.key.simpleName to it.value }
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->

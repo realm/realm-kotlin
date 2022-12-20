@@ -16,11 +16,9 @@ import kotlin.reflect.KClass
  * instance that does not store a `Double` value would raise an [IllegalStateException].
  *
  * `RealmAny` behaves like a value type on all the supported types except on Realm objects. It means
- * that Realm will not persist any change to the `RealmAny` value except when the type is
- * `REALM_OBJECT`. When a `RealmAny` holds a [BaseRealmObject], it just holds the reference to it,
- * not a copy of the object. So modifications to the Realm object are reflected in the RealmAny
- * value, including if the object is deleted. Because `RealmAny` instances are immutable, a new
- * instance is needed to update a `RealmAny` attribute.
+ * that Realm will not persist any change to the actual `RealmAny` value. If a `RealmAny` holds a
+ * [BaseRealmObject], it just holds the reference to it, not a copy of the object. Because
+ * `RealmAny` instances are immutable, a new instance is needed to update a `RealmAny` attribute.
  * ```
  *      anObject.realmAnyField = RealmAny.create(42.0)
  *      anObject.realmAnyField = RealmAny.create("Hello")
@@ -93,7 +91,7 @@ public interface RealmAny {
      * Supported Realm data types that can be stored in a `RealmAny` instance.
      */
     public enum class Type {
-        INT, BOOLEAN, STRING, BYTE_ARRAY, REALM_INSTANT, FLOAT, DOUBLE, OBJECT_ID, REALM_UUID, REALM_OBJECT
+        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, OBJECT_ID, UUID, OBJECT
     }
 
     /**
@@ -108,6 +106,7 @@ public interface RealmAny {
      * safely, although overflow might occur, for example, if the value to be output as a `Short`
      * is greater than [Short.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Short`.
+     * @throws [ArithmeticException] if the stored value cannot be coerced to another numeric type.
      */
     public fun asShort(): Short
 
@@ -117,6 +116,7 @@ public interface RealmAny {
      * safely, although overflow might occur, for example, if the value to be output as a `Short`
      * is greater than [Int.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Int`.
+     * @throws [ArithmeticException] if the stored value cannot be coerced to another numeric type.
      */
     public fun asInt(): Int
 
@@ -126,6 +126,7 @@ public interface RealmAny {
      * safely, although overflow might occur, for example, if the value to be output as a `Short`
      * is greater than [Byte.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Byte`.
+     * @throws [ArithmeticException] if the stored value cannot be coerced to another numeric type.
      */
     public fun asByte(): Byte
 
@@ -135,6 +136,7 @@ public interface RealmAny {
      * safely, although overflow might occur, for example, if the value to be output as a `Short`
      * is greater than [Char.MAX_VALUE].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Char`.
+     * @throws [ArithmeticException] if the stored value cannot be coerced to another numeric type.
      */
     public fun asChar(): Char
 
@@ -169,13 +171,6 @@ public interface RealmAny {
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Double`.
      */
     public fun asDouble(): Double
-
-    /**
-     * Returns the value from this `RealmAny` as an [ObjectId].
-     * @throws [IllegalStateException] if the stored value cannot be safely converted to `ObjectId`.
-     */
-    @Deprecated("Use the BSON ObjectId variant instead", ReplaceWith("RealmAny.asObjectId"))
-    public fun asRealmObjectId(): ObjectId
 
     /**
      * Returns the value from this `RealmAny` as a [BsonObjectId].
@@ -253,7 +248,7 @@ public interface RealmAny {
          * Creates an unmanaged `RealmAny` instance from a [Boolean] value.
          */
         public fun create(value: Boolean): RealmAny =
-            RealmAnyImpl(Type.BOOLEAN, Boolean::class, value)
+            RealmAnyImpl(Type.BOOL, Boolean::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [String] value.
@@ -290,26 +285,26 @@ public interface RealmAny {
          * Creates an unmanaged `RealmAny` instance from a [ByteArray] value.
          */
         public fun create(value: ByteArray): RealmAny =
-            RealmAnyImpl(Type.BYTE_ARRAY, ByteArray::class, value)
+            RealmAnyImpl(Type.BINARY, ByteArray::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmInstant] value.
          */
         public fun create(value: RealmInstant): RealmAny =
-            RealmAnyImpl(Type.REALM_INSTANT, RealmInstant::class, value)
+            RealmAnyImpl(Type.TIMESTAMP, RealmInstant::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmUUID] value.
          */
         public fun create(value: RealmUUID): RealmAny =
-            RealmAnyImpl(Type.REALM_UUID, RealmUUID::class, value)
+            RealmAnyImpl(Type.UUID, RealmUUID::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [BaseRealmObject] value and its
          * corresponding [KClass].
          */
         public fun <T : BaseRealmObject> create(value: T, clazz: KClass<out T>): RealmAny =
-            RealmAnyImpl(Type.REALM_OBJECT, clazz, value)
+            RealmAnyImpl(Type.OBJECT, clazz, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [BaseRealmObject] value.

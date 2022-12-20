@@ -35,7 +35,7 @@ import kotlin.reflect.KProperty1
  */
 public interface SchemaMetadata {
     public operator fun get(className: String): ClassMetadata?
-    public fun get(classKey: ClassKey): KClass<out BaseRealmObject>?
+    public fun get(classKey: ClassKey): ClassMetadata?
     public fun getOrThrow(className: String): ClassMetadata = this[className]
         ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
@@ -44,17 +44,17 @@ public interface SchemaMetadata {
  * Class metadata providing access class and property keys.
  */
 public interface ClassMetadata {
-    public val classInfo: ClassInfo
     public val className: String
     public val classKey: ClassKey
     public val properties: List<PropertyMetadata>
     public val primaryKeyProperty: PropertyMetadata?
     public val isEmbeddedRealmObject: Boolean
+    public val clazz: KClass<out BaseRealmObject>?
     public operator fun get(propertyName: String): PropertyMetadata?
     public operator fun get(propertyKey: PropertyKey): PropertyMetadata?
     public operator fun get(property: KProperty<*>): PropertyMetadata?
     public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
-        ?: throw IllegalArgumentException("Schema for type '${classInfo.name}' doesn't contain a property named '$propertyName'")
+        ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
 }
 
 public interface PropertyMetadata {
@@ -99,10 +99,10 @@ public class CachedSchemaMetadata constructor(
                     }
                 className to CachedClassMetadata(
                     dbPointer,
-                    classInfo,
+                    classInfo.name,
                     classInfo.key,
-                    classToCompanion?.value,
-                    classToCompanion?.key
+                    classToCompanion?.key,
+                    classToCompanion?.value
                 )
             }
 
@@ -113,8 +113,8 @@ public class CachedSchemaMetadata constructor(
 
     override fun get(className: String): CachedClassMetadata? =
         classNameToMetadataMap[className]
-    override fun get(classKey: ClassKey): KClass<out BaseRealmObject>? =
-        classKeyToMetadataMap[classKey]?.clazz
+    override fun get(classKey: ClassKey): CachedClassMetadata? =
+        classKeyToMetadataMap[classKey]
 }
 
 /**
@@ -122,15 +122,11 @@ public class CachedSchemaMetadata constructor(
  */
 public class CachedClassMetadata constructor(
     dbPointer: RealmPointer,
-    override val classInfo: ClassInfo,
+    override val className: String,
     override val classKey: ClassKey,
+    override val clazz: KClass<out BaseRealmObject>?,
     private val companion: RealmObjectCompanion?,
-    public val clazz: KClass<out BaseRealmObject>?
 ) : ClassMetadata {
-
-    // Added for convenience
-    override val className: String
-        get() = classInfo.name
 
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw

@@ -91,7 +91,8 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
     var binaryRealmList: RealmList<ByteArray> = realmListOf(byteArrayOf(42))
     var objectRealmList: RealmList<SyncObjectWithAllTypes> = realmListOf()
-    var realmAnyRealmList: RealmList<RealmAny?> = realmListOf(RealmAny.create(42))
+
+    var nullableRealmAnyRealmList: RealmList<RealmAny?> = realmListOf(RealmAny.create(42))
 
     // Nullable RealmLists of primitive values, not currently supported by Sync
     // Nullable Object lists, not currently supported by Core
@@ -111,7 +112,8 @@ class SyncObjectWithAllTypes : RealmObject {
     var realmUUIDRealmSet: RealmSet<RealmUUID> = realmSetOf(RealmUUID.random())
     var binaryRealmSet: RealmSet<ByteArray> = realmSetOf(byteArrayOf(42))
     var objectRealmSet: RealmSet<SyncObjectWithAllTypes> = realmSetOf()
-    var realmAnyRealmSet: RealmSet<RealmAny?> = realmSetOf(RealmAny.create(42))
+
+    var nullableRealmAnyRealmSet: RealmSet<RealmAny?> = realmSetOf(RealmAny.create(42))
 
     // RealmSets of nullable primitive values, not currently supported by Sync
     // RealmSets of nullable objects, not currently supported by Core
@@ -415,8 +417,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                     { obj: SyncObjectWithAllTypes ->
                                         obj.nullableRealmAnyField = realmAnyValues[0]
                                         obj.nullableRealmAnyForObjectField = realmAnyValues[2]
-                                        obj.realmAnyRealmList = realmListOf(realmAnyListValues[0], realmAnyListValues[1], realmAnyListValues[2], null)
-                                        obj.realmAnyRealmSet = realmSetOf(realmAnySetValues[0], realmAnySetValues[1], realmAnySetValues[2], null)
+                                        obj.nullableRealmAnyRealmList = realmListOf(realmAnyListValues[0], realmAnyListValues[1], realmAnyListValues[2], null)
+                                        obj.nullableRealmAnyRealmSet = realmSetOf(realmAnySetValues[0], realmAnySetValues[1], realmAnySetValues[2], null)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         // Check RealmAny containing an object
@@ -429,23 +431,23 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(realmAnyValues[0], obj.nullableRealmAnyField)
 
                                         // Check list of RealmAny values
-                                        assertEquals(realmAnyListValues[0], obj.realmAnyRealmList[0])
-                                        assertEquals(realmAnyListValues[1], obj.realmAnyRealmList[1])
+                                        assertEquals(realmAnyListValues[0], obj.nullableRealmAnyRealmList[0])
+                                        assertEquals(realmAnyListValues[1], obj.nullableRealmAnyRealmList[1])
                                         assertEquals(
                                             realmAnyListValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField,
-                                            obj.realmAnyRealmList[2]?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                            obj.nullableRealmAnyRealmList[2]?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
                                         )
-                                        assertEquals(null, obj.realmAnyRealmList[3])
+                                        assertEquals(null, obj.nullableRealmAnyRealmList[3])
 
                                         // Check set of RealmAny values
-                                        assertSetContains(realmAnySetValues[0], obj.realmAnyRealmSet)
-                                        assertSetContains(realmAnySetValues[1], obj.realmAnyRealmSet)
-                                        assertSetContains(null, obj.realmAnyRealmSet)
+                                        assertSetContains(realmAnySetValues[0], obj.nullableRealmAnyRealmSet)
+                                        assertSetContains(realmAnySetValues[1], obj.nullableRealmAnyRealmSet)
+                                        assertSetContains(null, obj.nullableRealmAnyRealmSet)
 
                                         // Extremely irritating to check this since none of the helpers are useful
-                                        obj.realmAnyRealmSet
+                                        obj.nullableRealmAnyRealmSet
                                             .first {
-                                                it?.type == RealmAny.Type.REALM_OBJECT
+                                                it?.type == RealmAny.Type.OBJECT
                                             }.also {
                                                 val expected = realmAnySetValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField
                                                 val actual = it?.asRealmObject<SyncObjectWithAllTypes>()?.stringField

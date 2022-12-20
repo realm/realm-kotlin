@@ -129,7 +129,8 @@ class DynamicRealmObjectTests {
 
     @Test
     fun get_realmAny() {
-        // It's not possible to integrate in get_allTypes() since RealmAny cannot be nullable
+        // It's not possible to integrate in get_allTypes() since RealmAny can only be nullable in
+        // the context of the test.
         // Provide at least the following types: null, primitive, RealmObject, DynamicRealmObject
         val realmAnyValues = listOf(
             null,
@@ -150,7 +151,7 @@ class DynamicRealmObjectTests {
 
             // Test we throw if trying to retrieve the object using its actual class instead of
             // DynamicRealmObject
-            if (actualReified?.type == RealmAny.Type.REALM_OBJECT) {
+            if (actualReified?.type == RealmAny.Type.OBJECT) {
                 assertFailsWith<ClassCastException> {
                     actualReified?.asRealmObject<Sample>()
                 }
@@ -333,10 +334,11 @@ class DynamicRealmObjectTests {
                                 )
                             }
                             RealmStorageType.ANY -> {
-                                // The testing pattern doesn't work for RealmAny since the type
-                                // isn't nullable so there is no way for us to test the different
-                                // values the property could host
-                                // Skip it - see 'get_realmAny()'
+                                // The testing pattern doesn't work for RealmAny since we only land
+                                // here in case the type is nullable and the expected value only
+                                // takes into consideration the default value, which is null.
+                                // However, we need to test it with different values.
+                                // See 'get_realmAny()'
                             }
                             else -> error("Model contains untested properties: $property")
                         }
