@@ -88,6 +88,6 @@ internal class StdOutLogger(
     companion object {
         const val INITIAL_BUFFER_SIZE = 256
         @Suppress("NewApi")
-        val TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MMM-dd hh:mm:ss.A")
+        val TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MMM-dd hh:mm:ss,SSS")
     }
 }
