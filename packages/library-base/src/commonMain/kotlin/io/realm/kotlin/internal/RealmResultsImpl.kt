@@ -69,31 +69,23 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
             realm = realm
         )
 
-    override fun query(query: String, vararg args: Any?): RealmQuery<E> {
-        try {
+    override fun query(query: String, vararg args: Any?): RealmQuery<E> =
+        ObjectQuery.tryCatchCoreException {
             inputScope {
                 val queryPointer = RealmInterop.realm_query_parse_for_results(
                     nativePointer,
                     query,
                     convertToQueryArgs(args)
                 )
-                return ObjectQuery(
+                ObjectQuery(
                     realm,
                     classKey,
                     clazz,
                     mediator,
                     queryPointer,
-                    query,
-                    *args
                 )
             }
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Invalid syntax for query `$query`"
-            )
         }
-    }
 
     override fun asFlow(): Flow<ResultsChange<E>> {
         realm.checkClosed()

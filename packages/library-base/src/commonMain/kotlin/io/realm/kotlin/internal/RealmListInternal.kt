@@ -17,7 +17,9 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_get
@@ -27,10 +29,13 @@ import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.query.ObjectBoundQuery
+import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
 import io.realm.kotlin.notifications.internal.UpdatedListImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.channels.ChannelResult
@@ -54,6 +59,7 @@ internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, Mutable
  * Implementation for managed lists, backed by Realm.
  */
 internal class ManagedRealmList<E>(
+    internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmListPointer,
     val operator: ListOperator<E>,
 ) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
@@ -134,13 +140,13 @@ internal class ManagedRealmList<E>(
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {
         return RealmInterop.realm_list_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
-            ManagedRealmList(it, operator.copy(frozenRealm, it))
+            ManagedRealmList(parent, it, operator.copy(frozenRealm, it))
         }
     }
 
     override fun thaw(liveRealm: RealmReference): ManagedRealmList<E>? {
         return RealmInterop.realm_list_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
-            ManagedRealmList(it, operator.copy(liveRealm, it))
+            ManagedRealmList(parent, it, operator.copy(liveRealm, it))
         }
     }
 
@@ -177,6 +183,33 @@ internal class ManagedRealmList<E>(
         !nativePointer.isReleased() && RealmInterop.realm_list_is_valid(nativePointer)
 
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
+}
+
+internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
+    query: String,
+    args: Array<out Any?>
+): RealmQuery<E> {
+    val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
+    return ObjectQuery.tryCatchCoreException {
+        val queryPointer = inputScope {
+            val queryArgs = convertToQueryArgs(args)
+            RealmInterop.realm_query_parse_for_list(
+                this@query.nativePointer,
+                query,
+                queryArgs
+            )
+        }
+        ObjectBoundQuery(
+            parent,
+            ObjectQuery(
+                operator.realmReference,
+                operator.classKey,
+                operator.clazz,
+                operator.mediator,
+                queryPointer,
+            )
+        )
+    }
 }
 
 // Cloned from https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/collections/AbstractList.kt
@@ -288,7 +321,8 @@ internal abstract class BaseRealmObjectListOperator<E>(
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
     protected val nativePointer: RealmListPointer,
-    protected val clazz: KClass<*>,
+    val clazz: KClass<E & Any>,
+    val classKey: ClassKey,
 ) : ListOperator<E> {
 
     @Suppress("UNCHECKED_CAST")
@@ -307,8 +341,9 @@ internal class RealmObjectListOperator<E>(
     realmReference: RealmReference,
     converter: RealmValueConverter<E>,
     nativePointer: RealmListPointer,
-    clazz: KClass<*>,
-) : BaseRealmObjectListOperator<E>(mediator, realmReference, converter, nativePointer, clazz) {
+    clazz: KClass<E & Any>,
+    classKey: ClassKey,
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, converter, nativePointer, clazz, classKey) {
 
     override fun insert(
         index: Int,
@@ -364,7 +399,8 @@ internal class RealmObjectListOperator<E>(
             realmReference,
             converter,
             nativePointer,
-            clazz
+            clazz,
+            classKey
         )
     }
 }
@@ -374,8 +410,9 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
     realmReference: RealmReference,
     converter: RealmValueConverter<E>,
     nativePointer: RealmListPointer,
-    clazz: KClass<*>
-) : BaseRealmObjectListOperator<E>(mediator, realmReference, converter, nativePointer, clazz) {
+    clazz: KClass<E>,
+    classKey: ClassKey,
+) : BaseRealmObjectListOperator<E>(mediator, realmReference, converter, nativePointer, clazz, classKey) {
 
     @Suppress("UNCHECKED_CAST")
     override fun insert(
@@ -418,13 +455,14 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
         nativePointer: RealmListPointer
     ): EmbeddedRealmObjectListOperator<E> {
         val converter: RealmValueConverter<E> =
-            converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
+            converter(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return EmbeddedRealmObjectListOperator(
             mediator,
             realmReference,
             converter,
             nativePointer,
-            clazz
+            clazz,
+            classKey
         )
     }
 }

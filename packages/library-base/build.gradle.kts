@@ -40,7 +40,7 @@ val versionDirectory = "$buildDir/generated/source/version/"
 kotlin {
     jvm()
     android("android") {
-        publishLibraryVariants("release", "debug")
+        publishLibraryVariants("release")
     }
     ios()
     iosSimulatorArm64()
@@ -173,6 +173,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            consumerProguardFiles("proguard-rules-consumer-common.pro")
+        }
         getByName("release") {
             consumerProguardFiles("proguard-rules-consumer-common.pro")
         }

@@ -277,7 +277,11 @@ actual object RealmInterop {
 
     actual fun realm_refresh(realm: RealmPointer) {
         memScoped {
-            realm_wrapper.realm_refresh(realm.cptr())
+            // Only returns `true` if the version changed, `false` if the version
+            // was already at the latest. Errors will be represented by the actual
+            // return value, so just ignore this out parameter.
+            val didRefresh = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_refresh(realm.cptr(), didRefresh.ptr))
         }
     }
 
@@ -1071,6 +1075,22 @@ actual object RealmInterop {
         return CPointerWrapper(
             realm_wrapper.realm_query_parse_for_results(
                 results.cptr(),
+                query,
+                count.toULong(),
+                args.second.value.ptr
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return CPointerWrapper(
+            realm_wrapper.realm_query_parse_for_list(
+                list.cptr(),
                 query,
                 count.toULong(),
                 args.second.value.ptr

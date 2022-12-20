@@ -73,7 +73,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_refresh(realm: RealmPointer) {
-        realmc.realm_refresh(realm.cptr())
+        // Only returns `true` if the version changed, `false` if the version
+        // was already at the latest. Errors will be represented by the actual
+        // return value, so just ignore this out parameter.
+        val didRefresh = booleanArrayOf(false)
+        realmc.realm_refresh(realm.cptr(), didRefresh)
     }
 
     actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer {
@@ -1283,6 +1287,22 @@ actual object RealmInterop {
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(
                 results.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_list(
+                list.cptr(),
                 query,
                 count.toLong(),
                 args.second.value

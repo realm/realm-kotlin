@@ -17,9 +17,14 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.internal.ManagedRealmList
 import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.asRealmList
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.query
+import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.TRUE_PREDICATE
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.TypedRealmObject
 
@@ -42,3 +47,22 @@ public inline fun <reified T : TypedRealmObject> RealmList<T>.copyFromRealm(dept
     return this.getRealm<TypedRealm>()?.copyFromRealm(this, depth)
         ?: throw IllegalArgumentException("This RealmList is unmanaged. Only managed lists can be copied.")
 }
+
+// Added as an extension method as we cannot add the method `fun query(...): RealmQuery<T>` to the
+// `RealmList` interface as `RealmQuery` has an `BaseRealmObject` upper bound which `RealmList` do
+// not.
+/**
+ * Query the objects of a list by the `filter` and `arguments`.
+ *
+ * @param filter the Realm Query Language predicate to append.
+ * @param arguments Realm values for the predicate.
+ */
+public fun <T : BaseRealmObject> RealmList<T>.query(
+    filter: String = TRUE_PREDICATE,
+    vararg arguments: Any?
+): RealmQuery<T> =
+    if (this is ManagedRealmList) {
+        query(filter, arguments)
+    } else {
+        throw IllegalArgumentException("Unmanaged list cannot be queried")
+    }

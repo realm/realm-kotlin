@@ -29,7 +29,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
-import io.realm.kotlin.internal.util.trySendCloseOnBufferOverflow
+import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
@@ -125,7 +125,7 @@ internal open class SyncSessionImpl(
                     progressMode == ProgressMode.INDEFINITELY
                 ) { transferredBytes: Long, totalBytes: Long ->
                     val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
-                    trySendCloseOnBufferOverflow(progress)
+                    trySendWithBufferOverflowCheck(progress)
                     if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
                         close()
                     }

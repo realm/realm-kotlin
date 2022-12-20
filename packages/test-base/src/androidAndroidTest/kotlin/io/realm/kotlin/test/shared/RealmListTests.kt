@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
+import io.realm.kotlin.entities.list.EmbeddedLevel1
 import io.realm.kotlin.entities.list.Level1
 import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
@@ -29,8 +30,10 @@ import io.realm.kotlin.entities.list.listTestSchema
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
@@ -38,9 +41,15 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.reflect.KClassifier
@@ -55,6 +64,8 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RealmListTests {
 
@@ -409,6 +420,191 @@ class RealmListTests {
                 findLatest(container)!!.objectListField.add(RealmListContainer())
             }
         }
+    }
+
+    @Test
+    fun listAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val mutex = Mutex(true)
+        val job = async {
+            container.objectListField.asFlow().collect {
+                mutex.unlock()
+            }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        withTimeout(10.seconds) {
+            job.await()
+        }
+    }
+
+    @Test
+    fun query_objectList() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmListContainer().apply {
+                    (1..5).map {
+                        objectListField.add(RealmListContainer().apply { stringField = "$it" })
+                    }
+                }
+            )
+        }
+        val objectListField = container.objectListField
+        assertEquals(5, objectListField.size)
+
+        val all: RealmQuery<RealmListContainer> = container.objectListField.query()
+        val ids = (1..5).map { it.toString() }.toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.stringField)) }
+        assertTrue { ids.isEmpty() }
+
+        container.objectListField.query("stringField = $0", 3.toString()).find().single()
+            .run { assertEquals("3", stringField) }
+    }
+
+    @Test
+    fun query_embeddedObjectList() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmListContainer().apply {
+                    (1..5).map {
+                        embeddedRealmObjectListField.add(EmbeddedLevel1().apply { id = it })
+                    }
+                }
+            )
+        }
+        val embeddedLevel1RealmList = container.embeddedRealmObjectListField
+        assertEquals(5, embeddedLevel1RealmList.size)
+
+        val all: RealmQuery<EmbeddedLevel1> = container.embeddedRealmObjectListField.query()
+        val ids = (1..5).toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.id)) }
+        assertTrue { ids.isEmpty() }
+
+        container.embeddedRealmObjectListField.query("id = $0", 3).find().single()
+            .run { assertEquals(3, id) }
+    }
+
+    @Test
+    fun queryOnListAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val mutex = Mutex(true)
+        val listener = async {
+            container.objectListField.query().asFlow().let {
+                withTimeout(10.seconds) {
+                    it.collect {
+                        mutex.unlock()
+                    }
+                }
+            }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    fun queryOnListAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val flow = container.objectListField.query().asFlow()
+            .buffer(1)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                assertFailsWith<CancellationException> {
+                    flow.collect { current ->
+                        delay(1000.milliseconds)
+                    }
+                }.message!!.let { message ->
+                    assertEquals(
+                        "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                        message
+                    )
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectListField.run {
+                    clear()
+                    add(RealmListContainer().apply { this.id = i })
+                }
+            }
+        }
+        listener.await()
+        Unit
+    }
+
+    // This test shows that our internal logic still works (by closing the flow on deletion events)
+    // even though the public consumer is dropping elements
+    @Test
+    fun queryOnListAsFlow_backpressureStrategyDoesNotRuinInternalLogic() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val flow = container.objectListField.query().asFlow()
+            .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                flow.collect { current ->
+                    delay(30.milliseconds)
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectListField.run {
+                    clear()
+                    add(RealmListContainer().apply { this.id = i })
+                }
+            }
+        }
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    fun query_throwsOnSyntaxError() = runBlocking {
+        val instance = realm.write { copyToRealm(RealmListContainer()) }
+        assertFailsWithMessage<IllegalArgumentException>("syntax error") {
+            instance.objectListField.query("ASDF = $0 $0")
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnUnmanagedList() = runBlocking {
+        realm.write {
+            val instance = RealmListContainer()
+            copyToRealm(instance)
+            assertFailsWithMessage<IllegalArgumentException>("Unmanaged list cannot be queried") {
+                instance.objectListField.query()
+            }
+            Unit
+        }
+    }
+
+    @Test
+    fun query_throwsOnDeletedList() = runBlocking {
+        realm.write {
+            val instance = copyToRealm(RealmListContainer())
+            val objectListField = instance.objectListField
+            delete(instance)
+            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+                objectListField.query()
+            }
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnClosedList() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val objectListField = container.objectListField
+        realm.close()
+
+        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            objectListField.query()
+        }
+        Unit
     }
 
     private fun getCloseableRealm(): Realm =

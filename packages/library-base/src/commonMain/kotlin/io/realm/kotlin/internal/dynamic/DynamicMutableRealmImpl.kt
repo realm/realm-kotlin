@@ -61,9 +61,8 @@ public open class DynamicMutableRealmImpl(
             realmReference.schemaMetadata.getOrThrow(className).classKey,
             DynamicMutableRealmObject::class,
             configuration.mediator,
-            null,
             query,
-            *args
+            args
         )
 
     // Type system doesn't prevent copying embedded objects, but theres not really a good way to
