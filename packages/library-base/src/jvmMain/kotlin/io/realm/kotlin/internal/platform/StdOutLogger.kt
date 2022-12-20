@@ -19,6 +19,10 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 /**
  * Logger implementation outputting to stdout.
@@ -28,9 +32,23 @@ internal class StdOutLogger(
     override val level: LogLevel
 ) : RealmLogger {
 
+
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val logMessage: String = prepareLogMessage(throwable, message, *args)
-        println("${level.name}: [$tag] $logMessage")
+        val timestamp: String = getTimestamp()
+        println("$timestamp ${level.name}: [$tag] $logMessage")
+    }
+
+    /**
+     * The `StdOutLogger` is only used on pure JVM, but is also included in our Android builds,
+     * which means that the use of `DateTimeFormatter` trigger warnings as it is only available
+     * from API 26+. Just suppress these warnings.
+     *
+     * We cannot use `DateFormatter` as it isn't thread-safe.
+     */
+    @Suppress("NewApi")
+    private inline fun getTimestamp(): String {
+        return TIMESTAMP_FORMATTER.format(Instant.now().atZone(ZoneId.systemDefault()))
     }
 
     private fun prepareLogMessage(
@@ -69,5 +87,7 @@ internal class StdOutLogger(
 
     companion object {
         const val INITIAL_BUFFER_SIZE = 256
+        @Suppress("NewApi")
+        val TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MMM-dd hh:mm:ss.A")
     }
 }
