@@ -143,7 +143,7 @@ internal inline fun realmValueToRealmAny(
                         ?.clazz
                         ?: throw IllegalArgumentException("The object class is not present in the current schema - are you using an outdated schema version?")
                     val realmObject = realmValueToRealmObject(transport, clazz, mediator, owner)
-                    RealmAny.create(realmObject!!, clazz)
+                    RealmAny.create(realmObject!! as RealmObject, clazz as KClass<out RealmObject>)
                 }
             }
             else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
@@ -423,7 +423,7 @@ internal fun realmAnyConverter(
                             clazz,
                             link
                         ) as RealmObject
-                        RealmAny.create(obj, clazz)
+                        RealmAny.create(obj, clazz as KClass<out RealmObject>)
                     }
                     else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
                 }
@@ -431,7 +431,12 @@ internal fun realmAnyConverter(
         }
 
         override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue {
-            return realmAnyToRealmValueWithObjectImport(value, mediator, realmReference)
+            return realmAnyToRealmValueWithObjectImport(
+                value,
+                mediator,
+                realmReference,
+                issueDynamicObject,
+            )
         }
     }
 }
@@ -442,13 +447,17 @@ internal fun realmAnyConverter(
 internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithObjectImport(
     value: RealmAny?,
     mediator: Mediator,
-    realmReference: RealmReference
+    realmReference: RealmReference,
+    issueDynamicObject: Boolean = false
 ): RealmValue {
     return when (value) {
         null -> nullTransport()
         else -> when (value.type) {
             RealmAny.Type.OBJECT -> {
-                val obj = value.asRealmObject<BaseRealmObject>()
+                val obj = when (issueDynamicObject) {
+                    true -> value.asDynamicRealmObject()
+                    false -> value.asRealmObject<RealmObject>()
+                }
                 val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference)
                 realmObjectTransport(objRef as RealmObjectInterop)
             }

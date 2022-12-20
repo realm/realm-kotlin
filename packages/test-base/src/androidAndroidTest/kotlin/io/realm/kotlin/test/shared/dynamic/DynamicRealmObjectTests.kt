@@ -193,7 +193,7 @@ class DynamicRealmObjectTests {
                     .find()
                     .first()
                 val actual = dynamicInner.getNullableValue<RealmAny>("nullableRealmAnyField")
-                val actualObject = actual?.asRealmObject<DynamicRealmObject>()
+                val actualObject = actual?.asDynamicRealmObject()
                 val actualString = actualObject?.getValue<String>("stringField")
                 assertEquals(sample.stringField, actualString)
             }

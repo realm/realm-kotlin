@@ -32,7 +32,6 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
-import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -274,7 +273,7 @@ class DynamicMutableRealmObjectTests {
                                     val expectedValue =
                                         dynamicMutableUnmanagedObject.getValue<String>("stringField")
                                     val actualValue = dynamicSample.getNullableValue<RealmAny>(name)
-                                        ?.asRealmObject<DynamicMutableRealmObject>()
+                                        ?.asDynamicRealmObject()
                                         ?.getValue<String>("stringField")
                                     assertEquals(expectedValue, actualValue)
                                 }
@@ -292,7 +291,7 @@ class DynamicMutableRealmObjectTests {
                                     val expectedValue =
                                         dynamicMutableManagedObject.getValue<String>("stringField")
                                     val managedDynamicMutableObject = dynamicSample.getNullableValue<RealmAny>(name)
-                                        ?.asRealmObject<DynamicMutableRealmObject>()
+                                        ?.asDynamicMutableRealmObject()
                                     val actualValue = managedDynamicMutableObject?.getValue<String>("stringField")
                                     assertEquals(expectedValue, actualValue)
 

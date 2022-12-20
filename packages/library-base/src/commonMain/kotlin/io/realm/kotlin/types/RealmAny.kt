@@ -1,6 +1,7 @@
 package io.realm.kotlin.types
 
-import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.dynamic.DynamicMutableRealmObject
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.RealmAnyImpl
 import io.realm.kotlin.query.RealmQuery
 import org.mongodb.kbson.BsonObjectId
@@ -17,8 +18,8 @@ import kotlin.reflect.KClass
  *
  * `RealmAny` behaves like a value type on all the supported types except on Realm objects. It means
  * that Realm will not persist any change to the actual `RealmAny` value. If a `RealmAny` holds a
- * [BaseRealmObject], it just holds the reference to it, not a copy of the object. Because
- * `RealmAny` instances are immutable, a new instance is needed to update a `RealmAny` attribute.
+ * [RealmObject], it just holds the reference to it, not a copy of the object. Because `RealmAny`
+ * instances are immutable, a new instance is needed to update a `RealmAny` attribute.
  * ```
  *      anObject.realmAnyField = RealmAny.create(42.0)
  *      anObject.realmAnyField = RealmAny.create("Hello")
@@ -201,10 +202,24 @@ public interface RealmAny {
     public fun asRealmUUID(): RealmUUID
 
     /**
-     * Returns the value from this RealmAny as a [BaseRealmObject] of type [T].
+     * Returns the value from this RealmAny as a [RealmObject] of type [T].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `T`.
      */
-    public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
+    public fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T
+
+    /**
+     * Returns the value from this RealmAny as a [DynamicRealmObject].
+     * @throws [IllegalStateException] if the stored value cannot be safely converted to
+     * `DynamicRealmObject`.
+     */
+    public fun asDynamicRealmObject(): DynamicRealmObject
+
+    /**
+     * Returns the value from this RealmAny as a [DynamicMutableRealmObject].
+     * @throws [IllegalStateException] if the stored value cannot be safely converted to
+     * `DynamicMutableRealmObject`.
+     */
+    public fun asDynamicMutableRealmObject(): DynamicMutableRealmObject
 
     /**
      * Two [RealmAny] instances are equal if and only if their types and contents are the equal.
@@ -269,13 +284,6 @@ public interface RealmAny {
             RealmAnyImpl(Type.DOUBLE, Double::class, value)
 
         /**
-         * Creates an unmanaged `RealmAny` instance from an [ObjectId] value.
-         */
-        @Deprecated("Use the BSON ObjectId variant instead", ReplaceWith("RealmAny.create"))
-        public fun create(value: ObjectId): RealmAny =
-            RealmAnyImpl(Type.OBJECT_ID, ObjectId::class, value.asBsonObjectId())
-
-        /**
          * Creates an unmanaged `RealmAny` instance from a [BsonObjectId] value.
          */
         public fun create(value: BsonObjectId): RealmAny =
@@ -300,16 +308,22 @@ public interface RealmAny {
             RealmAnyImpl(Type.UUID, RealmUUID::class, value)
 
         /**
-         * Creates an unmanaged `RealmAny` instance from a [BaseRealmObject] value and its
+         * Creates an unmanaged `RealmAny` instance from a [RealmObject] value and its
          * corresponding [KClass].
          */
-        public fun <T : BaseRealmObject> create(value: T, clazz: KClass<out T>): RealmAny =
+        public fun <T : RealmObject> create(value: T, clazz: KClass<out T>): RealmAny =
             RealmAnyImpl(Type.OBJECT, clazz, value)
 
         /**
-         * Creates an unmanaged `RealmAny` instance from a [BaseRealmObject] value.
+         * Creates an unmanaged `RealmAny` instance from a [RealmObject] value.
          */
-        public inline fun <reified T : BaseRealmObject> create(realmObject: T): RealmAny =
+        public inline fun <reified T : RealmObject> create(realmObject: T): RealmAny =
             create(realmObject, T::class)
+
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [DynamicRealmObject] value.
+         */
+        public fun create(realmObject: DynamicRealmObject): RealmAny =
+            RealmAnyImpl(Type.OBJECT, DynamicRealmObject::class, realmObject)
     }
 }

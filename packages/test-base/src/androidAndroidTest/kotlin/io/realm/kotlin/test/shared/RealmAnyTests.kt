@@ -19,6 +19,10 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.entities.embedded.EmbeddedChild
+import io.realm.kotlin.entities.embedded.EmbeddedParent
+import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -29,7 +33,6 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -72,19 +75,17 @@ class RealmAnyTests {
         ByteArray::class to byteArrayOf(42, 43, 44),
         RealmInstant::class to RealmInstant.now(),
         RealmUUID::class to RealmUUID.random(),
-        TestParent::class to TestParent()
+        Sample::class to Sample()
     )
 
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         configBuilder = RealmConfiguration.Builder(
-            setOf(
-                IndexedRealmAnyContainer::class,
-                RealmAnyContainer::class,
-                TestParent::class,
-                TestEmbeddedChild::class
-            )
+            embeddedSchema +
+                IndexedRealmAnyContainer::class +
+                RealmAnyContainer::class +
+                Sample::class
         ).directory(tmpDir)
         configuration = configBuilder.build()
         realm = Realm.open(configuration)
@@ -130,9 +131,7 @@ class RealmAnyTests {
             .build()
         Realm.open(originalConfig).use { realm ->
             realm.writeBlocking {
-                val unmanagedContainer = RealmAnyContainer().apply {
-                    anyField = RealmAny.create(NotInSchema())
-                }
+                val unmanagedContainer = RealmAnyContainer(RealmAny.create(NotInSchema()))
                 copyToRealm(unmanagedContainer)
             }
             realm.query<NotInSchema>()
@@ -200,9 +199,9 @@ class RealmAnyTests {
                     RealmUUID::class,
                     RealmAny.create(type.second as RealmUUID)
                 )
-                TestParent::class -> assertThrowsOnInvalidType(
-                    TestParent::class,
-                    RealmAny.create(type.second as TestParent, TestParent::class)
+                Sample::class -> assertThrowsOnInvalidType(
+                    Sample::class,
+                    RealmAny.create(type.second as Sample, Sample::class)
                 )
             }
         }
@@ -312,11 +311,11 @@ class RealmAnyTests {
                     assertEquals(RealmAny.create(uuid), realmAny)
                     assertEquals(RealmAny.Type.UUID, realmAny.type)
                 }
-                TestParent::class -> {
-                    val obj = TestParent()
-                    val realmAny = RealmAny.create(obj, TestParent::class)
-                    assertEquals(obj, realmAny.asRealmObject<TestParent>())
-                    assertEquals(RealmAny.create(obj, TestParent::class), realmAny)
+                Sample::class -> {
+                    val obj = Sample()
+                    val realmAny = RealmAny.create(obj, Sample::class)
+                    assertEquals(obj, realmAny.asRealmObject())
+                    assertEquals(RealmAny.create(obj, Sample::class), realmAny)
                     assertEquals(RealmAny.Type.OBJECT, realmAny.type)
                 }
                 else -> throw UnsupportedOperationException("Missing testing for type $type")
@@ -380,9 +379,9 @@ class RealmAnyTests {
                     RealmUUID::class,
                     createManagedRealmAny { RealmAny.create(RealmUUID.random()) }!!
                 )
-                TestParent::class -> assertThrowsOnInvalidType(
-                    TestParent::class,
-                    createManagedRealmAny { RealmAny.create(TestParent(), TestParent::class) }!!
+                Sample::class -> assertThrowsOnInvalidType(
+                    Sample::class,
+                    createManagedRealmAny { RealmAny.create(Sample(), Sample::class) }!!
                 )
             }
         }
@@ -406,7 +405,7 @@ class RealmAnyTests {
                 ByteArray::class -> loopSupportedTypes(createManagedContainer())
                 RealmInstant::class -> loopSupportedTypes(createManagedContainer())
                 RealmUUID::class -> loopSupportedTypes(createManagedContainer())
-                TestParent::class -> loopSupportedTypes(createManagedContainer())
+                Sample::class -> loopSupportedTypes(createManagedContainer())
             }
         }
     }
@@ -432,13 +431,11 @@ class RealmAnyTests {
     @Test
     fun managed_deletedObject() {
         val managedContainer = realm.writeBlocking {
-            val unmanagedContainer = RealmAnyContainer().apply {
-                this.anyField = RealmAny.create(TestParent())
-            }
+            val unmanagedContainer = RealmAnyContainer(RealmAny.create(Sample()))
             copyToRealm(unmanagedContainer)
         }
         realm.writeBlocking {
-            delete(query<TestParent>())
+            delete(query<Sample>())
         }
         realm.writeBlocking {
             val updatedContainer = findLatest(managedContainer)
@@ -449,16 +446,16 @@ class RealmAnyTests {
     @Test
     fun managed_deleteObjectInsideRealmAnyTriggersUpdateInContainer() {
         runBlocking {
-            val testParentChannel = Channel<SingleQueryChange<TestParent>>(1)
+            val sampleChannel = Channel<SingleQueryChange<Sample>>(1)
             val containerChannel = Channel<SingleQueryChange<RealmAnyContainer>>(1)
 
-            val testParentObserver = async {
-                realm.query<TestParent>()
+            val sampleObserver = async {
+                realm.query<Sample>()
                     .first()
                     .asFlow()
                     .collect {
-                        if (it is DeletedObject<TestParent>) {
-                            testParentChannel.trySend(it)
+                        if (it is DeletedObject<Sample>) {
+                            sampleChannel.trySend(it)
                         }
                     }
             }
@@ -476,28 +473,43 @@ class RealmAnyTests {
             val deletionJob = async {
                 delay(1.seconds)
                 realm.writeBlocking {
-                    delete(query<TestParent>())
+                    delete(query<Sample>())
                 }
             }
 
-            val unmanagedContainer = RealmAnyContainer().apply {
-                this.anyField = RealmAny.create(TestParent())
-            }
+            val unmanagedContainer = RealmAnyContainer(RealmAny.create(Sample()))
             realm.writeBlocking {
                 copyToRealm(unmanagedContainer)
             }
 
-            val deletedObjectChange = testParentChannel.receive()
+            val deletedObjectChange = sampleChannel.receive()
             val updatedContainerChange = containerChannel.receive()
             assertNull(deletedObjectChange.obj)
             assertNull(assertNotNull(updatedContainerChange.obj).anyField)
 
-            testParentObserver.cancel()
+            sampleObserver.cancel()
             containerObserver.cancel()
             deletionJob.cancel()
-            testParentChannel.close()
+            sampleChannel.close()
             containerChannel.close()
         }
+    }
+
+    @Test
+    fun embeddedObject_worksInsideParent() {
+        val embeddedChild = EmbeddedChild("CHILD")
+        val parent = EmbeddedParent().apply {
+            id = "PARENT"
+            child = embeddedChild
+        }
+
+        // Check writing a parent with an embedded object works
+        val validContainer = RealmAnyContainer(RealmAny.create(parent))
+        realm.writeBlocking {
+            copyToRealm(validContainer)
+        }
+        assertEquals(1, realm.query<EmbeddedParent>().count().find())
+        assertEquals(1, realm.query<EmbeddedChild>().count().find())
     }
 
     private fun assertCoreIntValuesAreTheSame(
@@ -599,8 +611,8 @@ class RealmAnyTests {
 
             when (expected.type) {
                 RealmAny.Type.OBJECT -> assertEquals(
-                    expected.asRealmObject<TestParent>().name,
-                    actualManaged.asRealmObject<TestParent>().name
+                    expected.asRealmObject<Sample>().stringField,
+                    actualManaged.asRealmObject<Sample>().stringField
                 )
                 else -> assertEquals(expected, actualManaged)
             }
@@ -633,8 +645,8 @@ class RealmAnyTests {
                         setAndAssert(RealmAny.create(candidate.second as RealmInstant), container)
                     RealmUUID::class ->
                         setAndAssert(RealmAny.create(candidate.second as RealmUUID), container)
-                    TestParent::class -> setAndAssert(
-                        RealmAny.create(candidate.second as TestParent, TestParent::class),
+                    Sample::class -> setAndAssert(
+                        RealmAny.create(candidate.second as Sample, Sample::class),
                         container
                     )
                 }
@@ -710,28 +722,24 @@ class RealmAnyTests {
                         assertFailsWith<IllegalStateException> { value.asRealmInstant() }
                     RealmUUID::class ->
                         assertFailsWith<IllegalStateException> { value.asRealmUUID() }
-                    TestParent::class -> assertFailsWith<IllegalStateException> {
-                        value.asRealmObject<TestParent>()
+                    Sample::class -> assertFailsWith<IllegalStateException> {
+                        value.asRealmObject<Sample>()
                     }
                 }
             }
     }
 }
 
-class TestParent : RealmObject {
-    var name: String? = "Parent"
+class RealmAnyContainer() : RealmObject {
 
-    override fun toString(): String = "TestParent{ name : '$name' }"
-}
-
-class TestEmbeddedChild : EmbeddedRealmObject {
-    var name: String? = "Embedded-child"
-}
-
-class RealmAnyContainer : RealmObject {
     var anyField: RealmAny? = RealmAny.create(42.toShort())
+
+    constructor(anyField: RealmAny?) : this() {
+        this.anyField = anyField
+    }
 }
 
+// This class is used to test can use an indexed RealmAny field
 class IndexedRealmAnyContainer : RealmObject {
     @Index
     var anyField: RealmAny? = RealmAny.create(42.toShort())

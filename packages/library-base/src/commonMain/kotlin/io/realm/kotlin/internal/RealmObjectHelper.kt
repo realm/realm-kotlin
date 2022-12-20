@@ -213,8 +213,25 @@ internal object RealmObjectHelper {
                     realmObjectTransport(value)
                 )
                 is MutableRealmInt -> setValueTransportByKey(obj, key, longTransport(value.get()))
-                is RealmAny -> with(realmAnyConverter(obj.mediator, obj.owner)) {
-                    setValueTransportByKey(obj, key, publicToRealmValue(value))
+                is RealmAny -> {
+                    val converter = if (value.type == RealmAny.Type.OBJECT) {
+                        when ((value as RealmAnyImpl<*>).clazz) {
+                            DynamicRealmObject::class ->
+                                realmAnyConverter(obj.mediator, obj.owner, true)
+                            DynamicMutableRealmObject::class -> realmAnyConverter(
+                                obj.mediator,
+                                obj.owner,
+                                issueDynamicObject = true,
+                                issueDynamicMutableObject = true
+                            )
+                            else -> realmAnyConverter(obj.mediator, obj.owner)
+                        }
+                    } else {
+                        realmAnyConverter(obj.mediator, obj.owner)
+                    }
+                    with(converter) {
+                        setValueTransportByKey(obj, key, publicToRealmValue(value))
+                    }
                 }
                 else -> throw IllegalArgumentException("Unsupported value for transport: $value")
             }
@@ -884,7 +901,7 @@ internal object RealmObjectHelper {
                             val objValue = value?.let {
                                 val objectClass = ((it as RealmAnyImpl<*>).clazz) as KClass<out BaseRealmObject>
                                 if (objectClass == DynamicRealmObject::class || objectClass == DynamicMutableRealmObject::class) {
-                                    value.asRealmObject(objectClass)
+                                    value.asDynamicRealmObject()
                                 } else {
                                     throw IllegalArgumentException("Dynamic RealmAny fields only support DynamicRealmObjects or DynamicMutableRealmObjects.")
                                 }

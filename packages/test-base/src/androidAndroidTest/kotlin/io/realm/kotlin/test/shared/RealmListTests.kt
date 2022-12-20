@@ -1410,7 +1410,6 @@ internal val REALM_ANY_PRIMITIVE_VALUES = listOf(
     RealmAny.create("Hello"),
     RealmAny.create(17F),
     RealmAny.create(18.0),
-    RealmAny.create(ObjectId.from("62aafc72b9c357695ac489a7")), // DON'T reuse the same hex for both ObjectId types as it overlaps!
     RealmAny.create(BsonObjectId("507f191e810c19729de860ea")),
     RealmAny.create(byteArrayOf(19)),
     RealmAny.create(RealmInstant.from(42, 420)),
