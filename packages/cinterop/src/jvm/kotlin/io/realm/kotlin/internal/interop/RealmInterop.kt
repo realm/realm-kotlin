@@ -1094,6 +1094,16 @@ actual object RealmInterop {
         // TODO Fill in appropriate app meta data
         //  https://github.com/realm/realm-kotlin/issues/407
         realmc.realm_app_config_set_local_app_version(config, "APP_VERSION")
+
+        // FIXME Set these to correct values -- Begin
+        realmc.realm_app_config_set_sdk(config, "unknown")
+        realmc.realm_app_config_set_cpu_arch(config, "unknown")
+        realmc.realm_app_config_set_device_name(config, "unknown")
+        realmc.realm_app_config_set_device_version(config, "unknown")
+        realmc.realm_app_config_set_framework_name(config, "unknown")
+        realmc.realm_app_config_set_framework_version(config, "unknown")
+        // FIXME --End
+
         return LongPointerWrapper(config)
     }
 

@@ -32,7 +32,6 @@ internal class StdOutLogger(
     override val level: LogLevel
 ) : RealmLogger {
 
-
     override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val logMessage: String = prepareLogMessage(throwable, message, *args)
         val timestamp: String = getTimestamp()

@@ -2191,6 +2191,15 @@ actual object RealmInterop {
 
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
+        // FIXME Set these to correct values -- Begin
+        realmc.realm_app_config_set_sdk(config, "unknown")
+        realmc.realm_app_config_set_cpu_arch(config, "unknown")
+        realmc.realm_app_config_set_device_name(config, "unknown")
+        realmc.realm_app_config_set_device_version(config, "unknown")
+        realmc.realm_app_config_set_framework_name(config, "unknown")
+        realmc.realm_app_config_set_framework_version(config, "unknown")
+        // FIXME --End
+
         return CPointerWrapper(appConfig)
     }
 
