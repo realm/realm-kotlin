@@ -127,6 +127,7 @@ class SyncClientResetIntegrationTests {
         }
     }
 
+    @Ignore // Waiting for a  fix for https://github.com/realm/realm-core/issues/6144
     @Test
     fun discardUnsyncedLocalChanges_success() {
         // Validate that the discard local strategy onBeforeReset and onAfterReset callbacks
