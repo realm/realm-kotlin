@@ -78,10 +78,10 @@ public object CoreExceptionConverter {
             @Suppress("invisible_reference", "invisible_member")
             when (cause.category) {
                 ErrorCategory.RLM_ERR_CAT_LOGIC,
-                ErrorCategory.RLM_ERR_CAT_RUNTIME -> IllegalStateException(cause.toString())
+                ErrorCategory.RLM_ERR_CAT_RUNTIME -> IllegalStateException(cause.message)
                 ErrorCategory.RLM_ERR_CAT_APP_ERROR,
-                ErrorCategory.RLM_ERR_CAT_INVALID_ARG -> IllegalArgumentException(cause.toString())
-                else -> RealmException(cause.toString())
+                ErrorCategory.RLM_ERR_CAT_INVALID_ARG -> IllegalArgumentException(cause.message)
+                else -> RealmException(cause.message)
             }
         }
     }

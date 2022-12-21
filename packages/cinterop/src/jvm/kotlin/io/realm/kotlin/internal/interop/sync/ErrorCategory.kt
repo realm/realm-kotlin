@@ -24,15 +24,15 @@ actual enum class ErrorCategory(
 ) : CodeDescription {
     RLM_ERR_CAT_LOGIC("Logic", realm_error_category_e.RLM_ERR_CAT_LOGIC),
     RLM_ERR_CAT_RUNTIME("Runtime", realm_error_category_e.RLM_ERR_CAT_RUNTIME),
-    RLM_ERR_CAT_INVALID_ARG("Invalid arg", realm_error_category_e.RLM_ERR_CAT_INVALID_ARG),
-    RLM_ERR_CAT_FILE_ACCESS("File access", realm_error_category_e.RLM_ERR_CAT_FILE_ACCESS),
-    RLM_ERR_CAT_SYSTEM_ERROR("System error", realm_error_category_e.RLM_ERR_CAT_SYSTEM_ERROR),
-    RLM_ERR_CAT_APP_ERROR("App error", realm_error_category_e.RLM_ERR_CAT_APP_ERROR),
-    RLM_ERR_CAT_CLIENT_ERROR("Client error", realm_error_category_e.RLM_ERR_CAT_CLIENT_ERROR),
-    RLM_ERR_CAT_JSON_ERROR("Json error", realm_error_category_e.RLM_ERR_CAT_JSON_ERROR),
-    RLM_ERR_CAT_SERVICE_ERROR("Service error", realm_error_category_e.RLM_ERR_CAT_SERVICE_ERROR),
-    RLM_ERR_CAT_HTTP_ERROR("Http error", realm_error_category_e.RLM_ERR_CAT_HTTP_ERROR),
-    RLM_ERR_CAT_CUSTOM_ERROR("Custom error", realm_error_category_e.RLM_ERR_CAT_CUSTOM_ERROR);
+    RLM_ERR_CAT_INVALID_ARG("Invalid", realm_error_category_e.RLM_ERR_CAT_INVALID_ARG),
+    RLM_ERR_CAT_FILE_ACCESS("File", realm_error_category_e.RLM_ERR_CAT_FILE_ACCESS),
+    RLM_ERR_CAT_SYSTEM_ERROR("System", realm_error_category_e.RLM_ERR_CAT_SYSTEM_ERROR),
+    RLM_ERR_CAT_APP_ERROR("App", realm_error_category_e.RLM_ERR_CAT_APP_ERROR),
+    RLM_ERR_CAT_CLIENT_ERROR("Client", realm_error_category_e.RLM_ERR_CAT_CLIENT_ERROR),
+    RLM_ERR_CAT_JSON_ERROR("Json", realm_error_category_e.RLM_ERR_CAT_JSON_ERROR),
+    RLM_ERR_CAT_SERVICE_ERROR("Service", realm_error_category_e.RLM_ERR_CAT_SERVICE_ERROR),
+    RLM_ERR_CAT_HTTP_ERROR("Http", realm_error_category_e.RLM_ERR_CAT_HTTP_ERROR),
+    RLM_ERR_CAT_CUSTOM_ERROR("Custom", realm_error_category_e.RLM_ERR_CAT_CUSTOM_ERROR);
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ErrorCategory? =

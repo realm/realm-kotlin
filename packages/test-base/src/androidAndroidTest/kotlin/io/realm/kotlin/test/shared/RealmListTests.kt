@@ -588,7 +588,7 @@ class RealmListTests {
             val instance = copyToRealm(RealmListContainer())
             val objectListField = instance.objectListField
             delete(instance)
-            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed") {
                 objectListField.query()
             }
         }
@@ -601,7 +601,7 @@ class RealmListTests {
         val objectListField = container.objectListField
         realm.close()
 
-        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+        assertFailsWithMessage<IllegalStateException>("List is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed") {
             objectListField.query()
         }
         Unit

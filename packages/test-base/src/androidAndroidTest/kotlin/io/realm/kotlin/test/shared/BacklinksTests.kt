@@ -246,7 +246,8 @@ class BacklinksTests {
                     .build()
 
             assertFailsWithMessage<IllegalStateException>(
-                "Property 'MissingSourceProperty.reference' declared as origin of linking objects property 'MissingSourceProperty.references' does not exist)"
+                "Property 'MissingSourceProperty.reference' declared as origin of linking " +
+                        "objects property 'MissingSourceProperty.references' does not exist"
             ) {
                 Realm.open(configuration)
             }

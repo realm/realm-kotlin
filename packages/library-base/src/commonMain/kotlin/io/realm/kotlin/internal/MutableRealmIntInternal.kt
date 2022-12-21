@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.internal.RealmObjectHelper.NOT_IN_A_TRANSACTION_MSG
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
@@ -38,7 +39,7 @@ internal class ManagedMutableRealmInt(
         }
     }
 
-    override fun set(value: Number) = operationInternal {
+    override fun set(value: Number) = operationInternal("Cannot set", value) {
         inputScope {
             with(converter) {
                 val convertedValue = publicToRealmValue(value.toLong())
@@ -52,7 +53,7 @@ internal class ManagedMutableRealmInt(
         }
     }
 
-    override fun increment(value: Number) = operationInternal {
+    override fun increment(value: Number) = operationInternal("Cannot increment/decrement", value) {
         RealmInterop.realm_object_add_int(
             obj.objectPointer,
             propertyKey,
@@ -62,9 +63,16 @@ internal class ManagedMutableRealmInt(
 
     override fun decrement(value: Number) = increment(-value.toLong())
 
-    private inline fun operationInternal(block: () -> Unit) {
+    private inline fun operationInternal(message: String, value: Number, block: () -> Unit) {
         obj.checkValid()
-        block()
+        try {
+            block()
+        } catch (exception: IllegalStateException) {
+            throw IllegalStateException(
+                "$message `${obj.className}.$${obj.metadata[propertyKey]!!.name}` with passed value `$value`: $NOT_IN_A_TRANSACTION_MSG",
+                exception
+            )
+        }
     }
 }
 
