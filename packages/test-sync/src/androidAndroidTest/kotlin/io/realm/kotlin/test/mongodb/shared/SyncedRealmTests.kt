@@ -90,7 +90,6 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
-@Ignore // Waiting for a  fix for https://github.com/realm/realm-core/issues/6144
 @Suppress("LargeClass")
 class SyncedRealmTests {
 
