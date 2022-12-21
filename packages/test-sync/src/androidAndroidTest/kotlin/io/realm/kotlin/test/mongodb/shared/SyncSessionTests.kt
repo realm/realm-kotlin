@@ -406,6 +406,7 @@ class SyncSessionTests {
      * - Open a Realm with the same partition key as the inserted document
      * - Wait for Sync to fetch the document as a valid RealmObject with the matching ObjectId as a PK
      */
+    @Ignore // Waiting for a  fix for https://github.com/realm/realm-core/issues/6144
     @Test
     fun syncingObjectIdFromMongoDB() {
         val adminApi = app.asTestApp
