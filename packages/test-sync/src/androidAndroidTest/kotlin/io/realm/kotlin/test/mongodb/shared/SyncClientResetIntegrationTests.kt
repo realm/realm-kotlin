@@ -263,6 +263,7 @@ class SyncClientResetIntegrationTests {
         }
     }
 
+    @Ignore // Waiting for a  fix for https://github.com/realm/realm-core/issues/6144
     @Test
     fun discardUnsyncedLocalChanges_success_attemptRecover() {
         // Attempts to recover data if a client reset is triggered.
