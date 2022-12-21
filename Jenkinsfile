@@ -223,6 +223,21 @@ pipeline {
                         ])
                     }
                 }
+                stage('Minified Sync Tests - Android') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PincludeSdkModules=false -PtestBuildType=debugMinified')
+                            }
+                        ])
+                        zip([
+                            'zipFile': 'mapping.zip',
+                            'archive': true,
+                            'glob': 'test-sync/build/outputs/mapping/debugMinified/mapping.txt'
+                        ])
+                    }
+                }
                 stage('Gradle Plugin Integration Tests') {
                     when { expression { runTests } }
                     steps {

@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* Added proguard consumer files to Android debug artifacts. (Issue [#1150](https://github.com/realm/realm-kotlin/issues/1150))
+* Fixed various proguard issues. (Issue [#1150](https://github.com/realm/realm-kotlin/issues/1150))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
