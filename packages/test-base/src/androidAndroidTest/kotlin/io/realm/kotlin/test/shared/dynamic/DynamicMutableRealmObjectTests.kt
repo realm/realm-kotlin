@@ -32,6 +32,7 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
 import io.realm.kotlin.entities.primarykey.PrimaryKeyString
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -273,7 +274,7 @@ class DynamicMutableRealmObjectTests {
                                     val expectedValue =
                                         dynamicMutableUnmanagedObject.getValue<String>("stringField")
                                     val actualValue = dynamicSample.getNullableValue<RealmAny>(name)
-                                        ?.asDynamicRealmObject()
+                                        ?.asRealmObject<DynamicRealmObject>()
                                         ?.getValue<String>("stringField")
                                     assertEquals(expectedValue, actualValue)
                                 }
@@ -291,7 +292,7 @@ class DynamicMutableRealmObjectTests {
                                     val expectedValue =
                                         dynamicMutableManagedObject.getValue<String>("stringField")
                                     val managedDynamicMutableObject = dynamicSample.getNullableValue<RealmAny>(name)
-                                        ?.asDynamicMutableRealmObject()
+                                        ?.asRealmObject<DynamicMutableRealmObject>()
                                     val actualValue = managedDynamicMutableObject?.getValue<String>("stringField")
                                     assertEquals(expectedValue, actualValue)
 
@@ -513,6 +514,77 @@ class DynamicMutableRealmObjectTests {
                                 )
                                 assertContentEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
+                            }
+                            RealmStorageType.ANY -> {
+                                // Check writing a regular object using the Dynamic API throws
+                                val objectValue = RealmAny.create(
+                                    PrimaryKeyString(),
+                                    PrimaryKeyString::class
+                                )
+                                assertFailsWith<ClassCastException> {
+                                    dynamicSample.set(name, realmListOf(objectValue))
+                                }
+
+                                // Test we can set null ...
+                                dynamicSample.set(name, realmListOf<RealmAny?>(null))
+                                dynamicSample.getNullableValueList<RealmAny>(name)
+                                    .also { list ->
+                                        assertEquals(1, list.size)
+                                        assertEquals(null, list[0])
+                                    }
+
+                                // ... and primitives...
+                                val value = RealmAny.create(42)
+                                dynamicSample.set(name, realmListOf(value))
+                                dynamicSample.getNullableValueList<RealmAny>(name)
+                                    .also { list ->
+                                        assertEquals(1, list.size)
+                                        assertEquals(value, list[0])
+                                    }
+
+                                // ... and dynamic mutable unmanaged objects ...
+                                DynamicMutableRealmObject.create(
+                                    "Sample",
+                                    mapOf("stringField" to "Custom1")
+                                ).also { dynamicMutableUnmanagedObject ->
+                                    val dynamicRealmAny =
+                                        RealmAny.create(dynamicMutableUnmanagedObject)
+                                    dynamicSample.set(name, realmListOf(dynamicRealmAny))
+                                    val expectedValue =
+                                        dynamicMutableUnmanagedObject.getValue<String>("stringField")
+                                    val actualList =
+                                        dynamicSample.getNullableValueList<RealmAny>(name)
+                                    assertEquals(1, actualList.size)
+                                    val actualValue = actualList[0]
+                                        ?.asRealmObject<DynamicRealmObject>()
+                                        ?.getValue<String>("stringField")
+                                    assertEquals(expectedValue, actualValue)
+                                }
+
+                                // ... and dynamic mutable managed objects
+                                dynamicMutableRealm.copyToRealm(
+                                    DynamicMutableRealmObject.create(
+                                        "Sample",
+                                        mapOf("stringField" to "Custom2")
+                                    )
+                                ).also { dynamicMutableManagedObject ->
+                                    val dynamicRealmAny =
+                                        RealmAny.create(dynamicMutableManagedObject)
+                                    dynamicSample.set(name, realmListOf(dynamicRealmAny))
+                                    val expectedValue =
+                                        dynamicMutableManagedObject.getValue<String>("stringField")
+                                    val actualList =
+                                        dynamicSample.getNullableValueList<RealmAny>(name)
+                                    assertEquals(1, actualList.size)
+                                    val managedDynamicMutableObject = actualList[0]
+                                        ?.asRealmObject<DynamicMutableRealmObject>()
+                                    val actualValue = managedDynamicMutableObject?.getValue<String>("stringField")
+                                    assertEquals(expectedValue, actualValue)
+
+                                    // Check we did indeed get a dynamic mutable object
+                                    managedDynamicMutableObject?.set("stringField", "NEW")
+                                    assertEquals("NEW", managedDynamicMutableObject?.getValue("stringField"))
+                                }
                             }
                             else -> error("Model contains untested properties: $property")
                         }
@@ -761,6 +833,77 @@ class DynamicMutableRealmObjectTests {
                                 )
                                 assertTrue(setOfNullable.contains(value))
                                 assertTrue(setOfNullable.contains(null))
+                            }
+                            RealmStorageType.ANY -> {
+                                // Check writing a regular object using the Dynamic API throws
+                                val objectValue = RealmAny.create(
+                                    PrimaryKeyString(),
+                                    PrimaryKeyString::class
+                                )
+                                assertFailsWith<ClassCastException> {
+                                    dynamicSample.set(name, realmSetOf(objectValue))
+                                }
+
+                                // Test we can set null ...
+                                dynamicSample.set(name, realmSetOf<RealmAny?>(null))
+                                dynamicSample.getNullableValueSet<RealmAny>(name)
+                                    .also { set ->
+                                        assertEquals(1, set.size)
+                                        assertEquals(null, set.iterator().next())
+                                    }
+
+                                // ... and primitives...
+                                val value = RealmAny.create(42)
+                                dynamicSample.set(name, realmSetOf(value))
+                                dynamicSample.getNullableValueSet<RealmAny>(name)
+                                    .also { set ->
+                                        assertEquals(1, set.size)
+                                        assertEquals(value, set.iterator().next())
+                                    }
+
+                                // ... and dynamic mutable unmanaged objects ...
+                                DynamicMutableRealmObject.create(
+                                    "Sample",
+                                    mapOf("stringField" to "Custom1")
+                                ).also { dynamicMutableUnmanagedObject ->
+                                    val dynamicRealmAny =
+                                        RealmAny.create(dynamicMutableUnmanagedObject)
+                                    dynamicSample.set(name, realmSetOf(dynamicRealmAny))
+                                    val expectedValue =
+                                        dynamicMutableUnmanagedObject.getValue<String>("stringField")
+                                    val actualSet =
+                                        dynamicSample.getNullableValueSet<RealmAny>(name)
+                                    assertEquals(1, actualSet.size)
+                                    val actualValue = actualSet.iterator().next()
+                                        ?.asRealmObject<DynamicRealmObject>()
+                                        ?.getValue<String>("stringField")
+                                    assertEquals(expectedValue, actualValue)
+                                }
+
+                                // ... and dynamic mutable managed objects
+                                dynamicMutableRealm.copyToRealm(
+                                    DynamicMutableRealmObject.create(
+                                        "Sample",
+                                        mapOf("stringField" to "Custom2")
+                                    )
+                                ).also { dynamicMutableManagedObject ->
+                                    val dynamicRealmAny =
+                                        RealmAny.create(dynamicMutableManagedObject)
+                                    dynamicSample.set(name, realmSetOf(dynamicRealmAny))
+                                    val expectedValue =
+                                        dynamicMutableManagedObject.getValue<String>("stringField")
+                                    val actualSet =
+                                        dynamicSample.getNullableValueSet<RealmAny>(name)
+                                    assertEquals(1, actualSet.size)
+                                    val managedDynamicMutableObject = actualSet.iterator().next()
+                                        ?.asRealmObject<DynamicMutableRealmObject>()
+                                    val actualValue = managedDynamicMutableObject?.getValue<String>("stringField")
+                                    assertEquals(expectedValue, actualValue)
+
+                                    // Check we did indeed get a dynamic mutable object
+                                    managedDynamicMutableObject?.set("stringField", "NEW")
+                                    assertEquals("NEW", managedDynamicMutableObject?.getValue("stringField"))
+                                }
                             }
                             else -> error("Model contains untested properties: $property")
                         }

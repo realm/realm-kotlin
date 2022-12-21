@@ -43,6 +43,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
@@ -677,6 +678,7 @@ class CopyFromRealmTests {
                 "io.realm.kotlin.types.ObjectId" -> ObjectId.from("635a1a95184a200db8a07bfc")
                 "io.realm.kotlin.types.RealmUUID" -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
                 "io.realm.kotlin.types.MutableRealmInt" -> MutableRealmInt.create(7)
+                "io.realm.kotlin.types.RealmAny" -> RealmAny.create(1)
                 "org.mongodb.kbson.BsonObjectId" -> BsonObjectId("635a1a95184a200db8a07bfc")
                 "io.realm.kotlin.entities.Sample" -> null // Object references are not part of this test, so just return null
                 else -> fail("Missing support for $type")
@@ -706,6 +708,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.ObjectId" -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            "io.realm.kotlin.types.RealmAny" -> realmListOf(RealmAny.create(1))
             "io.realm.kotlin.entities.Sample" -> realmListOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
         }
@@ -737,6 +740,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.ObjectId" -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            "io.realm.kotlin.types.RealmAny" -> realmSetOf(RealmAny.create(1))
             "io.realm.kotlin.entities.Sample" -> realmSetOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
         }

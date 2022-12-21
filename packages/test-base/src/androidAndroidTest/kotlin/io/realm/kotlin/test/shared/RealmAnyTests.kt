@@ -27,6 +27,8 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
+import io.realm.kotlin.notifications.InitialObject
+import io.realm.kotlin.notifications.PendingObject
 import io.realm.kotlin.notifications.SingleQueryChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.query.find
@@ -40,7 +42,6 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
@@ -49,9 +50,9 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.time.Duration.Companion.seconds
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -61,6 +62,7 @@ class RealmAnyTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
+    // TODO TYPEMETADATA: we should fail in case we forgot to cover the basic type
     private val supportedTypesAndValues = listOf(
         Short::class to 10.toShort(),
         Int::class to 10,
@@ -324,6 +326,27 @@ class RealmAnyTests {
     }
 
     @Test
+    fun unmanaged_asRealmObjectWrongCastThrows() {
+        val realmAny = RealmAny.create(Sample())
+        assertFailsWith<ClassCastException> {
+            realmAny.asRealmObject<RealmAnyContainer>()
+        }
+    }
+
+    @Test
+    fun managed_asRealmObjectWrongCastThrows() {
+        val realmAny = RealmAny.create(Sample())
+        val container = RealmAnyContainer(realmAny)
+        val managedContainer = realm.writeBlocking {
+            copyToRealm(container)
+        }
+        val managedRealmAny = assertNotNull(managedContainer.anyField)
+        assertFailsWith<ClassCastException> {
+            managedRealmAny.asRealmObject<RealmAnyContainer>()
+        }
+    }
+
+    @Test
     fun managed_incorrectTypeThrows() {
         for (type in supportedTypesAndValues) {
             when (type.first) {
@@ -454,9 +477,7 @@ class RealmAnyTests {
                     .first()
                     .asFlow()
                     .collect {
-                        if (it is DeletedObject<Sample>) {
-                            sampleChannel.trySend(it)
-                        }
+                        sampleChannel.trySend(it)
                     }
             }
             val containerObserver = async {
@@ -464,17 +485,8 @@ class RealmAnyTests {
                     .first()
                     .asFlow()
                     .collect {
-                        if (it is UpdatedObject<RealmAnyContainer>) {
-                            containerChannel.trySend(it)
-                        }
+                        containerChannel.trySend(it)
                     }
-            }
-
-            val deletionJob = async {
-                delay(1.seconds)
-                realm.writeBlocking {
-                    delete(query<Sample>())
-                }
             }
 
             val unmanagedContainer = RealmAnyContainer(RealmAny.create(Sample()))
@@ -482,14 +494,25 @@ class RealmAnyTests {
                 copyToRealm(unmanagedContainer)
             }
 
-            val deletedObjectChange = sampleChannel.receive()
-            val updatedContainerChange = containerChannel.receive()
-            assertNull(deletedObjectChange.obj)
-            assertNull(assertNotNull(updatedContainerChange.obj).anyField)
+            assertIs<PendingObject<Sample>>(sampleChannel.receive())
+            assertIs<PendingObject<RealmAnyContainer>>(containerChannel.receive())
+
+            assertIs<InitialObject<Sample>>(sampleChannel.receive())
+            assertIs<InitialObject<RealmAnyContainer>>(containerChannel.receive())
+
+            realm.writeBlocking {
+                delete(query<Sample>())
+            }
+
+            val deletedObjectEvent = sampleChannel.receive()
+            val updatedContainerEvent = containerChannel.receive()
+            assertIs<DeletedObject<Sample>>(deletedObjectEvent)
+            assertNull(deletedObjectEvent.obj)
+            assertIs<UpdatedObject<RealmAnyContainer>>(updatedContainerEvent)
+            assertNull(assertNotNull(updatedContainerEvent.obj).anyField)
 
             sampleObserver.cancel()
             containerObserver.cancel()
-            deletionJob.cancel()
             sampleChannel.close()
             containerChannel.close()
         }

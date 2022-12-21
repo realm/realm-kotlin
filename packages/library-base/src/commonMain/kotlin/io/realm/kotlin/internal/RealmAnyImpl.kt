@@ -16,9 +16,7 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.dynamic.DynamicMutableRealmObject
-import io.realm.kotlin.dynamic.DynamicRealmObject
-import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -84,19 +82,9 @@ internal class RealmAnyImpl<T : Any> constructor(
 
     override fun asRealmUUID(): RealmUUID = getValue(RealmAny.Type.UUID) as RealmUUID
 
-    override fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T {
+    override fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T {
         val getValue = getValue(RealmAny.Type.OBJECT)
         return clazz.cast(getValue)
-    }
-
-    override fun asDynamicRealmObject(): DynamicRealmObject {
-        val getValue = getValue(RealmAny.Type.OBJECT)
-        return clazz.cast(getValue) as DynamicRealmObject
-    }
-
-    override fun asDynamicMutableRealmObject(): DynamicMutableRealmObject {
-        val getValue = getValue(RealmAny.Type.OBJECT)
-        return clazz.cast(getValue) as DynamicMutableRealmObject
     }
 
     private fun getValue(type: RealmAny.Type): Any {
@@ -137,8 +125,8 @@ internal class RealmAnyImpl<T : Any> constructor(
         if (clazz == ByteArray::class) {
             if (other.internalValue !is ByteArray) return false
             if (!other.internalValue.contentEquals(this.internalValue as ByteArray)) return false
-        } else if (internalValue is ObjectId || internalValue is BsonObjectId) {
-            if (other.clazz != ObjectId::class && other.clazz != BsonObjectId::class) return false
+        } else if (internalValue is BsonObjectId) {
+            if (other.clazz != BsonObjectId::class) return false
             if (other.internalValue != this.internalValue) return false
         } else if (internalValue is RealmObject) {
             if (other.clazz != this.clazz) return false
@@ -159,7 +147,6 @@ internal class RealmAnyImpl<T : Any> constructor(
         return true
     }
 
-    @Suppress("ComplexMethod")
     override fun hashCode(): Int {
         var result = type.hashCode()
         result = 31 * result + clazz.hashCode()

@@ -19,6 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
@@ -218,13 +219,15 @@ internal object RealmObjectHelper {
                         when ((value as RealmAnyImpl<*>).clazz) {
                             DynamicRealmObject::class ->
                                 realmAnyConverter(obj.mediator, obj.owner, true)
-                            DynamicMutableRealmObject::class -> realmAnyConverter(
-                                obj.mediator,
-                                obj.owner,
-                                issueDynamicObject = true,
-                                issueDynamicMutableObject = true
-                            )
-                            else -> realmAnyConverter(obj.mediator, obj.owner)
+                            DynamicMutableRealmObject::class ->
+                                realmAnyConverter(
+                                    obj.mediator,
+                                    obj.owner,
+                                    issueDynamicObject = true,
+                                    issueDynamicMutableObject = true
+                                )
+                            else ->
+                                realmAnyConverter(obj.mediator, obj.owner)
                         }
                     } else {
                         realmAnyConverter(obj.mediator, obj.owner)
@@ -802,7 +805,9 @@ internal object RealmObjectHelper {
             clazz,
             nullable
         )
-        val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
+        val operatorType = if (propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED) {
+            CollectionOperatorType.REALM_ANY
+        } else if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
             CollectionOperatorType.PRIMITIVE
         } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
             CollectionOperatorType.REALM_OBJECT
@@ -835,7 +840,9 @@ internal object RealmObjectHelper {
             clazz,
             nullable
         )
-        val operatorType = if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
+        val operatorType = if (propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED) {
+            CollectionOperatorType.REALM_ANY
+        } else if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
             CollectionOperatorType.PRIMITIVE
         } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
             CollectionOperatorType.REALM_OBJECT
@@ -867,10 +874,10 @@ internal object RealmObjectHelper {
         val clazz = RealmStorageTypeImpl.fromCorePropertyType(propertyMetadata.type)
             .kClass
             .let { clazz ->
-                if (clazz == BaseRealmObject::class) {
-                    DynamicMutableRealmObject::class
-                } else {
-                    value?.let { it::class } ?: clazz
+                when (clazz) {
+                    BaseRealmObject::class -> DynamicMutableRealmObject::class
+                    RealmAny::class -> RealmAny::class
+                    else -> value?.let { it::class } ?: clazz
                 }
             }
         when (propertyMetadata.collectionType) {
@@ -901,7 +908,7 @@ internal object RealmObjectHelper {
                             val objValue = value?.let {
                                 val objectClass = ((it as RealmAnyImpl<*>).clazz) as KClass<out BaseRealmObject>
                                 if (objectClass == DynamicRealmObject::class || objectClass == DynamicMutableRealmObject::class) {
-                                    value.asDynamicRealmObject()
+                                    value.asRealmObject<DynamicRealmObject>()
                                 } else {
                                     throw IllegalArgumentException("Dynamic RealmAny fields only support DynamicRealmObjects or DynamicMutableRealmObjects.")
                                 }
@@ -1135,6 +1142,9 @@ internal object RealmObjectHelper {
                             }
                             accessor.set(target, list)
                         }
+                        PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                            accessor.set(target, elements.toRealmList())
+                        }
                         else -> {
                             throw IllegalStateException("Unknown type: ${property.type}")
                         }
@@ -1171,6 +1181,9 @@ internal object RealmObjectHelper {
                                 }
                             }
                             accessor.set(target, set)
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                            accessor.set(target, elements.toRealmSet())
                         }
                         else -> {
                             throw IllegalStateException("Unknown type: ${property.type}")

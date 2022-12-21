@@ -422,8 +422,17 @@ internal fun realmAnyConverter(
                             mediator,
                             clazz,
                             link
-                        ) as RealmObject
-                        RealmAny.create(obj, clazz as KClass<out RealmObject>)
+                        )
+                        when (issueDynamicObject) {
+                            true -> when (issueDynamicMutableObject) {
+                                true -> RealmAny.create(obj as DynamicMutableRealmObject)
+                                else -> RealmAny.create(obj as DynamicRealmObject)
+                            }
+                            false -> RealmAny.create(
+                                obj as RealmObject,
+                                clazz as KClass<out RealmObject>
+                            )
+                        }
                     }
                     else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
                 }
@@ -455,7 +464,7 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithObjectImport(
         else -> when (value.type) {
             RealmAny.Type.OBJECT -> {
                 val obj = when (issueDynamicObject) {
-                    true -> value.asDynamicRealmObject()
+                    true -> value.asRealmObject<DynamicRealmObject>()
                     false -> value.asRealmObject<RealmObject>()
                 }
                 val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference)

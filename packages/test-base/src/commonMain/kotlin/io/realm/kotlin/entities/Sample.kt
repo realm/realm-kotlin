@@ -96,6 +96,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+    var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
 
     var stringSetField: RealmSet<String> = realmSetOf()
     var byteSetField: RealmSet<Byte> = realmSetOf()
@@ -127,6 +128,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+    var nullableRealmAnySetField: RealmSet<RealmAny?> = realmSetOf()
 
     val objectBacklinks by backlinks(Sample::nullableObject)
     val listBacklinks by backlinks(Sample::objectListField)

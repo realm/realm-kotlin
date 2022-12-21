@@ -4,6 +4,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.RealmAnyImpl
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.types.RealmAny.Companion.create
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
@@ -65,6 +66,10 @@ import kotlin.reflect.KClass
  *      warehouse.nullableStorage = null // Assign null directly to the property
  * ```
  * `RealmAny` cannot store [EmbeddedRealmObject]s.
+ *
+ * [DynamicRealmObject]s and [DynamicMutableRealmObject]s can be used inside `RealmAny` with
+ * the corresponding [create] function for `DynamicRealmObject`s and with [asRealmObject] using
+ * either `DynamicRealmObject` or `DynamicMutableRealmObject` as the generic parameter.
  *
  * `RealmAny` values can be sorted. The sorting order used between different `RealmAny` types,
  * from lowest to highest, is:
@@ -202,24 +207,10 @@ public interface RealmAny {
     public fun asRealmUUID(): RealmUUID
 
     /**
-     * Returns the value from this RealmAny as a [RealmObject] of type [T].
+     * Returns the value from this RealmAny as a [BaseRealmObject] of type [T].
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `T`.
      */
-    public fun <T : RealmObject> asRealmObject(clazz: KClass<T>): T
-
-    /**
-     * Returns the value from this RealmAny as a [DynamicRealmObject].
-     * @throws [IllegalStateException] if the stored value cannot be safely converted to
-     * `DynamicRealmObject`.
-     */
-    public fun asDynamicRealmObject(): DynamicRealmObject
-
-    /**
-     * Returns the value from this RealmAny as a [DynamicMutableRealmObject].
-     * @throws [IllegalStateException] if the stored value cannot be safely converted to
-     * `DynamicMutableRealmObject`.
-     */
-    public fun asDynamicMutableRealmObject(): DynamicMutableRealmObject
+    public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
 
     /**
      * Two [RealmAny] instances are equal if and only if their types and contents are the equal.
@@ -233,25 +224,25 @@ public interface RealmAny {
          * Creates an unmanaged `RealmAny` instance from a [Short] value.
          */
         public fun create(value: Short): RealmAny =
-            RealmAnyImpl(Type.INT, Short::class, value)
+            RealmAnyImpl(Type.INT, Long::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from an [Int] value.
          */
         public fun create(value: Int): RealmAny =
-            RealmAnyImpl(Type.INT, Int::class, value)
+            RealmAnyImpl(Type.INT, Long::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Byte] value.
          */
         public fun create(value: Byte): RealmAny =
-            RealmAnyImpl(Type.INT, Byte::class, value)
+            RealmAnyImpl(Type.INT, Long::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Char] value.
          */
         public fun create(value: Char): RealmAny =
-            RealmAnyImpl(Type.INT, Char::class, value)
+            RealmAnyImpl(Type.INT, Long::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [Long] value.
