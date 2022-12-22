@@ -95,6 +95,7 @@ import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -418,7 +419,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             toRealmValue = null
                         )
                     }
-                    propertyType.isLinkingObject() -> {
+                    propertyType.isEmbeddedLinkingObject() || propertyType.isLinkingObject() -> {
                         getBacklinksTargetPropertyType(declaration)?.let { targetPropertyType ->
                             val sourceType: IrSimpleType = irClass.defaultType
 
@@ -845,9 +846,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun IrType.isLinkingObject(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
-        val realmBacklinksClassId = realmBacklinksClass.descriptor.classId
-        val realmEmbeddedBacklinksClassId = realmEmbeddedBacklinksClass.descriptor.classId
-        return propertyClassId == realmBacklinksClassId || propertyClassId == realmEmbeddedBacklinksClassId
+        val realmBacklinksClassId: ClassId? = realmBacklinksClass.descriptor.classId
+        return propertyClassId == realmBacklinksClassId
+    }
+
+    private fun IrType.isEmbeddedLinkingObject(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmEmbeddedBacklinksClassId: ClassId? = realmEmbeddedBacklinksClass.descriptor.classId
+        return propertyClassId == realmEmbeddedBacklinksClassId
     }
 
     private fun IrType.isObjectId(): Boolean {
