@@ -231,10 +231,11 @@ pipeline {
                                 testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PincludeSdkModules=false -PtestBuildType=debugMinified')
                             }
                         ])
+                        sh 'rm mapping.zip || true'
                         zip([
                             'zipFile': 'mapping.zip',
                             'archive': true,
-                            'glob': 'test-sync/build/outputs/mapping/debugMinified/mapping.txt'
+                            'glob': 'packages/test-sync/build/outputs/mapping/debugMinified/mapping.txt'
                         ])
                     }
                 }
