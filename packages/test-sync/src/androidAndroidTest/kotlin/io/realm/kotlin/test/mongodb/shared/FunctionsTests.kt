@@ -74,6 +74,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class FunctionsTests {
 //    @Serializable
@@ -166,6 +168,7 @@ class FunctionsTests {
         val i64 = 42L
 
         for (type in BsonType.values()) {
+            println("testing type $type")
             when (type) {
                 BsonType.DOUBLE -> {
                     assertEquals(
@@ -292,9 +295,9 @@ class FunctionsTests {
                 BsonType.DATE_TIME -> {
                     // RealmInstant has better precision (nanoseconds) than BsonDateTime (millis)
                     // Here we create a RealmInstant with loose of precision to match BsonDateTime
-                    val nowWithPrecisionLoose = RealmInstant.now().toDuration()
-                    val now = nowWithPrecisionLoose.toRealmInstant()
-
+                    val nowAsDuration: Duration = RealmInstant.now().toDuration()
+                    val nowInMilliseconds = nowAsDuration.inWholeMilliseconds.milliseconds
+                    val now = nowInMilliseconds.toRealmInstant()
                     assertEquals(
                         now,
                         functions.callBlocking<RealmInstant>(FIRST_ARG_FUNCTION.name, now)
@@ -324,15 +327,12 @@ class FunctionsTests {
                 BsonType.TIMESTAMP -> assertTypeOfFirstArgFunction(BsonTimestamp())
                 BsonType.MIN_KEY -> assertTypeOfFirstArgFunction(BsonMinKey)
                 BsonType.MAX_KEY -> assertTypeOfFirstArgFunction(BsonMaxKey)
-                BsonType.DB_POINTER -> assertFailsWithMessage<ServiceException>("invalid function call request, no function was specified") {
-                    functions.callBlocking(
-                        FIRST_ARG_FUNCTION.name,
-                        BsonDBPointer(
-                            "",
-                            BsonObjectId()
-                        )
+                BsonType.DB_POINTER -> assertTypeOfFirstArgFunction(
+                    BsonDBPointer(
+                        namespace = "namespace",
+                        id = BsonObjectId()
                     )
-                }
+                )
                 BsonType.END_OF_DOCUMENT -> {
                     // Not a real Bson type
                 }
