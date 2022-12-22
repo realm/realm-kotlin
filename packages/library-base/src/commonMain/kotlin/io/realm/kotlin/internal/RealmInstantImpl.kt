@@ -35,7 +35,7 @@ internal fun RealmInstant.toDuration(): Duration {
 }
 
 internal fun Duration.toRealmInstant(): RealmInstant {
-    val wholeSeconds: Long = this.inWholeSeconds
-    val wholeNanos: Long = (this - wholeSeconds.seconds).inWholeNanoseconds
-    return RealmInstant.from(wholeSeconds, wholeNanos.toInt())
+    val seconds: Duration = this.inWholeSeconds.seconds
+    val nanos: Duration = (this - seconds)
+    return RealmInstant.from(seconds.inWholeSeconds, nanos.inWholeNanoseconds.toInt())
 }
