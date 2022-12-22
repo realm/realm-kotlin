@@ -27,39 +27,15 @@ actual enum class ErrorCategory(
 ) : CodeDescription {
     RLM_ERR_CAT_LOGIC("Logic", realm_error_category.RLM_ERR_CAT_LOGIC.value.toInt()),
     RLM_ERR_CAT_RUNTIME("Runtime", realm_error_category.RLM_ERR_CAT_RUNTIME.value.toInt()),
-    RLM_ERR_CAT_INVALID_ARG("Invalid arg", realm_error_category.RLM_ERR_CAT_INVALID_ARG.value.toInt()),
-    RLM_ERR_CAT_FILE_ACCESS(
-        "File access",
-        RLM_ERR_CAT_RUNTIME.nativeValue and realm_error_category.RLM_ERR_CAT_FILE_ACCESS.value.toInt()
-    ),
-    RLM_ERR_CAT_SYSTEM_ERROR(
-        "System error",
-        RLM_ERR_CAT_RUNTIME.nativeValue and realm_error_category.RLM_ERR_CAT_SYSTEM_ERROR.value.toInt()
-    ),
-    RLM_ERR_CAT_APP_ERROR(
-        "App error",
-        RLM_ERR_CAT_RUNTIME.nativeValue and realm_error_category.RLM_ERR_CAT_APP_ERROR.value.toInt()
-    ),
-    RLM_ERR_CAT_CLIENT_ERROR(
-        "Client error",
-        RLM_ERR_CAT_APP_ERROR.nativeValue and realm_error_category.RLM_ERR_CAT_CLIENT_ERROR.value.toInt()
-    ),
-    RLM_ERR_CAT_JSON_ERROR(
-        "Json error",
-        RLM_ERR_CAT_APP_ERROR.nativeValue and realm_error_category.RLM_ERR_CAT_JSON_ERROR.value.toInt()
-    ),
-    RLM_ERR_CAT_SERVICE_ERROR(
-        "Service error",
-        RLM_ERR_CAT_APP_ERROR.nativeValue and realm_error_category.RLM_ERR_CAT_SERVICE_ERROR.value.toInt()
-    ),
-    RLM_ERR_CAT_HTTP_ERROR(
-        "Http error",
-        RLM_ERR_CAT_APP_ERROR.nativeValue and realm_error_category.RLM_ERR_CAT_HTTP_ERROR.value.toInt()
-    ),
-    RLM_ERR_CAT_CUSTOM_ERROR(
-        "Custom error",
-        RLM_ERR_CAT_APP_ERROR.nativeValue and realm_error_category.RLM_ERR_CAT_CUSTOM_ERROR.value.toInt()
-    );
+    RLM_ERR_CAT_INVALID_ARG("InvalidArg", realm_error_category.RLM_ERR_CAT_INVALID_ARG.value.toInt()),
+    RLM_ERR_CAT_FILE_ACCESS("File", realm_error_category.RLM_ERR_CAT_FILE_ACCESS.value.toInt()),
+    RLM_ERR_CAT_SYSTEM_ERROR("System", realm_error_category.RLM_ERR_CAT_SYSTEM_ERROR.value.toInt()),
+    RLM_ERR_CAT_APP_ERROR("App", realm_error_category.RLM_ERR_CAT_APP_ERROR.value.toInt()),
+    RLM_ERR_CAT_CLIENT_ERROR("Client", realm_error_category.RLM_ERR_CAT_CLIENT_ERROR.value.toInt()),
+    RLM_ERR_CAT_JSON_ERROR("Json", realm_error_category.RLM_ERR_CAT_JSON_ERROR.value.toInt()),
+    RLM_ERR_CAT_SERVICE_ERROR("Service", realm_error_category.RLM_ERR_CAT_SERVICE_ERROR.value.toInt()),
+    RLM_ERR_CAT_HTTP_ERROR("Http", realm_error_category.RLM_ERR_CAT_HTTP_ERROR.value.toInt()),
+    RLM_ERR_CAT_CUSTOM_ERROR("Custom", realm_error_category.RLM_ERR_CAT_CUSTOM_ERROR.value.toInt());
 
     actual companion object {
 

@@ -75,13 +75,10 @@ public object CoreExceptionConverter {
         // Just wrap all core exceptions in a public RealmException for now, we should be able t
         // throw subclasses of this without i being a breaking change.
         CoreErrorConverter.initialize { cause: CoreError ->
-            @Suppress("invisible_reference", "invisible_member")
-            when (cause.category) {
-                ErrorCategory.RLM_ERR_CAT_LOGIC,
-                ErrorCategory.RLM_ERR_CAT_RUNTIME -> IllegalStateException(cause.message)
-                ErrorCategory.RLM_ERR_CAT_APP_ERROR,
-                ErrorCategory.RLM_ERR_CAT_INVALID_ARG -> IllegalArgumentException(cause.message)
-                else -> RealmException(cause.message)
+            with(cause.category) {
+                if(hasFlag(ErrorCategory.RLM_ERR_CAT_INVALID_ARG)) IllegalArgumentException(cause.message)
+                else if(hasFlag(ErrorCategory.RLM_ERR_CAT_LOGIC) || hasFlag(ErrorCategory.RLM_ERR_CAT_RUNTIME)) IllegalStateException(cause.message)
+                else RealmException(cause.message)
             }
         }
     }

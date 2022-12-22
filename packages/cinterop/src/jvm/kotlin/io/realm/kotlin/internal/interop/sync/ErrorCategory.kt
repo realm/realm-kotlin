@@ -24,7 +24,7 @@ actual enum class ErrorCategory(
 ) : CodeDescription {
     RLM_ERR_CAT_LOGIC("Logic", realm_error_category_e.RLM_ERR_CAT_LOGIC),
     RLM_ERR_CAT_RUNTIME("Runtime", realm_error_category_e.RLM_ERR_CAT_RUNTIME),
-    RLM_ERR_CAT_INVALID_ARG("Invalid", realm_error_category_e.RLM_ERR_CAT_INVALID_ARG),
+    RLM_ERR_CAT_INVALID_ARG("InvalidArg", realm_error_category_e.RLM_ERR_CAT_INVALID_ARG),
     RLM_ERR_CAT_FILE_ACCESS("File", realm_error_category_e.RLM_ERR_CAT_FILE_ACCESS),
     RLM_ERR_CAT_SYSTEM_ERROR("System", realm_error_category_e.RLM_ERR_CAT_SYSTEM_ERROR),
     RLM_ERR_CAT_APP_ERROR("App", realm_error_category_e.RLM_ERR_CAT_APP_ERROR),
