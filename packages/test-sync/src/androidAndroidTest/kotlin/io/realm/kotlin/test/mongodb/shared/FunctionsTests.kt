@@ -168,7 +168,6 @@ class FunctionsTests {
         val i64 = 42L
 
         for (type in BsonType.values()) {
-            println("testing type $type")
             when (type) {
                 BsonType.DOUBLE -> {
                     assertEquals(

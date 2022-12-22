@@ -58,6 +58,17 @@ class RealmInstantTests {
         }
     }
 
+    @Test
+    fun nanosConversions() {
+        listOf(
+            0L.nanoseconds,
+            1669029663120L.nanoseconds,
+            (-1669029663120L).nanoseconds
+        ).forEach {
+            assertEquals(it, it.toRealmInstant().toDuration())
+        }
+    }
+
     // Test both unmanaged and managed boundaries
     @Test
     fun timestamp_boundaries() {
