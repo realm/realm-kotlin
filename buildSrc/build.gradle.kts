@@ -39,6 +39,10 @@ repositories {
 buildscript {
     dependencies {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+        // See https://github.com/gradle/gradle/issues/22510
+        constraints {
+            this.classpath("org.jetbrains.kotlin:kotlin-sam-with-receiver:${Versions.kotlin}")
+        }
     }
 }
 

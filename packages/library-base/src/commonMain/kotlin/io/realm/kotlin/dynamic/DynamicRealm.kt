@@ -18,6 +18,7 @@ package io.realm.kotlin.dynamic
 
 import io.realm.kotlin.BaseRealm
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.TRUE_PREDICATE
 
 /**
  * A **dynamic realm** gives access to the data of the realm through a generic string based
@@ -43,7 +44,7 @@ public interface DynamicRealm : BaseRealm {
      */
     public fun query(
         className: String,
-        query: String = "TRUEPREDICATE",
+        query: String = TRUE_PREDICATE,
         vararg args: Any?
     ): RealmQuery<out DynamicRealmObject>
 }

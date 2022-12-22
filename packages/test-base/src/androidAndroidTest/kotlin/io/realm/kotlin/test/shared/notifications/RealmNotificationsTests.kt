@@ -20,22 +20,31 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.InitialRealm
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RealmNotificationsTests : NotificationTests {
 
@@ -209,6 +218,65 @@ class RealmNotificationsTests : NotificationTests {
             assertTrue(observer.isCompleted)
             observer.cancel()
             c.close()
+        }
+    }
+
+    @Test
+    fun notification_cancelsOnInsufficientBuffers() {
+        val sample = realm.writeBlocking { copyToRealm(Sample()) }
+        val flow = sample.asFlow()
+
+        runBlocking {
+            val listener = async {
+                withTimeout(10.seconds) {
+                    assertFailsWith<CancellationException> {
+                        flow.collect {
+                            delay(1000.milliseconds)
+                        }
+                    }.message!!.let { message ->
+                        assertEquals(
+                            "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                            message
+                        )
+                    }
+                }
+            }
+            (1..100).forEach {
+                realm.writeBlocking {
+                    findLatest(sample)!!.apply {
+                        stringField = it.toString()
+                    }
+                }
+            }
+            listener.await()
+        }
+    }
+
+    // This test shows that our internal logic still works (by closing the flow on deletion events)
+    // even though the public consumer is dropping elements
+    @Test
+    fun notification_backpressureStrategyDoesNotRuinInternalLogic() {
+        val sample = realm.writeBlocking { copyToRealm(Sample()) }
+        val flow = sample.asFlow()
+            .buffer(0, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+        runBlocking {
+            val listener = async {
+                withTimeout(10.seconds) {
+                    flow.collect {
+                        delay(100.milliseconds)
+                    }
+                }
+            }
+            (1..100).forEach {
+                realm.writeBlocking {
+                    findLatest(sample)!!.apply {
+                        stringField = it.toString()
+                    }
+                }
+            }
+            realm.write { delete(findLatest(sample)!!) }
+            listener.await()
         }
     }
 }

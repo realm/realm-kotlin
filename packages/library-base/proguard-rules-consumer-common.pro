@@ -105,6 +105,10 @@
     *;
 }
 
+-keep class kotlin.Unit {
+    *;
+}
+
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt
 #-keepattributes LineNumberTable,SourceFile

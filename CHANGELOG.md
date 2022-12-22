@@ -9,6 +9,8 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Realm will now use a lot less memory and disk space when different versions of realm objects are used. ([Core Issue #5440](https://github.com/realm/realm-core/pull/5440))
 * Realm will now continuously track and reduce the size of the Realm file when it is in use rather that only when opening the file with `Configuration.compactOnLaunch` enabled. ([Core Issue #5754](https://github.com/realm/realm-core/issues/5754))
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
+* Add support for querying on RealmLists containing objects with `RealmList.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1037))
+* Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 * [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))
 * Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
@@ -21,6 +23,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
 * JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Issue [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 * `RealmUUID.random()` would generate the same values when an app was re-launched from Android Studio during development. (Issue [#1123](https://github.com/realm/realm-kotlin/pull/1123)) 
+* Complete flows with an IllegalStateException instead of crashing when notifications cannot be delivered due to insufficient channel capacity (Issue [#1147](https://github.com/realm/realm-kotlin/issues/1147))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -42,7 +45,34 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 
 
-## 1.5.1 (YYYY-MM-DD)
+## 1.5.2 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Added proguard consumer files to Android debug artifacts. (Issue [#1150](https://github.com/realm/realm-kotlin/issues/1150))
+* Fixed bug when creating `RealmInstant` instaces with `RealmInstant.now()` in Kotlin Native. (Issue [#1182](https://github.com/realm/realm-kotlin/issues/1182))
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Gradle 7.6.
+
+
+## 1.5.1 (2022-12-12)
 
 ### Breaking Changes
 * None.
@@ -72,6 +102,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Updated to Realm Core 12.12.0, commit 292f534a8ae687a86d799b14e06a94985e49c3c6.
 * Updated to KBSON 0.2.0
 * Updated to require Swig 4.1.0.
+
 
 ## 1.5.0 (2022-11-11)
 

@@ -1106,6 +1106,22 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return CPointerWrapper(
+            realm_wrapper.realm_query_parse_for_list(
+                list.cptr(),
+                query,
+                count.toULong(),
+                args.second.value.ptr
+            )
+        )
+    }
+
     actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
         memScoped {
             val found = alloc<BooleanVar>()
