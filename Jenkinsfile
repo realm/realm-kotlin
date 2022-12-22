@@ -292,10 +292,10 @@ def runScm() {
         [$class: 'SubmoduleOption', recursiveSubmodules: true]
     ]
     if (isReleaseBranch || forceWipeWorkspace) {
-        // repoExtensions += [
-        //     [$class: 'WipeWorkspace'],
-        //     [$class: 'CleanCheckout'],
-        // ]
+        repoExtensions += [
+            [$class: 'WipeWorkspace'],
+            [$class: 'CleanCheckout'],
+        ]
     }
     checkout([
             $class           : 'GitSCM',
