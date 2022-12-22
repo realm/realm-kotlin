@@ -25,6 +25,8 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 
@@ -33,6 +35,7 @@ import kotlin.reflect.KProperty1
  */
 public interface SchemaMetadata {
     public operator fun get(className: String): ClassMetadata?
+    public operator fun get(classKey: ClassKey): ClassMetadata?
     public fun getOrThrow(className: String): ClassMetadata = this[className]
         ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
@@ -41,6 +44,7 @@ public interface SchemaMetadata {
  * Class metadata providing access class and property keys.
  */
 public interface ClassMetadata {
+    public val clazz: KClass<out TypedRealmObject>?
     public val className: String
     public val classKey: ClassKey
     public val properties: List<PropertyMetadata>
@@ -72,29 +76,43 @@ public interface PropertyMetadata {
  * The provided class metadata entries are `CachedClassMetadata` for which property keys are also
  * only looked up on first access.
  */
-public class CachedSchemaMetadata(private val dbPointer: RealmPointer, companions: Collection<RealmObjectCompanion>) : SchemaMetadata {
+public class CachedSchemaMetadata(
+    private val dbPointer: RealmPointer,
+    companions: Collection<RealmObjectCompanion>
+) : SchemaMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
-    public val classMap: Map<String, CachedClassMetadata>
+    private val classMapByName: Map<String, CachedClassMetadata>
+    private val classMapByKey: Map<ClassKey, CachedClassMetadata>
 
     init {
-        classMap = RealmInterop.realm_get_class_keys(dbPointer).map<ClassKey, Pair<String, CachedClassMetadata>> {
+        classMapByName = RealmInterop.realm_get_class_keys(dbPointer).map<ClassKey, Pair<String, CachedClassMetadata>> {
             val classInfo = RealmInterop.realm_get_class(dbPointer, it)
             // FIXME OPTIMIZE
             val className = classInfo.name
             val companion: RealmObjectCompanion? = companions.singleOrNull { it.io_realm_kotlin_className == className }
             className to CachedClassMetadata(dbPointer, className, classInfo.key, companion)
         }.toMap()
+
+        classMapByKey = classMapByName.map { (_, metadata: CachedClassMetadata) ->
+            metadata.classKey to metadata
+        }.toMap()
     }
 
-    override fun get(className: String): CachedClassMetadata? = classMap[className]
+    override fun get(className: String): ClassMetadata? = classMapByName[className]
+    override fun get(classKey: ClassKey): ClassMetadata? = classMapByKey[classKey]
 }
 
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-public class CachedClassMetadata(dbPointer: RealmPointer, override val className: String, override val classKey: ClassKey, companion: RealmObjectCompanion?) : ClassMetadata {
+public class CachedClassMetadata(
+    dbPointer: RealmPointer,
+    override val className: String,
+    override val classKey: ClassKey,
+    companion: RealmObjectCompanion?
+) : ClassMetadata {
     // TODO OPTIMIZE We should theoretically be able to lazy load these, but it requires locking
     //  and 'by lazy' initializers can throw
     //  kotlin.native.concurrent.InvalidMutabilityException: Frozen during lazy computation
@@ -105,6 +123,7 @@ public class CachedClassMetadata(dbPointer: RealmPointer, override val className
 
     override val primaryKeyProperty: PropertyMetadata?
     override val isEmbeddedRealmObject: Boolean
+    override val clazz: KClass<out TypedRealmObject>? = companion?.io_realm_kotlin_class
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
