@@ -16,6 +16,7 @@
 -keepclassmembers class io.realm.kotlin.dynamic.DynamicRealmObject, io.realm.kotlin.dynamic.DynamicMutableRealmObject {
     **$Companion Companion;
 }
+-keep,allowobfuscation class ** implements io.realm.kotlin.types.BaseRealmObject
 -keep class ** implements io.realm.kotlin.internal.RealmObjectCompanion
 -keepclassmembers class ** implements io.realm.kotlin.types.BaseRealmObject {
     **$Companion Companion;
