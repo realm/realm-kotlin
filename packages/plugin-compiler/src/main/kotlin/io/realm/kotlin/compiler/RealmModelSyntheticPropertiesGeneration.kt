@@ -471,7 +471,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         ?: fatalError("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
+                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION) || primaryKey
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
                                     logError(
                                         "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
