@@ -120,7 +120,7 @@ public class RealmSchemaTests {
                 assertEquals(RealmStorageType.STRING, storageType)
                 assertFalse(isNullable)
                 assertTrue(isPrimaryKey)
-                assertFalse(isIndexed)
+                assertTrue(isIndexed)
             }
             assertFalse(isNullable)
         }
