@@ -4055,8 +4055,9 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:linkingObjectsByList visibility:public modality:FINAL [delegated,val]
         FIELD PROPERTY_DELEGATE name:linkingObjectsByList$delegate type:io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> visibility:private [final]
           EXPRESSION_BODY
-            CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.BacklinksExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
+            CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.RealmObjectExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.RealmObjectExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.RealmObjectExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
               <T>: sample.input.Sample
+              $receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample' type=sample.input.Sample origin=null
               sourceProperty: PROPERTY_REFERENCE 'public final objectListField: io.realm.kotlin.types.RealmList<sample.input.Sample> [var]' field=null getter='public final fun <get-objectListField> (): io.realm.kotlin.types.RealmList<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectListField> (<set-?>: io.realm.kotlin.types.RealmList<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, io.realm.kotlin.types.RealmList<sample.input.Sample>> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsByList> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
           correspondingProperty: PROPERTY name:linkingObjectsByList visibility:public modality:FINAL [delegated,val]
@@ -4071,8 +4072,9 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:linkingObjectsBySet visibility:public modality:FINAL [delegated,val]
         FIELD PROPERTY_DELEGATE name:linkingObjectsBySet$delegate type:io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> visibility:private [final]
           EXPRESSION_BODY
-            CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.BacklinksExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
+            CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.RealmObjectExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.RealmObjectExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.RealmObjectExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
               <T>: sample.input.Sample
+              $receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample' type=sample.input.Sample origin=null
               sourceProperty: PROPERTY_REFERENCE 'public final objectSetField: io.realm.kotlin.types.RealmSet<sample.input.Sample> [var]' field=null getter='public final fun <get-objectSetField> (): io.realm.kotlin.types.RealmSet<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectSetField> (<set-?>: io.realm.kotlin.types.RealmSet<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, io.realm.kotlin.types.RealmSet<sample.input.Sample>> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsBySet> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
           correspondingProperty: PROPERTY name:linkingObjectsBySet visibility:public modality:FINAL [delegated,val]
@@ -4991,6 +4993,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in sample.input.Sample.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Sample' type=sample.input.Sample origin=null
+        PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private
+            EXPRESSION_BODY
+              CLASS_REFERENCE 'CLASS CLASS name:Sample modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]' type=sample.input.Sample
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.Sample.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private' type=kotlin.reflect.KClass<T of kotlin.reflect.KClass> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_class>' type=sample.input.Sample.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
             EXPRESSION_BODY
@@ -5531,8 +5546,9 @@ MODULE_FRAGMENT name:<main>
       PROPERTY name:linkingObjectsByObject visibility:public modality:FINAL [delegated,val]
         FIELD PROPERTY_DELEGATE name:linkingObjectsByObject$delegate type:io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> visibility:private [final]
           EXPRESSION_BODY
-            CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.BacklinksExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.BacklinksExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
+            CALL 'public final fun backlinks <T> (sourceProperty: kotlin.reflect.KProperty1<T of io.realm.kotlin.ext.RealmObjectExtKt.backlinks, *>): io.realm.kotlin.types.BacklinksDelegate<T of io.realm.kotlin.ext.RealmObjectExtKt.backlinks> [inline] declared in io.realm.kotlin.ext.RealmObjectExtKt' type=io.realm.kotlin.types.BacklinksDelegate<sample.input.Sample> origin=null
               <T>: sample.input.Sample
+              $receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child' type=sample.input.Child origin=null
               sourceProperty: PROPERTY_REFERENCE 'public final child: sample.input.Child? [var]' field=null getter='public final fun <get-child> (): sample.input.Child? declared in sample.input.Sample' setter='public final fun <set-child> (<set-?>: sample.input.Child?): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, sample.input.Child?> origin=null
         FUN DELEGATED_PROPERTY_ACCESSOR name:<get-linkingObjectsByObject> visibility:public modality:FINAL <> ($this:sample.input.Child) returnType:io.realm.kotlin.query.RealmResults<sample.input.Sample>
           correspondingProperty: PROPERTY name:linkingObjectsByObject visibility:public modality:FINAL [delegated,val]
@@ -5608,6 +5624,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in sample.input.Child.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.Child' type=sample.input.Child origin=null
+        PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private
+            EXPRESSION_BODY
+              CLASS_REFERENCE 'CLASS CLASS name:Child modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]' type=sample.input.Child
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.Child.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private' type=kotlin.reflect.KClass<T of kotlin.reflect.KClass> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_class>' type=sample.input.Child.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
             EXPRESSION_BODY
@@ -5820,6 +5849,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in sample.input.EmbeddedParent.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.EmbeddedParent' type=sample.input.EmbeddedParent origin=null
+        PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private
+            EXPRESSION_BODY
+              CLASS_REFERENCE 'CLASS CLASS name:EmbeddedParent modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]' type=sample.input.EmbeddedParent
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedParent.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedParent.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.EmbeddedParent.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private' type=kotlin.reflect.KClass<T of kotlin.reflect.KClass> origin=null
+                  receiver: GET_VAR '<this>: sample.input.EmbeddedParent.Companion declared in sample.input.EmbeddedParent.Companion.<get-io_realm_kotlin_class>' type=sample.input.EmbeddedParent.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
             EXPRESSION_BODY
@@ -6025,6 +6067,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in sample.input.EmbeddedChild.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in sample.input.EmbeddedChild' type=sample.input.EmbeddedChild origin=null
+        PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private
+            EXPRESSION_BODY
+              CLASS_REFERENCE 'CLASS CLASS name:EmbeddedChild modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.EmbeddedRealmObject; io.realm.kotlin.internal.RealmObjectInternal]' type=sample.input.EmbeddedChild
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedChild.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedChild.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in sample.input.EmbeddedChild.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private' type=kotlin.reflect.KClass<T of kotlin.reflect.KClass> origin=null
+                  receiver: GET_VAR '<this>: sample.input.EmbeddedChild.Companion declared in sample.input.EmbeddedChild.Companion.<get-io_realm_kotlin_class>' type=sample.input.EmbeddedChild.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
             EXPRESSION_BODY

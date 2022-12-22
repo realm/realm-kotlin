@@ -24,8 +24,10 @@ import io.realm.kotlin.entities.backlink.Child
 import io.realm.kotlin.entities.backlink.EmbeddedChild
 import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
+import io.realm.kotlin.entities.backlink.Parent2
 import io.realm.kotlin.entities.backlink.Recursive
 import io.realm.kotlin.exceptions.RealmException
+import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -55,7 +57,15 @@ class BacklinksTests {
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
         val configuration =
-            RealmConfiguration.Builder(setOf(Parent::class, Child::class, Recursive::class, EmbeddedChild::class))
+            RealmConfiguration.Builder(
+                setOf(
+                    Parent::class,
+                    Parent2::class,
+                    Child::class,
+                    Recursive::class,
+                    EmbeddedChild::class
+                )
+            )
                 .directory(tmpDir)
                 .build()
 
@@ -378,5 +388,156 @@ class BacklinksTests {
 
         assertEquals(1, parent.embeddedChildren.size)
         assertEquals(parent.embeddedChild!!.id, parent.embeddedChildren.first().id)
+    }
+
+    @Test
+    fun linkingNull() {
+        val parent = realm.writeBlocking { copyToRealm(Parent()) }
+
+        assertFailsWithMessage<IllegalArgumentException>("Target property 'parents' not defined in 'Parent'.") {
+            parent.backlinks(EmbeddedChild::parent).getValue(parent, Child::parents)
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("Target property 'embeddedChild' is not a backlink property.") {
+            parent.backlinks(EmbeddedChild::parent).getValue(parent, Parent::embeddedChild)
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("Target property type 'EmbeddedChild' does not match backlink type 'Parent'.") {
+            parent.backlinks(Parent::child).getValue(parent, Parent::embeddedChildren)
+        }
+    }
+
+    @Test
+    fun linkingObjects_namedQueries() {
+        val parent = realm.writeBlocking {
+            copyToRealm(
+                Parent().also { parent ->
+                    parent.child = Child()
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<Child>("@links.Parent.child.id == $0", parent.id).count().find()
+        )
+    }
+
+    @Test
+    fun linkingObjects_namedQueriesRecursive() {
+        val recursive = realm.writeBlocking {
+            copyToRealm(
+                Recursive().also { parent ->
+                    parent.recursiveField = parent
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<Recursive>("@links.Recursive.recursiveField.name == $0", recursive.name).count().find()
+        )
+    }
+
+    @Test
+    fun linkingEmbeddedObjects_unnamedLinkQueries() {
+        val parent1 = realm.writeBlocking {
+            copyToRealm(
+                Parent(0).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        val parent2 = realm.writeBlocking {
+            copyToRealm(
+                Parent2(1).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("@links.Parent.embeddedChild.id == $0", parent1.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("@links.Parent.embeddedChild.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("@links.Parent2.embeddedChild.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("@links.Parent2.embeddedChild.id == $0", parent1.id).count().find()
+        )
+    }
+
+    @Test
+    fun embeddedBacklinks() {
+        val parent1 = realm.writeBlocking {
+            copyToRealm(
+                Parent(0).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        val parent2 = realm.writeBlocking {
+            copyToRealm(
+                Parent2(1).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        assertEquals(parent1.id, parent1.embeddedChild!!.parentViaBacklinks.id)
+        assertEquals(parent2.id, parent2.embeddedChild!!.parent2ViaBacklinks.id)
+
+        assertFailsWithMessage<IllegalStateException>("Backlink 'parentViaBacklinks' is not an instance of target property type 'Parent'.") {
+            parent2.embeddedChild!!.parentViaBacklinks
+        }
+
+        assertFailsWithMessage<IllegalStateException>("Backlink 'parent2ViaBacklinks' is not an instance of target property type 'Parent2'.") {
+            parent1.embeddedChild!!.parent2ViaBacklinks
+        }
+    }
+
+    @Test
+    fun linkingEmbeddedObjects_namedLinkQueries() {
+        val parent1 = realm.writeBlocking {
+            copyToRealm(
+                Parent(0).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        val parent2 = realm.writeBlocking {
+            copyToRealm(
+                Parent2(1).also { parent ->
+                    parent.embeddedChild = EmbeddedChild()
+                }
+            )
+        }
+
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("parentViaBacklinks.id == $0", parent1.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("parentViaBacklinks.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            1,
+            realm.query<EmbeddedChild>("parent2ViaBacklinks.id == $0", parent2.id).count().find()
+        )
+        assertEquals(
+            0,
+            realm.query<EmbeddedChild>("parent2ViaBacklinks.id == $0", parent1.id).count().find()
+        )
     }
 }

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalStdlibApi::class)
 package io.realm.kotlin.test
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
@@ -37,6 +36,7 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
@@ -109,6 +109,8 @@ class InstrumentedTests {
                         get() = TODO("Not yet implemented")
                     override val properties: List<PropertyMetadata>
                         get() = TODO("Not yet implemented")
+                    override val clazz: KClass<out TypedRealmObject>?
+                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
                     override val primaryKeyProperty: PropertyMetadata?
@@ -124,6 +126,10 @@ class InstrumentedTests {
                     override fun get(propertyName: String): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
+                }
+
+                override fun get(classKey: ClassKey): ClassMetadata? {
+                    TODO("Not yet implemented")
                 }
             }
     }

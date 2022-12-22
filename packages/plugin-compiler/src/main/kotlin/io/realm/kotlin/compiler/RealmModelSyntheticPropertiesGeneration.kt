@@ -42,6 +42,7 @@ import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
 import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_IS_EMBEDDED
@@ -76,6 +77,7 @@ import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
@@ -85,9 +87,11 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.constructors
@@ -223,14 +227,29 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     @Suppress("LongMethod")
     fun addCompanionFields(
-        className: String,
+        clazz: IrClass,
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
+        val className = clazz.name.identifier
         val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_CLASS_MEMBER,
+            pluginContext.irBuiltIns.kClassClass.defaultType
+        ) { startOffset, endOffset ->
+            IrClassReferenceImpl(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                type = clazz.symbol.starProjectedType,
+                symbol = clazz.symbol,
+                classType = clazz.defaultType
+            )
+        }
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,

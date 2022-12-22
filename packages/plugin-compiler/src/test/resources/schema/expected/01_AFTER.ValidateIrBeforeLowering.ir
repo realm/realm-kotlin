@@ -49,6 +49,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.A.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.A' type=schema.input.A origin=null
+        PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private
+            EXPRESSION_BODY
+              CLASS_REFERENCE 'CLASS CLASS name:A modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]' type=schema.input.A
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in schema.input.A.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private' type=kotlin.reflect.KClass<T of kotlin.reflect.KClass> origin=null
+                  receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_class>' type=schema.input.A.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
             EXPRESSION_BODY
@@ -188,6 +201,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.B.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.B' type=schema.input.B origin=null
+        PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private
+            EXPRESSION_BODY
+              CLASS_REFERENCE 'CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]' type=schema.input.B
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in schema.input.B.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private' type=kotlin.reflect.KClass<T of kotlin.reflect.KClass> origin=null
+                  receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_class>' type=schema.input.B.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
             EXPRESSION_BODY
@@ -327,6 +353,19 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.C.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.C' type=schema.input.C origin=null
+        PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private
+            EXPRESSION_BODY
+              CLASS_REFERENCE 'CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]' type=schema.input.C
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_class> visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:kotlin.reflect.KClass<T of kotlin.reflect.KClass>
+            correspondingProperty: PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
+            overridden:
+              public abstract fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<out io.realm.kotlin.types.TypedRealmObject> declared in io.realm.kotlin.internal.RealmObjectCompanion
+            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
+            BLOCK_BODY
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_class> (): kotlin.reflect.KClass<T of kotlin.reflect.KClass> declared in schema.input.C.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<T of kotlin.reflect.KClass> visibility:private' type=kotlin.reflect.KClass<T of kotlin.reflect.KClass> origin=null
+                  receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_class>' type=schema.input.C.Companion origin=null
         PROPERTY name:io_realm_kotlin_className visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private
             EXPRESSION_BODY

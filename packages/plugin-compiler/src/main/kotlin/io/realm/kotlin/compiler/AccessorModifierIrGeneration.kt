@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
+import io.realm.kotlin.compiler.FqNames.REALM_EMBEDDED_BACKLINKS
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
 import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
@@ -94,6 +95,7 @@ import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -115,6 +117,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
     private val realmBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_BACKLINKS)
+    private val realmEmbeddedBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_EMBEDDED_BACKLINKS)
     private val realmObjectInterface = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE).symbol
     private val embeddedRealmObjectInterface = pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE).symbol
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
@@ -416,7 +419,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             toRealmValue = null
                         )
                     }
-                    propertyType.isLinkingObject() -> {
+                    propertyType.isEmbeddedLinkingObject() || propertyType.isLinkingObject() -> {
                         getBacklinksTargetPropertyType(declaration)?.let { targetPropertyType ->
                             val sourceType: IrSimpleType = irClass.defaultType
 
@@ -843,8 +846,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun IrType.isLinkingObject(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
-        val realmBacklinksClassId = realmBacklinksClass.descriptor.classId
+        val realmBacklinksClassId: ClassId? = realmBacklinksClass.descriptor.classId
         return propertyClassId == realmBacklinksClassId
+    }
+
+    private fun IrType.isEmbeddedLinkingObject(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmEmbeddedBacklinksClassId: ClassId? = realmEmbeddedBacklinksClass.descriptor.classId
+        return propertyClassId == realmEmbeddedBacklinksClassId
     }
 
     private fun IrType.isObjectId(): Boolean {
