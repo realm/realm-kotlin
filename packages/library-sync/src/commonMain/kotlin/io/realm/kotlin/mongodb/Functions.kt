@@ -66,7 +66,7 @@ public interface Functions {
      * @param T The type for the functions response.
      * @return Result of the function.
      *
-     * @throws FunctionExecutionException if the request failed in some way.
+     * @throws FunctionExecutionException if the function failed in some way.
      */
     public suspend fun <T : Any?> call(
         name: String,
