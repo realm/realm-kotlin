@@ -62,7 +62,7 @@ public fun <T : TypedRealmObject> EmbeddedRealmObject.parent(parentClass: KClass
         RealmInterop.realm_object_get_parent(
             objectPointer
         ) { classKey: ClassKey, objectPointer: NativePointer<RealmObjectT> ->
-            val sourceClassMetadata = owner.schemaMetadata[classKey] ?: throw IllegalArgumentException("Parent class not defined in the Realm schema.")
+            val sourceClassMetadata = owner.schemaMetadata[classKey] ?: throw IllegalArgumentException("Parent class not defined in the Realm schema: ${parentClass. qualifiedName}")
 
             @Suppress("UNCHECKED_CAST")
             val sourceClass = (sourceClassMetadata.clazz!! as KClass<T>)
