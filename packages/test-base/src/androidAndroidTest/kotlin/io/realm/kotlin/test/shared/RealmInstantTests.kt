@@ -6,11 +6,13 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
+import kotlinx.coroutines.delay
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -20,6 +22,8 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RealmInstantTests {
 
@@ -167,16 +171,29 @@ class RealmInstantTests {
         assertEquals("RealmInstant(epochSeconds=42, nanosecondsOfSecond=420)", ts.toString())
     }
 
-    /**
-     * When this method was implemented the unix epoch time was 1664980145.
-     * Nanoseconds are too granular to perform tests on especially since the
-     * darwin implementation rounds the timestamp to a precision of milliseconds.
-     */
     @Test
     fun now() {
-        val ts = RealmInstant.now()
-        assertTrue(ts.epochSeconds > 1664980145)
-        assertTrue(ts.nanosecondsOfSecond >= 0)
+        runBlocking {
+            // Get two different instants with some time in between calls
+            val ts1 = RealmInstant.now()
+            delay(100.milliseconds)
+            val ts2 = RealmInstant.now()
+
+            // When this method was implemented the unix epoch time was 1664980145.
+            // Nanoseconds are too granular to perform tests on especially since the
+            // Darwin implementation rounds the timestamp to a precision of milliseconds.
+            val baselineEpoch = 1664980145
+            assertTrue(ts1.epochSeconds > baselineEpoch)
+            assertTrue(ts1.nanosecondsOfSecond >= 0)
+            assertTrue(ts2.epochSeconds > baselineEpoch)
+            assertTrue(ts2.nanosecondsOfSecond >= 0)
+
+            // Assert the second instant is greater than the first one, also using Duration
+            assertTrue(ts2 > ts1)
+            val duration1 = ts1.epochSeconds.seconds + ts1.nanosecondsOfSecond.nanoseconds
+            val duration2 = ts2.epochSeconds.seconds + ts2.nanosecondsOfSecond.nanoseconds
+            assertTrue(duration2 > duration1)
+        }
     }
 
     @Test
