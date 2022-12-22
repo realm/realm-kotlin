@@ -107,22 +107,33 @@ public class AppConfigurationImpl constructor(
     private fun initializeSyncClientConfig(): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
-                // TODO use separate logger for sync or piggyback on config's?
-                val syncLogger = createDefaultSystemLogger("SYNC", log.logLevel)
-
                 // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_log_level(
+                    syncClientConfig,
+                    CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
+                )
+
+                // TODO Redirect all Sync logs to the App configured logger. This makes it
+                //  impossible to configure a different TAG for these logs. Previously
+                //  these logs had a `SYNC` tag in contrast to the `REALM` tag used by the database.
+                //  A redesign of this should also take into account that unified error logging
+                //  is also coming in Core.
                 RealmInterop.realm_sync_client_config_set_log_callback(
                     syncClientConfig,
                     object : SyncLogCallback {
                         override fun log(logLevel: Short, message: String?) {
-                            val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)
-                            syncLogger.log(LogLevel.fromCoreLogLevel(coreLogLevel), message ?: "")
+                            when (val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)) {
+                                CoreLogLevel.RLM_LOG_LEVEL_TRACE -> log.trace(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_DEBUG -> log.debug(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_DETAIL -> log.debug(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_INFO -> log.info(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_WARNING -> log.warn(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_ERROR -> log.error(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_FATAL -> log.error(message ?: "")
+                                else -> throw IllegalStateException("Unsupported level: $coreLogLevel")
+                            }
                         }
                     }
-                )
-                RealmInterop.realm_sync_client_config_set_log_level(
-                    syncClientConfig,
-                    CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
                 )
                 RealmInterop.realm_sync_client_config_set_metadata_mode(
                     syncClientConfig,

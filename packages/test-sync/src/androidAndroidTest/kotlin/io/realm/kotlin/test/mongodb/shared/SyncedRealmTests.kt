@@ -32,6 +32,7 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -1297,6 +1298,63 @@ class SyncedRealmTests {
             flexApp.close()
         }
         Unit
+    }
+
+    /**
+     * Logged collecting all logs it has seen.
+     */
+    private class CustomLogCollector(
+        override val tag: String,
+        override val level: LogLevel
+    ) : RealmLogger {
+
+        private val _logs = mutableListOf<String>()
+        public val logs: List<String>
+            get() = _logs
+
+        override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+            val logMessage: String = message!!
+            _logs.add(logMessage)
+        }
+    }
+
+    @Test
+    fun customLoggersReceiveSyncLogs() = runBlocking {
+        val customLogger = CustomLogCollector("CUSTOM", LogLevel.DEBUG)
+        val section = Random.nextInt()
+        val flexApp = TestApp(
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+                it.log(level = LogLevel.DEBUG, listOf(customLogger))
+            }
+        )
+        val (email, password) = randomEmail() to "password1234"
+        val user = flexApp.createUserAndLogIn(email, password)
+        val syncConfig = createFlexibleSyncConfig(
+            user = user,
+            name = "flex.realm",
+            initialSubscriptions = { realm: Realm ->
+                realm.query<FlexParentObject>("section = $0", section).subscribe()
+            }
+        )
+        Realm.open(syncConfig).use { flexSyncRealm: Realm ->
+            flexSyncRealm.writeBlocking {
+                copyToRealm(
+                    FlexParentObject().apply {
+                        name = "local object"
+                    }
+                )
+            }
+            flexSyncRealm.syncSession.uploadAllLocalChanges()
+        }
+        assertTrue(customLogger.logs.isNotEmpty())
+        assertTrue(
+            customLogger.logs
+                .filter { it.contains("Connection[1]: Negotiated protocol version:") }
+                .isNotEmpty()
+        )
+        flexApp.close()
     }
 
 //    @Test
