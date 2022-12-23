@@ -22,7 +22,10 @@ import org.jetbrains.kotlin.name.Name
 internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "io_realm_kotlin_"
 
-    val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
+    val REALM_OBJECT_COMPANION_CLASS_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}class")
+    val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
@@ -111,6 +114,7 @@ internal object FqNames {
     val REALM_SET = FqName("io.realm.kotlin.types.RealmSet")
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
     val REALM_BACKLINKS = FqName("io.realm.kotlin.types.BacklinksDelegate")
+    val REALM_EMBEDDED_BACKLINKS = FqName("io.realm.kotlin.types.EmbeddedBacklinksDelegate")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
     val KBSON_OBJECT_ID = FqName("org.mongodb.kbson.BsonObjectId")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")

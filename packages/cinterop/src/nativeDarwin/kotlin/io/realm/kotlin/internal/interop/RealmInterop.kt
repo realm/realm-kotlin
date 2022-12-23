@@ -93,6 +93,7 @@ import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_app_user_apikey_t
 import realm_wrapper.realm_binary_t
 import realm_wrapper.realm_class_info_t
+import realm_wrapper.realm_class_key_tVar
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
 import realm_wrapper.realm_error_t
@@ -852,6 +853,29 @@ actual object RealmInterop {
 
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
         checkedBooleanResult(realm_wrapper.realm_object_add_int(obj.cptr(), key.key, value))
+    }
+
+    actual fun <T> realm_object_get_parent(
+        obj: RealmObjectPointer,
+        block: (ClassKey, RealmObjectPointer) -> T
+    ): T {
+        memScoped {
+            val objectPointerArray = allocArray<CPointerVar<realm_object_t>>(1)
+            val classKeyPointerArray = allocArray<realm_class_key_tVar>(1)
+
+            checkedBooleanResult(
+                realm_wrapper.realm_object_get_parent(
+                    `object` = obj.cptr(),
+                    parent = objectPointerArray,
+                    class_key = classKeyPointerArray
+                )
+            )
+
+            val classKey = ClassKey(classKeyPointerArray[0].toLong())
+            val objectPointer = CPointerWrapper<RealmObjectT>(objectPointerArray[0])
+
+            return block(classKey, objectPointer)
+        }
     }
 
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
