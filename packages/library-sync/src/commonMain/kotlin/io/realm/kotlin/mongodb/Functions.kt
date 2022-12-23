@@ -17,6 +17,7 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
+import io.realm.kotlin.mongodb.internal.DefaultConverter
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.serializer
@@ -24,6 +25,7 @@ import kotlinx.serialization.serializerOrNull
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
+import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 
 /**
@@ -73,6 +75,14 @@ public interface Functions {
         deserializationStrategy: DeserializationStrategy<T>,
         vararg args: Any?,
     ): T
+
+    public suspend fun call(name: String, arg: BsonValue): BsonValue
+    public suspend fun <T : Any?> call(name: String, vararg args: Any?, clazz: KClass<T & Any>, converter: BsonConverter = DefaultConverter): T
+}
+
+public interface BsonConverter {
+    public fun <T : Any?> fromBsonValue(bsonValue: BsonValue, clazz: KClass<T & Any>): T
+    public fun toBsonValue(value: Any?): BsonValue
 }
 
 /**
@@ -80,7 +90,18 @@ public interface Functions {
  *
  * Reified convenience wrapper of [Functions.call].
  */
-public suspend inline fun <reified T : Any?> Functions.call(
+public suspend inline fun <reified T : Any> Functions.call(
+    name: String,
+    vararg args: Any?
+): T = call<T>(
+    name = name,
+    args = *args,
+    clazz = T::class
+)
+// FIXME Discuss if we really want to expose deserializerStrategy based interface when we basically
+//  don't use the serializers. Could might as well just do a KType based interface or use the above
+//  simplified BsonConverter ... but somehow mark it @Beta/@OptIn
+public suspend inline fun <reified T : Any> Functions.call2(
     name: String,
     vararg args: Any?
 ): T = call<T>(

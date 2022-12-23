@@ -28,8 +28,8 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlin.time.Duration.Companion.milliseconds
 
-internal object RealmUUIDSerializer : KSerializer<RealmUUID> {
-    private val serializer = ByteArraySerializer()
+public object RealmUUIDSerializer : KSerializer<RealmUUID> {
+    public val serializer: KSerializer<ByteArray> = ByteArraySerializer()
 
     override val descriptor: SerialDescriptor = serializer.descriptor
 

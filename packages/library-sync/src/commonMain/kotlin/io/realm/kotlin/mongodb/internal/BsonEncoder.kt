@@ -266,7 +266,7 @@ public object BsonEncoder {
     )
 
     @Suppress("ComplexMethod")
-    private fun toBsonValue(value: Any?): BsonValue {
+    internal fun toBsonValue(value: Any?): BsonValue {
         return when (value) {
             is Byte -> BsonInt32(value.toInt())
             is Short -> BsonInt32(value.toInt())
