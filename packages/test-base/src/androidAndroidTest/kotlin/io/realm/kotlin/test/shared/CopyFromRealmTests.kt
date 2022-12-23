@@ -23,6 +23,7 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.embedded.EmbeddedChild
 import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.copyFromRealm
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.query
@@ -147,6 +148,73 @@ class CopyFromRealmTests {
         val innerCopy = unmanagedObj.nullableObject!!
         assertFalse(innerCopy.isManaged())
         assertEquals("inner", innerCopy.stringField)
+    }
+
+    @Test
+    fun realmAny_realmObjectReferences() {
+        val inner = Sample().apply { stringField = "inner" }
+
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(Sample().apply { nullableRealmAnyField = RealmAny.create(inner) })
+        }
+        val unmanagedObj = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        val realmAnyField = unmanagedObj.nullableRealmAnyField
+        assertNotNull(realmAnyField)
+        val innerObjectInsideRealmAny = realmAnyField.asRealmObject<Sample>()
+        assertNotNull(innerObjectInsideRealmAny)
+        assertFalse(innerObjectInsideRealmAny.isManaged())
+        assertEquals(inner.stringField, innerObjectInsideRealmAny.stringField)
+    }
+
+    @Test
+    fun realmAny_list_realmObjectReferences() {
+        val inner = Sample().apply { stringField = "inner" }
+
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(Sample().apply { nullableRealmAnyListField = realmListOf(RealmAny.create(inner)) })
+        }
+        val unmanagedObj = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        val realmAnyListField = unmanagedObj.nullableRealmAnyListField
+        assertNotNull(realmAnyListField)
+        assertEquals(1, realmAnyListField.size)
+        val realmAny = assertNotNull(realmAnyListField[0])
+        val innerObjectInsideRealmAny = realmAny.asRealmObject<Sample>()
+        assertNotNull(innerObjectInsideRealmAny)
+        assertFalse(innerObjectInsideRealmAny.isManaged())
+        assertEquals(inner.stringField, innerObjectInsideRealmAny.stringField)
+    }
+
+    @Test
+    fun realmAny_set_realmObjectReferences() {
+        val inner = Sample().apply { stringField = "inner" }
+
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(Sample().apply { nullableRealmAnySetField = realmSetOf(RealmAny.create(inner)) })
+        }
+        val unmanagedObj = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        val realmAnySetField = unmanagedObj.nullableRealmAnySetField
+        assertNotNull(realmAnySetField)
+        assertEquals(1, realmAnySetField.size)
+        val realmAny = assertNotNull(realmAnySetField.iterator().next())
+        val innerObjectInsideRealmAny = realmAny.asRealmObject<Sample>()
+        assertNotNull(innerObjectInsideRealmAny)
+        assertFalse(innerObjectInsideRealmAny.isManaged())
+        assertEquals(inner.stringField, innerObjectInsideRealmAny.stringField)
     }
 
     @Test

@@ -1106,8 +1106,29 @@ internal object RealmObjectHelper {
                             accessor.set(target, value)
                         }
                     }
+                    PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                        val value = accessor.get(source) as RealmAny?
+                        if (value?.type == RealmAny.Type.OBJECT) {
+                            if (currentDepth == maxDepth) {
+                                accessor.set(target, null)
+                            } else {
+                                val detachedObject = createDetachedCopy(
+                                    mediator,
+                                    value.asRealmObject(),
+                                    currentDepth + 1u,
+                                    maxDepth,
+                                    closeAfterCopy,
+                                    cache
+                                ) as RealmObject
+                                accessor.set(target, RealmAny.create(detachedObject))
+                            }
+                        } else {
+                            accessor.set(target, value)
+                        }
+                    }
                     else -> {
-                        accessor.set(target, accessor.get(source))
+                        val value = accessor.get(source)
+                        accessor.set(target, value)
                     }
                 }
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> {
@@ -1123,6 +1144,28 @@ internal object RealmObjectHelper {
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                         PropertyType.RLM_PROPERTY_TYPE_UUID -> {
                             accessor.set(target, elements.toRealmList())
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                            val detachedRealmAnyList = (elements as List<RealmAny?>).map { value ->
+                                if (value?.type == RealmAny.Type.OBJECT) {
+                                    if (currentDepth < maxDepth) {
+                                        val detachedObject = createDetachedCopy(
+                                            mediator,
+                                            value.asRealmObject(),
+                                            currentDepth + 1u,
+                                            maxDepth,
+                                            closeAfterCopy,
+                                            cache
+                                        ) as RealmObject
+                                        RealmAny.create(detachedObject)
+                                    } else {
+                                        null
+                                    }
+                                } else {
+                                    value
+                                }
+                            }
+                            accessor.set(target, detachedRealmAnyList.toRealmList())
                         }
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                             val list = UnmanagedRealmList<BaseRealmObject>()
@@ -1141,9 +1184,6 @@ internal object RealmObjectHelper {
                                 }
                             }
                             accessor.set(target, list)
-                        }
-                        PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
-                            accessor.set(target, elements.toRealmList())
                         }
                         else -> {
                             throw IllegalStateException("Unknown type: ${property.type}")
@@ -1164,6 +1204,28 @@ internal object RealmObjectHelper {
                         PropertyType.RLM_PROPERTY_TYPE_UUID -> {
                             accessor.set(target, elements.toRealmSet())
                         }
+                        PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                            val detachedRealmAnySet = (elements as Set<RealmAny?>).map { value ->
+                                if (value?.type == RealmAny.Type.OBJECT) {
+                                    if (currentDepth < maxDepth) {
+                                        val detachedObject = createDetachedCopy(
+                                            mediator,
+                                            value.asRealmObject(),
+                                            currentDepth + 1u,
+                                            maxDepth,
+                                            closeAfterCopy,
+                                            cache
+                                        ) as RealmObject
+                                        RealmAny.create(detachedObject)
+                                    } else {
+                                        null
+                                    }
+                                } else {
+                                    value
+                                }
+                            }
+                            accessor.set(target, detachedRealmAnySet.toRealmSet())
+                        }
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
                             val set = UnmanagedRealmSet<BaseRealmObject>()
                             if (currentDepth < maxDepth) {
@@ -1181,9 +1243,6 @@ internal object RealmObjectHelper {
                                 }
                             }
                             accessor.set(target, set)
-                        }
-                        PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
-                            accessor.set(target, elements.toRealmSet())
                         }
                         else -> {
                             throw IllegalStateException("Unknown type: ${property.type}")
