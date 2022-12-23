@@ -505,6 +505,7 @@ class BacklinksTests {
         }
     }
 
+    @Ignore
     @Test
     fun linkingEmbeddedObjects_namedLinkQueries() {
         val parent1 = realm.writeBlocking {
