@@ -20,6 +20,7 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.ExperimentalApi
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
@@ -155,6 +156,7 @@ class FunctionsTests {
     }
 
     // Facilitates debugging by executing the functions on its own block.
+    @OptIn(ExperimentalApi::class)
     private inline fun <reified T : Any?> Functions.callBlocking(
         name: String,
         vararg args: Any?,
@@ -484,6 +486,7 @@ class FunctionsTests {
     fun unknownFunction() {
         assertFailsWithMessage<FunctionExecutionException>("function not found: 'unknown'") {
             runBlocking {
+                @OptIn(ExperimentalApi::class)
                 functions.call<String>("unknown", 32)
             }
         }
@@ -513,6 +516,7 @@ class FunctionsTests {
     @Test
     fun callFunction_sum() {
         runBlocking {
+            @OptIn(ExperimentalApi::class)
             assertEquals(10, functions.call<Int>(SUM_FUNCTION.name, 1, 2, 3, 4))
         }
     }
@@ -521,6 +525,7 @@ class FunctionsTests {
     fun callFunction_remoteError() {
         assertFailsWithMessage<FunctionExecutionException>("ReferenceError: 'unknown' is not defined") {
             runBlocking {
+                @OptIn(ExperimentalApi::class)
                 functions.call<String>(ERROR_FUNCTION.name)
             }
         }
@@ -529,6 +534,7 @@ class FunctionsTests {
     @Test
     fun callFunction_null() {
         runBlocking {
+            @OptIn(ExperimentalApi::class)
             assertTrue(functions.call<BsonNull>(NULL_FUNCTION.name, emptyList<Any>()).isNull())
         }
     }
@@ -536,6 +542,7 @@ class FunctionsTests {
     @Test
     fun callFunction_void() {
         runBlocking {
+            @OptIn(ExperimentalApi::class)
             assertEquals(BsonType.UNDEFINED, functions.call<BsonUndefined>(VOID_FUNCTION.name).bsonType)
         }
     }
@@ -547,6 +554,7 @@ class FunctionsTests {
         }
         assertFailsWithMessage<ServiceException>("[Service][Unknown(-1)] expected Authorization header with JWT") {
             runBlocking {
+                @OptIn(ExperimentalApi::class)
                 functions.call(FIRST_ARG_FUNCTION.name, 1, 2, 3)
             }
         }
@@ -558,6 +566,7 @@ class FunctionsTests {
         // Not allow for anonymous user
         assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionExecutionError(14)] rule not matched for function \"authorizedOnly\"") {
             runBlocking {
+                @OptIn(ExperimentalApi::class)
                 functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3)
             }
         }
@@ -568,6 +577,7 @@ class FunctionsTests {
                 email = "authorizeduser@example.org",
                 password = "asdfasdf"
             )
+            @OptIn(ExperimentalApi::class)
             assertNotNull(authorizedUser.functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3))
         }
     }

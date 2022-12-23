@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.ExperimentalApi
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.toDuration
@@ -64,6 +65,7 @@ internal class FunctionsImpl(
     override val user: UserImpl
 ) : Functions {
 
+    @ExperimentalApi
     override suspend fun call(name: String, arg: BsonValue): BsonValue =
         Channel<Result<BsonValue>>(1).use { channel ->
             RealmInterop.realm_app_call_function(
@@ -76,6 +78,7 @@ internal class FunctionsImpl(
             return channel.receive().getOrThrow()
         }
 
+    @ExperimentalApi
     override suspend fun <T : Any?> call(
         name: String,
         vararg args: Any?,
@@ -107,6 +110,7 @@ internal class FunctionsImpl(
     }
 }
 
+@OptIn(ExperimentalApi::class)
 internal object DefaultConverter : BsonConverter {
     private fun Collection<*>.asBsonArray(): BsonArray =
         BsonArray(map { BsonEncoder.toBsonValue(it) })

@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.mongodb
 
+import io.realm.kotlin.ExperimentalApi
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.DefaultConverter
@@ -76,10 +77,13 @@ public interface Functions {
         vararg args: Any?,
     ): T
 
+    @ExperimentalApi
     public suspend fun call(name: String, arg: BsonValue): BsonValue
+    @ExperimentalApi
     public suspend fun <T : Any?> call(name: String, vararg args: Any?, clazz: KClass<T & Any>, converter: BsonConverter = DefaultConverter): T
 }
 
+@ExperimentalApi
 public interface BsonConverter {
     public fun <T : Any?> fromBsonValue(bsonValue: BsonValue, clazz: KClass<T & Any>): T
     public fun toBsonValue(value: Any?): BsonValue
@@ -90,6 +94,7 @@ public interface BsonConverter {
  *
  * Reified convenience wrapper of [Functions.call].
  */
+@ExperimentalApi
 public suspend inline fun <reified T : Any> Functions.call(
     name: String,
     vararg args: Any?
