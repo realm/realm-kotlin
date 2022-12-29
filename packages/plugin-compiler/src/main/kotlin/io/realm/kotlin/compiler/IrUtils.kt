@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
+import io.realm.kotlin.compiler.FqNames.PERSISTED_NAME_ANNOTATION
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -67,6 +68,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrWhenImpl
+import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
@@ -275,8 +277,29 @@ data class SchemaProperty(
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null
 ) {
-    val isComputed
-        get() = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+    val isComputed = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+    val hasPersistedNameAnnotation = declaration.backingField != null && declaration.hasAnnotation(PERSISTED_NAME_ANNOTATION)
+    val persistedName: String
+    val publicName: String
+
+    init {
+        if (hasPersistedNameAnnotation) {
+            // Set the persisted name to the name passed to `@PersistedName`
+            persistedName = getPersistedName(declaration)
+            // Set the public name to the original Kotlin name
+            publicName = declaration.name.identifier
+        } else {
+            persistedName = declaration.name.identifier
+            publicName = ""
+        }
+    }
+
+    companion object {
+        fun getPersistedName(declaration: IrProperty): String {
+            @Suppress("UNCHECKED_CAST")
+            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+        }
+    }
 }
 
 // ------------------------------------------------------------------------------
@@ -514,10 +537,15 @@ fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
     }
 }
 
-fun getLinkingObjectPropertyName(backingField: IrField): Name {
+fun getLinkingObjectPropertyName(backingField: IrField): String {
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
-        return propertyReference.referencedName
+        val targetProperty = propertyReference.symbol.owner
+        return if (targetProperty.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
+            SchemaProperty.getPersistedName(targetProperty)
+        } else {
+            propertyReference.referencedName.identifier
+        }
     }
 }
 

@@ -105,6 +105,7 @@ internal object FqNames {
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PrimaryKey")
     val INDEX_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Ignore")
+    val PERSISTED_NAME_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PersistedName")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
 

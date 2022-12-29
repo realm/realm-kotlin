@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.annotations.PersistedName
 import org.mongodb.kbson.BsonObjectId
 import java.util.*
 
@@ -135,12 +136,25 @@ class Sample : RealmObject {
     val linkingObjectsByList by backlinks(Sample::objectListField)
     val linkingObjectsBySet by backlinks(Sample::objectSetField)
 
+    // @PersistedName annotations
+    // Using positional argument
+    @PersistedName("persistedNameStringField")
+    var publicNameStringField: String? = ""
+    // Using named argument
+    @PersistedName(name = "persistedNameChildField")
+    var publicNameChildField: Child? = null
+    @PersistedName("persistedNameLinkingObjectsField")
+    val publicNameLinkingObjectsField by backlinks(Sample::objectSetField)
+
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
 
 class Child : RealmObject {
     var name: String? = "Child-default"
     val linkingObjectsByObject by backlinks(Sample::child)
+
+    @PersistedName(name = "persistedNameParent")
+    val publicNameParent by backlinks(Sample::publicNameChildField)
 }
 
 class EmbeddedParent : RealmObject {
