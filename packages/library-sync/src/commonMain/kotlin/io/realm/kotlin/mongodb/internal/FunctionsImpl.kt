@@ -19,18 +19,18 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions
 import kotlinx.coroutines.channels.Channel
-import kotlinx.serialization.DeserializationStrategy
 import org.mongodb.kbson.serialization.Bson
+import kotlin.reflect.KType
 
 internal class FunctionsImpl(
     override val app: AppImpl,
     override val user: UserImpl
 ) : Functions {
-    override suspend fun <T : Any?> call(
+    override suspend fun <T> call(
         name: String,
-        deserializationStrategy: DeserializationStrategy<T>,
+        type: KType,
         vararg args: Any?
-    ): T = Channel<Result<T>>(1).use { channel ->
+    ): T = Channel<Result<Any?>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
@@ -40,11 +40,13 @@ internal class FunctionsImpl(
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T
                 BsonEncoder.decodeFromBsonValue(
-                    deserializationStrategy = deserializationStrategy,
+                    type = type,
                     bsonValue = Bson(ejsonEncodedObject)
                 )
             }
         )
-        return channel.receive().getOrThrow()
+
+        @Suppress("UNCHECKED_CAST")
+        return channel.receive().getOrThrow() as T
     }
 }

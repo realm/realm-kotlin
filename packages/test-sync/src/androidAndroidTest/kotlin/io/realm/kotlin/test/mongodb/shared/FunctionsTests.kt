@@ -155,7 +155,7 @@ class FunctionsTests {
     }
 
     // Facilitates debugging by executing the functions on its own block.
-    private inline fun <reified T : Any?> Functions.callBlocking(
+    private inline fun <reified T> Functions.callBlocking(
         name: String,
         vararg args: Any?,
     ): T = runBlocking {

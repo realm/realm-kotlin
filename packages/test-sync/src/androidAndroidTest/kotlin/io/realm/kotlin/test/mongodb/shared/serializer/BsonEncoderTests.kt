@@ -19,9 +19,6 @@
 package io.realm.kotlin.test.mongodb.shared.serializer
 
 import io.realm.kotlin.internal.ObjectIdImpl
-import io.realm.kotlin.internal.RealmInstantImpl
-import io.realm.kotlin.internal.RealmUUIDImpl
-import io.realm.kotlin.internal.UnmanagedMutableRealmInt
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.types.MutableRealmInt
@@ -29,9 +26,6 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.InternalSerializationApi
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
@@ -48,6 +42,8 @@ import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
 import kotlin.reflect.KClass
+import kotlin.reflect.full.createType
+import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -110,33 +106,20 @@ class BsonEncoderTests {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    internal fun serializer(value: KClass<*>): KSerializer<*> = when (value) {
-        ObjectIdImpl::class -> BsonEncoder.serializersModule.serializer<ObjectId>()
-        ObjectId::class -> BsonEncoder.serializersModule.serializer<ObjectId>()
-        RealmUUID::class -> BsonEncoder.serializersModule.serializer<RealmUUID>()
-        RealmUUIDImpl::class -> BsonEncoder.serializersModule.serializer<RealmUUID>()
-        RealmInstant::class -> BsonEncoder.serializersModule.serializer<RealmInstant>()
-        RealmInstantImpl::class -> BsonEncoder.serializersModule.serializer<RealmInstant>()
-        MutableRealmInt::class -> BsonEncoder.serializersModule.serializer<MutableRealmInt>()
-        UnmanagedMutableRealmInt::class -> BsonEncoder.serializersModule.serializer<MutableRealmInt>()
-        else -> value.serializer()
-    }
-
     @Test
     fun decodeFromBsonElement() {
         (primitiveValues + realmValues).forEach { (value: Any?, bsonValue) ->
             when (value) {
                 null -> assertNull(
                     BsonEncoder.decodeFromBsonValue(
-                        deserializationStrategy = String.serializer(), // Arbitrary serializer to encode to null
+                        type = typeOf<String>(), // Arbitrary serializer to encode to null
                         bsonValue = bsonValue
                     )
                 )
                 is ByteArray -> assertContentEquals(
                     value,
                     BsonEncoder.decodeFromBsonValue(
-                        deserializationStrategy = serializer(value::class),
+                        type = typeOf<ByteArray>(),
                         bsonValue = bsonValue
                     ) as ByteArray,
                     "Failed to validate types ${value::class.simpleName} and ${bsonValue::class.simpleName}"
@@ -144,7 +127,7 @@ class BsonEncoderTests {
                 else -> assertEquals(
                     value,
                     BsonEncoder.decodeFromBsonValue(
-                        deserializationStrategy = serializer(value::class),
+                        type = value::class.createType(),
                         bsonValue = bsonValue
                     ),
                     "Failed to validate types ${value::class.simpleName} and ${bsonValue::class.simpleName}"
@@ -162,9 +145,9 @@ class BsonEncoderTests {
 
     @Test
     fun decodeFromBsonElement_throwsUnsupportedType() {
-        assertFailsWithMessage<IllegalArgumentException>("Unsupported deserializer. Only Bson and primitives types deserializers are supported.") {
+        assertFailsWithMessage<IllegalArgumentException>("Unsupported type. Only Bson and primitives types are supported.") {
             BsonEncoder.decodeFromBsonValue(
-                deserializationStrategy = SerializableClass.serializer(),
+                type = typeOf<SerializableClass>(),
                 bsonValue = BsonString("")
             )
         }
@@ -174,7 +157,6 @@ class BsonEncoderTests {
         val deserializedType: KClass<*>,
         val requiredBsonType: KClass<*>,
         val invalidBsonValue: BsonValue,
-        val deserializationStrategy: KSerializer<*> = deserializedType.serializer()
     )
 
     private val primitiveAsserters = listOf(
@@ -233,25 +215,21 @@ class BsonEncoderTests {
     private val realmAsserters = listOf(
         WrongTypeAsserter(
             deserializedType = RealmUUID::class,
-            deserializationStrategy = serializer(RealmUUID::class),
             requiredBsonType = BsonBinary::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = MutableRealmInt::class,
-            deserializationStrategy = serializer(MutableRealmInt::class),
             requiredBsonType = BsonInt64::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = ObjectId::class,
-            deserializationStrategy = serializer(ObjectId::class),
             requiredBsonType = BsonObjectId::class,
             invalidBsonValue = BsonString("")
         ),
         WrongTypeAsserter(
             deserializedType = RealmInstant::class,
-            deserializationStrategy = serializer(RealmInstant::class),
             requiredBsonType = BsonDateTime::class,
             invalidBsonValue = BsonString("")
         ),
@@ -263,7 +241,7 @@ class BsonEncoderTests {
             with(it) {
                 assertFailsWithMessage<IllegalArgumentException>("A '${requiredBsonType.simpleName}' is required to deserialize a '${deserializedType.simpleName}'. Type '${invalidBsonValue.bsonType}' found.") {
                     BsonEncoder.decodeFromBsonValue(
-                        deserializationStrategy = deserializationStrategy,
+                        type = deserializedType.createType(),
                         bsonValue = invalidBsonValue
                     )
                 }
@@ -281,7 +259,7 @@ class BsonEncoderTests {
 //            Double::class to BsonDecimal128.POSITIVE_ZERO, // conversion from Decimal128 to Double not supported yet
         ).forEach { (clazz: KClass<out Number>, bsonValue: BsonValue) ->
             BsonEncoder.decodeFromBsonValue(
-                deserializationStrategy = clazz.serializer(),
+                type = clazz.createType(),
                 bsonValue = bsonValue
             )
         }
@@ -295,10 +273,10 @@ class BsonEncoderTests {
             Long::class to BsonDouble(1.3),
             Float::class to BsonDouble(1.3),
 //        Double::class to BsonDecimal128.POSITIVE_INFINITY,// conversion from Decimal128 to Double not supported yet
-        ).forEach { (clazz: KClass<out Number>, bsonValue: BsonValue) ->
+        ).forEach { (clazz: KClass<*>, bsonValue: BsonValue) ->
             assertFailsWithMessage<BsonInvalidOperationException>("Could not convert DOUBLE to a ${clazz.simpleName} without losing precision") {
                 BsonEncoder.decodeFromBsonValue(
-                    deserializationStrategy = clazz.serializer(),
+                    type = clazz.createType(),
                     bsonValue = bsonValue
                 )
             }

@@ -16,9 +16,7 @@
 
 package io.realm.kotlin.types
 
-import io.realm.kotlin.internal.ManagedMutableRealmIntSerializer
 import io.realm.kotlin.internal.UnmanagedMutableRealmInt
-import kotlinx.serialization.Serializable
 
 /**
  * A `MutableRealmInt` is a mutable, [Long]-like, numeric quantity.
@@ -105,7 +103,6 @@ import kotlinx.serialization.Serializable
  * modify `counter` but rather create a new, **unmanaged** `MutableRealmInt` with the updated value.
  * **The only operations that result in a mutated value are [set], [increment] and [decrement]**.
  */
-@Serializable(with = ManagedMutableRealmIntSerializer::class)
 public abstract class MutableRealmInt : Comparable<MutableRealmInt>, Number() {
 
     /**

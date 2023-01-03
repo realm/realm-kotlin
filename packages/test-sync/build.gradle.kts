@@ -80,6 +80,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
 
                 implementation("com.squareup.okio:okio:${Versions.okio}")
+                implementation("org.jetbrains.kotlin:kotlin-reflect:${Versions.kotlin}")
             }
         }
 

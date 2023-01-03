@@ -16,14 +16,9 @@
 package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
-import io.realm.kotlin.mongodb.internal.BsonEncoder
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.serializer
-import kotlinx.serialization.serializerOrNull
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
-import org.mongodb.kbson.BsonValue
+import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /**
@@ -62,16 +57,16 @@ public interface Functions {
      *
      * @param name Name of the function to call.
      * @param args Arguments to the function.
-     * @param deserializationStrategy Deserialization strategy for decoding the results.
-     * @param T The type for the functions response.
+     * @param type The KType of the return value.
+     * @param T The type of the return value.
      * @return Result of the function.
      *
      * @throws FunctionExecutionException if the function failed in some way.
      */
-    public suspend fun <T : Any?> call(
+    public suspend fun <T> call(
         name: String,
-        deserializationStrategy: DeserializationStrategy<T>,
-        vararg args: Any?,
+        type: KType,
+        vararg args: Any?
     ): T
 }
 
@@ -80,24 +75,11 @@ public interface Functions {
  *
  * Reified convenience wrapper of [Functions.call].
  */
-public suspend inline fun <reified T : Any?> Functions.call(
+public suspend inline fun <reified T> Functions.call(
     name: String,
     vararg args: Any?
 ): T = call<T>(
     name = name,
-    deserializationStrategy = if (T::class == Any::class) {
-        BsonEncoder.serializersModule.serializer<BsonValue>()
-    } else {
-        BsonEncoder.serializersModule.serializer<T>()
-    } as KSerializer<T>,
+    type = typeOf<T>(),
     args = *args,
 )
-
-/**
- * Convenience helper that returns a predefined serializer when T class doesn't have a defined
- * serializer, or [T]'s serializer otherwise.
- */
-public inline fun <reified T : Any?> serializerOrDefault(
-    default: KSerializer<*>
-): KSerializer<T> =
-    (BsonEncoder.serializersModule.serializerOrNull(typeOf<T>()) ?: default) as KSerializer<T>
