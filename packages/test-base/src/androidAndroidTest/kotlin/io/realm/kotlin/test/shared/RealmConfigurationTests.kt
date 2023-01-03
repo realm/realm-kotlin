@@ -141,7 +141,7 @@ class RealmConfigurationTests {
             .build()
         assertEquals("$realmDir/${Realm.DEFAULT_FILE_NAME}", config.path)
         // Just verifying that we can open the realm
-        Realm.open(config).use {  }
+        Realm.open(config).use { }
     }
 
     @Test
@@ -235,7 +235,7 @@ class RealmConfigurationTests {
             .build()
         assertEquals("$tmpDir/$name", config.path)
         // Just verifying that we can open the realm
-        Realm.open(config).use {  }
+        Realm.open(config).use { }
     }
 
     @Test
