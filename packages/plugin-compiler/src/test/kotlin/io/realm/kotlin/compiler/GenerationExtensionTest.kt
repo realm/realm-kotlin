@@ -180,6 +180,7 @@ class GenerationExtensionTest {
             "uuidField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
             "mutableRealmInt" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableRealmAny" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -217,6 +218,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableRealmAnyListField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Set types
             "stringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -250,6 +252,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableRealmAnySetField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Linking objects
             "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,

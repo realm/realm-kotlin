@@ -127,7 +127,11 @@ public class CachedClassMetadata(
 
     init {
         val classInfo = RealmInterop.realm_get_class(dbPointer, classKey)
-        RealmInterop.realm_get_class_properties(dbPointer, classInfo.key, classInfo.numProperties + classInfo.numComputedProperties).let { interopProperties ->
+        RealmInterop.realm_get_class_properties(
+            dbPointer,
+            classInfo.key,
+            classInfo.numProperties + classInfo.numComputedProperties
+        ).let { interopProperties ->
             properties = interopProperties.map { propertyInfo: PropertyInfo ->
                 CachedPropertyMetadata(
                     propertyInfo,
