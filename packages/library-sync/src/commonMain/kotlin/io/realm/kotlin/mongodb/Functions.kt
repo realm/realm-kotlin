@@ -57,7 +57,7 @@ public interface Functions {
      *
      * @param name Name of the function to call.
      * @param args Arguments to the function.
-     * @param type The KType of the return value.
+     * @param resultType The KType of the return value.
      * @param T The type of the return value.
      * @return Result of the function.
      *
@@ -65,7 +65,7 @@ public interface Functions {
      */
     public suspend fun <T> call(
         name: String,
-        type: KType,
+        resultType: KType,
         vararg args: Any?
     ): T
 }
@@ -80,6 +80,6 @@ public suspend inline fun <reified T> Functions.call(
     vararg args: Any?
 ): T = call<T>(
     name = name,
-    type = typeOf<T>(),
+    resultType = typeOf<T>(),
     args = *args,
 )

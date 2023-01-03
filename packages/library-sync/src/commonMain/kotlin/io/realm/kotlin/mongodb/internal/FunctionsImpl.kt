@@ -28,7 +28,7 @@ internal class FunctionsImpl(
 ) : Functions {
     override suspend fun <T> call(
         name: String,
-        type: KType,
+        resultType: KType,
         vararg args: Any?
     ): T = Channel<Result<Any?>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
@@ -40,7 +40,7 @@ internal class FunctionsImpl(
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T
                 BsonEncoder.decodeFromBsonValue(
-                    type = type,
+                    type = resultType,
                     bsonValue = Bson(ejsonEncodedObject)
                 )
             }
