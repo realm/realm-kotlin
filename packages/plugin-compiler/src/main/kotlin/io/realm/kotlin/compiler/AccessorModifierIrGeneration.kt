@@ -266,13 +266,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 declaration.locationOf()
                             )
                         }
-                        fields[name] = SchemaProperty(
+                        val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_MIXED,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
+                        fields[name] = schemaProperty
                         modifyAccessor(
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getRealmAny,
                             fromRealmValue = null,
                             toPublic = null,
