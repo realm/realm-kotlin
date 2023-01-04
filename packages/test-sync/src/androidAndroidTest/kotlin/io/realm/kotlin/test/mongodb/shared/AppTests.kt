@@ -415,7 +415,7 @@ class AppTests {
             assertTrue(fileExists(config.path))
 
             // Open the metadata realm file without a valid encryption key
-            assertFailsWithMessage<IllegalArgumentException>("Could not open Realm with the given configuration") {
+            assertFailsWithMessage<IllegalStateException>("Could not open Realm with the given configuration") {
                 Realm.open(config)
             }
         } finally {

@@ -212,6 +212,7 @@ internal fun convertAppError(appError: AppError): Throwable {
                         ServiceException(msg)
                     }
                 }
+                ErrorCode.RLM_ERR_INVALID_SESSION -> CredentialsCannotBeLinkedException(msg)
                 ErrorCode.RLM_ERR_USER_DISABLED,
                 ErrorCode.RLM_ERR_AUTH_ERROR -> {
                     // Some auth providers return a generic AuthError when

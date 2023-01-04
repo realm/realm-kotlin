@@ -76,11 +76,14 @@ public object CoreExceptionConverter {
         // Just wrap all core exceptions in a public RealmException for now, we should be able t
         // throw subclasses of this without i being a breaking change.
         CoreErrorConverter.initialize { cause: CoreError ->
-            with(cause.category) {
-                if (cause.errorCode == ErrorCode.RLM_ERR_INDEX_OUT_OF_BOUNDS) IndexOutOfBoundsException(cause.message)
-                else if(hasFlag(ErrorCategory.RLM_ERR_CAT_INVALID_ARG)) IllegalArgumentException(cause.message)
-                else if(hasFlag(ErrorCategory.RLM_ERR_CAT_LOGIC) || hasFlag(ErrorCategory.RLM_ERR_CAT_RUNTIME)) IllegalStateException(cause.message)
-                else RealmException(cause.message)
+            when {
+                ErrorCode.RLM_ERR_INDEX_OUT_OF_BOUNDS == cause.errorCode ->
+                    IndexOutOfBoundsException(cause.message)
+                ErrorCategory.RLM_ERR_CAT_INVALID_ARG in cause.category ->
+                    IllegalArgumentException(cause.message)
+                ErrorCategory.RLM_ERR_CAT_LOGIC in cause.category || ErrorCategory.RLM_ERR_CAT_RUNTIME in cause.category ->
+                    IllegalStateException(cause.message)
+                else -> RealmException(cause.message)
             }
         }
     }

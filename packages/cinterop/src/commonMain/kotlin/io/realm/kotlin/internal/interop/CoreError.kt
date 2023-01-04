@@ -35,5 +35,5 @@ class CoreError(
 }
 
 data class CategoryFlag(val categoryCode: Int) {
-    fun hasFlag(category: ErrorCategory): Boolean = categoryCode and category.nativeValue != 0
+    operator fun contains(other: ErrorCategory): Boolean = categoryCode and other.nativeValue != 0
 }

@@ -38,7 +38,7 @@ data class AppError internal constructor(
             message: String?,
             linkToServerLog: String?
         ): AppError {
-            val category = ErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
+            val category = ErrorCategory.of(categoryCode - ErrorCategory.RLM_ERR_CAT_RUNTIME.nativeValue - ErrorCategory.RLM_ERR_CAT_APP_ERROR.nativeValue) ?: UnknownCodeDescription(categoryCode)
             val code = ErrorCode.of(errorCode) ?: UnknownCodeDescription(errorCode)
 
             return AppError(
