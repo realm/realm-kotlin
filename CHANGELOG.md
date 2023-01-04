@@ -21,7 +21,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Added test wrapper for Gradle 7.6 as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 
 
 ## 1.5.2 (2023-01-10)
