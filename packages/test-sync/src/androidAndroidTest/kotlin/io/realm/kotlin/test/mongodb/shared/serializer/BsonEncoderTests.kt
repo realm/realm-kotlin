@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 @file:Suppress("invisible_reference", "invisible_member")
-@file:OptIn(InternalSerializationApi::class)
 
 package io.realm.kotlin.test.mongodb.shared.serializer
 
-import io.realm.kotlin.internal.ObjectIdImpl
+import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
-import kotlinx.serialization.InternalSerializationApi
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
@@ -42,8 +41,6 @@ import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
 import kotlin.reflect.KClass
-import kotlin.reflect.full.createType
-import kotlin.reflect.typeOf
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -53,84 +50,159 @@ class BsonEncoderTests {
     @kotlinx.serialization.Serializable
     class SerializableClass
 
-    private val primitiveValues: List<Pair<Any?, BsonValue>> = listOf(
-        10.toByte() to BsonInt32(10.toByte().toInt()),
-        20.toShort() to BsonInt32(20.toShort().toInt()),
-        30 to BsonInt32(30),
-        40L to BsonInt64(40L),
-        50F to BsonDouble(50F.toDouble()),
-        2.0 to BsonDouble(2.0),
-        true to BsonBoolean.TRUE_VALUE,
-        "hello world" to BsonString("hello world"),
-        'c' to BsonString('c'.toString()),
-        byteArrayOf(0x00, 0x01, 0x03) to BsonBinary(
-            BsonBinarySubType.BINARY,
-            byteArrayOf(0x00, 0x01, 0x03)
+    private val primitiveAsserters = listOf(
+        DecoderAsserter(
+            deserializedType = Byte::class,
+            bsonType = BsonNumber::class,
+            value = 10.toByte(),
+            bsonValue = BsonInt32(10.toByte().toInt()),
         ),
-        null to BsonNull
+        DecoderAsserter(
+            deserializedType = Short::class,
+            bsonType = BsonNumber::class,
+            value = 20.toShort(),
+            bsonValue = BsonInt32(20.toShort().toInt())
+        ),
+        DecoderAsserter(
+            deserializedType = Int::class,
+            bsonType = BsonNumber::class,
+            value = 30,
+            bsonValue = BsonInt32(30)
+        ),
+        DecoderAsserter(
+            deserializedType = Long::class,
+            bsonType = BsonNumber::class,
+            value = 40L,
+            bsonValue = BsonInt64(40L)
+        ),
+        DecoderAsserter(
+            deserializedType = Float::class,
+            bsonType = BsonNumber::class,
+            value = 50F,
+            bsonValue = BsonDouble(50F.toDouble())
+        ),
+        DecoderAsserter(
+            deserializedType = Double::class,
+            bsonType = BsonNumber::class,
+            value = 2.0,
+            bsonValue = BsonDouble(2.0)
+        ),
+        DecoderAsserter(
+            deserializedType = Boolean::class,
+            value = true,
+            bsonValue = BsonBoolean.TRUE_VALUE
+        ),
+        DecoderAsserter(
+            deserializedType = String::class,
+            value = "hello world",
+            bsonValue = BsonString("hello world")
+        ),
+        DecoderAsserter(
+            deserializedType = Char::class,
+            value = 'c',
+            bsonValue = BsonString('c'.toString())
+        ),
+        DecoderAsserter(
+            deserializedType = ByteArray::class,
+            value = byteArrayOf(0x00, 0x01, 0x03),
+            bsonValue = BsonBinary(
+                BsonBinarySubType.BINARY,
+                byteArrayOf(0x00, 0x01, 0x03)
+            )
+        ),
+        DecoderAsserter(
+            deserializedType = ByteArray::class,
+            value = null,
+            bsonValue = BsonNull
+        ),
     )
 
-    private val realmValues = listOf(
-        MutableRealmInt.create(15) to BsonInt64(15),
-        RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff").let {
-            it to BsonBinary(BsonBinarySubType.UUID_STANDARD, it.bytes)
+    private val realmValueAsserter = listOf(
+        DecoderAsserter(
+            deserializedType = MutableRealmInt::class,
+            bsonType = BsonNumber::class,
+            value = MutableRealmInt.create(15),
+            bsonValue = BsonInt64(15),
+        ),
+        RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff").let { uuid ->
+            DecoderAsserter(
+                deserializedType = RealmUUID::class,
+                value = uuid,
+                bsonValue = BsonBinary(BsonBinarySubType.UUID_STANDARD, uuid.bytes),
+            )
         },
-        ObjectId.create().let {
-            it to BsonObjectId((it as ObjectIdImpl).bytes)
+        ObjectId.create().let { objectId ->
+            DecoderAsserter(
+                deserializedType = ObjectId::class,
+                value = objectId,
+                bsonValue = objectId.asBsonObjectId(),
+            )
         },
         RealmInstant.from(
             epochSeconds = 1668425451,
             nanosecondAdjustment = 862000000
-        ) to BsonDateTime(1668425451862)
+        ).let { instant ->
+            DecoderAsserter(
+                deserializedType = RealmInstant::class,
+                value = instant,
+                bsonValue = BsonDateTime(instant.toDuration().inWholeMilliseconds),
+            )
+        },
     )
 
-    private val listValue: Pair<List<Any?>, BsonArray> =
-        primitiveValues.map { it.first } to BsonArray(primitiveValues.map { it.second })
+    private val listValueAsserter = DecoderAsserter(
+        deserializedType = List::class,
+        bsonValue = BsonArray(primitiveAsserters.map { it.bsonValue }),
+        value = primitiveAsserters.map { it.value }
+    )
 
-    private val mapValue: Pair<Map<String, Any?>, BsonDocument> =
-        primitiveValues.mapIndexed { index, pair ->
-            index.toString() to pair.first
-        }.toMap() to BsonDocument(
-            primitiveValues.mapIndexed { index, pair ->
-                index.toString() to pair.second
+    private val mapValueAsserter = DecoderAsserter(
+        deserializedType = Map::class,
+        bsonValue = BsonDocument(
+            primitiveAsserters.mapIndexed { index, asserter ->
+                "$index" to asserter.bsonValue
             }.toMap()
-        )
+        ),
+        value = primitiveAsserters.mapIndexed { index, asserter ->
+            "$index" to asserter.value
+        }.toMap()
+    )
 
     @Test
     fun encodeToBsonValue() {
-        (primitiveValues + realmValues + listValue + mapValue).forEach { (value, bsonValue) ->
+        (primitiveAsserters + realmValueAsserter + listValueAsserter + mapValueAsserter).forEach { asserter ->
             assertEquals(
-                bsonValue,
-                BsonEncoder.encodeToBsonValue(value)
+                asserter.bsonValue,
+                BsonEncoder.encodeToBsonValue(asserter.value)
             )
         }
     }
 
     @Test
     fun decodeFromBsonElement() {
-        (primitiveValues + realmValues).forEach { (value: Any?, bsonValue) ->
-            when (value) {
+        (primitiveAsserters + realmValueAsserter).forEach { asserter: DecoderAsserter ->
+            when (asserter.value) {
                 null -> assertNull(
                     BsonEncoder.decodeFromBsonValue(
-                        type = typeOf<String>(), // Arbitrary serializer to encode to null
-                        bsonValue = bsonValue
+                        kClassifier = asserter.deserializedType, // Arbitrary serializer to encode to null
+                        bsonValue = asserter.bsonValue
                     )
                 )
                 is ByteArray -> assertContentEquals(
-                    value,
+                    asserter.value,
                     BsonEncoder.decodeFromBsonValue(
-                        type = typeOf<ByteArray>(),
-                        bsonValue = bsonValue
+                        kClassifier = asserter.deserializedType,
+                        bsonValue = asserter.bsonValue
                     ) as ByteArray,
-                    "Failed to validate types ${value::class.simpleName} and ${bsonValue::class.simpleName}"
+                    "Failed to validate types ${asserter.deserializedType.simpleName} and ${asserter.bsonValue::class.simpleName}"
                 )
                 else -> assertEquals(
-                    value,
+                    asserter.value,
                     BsonEncoder.decodeFromBsonValue(
-                        type = value::class.createType(),
-                        bsonValue = bsonValue
+                        kClassifier = asserter.deserializedType,
+                        bsonValue = asserter.bsonValue
                     ),
-                    "Failed to validate types ${value::class.simpleName} and ${bsonValue::class.simpleName}"
+                    "Failed to validate types ${asserter.deserializedType.simpleName} and ${asserter.bsonValue::class.simpleName}"
                 )
             }
         }
@@ -147,102 +219,105 @@ class BsonEncoderTests {
     fun decodeFromBsonElement_throwsUnsupportedType() {
         assertFailsWithMessage<IllegalArgumentException>("Unsupported type. Only Bson and primitives types are supported.") {
             BsonEncoder.decodeFromBsonValue(
-                type = typeOf<SerializableClass>(),
+                kClassifier = SerializableClass::class,
                 bsonValue = BsonString("")
             )
         }
     }
 
-    private data class WrongTypeAsserter(
+    private class DecoderAsserter(
         val deserializedType: KClass<*>,
-        val requiredBsonType: KClass<*>,
-        val invalidBsonValue: BsonValue,
-    )
+        bsonType: KClass<*>? = null,
+        val bsonValue: BsonValue,
+        val value: Any? = null
+    ) {
+        val bsonType: KClass<*> = bsonType ?: bsonValue::class
+    }
 
-    private val primitiveAsserters = listOf(
-        WrongTypeAsserter(
+    private val wrongPrimitiveAsserters = listOf(
+        DecoderAsserter(
             deserializedType = Byte::class,
-            requiredBsonType = BsonNumber::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonNumber::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = Short::class,
-            requiredBsonType = BsonNumber::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonNumber::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = Int::class,
-            requiredBsonType = BsonNumber::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonNumber::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = Long::class,
-            requiredBsonType = BsonNumber::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonNumber::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = Float::class,
-            requiredBsonType = BsonNumber::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonNumber::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = Double::class,
-            requiredBsonType = BsonNumber::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonNumber::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = Boolean::class,
-            requiredBsonType = BsonBoolean::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonBoolean::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = String::class,
-            requiredBsonType = BsonString::class,
-            invalidBsonValue = BsonInt32(0)
+            bsonType = BsonString::class,
+            bsonValue = BsonInt32(0)
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = Char::class,
-            requiredBsonType = BsonString::class,
-            invalidBsonValue = BsonInt32(0)
+            bsonType = BsonString::class,
+            bsonValue = BsonInt32(0)
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = ByteArray::class,
-            requiredBsonType = BsonBinary::class,
-            invalidBsonValue = BsonInt32(0)
+            bsonType = BsonBinary::class,
+            bsonValue = BsonInt32(0)
         ),
     )
 
-    private val realmAsserters = listOf(
-        WrongTypeAsserter(
+    private val wrongRealmValueAsserters = listOf(
+        DecoderAsserter(
             deserializedType = RealmUUID::class,
-            requiredBsonType = BsonBinary::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonBinary::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = MutableRealmInt::class,
-            requiredBsonType = BsonInt64::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonInt64::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = ObjectId::class,
-            requiredBsonType = BsonObjectId::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonObjectId::class,
+            bsonValue = BsonString("")
         ),
-        WrongTypeAsserter(
+        DecoderAsserter(
             deserializedType = RealmInstant::class,
-            requiredBsonType = BsonDateTime::class,
-            invalidBsonValue = BsonString("")
+            bsonType = BsonDateTime::class,
+            bsonValue = BsonString("")
         ),
     )
 
     @Test
     fun decodeFromBsonElement_throwsWrongType() {
-        (primitiveAsserters + realmAsserters).forEach {
+        (wrongPrimitiveAsserters + wrongRealmValueAsserters).forEach {
             with(it) {
-                assertFailsWithMessage<IllegalArgumentException>("A '${requiredBsonType.simpleName}' is required to deserialize a '${deserializedType.simpleName}'. Type '${invalidBsonValue.bsonType}' found.") {
+                assertFailsWithMessage<IllegalArgumentException>("A '${bsonType.simpleName}' is required to deserialize a '${deserializedType.simpleName}'. Type '${bsonValue.bsonType}' found.") {
                     BsonEncoder.decodeFromBsonValue(
-                        type = deserializedType.createType(),
-                        bsonValue = invalidBsonValue
+                        kClassifier = deserializedType,
+                        bsonValue = bsonValue
                     )
                 }
             }
@@ -259,7 +334,7 @@ class BsonEncoderTests {
 //            Double::class to BsonDecimal128.POSITIVE_ZERO, // conversion from Decimal128 to Double not supported yet
         ).forEach { (clazz: KClass<out Number>, bsonValue: BsonValue) ->
             BsonEncoder.decodeFromBsonValue(
-                type = clazz.createType(),
+                kClassifier = clazz,
                 bsonValue = bsonValue
             )
         }
@@ -276,7 +351,7 @@ class BsonEncoderTests {
         ).forEach { (clazz: KClass<*>, bsonValue: BsonValue) ->
             assertFailsWithMessage<BsonInvalidOperationException>("Could not convert DOUBLE to a ${clazz.simpleName} without losing precision") {
                 BsonEncoder.decodeFromBsonValue(
-                    type = clazz.createType(),
+                    kClassifier = clazz,
                     bsonValue = bsonValue
                 )
             }

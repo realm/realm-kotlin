@@ -17,11 +17,7 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.internal.ManagedMutableRealmInt
 import io.realm.kotlin.internal.ObjectIdImpl
-import io.realm.kotlin.internal.RealmInstantImpl
-import io.realm.kotlin.internal.RealmUUIDImpl
-import io.realm.kotlin.internal.UnmanagedMutableRealmInt
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.types.MutableRealmInt
@@ -55,8 +51,7 @@ import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.BsonValue
-import kotlin.reflect.KType
-import kotlin.reflect.typeOf
+import kotlin.reflect.KClassifier
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -82,19 +77,19 @@ internal object BsonEncoder {
      * Uses the given serialization strategy to perform a manual decode of the [BsonValue].
      *
      * @param T type of the decoded value.
-     * @param type type to decode to.
+     * @param kClassifier classifier for the decoded value.
      * @param bsonValue value to decode.
      * @return decoded [T] value.
      */
     @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY", "ComplexMethod", "LongMethod")
     internal fun <T : Any?> decodeFromBsonValue(
-        type: KType,
+        kClassifier: KClassifier?,
         bsonValue: BsonValue,
     ): T {
-        return if (bsonValue == BsonNull && type != typeOf<BsonNull>()) {
+        return if (bsonValue == BsonNull && kClassifier != BsonNull::class) {
             null
         } else {
-            when (type.classifier) {
+            when (kClassifier) {
                 Byte::class -> {
                     deserializeNumber(bsonValue, "Byte") {
                         it.intValue().toByte()
@@ -179,15 +174,12 @@ internal object BsonEncoder {
                 BsonUndefined::class,
                 Any::class,
                 BsonValue::class -> bsonValue
-                UnmanagedMutableRealmInt::class,
-                ManagedMutableRealmInt::class,
                 MutableRealmInt::class -> {
                     require(bsonValue.bsonType == BsonType.INT64) {
                         "A 'BsonInt64' is required to deserialize a 'MutableRealmInt'. Type '${bsonValue.bsonType}' found."
                     }
                     MutableRealmInt.create(bsonValue.asInt64().value)
                 }
-                RealmUUIDImpl::class,
                 RealmUUID::class -> {
                     require(bsonValue.bsonType == BsonType.BINARY) {
                         "A 'BsonBinary' is required to deserialize a 'RealmUUID'. Type '${bsonValue.bsonType}' found."
@@ -198,7 +190,6 @@ internal object BsonEncoder {
                     }
                     RealmUUID.from(bsonValue.data)
                 }
-                ObjectIdImpl::class,
                 ObjectId::class -> {
                     require(bsonValue.bsonType == BsonType.OBJECT_ID) {
                         "A 'BsonObjectId' is required to deserialize a 'ObjectId'. Type '${bsonValue.bsonType}' found."
@@ -206,7 +197,6 @@ internal object BsonEncoder {
                     bsonValue as BsonObjectId
                     ObjectId.from(bsonValue.toByteArray())
                 }
-                RealmInstantImpl::class,
                 RealmInstant::class -> {
                     require(bsonValue.bsonType == BsonType.DATE_TIME) {
                         "A 'BsonDateTime' is required to deserialize a 'RealmInstant'. Type '${bsonValue.bsonType}' found."

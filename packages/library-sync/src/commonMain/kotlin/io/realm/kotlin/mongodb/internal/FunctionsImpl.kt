@@ -40,7 +40,7 @@ internal class FunctionsImpl(
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T
                 BsonEncoder.decodeFromBsonValue(
-                    type = resultType,
+                    kClassifier = resultType.classifier,
                     bsonValue = Bson(ejsonEncodedObject)
                 )
             }
