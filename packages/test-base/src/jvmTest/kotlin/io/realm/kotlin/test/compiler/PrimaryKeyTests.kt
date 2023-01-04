@@ -72,6 +72,7 @@ class PrimaryKeyTests {
                     """
                         import io.realm.kotlin.types.MutableRealmInt
                         import io.realm.kotlin.types.ObjectId
+                        import io.realm.kotlin.types.RealmAny
                         import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.types.RealmUUID
