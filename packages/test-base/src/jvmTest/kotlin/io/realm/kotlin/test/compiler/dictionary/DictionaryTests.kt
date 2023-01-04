@@ -53,6 +53,7 @@ class DictionaryTests {
     // ------------------------------------------------
 
     // - supported types
+    // TODO DONE
     @Test
     fun `non-nullable dictionary`() {
         // TODO optimize: see comment in TypeDescriptor.elementTypesForDictionary
@@ -72,6 +73,7 @@ class DictionaryTests {
 
     // - RealmAny fails if non-nullable (mixed is always non-null)
     // - Other unsupported types fail too (nullability is irrelevant in this case)
+    // TODO DONE
     @Test
     fun `unsupported non-nullable dictionary - fails`() {
         val unsupportedNonNullableTypes =
@@ -92,6 +94,7 @@ class DictionaryTests {
     }
 
     // - Other unsupported types fail too
+    // TODO DONE
     @Test
     fun `unsupported type in dictionary - fails`() {
         val result = compileFromSource(
