@@ -219,14 +219,11 @@ internal class PrimitiveSetOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             with(converter) {
-                realm_set_get(nativePointer, index.toLong())
-                    .let { transport ->
-                        when (ValueType.RLM_TYPE_NULL) {
-                            transport.getType() -> null
-                            else -> realmValueToPublic(transport)
-                        }
-                    } as E
-            }
+                val transport = realm_set_get(nativePointer, index.toLong())
+                with(converter) {
+                    realmValueToPublic(transport)
+                }
+            } as E
         }
     }
 
@@ -255,7 +252,8 @@ internal class PrimitiveSetOperator<E>(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
-    ): SetOperator<E> = PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
+    ): SetOperator<E> =
+        PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
 }
 
 internal class RealmObjectSetOperator<E>(

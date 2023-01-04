@@ -244,6 +244,10 @@ expect object RealmInterop {
     )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
+    fun <T> realm_object_get_parent(
+        obj: RealmObjectPointer,
+        block: (ClassKey, RealmObjectPointer) -> T
+    ): T
 
     // list
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer

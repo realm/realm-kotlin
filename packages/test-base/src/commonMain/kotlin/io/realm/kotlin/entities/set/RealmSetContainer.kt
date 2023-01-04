@@ -18,6 +18,7 @@ package io.realm.kotlin.entities.set
 
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -58,6 +59,7 @@ class RealmSetContainer : RealmObject {
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+    var nullableRealmAnySetField: RealmSet<RealmAny?> = realmSetOf()
 
     companion object {
         @Suppress("UNCHECKED_CAST")
@@ -94,7 +96,8 @@ class RealmSetContainer : RealmObject {
             ObjectId::class to RealmSetContainer::nullableObjectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
             BsonObjectId::class to RealmSetContainer::nullableBsonObjectIdSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
             RealmUUID::class to RealmSetContainer::nullableUUIDSetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
-            ByteArray::class to RealmSetContainer::nullableBinarySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>
+            ByteArray::class to RealmSetContainer::nullableBinarySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>,
+            RealmAny::class to RealmSetContainer::nullableRealmAnySetField as KMutableProperty1<RealmSetContainer, RealmSet<Any?>>
         ).toMap()
     }
 }

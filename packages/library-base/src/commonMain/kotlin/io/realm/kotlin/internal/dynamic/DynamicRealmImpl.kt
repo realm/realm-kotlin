@@ -26,12 +26,24 @@ import io.realm.kotlin.internal.interop.FrozenRealmPointer
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
 
-internal open class DynamicRealmImpl(configuration: InternalConfiguration, dbPointer: FrozenRealmPointer) :
-    BaseRealmImpl(configuration),
-    DynamicRealm {
+internal open class DynamicRealmImpl(
+    configuration: InternalConfiguration,
+    dbPointer: FrozenRealmPointer
+) : BaseRealmImpl(configuration), DynamicRealm {
 
     override val realmReference: RealmReference = FrozenRealmReference(this, dbPointer)
 
-    override fun query(className: String, query: String, vararg args: Any?): RealmQuery<DynamicRealmObject> =
-        ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, DynamicRealmObject::class, configuration.mediator, query, args)
+    override fun query(
+        className: String,
+        query: String,
+        vararg args: Any?
+    ): RealmQuery<DynamicRealmObject> =
+        ObjectQuery(
+            realmReference,
+            realmReference.schemaMetadata.getOrThrow(className).classKey,
+            DynamicRealmObject::class,
+            configuration.mediator,
+            query,
+            args
+        )
 }

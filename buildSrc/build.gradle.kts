@@ -18,6 +18,8 @@
 plugins {
     `kotlin-dsl`
     `kotlin-dsl-precompiled-script-plugins`
+    // Workaround for https://youtrack.jetbrains.com/issue/KT-54634
+    `embedded-kotlin`
 }
 
 gradlePlugin {
@@ -32,6 +34,8 @@ gradlePlugin {
 repositories {
     google()
     gradlePluginPortal()
+    // Workaround for https://youtrack.jetbrains.com/issue/KT-54634
+    mavenCentral()
 }
 
 
@@ -56,6 +60,8 @@ dependencies {
     implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}") // TODO LATER Don't know why this has to be here. See if we can remove this
     implementation("com.android.tools.build:gradle-api:${Versions.Android.buildTools}")
     implementation(kotlin("script-runtime"))
+    // Workaround for https://youtrack.jetbrains.com/issue/KT-54634
+    implementation(gradleApi())
 }
 
 kotlinDslPluginOptions {
