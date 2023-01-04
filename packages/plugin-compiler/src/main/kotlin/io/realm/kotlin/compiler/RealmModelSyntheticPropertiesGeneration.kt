@@ -37,6 +37,7 @@ import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
+import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_DICTIONARY
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
@@ -568,8 +569,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
                                         CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
                                         CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
-                                        else ->
-                                            error("Unsupported collection type '${value.collectionType}' for field ${entry.key}")
+                                        CollectionType.DICTIONARY -> PROPERTY_COLLECTION_TYPE_DICTIONARY
                                     }
                                     putValueArgument(
                                         arg++,
@@ -592,7 +592,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                     PROPERTY_COLLECTION_TYPE_NONE ->
                                                         backingField.type
                                                     PROPERTY_COLLECTION_TYPE_LIST,
-                                                    PROPERTY_COLLECTION_TYPE_SET ->
+                                                    PROPERTY_COLLECTION_TYPE_SET,
+                                                    PROPERTY_COLLECTION_TYPE_DICTIONARY ->
                                                         getCollectionElementType(backingField.type)
                                                             ?: error("Could not get collection type from ${backingField.type}")
                                                     else ->

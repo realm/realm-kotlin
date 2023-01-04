@@ -274,11 +274,26 @@ public object TypeDescriptor {
             acc
         }
 
+    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
+    fun elementTypesForDictionary(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
+        classifiers.fold(mutableSetOf()) { acc, classifier ->
+            val realmFieldType = TypeDescriptor.classifiers[classifier]
+                ?: error("Unmapped classifier $classifier")
+            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)) {
+                acc.add(ElementType(classifier, true))
+            }
+            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)) {
+                acc.add(ElementType(classifier, false))
+            }
+            acc
+        }
+
     // Convenience variables holding collections of the various supported types
     val elementClassifiers: Set<KClassifier> = classifiers.keys
     val elementTypes = elementTypes(elementClassifiers)
     val elementTypesForList = elementTypesForList(elementClassifiers)
     val elementTypesForSet = elementTypesForSet(elementClassifiers)
+    val elementTypesForDictionary = elementTypesForSet(elementClassifiers)
 
     // Convenience variables holding collection of various groups of Realm field types
     val allSingularFieldTypes = elementTypes.map {

@@ -52,7 +52,7 @@ class SetTests {
     // - supported types
     @Test
     fun `non-nullable set`() {
-        // TODO optimize: see comment in TypeDescriptor.elementTypesForSet to avoid this filter
+        // TODO optimize: see comment in TypeDescriptor.elementTypesForSet
         nonNullableTypes.forEach { nonNullableType ->
             val result = createFileAndCompile(
                 "nonNullableSet.kt",
@@ -62,7 +62,7 @@ class SetTests {
         }
     }
 
-    // - RealmAny fails - mixed is always non-null
+    // - RealmAny fails if non-nullable - mixed is always non-null
     @Test
     fun `unsupported non-nullable set - fails`() {
         val unsupportedNonNullableTypes =
@@ -77,12 +77,12 @@ class SetTests {
         }
     }
 
-    // - other unsupported types fails
+    // - Other unsupported types fail too
     @Test
     fun `unsupported type in set - fails`() {
         val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", UNSUPPORTED_TYPE))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmSets: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for RealmSet: 'A'"))
     }
 
     // - Embedded objects fail
@@ -90,7 +90,7 @@ class SetTests {
     fun `unsupported type in set - EmbeddedRealmObject fails`() {
         val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", EMBEDDED_TYPE))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmSets do not support embedded realm objects element types"))
+        assertTrue(result.messages.contains("RealmSet does not support embedded realm objects element types"))
     }
 
     // ------------------------------------------------
@@ -113,7 +113,7 @@ class SetTests {
         val result =
             createFileAndCompile("nullableTypeSet.kt", NULLABLE_TYPE_CODE.format("NullableTypeSet"))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmSets do not support nullable realm objects element types"))
+        assertTrue(result.messages.contains("RealmSet does not support nullable realm objects element types"))
     }
 
     // ------------------------------------------------
@@ -138,7 +138,7 @@ class SetTests {
         // It is not possible to test a set missing generics since this would not even compile
         val result = compileFromSource(SourceFile.kotlin("nullableSet.kt", STAR_PROJECTION))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmSets cannot use a '*' projection"))
+        assertTrue(result.messages.contains("RealmSet cannot use a '*' projection"))
     }
 }
 

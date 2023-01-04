@@ -51,9 +51,11 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.ManagedRealmDictionary
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -534,6 +536,13 @@ internal object RealmObjectHelper {
         }
     }
 
+    internal inline fun <reified R : Any> getDictionary(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): ManagedRealmDictionary<R?> {
+        TODO()
+    }
+
     internal fun setValueTransportByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
@@ -608,6 +617,16 @@ internal object RealmObjectHelper {
                 it.operator.addAll(set, updatePolicy, cache)
             }
         }
+    }
+
+    internal inline fun <reified T : Any> setDictionary(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        col: String,
+        dictionary: RealmDictionary<T>,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    ) {
+        TODO()
     }
 
     @Suppress("LongParameterList")
