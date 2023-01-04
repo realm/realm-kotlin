@@ -20,6 +20,7 @@ import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.internal.interop.CoreError
 import io.realm.kotlin.internal.interop.CoreErrorConverter
 import io.realm.kotlin.internal.interop.sync.ErrorCategory
+import io.realm.kotlin.internal.interop.sync.ErrorCode
 
 /**
  * This class is a work-around for `cinterop` not being able to access `library-base` and
@@ -76,7 +77,8 @@ public object CoreExceptionConverter {
         // throw subclasses of this without i being a breaking change.
         CoreErrorConverter.initialize { cause: CoreError ->
             with(cause.category) {
-                if(hasFlag(ErrorCategory.RLM_ERR_CAT_INVALID_ARG)) IllegalArgumentException(cause.message)
+                if (cause.errorCode == ErrorCode.RLM_ERR_INDEX_OUT_OF_BOUNDS) IndexOutOfBoundsException(cause.message)
+                else if(hasFlag(ErrorCategory.RLM_ERR_CAT_INVALID_ARG)) IllegalArgumentException(cause.message)
                 else if(hasFlag(ErrorCategory.RLM_ERR_CAT_LOGIC) || hasFlag(ErrorCategory.RLM_ERR_CAT_RUNTIME)) IllegalStateException(cause.message)
                 else RealmException(cause.message)
             }

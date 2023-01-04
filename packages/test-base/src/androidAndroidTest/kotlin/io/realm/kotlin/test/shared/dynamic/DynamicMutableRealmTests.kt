@@ -266,7 +266,7 @@ class DynamicMutableRealmTests {
             "stringField" to "INITIAL_VALUE",
             "nullableObject" to child
         )
-        assertFailsWithMessage<IllegalArgumentException>("Object with this primary key already exists") {
+        assertFailsWithMessage<IllegalArgumentException>("Attempting to create an object of type 'SampleWithPrimaryKey' with an existing primary key value '1'") {
             dynamicMutableRealm.copyToRealm(parent)
         }
         dynamicMutableRealm.query("SampleWithPrimaryKey").find().none()
@@ -307,7 +307,7 @@ class DynamicMutableRealmTests {
     @Test
     fun copyToRealm_throwsOnNullPrimaryKey() {
         val obj = DynamicMutableRealmObject.create("PrimaryKeyString", "primaryKey" to null)
-        assertFailsWithMessage<IllegalArgumentException>("Property 'primaryKey' of class 'PrimaryKeyString' cannot be NULL") {
+        assertFailsWithMessage<IllegalArgumentException>("Primary key for class PrimaryKeyString cannot be NULL") {
             dynamicMutableRealm.copyToRealm(obj)
         }
     }
@@ -315,7 +315,7 @@ class DynamicMutableRealmTests {
     @Test
     fun copyToRealm_throwsWithWrongPrimaryKeyType() {
         val obj = DynamicMutableRealmObject.create("PrimaryKeyString", mapOf("primaryKey" to 42))
-        assertFailsWithMessage<IllegalArgumentException>("Wrong primary key type for 'PrimaryKeyString'") {
+        assertFailsWithMessage<IllegalArgumentException>("Wrong primary key type for class PrimaryKeyString") {
             dynamicMutableRealm.copyToRealm(obj)
         }
     }

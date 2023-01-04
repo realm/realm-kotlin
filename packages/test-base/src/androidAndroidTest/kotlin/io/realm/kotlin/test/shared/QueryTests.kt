@@ -94,7 +94,7 @@ class QueryTests {
 
     @Test
     fun query_missingArgumentThrows() {
-        assertFailsWithMessage<IllegalArgumentException>("Request for argument at index 0 but no arguments are provided") {
+        assertFailsWithMessage<IndexOutOfBoundsException>("Request for argument at index 0 but no arguments are provided") {
             realm.query<QuerySample>("stringField = $0")
         }
     }
@@ -289,44 +289,32 @@ class QueryTests {
 
     @Test
     fun find_realm_malformedQueryThrows() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IndexOutOfBoundsException>("Request for argument at index 0 but no arguments are provided") {
             realm.query<QuerySample>("stringField = $0")
-        }.let {
-            assertTrue(it.message!!.contains("Have you specified all parameters"))
         }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Unsupported comparison between type 'string' and type 'int'") {
             realm.query<QuerySample>("stringField = 42")
-        }.let {
-            assertTrue(it.message!!.contains("Wrong query field"))
         }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("'QuerySample' has no property 'nonExistingField'") {
             realm.query<QuerySample>("nonExistingField = 13")
-        }.let {
-            assertTrue(it.message!!.contains("Wrong query field"))
         }
     }
 
     @Test
     fun find_mutableRealm_malformedQueryThrows() {
         realm.writeBlocking {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IndexOutOfBoundsException>("Request for argument at index 0 but no arguments are provided") {
                 query<QuerySample>("stringField = $0")
-            }.let {
-                assertTrue(it.message!!.contains("Have you specified all parameters"))
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("Unsupported comparison between type 'string' and type 'int'") {
                 query<QuerySample>("stringField = 42")
-            }.let {
-                assertTrue(it.message!!.contains("Wrong query field"))
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("'QuerySample' has no property 'nonExistingField'") {
                 query<QuerySample>("nonExistingField = 13")
-            }.let {
-                assertTrue(it.message!!.contains("Wrong query field"))
             }
         }
     }
@@ -1362,13 +1350,13 @@ class QueryTests {
     @Test
     fun sum_asFlow_throwsIfInvalidProperty() {
         runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .sum<String>(QuerySample::stringField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid query formulation"))
+            assertFailsWithMessage<IllegalArgumentException>("Operation 'sum' not supported for string property 'QuerySample.stringField'") {
+                runBlocking {
+                    realm.query<QuerySample>()
+                        .sum<String>(QuerySample::stringField.name)
+                        .asFlow()
+                        .collect { /* No-op */ }
+                }
             }
         }
     }
@@ -1546,13 +1534,13 @@ class QueryTests {
         }
 
         runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .max<String>(QuerySample::stringField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid query formulation"))
+            assertFailsWithMessage<IllegalArgumentException>("Operation 'max' not supported for string property 'QuerySample.stringField'") {
+                runBlocking {
+                    realm.query<QuerySample>()
+                        .max<String>(QuerySample::stringField.name)
+                        .asFlow()
+                        .collect { /* No-op */ }
+                }
             }
         }
     }
@@ -1730,13 +1718,13 @@ class QueryTests {
         }
 
         runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .min<String>(QuerySample::stringField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid query formulation"))
+            assertFailsWithMessage<IllegalArgumentException>("Operation 'min' not supported for string property 'QuerySample.stringField'") {
+                runBlocking {
+                    realm.query<QuerySample>()
+                        .min<String>(QuerySample::stringField.name)
+                        .asFlow()
+                        .collect { /* No-op */ }
+                }
             }
         }
     }
