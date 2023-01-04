@@ -144,7 +144,7 @@ android {
 
 kotlin {
     android("android") {
-        publishLibraryVariants("release", "debug")
+        publishLibraryVariants("release")
     }
     sourceSets {
         val androidMain by getting {

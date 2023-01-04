@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.platform.returnType
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -185,6 +186,17 @@ public object TypeDescriptor {
             indexSupport = false,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
+        ),
+        MIXED(
+            type = PropertyType.RLM_PROPERTY_TYPE_MIXED,
+            nullable = true,
+            nonNullable = false,
+            listSupport = true,
+            setSupport = true,
+            primaryKeySupport = false,
+            indexSupport = true,
+            canBeNull = nullabilityForAll,
+            canBeNotNull = setOf()
         );
     }
 
@@ -203,7 +215,8 @@ public object TypeDescriptor {
         Int::class to CoreFieldType.INT,
         Long::class to CoreFieldType.INT,
         Float::class to CoreFieldType.FLOAT,
-        Double::class to CoreFieldType.DOUBLE
+        Double::class to CoreFieldType.DOUBLE,
+        RealmAny::class to CoreFieldType.MIXED
     )
 
     // Kotlin classifier to Core field type mappings
@@ -246,6 +259,7 @@ public object TypeDescriptor {
             acc
         }
 
+    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
     fun elementTypesForList(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
         classifiers.fold(mutableSetOf()) { acc, classifier ->
             val realmFieldType = TypeDescriptor.classifiers[classifier]
@@ -259,6 +273,7 @@ public object TypeDescriptor {
             acc
         }
 
+    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
     fun elementTypesForSet(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
         classifiers.fold(mutableSetOf()) { acc, classifier ->
             val realmFieldType = TypeDescriptor.classifiers[classifier]

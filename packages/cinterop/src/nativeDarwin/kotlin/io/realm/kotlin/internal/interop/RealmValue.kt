@@ -65,6 +65,12 @@ actual value class RealmValue actual constructor(
         }
     }
 
+    actual inline fun getDecimal128Array(): ULongArray = ULongArray(2).apply {
+        (0 until 2).map {
+            this[it] = value.decimal128.w[it].toULong()
+        }
+    }
+
     actual inline fun getLink(): Link = value.asLink()
 
     actual inline fun isNull(): Boolean = value.type == ValueType.RLM_TYPE_NULL.nativeValue
@@ -80,6 +86,7 @@ actual value class RealmValue actual constructor(
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
             ValueType.RLM_TYPE_DECIMAL128 -> getDecimal128().toString()
+            ValueType.RLM_TYPE_DECIMAL128 -> getDecimal128Array().toString()
             ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdBytes().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()
             ValueType.RLM_TYPE_UUID -> getUUIDBytes().toString()

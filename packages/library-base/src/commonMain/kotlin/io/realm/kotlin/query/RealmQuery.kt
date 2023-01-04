@@ -24,6 +24,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 /**
+ * A query filter predicate string that will be true for all objects, hence will make the query
+ * select all objects.
+ */
+public const val TRUE_PREDICATE: String = "TRUEPREDICATE"
+
+/**
  * A `RealmQuery` encapsulates a query on a [Realm], a [RealmResults] or a [RealmList] instance
  * using the `Builder` pattern. The query is executed using either [find] or subscribing to the
  * [Flow] returned by [asFlow].

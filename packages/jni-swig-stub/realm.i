@@ -327,7 +327,7 @@ bool realm_object_is_valid(const realm_object_t*);
 %apply int64_t[] {uint64_t w[2]};
 
 %typemap(out) uint64_t w[2] %{
-$result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
+    $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
 %}
 
 %typemap(freearg) const uint8_t* data;

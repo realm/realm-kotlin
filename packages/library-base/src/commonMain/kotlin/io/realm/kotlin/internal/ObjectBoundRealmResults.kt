@@ -16,18 +16,19 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.query.ObjectBoundQuery
+import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.notifications.DeletedObject
-import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 
 /**
  * Class that binds a RealmResults to an Object lifecycle. Flows resulting from this class would be
@@ -75,14 +76,27 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
  * Binds a flow to an object lifecycle. It allows flows on queries to complete once the object gets
  * deleted. It is used on sub-queries and backlinks.
  */
-internal fun <T> Flow<T>.bind(
-    reference: RealmObjectReference<out BaseRealmObject>,
-): Flow<T> = reference.asFlow().filter { change: ObjectChange<out BaseRealmObject> ->
-    change !is UpdatedObject
-}.combineTransform(this) { objectChange: ObjectChange<out BaseRealmObject>, resultsChange: T ->
-    if (objectChange is DeletedObject) {
-        currentCoroutineContext().cancel()
-    } else {
-        emit(resultsChange)
+internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObject>): Flow<T> =
+    channelFlow {
+        // Listen for object deletions
+        reference.asFlow()
+            .map { it is DeletedObject }
+            .onStart { false }
+            .distinctUntilChanged()
+            // Combine object deletion events with the actual result changes
+            .combine(this@bind) { deleted: Boolean, resultsChange: T -> deleted to resultsChange }
+            // We just collect the flow instead of the using the fusing functionality like produceIn
+            // as the fusing operations will fuse backpressure strategy to our internal flows and
+            // we cannot allow that as we rely on some of the internal events for the logic to work.
+            .collect { (deleted, resultChange) ->
+                if (deleted) {
+                    close()
+                } else {
+                    trySendWithBufferOverflowCheck(resultChange)?.let {
+                        // Cancel scope if the user does not keep up to signal that we are loosing
+                        // events
+                        cancel(it)
+                    }
+                }
+            }
     }
-}

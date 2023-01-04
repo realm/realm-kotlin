@@ -454,6 +454,25 @@ actual object RealmInterop {
         realmc.realm_object_add_int(obj.cptr(), key.key, value)
     }
 
+    actual fun <T> realm_object_get_parent(
+        obj: RealmObjectPointer,
+        block: (ClassKey, RealmObjectPointer) -> T
+    ): T {
+        val objectPointerArray = longArrayOf(0)
+        val classKeyPointerArray = longArrayOf(0)
+
+        realmc.realm_object_get_parent(
+            /* object = */ obj.cptr(),
+            /* parent = */ objectPointerArray,
+            /* class_key = */ classKeyPointerArray
+        )
+
+        val classKey = ClassKey(classKeyPointerArray[0])
+        val objectPointer = LongPointerWrapper<RealmObjectT>(objectPointerArray[0])
+
+        return block(classKey, objectPointer)
+    }
+
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         return LongPointerWrapper(
             realmc.realm_get_list(
@@ -1277,6 +1296,22 @@ actual object RealmInterop {
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(
                 results.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_list(
+                list.cptr(),
                 query,
                 count.toLong(),
                 args.second.value

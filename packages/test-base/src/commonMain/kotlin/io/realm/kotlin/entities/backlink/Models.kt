@@ -36,6 +36,8 @@ class Child : RealmObject {
 class EmbeddedChild : EmbeddedRealmObject {
     var id = ObjectId()
     var parent: Parent? = null
+    val parentViaBacklinks: Parent by backlinks(Parent::embeddedChild)
+    val parent2ViaBacklinks: Parent2 by backlinks(Parent2::embeddedChild)
 }
 
 class Parent(var id: Int) : RealmObject {
@@ -47,6 +49,11 @@ class Parent(var id: Int) : RealmObject {
 
     var embeddedChild: EmbeddedChild? = EmbeddedChild()
     val embeddedChildren by backlinks(EmbeddedChild::parent)
+}
+
+class Parent2(var id: Int) : RealmObject {
+    constructor() : this(0)
+    var embeddedChild: EmbeddedChild? = EmbeddedChild()
 }
 
 class Recursive : RealmObject {
