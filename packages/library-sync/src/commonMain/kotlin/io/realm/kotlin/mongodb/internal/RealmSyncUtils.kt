@@ -247,7 +247,7 @@ internal fun convertAppError(appError: AppError): Throwable {
                 ErrorCode.RLM_ERR_BAD_REQUEST -> {
                     BadRequestException(msg)
                 }
-                else -> ServiceException(msg)
+                else -> ServiceException(msg, appError.code)
             }
         }
         else -> AppException(msg)

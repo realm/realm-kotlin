@@ -158,7 +158,7 @@ actual enum class ErrorCode(
     RLM_ERR_ACCOUNT_NAME_IN_USE("AccountNameInUse", realm_errno.RLM_ERR_ACCOUNT_NAME_IN_USE),
     RLM_ERR_INVALID_PASSWORD("InvalidPassword", realm_errno.RLM_ERR_INVALID_PASSWORD),
     RLM_ERR_SCHEMA_VALIDATION_FAILED_WRITE("SchemaValidationFailedWrite", realm_errno.RLM_ERR_SCHEMA_VALIDATION_FAILED_WRITE),
-    RLM_ERR_APP_UNKNOWN("AppUnknown", realm_errno.RLM_ERR_APP_UNKNOWN),
+    RLM_ERR_APP_UNKNOWN("Unknown", realm_errno.RLM_ERR_APP_UNKNOWN),
     RLM_ERR_MAINTENANCE_IN_PROGRESS("MaintenanceInProgress", realm_errno.RLM_ERR_MAINTENANCE_IN_PROGRESS),
     RLM_ERR_CALLBACK("Callback", realm_errno.RLM_ERR_CALLBACK),
     RLM_ERR_UNKNOWN("Unknown", realm_errno.RLM_ERR_UNKNOWN);

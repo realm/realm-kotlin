@@ -72,7 +72,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun create_throwsWithInvalidName() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][InvalidParameter(6)] can only contain ASCII letters, numbers, underscores, and hyphens.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][InvalidParameter(4305)] can only contain ASCII letters, numbers, underscores, and hyphens.") {
             runBlocking {
                 provider.create("%s")
             }
@@ -81,7 +81,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun create_throwsWithNoName() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][Unknown(-1)] 'name' is a required string.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][Unknown(4351)] 'name' is a required string.") {
             runBlocking {
                 provider.create("")
             }
@@ -159,7 +159,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun enable_nonExistingKeyThrows() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(4334)] API key not found.") {
             runBlocking {
                 provider.enable(ObjectId.create())
             }
@@ -184,7 +184,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun disable_nonExistingKeyThrows() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(4334)] API key not found.") {
             runBlocking {
                 provider.disable(ObjectId.create())
             }
@@ -197,7 +197,7 @@ class ApiKeyAuthTests {
             user.logOut()
         }
         for (method in Method.values()) {
-            assertFailsWithMessage<ServiceException>("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).") {
+            assertFailsWithMessage<ServiceException>("[Service][Unknown(4351)] expected Authorization header with JWT (Bearer schema).") {
                 runBlocking {
                     when (method) {
                         Method.CREATE -> provider.create("name")
