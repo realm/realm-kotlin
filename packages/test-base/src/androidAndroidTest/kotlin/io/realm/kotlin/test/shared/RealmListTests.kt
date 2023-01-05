@@ -53,6 +53,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.random.Random
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -632,6 +633,7 @@ class RealmListTests {
         Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
         Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
         Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
@@ -1370,6 +1372,7 @@ internal val SHORT_VALUES = listOf<Short>(1, 2)
 internal val BYTE_VALUES = listOf<Byte>(1, 2)
 internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
+internal val DECIMAL128_VALUES = listOf(Decimal128("1.8446744073709551618E-6157"), Decimal128("-1.8446073709551618E-617"))
 internal val BOOLEAN_VALUES = listOf(true, false)
 internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
@@ -1432,6 +1435,7 @@ internal val NULLABLE_SHORT_VALUES = SHORT_VALUES + null
 internal val NULLABLE_BYTE_VALUES = BYTE_VALUES + null
 internal val NULLABLE_FLOAT_VALUES = FLOAT_VALUES + null
 internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
+internal val NULLABLE_DECIMAL128_VALUES = DECIMAL128_VALUES + null
 internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
 internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
 internal val NULLABLE_OBJECT_ID_VALUES = OBJECT_ID_VALUES + null

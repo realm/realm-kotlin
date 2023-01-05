@@ -364,6 +364,20 @@ class DynamicRealmObjectTests {
                                     dynamicSample.getValue(property.name, type.storageType.kClass)
                                 )
                             }
+                            RealmStorageType.DECIMAL128 -> {
+                                assertEquals(
+                                    expectedSample.decimal128Field,
+                                    dynamicSample.getValue(property.name)
+                                )
+                                assertEquals(
+                                    expectedSample.decimal128Field,
+                                    dynamicSample.getValue<Decimal128>(property.name)
+                                )
+                                assertEquals(
+                                    expectedSample.decimal128Field,
+                                    dynamicSample.getValue(property.name, type.storageType.kClass)
+                                )
+                            }
                             RealmStorageType.TIMESTAMP -> {
                                 assertEquals(
                                     expectedSample.timestampField,
@@ -537,6 +551,19 @@ class DynamicRealmObjectTests {
                                     )[0]
                                 )
                             }
+                            RealmStorageType.DECIMAL128 -> {
+                                assertEquals(
+                                    null,
+                                    dynamicSample.getNullableValueList<Decimal128>(property.name)[0]
+                                )
+                                assertEquals(
+                                    null,
+                                    dynamicSample.getNullableValueList(
+                                        property.name,
+                                        Decimal128::class
+                                    )[0]
+                                )
+                            }
                             RealmStorageType.TIMESTAMP -> {
                                 assertEquals(
                                     null,
@@ -693,6 +720,17 @@ class DynamicRealmObjectTests {
                                 assertEquals(
                                     expectedValue,
                                     dynamicSample.getValueList(property.name, Double::class)[0]
+                                )
+                            }
+                            RealmStorageType.DECIMAL128 -> {
+                                val expectedValue = defaultSample.decimal128Field
+                                assertEquals(
+                                    expectedValue,
+                                    dynamicSample.getValueList<Decimal128>(property.name)[0]
+                                )
+                                assertEquals(
+                                    expectedValue,
+                                    dynamicSample.getValueList(property.name, Decimal128::class)[0]
                                 )
                             }
                             RealmStorageType.TIMESTAMP -> {

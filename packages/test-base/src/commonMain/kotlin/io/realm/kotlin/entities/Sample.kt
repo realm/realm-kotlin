@@ -59,6 +59,7 @@ class Sample : RealmObject {
     var nullableBooleanField: Boolean? = null
     var nullableFloatField: Float? = null
     var nullableDoubleField: Double? = null
+    var nullableDecimal128Field: Decimal128? = null
     var nullableTimestampField: RealmInstant? = null
     var nullableObjectIdField: ObjectId? = null
     var nullableBsonObjectIdField: ObjectId? = null

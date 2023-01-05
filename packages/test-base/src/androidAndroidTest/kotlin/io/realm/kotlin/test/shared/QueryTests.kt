@@ -135,6 +135,7 @@ class QueryTests {
                     booleanField = false
                     floatField = 1F
                     doubleField = 1.0
+                    decimal128Field = Decimal128("2.8446744073709551618E-6151")
                     timestampField = RealmInstant.from(100, 1001)
                     objectIdField = ObjectId.from("507f191e810c19729de860eb")
                     bsonObjectIdField = BsonObjectId("507f191e810c19729de860eb")
@@ -185,6 +186,10 @@ class QueryTests {
                 RealmStorageType.DOUBLE -> {
                     checkQuery(QuerySample::doubleField, 1.0)
                 }
+                RealmStorageType.DECIMAL128 -> {
+                    checkQuery(QuerySample::decimal128Field, Decimal128("2.8446744073709551618E-6151"))
+                }
+
                 RealmStorageType.TIMESTAMP -> {
                     checkQuery(QuerySample::timestampField, RealmInstant.from(100, 1001))
                 }
@@ -2802,6 +2807,7 @@ class QuerySample() : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 0F
     var doubleField: Double = 0.0
+    var decimal128Field: Decimal128 = Decimal128("1.84467440737095E-6157")
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f191e810c19729de860ea")
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
@@ -2819,6 +2825,7 @@ class QuerySample() : RealmObject {
     var nullableBooleanField: Boolean? = null
     var nullableFloatField: Float? = null
     var nullableDoubleField: Double? = null
+    var nullableDecimal128Field: Decimal128? = null
     var nullableTimestampField: RealmInstant? = null
     var nullableObjectIdField: ObjectId? = null
     var nullableBsonObjectIdField: BsonObjectId? = null
@@ -2834,6 +2841,7 @@ class QuerySample() : RealmObject {
     var booleanListField: RealmList<Boolean> = realmListOf()
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
+    var decimal128ListField: RealmList<Decimal128> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
@@ -2848,6 +2856,7 @@ class QuerySample() : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = realmListOf()
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
+    var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()

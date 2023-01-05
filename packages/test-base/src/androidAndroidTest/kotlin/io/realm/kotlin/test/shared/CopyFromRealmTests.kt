@@ -50,6 +50,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -748,6 +749,7 @@ class CopyFromRealmTests {
                 "io.realm.kotlin.types.MutableRealmInt" -> MutableRealmInt.create(7)
                 "io.realm.kotlin.types.RealmAny" -> RealmAny.create(1)
                 "org.mongodb.kbson.BsonObjectId" -> BsonObjectId("635a1a95184a200db8a07bfc")
+                "org.mongodb.kbson.Decimal128 /* = org.mongodb.kbson.BsonDecimal128 */" -> Decimal128("1.8446744073709551618E-615")
                 "io.realm.kotlin.entities.Sample" -> null // Object references are not part of this test, so just return null
                 else -> fail("Missing support for $type")
             }
@@ -776,6 +778,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.ObjectId" -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            "org.mongodb.kbson.Decimal128 /* = org.mongodb.kbson.BsonDecimal128 */" -> realmListOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
             "io.realm.kotlin.types.RealmAny" -> realmListOf(RealmAny.create(1))
             "io.realm.kotlin.entities.Sample" -> realmListOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
@@ -808,6 +811,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.ObjectId" -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            "org.mongodb.kbson.Decimal128 /* = org.mongodb.kbson.BsonDecimal128 */" -> realmSetOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
             "io.realm.kotlin.types.RealmAny" -> realmSetOf(RealmAny.create(1))
             "io.realm.kotlin.entities.Sample" -> realmSetOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
