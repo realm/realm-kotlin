@@ -41,13 +41,11 @@ import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
 import kotlin.reflect.KClass
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-@Ignore
 class BsonEncoderTests {
     @kotlinx.serialization.Serializable
     class SerializableClass

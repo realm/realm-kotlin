@@ -55,9 +55,8 @@ import kotlin.reflect.KClassifier
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Bson encoder based on the `Json` encoder from the `KSerializer`. To avoid using any
- * experimental `KSerializer` APIs and to maximize compatibility it only supports a predefined set
- * of types:
+ * Bson encoder that avoids using any experimental `KSerializer` APIs, to maximize compatibility it
+ * only supports a limited type set:
  * - Primitives, Realm, Bson, Collections and Map types for encoding.
  * - Primitives, Realm and Bson types for decoding.
  */

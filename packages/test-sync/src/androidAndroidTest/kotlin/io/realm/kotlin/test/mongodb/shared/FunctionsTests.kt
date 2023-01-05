@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// We use internal serialization APIs for testing purposes. No leaks to the public API.
-@file:OptIn(InternalSerializationApi::class)
 @file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.shared
@@ -42,7 +39,6 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.SUM_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.types.RealmInstant
-import kotlinx.serialization.InternalSerializationApi
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBoolean
@@ -67,7 +63,6 @@ import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
@@ -78,7 +73,6 @@ import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-@Ignore
 class FunctionsTests {
 //    @Serializable
 //    private data class Dog(var name: String? = null)
