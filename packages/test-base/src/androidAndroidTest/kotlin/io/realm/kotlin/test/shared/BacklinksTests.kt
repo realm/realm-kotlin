@@ -355,7 +355,6 @@ class BacklinksTests {
 
             // Closing the Realm instance should make backlinks inaccessible
             linkingObjects.forEach {
-                // TODO update changelog with this being fixed
                 assertFailsWithMessage<IllegalStateException>("Access to invalidated Results objects") {
                     it.size
                 }

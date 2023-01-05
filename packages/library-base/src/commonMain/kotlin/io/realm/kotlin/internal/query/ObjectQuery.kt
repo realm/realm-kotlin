@@ -90,16 +90,14 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         RealmResultsImpl(realmReference, resultsPointer, classKey, clazz, mediator)
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> =
-        tryCatchCoreException {
-            inputScope {
-                val appendedQuery =
-                    RealmInterop.realm_query_append_query(
-                        queryPointer,
-                        filter,
-                        convertToQueryArgs(arguments)
-                    )
-                ObjectQuery(appendedQuery, this@ObjectQuery)
-            }
+        inputScope {
+            val appendedQuery =
+                RealmInterop.realm_query_append_query(
+                    queryPointer,
+                    filter,
+                    convertToQueryArgs(arguments)
+                )
+            ObjectQuery(appendedQuery, this@ObjectQuery)
         }
 
     // TODO OPTIMIZE Descriptors are added using 'append_query', which requires an actual predicate.
@@ -191,13 +189,9 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
             classKey: ClassKey,
             filter: String,
             args: Array<out Any?>
-        ): RealmQueryPointer = tryCatchCoreException {
-            inputScope {
-                val queryArgs = convertToQueryArgs(args)
-                RealmInterop.realm_query_parse(dbPointer, classKey, filter, queryArgs)
-            }
+        ): RealmQueryPointer = inputScope {
+            val queryArgs = convertToQueryArgs(args)
+            RealmInterop.realm_query_parse(dbPointer, classKey, filter, queryArgs)
         }
-
-        fun <R> tryCatchCoreException(block: () -> R): R = block.invoke()
     }
 }
