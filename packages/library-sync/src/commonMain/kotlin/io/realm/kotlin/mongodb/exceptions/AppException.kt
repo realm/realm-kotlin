@@ -17,8 +17,6 @@
 package io.realm.kotlin.mongodb.exceptions
 
 import io.realm.kotlin.exceptions.RealmException
-import io.realm.kotlin.internal.interop.sync.ErrorCategory
-import io.realm.kotlin.internal.interop.sync.ErrorCode
 
 /**
  * Top level class for all exceptions that are specific to using App Services and Device Sync.

@@ -25,7 +25,6 @@ import io.realm.kotlin.entities.backlink.EmbeddedChild
 import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
 import io.realm.kotlin.entities.backlink.Recursive
-import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -247,7 +246,7 @@ class BacklinksTests {
 
             assertFailsWithMessage<IllegalStateException>(
                 "Property 'MissingSourceProperty.reference' declared as origin of linking " +
-                        "objects property 'MissingSourceProperty.references' does not exist"
+                    "objects property 'MissingSourceProperty.references' does not exist"
             ) {
                 Realm.open(configuration)
             }
