@@ -32,18 +32,15 @@ fun getCode(
         false -> ""
     }
     // See comments in COLLECTION_CODE for meaning of parameters
-    return COLLECTION_CODE.format(
+    val output = COLLECTION_CODE.format(
         collectionType.description,
         formattedContentType,
-        formattedFieldNullability,
-        "TODO()" // There is no need to use an actual default initializer when testing compilation
+        formattedFieldNullability
     )
+    return output
 }
 
 private val COLLECTION_CODE = """
-import io.realm.kotlin.ext.realmDictionaryOf
-import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
@@ -64,6 +61,6 @@ class SampleClass : RealmObject {
     // 2nd parameter indicates the contained type: string, long, etc. - nullability must be handled here
     // 3rd parameter indicates nullability of the field itself
     // 4th parameter indicates the default value: realmListOf, realmSetOf or realmDictionaryOf
-    var collection: %1${'$'}s<%2${'$'}s>%3${'$'}s = %4${'$'}s
+    var collection: %1${'$'}s<%2${'$'}s>%3${'$'}s = TODO() // There is no need to use an actual default initializer when testing compilation
 }
 """.trimIndent()

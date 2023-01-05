@@ -723,7 +723,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val type: IrType? = when (collectionType) {
             CollectionType.NONE -> backingField.type
             CollectionType.LIST,
-            CollectionType.SET -> getCollectionElementType(backingField.type)
+            CollectionType.SET,
             CollectionType.DICTIONARY -> getCollectionElementType(backingField.type)
         }
         val getter = property.declaration.getter

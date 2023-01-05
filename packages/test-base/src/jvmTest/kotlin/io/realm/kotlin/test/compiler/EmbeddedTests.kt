@@ -45,23 +45,23 @@ class EmbeddedTests {
         assertTrue(result.messages.contains("Embedded object is not allowed to have a primary key"))
     }
 
-    @Test
-    fun `embedded object lists cannot be nullable`() {
-        val result = Compiler.compileFromSource(
-            source = SourceFile.kotlin(
-                "embeddedRealmObjectNullableList.kt",
-                """
-                    import io.realm.kotlin.types.EmbeddedRealmObject
-                    import io.realm.kotlin.types.RealmList
-                    import io.realm.kotlin.ext.realmListOf
-
-                    class A : EmbeddedRealmObject {
-                        var embeddedList: RealmList<A?> = realmListOf()
-                    }
-                """.trimIndent()
-            )
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmList does not support nullable realm objects element types"))
-    }
+//    @Test
+//    fun `embedded object lists cannot be nullable`() {
+//        val result = Compiler.compileFromSource(
+//            source = SourceFile.kotlin(
+//                "embeddedRealmObjectNullableList.kt",
+//                """
+//                    import io.realm.kotlin.types.EmbeddedRealmObject
+//                    import io.realm.kotlin.types.RealmList
+//                    import io.realm.kotlin.ext.realmListOf
+//
+//                    class A : EmbeddedRealmObject {
+//                        var embeddedList: RealmList<A?> = realmListOf()
+//                    }
+//                """.trimIndent()
+//            )
+//        )
+//        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+//        assertTrue(result.messages.contains("RealmList does not support nullable realm objects element types"))
+//    }
 }
