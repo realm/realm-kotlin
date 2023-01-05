@@ -20,7 +20,6 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.usePinned
-import org.mongodb.kbson.Decimal128
 import platform.posix.memcpy
 import realm_wrapper.realm_query_arg
 import realm_wrapper.realm_value

@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.internal.interop
 
-import org.mongodb.kbson.Decimal128
-
 // TODO BENCHMARK: investigate performance between using this as value vs reference type
 actual typealias RealmValueT = realm_value_t
 

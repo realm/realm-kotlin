@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.internal.interop
 
-import org.mongodb.kbson.Decimal128
-
 /**
  * Representation of a C-API `realm_value_t` struct.
  */
