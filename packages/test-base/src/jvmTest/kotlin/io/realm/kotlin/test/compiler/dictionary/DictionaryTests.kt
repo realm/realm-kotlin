@@ -21,7 +21,6 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.compiler.CollectionType
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.compiler.getCode
-import io.realm.kotlin.test.compiler.getCodeForStarProjection
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.RealmAny
@@ -192,7 +191,7 @@ class DictionaryTests {
         val result = compileFromSource(
             SourceFile.kotlin(
                 "starProjectionDictionary.kt",
-                getCodeForStarProjection(CollectionType.DICTIONARY)
+                getCode(CollectionType.DICTIONARY, userStarProjection = true)
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)

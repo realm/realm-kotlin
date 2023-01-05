@@ -30,4 +30,3 @@ public class ManagedRealmDictionary<E> : AbstractMutableMap<String, E>(), RealmD
         TODO("Not yet implemented")
     }
 }
-
