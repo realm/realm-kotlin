@@ -7,6 +7,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 ### Enhancements
 * OpenSSL has been upgraded from from 1.1.1n to 3.0.7.
+* Added support for `RealmAny` as supported field in model classes. A `RealmAny` is used to represent a polymorphic Realm value or Realm Object, is indexable but cannot be used as a primary key.
 * Realm will now use a lot less memory and disk space when different versions of realm objects are used. ([Core Issue #5440](https://github.com/realm/realm-core/pull/5440))
 * Realm will now continuously track and reduce the size of the Realm file when it is in use rather that only when opening the file with `Configuration.compactOnLaunch` enabled. ([Core Issue #5754](https://github.com/realm/realm-core/issues/5754))
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
@@ -14,8 +15,10 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
 * Added support for reverse relationships on Embedded objects through the `EmbeddedRealmObject.parent()` extension function. (Issue [#1141](https://github.com/realm/realm-kotlin/pull/1141))
 * Added support for reverse relationships through the `backlinks` delegate on `EmbeddedObjects`. See the function documentation for more details. (Issue [#1134](https://github.com/realm/realm-kotlin/issues/1134))
+* Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
+* Added support for `@PersistedName` annotations for mapping a Kotlin field name to the underlying field name persisted in the Realm. (Issue [#590](https://github.com/realm/realm-kotlin/issues/590))
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
-* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))
+* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))lin/issues/1086))
 * [Sync] `Realm.writeCopyTo(syncConfig)` now support copying a Flexible Sync Realm to another Flexible Sync Realm. 
 
 ### Fixed
@@ -32,7 +35,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
   * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above. 
+  * Coroutines 1.6.4 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Gradle version: 6.7.1.
@@ -44,6 +47,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Updated to Realm Core 13.1.2, commit 6f34b37b871d001d59c02b78ca6987cce4195bf5.
 * Updated to require Swig 4.1.0.
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
+* Added JVM test wrapper as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 
 
 ## 1.5.2 (YYYY-MM-DD)

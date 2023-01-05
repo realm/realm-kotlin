@@ -273,8 +273,7 @@ internal class PrimitiveListOperator<E>(
         return getterScope {
             val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
-                val publicValue = realmValueToPublic(transport)
-                publicValue as E
+                realmValueToPublic(transport) as E
             }
         }
     }
@@ -313,7 +312,8 @@ internal class PrimitiveListOperator<E>(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmListPointer
-    ): ListOperator<E> = PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
+    ): ListOperator<E> =
+        PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
 }
 
 internal abstract class BaseRealmObjectListOperator<E>(

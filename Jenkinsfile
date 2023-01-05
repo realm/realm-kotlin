@@ -254,7 +254,7 @@ pipeline {
                     }
                 }
                 stage('Track build metrics') {
-                    when { expression { currentBranch == "master" } }
+                    when { expression { currentBranch == "main" } }
                     steps {
                         trackBuildMetrics(version)
                     }
@@ -490,7 +490,7 @@ def testWithServer(tasks) {
 
             mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -p9090:9090 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
 
-            // Techinically this is only needed for Android, but since all tests are
+            // Technically, this is only needed for Android, but since all tests are
             // executed on same host and tasks are grouped in same stage we just do it
             // here
             forwardAdbPorts()
