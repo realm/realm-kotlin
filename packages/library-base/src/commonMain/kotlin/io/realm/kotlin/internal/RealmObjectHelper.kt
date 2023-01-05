@@ -55,6 +55,7 @@ import io.realm.kotlin.types.ManagedRealmDictionary
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -535,9 +536,11 @@ internal object RealmObjectHelper {
         }
     }
 
+    // TODO remove suppress in next PR, needed to avoid static analysis task failing
+    @Suppress("UnusedPrivateMember")
     internal inline fun <reified R : Any> getDictionary(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        propertyName: String
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
     ): ManagedRealmDictionary<R?> {
         TODO()
     }
@@ -618,12 +621,14 @@ internal object RealmObjectHelper {
         }
     }
 
+    // TODO remove suppress in next PR, needed to avoid static analysis task failing
+    @Suppress("UnusedPrivateMember")
     internal inline fun <reified T : Any> setDictionary(
-//        obj: RealmObjectReference<out BaseRealmObject>,
-//        col: String,
-//        dictionary: RealmDictionary<T>,
-//        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-//        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+        obj: RealmObjectReference<out BaseRealmObject>,
+        col: String,
+        dictionary: RealmDictionary<T>,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         TODO()
     }
