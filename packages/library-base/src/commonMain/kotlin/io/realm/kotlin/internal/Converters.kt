@@ -89,8 +89,6 @@ public inline fun realmValueToRealmInstant(transport: RealmValue): RealmInstant 
     RealmInstantImpl(transport.getTimestamp())
 public inline fun realmValueToFloat(transport: RealmValue): Float = transport.getFloat()
 public inline fun realmValueToDouble(transport: RealmValue): Double = transport.getDouble()
-public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128? =
-    if (transport.isNull()) null else transport.getDecimal128()
 public inline fun realmValueToObjectId(transport: RealmValue): BsonObjectId =
     BsonObjectId(transport.getObjectIdBytes())
 public inline fun realmValueToRealmObjectId(transport: RealmValue): ObjectId =
@@ -213,14 +211,6 @@ internal object DoubleConverter : PassThroughPublicConverter<Double>() {
         doubleTransport(value)
 }
 
-internal object Decimal128Converter : PassThroughPublicConverter<Decimal128>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): Decimal128? =
-        if (realmValue.isNull()) null else realmValueToDecimal128(realmValue)
-
-    override inline fun MemTrackingAllocator.toRealmValue(value: Decimal128?): RealmValue =
-        decimal128Transport(value)
-}
-
 // Converter for Core INT storage type (i.e. Byte, Short, Int and Char public types )
 internal interface CoreIntConverter : StorageTypeConverter<Long> {
     override fun fromRealmValue(realmValue: RealmValue): Long? =
@@ -311,7 +301,7 @@ internal object Decimal128Converter : PassThroughPublicConverter<Decimal128>() {
         if (realmValue.isNull()) null else realmValueToDecimal128(realmValue)
 
     override inline fun MemTrackingAllocator.toRealmValue(value: Decimal128?): RealmValue =
-        TODO("BsonDecimal128 doesn't expose 'high' and 'low' so we can't create transport objects towards the C-API yet.")
+        decimal128Transport(value)
 }
 
 @SharedImmutable

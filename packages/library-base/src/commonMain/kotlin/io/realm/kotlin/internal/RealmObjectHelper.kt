@@ -274,7 +274,7 @@ internal object RealmObjectHelper {
     internal inline fun getDecimal128(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
-    ): Decimal128? = getterScope { realmValueToDecimal128(getValue(obj, propertyName)) }
+    ): Decimal128? = getterScope { getValue(obj, propertyName)?.let { realmValueToDecimal128(it) } }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,

@@ -40,9 +40,6 @@ actual value class RealmValue actual constructor(
     actual inline fun getTimestamp(): Timestamp = value.asTimestamp()
     actual inline fun getFloat(): Float = value.fnum
     actual inline fun getDouble(): Double = value.dnum
-    actual inline fun getDecimal128(): Decimal128 =
-        Decimal128.fromIEEE754BIDEncoding(value.decimal128.w[1], value.decimal128.w[0])
-
     actual inline fun getObjectIdBytes(): ByteArray = memScoped {
         UByteArray(OBJECT_ID_BYTES_SIZE).let { byteArray ->
             byteArray.usePinned {
@@ -65,10 +62,9 @@ actual value class RealmValue actual constructor(
         }
     }
 
-    actual inline fun getDecimal128Array(): ULongArray = ULongArray(2).apply {
-        (0 until 2).map {
-            this[it] = value.decimal128.w[it].toULong()
-        }
+    actual inline fun getDecimal128Array(): ULongArray {
+        val w = value.decimal128.w
+        return ulongArrayOf(w[0], w[1])
     }
 
     actual inline fun getLink(): Link = value.asLink()
@@ -85,7 +81,6 @@ actual value class RealmValue actual constructor(
             ValueType.RLM_TYPE_TIMESTAMP -> getTimestamp().toString()
             ValueType.RLM_TYPE_FLOAT -> getFloat()
             ValueType.RLM_TYPE_DOUBLE -> getDouble()
-            ValueType.RLM_TYPE_DECIMAL128 -> getDecimal128().toString()
             ValueType.RLM_TYPE_DECIMAL128 -> getDecimal128Array().toString()
             ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdBytes().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()

@@ -263,7 +263,7 @@ class SampleTests {
 //                assertEquals(1, objects.size)
 //            }
 
-        realm.query<Sample>("decimal128Field >= $0", Decimal128("2"))
+        realm.query<Sample>("decimal128Field == $0", Decimal128(t))
             .find { objects ->
                 objects[0].decimal128Field.low
                 assertEquals(1, objects.size)

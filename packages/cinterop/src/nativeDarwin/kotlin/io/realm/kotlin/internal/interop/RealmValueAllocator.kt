@@ -70,8 +70,8 @@ class NativeMemAllocator : MemTrackingAllocator {
     override fun decimal128Transport(value: Decimal128?): RealmValue =
         createTransport(value, realm_value_type.RLM_TYPE_DECIMAL128) {
             decimal128.apply {
-                w[0] = value!!.low
-                w[1] = value.high
+                w[0] = it.low
+                w[1] = it.high
             }
         }
 

@@ -34,6 +34,7 @@ import org.mongodb.kbson.BsonObjectId
 import kotlin.reflect.KClass
 
 internal object RealmStorageTypeImpl {
+    @Suppress("ComplexMethod")
     fun fromCorePropertyType(type: PropertyType): RealmStorageType {
         return when (type) {
             PropertyType.RLM_PROPERTY_TYPE_INT -> RealmStorageType.INT

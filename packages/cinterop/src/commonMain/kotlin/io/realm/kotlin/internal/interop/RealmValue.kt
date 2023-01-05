@@ -38,7 +38,6 @@ expect value class RealmValue(val value: RealmValueT) {
     inline fun getTimestamp(): Timestamp
     inline fun getFloat(): Float
     inline fun getDouble(): Double
-    inline fun getDecimal128(): Decimal128
     inline fun getObjectIdBytes(): ByteArray
     inline fun getUUIDBytes(): ByteArray
     inline fun getDecimal128Array(): ULongArray

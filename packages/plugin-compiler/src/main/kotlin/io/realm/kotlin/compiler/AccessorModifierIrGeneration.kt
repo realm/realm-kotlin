@@ -17,8 +17,8 @@
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.KBSON_DECIMAL128
 import io.realm.kotlin.compiler.FqNames.IGNORE_ANNOTATION
+import io.realm.kotlin.compiler.FqNames.KBSON_DECIMAL128
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_ANY
 import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
@@ -271,13 +271,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 declaration.locationOf()
                             )
                         }
-                        fields[name] = SchemaProperty(
+                        val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_MIXED,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
+                        fields[name] = schemaProperty
                         modifyAccessor(
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getRealmAny,
                             fromRealmValue = null,
                             toPublic = null,
@@ -469,13 +470,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isDecimal128() -> {
                         logDebug("Decimal128 property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        fields[name] = SchemaProperty(
+                        val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
+                        fields[name] = schemaProperty
                         modifyAccessor(
-                            property = declaration,
+                            property = schemaProperty,
                             getFunction = getDecimal128,
                             fromRealmValue = null,
                             toPublic = null,
@@ -1057,6 +1059,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
                     "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
                     "BsonObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+                    "BsonDecimal128" -> PropertyType.RLM_PROPERTY_TYPE_DECIMAL128
                     "RealmUUID" -> PropertyType.RLM_PROPERTY_TYPE_UUID
                     "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
                     "RealmAny" -> PropertyType.RLM_PROPERTY_TYPE_MIXED
