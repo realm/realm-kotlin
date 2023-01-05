@@ -114,7 +114,7 @@ public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
 public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
     val dir = NSURL.fileURLWithPath(directoryPath, isDirectory = true)
     preparePath(directoryPath, dir)
-    return NSURL.fileURLWithPath(filename, dir).absoluteString?.removePrefix("file://")
+    return NSURL.fileURLWithPath(filename, dir).path
         ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
 }
 
