@@ -29,8 +29,8 @@ import org.mongodb.kbson.BsonObjectId
  *
  * Multiple fields in a RealmObject class can have this annotation.
  *
- * This annotation applies to the following primitive types: [String], [Byte], [Char], [Short],
- * [Int], [Long], [RealmInstant], [ObjectId], [BsonObjectId], [RealmUUID] as well as their nullable
- * variants.
+ * This annotation applies to the following primitive types: [String], [Boolean], [Byte], [Char],
+ * [Short], [Int], [Long], [RealmInstant], [ObjectId], [BsonObjectId], [RealmUUID] as well as their
+ * nullable variants.
  */
 public annotation class Index
