@@ -199,6 +199,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
     private val indexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
+            booleanType,
             byteType,
             charType,
             shortType,
