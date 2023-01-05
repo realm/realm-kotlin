@@ -9,6 +9,7 @@
 ### Fixed
 * Added proguard consumer files to Android debug artifacts. (Issue [#1150](https://github.com/realm/realm-kotlin/issues/1150))
 * Fixed bug when creating `RealmInstant` instaces with `RealmInstant.now()` in Kotlin Native. (Issue [#1182](https://github.com/realm/realm-kotlin/issues/1182))
+* Allow `@Index` on `Boolean` fields. (Issue [#1193](https://github.com/realm/realm-kotlin/issues/1193))
 * Fixed issue with spaces in realm file path on iOS (Issue [#1194](https://github.com/realm/realm-kotlin/issues/1194))
 
 ### Compatibility
