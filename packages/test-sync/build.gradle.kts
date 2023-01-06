@@ -54,12 +54,12 @@ configurations.all {
 kotlin {
     sourceSets {
         val commonMain by getting {
+            kotlin.srcDir("$projectDir/../test-base/src/commonMain")
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
-                implementation(project(":test-base"))
                 // IDE Doesn't resolve library-base symbols if not adding it as an explicit
                 // dependency. Probably due to our own custom dependency substitution above, but
                 // shouldn't be an issue as it is already a transitive dependency of library-sync.
@@ -80,6 +80,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-content-negotiation:${Versions.ktor}")
 
                 implementation("com.squareup.okio:okio:${Versions.okio}")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
 
@@ -151,6 +152,7 @@ kotlin {
     android("android")
     sourceSets {
         val androidMain by getting {
+            kotlin.srcDir("$projectDir/../test-base/src/androidMain")
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
@@ -174,6 +176,7 @@ kotlin {
     jvm()
     sourceSets {
         val jvmMain by getting {
+            kotlin.srcDir("$projectDir/../test-base/src/jvmMain")
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
@@ -207,6 +210,7 @@ kotlin {
         val commonTest by getting
         val nativeDarwin by creating {
             dependsOn(commonMain)
+            kotlin.srcDir("$projectDir/../test-base/src/nativeDarwin")
         }
         val nativeDarwinTest by creating {
             dependsOn(commonTest)
