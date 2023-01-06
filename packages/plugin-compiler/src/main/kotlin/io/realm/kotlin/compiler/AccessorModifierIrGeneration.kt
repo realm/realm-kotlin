@@ -972,11 +972,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val descriptorType = declaration.symbol.descriptor.type
         val collectionGenericType = descriptorType.arguments[0].type
 
-        // No embedded objects for sets
         val supertypes = collectionGenericType.constructor.supertypes
         val isEmbedded = inheritsFromRealmObject(supertypes, RealmObjectType.EMBEDDED)
 
         if (inheritsFromRealmObject(supertypes)) {
+            // No embedded objects for sets
             if (collectionType == CollectionType.SET && isEmbedded) {
                 logError(
                     "Error in field ${declaration.name} - ${collectionType.description} does not support embedded realm objects element types.",
@@ -987,8 +987,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
             val isNullable = collectionGenericType.isNullable()
 
-            // Unlike lists and sets, dictionaries of objects/embedded objects may contain null values
-            if (collectionType != CollectionType.DICTIONARY) {
+            // Lists of objects/embedded objects and sets of object may NOT contain null values, but dictionaries may
+            if (collectionType == CollectionType.SET || collectionType == CollectionType.LIST) {
                 if (isNullable) {
                     logError(
                         "Error in field ${declaration.name} - ${collectionType.description} does not support nullable realm objects element types.",

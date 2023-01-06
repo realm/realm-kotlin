@@ -48,8 +48,8 @@ class DictionaryTests : CollectionTests(
                     "nullableRealmObjectDictionary.kt",
                     getCode(
                         collectionType = CollectionType.DICTIONARY,
-                        contentType = realmObjectType,
-                        nullableContent = true,
+                        elementType = realmObjectType,
+                        nullableElementType = true,
                         nullableField = false
                     )
                 )

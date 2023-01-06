@@ -71,8 +71,8 @@ abstract class CollectionTests(
                 "nonNullableCollection.kt",
                 getCode(
                     collectionType = collectionType,
-                    contentType = nonNullableType,
-                    nullableContent = false,
+                    elementType = nonNullableType,
+                    nullableElementType = false,
                     nullableField = false
                 )
             )
@@ -90,8 +90,8 @@ abstract class CollectionTests(
                     "unsupportedNonNullableCollection.kt",
                     getCode(
                         collectionType = collectionType,
-                        contentType = nonNullableType,
-                        nullableContent = false,
+                        elementType = nonNullableType,
+                        nullableElementType = false,
                         nullableField = false
                     )
                 )
@@ -108,8 +108,8 @@ abstract class CollectionTests(
                 "unsupportedTypeCollection.kt",
                 getCode(
                     collectionType = collectionType,
-                    contentType = "A",
-                    nullableContent = false,
+                    elementType = "A",
+                    nullableElementType = false,
                     nullableField = false
                 )
             )
@@ -130,8 +130,8 @@ abstract class CollectionTests(
                 "nullableTypeCollection.kt",
                 getCode(
                     collectionType = collectionType,
-                    contentType = nullableType,
-                    nullableContent = true,
+                    elementType = nullableType,
+                    nullableElementType = true,
                     nullableField = false
                 )
             )
@@ -151,8 +151,8 @@ abstract class CollectionTests(
                 "nullableCollection.kt",
                 getCode(
                     collectionType = collectionType,
-                    contentType = primitiveType,
-                    nullableContent = false,
+                    elementType = primitiveType,
+                    nullableElementType = false,
                     nullableField = true
                 )
             )
@@ -169,7 +169,7 @@ abstract class CollectionTests(
         val result = Compiler.compileFromSource(
             SourceFile.kotlin(
                 "starProjectionCollection.kt",
-                getCode(collectionType, userStarProjection = true)
+                getCode(collectionType)
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)

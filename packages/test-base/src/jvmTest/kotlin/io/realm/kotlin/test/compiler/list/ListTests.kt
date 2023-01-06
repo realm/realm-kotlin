@@ -48,8 +48,8 @@ class ListTests : CollectionTests(
                     "nullableRealmObjectList.kt",
                     getCode(
                         collectionType = CollectionType.LIST,
-                        contentType = realmObjectType,
-                        nullableContent = true,
+                        elementType = realmObjectType,
+                        nullableElementType = true,
                         nullableField = false
                     )
                 )

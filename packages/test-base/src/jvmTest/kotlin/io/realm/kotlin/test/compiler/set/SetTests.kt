@@ -48,8 +48,8 @@ class SetTests : CollectionTests(
                 "unsupportedEmbeddedRealmObjectSet.kt",
                 getCode(
                     collectionType = CollectionType.SET,
-                    contentType = "EmbeddedClass",
-                    nullableContent = false,
+                    elementType = "EmbeddedClass",
+                    nullableElementType = false,
                     nullableField = false
                 )
             )
@@ -69,8 +69,8 @@ class SetTests : CollectionTests(
             "nullableRealmObjectSet.kt",
             getCode(
                 collectionType = CollectionType.SET,
-                contentType = "SampleClass",
-                nullableContent = true,
+                elementType = "SampleClass",
+                nullableElementType = true,
                 nullableField = false
             )
         )
@@ -86,8 +86,8 @@ class SetTests : CollectionTests(
                 "unsupportedEmbeddedRealmObjectSet.kt",
                 getCode(
                     collectionType = CollectionType.SET,
-                    contentType = "EmbeddedClass",
-                    nullableContent = true,
+                    elementType = "EmbeddedClass",
+                    nullableElementType = true,
                     nullableField = false
                 )
             )

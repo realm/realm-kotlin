@@ -9,22 +9,21 @@ fun createFileAndCompile(fileName: String, code: String): KotlinCompilation.Resu
     Compiler.compileFromSource(SourceFile.kotlin(fileName, code))
 
 /**
- * Generates a formatted string containing code that can be built by the compiler.
- * Use it to generate different types of scenarios for nullability of contained type and the field
- * itself.
+ * Generates a formatted string containing code related to lists, sets and dictionaries that can be
+ * built by the compiler. Use it to generate different types of scenarios for nullability of
+ * the element type and the collection field itself.
  */
 fun getCode(
     collectionType: CollectionType,
-    contentType: String = "",
-    nullableContent: Boolean = false,
-    nullableField: Boolean = false,
-    userStarProjection: Boolean = false
+    elementType: String = "*",
+    nullableElementType: Boolean = false,
+    nullableField: Boolean = false
 ): String {
-    val formattedContentType = when (userStarProjection) {
-        true -> "*"
-        false -> when (nullableContent) {
-            true -> "$contentType?"
-            false -> contentType
+    val formattedContentType = when (elementType) {
+        "*" -> elementType
+        else -> when (nullableElementType) {
+            true -> "$elementType?"
+            false -> elementType
         }
     }
     val formattedFieldNullability = when (nullableField) {
@@ -57,10 +56,9 @@ import java.lang.Exception
 class A
 class EmbeddedClass : EmbeddedRealmObject
 class SampleClass : RealmObject {
-    // 1st parameter indicates the collection type: list, set or dictionary
-    // 2nd parameter indicates the contained type: string, long, etc. - nullability must be handled here
+    // 1st parameter indicates the collection type: RealmList, RealmSet, RealmDictionary
+    // 2nd parameter indicates the contained type: String, Long, etc. - nullability must be handled here
     // 3rd parameter indicates nullability of the field itself
-    // 4th parameter indicates the default value: realmListOf, realmSetOf or realmDictionaryOf
     var collection: %1${'$'}s<%2${'$'}s>%3${'$'}s = TODO() // There is no need to use an actual default initializer when testing compilation
 }
 """.trimIndent()
