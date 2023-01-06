@@ -40,6 +40,7 @@ public object TypeDescriptor {
         val nonNullable: Boolean, // TODO this doesn't contain enough info for lists
         val listSupport: Boolean,
         val setSupport: Boolean,
+        val dictionarySupport: Boolean,
         val primaryKeySupport: Boolean,
         val indexSupport: Boolean,
         val canBeNull: Set<CollectionType>, // favor using this over "nullable"
@@ -51,6 +52,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -62,15 +64,18 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = false,
             setSupport = false,
+            dictionarySupport = false,
             primaryKeySupport = false,
             indexSupport = false,
             canBeNull = nullabilityForAll.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+                remove(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
             },
             canBeNotNull = nullabilityForAll.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+                remove(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
             }
         ),
         BOOL(
@@ -79,6 +84,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -90,6 +96,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -101,6 +108,7 @@ public object TypeDescriptor {
             nonNullable = false,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
             canBeNull = nullabilityForAll.toMutableSet().apply {
@@ -115,6 +123,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
             canBeNull = nullabilityForAll,
@@ -126,6 +135,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
             canBeNull = nullabilityForAll,
@@ -137,6 +147,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -148,6 +159,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -159,6 +171,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -170,6 +183,7 @@ public object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
             canBeNull = nullabilityForAll,
@@ -181,6 +195,7 @@ public object TypeDescriptor {
             nonNullable = false,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
             canBeNull = nullabilityForAll,
@@ -247,53 +262,30 @@ public object TypeDescriptor {
         }
 
     // TODO add supported types for collections based on nullability since RealmAny can only be nullable
-    fun elementTypesForList(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
-        classifiers.fold(mutableSetOf()) { acc, classifier ->
-            val realmFieldType = TypeDescriptor.classifiers[classifier]
-                ?: error("Unmapped classifier $classifier")
-            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                acc.add(ElementType(classifier, true))
-            }
-            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                acc.add(ElementType(classifier, false))
-            }
-            acc
+    private fun elementTypesForCollection(
+        classifiers: Collection<KClassifier>,
+        collectionType: CollectionType
+    ): MutableSet<ElementType> = classifiers.fold(mutableSetOf()) { acc, classifier ->
+        val realmFieldType = TypeDescriptor.classifiers[classifier]
+            ?: error("Unmapped classifier $classifier")
+        if (realmFieldType.canBeNull.contains(collectionType)) {
+            acc.add(ElementType(classifier, true))
         }
-
-    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
-    fun elementTypesForSet(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
-        classifiers.fold(mutableSetOf()) { acc, classifier ->
-            val realmFieldType = TypeDescriptor.classifiers[classifier]
-                ?: error("Unmapped classifier $classifier")
-            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_SET)) {
-                acc.add(ElementType(classifier, true))
-            }
-            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_SET)) {
-                acc.add(ElementType(classifier, false))
-            }
-            acc
+        if (realmFieldType.canBeNotNull.contains(collectionType)) {
+            acc.add(ElementType(classifier, false))
         }
-
-    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
-    fun elementTypesForDictionary(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
-        classifiers.fold(mutableSetOf()) { acc, classifier ->
-            val realmFieldType = TypeDescriptor.classifiers[classifier]
-                ?: error("Unmapped classifier $classifier")
-            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)) {
-                acc.add(ElementType(classifier, true))
-            }
-            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)) {
-                acc.add(ElementType(classifier, false))
-            }
-            acc
-        }
+        acc
+    }
 
     // Convenience variables holding collections of the various supported types
     val elementClassifiers: Set<KClassifier> = classifiers.keys
     val elementTypes = elementTypes(elementClassifiers)
-    val elementTypesForList = elementTypesForList(elementClassifiers)
-    val elementTypesForSet = elementTypesForSet(elementClassifiers)
-    val elementTypesForDictionary = elementTypesForSet(elementClassifiers)
+    val elementTypesForList =
+        elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_LIST)
+    val elementTypesForSet =
+        elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_SET)
+    val elementTypesForDictionary =
+        elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
 
     // Convenience variables holding collection of various groups of Realm field types
     val allSingularFieldTypes = elementTypes.map {

@@ -60,8 +60,8 @@ class DictionaryTests {
                 "nonNullableDictionary.kt",
                 getCode(
                     collectionType = CollectionType.DICTIONARY,
-                    contentType = nonNullableType,
-                    nullableContent = false,
+                    elementType = nonNullableType,
+                    nullableElementType = false,
                     nullableField = false
                 )
             )
@@ -80,8 +80,8 @@ class DictionaryTests {
                 "unsupportedNonNullableDictionary.kt",
                 getCode(
                     collectionType = CollectionType.DICTIONARY,
-                    contentType = nonNullableType,
-                    nullableContent = false,
+                    elementType = nonNullableType,
+                    nullableElementType = false,
                     nullableField = false
                 )
             )
@@ -98,8 +98,8 @@ class DictionaryTests {
                 "unsupportedTypeDictionary.kt",
                 getCode(
                     collectionType = CollectionType.DICTIONARY,
-                    contentType = "A",
-                    nullableContent = false,
+                    elementType = "A",
+                    nullableElementType = false,
                     nullableField = false
                 )
             )
@@ -120,8 +120,8 @@ class DictionaryTests {
                 "nullableTypeDictionary.kt",
                 getCode(
                     collectionType = CollectionType.DICTIONARY,
-                    contentType = nullableType,
-                    nullableContent = true,
+                    elementType = nullableType,
+                    nullableElementType = true,
                     nullableField = false
                 )
             )
@@ -137,8 +137,8 @@ class DictionaryTests {
             "nullableRealmObjectDictionary.kt",
             getCode(
                 collectionType = CollectionType.DICTIONARY,
-                contentType = "SampleClass",
-                nullableContent = true,
+                elementType = "SampleClass",
+                nullableElementType = true,
                 nullableField = false
             )
         )
@@ -153,8 +153,8 @@ class DictionaryTests {
             "nullableEmbeddedRealmObjectDictionary.kt",
             getCode(
                 collectionType = CollectionType.DICTIONARY,
-                contentType = "EmbeddedClass",
-                nullableContent = true,
+                elementType = "EmbeddedClass",
+                nullableElementType = true,
                 nullableField = false
             )
         )
@@ -173,8 +173,8 @@ class DictionaryTests {
                 "nullableDictionary.kt",
                 getCode(
                     collectionType = CollectionType.DICTIONARY,
-                    contentType = primitiveType,
-                    nullableContent = false,
+                    elementType = primitiveType,
+                    nullableElementType = false,
                     nullableField = true
                 )
             )
@@ -191,7 +191,7 @@ class DictionaryTests {
         val result = compileFromSource(
             SourceFile.kotlin(
                 "starProjectionDictionary.kt",
-                getCode(CollectionType.DICTIONARY, userStarProjection = true)
+                getCode(CollectionType.DICTIONARY)
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)

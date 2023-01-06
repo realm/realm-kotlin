@@ -20,9 +20,9 @@ public interface RealmMap<K, V> : MutableMap<K, V>
 
 public interface RealmDictionary<E> : RealmMap<String, E>
 
-public class UnmanagedRealmDictionary<E> : RealmDictionary<E>, MutableMap<String, E> by mutableMapOf()
+internal class UnmanagedRealmDictionary<E> : RealmDictionary<E>, MutableMap<String, E> by mutableMapOf()
 
-public class ManagedRealmDictionary<E> : AbstractMutableMap<String, E>(), RealmDictionary<E> {
+internal class ManagedRealmDictionary<E> : AbstractMutableMap<String, E>(), RealmDictionary<E> {
     override val entries: MutableSet<MutableMap.MutableEntry<String, E>>
         get() = TODO("Not yet implemented")
 
