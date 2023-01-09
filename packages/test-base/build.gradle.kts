@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("com.android.application")
+    id("com.android.library")
     // Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
     // gradle run, so we just apply the compiler plugin directly as a dependency below instead
     // id("io.realm.kotlin")
@@ -111,18 +111,22 @@ android {
     }
 
     buildTypes {
-        // Can be tested with
+        // LibraryBuildType is not minifiable, but the current dependency from test-sync doesn't
+        // allow test-base to be configured as a library. To test test-base with minification
+        // change the AGP plugin to
+        //    id("com.android.application")
+        // and uncomment the below buildType then you can run the full test suite with
         //    ./gradlew test-base:clean test-base:connAT -PtestBuildType=debugMinified
         // Note that we cannot get memory consumption for non-debuggable build types so MemoryTests
-        // will fail.
-        testBuildType = (properties["testBuildType"] ?: "debug") as String
-        create("debugMinified") {
-            initWith(getByName("debug"))
-            matchingFallbacks.add("debug")
-            isMinifyEnabled = true
-            isDebuggable = false
-            proguardFiles("proguard-rules-test.pro")
-        }
+        // will fail
+        // testBuildType = (properties["testBuildType"] ?: "debug") as String
+        // create("debugMinified") {
+        //     initWith(getByName("debug"))
+        //     matchingFallbacks.add("debug")
+        //     isMinifyEnabled = true
+        //     isDebuggable = false
+        //     proguardFiles("proguard-rules-test.pro")
+        // }
     }
 
     compileOptions {
