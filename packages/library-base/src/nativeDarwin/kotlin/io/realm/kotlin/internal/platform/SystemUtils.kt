@@ -15,7 +15,6 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import platform.Foundation.NSDate
 import platform.Foundation.NSError
-import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
 import platform.posix.pthread_threadid_np

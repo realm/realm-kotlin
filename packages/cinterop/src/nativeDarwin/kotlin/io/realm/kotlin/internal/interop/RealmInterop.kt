@@ -2202,6 +2202,7 @@ actual object RealmInterop {
         connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
+        baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
         // From https://github.com/realm/realm-kotlin/issues/407
         realm_wrapper.realm_app_config_set_local_app_name(appConfig, "APP_NAME")

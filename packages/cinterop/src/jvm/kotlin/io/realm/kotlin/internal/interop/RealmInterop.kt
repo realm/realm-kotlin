@@ -1116,7 +1116,7 @@ actual object RealmInterop {
         realmc.realm_app_config_set_cpu_arch(config, connectionParams.cpuArch)
         realmc.realm_app_config_set_device_name(config, connectionParams.device)
         realmc.realm_app_config_set_device_version(config, connectionParams.deviceVersion)
-        realmc.realm_app_config_set_framework_name(config, connectionParams.framework.description)
+        realmc.realm_app_config_set_framework_name(config, connectionParams.framework)
         realmc.realm_app_config_set_framework_version(config, connectionParams.frameworkVersion)
 
         return LongPointerWrapper(config)
