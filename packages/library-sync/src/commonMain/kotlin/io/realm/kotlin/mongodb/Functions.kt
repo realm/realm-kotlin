@@ -22,7 +22,7 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 /**
- * A Functions manager to call remote Atlas Functions for the associated Atlas App services Application.
+ * A Functions manager to call remote Atlas Functions for the associated Atlas App Services Application.
  *
  * Since the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
  * limitations in what types can be used as arguments and return types:
