@@ -2216,7 +2216,7 @@ actual object RealmInterop {
         realm_wrapper.realm_app_config_set_cpu_arch(appConfig, connectionParams.cpuArch)
         realm_wrapper.realm_app_config_set_device_name(appConfig, connectionParams.device)
         realm_wrapper.realm_app_config_set_device_version(appConfig, connectionParams.deviceVersion)
-        realm_wrapper.realm_app_config_set_framework_name(appConfig, connectionParams.framework.description)
+        realm_wrapper.realm_app_config_set_framework_name(appConfig, connectionParams.framework)
         realm_wrapper.realm_app_config_set_framework_version(appConfig, connectionParams.frameworkVersion)
 
         return CPointerWrapper(appConfig)
