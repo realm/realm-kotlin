@@ -39,6 +39,7 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
@@ -185,6 +186,7 @@ class SyncSessionTests {
     @Test
     fun session_localRealmThrows() {
         val config = RealmConfiguration.Builder(schema = setOf(ParentPk::class, ChildPk::class))
+            .directory(PlatformUtils.createTempDir())
             .build()
         Realm.open(config).use { realm ->
             assertFailsWith<IllegalStateException> { realm.syncSession }
