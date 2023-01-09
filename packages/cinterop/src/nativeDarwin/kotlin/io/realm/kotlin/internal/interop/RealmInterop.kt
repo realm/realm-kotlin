@@ -2205,8 +2205,8 @@ actual object RealmInterop {
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
         // From https://github.com/realm/realm-kotlin/issues/407
-        realm_wrapper.realm_app_config_set_local_app_name(appConfig, "APP_NAME")
-        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
+        realm_wrapper.realm_app_config_set_local_app_name(appConfig, "")
+        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "")
 
         // Sync Connection Parameters
         realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
