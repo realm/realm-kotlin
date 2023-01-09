@@ -119,6 +119,24 @@ typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscript
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
 
+data class SyncConnectionParams(
+    public val sdkVersion: String,
+    public val platform: String,
+    public val platformVersion: String,
+    public val cpuArch: String,
+    public val device: String,
+    public val deviceVersion: String,
+    public val framework: Runtime,
+    public val frameworkVersion: String
+) {
+    enum class Runtime(public val description: String) {
+        JVM("JVM"),
+        ANDROID("Android"),
+        NATIVE("Native")
+    }
+    public val sdkName = "Kotlin"
+}
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_get_version_id(realm: RealmPointer): Long
@@ -515,9 +533,7 @@ expect object RealmInterop {
         appId: String,
         networkTransport: RealmNetworkTransportPointer,
         baseUrl: String? = null,
-        platform: String,
-        platformVersion: String,
-        sdkVersion: String
+        connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer
     fun realm_app_config_set_base_url(appConfig: RealmAppConfigurationPointer, baseUrl: String)
 

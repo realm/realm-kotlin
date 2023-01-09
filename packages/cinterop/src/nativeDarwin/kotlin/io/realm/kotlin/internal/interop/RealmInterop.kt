@@ -2199,30 +2199,24 @@ actual object RealmInterop {
         appId: String,
         networkTransport: RealmNetworkTransportPointer,
         baseUrl: String?,
-        platform: String,
-        platformVersion: String,
-        sdkVersion: String
+        connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
 
-        realm_wrapper.realm_app_config_set_platform(appConfig, platform)
-        realm_wrapper.realm_app_config_set_platform_version(appConfig, platformVersion)
-        realm_wrapper.realm_app_config_set_sdk_version(appConfig, sdkVersion)
-
-        // TODO Fill in appropriate app meta data
-        //  https://github.com/realm/realm-kotlin/issues/407
+        // From https://github.com/realm/realm-kotlin/issues/407
+        realm_wrapper.realm_app_config_set_local_app_name(appConfig, "APP_NAME")
         realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
 
-        baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
-
-        // FIXME Set these to correct values -- Begin
-        realm_wrapper.realm_app_config_set_sdk(appConfig, "unknown")
-        realm_wrapper.realm_app_config_set_cpu_arch(appConfig, "unknown")
-        realm_wrapper.realm_app_config_set_device_name(appConfig, "unknown")
-        realm_wrapper.realm_app_config_set_device_version(appConfig, "unknown")
-        realm_wrapper.realm_app_config_set_framework_name(appConfig, "unknown")
-        realm_wrapper.realm_app_config_set_framework_version(appConfig, "unknown")
-        // FIXME --End
+        // Sync Connection Parameters
+        realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
+        realm_wrapper.realm_app_config_set_sdk_version(appConfig, connectionParams.sdkVersion)
+        realm_wrapper.realm_app_config_set_platform(appConfig, connectionParams.platform)
+        realm_wrapper.realm_app_config_set_platform_version(appConfig, connectionParams.platformVersion)
+        realm_wrapper.realm_app_config_set_cpu_arch(appConfig, connectionParams.cpuArch)
+        realm_wrapper.realm_app_config_set_device_name(appConfig, connectionParams.device)
+        realm_wrapper.realm_app_config_set_device_version(appConfig, connectionParams.deviceVersion)
+        realm_wrapper.realm_app_config_set_framework_name(appConfig, connectionParams.framework.description)
+        realm_wrapper.realm_app_config_set_framework_version(appConfig, connectionParams.frameworkVersion)
 
         return CPointerWrapper(appConfig)
     }

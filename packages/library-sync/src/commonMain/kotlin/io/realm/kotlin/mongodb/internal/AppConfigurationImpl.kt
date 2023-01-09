@@ -17,17 +17,23 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.RealmLog
+import io.realm.kotlin.internal.SDK_VERSION
 import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
+import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.interop.SyncLogCallback
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.platform.CPU_ARCH
+import io.realm.kotlin.internal.platform.DEVICE_MANUFACTURER
+import io.realm.kotlin.internal.platform.DEVICE_MODEL
 import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
+import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.AppConfiguration
@@ -97,9 +103,16 @@ public class AppConfigurationImpl constructor(
             appId = appId,
             baseUrl = baseUrl,
             networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
-            platform = "$OS_NAME/$RUNTIME",
-            platformVersion = OS_VERSION,
-            sdkVersion = io.realm.kotlin.internal.SDK_VERSION
+            connectionParams = SyncConnectionParams(
+                sdkVersion = SDK_VERSION,
+                platform = OS_NAME,
+                platformVersion = OS_VERSION,
+                cpuArch = CPU_ARCH,
+                device = DEVICE_MANUFACTURER,
+                deviceVersion = DEVICE_MODEL,
+                framework = RUNTIME,
+                frameworkVersion = RUNTIME_VERSION
+            )
         ).freeze()
 
     private fun initializeSyncClientConfig(): RealmSyncClientConfigurationPointer =
