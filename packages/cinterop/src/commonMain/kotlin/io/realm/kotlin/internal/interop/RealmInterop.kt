@@ -119,6 +119,7 @@ typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscript
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
 
+@Suppress("LongParameterList")
 class SyncConnectionParams(
     sdkVersion: String,
     platform: String,
