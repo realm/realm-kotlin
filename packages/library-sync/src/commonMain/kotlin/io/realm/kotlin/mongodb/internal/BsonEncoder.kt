@@ -73,8 +73,6 @@ internal object BsonEncoder {
     /**
      * Decodes a [BsonValue] into a [T] value. Only primitives, Realm, Bson types are supported.
      *
-     * Uses the given serialization strategy to perform a manual decode of the [BsonValue].
-     *
      * @param T type of the decoded value.
      * @param kClassifier classifier for the decoded value.
      * @param bsonValue value to decode.
