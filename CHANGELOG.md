@@ -7,17 +7,18 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 ### Enhancements
 * Added support for `RealmAny` as supported field in model classes. A `RealmAny` is used to represent a polymorphic Realm value or Realm Object, is indexable but cannot be used as a primary key.
+* Add support for `Decimal128` as supported field in model classes. (Issue [#653](https://github.com/realm/realm-kotlin/issues/653))
 * Realm will now use a lot less memory and disk space when different versions of realm objects are used. ([Core Issue #5440](https://github.com/realm/realm-core/pull/5440))
 * Realm will now continuously track and reduce the size of the Realm file when it is in use rather that only when opening the file with `Configuration.compactOnLaunch` enabled. ([Core Issue #5754](https://github.com/realm/realm-core/issues/5754))
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 * Add support for querying on RealmLists containing objects with `RealmList.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1037))
 * Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
-* [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
-* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))
 * Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
 * Added support for reverse relationships on Embedded objects through the `EmbeddedRealmObject.parent()` extension function. (Issue [#1141](https://github.com/realm/realm-kotlin/pull/1141))
 * Added support for reverse relationships through the `backlinks` delegate on `EmbeddedObjects`. See the function documentation for more details. (Issue [#1134](https://github.com/realm/realm-kotlin/issues/1134))
 * Added support for `@PersistedName` annotations for mapping a Kotlin field name to the underlying field name persisted in the Realm. (Issue [#590](https://github.com/realm/realm-kotlin/issues/590))
+* [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
+* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))
 
 ### Fixed
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
