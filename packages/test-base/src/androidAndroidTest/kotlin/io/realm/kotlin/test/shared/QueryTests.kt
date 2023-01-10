@@ -2043,6 +2043,12 @@ class QueryTests {
                 values as List<Double?>,
                 index
             )
+            Decimal128::class -> setProperty(
+                instance,
+                property as KMutableProperty1<C, Decimal128?>,
+                values as List<Decimal128?>,
+                index
+            )
             Float::class -> setProperty(
                 instance,
                 property as KMutableProperty1<C, Float?>,
@@ -2132,6 +2138,11 @@ class QueryTests {
                 AggregatorQueryType.MIN -> DOUBLE_VALUES.minOrNull()!!
                 AggregatorQueryType.MAX -> DOUBLE_VALUES.maxOrNull()!!
                 AggregatorQueryType.SUM -> DOUBLE_VALUES.sum()
+            }
+            Decimal128::class -> when (type) {
+                AggregatorQueryType.MIN -> DECIMAL128_MIN_VALUE
+                AggregatorQueryType.MAX -> DECIMAL128_MAX_VALUE
+                AggregatorQueryType.SUM -> Decimal128("1.800000000000000000000000000000000E+601")
             }
             Float::class -> when (type) {
                 AggregatorQueryType.MIN -> FLOAT_VALUES.minOrNull()!!
@@ -2703,6 +2714,11 @@ class QueryTests {
             if (isNullable) QuerySample::nullableDoubleField else QuerySample::doubleField,
             Double::class,
             if (isNullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        )
+        Decimal128::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableDecimal128Field else QuerySample::decimal128Field,
+            Decimal128::class,
+            if (isNullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
         )
         Byte::class -> PropertyDescriptor(
             if (isNullable) QuerySample::nullableByteField else QuerySample::byteField,

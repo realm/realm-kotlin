@@ -43,6 +43,7 @@ import io.realm.kotlin.types.annotations.Index
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -73,6 +74,7 @@ class RealmAnyTests {
         String::class to "hello",
         Float::class to 10F,
         Double::class to 10.0,
+        Decimal128::class to Decimal128("1"),
         BsonObjectId::class to BsonObjectId(),
         ByteArray::class to byteArrayOf(42, 43, 44),
         RealmInstant::class to RealmInstant.now(),
@@ -284,6 +286,12 @@ class RealmAnyTests {
                     assertEquals(42.0, realmAny.asDouble())
                     assertEquals(RealmAny.create(42.0), realmAny)
                     assertEquals(RealmAny.Type.DOUBLE, realmAny.type)
+                }
+                Decimal128::class -> {
+                    val realmAny = RealmAny.create(Decimal128("1.5"))
+                    assertEquals(Decimal128("1.5"), realmAny.asDecimal128())
+                    assertEquals(RealmAny.create(Decimal128("1.5")), realmAny)
+                    assertEquals(RealmAny.Type.DECIMAL128, realmAny.type)
                 }
                 BsonObjectId::class -> {
                     val objectId = BsonObjectId("000000000000000000000000")

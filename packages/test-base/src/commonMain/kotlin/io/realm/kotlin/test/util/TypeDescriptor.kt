@@ -216,6 +216,7 @@ public object TypeDescriptor {
         Long::class to CoreFieldType.INT,
         Float::class to CoreFieldType.FLOAT,
         Double::class to CoreFieldType.DOUBLE,
+        Decimal128::class to CoreFieldType.DECIMAL128,
         RealmAny::class to CoreFieldType.MIXED
     )
 
@@ -226,7 +227,6 @@ public object TypeDescriptor {
         RealmInstant::class to CoreFieldType.TIMESTAMP,
         ObjectId::class to CoreFieldType.OBJECT_ID,
         BsonObjectId::class to CoreFieldType.OBJECT_ID,
-        Decimal128::class to CoreFieldType.DECIMAL128,
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
         MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,

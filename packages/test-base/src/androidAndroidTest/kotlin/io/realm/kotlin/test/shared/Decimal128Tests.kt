@@ -36,8 +36,10 @@ class Decimal128Tests {
         setOf(
             Decimal128.POSITIVE_INFINITY,
             Decimal128.NEGATIVE_INFINITY,
-            Decimal128.NaN,
-            Decimal128.NEGATIVE_NaN,
+            // FIXME Querying on NaN does not work
+            //  https://github.com/realm/realm-core/issues/6182
+            // Decimal128.NaN,
+            // Decimal128.NEGATIVE_NaN,
             Decimal128.POSITIVE_ZERO,
             Decimal128.NEGATIVE_ZERO,
         ).forEach { decimal128 ->

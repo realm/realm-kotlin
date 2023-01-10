@@ -1321,6 +1321,7 @@ internal class ManagedRealmAnyListTester constructor(
                     assertEquals(expected.asRealmInstant(), actual.asRealmInstant())
                 RealmAny.Type.FLOAT -> assertEquals(expected.asFloat(), actual.asFloat())
                 RealmAny.Type.DOUBLE -> assertEquals(expected.asDouble(), actual.asDouble())
+                RealmAny.Type.DECIMAL128 -> assertEquals(expected.asDecimal128(), actual.asDecimal128())
                 RealmAny.Type.OBJECT_ID -> assertEquals(expected.asObjectId(), actual.asObjectId())
                 RealmAny.Type.UUID -> assertEquals(
                     expected.asRealmUUID(),
@@ -1372,7 +1373,9 @@ internal val SHORT_VALUES = listOf<Short>(1, 2)
 internal val BYTE_VALUES = listOf<Byte>(1, 2)
 internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
-internal val DECIMAL128_VALUES = listOf(Decimal128("1.8446744073709551618E-6157"), Decimal128("-1.8446073709551618E-617"))
+val DECIMAL128_MIN_VALUE = Decimal128("-2.000000000000000000000000000000000E+600")
+val DECIMAL128_MAX_VALUE = Decimal128("2.000000000000000000000000000000000E+601")
+internal val DECIMAL128_VALUES = listOf(DECIMAL128_MAX_VALUE, DECIMAL128_MIN_VALUE)
 internal val BOOLEAN_VALUES = listOf(true, false)
 internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
