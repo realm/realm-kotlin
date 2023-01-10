@@ -81,7 +81,7 @@ public object TypeDescriptor {
             listSupport = true,
             setSupport = true,
             primaryKeySupport = false,
-            indexSupport = false,
+            indexSupport = true,
             canBeNull = nullabilityForAll,
             canBeNotNull = nullabilityForAll
         ),
