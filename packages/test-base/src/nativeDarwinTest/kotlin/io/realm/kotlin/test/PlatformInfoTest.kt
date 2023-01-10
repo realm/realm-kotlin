@@ -26,7 +26,7 @@ import kotlin.test.assertTrue
 class PlatformInfoTest {
     @Test
     fun platformInfo() {
-        assertEquals("Native", RUNTIME)
+        assertEquals("Native", RUNTIME.description)
         assertEquals("NSMACHOperatingSystem", OS_NAME)
         assertTrue(OS_VERSION.startsWith("Version "))
     }
