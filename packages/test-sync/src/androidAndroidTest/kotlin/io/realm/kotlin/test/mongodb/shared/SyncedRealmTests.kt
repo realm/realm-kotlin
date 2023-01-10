@@ -62,12 +62,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.flow.transformWhile
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -1203,101 +1201,6 @@ class SyncedRealmTests {
             realm1.close()
             flexApp.close()
         }
-    }
-
-    // Verify that we are seeing in-between writes while Sync is integrating a long list
-    // of Flexible Sync changes from the server
-    @Ignore // Reproduces https://github.com/realm/realm-core/issues/6141
-    @Test
-    fun realmUpdatedWhileFlexibleSyncIsIntegratingChanges() = runBlocking {
-        val flexApp = TestApp(
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
-            builder = {
-                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
-            }
-        )
-        val section = Random.nextInt()
-        val (email1, password1) = randomEmail() to "password1234"
-        val (email2, password2) = randomEmail() to "password1234"
-        val user1 = flexApp.createUserAndLogIn(email1, password1)
-        val user2 = flexApp.createUserAndLogIn(email2, password2)
-        val syncConfig1 = createFlexibleSyncConfig(
-            user = user1,
-            name = "sync1.realm",
-            initialSubscriptions = { realm: Realm ->
-                realm.query<FlexParentObject>("section = $0", section).subscribe()
-            }
-        )
-        val syncConfig2 = createFlexibleSyncConfig(
-            user = user2,
-            name = "sync2.realm",
-            initialSubscriptions = { realm: Realm ->
-                realm.query<FlexParentObject>("section = $0", section).subscribe()
-            }
-        )
-        // 1. Write first batch of sample data
-        val realm1 = Realm.open(syncConfig1)
-        realm1.write {
-            copyToRealm(FlexParentObject(section))
-        }
-        realm1.subscriptions.waitForSynchronization(30.seconds)
-        realm1.syncSession.uploadAllLocalChanges(30.seconds)
-
-        // 2. Copy the Realm with data to user 2
-        realm1.writeCopyTo(syncConfig2)
-
-        // 3. Write large amount of data to first Realm. This will not be in the Realm2 copy.
-        repeat(100) {
-            realm1.write {
-                copyToRealm(FlexParentObject(section))
-            }
-        }
-
-        // 4. Open Realm 2 and wait for all changes to make its way to the Realm. We don't 100%
-        // control how many updates we see, but we should see more than just 0 -> done.
-        val realm2 = Realm.open(syncConfig2)
-        val c = Channel<ArrayList<Long>>(1)
-        async {
-            val updates: ArrayList<Long> = arrayListOf<Long>()
-// Listen to changes to a `Results`. This is correctly updated
-//            realm2.query<FlexParentObject>().count().asFlow()
-//                .transformWhile {
-//                    emit(it)
-//                    (it < 101)
-//                }
-//                .collect {
-//                    println("See updates: $it")
-//                    updates.add(it)
-//                }
-
-            // Listen to changes using C-API:
-            realm2.asFlow()
-                .transformWhile {
-                    val size = it.realm.query<FlexParentObject>().count().find()
-                    emit(size)
-                    (size < 101)
-                }
-                .collect {
-                    println("See updates: $it")
-                    updates.add(it)
-                }
-            c.send(updates)
-        }
-
-        // 5. Listen to changes
-        try {
-            withTimeout(60.seconds) {
-                val updates = c.receive()
-                // We should see more updates than just first and last update.
-                assertTrue(2 < updates.size, "Size is: ${updates.size}")
-                assertEquals(101, updates.last())
-            }
-        } finally {
-            realm1.close()
-            realm2.close()
-            flexApp.close()
-        }
-        Unit
     }
 
     /**
