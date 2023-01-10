@@ -36,7 +36,6 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.runBlocking
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -157,7 +156,6 @@ class BacklinksTests {
         }
     }
 
-    @Ignore // See https://github.com/realm/realm-core/issues/6144
     @Test
     fun dynamic() {
         runBlocking {
@@ -505,7 +503,6 @@ class BacklinksTests {
         }
     }
 
-    @Ignore
     @Test
     fun linkingEmbeddedObjects_namedLinkQueries() {
         val parent1 = realm.writeBlocking {
