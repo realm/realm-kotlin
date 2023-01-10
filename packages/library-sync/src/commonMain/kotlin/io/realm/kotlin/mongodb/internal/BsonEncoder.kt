@@ -80,7 +80,7 @@ internal object BsonEncoder {
      *
      * Uses the given serialization strategy to perform a manual decode of the [BsonValue].
      *
-     * @param kClass classifier for the decoded value.
+     * @param kClass class of the decoded value.
      * @param bsonValue value to decode.
      * @return decoded value.
      */
