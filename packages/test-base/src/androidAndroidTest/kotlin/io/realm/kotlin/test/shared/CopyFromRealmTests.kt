@@ -727,30 +727,30 @@ class CopyFromRealmTests {
         accessor: KMutableProperty1<BaseRealmObject, Any?>
     ): Any? {
         val type: KType = accessor.returnType
-        type.classifier
         if (type.isMarkedNullable) {
             return null
         } else {
-            return when (type.toString()) {
+            return when (type.classifier) {
                 // Make sure these values are different than default values in Sample class
-                "kotlin.String" -> "foo"
-                "kotlin.Byte" -> 0x5.toByte()
-                "kotlin.Char" -> 'b'
-                "kotlin.Short" -> 3.toShort()
-                "kotlin.Int" -> 4
-                "kotlin.Long" -> 7L
-                "kotlin.Boolean" -> false
-                "kotlin.Float" -> 1.23.toFloat()
-                "kotlin.Double" -> 1.234
-                "kotlin.ByteArray" -> byteArrayOf(43)
-                "io.realm.kotlin.types.RealmInstant" -> RealmInstant.from(1, 100)
-                "io.realm.kotlin.types.ObjectId" -> ObjectId.from("635a1a95184a200db8a07bfc")
-                "io.realm.kotlin.types.RealmUUID" -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
-                "io.realm.kotlin.types.MutableRealmInt" -> MutableRealmInt.create(7)
-                "io.realm.kotlin.types.RealmAny" -> RealmAny.create(1)
-                "org.mongodb.kbson.BsonObjectId" -> BsonObjectId("635a1a95184a200db8a07bfc")
-                "org.mongodb.kbson.Decimal128 /* = org.mongodb.kbson.BsonDecimal128 */" -> Decimal128("1.8446744073709551618E-615")
-                "io.realm.kotlin.entities.Sample" -> null // Object references are not part of this test, so just return null
+                String::class -> "foo"
+                Byte::class -> 0x5.toByte()
+                Char::class -> 'b'
+                Short::class -> 3.toShort()
+                Int::class -> 4
+                Long::class -> 7L
+                Boolean::class -> false
+                Float::class -> 1.23.toFloat()
+                Double::class -> 1.234
+                ByteArray::class -> byteArrayOf(43)
+                RealmInstant::class -> RealmInstant.from(1, 100)
+                ObjectId::class -> ObjectId.from("635a1a95184a200db8a07bfc")
+                RealmUUID::class-> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
+                MutableRealmInt::class -> MutableRealmInt.create(7)
+                RealmAny::class -> RealmAny.create(1)
+                BsonObjectId::class -> BsonObjectId("635a1a95184a200db8a07bfc")
+                Decimal128::class -> Decimal128("1.8446744073709551618E-615")
+                Sample::class -> null // Object references are not part of this test, so just return null
+
                 else -> fail("Missing support for $type")
             }
         }
