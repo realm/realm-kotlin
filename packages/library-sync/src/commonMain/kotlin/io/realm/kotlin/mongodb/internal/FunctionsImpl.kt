@@ -20,16 +20,18 @@ import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions
 import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.serialization.Bson
-import kotlin.reflect.KType
+import kotlin.reflect.KClass
 
+@PublishedApi
 internal class FunctionsImpl(
     override val app: AppImpl,
     override val user: UserImpl
 ) : Functions {
-    override suspend fun <T> call(
+    @PublishedApi
+    internal suspend fun <T> callInternal(
         name: String,
-        resultType: KType,
-        vararg args: Any?
+        resultType: KClass<T & Any>,
+        args: Array<out Any?>
     ): T = Channel<Result<Any?>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
@@ -40,7 +42,7 @@ internal class FunctionsImpl(
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T
                 BsonEncoder.decodeFromBsonValue(
-                    kClassifier = resultType.classifier,
+                    kClass = resultType,
                     bsonValue = Bson(ejsonEncodedObject)
                 )
             }
