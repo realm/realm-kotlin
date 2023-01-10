@@ -15,19 +15,12 @@
  */
 package io.realm.kotlin.mongodb
 
-import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
-import io.realm.kotlin.mongodb.internal.FunctionsImpl
-import org.mongodb.kbson.BsonArray
-import org.mongodb.kbson.BsonDocument
+import io.realm.kotlin.mongodb.ext.call
 
 /**
  * A Functions manager to call remote Atlas Functions for the associated Atlas App Services Application.
  *
- * Since the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
- * limitations in what types can be used as arguments and return types:
- *
- * - Primitives, Bson, lists, and maps are valid argument types.
- * - Results can only be deserialized to primitives or Bson types.
+ * Functions are invoked using the extension function [Functions.call].
  *
  * @see [User.functions]
  */
@@ -42,27 +35,3 @@ public interface Functions {
      */
     public val user: User
 }
-
-/**
- * Invokes an Atlas function.
- *
- * Since the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
- * limitations in what types can be used as arguments and return types:
- *
- * - Primitives, Bson, lists, and maps are valid argument types.
- * - Results can only be deserialized to primitives or Bson types.
- *
- * The Bson implementations for arrays or maps are [BsonArray] and [BsonDocument], and they can be
- * used as valid return types.
- *
- * @param name Name of the function to call.
- * @param args Arguments to the function.
- * @param T The function return value type.
- * @return Result of the function call.
- *
- * @throws FunctionExecutionException if the function failed in some way.
- */
-public suspend inline fun <reified T : Any> Functions.call(
-    name: String,
-    vararg args: Any?
-): T = (this as FunctionsImpl).callInternal(name, T::class, args)

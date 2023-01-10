@@ -23,9 +23,9 @@ import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.call
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn

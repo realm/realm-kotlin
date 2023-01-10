@@ -55,7 +55,7 @@ class BsonEncoderTests {
     private class SerializableClass
 
     private class DecoderAsserter(
-        val valueType: KClass<*>,
+        val type: KClass<*>,
         val value: Any? = null,
         val bsonType: KClass<*>,
         val bsonValue: BsonValue
@@ -65,65 +65,65 @@ class BsonEncoderTests {
         .filter { (key, _) ->
             key != RealmAny::class && // Tested by `realmAnyEncoding`
                 key != BsonObjectId::class && // Tested by `encodeBsonValueToBsonValue`
-                key != RealmObject::class // Not supported
+                key != RealmObject::class // Non-primitives are not supported
         }.map { (key, _) ->
             when (key) {
                 Byte::class -> DecoderAsserter(
-                    valueType = Byte::class,
+                    type = Byte::class,
                     value = 10.toByte(),
                     bsonType = BsonNumber::class,
                     bsonValue = BsonInt32(10.toByte().toInt()),
                 )
                 Short::class -> DecoderAsserter(
-                    valueType = Short::class,
+                    type = Short::class,
                     value = 20.toShort(),
                     bsonType = BsonNumber::class,
                     bsonValue = BsonInt32(20.toShort().toInt())
                 )
                 Int::class -> DecoderAsserter(
-                    valueType = Int::class,
+                    type = Int::class,
                     value = 30,
                     bsonType = BsonNumber::class,
                     bsonValue = BsonInt32(30)
                 )
                 Long::class -> DecoderAsserter(
-                    valueType = Long::class,
+                    type = Long::class,
                     value = 40L,
                     bsonType = BsonNumber::class,
                     bsonValue = BsonInt64(40L)
                 )
                 Float::class -> DecoderAsserter(
-                    valueType = Float::class,
+                    type = Float::class,
                     value = 50F,
                     bsonType = BsonNumber::class,
                     bsonValue = BsonDouble(50F.toDouble())
                 )
                 Double::class -> DecoderAsserter(
-                    valueType = Double::class,
+                    type = Double::class,
                     value = 2.0,
                     bsonType = BsonNumber::class,
                     bsonValue = BsonDouble(2.0)
                 )
                 Boolean::class -> DecoderAsserter(
-                    valueType = Boolean::class,
+                    type = Boolean::class,
                     value = true,
                     bsonType = BsonBoolean::class,
                     bsonValue = BsonBoolean.TRUE_VALUE
                 )
                 String::class -> DecoderAsserter(
-                    valueType = String::class,
+                    type = String::class,
                     value = "hello world",
                     bsonType = BsonString::class,
                     bsonValue = BsonString("hello world")
                 )
                 Char::class -> DecoderAsserter(
-                    valueType = Char::class,
+                    type = Char::class,
                     value = 'c',
                     bsonType = BsonString::class,
                     bsonValue = BsonString('c'.toString())
                 )
                 ByteArray::class -> DecoderAsserter(
-                    valueType = ByteArray::class,
+                    type = ByteArray::class,
                     value = byteArrayOf(0x00, 0x01, 0x03),
                     bsonType = BsonBinary::class,
                     bsonValue = BsonBinary(
@@ -132,13 +132,13 @@ class BsonEncoderTests {
                     )
                 )
                 ByteArray::class -> DecoderAsserter(
-                    valueType = ByteArray::class,
+                    type = ByteArray::class,
                     value = null,
                     bsonType = BsonNull::class,
                     bsonValue = BsonNull
                 )
                 MutableRealmInt::class -> DecoderAsserter(
-                    valueType = MutableRealmInt::class,
+                    type = MutableRealmInt::class,
                     value = MutableRealmInt.create(15),
                     bsonType = BsonNumber::class,
                     bsonValue = BsonInt64(15),
@@ -146,7 +146,7 @@ class BsonEncoderTests {
                 RealmUUID::class -> RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff")
                     .let { uuid ->
                         DecoderAsserter(
-                            valueType = RealmUUID::class,
+                            type = RealmUUID::class,
                             value = uuid,
                             bsonType = BsonBinary::class,
                             bsonValue = BsonBinary(BsonBinarySubType.UUID_STANDARD, uuid.bytes),
@@ -154,7 +154,7 @@ class BsonEncoderTests {
                     }
                 ObjectId::class -> ObjectId.create().let { objectId ->
                     DecoderAsserter(
-                        valueType = ObjectId::class,
+                        type = ObjectId::class,
                         value = objectId,
                         bsonType = BsonObjectId::class,
                         bsonValue = objectId.asBsonObjectId(),
@@ -165,7 +165,7 @@ class BsonEncoderTests {
                     nanosecondAdjustment = 862000000
                 ).let { instant ->
                     DecoderAsserter(
-                        valueType = RealmInstant::class,
+                        type = RealmInstant::class,
                         value = instant,
                         bsonType = BsonDateTime::class,
                         bsonValue = BsonDateTime(instant.toDuration().inWholeMilliseconds),
@@ -176,7 +176,7 @@ class BsonEncoderTests {
         }
 
     private val listValueAsserter = DecoderAsserter(
-        valueType = List::class,
+        type = List::class,
         value = primitiveAsserters.map { it.value },
         bsonType = BsonArray::class,
         bsonValue = BsonArray(primitiveAsserters.map { it.bsonValue })
@@ -184,7 +184,7 @@ class BsonEncoderTests {
 
     // Map containing all BsonValues defined in primitiveAsserters with "$index" -> BsonValue
     private val mapValueAsserter = DecoderAsserter(
-        valueType = Map::class,
+        type = Map::class,
         value = primitiveAsserters.mapIndexed { index, asserter ->
             "$index" to asserter.value
         }.toMap(),
@@ -199,68 +199,60 @@ class BsonEncoderTests {
     @Test
     fun encodeToBsonValue() {
         (primitiveAsserters + listValueAsserter + mapValueAsserter).forEach { asserter ->
-            with(asserter) {
-                assertEquals(
-                    bsonValue,
-                    BsonEncoder.encodeToBsonValue(value)
-                )
-            }
+            assertEquals(
+                asserter.bsonValue,
+                BsonEncoder.encodeToBsonValue(asserter.value)
+            )
         }
     }
 
     @Test
     fun encodeBsonValueToBsonValue() {
         (primitiveAsserters + listValueAsserter + mapValueAsserter).forEach { asserter ->
-            with(asserter) {
-                assertEquals(
-                    bsonValue,
-                    BsonEncoder.encodeToBsonValue(bsonValue)
-                )
-            }
+            assertEquals(
+                asserter.bsonValue,
+                BsonEncoder.encodeToBsonValue(asserter.bsonValue)
+            )
         }
     }
 
     @Test
     fun decodeFromBsonElement() {
-        primitiveAsserters.forEach { asserter: DecoderAsserter ->
-            with(asserter) {
-                when (value) {
-                    null -> assertNull(
-                        BsonEncoder.decodeFromBsonValue(
-                            kClass = valueType, // Arbitrary class to encode to null
-                            bsonValue = bsonValue
-                        )
+        primitiveAsserters.forEach { asserter ->
+            when (asserter.value) {
+                null -> assertNull(
+                    BsonEncoder.decodeFromBsonValue(
+                        kClass = asserter.type, // Arbitrary class to encode to null
+                        bsonValue = asserter.bsonValue
                     )
-                    is ByteArray -> assertContentEquals(
-                        value,
-                        BsonEncoder.decodeFromBsonValue(
-                            kClass = valueType,
-                            bsonValue = bsonValue
-                        ) as ByteArray,
-                        "Failed to validate types ${valueType.simpleName} and ${bsonValue::class.simpleName}"
-                    )
-                    else -> assertEquals(
-                        value,
-                        BsonEncoder.decodeFromBsonValue(
-                            kClass = valueType,
-                            bsonValue = bsonValue
-                        ),
-                        "Failed to validate types ${valueType.simpleName} and ${bsonValue::class.simpleName}"
-                    )
-                }
+                )
+                is ByteArray -> assertContentEquals(
+                    asserter.value,
+                    BsonEncoder.decodeFromBsonValue(
+                        kClass = asserter.type,
+                        bsonValue = asserter.bsonValue
+                    ) as ByteArray,
+                    "Failed to validate types ${asserter.type.simpleName} and ${asserter.bsonValue::class.simpleName}"
+                )
+                else -> assertEquals(
+                    asserter.value,
+                    BsonEncoder.decodeFromBsonValue(
+                        kClass = asserter.type,
+                        bsonValue = asserter.bsonValue
+                    ),
+                    "Failed to validate types ${asserter.type.simpleName} and ${asserter.bsonValue::class.simpleName}"
+                )
             }
         }
     }
 
     @Test
     fun decodeBsonElementFromBsonElement() {
-        primitiveAsserters.forEach { asserter: DecoderAsserter ->
-            with(asserter) {
-                BsonEncoder.decodeFromBsonValue(
-                    kClass = bsonValue::class,
-                    bsonValue = bsonValue
-                )
-            }
+        primitiveAsserters.forEach { asserter ->
+            BsonEncoder.decodeFromBsonValue(
+                kClass = asserter.bsonValue::class,
+                bsonValue = asserter.bsonValue
+            )
         }
     }
 
@@ -284,13 +276,11 @@ class BsonEncoderTests {
     @Test
     fun decodeFromBsonElement_throwsWrongType() {
         primitiveAsserters.forEach { asserter ->
-            with(asserter) {
-                assertFailsWithMessage<IllegalArgumentException>("A '${bsonType.simpleName}' is required to deserialize a '${valueType.simpleName}'. Type 'REGULAR_EXPRESSION' found.") {
-                    BsonEncoder.decodeFromBsonValue(
-                        kClass = valueType,
-                        bsonValue = BsonRegularExpression("")
-                    )
-                }
+            assertFailsWithMessage<IllegalArgumentException>("A '${asserter.bsonType.simpleName}' is required to deserialize a '${asserter.type.simpleName}'. Type 'REGULAR_EXPRESSION' found.") {
+                BsonEncoder.decodeFromBsonValue(
+                    kClass = asserter.type,
+                    bsonValue = BsonRegularExpression("")
+                )
             }
         }
     }
@@ -368,7 +358,7 @@ class BsonEncoderTests {
 
     @Test
     fun realmAny_decodeUnsupportedTypeThrows() {
-        assertFailsWithMessage<IllegalArgumentException>("") {
+        assertFailsWithMessage<IllegalArgumentException>("Cannot decode a REGULAR_EXPRESSION into RealmAny.") {
             BsonEncoder.decodeFromBsonValue(
                 kClass = RealmAny::class,
                 bsonValue = BsonRegularExpression("")
