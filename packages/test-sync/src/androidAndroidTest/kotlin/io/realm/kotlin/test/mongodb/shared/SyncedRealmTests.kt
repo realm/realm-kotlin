@@ -52,6 +52,7 @@ import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmSchema
+import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -680,10 +681,11 @@ class SyncedRealmTests {
                 // Make sure that server schema changes are integrated
                 realm.syncSession.downloadAllServerChanges(60.seconds)
                 val schema: RealmSchema = realm.schema()
-                assertNull(schema[SyncObjectWithAllTypes::class.simpleName!!])
+                assertNull(schema["SyncObjectWithAllTypes"])
                 val childPkSchema: RealmClass? = schema["ChildPk"]
                 assertNotNull(childPkSchema)
                 assertNotNull(childPkSchema["name"])
+                assertTrue((childPkSchema["_id"]!!.type as ValuePropertyType).isIndexed)
                 assertNull(childPkSchema["age"])
                 assertNull(childPkSchema["link"])
                 assertNull(childPkSchema["linkedFrom"])

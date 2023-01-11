@@ -17,10 +17,8 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.BaseRealm
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.notifications.internal.Callback
 import io.realm.kotlin.notifications.internal.Cancellable
-import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 
@@ -59,14 +57,6 @@ public abstract class BaseRealmImpl internal constructor(
 
     init {
         log.info("Realm opened: ${configuration.path}")
-    }
-
-    // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
-    //  update, but requires that we initialize it all on the actual schema update to allow freezing
-    //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
-    //  initialization it would probably be acceptable to initialize on schema updates
-    override fun schema(): RealmSchema {
-        return RealmSchemaImpl.fromRealm(realmReference.dbPointer, realmReference.schemaMetadata)
     }
 
     override fun schemaVersion(): Long {

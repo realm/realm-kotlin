@@ -28,19 +28,19 @@ internal data class RealmSchemaImpl(
     override fun get(className: String): RealmClassImpl? = classes.firstOrNull { it.name == className }
 
     companion object {
-        fun fromRealm(dbPointer: RealmPointer, schemaMetadata: SchemaMetadata): RealmSchemaImpl {
+        private fun fromRealm(dbPointer: RealmPointer, schemaMetadata: SchemaMetadata?): RealmSchemaImpl {
             val classKeys = RealmInterop.realm_get_class_keys(dbPointer)
             return RealmSchemaImpl(
                 classKeys.mapNotNull {
                     val table = RealmInterop.realm_get_class(dbPointer, it)
-                    val classMetadata: ClassMetadata? = schemaMetadata[table.name]
-                    if (classMetadata?.isUserDefined() == true) {
+                    val classMetadata: ClassMetadata? = schemaMetadata?.get(table.name)
+                    if (schemaMetadata == null || classMetadata?.isUserDefined() == true) {
                         val properties: List<PropertyInfo> = RealmInterop.realm_get_class_properties(
                             dbPointer,
                             it,
                             table.numProperties + table.numComputedProperties
                         ).filter { property: PropertyInfo ->
-                            classMetadata[property.name]?.isUserDefined() == true
+                            schemaMetadata == null || classMetadata?.get(property.name)?.isUserDefined() == true
                         }
                         RealmClassImpl(table, properties)
                     } else {
@@ -48,6 +48,14 @@ internal data class RealmSchemaImpl(
                     }
                 }
             )
+        }
+
+        fun fromDynamicRealm(dbPointer: RealmPointer): RealmSchemaImpl {
+            return fromRealm(dbPointer, null)
+        }
+
+        fun fromTypedRealm(dbPointer: RealmPointer, schemaMetadata: SchemaMetadata): RealmSchemaImpl {
+            return fromRealm(dbPointer, schemaMetadata)
         }
     }
 }

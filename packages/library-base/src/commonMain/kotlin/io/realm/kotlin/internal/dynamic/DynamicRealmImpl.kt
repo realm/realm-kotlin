@@ -24,7 +24,9 @@ import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.interop.FrozenRealmPointer
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.schema.RealmSchema
 
 internal open class DynamicRealmImpl(
     configuration: InternalConfiguration,
@@ -46,4 +48,12 @@ internal open class DynamicRealmImpl(
             query,
             args
         )
+
+    // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
+    //  update, but requires that we initialize it all on the actual schema update to allow freezing
+    //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
+    //  initialization it would probably be acceptable to initialize on schema updates
+    override fun schema(): RealmSchema {
+        return RealmSchemaImpl.fromDynamicRealm(realmReference.dbPointer)
+    }
 }

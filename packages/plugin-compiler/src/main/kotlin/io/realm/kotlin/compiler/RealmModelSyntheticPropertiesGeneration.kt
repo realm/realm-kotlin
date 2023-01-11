@@ -519,6 +519,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         property.locationOf()
                                     )
                                 }
+                                // See https://github.com/realm/realm-core/issues/6187
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION) || primaryKey
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(
