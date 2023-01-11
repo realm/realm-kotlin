@@ -43,7 +43,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 
 ### Internal
-* Updated to Realm Core 13.1.2, commit 1bc488077bf9b5205728a036d253f673bf563147.
+* Updated to Realm Core 13.1.2, commit 711c5f0bae2f0b2c3397cec99a81f1ed3f03b5a9.
 * Updated to require Swig 4.1.0.
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 * Added JVM test wrapper as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
