@@ -213,9 +213,8 @@ internal open class SyncSessionImpl(
                 }
             }
             // We need to refresh the public Realm when downloading to make the changes visible
-            // to users immediately.
-            // We need to refresh the public Realm when uploading in order to support functionality
-            // like `Realm.writeCopyTo()` which require that all changes are uploaded.
+            // to users immediately, this include functionality like `Realm.writeCopyTo()` which
+            // require that all changes are uploaded.
             realm.refresh()
             when (result) {
                 is Boolean -> return result
@@ -225,7 +224,8 @@ internal open class SyncSessionImpl(
         } catch (ex: TimeoutCancellationException) {
             // Don't throw if timeout is hit, instead just return false per the API contract.
             // However, since the download might have made progress and integrated some changesets,
-            // we still need to refresh the public facing Realm.
+            // we should still refresh the public facing Realm, so it reflect however far
+            // Sync has gotten.
             realm.refresh()
             return false
         } finally {
