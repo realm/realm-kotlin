@@ -164,6 +164,7 @@ class FunctionsTests {
         val i64 = 42L
 
         for (type in BsonType.values()) {
+            println(type)
             when (type) {
                 BsonType.DOUBLE -> {
                     assertEquals(
@@ -311,7 +312,7 @@ class FunctionsTests {
                         BsonNull,
                         functions.callBlocking(FIRST_ARG_FUNCTION.name, BsonNull)
                     )
-                    assertNull(functions.callBlocking(FIRST_ARG_FUNCTION.name, null))
+                    assertNull(functions.callBlocking<String?>(FIRST_ARG_FUNCTION.name, null))
                 }
                 BsonType.REGULAR_EXPRESSION -> assertTypeOfFirstArgFunction(BsonRegularExpression(""))
                 BsonType.SYMBOL -> assertTypeOfFirstArgFunction(BsonSymbol(""))

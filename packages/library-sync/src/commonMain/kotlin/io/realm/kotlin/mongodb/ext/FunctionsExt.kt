@@ -40,7 +40,7 @@ import org.mongodb.kbson.BsonDocument
  *
  * @throws FunctionExecutionException if the function failed in some way.
  */
-public suspend inline fun <reified T : Any> Functions.call(
+public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
     vararg args: Any?
-): T = (this as FunctionsImpl).callInternal(name, T::class, args)
+): T = (this as FunctionsImpl).callInternal(name, T::class, args) as T

@@ -222,14 +222,14 @@ class BsonEncoderTests {
             when (asserter.value) {
                 null -> assertNull(
                     BsonEncoder.decodeFromBsonValue(
-                        kClass = asserter.type, // Arbitrary class to encode to null
+                        resultClass = asserter.type, // Arbitrary class to encode to null
                         bsonValue = asserter.bsonValue
                     )
                 )
                 is ByteArray -> assertContentEquals(
                     asserter.value,
                     BsonEncoder.decodeFromBsonValue(
-                        kClass = asserter.type,
+                        resultClass = asserter.type,
                         bsonValue = asserter.bsonValue
                     ) as ByteArray,
                     "Failed to validate types ${asserter.type.simpleName} and ${asserter.bsonValue::class.simpleName}"
@@ -237,7 +237,7 @@ class BsonEncoderTests {
                 else -> assertEquals(
                     asserter.value,
                     BsonEncoder.decodeFromBsonValue(
-                        kClass = asserter.type,
+                        resultClass = asserter.type,
                         bsonValue = asserter.bsonValue
                     ),
                     "Failed to validate types ${asserter.type.simpleName} and ${asserter.bsonValue::class.simpleName}"
@@ -250,7 +250,7 @@ class BsonEncoderTests {
     fun decodeBsonElementFromBsonElement() {
         primitiveAsserters.forEach { asserter ->
             BsonEncoder.decodeFromBsonValue(
-                kClass = asserter.bsonValue::class,
+                resultClass = asserter.bsonValue::class,
                 bsonValue = asserter.bsonValue
             )
         }
@@ -267,7 +267,7 @@ class BsonEncoderTests {
     fun decodeFromBsonElement_throwsUnsupportedType() {
         assertFailsWithMessage<IllegalArgumentException>("Unsupported type. Only Bson and primitives types are supported.") {
             BsonEncoder.decodeFromBsonValue(
-                kClass = SerializableClass::class,
+                resultClass = SerializableClass::class,
                 bsonValue = BsonString("")
             )
         }
@@ -278,7 +278,7 @@ class BsonEncoderTests {
         primitiveAsserters.forEach { asserter ->
             assertFailsWithMessage<IllegalArgumentException>("A '${asserter.bsonType.simpleName}' is required to deserialize a '${asserter.type.simpleName}'. Type 'REGULAR_EXPRESSION' found.") {
                 BsonEncoder.decodeFromBsonValue(
-                    kClass = asserter.type,
+                    resultClass = asserter.type,
                     bsonValue = BsonRegularExpression("")
                 )
             }
@@ -300,7 +300,7 @@ class BsonEncoderTests {
             it.key as KClass<*> to BsonDouble(1.0)
         }.forEach { (clazz: KClass<*>, bsonValue: BsonValue) ->
             BsonEncoder.decodeFromBsonValue(
-                kClass = clazz,
+                resultClass = clazz,
                 bsonValue = bsonValue
             )
         }
@@ -313,7 +313,7 @@ class BsonEncoderTests {
         }.forEach { (clazz: KClass<*>, bsonValue: BsonValue) ->
             assertFailsWithMessage<BsonInvalidOperationException>("Could not convert DOUBLE to a ${clazz.simpleName} without losing precision") {
                 BsonEncoder.decodeFromBsonValue(
-                    kClass = clazz,
+                    resultClass = clazz,
                     bsonValue = bsonValue
                 )
             }
@@ -360,7 +360,7 @@ class BsonEncoderTests {
     fun realmAny_decodeUnsupportedTypeThrows() {
         assertFailsWithMessage<IllegalArgumentException>("Cannot decode a REGULAR_EXPRESSION into RealmAny.") {
             BsonEncoder.decodeFromBsonValue(
-                kClass = RealmAny::class,
+                resultClass = RealmAny::class,
                 bsonValue = BsonRegularExpression("")
             )
         }

@@ -28,11 +28,11 @@ internal class FunctionsImpl(
     override val user: UserImpl
 ) : Functions {
     @PublishedApi
-    internal suspend fun <T> callInternal(
+    internal suspend fun callInternal(
         name: String,
-        resultType: KClass<T & Any>,
+        resultClass: KClass<*>,
         args: Array<out Any?>
-    ): T = Channel<Result<Any?>>(1).use { channel ->
+    ): Any? = Channel<Result<Any?>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
@@ -42,13 +42,12 @@ internal class FunctionsImpl(
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T
                 BsonEncoder.decodeFromBsonValue(
-                    kClass = resultType,
+                    resultClass = resultClass,
                     bsonValue = Bson(ejsonEncodedObject)
                 )
             }
         )
 
-        @Suppress("UNCHECKED_CAST")
-        return channel.receive().getOrThrow() as T
+        return channel.receive().getOrThrow()
     }
 }

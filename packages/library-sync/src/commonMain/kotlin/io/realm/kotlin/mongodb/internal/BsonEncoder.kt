@@ -21,7 +21,6 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
-import io.realm.kotlin.mongodb.internal.BsonEncoder.asBsonValue
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
@@ -76,24 +75,24 @@ internal object BsonEncoder {
     internal fun encodeToBsonValue(value: Any?): BsonValue = toBsonValue(value)
 
     /**
-     * Decodes a [BsonValue] into a value of the [kClass] class. Only primitives, Realm, Bson types are supported.
+     * Decodes a [BsonValue] into a value of the [resultClass] class. Only primitives, Realm, Bson types are supported.
      *
      * Uses the given serialization strategy to perform a manual decode of the [BsonValue].
      *
-     * @param kClass class of the decoded value.
+     * @param resultClass class of the decoded value.
      * @param bsonValue value to decode.
      * @return decoded value.
      */
     @PublishedApi
     @Suppress("ComplexMethod", "LongMethod", "NestedBlockDepth")
     internal fun decodeFromBsonValue(
-        kClass: KClass<*>?,
+        resultClass: KClass<*>?,
         bsonValue: BsonValue,
     ): Any? {
         return when {
-            kClass == null || bsonValue == BsonNull && kClass != BsonNull::class -> null
+            resultClass == null || bsonValue == BsonNull && resultClass != BsonNull::class -> null
             else -> {
-                when (kClass) {
+                when (resultClass) {
                     Byte::class -> {
                         deserializeNumber(bsonValue, "Byte") {
                             it.intValue().toByte()
