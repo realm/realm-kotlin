@@ -50,6 +50,8 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.schema.RealmClass
+import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -83,6 +85,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
@@ -638,6 +641,52 @@ class SyncedRealmTests {
                         }.list
                 assertEquals(1, list.size)
                 assertTrue(SyncObjectWithAllTypes.compareAgainstSampleData(list.first()))
+            }
+        }
+    }
+
+    // After https://github.com/realm/realm-core/pull/5784 was merged, ObjectStore will now
+    // return the full on-disk schema from ObjectStore, but for typed Realms the user visible schema
+    // should still only return classes and properties that was defined by the user.
+    @Test
+    fun onlyLocalSchemaIsVisible() = runBlocking {
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val user1 = app.createUserAndLogIn(email1, password1)
+        val user2 = app.createUserAndLogIn(email2, password2)
+
+        createSyncConfig(
+            user = user1,
+            partitionValue = partitionValue,
+            schema = setOf(SyncObjectWithAllTypes::class, ChildPk::class)
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                realm.syncSession.uploadAllLocalChanges()
+                val schema: RealmSchema = realm.schema()
+                val childPkSchema: RealmClass? = schema["ChildPk"]
+                assertNotNull(childPkSchema)
+                assertNotNull(childPkSchema["name"])
+                assertNotNull(childPkSchema["age"])
+                assertNotNull(childPkSchema["link"])
+                assertNotNull(childPkSchema["linkedFrom"])
+            }
+        }
+        createSyncConfig(
+            user = user2,
+            partitionValue = partitionValue,
+            schema = setOf(io.realm.kotlin.entities.sync.subset.ChildPk::class)
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                // Make sure that server schema changes are integrated
+                realm.syncSession.downloadAllServerChanges(60.seconds)
+                val schema: RealmSchema = realm.schema()
+                assertNull(schema[SyncObjectWithAllTypes::class.simpleName!!])
+                val childPkSchema: RealmClass? = schema["ChildPk"]
+                assertNotNull(childPkSchema)
+                assertNotNull(childPkSchema["name"])
+                assertNull(childPkSchema["age"])
+                assertNull(childPkSchema["link"])
+                assertNull(childPkSchema["linkedFrom"])
             }
         }
     }

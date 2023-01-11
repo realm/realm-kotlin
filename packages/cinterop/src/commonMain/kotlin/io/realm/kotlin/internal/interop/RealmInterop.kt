@@ -119,6 +119,10 @@ typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscript
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
 
+/**
+ * Class for grouping and normalizing values we want to send as part of
+ * logging in Sync Users.
+ */
 @Suppress("LongParameterList")
 class SyncConnectionParams(
     sdkVersion: String,
@@ -158,7 +162,6 @@ class SyncConnectionParams(
     }
 
     private fun normalizeCpuArch(cpuArch: String): String {
-
         return if (cpuArch.isEmpty()) {
             return ""
         } else if (Regex("x86.64", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
@@ -169,9 +172,7 @@ class SyncConnectionParams(
             "armeabi-v7a"
         } else if (
             Regex("arm64", RegexOption.IGNORE_CASE).find(cpuArch) != null ||
-            cpuArch.equals(
-                "aarch64", ignoreCase = true
-            )
+            cpuArch.equals("aarch64", ignoreCase = true)
         ) {
             "arm64"
         } else {

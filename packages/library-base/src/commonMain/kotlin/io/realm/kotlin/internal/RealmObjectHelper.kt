@@ -644,7 +644,7 @@ internal object RealmObjectHelper {
             // to iterate through the Realm schema and assume that all properties will have kotlin
             // properties associated with them. To avoid throwing errors we double check that
             val accessor: KProperty1<BaseRealmObject, Any?> = property.accessor
-                ?: if (property.isUserDefined) {
+                ?: if (property.isUserDefined()) {
                     sdkError("Typed object should always have an accessor: ${metadata.className}.${property.name}")
                 } else {
                     return@forEach // Property is only visible on disk, ignore.
@@ -1081,7 +1081,7 @@ internal object RealmObjectHelper {
             // to iterate through the Realm schema and assume that all properties will have kotlin
             // properties associated with them. To avoid throwing errors we double check that
             val accessor: KProperty1<BaseRealmObject, Any?> = property.accessor
-                ?: if (property.isUserDefined) {
+                ?: if (property.isUserDefined()) {
                     sdkError("Typed object should always have an accessor: ${metadata.className}.${property.name}")
                 } else {
                     continue // Property is only visible on disk, ignore.

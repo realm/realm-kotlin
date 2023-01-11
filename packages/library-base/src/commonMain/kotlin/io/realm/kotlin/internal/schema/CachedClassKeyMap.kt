@@ -55,6 +55,11 @@ public interface ClassMetadata {
     public operator fun get(property: KProperty<*>): PropertyMetadata?
     public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
         ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
+    /**
+     * Returns `true` if this class has been defined by the user, `false` is returned
+     * if this class is only found in the on-disk schema.
+     */
+    public fun isUserDefined(): Boolean = (clazz != null)
 }
 
 public interface PropertyMetadata {
@@ -68,8 +73,11 @@ public interface PropertyMetadata {
     public val linkTarget: String
     public val linkOriginPropertyName: String
     public val isComputed: Boolean
-    // True if this property is defined in a user defined model class
-    public val isUserDefined: Boolean
+    /**
+     * Returns `true` if this property has been defined by the user, `false` is returned
+     * if this property is only found in the on-disk schema.
+     */
+    public fun isUserDefined(): Boolean = (accessor != null)
 }
 
 /**
@@ -169,5 +177,4 @@ public class CachedPropertyMetadata(
     override val linkTarget: String = propertyInfo.linkTarget
     override val linkOriginPropertyName: String = propertyInfo.linkOriginPropertyName
     override val isComputed: Boolean = propertyInfo.isComputed
-    override val isUserDefined: Boolean = (accessor != null)
 }

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal.schema
 
+import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.schema.RealmSchema
@@ -27,14 +28,24 @@ internal data class RealmSchemaImpl(
     override fun get(className: String): RealmClassImpl? = classes.firstOrNull { it.name == className }
 
     companion object {
-        fun fromRealm(dbPointer: RealmPointer): RealmSchemaImpl {
+        fun fromRealm(dbPointer: RealmPointer, schemaMetadata: SchemaMetadata): RealmSchemaImpl {
             val classKeys = RealmInterop.realm_get_class_keys(dbPointer)
             return RealmSchemaImpl(
-                classKeys.map {
+                classKeys.mapNotNull {
                     val table = RealmInterop.realm_get_class(dbPointer, it)
-                    val properties =
-                        RealmInterop.realm_get_class_properties(dbPointer, it, table.numProperties + table.numComputedProperties)
-                    RealmClassImpl(table, properties)
+                    val classMetadata: ClassMetadata? = schemaMetadata[table.name]
+                    if (classMetadata?.isUserDefined() == true) {
+                        val properties: List<PropertyInfo> = RealmInterop.realm_get_class_properties(
+                            dbPointer,
+                            it,
+                            table.numProperties + table.numComputedProperties
+                        ).filter { property: PropertyInfo ->
+                            classMetadata[property.name]?.isUserDefined() == true
+                        }
+                        RealmClassImpl(table, properties)
+                    } else {
+                        null
+                    }
                 }
             )
         }

@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.entities.sync
+package io.realm.kotlin.entities.sync.subset
 
-import io.realm.kotlin.ext.backlinks
-import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlin.random.Random
 
+/**
+ * Copy of io.realm.kotlin.entities.sync.ChildPk, but it only contains a subset of its properties
+ */
 class ChildPk : RealmObject {
-    @Suppress("VariableNaming")
-    @PrimaryKey var _id: String = Random.nextLong().toString()
+    @PersistedName("_id")
+    @PrimaryKey var id: String = Random.nextLong().toString()
     var name: String = "DEFAULT"
-    var age: Int = 0
-
-    var link: ChildPk? = null
-    val linkedFrom: RealmResults<ChildPk> by backlinks(ChildPk::link)
 }
