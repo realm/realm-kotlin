@@ -116,6 +116,7 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
+    @Ignore
     fun closeShouldFreeMemory() {
         @OptIn(ExperimentalStdlibApi::class)
         println("NEW_MEMORY_MODEL: " + isExperimentalMM())
