@@ -39,6 +39,7 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.SUM_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBoolean
@@ -74,8 +75,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 class FunctionsTests {
-//    @Serializable
-//    private data class Dog(var name: String? = null)
+    private data class Dog(var name: String? = null)
 
 //    private val looperThread = BlockingLooperThread()
 
@@ -343,6 +343,20 @@ class FunctionsTests {
         value: T
     ): T = functions.callBlocking<T>(FIRST_ARG_FUNCTION.name, value).also {
         assertEquals(value, it)
+    }
+
+    @Test
+    fun unsupportedReturnTypeThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("Failed to convert arguments, type 'Dog' not supported. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, Array, Collection, Map and primitives are valid arguments types.") {
+            functions.callBlocking<Int>(FIRST_ARG_FUNCTION.name, Dog())
+        }
+    }
+
+    @Test
+    fun unsupportedArgumentTypeThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("Unsupported type 'RealmList'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.") {
+            functions.callBlocking<RealmList<String>>(FIRST_ARG_FUNCTION.name, "hello world")
+        }
     }
 
 //    @Test

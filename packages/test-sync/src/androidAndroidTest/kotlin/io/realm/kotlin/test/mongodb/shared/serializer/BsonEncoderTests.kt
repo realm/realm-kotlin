@@ -258,14 +258,14 @@ class BsonEncoderTests {
 
     @Test
     fun encodeToString_throwsUnsupportedType() {
-        assertFailsWithMessage<IllegalArgumentException>("Failed to convert arguments, type 'SerializableClass' not supported. Only Bson, primitives, lists and maps are valid arguments types.") {
+        assertFailsWithMessage<IllegalArgumentException>("Failed to convert arguments, type 'SerializableClass' not supported. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, Array, Collection, Map and primitives are valid arguments types.") {
             BsonEncoder.encodeToBsonValue(SerializableClass())
         }
     }
 
     @Test
     fun decodeFromBsonElement_throwsUnsupportedType() {
-        assertFailsWithMessage<IllegalArgumentException>("Unsupported type. Only Bson and primitives types are supported.") {
+        assertFailsWithMessage<IllegalArgumentException>("Unsupported type 'SerializableClass'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.") {
             BsonEncoder.decodeFromBsonValue(
                 resultClass = SerializableClass::class,
                 bsonValue = BsonString("")

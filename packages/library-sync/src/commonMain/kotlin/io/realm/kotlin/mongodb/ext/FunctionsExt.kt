@@ -27,8 +27,8 @@ import org.mongodb.kbson.BsonDocument
  * Since the serialization engine [does not support third-party libraries yet](https://github.com/Kotlin/kotlinx.serialization/blob/master/docs/formats.md), there are some
  * limitations in what types can be used as arguments and return types:
  *
- * - Primitives, Bson, lists, and maps are valid argument types.
- * - Results can only be deserialized to primitives or Bson types.
+ * - Primitives, Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, Array, Collection, and Map are valid argument types.
+ * - Results can only be deserialized to Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny and primitive types
  *
  * The Bson implementations for arrays or maps are [BsonArray] and [BsonDocument], and they can be
  * used as valid return types.

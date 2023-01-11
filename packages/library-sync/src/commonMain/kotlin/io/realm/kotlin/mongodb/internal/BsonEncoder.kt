@@ -228,7 +228,7 @@ internal object BsonEncoder {
                         }
                     }
                     else -> {
-                        throw IllegalArgumentException("Unsupported type. Only Bson and primitives types are supported.")
+                        throw IllegalArgumentException("Unsupported type '${resultClass.simpleName}'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.")
                     }
                 }
             }
@@ -309,7 +309,7 @@ internal object BsonEncoder {
             is Array<*> -> value.asBsonArray()
             is Collection<*> -> value.asBsonArray()
             is Map<*, *> -> value.asBsonDocument()
-            else -> throw IllegalArgumentException("Failed to convert arguments, type '${value::class.simpleName}' not supported. Only Bson, primitives, lists and maps are valid arguments types.")
+            else -> throw IllegalArgumentException("Failed to convert arguments, type '${value::class.simpleName}' not supported. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, Array, Collection, Map and primitives are valid arguments types.")
         }
     }
 }
