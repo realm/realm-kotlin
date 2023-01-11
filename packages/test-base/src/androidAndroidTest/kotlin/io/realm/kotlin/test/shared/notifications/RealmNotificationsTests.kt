@@ -28,7 +28,7 @@ import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -36,6 +36,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class RealmNotificationsTests : NotificationTests {
 
@@ -191,24 +192,13 @@ class RealmNotificationsTests : NotificationTests {
     @Test
     fun closingRealmCompletesFlow() {
         runBlocking {
-            val c = Channel<RealmChange<*>>(1)
-            val cancelledChannel = Channel<Boolean>(1)
-
             val observer = async {
-                realm.asFlow()
-                    .onCompletion {
-                        // Signal completion
-                        cancelledChannel.send(true)
-                    }
-                    .collect {
-                        c.trySend(it)
-                    }
+                realm.asFlow().collect { }
             }
             realm.close()
-            cancelledChannel.receive()
-            assertTrue(observer.isCompleted)
-            observer.cancel()
-            c.close()
+            withTimeout(5.seconds) {
+                observer.await()
+            }
         }
     }
 }

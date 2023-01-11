@@ -38,12 +38,10 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.flattenConcat
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -60,8 +58,10 @@ public class RealmImpl private constructor(
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + configuration.notificationDispatcher)
-    private val realmFlow =
-        MutableSharedFlow<RealmChange<Realm>>() // Realm notifications emit their initial state when subscribed to
+    private val realmFlow = MutableSharedFlow<RealmChange<Realm>>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     private val notifier =
         SuspendableNotifier(this, configuration.notificationDispatcher)
     internal val writer =
@@ -203,12 +203,10 @@ public class RealmImpl private constructor(
         }
     }
 
-    override fun asFlow(): Flow<RealmChange<Realm>> {
-        return flowOf(
-            flow { emit(InitialRealmImpl(this@RealmImpl)) },
-            realmFlow.asSharedFlow().takeWhile { !isClosed() }
-        ).flattenConcat()
-    }
+    override fun asFlow(): Flow<RealmChange<Realm>> =
+        realmFlow
+            .onStart { emit(InitialRealmImpl(this@RealmImpl)) }
+            .takeWhile { !isClosed() }
 
     override fun writeCopyTo(configuration: Configuration) {
         if (fileExists(configuration.path)) {
