@@ -49,7 +49,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Added JVM test wrapper as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 
 
-## 1.5.2 (YYYY-MM-DD)
+## 1.5.3 (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -58,7 +58,33 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * None.
 
 ### Fixed
-* Added proguard consumer files to Android debug artifacts. (Issue [#1150](https://github.com/realm/realm-kotlin/issues/1150))
+* None.
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.5.2 (2023-01-10)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Fixed various proguard issues. (Issue [#1150](https://github.com/realm/realm-kotlin/issues/1150))
 * Fixed bug when creating `RealmInstant` instaces with `RealmInstant.now()` in Kotlin Native. (Issue [#1182](https://github.com/realm/realm-kotlin/issues/1182))
 * Allow `@Index` on `Boolean` fields. (Issue [#1193](https://github.com/realm/realm-kotlin/issues/1193))
 * Fixed issue with spaces in realm file path on iOS (Issue [#1194](https://github.com/realm/realm-kotlin/issues/1194))
