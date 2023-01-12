@@ -56,17 +56,18 @@ public actual fun epochInSeconds(): Long =
  */
 @Suppress("MagicNumber")
 internal actual fun currentTime(): RealmInstant {
-    val secs = NSDate().timeIntervalSince1970
-    val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
-    return if (millis < RealmInstant.MIN.epochSeconds * 1000) {
-        RealmInstant.MIN
-    } else if (millis > RealmInstant.MAX.epochSeconds * 1000) {
-        RealmInstant.MAX
-    } else {
-        RealmInstantImpl(
-            millis.floorDiv(1000.toLong()),
-            (millis.mod(1000.toLong()) * 1000).toInt()
-        )
+    val secs: Double = NSDate().timeIntervalSince1970
+    return when {
+        // We can't convert the MIN value to ms - it is initialized with Long.MIN_VALUE and
+        // multiplying it by 1000 will cause overflow. We have to compare directly against seconds
+        secs < RealmInstant.MIN.epochSeconds -> RealmInstant.MIN
+        // Similarly here, compare to seconds instead to avoid overflow with Long.MAX_VALUE
+        secs > RealmInstant.MAX.epochSeconds -> RealmInstant.MAX
+        else -> {
+            val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
+            val nanos = millis.mod(1000L) * 1000000L
+            RealmInstantImpl(millis.floorDiv(1000L), nanos.toInt())
+        }
     }
 }
 
@@ -113,7 +114,7 @@ public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
 public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
     val dir = NSURL.fileURLWithPath(directoryPath, isDirectory = true)
     preparePath(directoryPath, dir)
-    return NSURL.fileURLWithPath(filename, dir).absoluteString?.removePrefix("file://")
+    return NSURL.fileURLWithPath(filename, dir).path
         ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
 }
 

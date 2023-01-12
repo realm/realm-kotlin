@@ -23,6 +23,7 @@ import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.junit.Test
@@ -33,7 +34,7 @@ import kotlin.test.assertTrue
 
 class IndexTests {
     @Test
-    fun `index supportness`() {
+    fun `index support`() {
         // TODO Consider placing these in PropertyDescriptor.kt for reuse
         val defaults = mapOf<KClassifier, Any>(
             Boolean::class to true,
@@ -50,7 +51,8 @@ class IndexTests {
             BsonObjectId::class to "BsonObjectId()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
-            MutableRealmInt::class to "MutableRealmInt.create(42)"
+            MutableRealmInt::class to "MutableRealmInt.create(42)",
+            RealmAny::class to "RealmAny(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -71,6 +73,7 @@ class IndexTests {
                     """
                         import io.realm.kotlin.types.MutableRealmInt
                         import io.realm.kotlin.types.ObjectId
+                        import io.realm.kotlin.types.RealmAny
                         import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.types.RealmUUID
@@ -96,7 +99,7 @@ class IndexTests {
                     result.exitCode,
                     type.toString()
                 )
-                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(11, 5\\): .*but must be of type")))
+                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(12, 5\\): .*but must be of type")))
             }
         }
     }

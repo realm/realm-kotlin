@@ -21,26 +21,37 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
+import io.realm.kotlin.entities.list.EmbeddedLevel1
 import io.realm.kotlin.entities.list.Level1
 import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.reflect.KClassifier
@@ -55,6 +66,9 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RealmListTests {
 
@@ -411,6 +425,191 @@ class RealmListTests {
         }
     }
 
+    @Test
+    fun listAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val mutex = Mutex(true)
+        val job = async {
+            container.objectListField.asFlow().collect {
+                mutex.unlock()
+            }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        withTimeout(10.seconds) {
+            job.await()
+        }
+    }
+
+    @Test
+    fun query_objectList() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmListContainer().apply {
+                    (1..5).map {
+                        objectListField.add(RealmListContainer().apply { stringField = "$it" })
+                    }
+                }
+            )
+        }
+        val objectListField = container.objectListField
+        assertEquals(5, objectListField.size)
+
+        val all: RealmQuery<RealmListContainer> = container.objectListField.query()
+        val ids = (1..5).map { it.toString() }.toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.stringField)) }
+        assertTrue { ids.isEmpty() }
+
+        container.objectListField.query("stringField = $0", 3.toString()).find().single()
+            .run { assertEquals("3", stringField) }
+    }
+
+    @Test
+    fun query_embeddedObjectList() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmListContainer().apply {
+                    (1..5).map {
+                        embeddedRealmObjectListField.add(EmbeddedLevel1().apply { id = it })
+                    }
+                }
+            )
+        }
+        val embeddedLevel1RealmList = container.embeddedRealmObjectListField
+        assertEquals(5, embeddedLevel1RealmList.size)
+
+        val all: RealmQuery<EmbeddedLevel1> = container.embeddedRealmObjectListField.query()
+        val ids = (1..5).toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.id)) }
+        assertTrue { ids.isEmpty() }
+
+        container.embeddedRealmObjectListField.query("id = $0", 3).find().single()
+            .run { assertEquals(3, id) }
+    }
+
+    @Test
+    fun queryOnListAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val mutex = Mutex(true)
+        val listener = async {
+            container.objectListField.query().asFlow().let {
+                withTimeout(10.seconds) {
+                    it.collect {
+                        mutex.unlock()
+                    }
+                }
+            }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    fun queryOnListAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val flow = container.objectListField.query().asFlow()
+            .buffer(1)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                assertFailsWith<CancellationException> {
+                    flow.collect { current ->
+                        delay(1000.milliseconds)
+                    }
+                }.message!!.let { message ->
+                    assertEquals(
+                        "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                        message
+                    )
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectListField.run {
+                    clear()
+                    add(RealmListContainer().apply { this.id = i })
+                }
+            }
+        }
+        listener.await()
+        Unit
+    }
+
+    // This test shows that our internal logic still works (by closing the flow on deletion events)
+    // even though the public consumer is dropping elements
+    @Test
+    fun queryOnListAsFlow_backpressureStrategyDoesNotRuinInternalLogic() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val flow = container.objectListField.query().asFlow()
+            .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                flow.collect { current ->
+                    delay(30.milliseconds)
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectListField.run {
+                    clear()
+                    add(RealmListContainer().apply { this.id = i })
+                }
+            }
+        }
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    fun query_throwsOnSyntaxError() = runBlocking {
+        val instance = realm.write { copyToRealm(RealmListContainer()) }
+        assertFailsWithMessage<IllegalArgumentException>("syntax error") {
+            instance.objectListField.query("ASDF = $0 $0")
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnUnmanagedList() = runBlocking {
+        realm.write {
+            val instance = RealmListContainer()
+            copyToRealm(instance)
+            assertFailsWithMessage<IllegalArgumentException>("Unmanaged list cannot be queried") {
+                instance.objectListField.query()
+            }
+            Unit
+        }
+    }
+
+    @Test
+    fun query_throwsOnDeletedList() = runBlocking {
+        realm.write {
+            val instance = copyToRealm(RealmListContainer())
+            val objectListField = instance.objectListField
+            delete(instance)
+            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+                objectListField.query()
+            }
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnClosedList() = runBlocking {
+        val container = realm.write { copyToRealm(RealmListContainer()) }
+        val objectListField = container.objectListField
+        realm.close()
+
+        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            objectListField.query()
+        }
+        Unit
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = listTestSchema)
             .directory(tmpDir)
@@ -440,6 +639,7 @@ class RealmListTests {
         RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
         ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
         RealmObject::class -> OBJECT_VALUES
+        RealmAny::class -> LIST_REALM_ANY_VALUES
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 
@@ -475,6 +675,14 @@ class RealmListTests {
                         classifier,
                         elementType.nullable
                     ) as TypeSafetyManager<ByteArray?>
+                )
+                RealmAny::class -> ManagedRealmAnyListTester(
+                    realm = realm,
+                    typeSafetyManager = NullableList(
+                        classifier = classifier,
+                        property = RealmListContainer.nullableProperties[classifier]!!,
+                        dataSet = getDataSetForClassifier(classifier, true)
+                    ) as TypeSafetyManager<RealmAny?>
                 )
                 else -> ManagedGenericListTester(
                     realm = realm,
@@ -1051,7 +1259,7 @@ internal abstract class ManagedListTester<T>(
             }
 
             // Clean up
-            delete(findLatest(container)!!)
+            delete(query<RealmListContainer>())
         }
     }
 
@@ -1068,7 +1276,7 @@ internal abstract class ManagedListTester<T>(
 
         // Clean up
         realm.writeBlocking {
-            delete(findLatest(container)!!)
+            delete(query<RealmListContainer>())
         }
     }
 }
@@ -1077,7 +1285,7 @@ internal abstract class ManagedListTester<T>(
  * No special needs for managed, generic testers. Elements can be compared painlessly and need not
  * be copied to Realm when calling RealmList API methods.
  */
-internal class ManagedGenericListTester<T>(
+internal class ManagedGenericListTester<T> constructor(
     realm: Realm,
     typeSafetyManager: TypeSafetyManager<T>
 ) : ManagedListTester<T>(realm, typeSafetyManager) {
@@ -1086,6 +1294,43 @@ internal class ManagedGenericListTester<T>(
             assertContentEquals(expected, actual as ByteArray)
         } else {
             assertEquals(expected, actual)
+        }
+    }
+}
+
+/**
+ * Checks equality for RealmAny values. When working with RealmObjects we need to do it at a
+ * structural level.
+ */
+internal class ManagedRealmAnyListTester constructor(
+    realm: Realm,
+    typeSafetyManager: TypeSafetyManager<RealmAny?>
+) : ManagedListTester<RealmAny?>(realm, typeSafetyManager) {
+    override fun assertElementsAreEqual(expected: RealmAny?, actual: RealmAny?) {
+        if (expected != null && actual != null) {
+            assertEquals(expected.type, actual.type)
+            when (expected.type) {
+                RealmAny.Type.INT -> assertEquals(expected.asInt(), actual.asInt())
+                RealmAny.Type.BOOL -> assertEquals(expected.asBoolean(), actual.asBoolean())
+                RealmAny.Type.STRING -> assertEquals(expected.asString(), actual.asString())
+                RealmAny.Type.BINARY ->
+                    assertContentEquals(expected.asByteArray(), actual.asByteArray())
+                RealmAny.Type.TIMESTAMP ->
+                    assertEquals(expected.asRealmInstant(), actual.asRealmInstant())
+                RealmAny.Type.FLOAT -> assertEquals(expected.asFloat(), actual.asFloat())
+                RealmAny.Type.DOUBLE -> assertEquals(expected.asDouble(), actual.asDouble())
+                RealmAny.Type.OBJECT_ID -> assertEquals(expected.asObjectId(), actual.asObjectId())
+                RealmAny.Type.UUID -> assertEquals(
+                    expected.asRealmUUID(),
+                    actual.asRealmUUID()
+                )
+                RealmAny.Type.OBJECT -> assertEquals(
+                    expected.asRealmObject<RealmListContainer>().stringField,
+                    actual.asRealmObject<RealmListContainer>().stringField
+                )
+            }
+        } else if (expected != null || actual != null) {
+            fail("One of the RealmAny values is null, expected = $expected, actual = $actual")
         }
     }
 }
@@ -1150,6 +1395,34 @@ internal val OBJECT_VALUES3 = listOf(
     RealmListContainer().apply { stringField = "H" }
 )
 internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.nextBytes(2))
+
+// Base RealmAny values. The list does not include 'RealmAny.create(RealmObject())' since it is used
+// as a base for both lists and sets and they use different container classes in their logic.
+// Do NOT use this list directly in your tests unless you have a good reason to ignore RealmAny
+// instances containing a RealmObject.
+internal val REALM_ANY_PRIMITIVE_VALUES = listOf(
+    RealmAny.create((-12).toShort()),
+    RealmAny.create(13),
+    RealmAny.create(14.toByte()),
+    RealmAny.create(15.toChar()),
+    RealmAny.create(16L),
+    RealmAny.create(false),
+    RealmAny.create("Hello"),
+    RealmAny.create(17F),
+    RealmAny.create(18.0),
+    RealmAny.create(BsonObjectId("507f191e810c19729de860ea")),
+    RealmAny.create(byteArrayOf(19)),
+    RealmAny.create(RealmInstant.from(42, 420)),
+    RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")),
+    null
+)
+internal val REALM_ANY_REALM_OBJECT = RealmAny.create(
+    RealmListContainer().apply { stringField = "hello" },
+    RealmListContainer::class
+)
+
+// Use this for LIST tests as this file does exhaustive testing on all RealmAny types
+internal val LIST_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
 
 internal val NULLABLE_CHAR_VALUES = CHAR_VALUES + null
 internal val NULLABLE_STRING_VALUES = STRING_VALUES + null

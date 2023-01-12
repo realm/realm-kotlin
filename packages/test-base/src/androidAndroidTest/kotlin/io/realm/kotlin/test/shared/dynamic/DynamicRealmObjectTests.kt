@@ -29,6 +29,10 @@ import io.realm.kotlin.dynamic.getValueList
 import io.realm.kotlin.dynamic.getValueSet
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asFlow
+import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.ListPropertyType
@@ -39,6 +43,7 @@ import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
@@ -257,6 +262,13 @@ class DynamicRealmObjectTests {
                                         type.storageType.kClass
                                     ) as ByteArray?
                                 )
+                            }
+                            RealmStorageType.ANY -> {
+                                // The testing pattern doesn't work for RealmAny since we only land
+                                // here in case the type is nullable and the expected value only
+                                // takes into consideration the default value, which is null.
+                                // However, we need to test it with different values.
+                                // See 'get_realmAny()'
                             }
                             else -> error("Model contains untested properties: $property")
                         }
@@ -595,6 +607,14 @@ class DynamicRealmObjectTests {
                                     )[0]
                                 )
                             }
+                            RealmStorageType.ANY -> {
+                                // The testing pattern doesn't work for RealmAny since we only land
+                                // here in case the type is nullable and the expected value only
+                                // takes into consideration the default value, which is an empty
+                                // list.
+                                // However, we need to test it with different values.
+                                // See 'get_realmAnyList()'
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     } else {
@@ -889,6 +909,14 @@ class DynamicRealmObjectTests {
                                     ).first()
                                 )
                             }
+                            RealmStorageType.ANY -> {
+                                // The testing pattern doesn't work for RealmAny since we only land
+                                // here in case the type is nullable and the expected value only
+                                // takes into consideration the default value, which is an empty
+                                // set.
+                                // However, we need to test it with different values.
+                                // See 'get_realmAnySet()'
+                            }
                             else -> error("Model contains untested properties: $property")
                         }
                     } else {
@@ -1055,6 +1083,225 @@ class DynamicRealmObjectTests {
     }
 
     @Test
+    fun get_realmAny() {
+        // It's not possible to integrate in get_allTypes() since RealmAny can only be nullable in
+        // the context of the test.
+        // Provide at least the following types: null, primitive, RealmObject, DynamicRealmObject
+        val realmAnyValues = listOf(
+            null,
+            RealmAny.create("Hello"),
+            RealmAny.create(Sample().apply { stringField = "INNER" }),
+        )
+
+        for (expected in realmAnyValues) {
+            val unmanagedSample = Sample().apply { nullableRealmAnyField = expected }
+            realm.writeBlocking { copyToRealm(unmanagedSample) }
+            val dynamicRealm = realm.asDynamicRealm()
+            val dynamicSample = dynamicRealm.query("Sample")
+                .find()
+                .first()
+
+            val actualReified = dynamicSample.getNullableValue<RealmAny>(Sample::nullableRealmAnyField.name)
+            val actual = dynamicSample.getNullableValue(Sample::nullableRealmAnyField.name, RealmAny::class)
+
+            // Test we throw if trying to retrieve the object using its actual class instead of
+            // DynamicRealmObject
+            if (actualReified?.type == RealmAny.Type.OBJECT) {
+                assertFailsWith<ClassCastException> {
+                    actualReified?.asRealmObject<Sample>()
+                }
+                assertFailsWith<ClassCastException> {
+                    actual?.asRealmObject(Sample::class)
+                }
+
+                // Retrieve values now
+                assertEquals(
+                    expected?.asRealmObject<Sample>()?.stringField,
+                    actualReified?.asRealmObject<DynamicRealmObject>()?.getValue("stringField")
+                )
+                assertEquals(
+                    expected?.asRealmObject<Sample>()?.stringField,
+                    actual?.asRealmObject<DynamicRealmObject>()?.getValue("stringField")
+                )
+            } else {
+                assertEquals(expected, actualReified)
+                assertEquals(expected, actual)
+            }
+            realm.writeBlocking { delete(query(Sample::class)) }
+        }
+
+        // The code is allowed by our semantics but is a rather obscure use case:
+        // 1 - write an object using a regular realm
+        // 2 - retrieve that object using a dynamic realm
+        // 3 - wrap the dynamic object inside RealmAny and put it inside a container and save it to
+        //     a regular realm
+        // In principle we shouldn't allow dynamic objects to be written using a regular realm but
+        // 'copyToRealm' isn't constrained to prevent it.
+
+        // First write a container holding a RealmAny field wrapping a DynamicRealmObject
+        val sample = Sample().apply { stringField = "INNER" }
+        realm.writeBlocking { copyToRealm(sample) }
+        realm.asDynamicRealm()
+            .also { dynamicRealm ->
+                // Retrieve the container we just stored
+                val dynamicSample = dynamicRealm.query("Sample")
+                    .find()
+                    .first()
+                realm.writeBlocking {
+                    // Create a RealmAny instance with the INNER object - call the container OUTER
+                    val latestDynamicSample = findLatest(dynamicSample)
+                    val outer = Sample().apply {
+                        stringField = "OUTER"
+                        nullableRealmAnyField = RealmAny.create(latestDynamicSample!!)
+                    }
+                    copyToRealm(outer)
+                }
+            }
+
+        // Then retrieve OUTER object and get the RealmAny value that contains the INNER DynamicRealmObject
+        realm.asDynamicRealm()
+            .also { dynamicRealm ->
+                val dynamicInner = dynamicRealm.query("Sample", "stringField = $0", "OUTER")
+                    .find()
+                    .first()
+                val actual = dynamicInner.getNullableValue<RealmAny>("nullableRealmAnyField")
+                val actualObject = actual?.asRealmObject<DynamicRealmObject>()
+                val actualString = actualObject?.getValue<String>("stringField")
+                assertEquals(sample.stringField, actualString)
+            }
+    }
+
+    @Test
+    fun get_realmAnyList() {
+        val realmAnyValues = realmListOf(
+            null,
+            RealmAny.create("Hello"),
+            RealmAny.create(Sample().apply { stringField = "INNER" }),
+        )
+
+        val unmanagedSample = Sample().apply {
+            nullableRealmAnyListField = realmAnyValues
+        }
+        realm.writeBlocking { copyToRealm(unmanagedSample) }
+        realm.asDynamicRealm()
+            .also { dynamicRealm ->
+                val dynamicSample = dynamicRealm.query("Sample")
+                    .find()
+                    .first()
+
+                val actualReifiedList = dynamicSample.getNullableValueList<RealmAny>(
+                    Sample::nullableRealmAnyListField.name
+                )
+                val actualList = dynamicSample.getNullableValueList(
+                    Sample::nullableRealmAnyListField.name,
+                    RealmAny::class
+                )
+                for (i in realmAnyValues.indices) {
+                    val expected = realmAnyValues[i]
+                    val actualReified = actualReifiedList[i]
+                    val actual = actualList[i]
+                    if (actual?.type == RealmAny.Type.OBJECT) {
+                        // Test we throw if trying to retrieve the object using its actual class instead of
+                        // DynamicRealmObject
+                        assertFailsWith<ClassCastException> {
+                            actualReified?.asRealmObject<Sample>()
+                        }
+                        assertFailsWith<ClassCastException> {
+                            actualReified?.asRealmObject(Sample::class)
+                        }
+                        assertFailsWith<ClassCastException> {
+                            actual?.asRealmObject<Sample>()
+                        }
+                        assertFailsWith<ClassCastException> {
+                            actual?.asRealmObject(Sample::class)
+                        }
+
+                        // Retrieve values now
+                        assertEquals(
+                            expected?.asRealmObject<Sample>()?.stringField,
+                            actualReified?.asRealmObject<DynamicRealmObject>()?.getValue("stringField")
+                        )
+                        assertEquals(
+                            expected?.asRealmObject<Sample>()?.stringField,
+                            actual?.asRealmObject<DynamicRealmObject>()?.getValue("stringField")
+                        )
+                    } else {
+                        assertEquals(expected, actualReified)
+                        assertEquals(expected, actual)
+                    }
+                }
+            }
+
+        // In case of testing lists we have to skip dynamic managed objects inside a
+        // RealmList<RealmAny> since the semantics prevent us from writing a DynamicRealmObject
+        // in this way, rightfully so. The reason for this is that we use the regular realm's
+        // accessors which go through the non-dynamic path so objects inside the list are expected
+        // to be non-dynamic - the 'issueDynamicObject' flag is always false following this path.
+        // This should be tested for DynamicMutableRealm instead.
+    }
+
+    @Test
+    fun get_realmAnySet() {
+        val realmAnyValues = realmListOf(
+            null,
+            RealmAny.create("Hello"),
+            RealmAny.create(Sample().apply { stringField = "INNER" }),
+        )
+
+        val unmanagedSample = Sample().apply {
+            nullableRealmAnySetField = realmAnyValues.toRealmSet()
+        }
+        realm.writeBlocking { copyToRealm(unmanagedSample) }
+        realm.asDynamicRealm()
+            .also { dynamicRealm ->
+                val dynamicSample = dynamicRealm.query("Sample")
+                    .find()
+                    .first()
+
+                val actualReifiedSet = dynamicSample.getNullableValueSet<RealmAny>(
+                    Sample::nullableRealmAnySetField.name
+                )
+                val actualSet = dynamicSample.getNullableValueSet(
+                    Sample::nullableRealmAnySetField.name,
+                    RealmAny::class
+                )
+
+                fun assertions(actual: RealmAny?) {
+                    if (actual?.type == RealmAny.Type.OBJECT) {
+                        var assertionSucceeded = false
+                        for (value in realmAnyValues) {
+                            if (value?.type == RealmAny.Type.OBJECT) {
+                                assertEquals(
+                                    value.asRealmObject<Sample>().stringField,
+                                    actual.asRealmObject<DynamicRealmObject>().getValue("stringField")
+                                )
+                                assertionSucceeded = true
+                                return
+                            }
+                        }
+                        assertTrue(assertionSucceeded)
+                    } else {
+                        assertTrue(realmAnyValues.contains(actual))
+                    }
+                }
+
+                for (actual in actualReifiedSet) {
+                    assertions(actual)
+                }
+                for (actual in actualSet) {
+                    assertions(actual)
+                }
+            }
+
+        // In case of testing sets we have to skip dynamic managed objects inside a
+        // RealmSet<RealmAny> since the semantics prevent us from writing a DynamicRealmObject
+        // in this way, rightfully so. The reason for this is that we use the regular realm's
+        // accessors which go through the non-dynamic path so objects inside the set are expected
+        // to be non-dynamic - the 'issueDynamicObject' flag is always false following this path.
+        // This should be tested for DynamicMutableRealm instead.
+    }
+
+    @Test
     fun get_throwsOnUnkownName() {
         realm.writeBlocking {
             copyToRealm(Sample())
@@ -1136,6 +1383,23 @@ class DynamicRealmObjectTests {
         assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'Sample.stringListField' as type: 'class io.realm.kotlin.types.BaseRealmObject?' but actual schema type is 'RealmList<class kotlin.String>'") {
             dynamicSample.getObject("stringListField")
         }
+    }
+
+    @Test
+    fun list_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                Sample().apply {
+                    (1..5).forEach { objectListField.add(Sample().apply { intField = it }) }
+                }
+            )
+        }
+        val dynamicRealm = realm.asDynamicRealm()
+        val dynamicSample = dynamicRealm.query("Sample").find().first()
+
+        val results = dynamicSample.getObjectList("objectListField").query("intField > 2").find()
+        assertEquals(3, results.size)
+        results.forEach { assertTrue { it.getValue<Long>("intField") > 2 } }
     }
 
     @Test

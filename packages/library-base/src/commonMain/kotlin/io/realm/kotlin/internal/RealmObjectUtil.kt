@@ -59,7 +59,8 @@ internal fun <T : BaseRealmObject> RealmObjectInternal.link(
     type: KClass<T>,
     link: Link
 ): T {
-    return this.manage(realm, mediator, type, RealmInterop.realm_get_object(realm.dbPointer, link))
+    val objectPointer = RealmInterop.realm_get_object(realm.dbPointer, link)
+    return this.manage(realm, mediator, type, objectPointer)
 }
 
 /**

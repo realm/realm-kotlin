@@ -18,6 +18,8 @@ package io.realm.kotlin.internal.interop
 
 import realm_wrapper.realm_schema_mode
 import realm_wrapper.realm_schema_mode_e
+import realm_wrapper.realm_value_type
+import realm_wrapper.realm_value_type_e
 
 // Interfaces to hold C API enum from cinterop
 interface NativeEnum<T : Enum<T>> {
@@ -53,13 +55,14 @@ actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerate
     RLM_PROPERTY_TYPE_BOOL(realm_wrapper.RLM_PROPERTY_TYPE_BOOL),
     RLM_PROPERTY_TYPE_STRING(realm_wrapper.RLM_PROPERTY_TYPE_STRING),
     RLM_PROPERTY_TYPE_BINARY(realm_wrapper.RLM_PROPERTY_TYPE_BINARY),
-    RLM_PROPERTY_TYPE_OBJECT(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT),
+    RLM_PROPERTY_TYPE_MIXED(realm_wrapper.RLM_PROPERTY_TYPE_MIXED),
+    RLM_PROPERTY_TYPE_TIMESTAMP(realm_wrapper.RLM_PROPERTY_TYPE_TIMESTAMP),
     RLM_PROPERTY_TYPE_FLOAT(realm_wrapper.RLM_PROPERTY_TYPE_FLOAT),
     RLM_PROPERTY_TYPE_DOUBLE(realm_wrapper.RLM_PROPERTY_TYPE_DOUBLE),
-    RLM_PROPERTY_TYPE_TIMESTAMP(realm_wrapper.RLM_PROPERTY_TYPE_TIMESTAMP),
+    RLM_PROPERTY_TYPE_OBJECT(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT),
+    RLM_PROPERTY_TYPE_LINKING_OBJECTS(realm_wrapper.RLM_PROPERTY_TYPE_LINKING_OBJECTS),
     RLM_PROPERTY_TYPE_OBJECT_ID(realm_wrapper.RLM_PROPERTY_TYPE_OBJECT_ID),
-    RLM_PROPERTY_TYPE_UUID(realm_wrapper.RLM_PROPERTY_TYPE_UUID),
-    RLM_PROPERTY_TYPE_LINKING_OBJECTS(realm_wrapper.RLM_PROPERTY_TYPE_LINKING_OBJECTS)
+    RLM_PROPERTY_TYPE_UUID(realm_wrapper.RLM_PROPERTY_TYPE_UUID)
     ;
 
     actual companion object {
@@ -93,4 +96,27 @@ actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeE
     RLM_SCHEMA_VALIDATION_SYNC_FLX(realm_wrapper.RLM_SCHEMA_VALIDATION_SYNC_FLX),
     RLM_SCHEMA_VALIDATION_SYNC_PBS(realm_wrapper.RLM_SCHEMA_VALIDATION_SYNC_PBS),
     RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS(realm_wrapper.RLM_SCHEMA_VALIDATION_REJECT_EMBEDDED_ORPHANS),
+}
+
+actual enum class ValueType(
+    override val nativeValue: realm_value_type
+) : NativeEnum<realm_value_type_e> {
+    RLM_TYPE_NULL(realm_value_type_e.RLM_TYPE_NULL),
+    RLM_TYPE_INT(realm_value_type_e.RLM_TYPE_INT),
+    RLM_TYPE_BOOL(realm_value_type_e.RLM_TYPE_BOOL),
+    RLM_TYPE_STRING(realm_value_type_e.RLM_TYPE_STRING),
+    RLM_TYPE_BINARY(realm_value_type_e.RLM_TYPE_BINARY),
+    RLM_TYPE_TIMESTAMP(realm_value_type_e.RLM_TYPE_TIMESTAMP),
+    RLM_TYPE_FLOAT(realm_value_type_e.RLM_TYPE_FLOAT),
+    RLM_TYPE_DOUBLE(realm_value_type_e.RLM_TYPE_DOUBLE),
+    RLM_TYPE_DECIMAL128(realm_value_type_e.RLM_TYPE_DECIMAL128),
+    RLM_TYPE_OBJECT_ID(realm_value_type_e.RLM_TYPE_OBJECT_ID),
+    RLM_TYPE_LINK(realm_value_type_e.RLM_TYPE_LINK),
+    RLM_TYPE_UUID(realm_value_type_e.RLM_TYPE_UUID);
+
+    companion object {
+        fun from(nativeValue: realm_value_type): ValueType = values().find {
+            it.nativeValue == nativeValue
+        } ?: error("Unknown value type: $nativeValue")
+    }
 }

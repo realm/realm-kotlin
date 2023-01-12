@@ -6,13 +6,14 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.util.Validation.sdkError
-import io.realm.kotlin.notifications.internal.Callback
+import io.realm.kotlin.internal.util.checkForBufferOverFlow
 import io.realm.kotlin.notifications.internal.Cancellable
+import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import kotlinx.atomicfu.AtomicRef
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -37,14 +38,6 @@ internal class SuspendableNotifier(
     private val owner: RealmImpl,
     private val dispatcher: CoroutineDispatcher
 ) {
-
-    companion object {
-        val NO_OP_NOTIFICATION_TOKEN = object : Cancellable {
-            override fun cancel() { /* Do Nothing */
-            }
-        }
-    }
-
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<FrozenRealmReference>(
@@ -106,7 +99,13 @@ internal class SuspendableNotifier(
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
                                 liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
-                                    ?.let { checkResult(it) }
+                                    ?.run { // this: ChannelResult<T>
+                                        checkForBufferOverFlow()?.let { overflowException: CancellationException ->
+                                            // Cancel scope if the user does not keep up to signal
+                                            // that we are loosing events
+                                            this@callbackFlow.cancel(overflowException)
+                                        }
+                                    }
                             }
                         }.freeze<io.realm.kotlin.internal.interop.Callback<RealmChangesPointer>>() // Freeze to allow cleaning up on another thread
                     val newToken =
@@ -134,18 +133,6 @@ internal class SuspendableNotifier(
             if (realmInitializer.isInitialized()) {
                 realm.close()
             }
-        }
-    }
-
-    // Verify that notifications emitted to Streams are handled in an uniform manner
-    private fun checkResult(result: ChannelResult<Unit>) {
-        if (result.isClosed) {
-            // If the Flow was closed, we assume it is on purpose, so avoid raising an exception.
-            return
-        }
-        if (!result.isSuccess) {
-            // TODO Is there a better way to handle this?
-            throw IllegalStateException("Notification could not be sent: $result")
         }
     }
 
