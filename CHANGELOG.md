@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* Fix missing `Realm.asFlow()`-events from remote updates on synced realms. (Issue [#1070](https://github.com/realm/realm-kotlin/issues/1070))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:

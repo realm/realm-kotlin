@@ -58,7 +58,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -208,7 +207,6 @@ class SyncedRealmTests {
     }
 
     // Test for https://github.com/realm/realm-kotlin/issues/1070
-    @Ignore // Enable once #1070 is fixed
     @Test
     fun realmAsFlow_acrossSyncedChanges() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
@@ -242,8 +240,7 @@ class SyncedRealmTests {
             Realm.open(config).use { realm ->
                 realm.write {
                     val id = "id-${Random.nextLong()}"
-                    val masterObject = SyncObjectWithAllTypes.createWithSampleData(id)
-                    copyToRealm(masterObject)
+                    copyToRealm(SyncObjectWithAllTypes().apply { _id = id })
                 }
                 realm.syncSession.uploadAllLocalChanges()
             }
@@ -251,11 +248,13 @@ class SyncedRealmTests {
 
         // Wait for Realm.asFlow() to be updated based on remote change.
         try {
-            withTimeout(timeout = 30.seconds) {
-                val updateEvent: RealmChange<Realm> = c.receive()
-                assertTrue(updateEvent is UpdatedRealm)
-                assertEquals(1, updateEvent.realm.query<SyncObjectWithAllTypes>().find().size)
-                assertEquals(1, realm.query<SyncObjectWithAllTypes>().find().size)
+            withTimeout(timeout = 10.seconds) {
+                while (true) {
+                    val updateEvent: RealmChange<Realm> = c.receive()
+                    assertTrue(updateEvent is UpdatedRealm)
+                    if (updateEvent.realm.query<SyncObjectWithAllTypes>().find().size == 1)
+                        break
+                }
             }
         } finally {
             realm1.close()
