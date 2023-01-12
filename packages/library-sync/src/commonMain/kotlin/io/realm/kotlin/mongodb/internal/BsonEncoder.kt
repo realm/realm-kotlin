@@ -57,7 +57,7 @@ import kotlin.reflect.KClass
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Bson encoder that avoids using any experimental `KSerializer` APIs, to maximize compatibility it
+ * Bson encoder that avoids using any experimental `KSerializer` APIs. To maximize compatibility it
  * only supports a limited type set:
  * - Primitives, Realm, Bson, Collections and Map types for encoding.
  * - Primitives, Realm and Bson types for decoding.
