@@ -16,7 +16,9 @@
 package io.realm.kotlin.mongodb.ext
 
 import io.realm.kotlin.mongodb.Functions
+import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.FunctionsImpl
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
@@ -39,6 +41,8 @@ import org.mongodb.kbson.BsonDocument
  * @return result of the function call.
  *
  * @throws FunctionExecutionException if the function failed in some way.
+ * @throws ServiceException for other failures that can happen when communicating with App Services.
+ * See [AppException] for details.
  */
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
