@@ -27,7 +27,7 @@ class PlatformInfoTest {
     @Test
     fun platformInfo() {
         assertEquals("Native", RUNTIME.description)
-        assertEquals("NSMACHOperatingSystem", OS_NAME)
+        assertEquals("MacOS", OS_NAME)
         assertTrue(OS_VERSION.startsWith("Version "))
     }
 }
