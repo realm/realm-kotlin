@@ -28,9 +28,6 @@ public actual val RUNTIME: SyncConnectionParams.Runtime = SyncConnectionParams.R
 public actual val RUNTIME_VERSION: String = ""
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
-public actual val CPU_ARCH: String = ""
-
-@Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val PATH_SEPARATOR: String = "/"
 
 public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =

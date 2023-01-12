@@ -8,14 +8,12 @@ import io.realm.kotlin.log.RealmLogger
 
 public actual val RUNTIME: SyncConnectionParams.Runtime = SyncConnectionParams.Runtime.ANDROID
 public actual val RUNTIME_VERSION: String = android.os.Build.VERSION.SDK_INT.toString()
-public actual val CPU_ARCH: String
-    get() {
-        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
-            @Suppress("DEPRECATION")
-            return android.os.Build.CPU_ABI
-        } else {
-            return android.os.Build.SUPPORTED_ABIS[0]
-        }
+public actual val CPU_ARCH: String =
+    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.LOLLIPOP) {
+        @Suppress("DEPRECATION")
+        android.os.Build.CPU_ABI
+    } else {
+        android.os.Build.SUPPORTED_ABIS[0]
     }
 public actual val OS_NAME: String = "Android"
 public actual val OS_VERSION: String = android.os.Build.VERSION.RELEASE
