@@ -33,7 +33,7 @@ import kotlin.test.assertTrue
 class ListTests {
 
     private val baseSupportedPrimitiveClasses = TypeDescriptor.elementTypesForList
-        .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmSet<RealmObject>
+        .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmList<RealmObject>
 
     private val nonNullableTypes = baseSupportedPrimitiveClasses
         .filter { it.classifier != RealmAny::class } // No non-nullable RealmList<RealmAny> allowed
@@ -52,7 +52,7 @@ class ListTests {
     // - supported types
     @Test
     fun `non-nullable list`() {
-        // TODO optimize: see comment in TypeDescriptor.elementTypesForList to avoid this filter
+        // TODO optimize: see comment in TypeDescriptor.elementTypesForList
         nonNullableTypes.forEach { nonNullableType ->
             val result = createFileAndCompile(
                 "nonNullableList.kt",
@@ -73,7 +73,7 @@ class ListTests {
                 NON_NULLABLE_LIST_CODE.format(it)
             )
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-            assertTrue(result.messages.contains("Unsupported type for RealmLists"))
+            assertTrue(result.messages.contains("Unsupported type for RealmList"))
         }
     }
 
@@ -82,7 +82,7 @@ class ListTests {
     fun `unsupported type in list - fails`() {
         val result = compileFromSource(SourceFile.kotlin("nullableList.kt", UNSUPPORTED_TYPE))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmLists: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for RealmList: 'A'"))
     }
 
     // ------------------------------------------------
@@ -109,7 +109,7 @@ class ListTests {
             NULLABLE_TYPE_CODE.format("NullableTypeList")
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists do not support nullable realm objects element types"))
+        assertTrue(result.messages.contains("RealmList does not support nullable realm objects element types"))
     }
 
     // ------------------------------------------------
@@ -134,7 +134,7 @@ class ListTests {
         // It is not possible to test a list missing generics since this would not even compile
         val result = compileFromSource(SourceFile.kotlin("nullableList.kt", STAR_PROJECTION))
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmLists cannot use a '*' projection"))
+        assertTrue(result.messages.contains("RealmList cannot use a '*' projection"))
     }
 }
 
