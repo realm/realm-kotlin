@@ -38,23 +38,37 @@ class ListTests : CollectionTests(
     // List<E?> - specific list cases
     // ------------------------------------------------
 
-    // - RealmObject and EmbeddedRealmObject fail
-    // Lists and sets of objects/embedded objects may NOT contain null values
+    // - RealmObject fails
+    // Lists and sets of objects may NOT contain null values
     @Test
     fun `nullable RealmObject list - fails`() {
-        listOf("SampleClass", "EmbeddedClass")
-            .forEach { realmObjectType ->
-                val result = createFileAndCompile(
-                    "nullableRealmObjectList.kt",
-                    getCode(
-                        collectionType = CollectionType.LIST,
-                        elementType = realmObjectType,
-                        nullableElementType = true,
-                        nullableField = false
-                    )
-                )
-                assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-                assertTrue(result.messages.contains("RealmList does not support nullable realm objects element types"))
-            }
+        val result = createFileAndCompile(
+            "nullableRealmObjectList.kt",
+            getCode(
+                collectionType = CollectionType.LIST,
+                elementType = "SampleClass",
+                nullableElementType = true,
+                nullableField = false
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("RealmList does not support nullable realm objects element types"))
+    }
+
+    // - EmbeddedRealmObject fails
+    // Lists and sets of embedded objects may NOT contain null values
+    @Test
+    fun `nullable EmbeddedRealmObject list - fails`() {
+        val result = createFileAndCompile(
+            "nullableRealmObjectList.kt",
+            getCode(
+                collectionType = CollectionType.LIST,
+                elementType = "EmbeddedClass",
+                nullableElementType = true,
+                nullableField = false
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("RealmList does not support nullable realm objects element types"))
     }
 }

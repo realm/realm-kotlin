@@ -42,18 +42,31 @@ class DictionaryTests : CollectionTests(
     // Unlike lists and sets, dictionaries of objects/embedded objects may contain null values.
     @Test
     fun `nullable RealmObject dictionary`() {
-        listOf("SampleClass", "EmbeddedClass")
-            .forEach { realmObjectType ->
-                val result = createFileAndCompile(
-                    "nullableRealmObjectDictionary.kt",
-                    getCode(
-                        collectionType = CollectionType.DICTIONARY,
-                        elementType = realmObjectType,
-                        nullableElementType = true,
-                        nullableField = false
-                    )
-                )
-                assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-            }
+        val result = createFileAndCompile(
+            "nullableRealmObjectDictionary.kt",
+            getCode(
+                collectionType = CollectionType.DICTIONARY,
+                elementType = "SampleClass",
+                nullableElementType = true,
+                nullableField = false
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+    }
+
+    // - EmbeddedRealmObject works
+    // Unlike lists and sets, dictionaries of objects/embedded objects may contain null values.
+    @Test
+    fun `nullable EmbeddedRealmObject dictionary`() {
+        val result = createFileAndCompile(
+            "nullableEmbeddedRealmObjectDictionary.kt",
+            getCode(
+                collectionType = CollectionType.DICTIONARY,
+                elementType = "EmbeddedClass",
+                nullableElementType = true,
+                nullableField = false
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
     }
 }

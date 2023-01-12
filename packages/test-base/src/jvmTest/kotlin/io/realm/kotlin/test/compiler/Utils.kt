@@ -31,12 +31,11 @@ fun getCode(
         false -> ""
     }
     // See comments in COLLECTION_CODE for meaning of parameters
-    val output = COLLECTION_CODE.format(
+    return COLLECTION_CODE.format(
         collectionType.description,
         formattedContentType,
         formattedFieldNullability
     )
-    return output
 }
 
 private val COLLECTION_CODE = """
