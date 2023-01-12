@@ -1,11 +1,11 @@
 # Version of MongoDB Realm used by integration tests
 # See https://github.com/realm/ci/packages/147854 for available versions
-MONGODB_REALM_SERVER=2022-12-01
+MONGODB_REALM_SERVER=2023-01-12
 
 # `BAAS` and `BAAS-UI` projects commit hashes matching MONGODB_REALM_SERVER image version
 # note that the MONGODB_REALM_SERVER image is a nightly build, find the matching commits
 # for that date within the following repositories: 
 # https://github.com/10gen/baas/ 
 # https://github.com/10gen/baas-ui/
-REALM_BAAS_GIT_HASH=ba9d376b00c49726c61fe993186710e599810f7b
-REALM_BAAS_UI_GIT_HASH=784f2bef1ee815eb3376b192465ff3c4609b1e33
+REALM_BAAS_GIT_HASH=9cf71390aeab537e3c6fd444fe22cde41ce15220
+REALM_BAAS_UI_GIT_HASH=3c2eb351952353d07b76c5c6eea3860cdf96946c
