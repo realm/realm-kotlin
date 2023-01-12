@@ -519,8 +519,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         property.locationOf()
                                     )
                                 }
-                                // See https://github.com/realm/realm-core/issues/6187
-                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION) || primaryKey
+                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(
                                         "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
