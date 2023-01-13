@@ -119,6 +119,89 @@ typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscript
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
 
+/**
+ * Class for grouping and normalizing values we want to send as part of
+ * logging in Sync Users.
+ */
+@Suppress("LongParameterList")
+class SyncConnectionParams(
+    sdkVersion: String,
+    platform: String,
+    platformVersion: String,
+    cpuArch: String,
+    device: String,
+    deviceVersion: String,
+    framework: Runtime,
+    frameworkVersion: String
+) {
+    val sdkName = "Kotlin"
+    val sdkVersion: String
+    val platform: String
+    val platformVersion: String
+    val cpuArch: String
+    val device: String
+    val deviceVersion: String
+    val framework: String
+    val frameworkVersion: String
+
+    enum class Runtime(public val description: String) {
+        JVM("JVM"),
+        ANDROID("Android"),
+        NATIVE("Native")
+    }
+
+    init {
+        this.sdkVersion = sdkVersion
+        this.platform = normalizePlatformValue(platform)
+        this.platformVersion = platformVersion
+        this.cpuArch = normalizeCpuArch(cpuArch)
+        this.device = device
+        this.deviceVersion = deviceVersion
+        this.framework = framework.description
+        this.frameworkVersion = frameworkVersion
+    }
+
+    private fun normalizeCpuArch(cpuArch: String): String {
+        return if (cpuArch.isEmpty()) {
+            return ""
+        } else if (Regex("x86.64", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
+            "x86_64"
+        } else if (cpuArch.contains("x86", ignoreCase = true)) {
+            "x86"
+        } else if (Regex("v7a", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
+            "armeabi-v7a"
+        } else if (
+            Regex("arm64", RegexOption.IGNORE_CASE).find(cpuArch) != null ||
+            cpuArch.equals("aarch64", ignoreCase = true)
+        ) {
+            "arm64"
+        } else {
+            "Unknown ($cpuArch)"
+        }
+    }
+
+    private fun normalizePlatformValue(platform: String): String {
+        return if (platform.isEmpty()) {
+            return ""
+        } else if (platform.contains("windows", ignoreCase = true)) {
+            "Windows"
+        } else if (platform.contains("linux", ignoreCase = true)) {
+            "Linux"
+        } else if (
+            Regex("mac( )?os", setOf(RegexOption.IGNORE_CASE)).find(platform) != null ||
+            platform.equals("NSMACHOperatingSystem", ignoreCase = true)
+        ) {
+            "MacOS"
+        } else if (platform.contains("ios", ignoreCase = true)) {
+            "iOS"
+        } else if (platform.contains("android", ignoreCase = true)) {
+            "Android"
+        } else {
+            "Unknown ($platform)"
+        }
+    }
+}
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_get_version_id(realm: RealmPointer): Long
@@ -479,7 +562,7 @@ expect object RealmInterop {
         syncConfig: RealmSyncConfigurationPointer,
         afterHandler: SyncAfterClientResetHandler
     )
-    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String)
+    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean
 
     // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
@@ -515,9 +598,7 @@ expect object RealmInterop {
         appId: String,
         networkTransport: RealmNetworkTransportPointer,
         baseUrl: String? = null,
-        platform: String,
-        platformVersion: String,
-        sdkVersion: String
+        connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer
     fun realm_app_config_set_base_url(appConfig: RealmAppConfigurationPointer, baseUrl: String)
 
