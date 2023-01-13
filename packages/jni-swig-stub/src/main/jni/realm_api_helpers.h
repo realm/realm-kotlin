@@ -103,6 +103,9 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
 void
 realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes);
 
+void
+realm_sync_session_connection_state_change_callback(void *userdata, realm_sync_connection_state_e old_state, realm_sync_connection_state_e new_state);
+
 // Explicit clean up method for releasing heap allocated data of a realm_value_t instance
 void
 realm_value_t_cleanup(realm_value_t* value);

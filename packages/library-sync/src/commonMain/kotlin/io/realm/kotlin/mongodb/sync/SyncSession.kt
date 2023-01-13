@@ -46,11 +46,6 @@ import kotlin.time.Duration
 public interface SyncSession {
 
     /**
-     * The current session state. See [State] for more details about each state.
-     */
-    public val state: State
-
-    /**
      * The [SyncConfiguration] responsible for controlling the session.
      *
      * @throws IllegalStateException if accessed from inside a [SyncSession.ErrorHandler] due to session errors.
@@ -61,6 +56,16 @@ public interface SyncSession {
      * The [User] used to authenticate the session on Atlas App Services.
      */
     public val user: User
+
+    /**
+     * The current session state. See [State] for more details about each state.
+     */
+    public val state: State
+
+    /**
+     * The current [ConnectionState].
+     */
+    public val connectionState: ConnectionState
 
     /**
      * Calling this method will block until all known remote changes have been downloaded and
@@ -136,6 +141,17 @@ public interface SyncSession {
         direction: Direction,
         progressMode: ProgressMode,
     ): Flow<Progress>
+
+    /**
+     * Create a [Flow] of _connection state changes_-events.
+     *
+     * Each change of state in the underlying connection will be emitted as a pair of the old and
+     * new [ConnectionState].
+     *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+     * the elements in a timely manner the flow will be completed with an [IllegalStateException].
+     */
+    public fun connectionState(): Flow<Pair<ConnectionState, ConnectionState>>
 
     /**
      * Interface used to report any session errors.

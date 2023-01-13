@@ -31,6 +31,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.sync.ConnectionState
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
@@ -45,6 +46,8 @@ import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -567,6 +570,34 @@ class SyncSessionTests {
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             assertSame(user, realm.syncSession.user)
+        }
+    }
+
+    @Test
+    fun connectionState() = runBlocking {
+        Realm.open(createSyncConfig(user)).use { realm: Realm ->
+            // We don't know what the state will be, but just verify that we can retrieve it
+            // without issues
+            assertNotNull(realm.syncSession.connectionState)
+        }
+    }
+
+    @Test
+    fun connectionState_asFlow() = runBlocking {
+        Realm.open(createSyncConfig(user)).use { realm: Realm ->
+            val flow = realm.syncSession.connectionState()
+            val initialState = realm.syncSession.connectionState
+            // Adopted from realm-java tests ...
+            // Sometimes the connection is already established and then we cannot expect any
+            // updates, but as this is highly just safely ignore this to avoid flaky tests on CI
+            if (initialState != ConnectionState.CONNECTED) {
+                val (oldState, newState) = withTimeout(10.seconds) { flow.first() }
+                assertNotEquals(oldState, newState)
+                assertEquals(realm.syncSession.connectionState, newState)
+            } else {
+                // Make some visible sign that we have skipped waiting for events
+                println("Skipping flow tests as connection is already established")
+            }
         }
     }
 

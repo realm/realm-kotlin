@@ -19,6 +19,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 * [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))lin/issues/1086))
 * [Sync] `Realm.writeCopyTo(syncConfig)` now support copying a Flexible Sync Realm to another Flexible Sync Realm. 
+* [Sync] Add support for connection state and connection state change listerners with `SyncSession.connectionState` and `SyncSession.connectionState(). (Issue [#429](https://github.com/realm/realm-kotlin/issues/429))
 
 ### Fixed
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))

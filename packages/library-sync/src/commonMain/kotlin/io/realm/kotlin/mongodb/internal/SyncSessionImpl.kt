@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncSessionTransferCompletionCallback
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
@@ -31,6 +32,7 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.sync.ConnectionState
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
@@ -62,24 +64,6 @@ internal open class SyncSessionImpl(
     // current implementation.
     constructor(ptr: RealmSyncSessionPointer) : this(null, ptr)
 
-    private enum class TransferDirection {
-        UPLOAD, DOWNLOAD
-    }
-
-    override suspend fun downloadAllServerChanges(timeout: Duration): Boolean {
-        return waitForChanges(TransferDirection.DOWNLOAD, timeout)
-    }
-
-    override suspend fun uploadAllLocalChanges(timeout: Duration): Boolean {
-        return waitForChanges(TransferDirection.UPLOAD, timeout)
-    }
-
-    override val state: SyncSession.State
-        get() {
-            val state = RealmInterop.realm_sync_session_state(nativePointer)
-            return SyncSessionImpl.stateFrom(state)
-        }
-
     override val configuration: SyncConfiguration
         // TODO Get the sync config w/o ever throwing
         get() {
@@ -95,6 +79,27 @@ internal open class SyncSessionImpl(
 
     override val user: User
         get() = configuration.user
+
+    override val state: SyncSession.State
+        get() {
+            val state = RealmInterop.realm_sync_session_state(nativePointer)
+            return SyncSessionImpl.stateFrom(state)
+        }
+
+    override val connectionState: ConnectionState
+        get() = connectionStateFrom(RealmInterop.realm_sync_connection_state(nativePointer))
+
+    private enum class TransferDirection {
+        UPLOAD, DOWNLOAD
+    }
+
+    override suspend fun downloadAllServerChanges(timeout: Duration): Boolean {
+        return waitForChanges(TransferDirection.DOWNLOAD, timeout)
+    }
+
+    override suspend fun uploadAllLocalChanges(timeout: Duration): Boolean {
+        return waitForChanges(TransferDirection.UPLOAD, timeout)
+    }
 
     override fun pause() {
         RealmInterop.realm_sync_session_pause(nativePointer)
@@ -134,6 +139,23 @@ internal open class SyncSessionImpl(
             awaitClose {
                 token.value.cancel()
             }
+        }
+    }
+
+    override fun connectionState(): Flow<Pair<ConnectionState, ConnectionState>> = callbackFlow {
+        val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+        token.value = NotificationToken(
+            RealmInterop.realm_sync_session_register_connection_state_change_callback(
+                nativePointer
+            ) { oldState: Int, newState: Int ->
+                trySendWithBufferOverflowCheck(
+                    connectionStateFrom(CoreConnectionState.from(oldState))
+                        to connectionStateFrom(CoreConnectionState.from(newState))
+                )
+            }
+        )
+        awaitClose {
+            token.value.cancel()
         }
     }
 
@@ -241,6 +263,14 @@ internal open class SyncSessionImpl(
                 CoreSyncSessionState.RLM_SYNC_SESSION_STATE_INACTIVE -> SyncSession.State.INACTIVE
                 CoreSyncSessionState.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN -> SyncSession.State.WAITING_FOR_ACCESS_TOKEN
                 else -> throw IllegalStateException("Unsupported state: $coreState")
+            }
+        }
+        internal fun connectionStateFrom(coreConnectionState: CoreConnectionState): ConnectionState {
+            return when (coreConnectionState) {
+                CoreConnectionState.RLM_SYNC_CONNECTION_STATE_DISCONNECTED -> ConnectionState.DISCONNECTED
+                CoreConnectionState.RLM_SYNC_CONNECTION_STATE_CONNECTING -> ConnectionState.CONNECTING
+                CoreConnectionState.RLM_SYNC_CONNECTION_STATE_CONNECTED -> ConnectionState.CONNECTED
+                else -> throw IllegalStateException("Unsupported connection state: $coreConnectionState")
             }
         }
     }

@@ -859,6 +859,17 @@ realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferr
     jni_check_exception(env);
 }
 
+void
+realm_sync_session_connection_state_change_callback(void *userdata, realm_sync_connection_state_e old_state, realm_sync_connection_state_e new_state) {
+    auto env = get_env(true);
+
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::connection_state_change_callback(), "onChange", "(II)V");
+
+    jni_check_exception(env);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jint(old_state), jint(new_state));
+    jni_check_exception(env);
+}
+
 jlong
 realm_sync_session_register_progress_notifier_wrapper(
         realm_sync_session_t* session, realm_sync_progress_direction_e direction, bool is_streaming, jobject callback
