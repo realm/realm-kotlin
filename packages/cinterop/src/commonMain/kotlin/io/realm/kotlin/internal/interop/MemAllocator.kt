@@ -74,6 +74,11 @@ interface MemAllocator {
     fun uuidTransport(value: ByteArray?): RealmValue
 
     /**
+     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_DECIMAL128`.
+     */
+    fun decimal128Transport(value: ULongArray?): RealmValue
+
+    /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_LINK`.
      */
     fun realmObjectTransport(value: RealmObjectInterop?): RealmValue

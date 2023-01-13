@@ -17,6 +17,7 @@
 package io.realm.kotlin.entities.migration.before
 
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
 
 @Suppress("MagicNumber")
 class MigrationSample : RealmObject {
@@ -24,4 +25,14 @@ class MigrationSample : RealmObject {
     var lastName: String = "Last"
     var property: String = "Realm"
     var type: Int = 42
+}
+
+class PersistedNameChangeMigrationSample : RealmObject {
+    @PersistedName("oldPersistedName")
+    var unchangedPublicName = "Realm"
+}
+
+class PublicNameChangeMigrationSample : RealmObject {
+    @PersistedName("unchangedPersistedName")
+    var oldPublicName = "Realm"
 }

@@ -17,9 +17,20 @@
 package io.realm.kotlin.entities.migration.after
 
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
 
 class MigrationSample : RealmObject {
     var fullName: String = "First Last"
     var renamedProperty: String = "Realm"
     var type: String = "42"
+}
+
+class PersistedNameChangeMigrationSample : RealmObject {
+    @PersistedName("newPersistedName")
+    var unchangedPublicName = "Realm"
+}
+
+class PublicNameChangeMigrationSample : RealmObject {
+    @PersistedName("unchangedPersistedName")
+    var newPublicName = "Realm"
 }

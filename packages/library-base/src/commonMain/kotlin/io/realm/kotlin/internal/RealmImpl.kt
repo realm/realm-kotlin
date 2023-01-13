@@ -219,9 +219,6 @@ public class RealmImpl private constructor(
             throw IllegalArgumentException("File already exists at: ${configuration.path}. Realm can only write a copy to an empty path.")
         }
         val internalConfig = (configuration as InternalConfiguration)
-        if (internalConfig.isFlexibleSyncConfiguration) {
-            throw IllegalArgumentException("Creating a copy of a Realm where the target has Flexible Sync enabled is currently not supported.")
-        }
         val configPtr = internalConfig.createNativeConfiguration()
         try {
             RealmInterop.realm_convert_with_config(
@@ -232,6 +229,8 @@ public class RealmImpl private constructor(
         } catch (ex: RealmException) {
             if (ex.message?.contains("Could not write file as not all client changes are integrated in server") == true) {
                 throw IllegalStateException(ex.message)
+            } else if (ex.message?.contains("Realm cannot be converted to a flexible sync realm unless flexible sync is already enabled") == true) {
+                throw IllegalArgumentException(ex.message)
             } else {
                 throw ex
             }
