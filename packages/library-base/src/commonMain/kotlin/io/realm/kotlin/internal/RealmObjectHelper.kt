@@ -64,6 +64,7 @@ import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 
 /**
  * This object holds helper methods for the compiler plugin generated methods, providing the
@@ -645,9 +646,16 @@ internal object RealmObjectHelper {
             // Computed properties have no assignment
             !it.isComputed && !it.isPrimaryKey
         }.forEach { property ->
-            val accessor = property.accessor
-                ?: sdkError("Typed object should always have an accessor")
-
+            // For synced Realms in ADDITIVE mode, Object Store will return the full on-disk
+            // schema, including fields not defined in the user schema. This makes it problematic
+            // to iterate through the Realm schema and assume that all properties will have kotlin
+            // properties associated with them. To avoid throwing errors we double check that
+            val accessor: KProperty1<BaseRealmObject, Any?> = property.accessor
+                ?: if (property.isUserDefined()) {
+                    sdkError("Typed object should always have an accessor: ${metadata.className}.${property.name}")
+                } else {
+                    return@forEach // Property is only visible on disk, ignore.
+                }
             accessor as KMutableProperty1<BaseRealmObject, Any?>
             when (property.collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
@@ -1063,7 +1071,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod")
+    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod", "LoopWithTooManyJumpStatements")
     internal fun assignValuesOnUnmanagedObject(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -1074,9 +1082,17 @@ internal object RealmObjectHelper {
         cache: ManagedToUnmanagedObjectCache
     ) {
         val metadata: ClassMetadata = source.realmObjectReference!!.metadata
-        for (property in metadata.properties) {
-            val accessor = property.accessor
-                ?: sdkError("Typed object should always have an accessor")
+        for (property: PropertyMetadata in metadata.properties) {
+            // For synced Realms in ADDITIVE mode, Object Store will return the full on-disk
+            // schema, including fields not defined in the user schema. This makes it problematic
+            // to iterate through the Realm schema and assume that all properties will have kotlin
+            // properties associated with them. To avoid throwing errors we double check that
+            val accessor: KProperty1<BaseRealmObject, Any?> = property.accessor
+                ?: if (property.isUserDefined()) {
+                    sdkError("Typed object should always have an accessor: ${metadata.className}.${property.name}")
+                } else {
+                    continue // Property is only visible on disk, ignore.
+                }
             if (property.isComputed) {
                 continue
             }

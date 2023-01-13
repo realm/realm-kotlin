@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -1017,8 +1018,10 @@ actual object RealmInterop {
         realmc.sync_after_client_reset_handler(syncConfig.cptr(), afterHandler)
     }
 
-    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
-        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean {
+        val didRun = booleanArrayOf(false)
+        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath, didRun)
+        return didRun.first()
     }
 
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
@@ -1095,21 +1098,27 @@ actual object RealmInterop {
         appId: String,
         networkTransport: RealmNetworkTransportPointer,
         baseUrl: String?,
-        platform: String,
-        platformVersion: String,
-        sdkVersion: String,
+        connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer {
         val config = realmc.realm_app_config_new(appId, networkTransport.cptr())
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
-        realmc.realm_app_config_set_platform(config, platform)
-        realmc.realm_app_config_set_platform_version(config, platformVersion)
-        realmc.realm_app_config_set_sdk_version(config, sdkVersion)
+        // From https://github.com/realm/realm-kotlin/issues/407
+        realmc.realm_app_config_set_local_app_name(config, "")
+        realmc.realm_app_config_set_local_app_version(config, "")
 
-        // TODO Fill in appropriate app meta data
-        //  https://github.com/realm/realm-kotlin/issues/407
-        realmc.realm_app_config_set_local_app_version(config, "APP_VERSION")
+        // Sync Connection Parameters
+        realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
+        realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
+        realmc.realm_app_config_set_platform(config, connectionParams.platform)
+        realmc.realm_app_config_set_platform_version(config, connectionParams.platformVersion)
+        realmc.realm_app_config_set_cpu_arch(config, connectionParams.cpuArch)
+        realmc.realm_app_config_set_device_name(config, connectionParams.device)
+        realmc.realm_app_config_set_device_version(config, connectionParams.deviceVersion)
+        realmc.realm_app_config_set_framework_name(config, connectionParams.framework)
+        realmc.realm_app_config_set_framework_version(config, connectionParams.frameworkVersion)
+
         return LongPointerWrapper(config)
     }
 

@@ -6,6 +6,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * None.
 
 ### Enhancements
+* OpenSSL has been upgraded from from 1.1.1n to 3.0.7.
 * Added support for `RealmAny` as supported field in model classes. A `RealmAny` is used to represent a polymorphic Realm value or Realm Object, is indexable but cannot be used as a primary key.
 * Add support for `Decimal128` as supported field in model classes. (Issue [#653](https://github.com/realm/realm-kotlin/issues/653))
 * Realm will now use a lot less memory and disk space when different versions of realm objects are used. ([Core Issue #5440](https://github.com/realm/realm-core/pull/5440))
@@ -13,12 +14,12 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Add support for `Realm.copyFromRealm()`. All RealmObjects, RealmResults, RealmList and RealmSets now also have a `copyFromRealm()` extension method.
 * Add support for querying on RealmLists containing objects with `RealmList.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1037))
 * Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
-* Add better error messages when inheriting `RealmObject` with unsupported class types. (Issue [#1086](https://github.com/realm/realm-kotlin/issues/1086))
 * Added support for reverse relationships on Embedded objects through the `EmbeddedRealmObject.parent()` extension function. (Issue [#1141](https://github.com/realm/realm-kotlin/pull/1141))
 * Added support for reverse relationships through the `backlinks` delegate on `EmbeddedObjects`. See the function documentation for more details. (Issue [#1134](https://github.com/realm/realm-kotlin/issues/1134))
 * Added support for `@PersistedName` annotations for mapping a Kotlin field name to the underlying field name persisted in the Realm. (Issue [#590](https://github.com/realm/realm-kotlin/issues/590))
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
-* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))
+* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))lin/issues/1086))
+* [Sync] `Realm.writeCopyTo(syncConfig)` now support copying a Flexible Sync Realm to another Flexible Sync Realm. 
 
 ### Fixed
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
@@ -27,6 +28,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Issue [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 * `RealmUUID.random()` would generate the same values when an app was re-launched from Android Studio during development. (Issue [#1123](https://github.com/realm/realm-kotlin/pull/1123)) 
 * Complete flows with an IllegalStateException instead of crashing when notifications cannot be delivered due to insufficient channel capacity (Issue [#1147](https://github.com/realm/realm-kotlin/issues/1147))
+* [Sync] Custom loggers now correctly see both normal and sync events. Before, sync events were just logged directly to LogCat/StdOut.
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -43,13 +45,39 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 
 ### Internal
-* Updated to Realm Core 13.1.2, commit c03b10adcacec814c89158de8d4c06c2719af887.
+* Updated to Realm Core 13.1.2, commit 711c5f0bae2f0b2c3397cec99a81f1ed3f03b5a9.
 * Updated to require Swig 4.1.0.
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 * Added JVM test wrapper as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 
 
-## 1.5.2 (YYYY-MM-DD)
+## 1.5.3 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.5.2 (2023-01-10)
 
 ### Breaking Changes
 * None.
