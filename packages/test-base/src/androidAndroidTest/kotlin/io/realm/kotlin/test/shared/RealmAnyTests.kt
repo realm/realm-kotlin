@@ -58,6 +58,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.fail
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -272,7 +273,7 @@ class RealmAnyTests {
                     assertEquals(RealmAny.create(obj, Sample::class), realmAny)
                     assertEquals(RealmAny.Type.OBJECT, realmAny.type)
                 }
-                else -> throw UnsupportedOperationException("Missing testing for type $type")
+                else -> fail("Missing testing for type $type")
             }
         }
     }
@@ -300,65 +301,8 @@ class RealmAnyTests {
 
     @Test
     fun managed_incorrectTypeThrows() {
-        for (type in TypeDescriptor.anyClassifiers) {
-            when (type) {
-                Short::class -> assertThrowsOnInvalidType(
-                    Short::class,
-                    createManagedRealmAny { RealmAny.create(10.toShort()) }!!
-                )
-                Int::class -> assertThrowsOnInvalidType(
-                    Int::class,
-                    createManagedRealmAny { RealmAny.create(10) }!!
-                )
-                Byte::class -> assertThrowsOnInvalidType(
-                    Byte::class,
-                    createManagedRealmAny { RealmAny.create(10.toByte()) }!!
-                )
-                Char::class -> assertThrowsOnInvalidType(
-                    Char::class,
-                    createManagedRealmAny { RealmAny.create(10.toChar()) }!!
-                )
-                Long::class -> assertThrowsOnInvalidType(
-                    Long::class,
-                    createManagedRealmAny { RealmAny.create(10L) }!!
-                )
-                Boolean::class -> assertThrowsOnInvalidType(
-                    Boolean::class,
-                    createManagedRealmAny { RealmAny.create(true) }!!
-                )
-                String::class -> assertThrowsOnInvalidType(
-                    String::class,
-                    createManagedRealmAny { RealmAny.create("hello") }!!
-                )
-                Float::class -> assertThrowsOnInvalidType(
-                    Float::class,
-                    createManagedRealmAny { RealmAny.create(10F) }!!
-                )
-                Double::class -> assertThrowsOnInvalidType(
-                    Double::class,
-                    createManagedRealmAny { RealmAny.create(10.0) }!!
-                )
-                BsonObjectId::class -> assertThrowsOnInvalidType(
-                    BsonObjectId::class,
-                    createManagedRealmAny { RealmAny.create(BsonObjectId()) }!!
-                )
-                ByteArray::class -> assertThrowsOnInvalidType(
-                    ByteArray::class,
-                    createManagedRealmAny { RealmAny.create(byteArrayOf(42, 43, 44)) }!!
-                )
-                RealmInstant::class -> assertThrowsOnInvalidType(
-                    RealmInstant::class,
-                    createManagedRealmAny { RealmAny.create(RealmInstant.now()) }!!
-                )
-                RealmUUID::class -> assertThrowsOnInvalidType(
-                    RealmUUID::class,
-                    createManagedRealmAny { RealmAny.create(RealmUUID.random()) }!!
-                )
-                Sample::class -> assertThrowsOnInvalidType(
-                    Sample::class,
-                    createManagedRealmAny { RealmAny.create(Sample(), Sample::class) }!!
-                )
-            }
+        supportedRealmAnys.forEach { (type, value: RealmAny) ->
+            assertThrowsOnInvalidType(type, createManagedRealmAny { value }!!)
         }
     }
 
@@ -536,6 +480,7 @@ class RealmAnyTests {
                 Short::class -> {
                     assertNumericCoercionOverflows(actualValue) { it.asByte() }
                 }
+                else -> fail("Unexpected clazz: $clazz")
             }
         }
     }
@@ -643,6 +588,8 @@ class RealmAnyTests {
                         assertFailsWith<IllegalStateException> { value.asFloat() }
                     Double::class ->
                         assertFailsWith<IllegalStateException> { value.asDouble() }
+                    Decimal128::class ->
+                        assertFailsWith<IllegalStateException> { value.asDecimal128() }
                     BsonObjectId::class ->
                         assertFailsWith<IllegalStateException> { value.asObjectId() }
                     ByteArray::class ->
@@ -651,9 +598,10 @@ class RealmAnyTests {
                         assertFailsWith<IllegalStateException> { value.asRealmInstant() }
                     RealmUUID::class ->
                         assertFailsWith<IllegalStateException> { value.asRealmUUID() }
-                    Sample::class -> assertFailsWith<IllegalStateException> {
+                    RealmObject::class -> assertFailsWith<IllegalStateException> {
                         value.asRealmObject<Sample>()
                     }
+                    else -> fail("Untested type: $candidateClass")
                 }
             }
     }
@@ -700,8 +648,7 @@ class RealmAnyTests {
             is RealmUUID -> RealmAny.create(value)
             is RealmObject -> RealmAny.create(value, value::class as KClass<out RealmObject>)
             else -> {
-                val kClass = value?.let { value::class }
-                TODO("Cannot create a RealmValue for value: $value of type $kClass")
+                fail("Cannot create a RealmValue for value: $value of type ${value?.let { value::class }}")
             }
         }
     }
