@@ -1406,22 +1406,9 @@ internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.
 // as a base for both lists and sets and they use different container classes in their logic.
 // Do NOT use this list directly in your tests unless you have a good reason to ignore RealmAny
 // instances containing a RealmObject.
-internal val REALM_ANY_PRIMITIVE_VALUES = listOf(
-    RealmAny.create((-12).toShort()),
-    RealmAny.create(13),
-    RealmAny.create(14.toByte()),
-    RealmAny.create(15.toChar()),
-    RealmAny.create(16L),
-    RealmAny.create(false),
-    RealmAny.create("Hello"),
-    RealmAny.create(17F),
-    RealmAny.create(18.0),
-    RealmAny.create(BsonObjectId("507f191e810c19729de860ea")),
-    RealmAny.create(byteArrayOf(19)),
-    RealmAny.create(RealmInstant.from(42, 420)),
-    RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")),
-    null
-)
+internal val REALM_ANY_PRIMITIVE_VALUES =
+    TypeDescriptor.anyClassifiers.filterValues { it.isPrimitive }
+        .map { RealmAnyTests.create(RealmAnyTests.defaultValues[it.key]) } + null
 internal val REALM_ANY_REALM_OBJECT = RealmAny.create(
     RealmListContainer().apply { stringField = "hello" },
     RealmListContainer::class

@@ -126,6 +126,7 @@ internal inline fun realmValueToRealmAny(
             ValueType.RLM_TYPE_TIMESTAMP -> RealmAny.create(RealmInstantImpl(transport.getTimestamp()))
             ValueType.RLM_TYPE_FLOAT -> RealmAny.create(transport.getFloat())
             ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(transport.getDouble())
+            ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(realmValueToDecimal128(transport))
             ValueType.RLM_TYPE_OBJECT_ID ->
                 RealmAny.create(BsonObjectId(transport.getObjectIdBytes()))
             ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(transport.getUUIDBytes()))
@@ -399,6 +400,11 @@ internal fun realmAnyConverter(
                         RealmAny.create(RealmInstantImpl(realmValue.getTimestamp()))
                     ValueType.RLM_TYPE_FLOAT -> RealmAny.create(realmValue.getFloat())
                     ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(realmValue.getDouble())
+                    ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(
+                        realmValueToDecimal128(
+                            realmValue
+                        )
+                    )
                     ValueType.RLM_TYPE_OBJECT_ID ->
                         RealmAny.create(BsonObjectId(realmValue.getObjectIdBytes()))
                     ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDBytes()))
@@ -504,6 +510,7 @@ private inline fun MemTrackingAllocator.realmAnyPrimitiveToRealmValue(value: Rea
         RealmAny.Type.TIMESTAMP -> timestampTransport(value.asRealmInstant() as RealmInstantImpl)
         RealmAny.Type.FLOAT -> floatTransport(value.asFloat())
         RealmAny.Type.DOUBLE -> doubleTransport(value.asDouble())
+        RealmAny.Type.DECIMAL128 -> decimal128Transport(value.asDecimal128())
         RealmAny.Type.OBJECT_ID -> objectIdTransport(value.asObjectId().toByteArray())
         RealmAny.Type.UUID -> uuidTransport(value.asRealmUUID().bytes)
         else -> throw UnsupportedOperationException("If you want to convert a 'RealmAny' instance containing an object to a 'RealmValue' use 'realmAnyToRealmValue' (when working with 'RealmQuery') or 'realmAnyToRealmValueWithObjectImport' (when using an accessor).")

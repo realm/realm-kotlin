@@ -2888,6 +2888,6 @@ internal val QUERY_REALM_ANY_OBJECT = RealmAny.create(
 // Use this for QUERY tests as this file does exhaustive testing on all RealmAny types
 internal val QUERY_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + QUERY_REALM_ANY_OBJECT
 
-internal val REALM_ANY_SUM = Decimal128("81") // sum of numerics present in PRIMITIVE_REALM_ANY_VALUES = -12+13+14+15+16L+17F+18.0
+internal val REALM_ANY_SUM = Decimal128("82") // sum of numerics present in PRIMITIVE_REALM_ANY_VALUES = -12+13+14+15+16L+17F+18.0+Decimal128("1")
 internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
 internal val REALM_ANY_MAX = QUERY_REALM_ANY_OBJECT // RealmObject is "highest" when comparing Mixed types

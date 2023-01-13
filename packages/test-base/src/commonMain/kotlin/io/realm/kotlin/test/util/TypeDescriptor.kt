@@ -31,7 +31,7 @@ import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
-public object TypeDescriptor {
+object TypeDescriptor {
 
     // Core field types with their support level
     @Suppress("LongParameterList")
@@ -44,7 +44,9 @@ public object TypeDescriptor {
         val primaryKeySupport: Boolean,
         val indexSupport: Boolean,
         val canBeNull: Set<CollectionType>, // favor using this over "nullable"
-        val canBeNotNull: Set<CollectionType> // favor using this over "nonNullable"
+        val canBeNotNull: Set<CollectionType>, // favor using this over "nonNullable"
+        val aggregator: Boolean,
+        val anySupport: Boolean,
     ) {
         INT(
             type = PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -54,8 +56,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = true,
             indexSupport = true,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = true,
+            anySupport = true,
         ),
         MUTABLE_REALM_INT(
             type = PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -65,14 +69,16 @@ public object TypeDescriptor {
             setSupport = false,
             primaryKeySupport = false,
             indexSupport = false,
-            canBeNull = nullabilityForAll.toMutableSet().apply {
+            canBeNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
             },
-            canBeNotNull = nullabilityForAll.toMutableSet().apply {
+            canBeNotNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
-            }
+            },
+            aggregator = false,
+            anySupport = false,
         ),
         BOOL(
             type = PropertyType.RLM_PROPERTY_TYPE_BOOL,
@@ -82,8 +88,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = true,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = false,
+            anySupport = true,
         ),
         STRING(
             type = PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -93,8 +101,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = true,
             indexSupport = true,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = false,
+            anySupport = true,
         ),
         OBJECT(
             type = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -104,11 +114,13 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = false,
-            canBeNull = nullabilityForAll.toMutableSet().apply {
+            canBeNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
             },
-            canBeNotNull = nullabilityForAll
+            canBeNotNull = allCollectionTypes,
+            aggregator = false,
+            anySupport = true,
         ),
         FLOAT(
             type = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
@@ -118,8 +130,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = false,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = true,
+            anySupport = true,
         ),
         DOUBLE(
             type = PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
@@ -129,8 +143,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = false,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = true,
+            anySupport = true,
         ),
         DECIMAL128(
             type = PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
@@ -140,8 +156,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = false,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = true,
+            anySupport = true,
         ),
         TIMESTAMP(
             type = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
@@ -151,8 +169,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = true,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = false,
+            anySupport = true,
         ),
         OBJECT_ID(
             type = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
@@ -162,8 +182,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = true,
             indexSupport = true,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = false,
+            anySupport = true,
         ),
         UUID(
             type = PropertyType.RLM_PROPERTY_TYPE_UUID,
@@ -173,8 +195,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = true,
             indexSupport = true,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = false,
+            anySupport = true,
         ),
         BINARY(
             type = PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -184,8 +208,10 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = false,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = nullabilityForAll
+            canBeNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes,
+            aggregator = false,
+            anySupport = true,
         ),
         MIXED(
             type = PropertyType.RLM_PROPERTY_TYPE_MIXED,
@@ -195,20 +221,19 @@ public object TypeDescriptor {
             setSupport = true,
             primaryKeySupport = false,
             indexSupport = true,
-            canBeNull = nullabilityForAll,
-            canBeNotNull = setOf()
+            canBeNull = allCollectionTypes,
+            canBeNotNull = setOf(),
+            aggregator = true,
+            anySupport = false,
         );
+
+        val isPrimitive = type != PropertyType.RLM_PROPERTY_TYPE_OBJECT
     }
 
-    private val nullabilityForAll: Set<CollectionType> = setOf(
-        CollectionType.RLM_COLLECTION_TYPE_NONE,
-        CollectionType.RLM_COLLECTION_TYPE_LIST,
-        CollectionType.RLM_COLLECTION_TYPE_SET,
-        CollectionType.RLM_COLLECTION_TYPE_DICTIONARY
-    )
+    private val allCollectionTypes: Set<CollectionType> = CollectionType.values().toSet()
 
-    // Classifiers for types that can be used in aggregate queries
-    val aggregateClassifiers: Map<KClassifier, CoreFieldType> = mapOf(
+    // Kotlin classifier to Core field type mappings
+    val classifiers: Map<KClassifier, CoreFieldType> = mapOf(
         Byte::class to CoreFieldType.INT,
         Char::class to CoreFieldType.INT,
         Short::class to CoreFieldType.INT,
@@ -217,11 +242,7 @@ public object TypeDescriptor {
         Float::class to CoreFieldType.FLOAT,
         Double::class to CoreFieldType.DOUBLE,
         Decimal128::class to CoreFieldType.DECIMAL128,
-        RealmAny::class to CoreFieldType.MIXED
-    )
-
-    // Kotlin classifier to Core field type mappings
-    val classifiers: Map<KClassifier, CoreFieldType> = aggregateClassifiers + mapOf(
+        RealmAny::class to CoreFieldType.MIXED,
         Boolean::class to CoreFieldType.BOOL,
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
@@ -232,6 +253,13 @@ public object TypeDescriptor {
         MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,
         RealmObject::class to CoreFieldType.OBJECT
     )
+    // Classifiers for types that can be used in aggregate queries
+    val aggregateClassifiers = classifiers.filter { it.value.aggregator }
+    // Classifiers that are allowed in RealmAny
+    // The deprecated variant of ObjectId is not allowed as it was already deprecated when RealmAny
+    // was added
+    val anyClassifiers =
+        classifiers.filter { it.value.anySupport && it.key != ObjectId::class }
 
     // Element type is the type of the element of either a singular field or the container element type.
     // Basically just a clone of KType but with the ability to create them from input parameters at
