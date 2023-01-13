@@ -23,6 +23,7 @@ release/
 # Gradle files
 .gradle/
 build/
+!buildSrc/src/main/kotlin/org/jetbrains/kotlin/gradle/**/*
 
 # Local configuration file (sdk path, etc)
 local.properties

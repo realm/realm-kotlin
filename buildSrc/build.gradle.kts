@@ -42,6 +42,11 @@ repositories {
 // Setup dependencies for building the buildScript.
 buildscript {
     dependencies {
+        // Work-around for https://youtrack.jetbrains.com/issue/KT-54634
+        classpath(fileTree("$rootDir/buildSrc/build/libs") {
+            include("*.jar")
+        })
+        // Work-around end
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
         // See https://github.com/gradle/gradle/issues/22510
         constraints {

@@ -17,21 +17,25 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.RealmLog
+import io.realm.kotlin.internal.SDK_VERSION
 import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
+import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.interop.SyncLogCallback
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.platform.CPU_ARCH
+import io.realm.kotlin.internal.platform.DEVICE_MANUFACTURER
+import io.realm.kotlin.internal.platform.DEVICE_MODEL
 import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
+import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.freeze
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
@@ -99,30 +103,48 @@ public class AppConfigurationImpl constructor(
             appId = appId,
             baseUrl = baseUrl,
             networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
-            platform = "$OS_NAME/$RUNTIME",
-            platformVersion = OS_VERSION,
-            sdkVersion = io.realm.kotlin.internal.SDK_VERSION
+            connectionParams = SyncConnectionParams(
+                sdkVersion = SDK_VERSION,
+                platform = OS_NAME,
+                platformVersion = OS_VERSION,
+                cpuArch = CPU_ARCH,
+                device = DEVICE_MANUFACTURER,
+                deviceVersion = DEVICE_MODEL,
+                framework = RUNTIME,
+                frameworkVersion = RUNTIME_VERSION
+            )
         ).freeze()
 
     private fun initializeSyncClientConfig(): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
-                // TODO use separate logger for sync or piggyback on config's?
-                val syncLogger = createDefaultSystemLogger("SYNC", log.logLevel)
-
                 // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_log_level(
+                    syncClientConfig,
+                    CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
+                )
+
+                // TODO Redirect all Sync logs to the App configured logger. This makes it
+                //  impossible to configure a different TAG for these logs. Previously
+                //  these logs had a `SYNC` tag in contrast to the `REALM` tag used by the database.
+                //  A redesign of this should also take into account that unified error logging
+                //  is also coming in Core.
                 RealmInterop.realm_sync_client_config_set_log_callback(
                     syncClientConfig,
                     object : SyncLogCallback {
                         override fun log(logLevel: Short, message: String?) {
-                            val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)
-                            syncLogger.log(LogLevel.fromCoreLogLevel(coreLogLevel), message ?: "")
+                            when (val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)) {
+                                CoreLogLevel.RLM_LOG_LEVEL_TRACE -> log.trace(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_DEBUG -> log.debug(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_DETAIL -> log.debug(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_INFO -> log.info(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_WARNING -> log.warn(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_ERROR -> log.error(message ?: "")
+                                CoreLogLevel.RLM_LOG_LEVEL_FATAL -> log.error(message ?: "")
+                                else -> throw IllegalStateException("Unsupported level: $coreLogLevel")
+                            }
                         }
                     }
-                )
-                RealmInterop.realm_sync_client_config_set_log_level(
-                    syncClientConfig,
-                    CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
                 )
                 RealmInterop.realm_sync_client_config_set_metadata_mode(
                     syncClientConfig,
