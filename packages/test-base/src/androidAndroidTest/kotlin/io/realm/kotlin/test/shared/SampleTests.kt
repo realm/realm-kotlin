@@ -179,7 +179,7 @@ class SampleTests {
     @Test
     @Suppress("LongMethod")
     fun primitiveTypes() {
-        val obj = realm.writeBlocking {
+        realm.writeBlocking {
             copyToRealm(Sample()).apply {
                 stringField = "Realm Kotlin"
                 byteField = 0xb
