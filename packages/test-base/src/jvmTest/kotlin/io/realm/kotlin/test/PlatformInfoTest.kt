@@ -25,7 +25,7 @@ import kotlin.test.assertEquals
 class PlatformInfoTest {
     @Test
     fun platformInfo() {
-        assertEquals("JVM", RUNTIME)
+        assertEquals("JVM", RUNTIME.description)
         assertEquals(System.getProperty("os.name"), OS_NAME)
         assertEquals(System.getProperty("os.version"), OS_VERSION)
     }

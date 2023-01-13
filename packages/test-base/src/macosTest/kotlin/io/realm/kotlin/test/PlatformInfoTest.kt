@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.test
 
 import io.realm.kotlin.internal.platform.OS_NAME
@@ -21,12 +20,13 @@ import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class PlatformInfoTest {
     @Test
     fun platformInfo() {
-        assertEquals("Android", RUNTIME.description)
-        assertEquals("Android", OS_NAME)
-        assertEquals(android.os.Build.VERSION.RELEASE, OS_VERSION)
+        assertEquals("Native", RUNTIME.description)
+        assertEquals("MacOS", OS_NAME)
+        assertTrue(OS_VERSION.startsWith("Version "))
     }
 }

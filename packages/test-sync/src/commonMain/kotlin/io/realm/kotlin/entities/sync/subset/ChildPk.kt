@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.test
+package io.realm.kotlin.entities.sync.subset
 
-import io.realm.kotlin.internal.platform.OS_NAME
-import io.realm.kotlin.internal.platform.OS_VERSION
-import io.realm.kotlin.internal.platform.RUNTIME
-import kotlin.test.Test
-import kotlin.test.assertEquals
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
+import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlin.random.Random
 
-class PlatformInfoTest {
-    @Test
-    fun platformInfo() {
-        assertEquals("Android", RUNTIME.description)
-        assertEquals("Android", OS_NAME)
-        assertEquals(android.os.Build.VERSION.RELEASE, OS_VERSION)
-    }
+/**
+ * Copy of io.realm.kotlin.entities.sync.ChildPk, but it only contains a subset of its properties
+ */
+class ChildPk : RealmObject {
+    @PersistedName("_id")
+    @PrimaryKey var id: String = Random.nextLong().toString()
+    var name: String = "DEFAULT"
 }
