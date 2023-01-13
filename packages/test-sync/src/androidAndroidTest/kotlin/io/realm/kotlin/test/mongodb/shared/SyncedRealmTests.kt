@@ -685,7 +685,7 @@ class SyncedRealmTests {
                 val childPkSchema: RealmClass? = schema["ChildPk"]
                 assertNotNull(childPkSchema)
                 assertNotNull(childPkSchema["name"])
-                assertTrue((childPkSchema["_id"]!!.type as ValuePropertyType).isIndexed)
+                assertFalse((childPkSchema["_id"]!!.type as ValuePropertyType).isIndexed)
                 assertNull(childPkSchema["age"])
                 assertNull(childPkSchema["link"])
                 assertNull(childPkSchema["linkedFrom"])

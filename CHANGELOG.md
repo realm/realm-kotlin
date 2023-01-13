@@ -21,7 +21,6 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] `Realm.writeCopyTo(syncConfig)` now support copying a Flexible Sync Realm to another Flexible Sync Realm. 
 
 ### Fixed
-* `RealmSchema` incorrectly reported primary key properties as not having an index.
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
