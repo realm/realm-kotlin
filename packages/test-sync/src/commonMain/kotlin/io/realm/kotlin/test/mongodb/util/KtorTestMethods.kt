@@ -23,11 +23,7 @@ import kotlin.native.concurrent.SharedImmutable
 val TEST_METHODS = listOf(
     HttpMethod.Get,
     HttpMethod.Post,
-    // PATCH is currently broken on macOS if you read the content, which
-    // our NetworkTransport does: https://youtrack.jetbrains.com/issue/KTOR-4101/JsonFeature:-HttpClient-always-timeout-when-sending-PATCH-reques
-    // So for now, ignore PATCH in our tests. User API's does not use this anyway, only
-    // the AdminAPI, which has a work-around.
-    // HttpMethod.Patch,
+    HttpMethod.Patch,
     HttpMethod.Put,
     HttpMethod.Delete,
 )

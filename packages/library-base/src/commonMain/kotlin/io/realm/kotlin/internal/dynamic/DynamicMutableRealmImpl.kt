@@ -30,9 +30,11 @@ import io.realm.kotlin.internal.asInternalDeleteable
 import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.runIfManaged
+import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.RealmClass
+import io.realm.kotlin.schema.RealmSchema
 
 // Public due to tests needing to access `close` and trying to make the class visible through
 // annotations didn't work for some reason.
@@ -103,6 +105,14 @@ public open class DynamicMutableRealmImpl(
         for (schemaClass: RealmClass in schema().classes) {
             delete(schemaClass.name)
         }
+    }
+
+    // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
+    //  update, but requires that we initialize it all on the actual schema update to allow freezing
+    //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
+    //  initialization it would probably be acceptable to initialize on schema updates
+    override fun schema(): RealmSchema {
+        return RealmSchemaImpl.fromDynamicRealm(realmReference.dbPointer)
     }
 
     public override fun close() {
