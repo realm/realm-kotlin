@@ -4421,7 +4421,7 @@ MODULE_FRAGMENT name:<main>
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
                       isNullable: CONST Boolean type=kotlin.Boolean value=false
                       isPrimaryKey: CONST Boolean type=kotlin.Boolean value=true
-                      isIndexed: CONST Boolean type=kotlin.Boolean value=true
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
                       name: CONST String type=kotlin.String value="stringField"
