@@ -690,7 +690,8 @@ def runCommand(String command){
 }
 
 def shouldBuildJvmABIs() {
-    if (publishBuild || shouldPublishSnapshot(version)) return true else return false
+    return true // While testing Windows
+    // if (publishBuild || shouldPublishSnapshot(version)) return true else return false
 }
 
 def build_jvm_linux(String buildType) {
