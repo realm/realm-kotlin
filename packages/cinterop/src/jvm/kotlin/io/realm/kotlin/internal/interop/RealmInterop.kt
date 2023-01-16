@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -1053,7 +1052,7 @@ actual object RealmInterop {
         return CoreSyncSessionState.of(realmc.realm_sync_session_get_state(syncSession.cptr()))
     }
     actual fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState {
-        return CoreConnectionState.from(realmc.realm_sync_session_get_connection_state(syncSession.cptr()))
+        return CoreConnectionState.of(realmc.realm_sync_session_get_connection_state(syncSession.cptr()))
     }
 
     actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {

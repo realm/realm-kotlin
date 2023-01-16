@@ -143,15 +143,13 @@ public interface SyncSession {
     ): Flow<Progress>
 
     /**
-     * Create a [Flow] of _connection state changes_-events.
-     *
-     * Each change of state in the underlying connection will be emitted as a pair of the old and
-     * new [ConnectionState].
+     * Create a [Flow] of [ConnectionStateChange]-events to receive notifications of updates to the
+     * session's connection state.
      *
      * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
      * the elements in a timely manner the flow will be completed with an [IllegalStateException].
      */
-    public fun connectionState(): Flow<Pair<ConnectionState, ConnectionState>>
+    public fun connectionState(): Flow<ConnectionStateChange>
 
     /**
      * Interface used to report any session errors.

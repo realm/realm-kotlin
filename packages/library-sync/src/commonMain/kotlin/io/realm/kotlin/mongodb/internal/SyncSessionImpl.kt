@@ -33,6 +33,7 @@ import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.ConnectionState
+import io.realm.kotlin.mongodb.sync.ConnectionStateChange
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
@@ -142,15 +143,17 @@ internal open class SyncSessionImpl(
         }
     }
 
-    override fun connectionState(): Flow<Pair<ConnectionState, ConnectionState>> = callbackFlow {
+    override fun connectionState(): Flow<ConnectionStateChange> = callbackFlow {
         val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
         token.value = NotificationToken(
             RealmInterop.realm_sync_session_register_connection_state_change_callback(
                 nativePointer
             ) { oldState: Int, newState: Int ->
                 trySendWithBufferOverflowCheck(
-                    connectionStateFrom(CoreConnectionState.from(oldState))
-                        to connectionStateFrom(CoreConnectionState.from(newState))
+                    ConnectionStateChange(
+                        connectionStateFrom(CoreConnectionState.of(oldState)),
+                        connectionStateFrom(CoreConnectionState.of(newState))
+                    )
                 )
             }
         )

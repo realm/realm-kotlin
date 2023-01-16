@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.mongodb.sync
 
-expect enum class CoreConnectionState {
-    RLM_SYNC_CONNECTION_STATE_DISCONNECTED,
-    RLM_SYNC_CONNECTION_STATE_CONNECTING,
-    RLM_SYNC_CONNECTION_STATE_CONNECTED;
-
-    companion object {
-        fun of(nativeValue: Int): CoreConnectionState
-    }
-}
+/**
+ * A **connection state change** indicates a change in the [SyncSession]'s underlying connection
+ * state.
+ *
+ * @property oldState the sync session's old connection state.
+ * @property newState the sync session's new connection state.
+ *
+ * @see SyncSession.connectionState
+ */
+public data class ConnectionStateChange(val oldState: ConnectionState, val newState: ConnectionState)

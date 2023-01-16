@@ -25,7 +25,7 @@ actual enum class CoreConnectionState(override val nativeValue: Int) : NativeEnu
     RLM_SYNC_CONNECTION_STATE_CONNECTED(realm_sync_connection_state_e.RLM_SYNC_CONNECTION_STATE_CONNECTED);
 
     actual companion object {
-        actual fun from(nativeValue: Int): CoreConnectionState =
+        actual fun of(nativeValue: Int): CoreConnectionState =
             values().find { it.nativeValue == nativeValue }
                 ?: error("Unknown connection state: $nativeValue")
     }

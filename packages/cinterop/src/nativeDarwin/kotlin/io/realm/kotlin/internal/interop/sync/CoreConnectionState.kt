@@ -26,7 +26,7 @@ actual enum class CoreConnectionState(override val nativeValue: UInt) : NativeEn
     ;
 
     actual companion object {
-        actual fun from(nativeValue: Int): CoreConnectionState =
+        actual fun of(nativeValue: Int): CoreConnectionState =
             values().find { it.nativeValue == nativeValue.toUInt() }
                 ?: error("Unknown property type: $nativeValue")
     }

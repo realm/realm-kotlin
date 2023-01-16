@@ -107,7 +107,6 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
-import realm_wrapper.realm_object_as_link
 import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
@@ -2120,7 +2119,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState =
-        CoreConnectionState.from(
+        CoreConnectionState.of(
             realm_wrapper.realm_sync_session_get_connection_state(syncSession.cptr()).value.toInt()
         )
 
