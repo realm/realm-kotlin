@@ -160,15 +160,15 @@ jobs:
 
       - name: Get vcpkg submodule commit sha
         id: vcpkg-cache-key
-        working-directory: packages/external/core/tools/vcpkg/ports
+        working-directory: packages\external\core\tools\vcpkg\ports
         shell: powershell
         run: echo "::set-output name=commit::$(git rev-parse HEAD)"
 
       - name: Setup Vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          path: ./packages/external/core/tools/vcpkg/ports
-          cache-key: vcpkg-windows-${{ hashFiles('./packages/external/core/tools/vcpkg/vcpkg.json') }}-${{ steps.vcpkg-cache-key.outputs.commit }}
+          path: .\packages\external\core\tools\vcpkg\ports
+          cache-key: vcpkg-windows-${{ hashFiles('.\packages\external\core\tools\vcpkg\vcpkg.json') }}-${{ steps.vcpkg-cache-key.outputs.commit }}
           cache-restore-keys: vcpkg-windows-${{ steps.vcpkg_cache_key.outputs.commit }}
 
       - name: Build native lib
