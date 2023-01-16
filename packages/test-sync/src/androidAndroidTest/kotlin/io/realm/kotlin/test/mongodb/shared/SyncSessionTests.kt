@@ -589,7 +589,7 @@ class SyncSessionTests {
             val initialState = realm.syncSession.connectionState
             // Adopted from realm-java tests ...
             // Sometimes the connection is already established and then we cannot expect any
-            // updates, but as this is highly just safely ignore this to avoid flaky tests on CI
+            // updates, but as this is highly likely just safely ignore this to avoid flaky tests on CI
             if (initialState != ConnectionState.CONNECTED) {
                 val (oldState, newState) = withTimeout(10.seconds) { flow.first() }
                 assertNotEquals(oldState, newState)
