@@ -31,7 +31,6 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.serialization.DeserializationStrategy
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.serialization.Bson
 
@@ -63,28 +62,16 @@ public class UserImpl(
         get() = RealmInterop.realm_user_get_device_id(nativePointer)
     override val functions: Functions by lazy { FunctionsImpl(app, this) }
 
-    override fun <T : Any> profile(deserializationStrategy: DeserializationStrategy<T>): T {
-        if (deserializationStrategy != BsonDocument.serializer()) {
-            throw IllegalArgumentException("Only BsonDocuments are valid return types")
-        }
-
-        return BsonEncoder.decodeFromBsonValue(
-            deserializationStrategy,
-            Bson(RealmInterop.realm_user_get_profile(nativePointer))
-        )
+    @PublishedApi
+    internal fun profileAsBsonDocumentInternal(): BsonDocument {
+        return Bson(RealmInterop.realm_user_get_profile(nativePointer)) as BsonDocument
     }
 
-    override fun <T : Any> customData(deserializationStrategy: DeserializationStrategy<T>): T? {
-        if (deserializationStrategy != BsonDocument.serializer()) {
-            throw IllegalArgumentException("Only BsonDocuments are valid return types")
-        }
-
+    @PublishedApi
+    internal fun customDataAsBsonDocumentInternal(): BsonDocument? {
         return RealmInterop.realm_user_get_custom_data(nativePointer)
             ?.let { ejsonCustomData: String ->
-                BsonEncoder.decodeFromBsonValue(
-                    deserializationStrategy,
-                    Bson(ejsonCustomData)
-                )
+                Bson(ejsonCustomData) as BsonDocument
             }
     }
 

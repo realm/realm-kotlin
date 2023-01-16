@@ -20,13 +20,10 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback
 import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
-import io.realm.kotlin.mongodb.internal.BsonEncoder
-import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
 import kotlin.test.AfterTest
@@ -179,19 +176,6 @@ class UserProfileTests {
                 else -> TODO()
             }
             assertEquals(profileBody[key], stringValue, "failed comparing key $key")
-        }
-    }
-
-    @kotlinx.serialization.Serializable
-    class SerializableClass
-
-    @Test
-    fun unsupportedType() {
-        setDefaultProfile()
-        val user = app.createUserAndLogin()
-
-        assertFailsWithMessage<IllegalArgumentException>("Only BsonDocuments are valid return types") {
-            user.profile(BsonEncoder.serializersModule.serializer<SerializableClass>())
         }
     }
 }

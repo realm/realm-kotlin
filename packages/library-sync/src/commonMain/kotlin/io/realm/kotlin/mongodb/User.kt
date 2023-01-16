@@ -18,11 +18,7 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
-import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
-import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import kotlinx.serialization.DeserializationStrategy
-import org.mongodb.kbson.BsonDocument
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
@@ -107,49 +103,6 @@ public interface User {
      * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
      */
     public val functions: Functions
-
-    /**
-     * Returns the profile for this user.
-     *
-     * Serializers can be retrieved from the serializers module:
-     * ```
-     * val serializer = serializersModule.serializer<Profile>()
-     * val profile: Profile = user.profile(serializer)
-     * ```
-     *
-     * Note: Currently it only supports the [BsonDocument] serializer. The extension function
-     * [profileAsBsonDocument] would invoke this method with the [BsonDocument] serializer.
-     *
-     * @param T type to deserialize the custom data.
-     * @param deserializationStrategy strategy used to deserialize the data into a T type.
-     * @return The profile for this user.
-     *
-     * @throws IllegalArgumentException on unsupported [DeserializationStrategy]
-     */
-    public fun <T : Any> profile(deserializationStrategy: DeserializationStrategy<T>): T
-
-    /**
-     * Return the custom user data associated with the user in the Realm App.
-     *
-     * The data is only refreshed when the user's access token is refreshed or when explicitly
-     * calling [refreshCustomData].
-     *
-     * Serializers can be retrieved from the serializers module:
-     * ```
-     * val serializer = serializersModule.serializer<CustomData>()
-     * val profile: CustomData = user.customData(serializer)
-     * ```
-     *
-     * Note: Currently it only supports the [BsonDocument] serializer. The extension function
-     * [customDataAsBsonDocument] would invoke this method with the [BsonDocument] serializer.
-     *
-     * @param T type to deserialize the custom data.
-     * @param deserializationStrategy strategy used to deserialize the data into a T type.
-     * @return The custom user data associated with the user.
-     *
-     * @throws IllegalArgumentException on unsupported [DeserializationStrategy]
-     */
-    public fun <T : Any> customData(deserializationStrategy: DeserializationStrategy<T>): T?
 
     /**
      * Re-fetch custom user data from the Realm App.

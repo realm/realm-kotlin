@@ -25,14 +25,11 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
-import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
-import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.serialization.Bson
@@ -670,17 +667,6 @@ class UserTests {
         val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
-    }
-
-    @Test
-    fun customDataAsBsonDocument_unsupportedReturnType() {
-        val (email, password) = randomEmail() to "123456"
-        val user = runBlocking {
-            createUserAndLogin(email, password)
-        }
-        assertFailsWithMessage<IllegalArgumentException>("Only BsonDocuments are valid return types") {
-            user.customData(BsonEncoder.serializersModule.serializer<String>())
-        }
     }
 
     private fun updatecustomDataAsBsonDocument(user: User, data: BsonDocument) {

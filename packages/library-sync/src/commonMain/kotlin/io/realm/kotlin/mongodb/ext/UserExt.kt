@@ -17,25 +17,24 @@
 package io.realm.kotlin.mongodb.ext
 
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.internal.BsonEncoder
-import kotlinx.serialization.serializer
+import io.realm.kotlin.mongodb.internal.UserImpl
 import org.mongodb.kbson.BsonDocument
 
 /**
- * Returns the profile for this user as [BsonDocument]
+ * Returns the profile for this user as [BsonDocument].
  *
- * @return A [BsonDocument] with the profile for this user.
+ * @return The profile for this user.
  */
 public inline fun User.profileAsBsonDocument(): BsonDocument =
-    profile(BsonEncoder.serializersModule.serializer())
+    (this as UserImpl).profileAsBsonDocumentInternal()
 
 /**
- * Return the custom user data associated with the user in the Realm App.
+ * Return the custom user data associated with the user in the Realm App as [BsonDocument].
  *
  * The data is only refreshed when the user's access token is refreshed or when explicitly
  * calling [User.refreshCustomData].
  *
- * @return A [BsonDocument] with custom user data associated with the user.
+ * @return The custom user data associated with the user.
  */
 public inline fun User.customDataAsBsonDocument(): BsonDocument? =
-    customData(BsonEncoder.serializersModule.serializer())
+    (this as UserImpl).customDataAsBsonDocumentInternal()
