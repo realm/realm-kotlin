@@ -60,7 +60,7 @@ object Versions {
         const val ndkVersion = "23.2.8568313"
     }
     const val androidxBenchmarkPlugin = "1.2.0-alpha05" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
-    const val androidxStartup = "1.1.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
+    const val androidxStartup = "1.1.1" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.4.0" // https://maven.google.com/web/index.html#androidx.test:rules
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin

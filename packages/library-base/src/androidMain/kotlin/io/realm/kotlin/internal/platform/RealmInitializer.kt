@@ -17,6 +17,10 @@ package io.realm.kotlin.internal.platform
 
 import android.content.Context
 import androidx.startup.Initializer
+import io.realm.kotlin.internal.SDK_VERSION
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.realmc
+import io.realm.kotlin.internal.loadAndroidNativeLibs
 import java.io.File
 
 /**
@@ -34,6 +38,7 @@ class RealmInitializer : Initializer<Context> {
 
     override fun create(context: Context): Context {
         filesDir = context.filesDir
+        loadAndroidNativeLibs(context, SDK_VERSION)
         return context
     }
 

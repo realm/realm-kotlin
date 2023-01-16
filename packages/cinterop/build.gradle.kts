@@ -31,6 +31,7 @@ buildscript {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
     }
 }
+
 apply(plugin = "kotlinx-atomicfu")
 // AtomicFu cannot transform JVM code. Throws
 // ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
@@ -202,7 +203,6 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-
                 api("org.mongodb.kbson:kbson:${Versions.kbson}")
             }
         }
