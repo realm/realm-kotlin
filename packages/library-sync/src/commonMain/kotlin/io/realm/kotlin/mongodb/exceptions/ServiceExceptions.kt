@@ -29,9 +29,7 @@ package io.realm.kotlin.mongodb.exceptions
  * @see BadRequestException
  * @see AuthException
  */
-public open class ServiceException : AppException {
-    internal constructor(message: String) : super(message)
-}
+public open class ServiceException internal constructor(message: String) : AppException(message)
 
 /**
  * Exception indicating that something went wrong with the underlying HTTP request to
@@ -46,9 +44,8 @@ public open class ServiceException : AppException {
  * specific exception instead, e.g. `401 - AuthenticationRequired` will throw
  * [InvalidCredentialsException].
  */
-public open class ConnectionException : ServiceException {
-    internal constructor(message: String) : super(message)
-}
+public open class ConnectionException internal constructor(message: String) :
+    ServiceException(message)
 
 /**
  * This exception is thrown when parameters sent to Atlas App Services are considered malformed.
@@ -58,9 +55,7 @@ public open class ConnectionException : ServiceException {
  * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.resetPassword
  * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.retryCustomConfirmation
  */
-public class BadRequestException : ServiceException {
-    internal constructor(message: String) : super(message)
-}
+public class BadRequestException internal constructor(message: String) : ServiceException(message)
 
 /**
  * This exception is considered the top-level or "catch-all" for problems related to user account
@@ -74,9 +69,7 @@ public class BadRequestException : ServiceException {
  * @see UserAlreadyExistsException
  * @see InvalidCredentialsException
  */
-public open class AuthException : ServiceException {
-    internal constructor(message: String) : super(message)
-}
+public open class AuthException internal constructor(message: String) : ServiceException(message)
 
 /**
  * Thrown when trying to confirm a user that was already confirmed on the server.
@@ -85,9 +78,8 @@ public open class AuthException : ServiceException {
  * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.resendConfirmationEmail
  * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.retryCustomConfirmation
  */
-public class UserAlreadyConfirmedException : AuthException {
-    internal constructor(message: String) : super(message)
-}
+public class UserAlreadyConfirmedException internal constructor(message: String) :
+    AuthException(message)
 
 /**
  * Thrown when using an API that also require some kind of user identifier, but the server is
@@ -98,9 +90,7 @@ public class UserAlreadyConfirmedException : AuthException {
  * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.retryCustomConfirmation
  * @see io.realm.kotlin.mongodb.auth.EmailPasswordAuth.sendResetPasswordEmail
  */
-public class UserNotFoundException : AuthException {
-    internal constructor(message: String) : super(message)
-}
+public class UserNotFoundException internal constructor(message: String) : AuthException(message)
 
 /**
  * Thrown when trying to register a new user with email and password, and the user already
@@ -108,9 +98,8 @@ public class UserNotFoundException : AuthException {
  *
  * @see io.realm.kotlin.mongodb.EmailPasswordAuth.registerUser
  */
-public class UserAlreadyExistsException : AuthException {
-    internal constructor(message: String) : super(message)
-}
+public class UserAlreadyExistsException internal constructor(message: String) :
+    AuthException(message)
 
 /**
  * Thrown when credentials were rejected by the server when trying to log in. Only some
@@ -124,9 +113,8 @@ public class UserAlreadyExistsException : AuthException {
  *
  * @see io.realm.kotlin.mongodb.App.login
  */
-public class InvalidCredentialsException : AuthException {
-    internal constructor(message: String) : super(message)
-}
+public class InvalidCredentialsException internal constructor(message: String) :
+    AuthException(message)
 
 /**
  * Thrown when attempting to link credentials that are not supported.
@@ -141,6 +129,14 @@ public class InvalidCredentialsException : AuthException {
  *
  * @see io.realm.kotlin.mongodb.User.linkCredentials
  */
-public class CredentialsCannotBeLinkedException : ServiceException {
-    internal constructor(message: String) : super(message)
-}
+public class CredentialsCannotBeLinkedException internal constructor(message: String) :
+    ServiceException(message)
+
+/**
+ * Exception indicating that an Atlas Function failed to execute. The exact reason for the error can
+ * be found in [Throwable.message].
+ *
+ * @see [io.realm.kotlin.mongodb.Functions.call]
+ */
+public class FunctionExecutionException internal constructor(message: String) :
+    ServiceException(message)

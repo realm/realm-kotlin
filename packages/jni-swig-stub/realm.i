@@ -178,6 +178,19 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+// Reuse void callback typemap as template for callbacks returning a string
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_string_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_string_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_string_func_t>(app_string_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // Reuse void callback typemap as template for callbacks returning a list of api keys
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)

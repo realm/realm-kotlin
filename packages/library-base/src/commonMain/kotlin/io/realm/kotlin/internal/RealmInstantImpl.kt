@@ -2,9 +2,13 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.types.RealmInstant
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 // Public as constructor is inlined in accessor converter method (Converters.kt)
-public data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) : Timestamp, RealmInstant {
+public data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) :
+    Timestamp, RealmInstant {
     public constructor(ts: Timestamp) : this(ts.seconds, ts.nanoSeconds)
 
     override val epochSeconds: Long
@@ -24,4 +28,14 @@ public data class RealmInstantImpl(override val seconds: Long, override val nano
     override fun toString(): String {
         return "RealmInstant(epochSeconds=$epochSeconds, nanosecondsOfSecond=$nanosecondsOfSecond)"
     }
+}
+
+internal fun RealmInstant.toDuration(): Duration {
+    return epochSeconds.seconds + nanosecondsOfSecond.nanoseconds
+}
+
+internal fun Duration.toRealmInstant(): RealmInstant {
+    val seconds: Long = this.inWholeSeconds
+    val nanos: Duration = (this - seconds.seconds)
+    return RealmInstant.from(seconds, nanos.inWholeNanoseconds.toInt())
 }

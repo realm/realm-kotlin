@@ -17,6 +17,8 @@ package io.realm.kotlin.test.mongodb.util
 
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 object TestAppInitializer {
     // Setups a test app
@@ -512,5 +514,96 @@ object TestAppInitializer {
         }
         
         """.trimIndent()
+    )
+
+    val FIRST_ARG_FUNCTION = Function(
+        name = "firstArg",
+        source =
+        """
+        exports = function(arg){
+          // Returns first argument
+          return arg
+        };
+        
+        """.trimIndent()
+    )
+
+    val SUM_FUNCTION = Function(
+        name = "sum",
+        source =
+        """
+        exports = function(...args) {
+            return parseInt(args.reduce((a,b) => a + b, 0));
+        };
+        
+        """.trimIndent()
+    )
+
+    val NULL_FUNCTION = Function(
+        name = "null",
+        source =
+        """
+        exports = function(arg){
+          return null;
+        };
+        
+        """.trimIndent()
+    )
+
+    val ERROR_FUNCTION = Function(
+        name = "error",
+        source =
+        """
+        exports = function(arg){
+          return unknown;
+        };
+        
+        """.trimIndent()
+    )
+
+    val VOID_FUNCTION = Function(
+        name = "void",
+        source =
+        """
+        exports = function(arg){
+          return void(0);
+        };
+        
+        """.trimIndent()
+    )
+
+    val AUTHORIZED_ONLY_FUNCTION = Function(
+        name = "authorizedOnly",
+        source =
+        """
+        exports = function(arg){
+          /*
+            Accessing application's values:
+            var x = context.values.get("value_name");
+        
+            Accessing a mongodb service:
+            var collection = context.services.get("mongodb-atlas").db("dbname").collection("coll_name");
+            var doc = collection.findOne({owner_id: context.user.id});
+        
+            To call other named functions:
+            var result = context.functions.execute("function_name", arg1, arg2);
+        
+            Try running in the console below.
+          */
+          return {arg: context.user};
+        };
+        
+        """.trimIndent(),
+        canEvaluate = Json.decodeFromString(
+            """
+            {
+                "%%user.data.email": {
+                    "%in": [
+                        "authorizeduser@example.org"
+                    ]
+                }
+            }
+            """.trimIndent()
+        )
     )
 }
