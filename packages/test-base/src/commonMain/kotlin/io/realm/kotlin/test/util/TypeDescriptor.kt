@@ -32,6 +32,14 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
 object TypeDescriptor {
+    enum class AggregatorSupport {
+        MINMAX, SUM;
+
+        companion object {
+            val NONE = emptySet<AggregatorSupport>()
+            val ALL = values().toSet()
+        }
+    }
 
     // Core field types with their support level
     @Suppress("LongParameterList")
@@ -45,7 +53,7 @@ object TypeDescriptor {
         val indexSupport: Boolean,
         val canBeNull: Set<CollectionType>, // favor using this over "nullable"
         val canBeNotNull: Set<CollectionType>, // favor using this over "nonNullable"
-        val aggregator: Boolean,
+        val aggregatorSupport: Set<AggregatorSupport>,
         val anySupport: Boolean,
     ) {
         INT(
@@ -58,7 +66,7 @@ object TypeDescriptor {
             indexSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = true,
+            aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
         ),
         MUTABLE_REALM_INT(
@@ -77,7 +85,7 @@ object TypeDescriptor {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
             },
-            aggregator = false,
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = false,
         ),
         BOOL(
@@ -90,7 +98,7 @@ object TypeDescriptor {
             indexSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = false,
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
         ),
         STRING(
@@ -103,7 +111,7 @@ object TypeDescriptor {
             indexSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = false,
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
         ),
         OBJECT(
@@ -119,7 +127,7 @@ object TypeDescriptor {
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
             },
             canBeNotNull = allCollectionTypes,
-            aggregator = false,
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
         ),
         FLOAT(
@@ -132,7 +140,7 @@ object TypeDescriptor {
             indexSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = true,
+            aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
         ),
         DOUBLE(
@@ -145,7 +153,7 @@ object TypeDescriptor {
             indexSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = true,
+            aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
         ),
         DECIMAL128(
@@ -158,7 +166,7 @@ object TypeDescriptor {
             indexSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = true,
+            aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
         ),
         TIMESTAMP(
@@ -171,7 +179,7 @@ object TypeDescriptor {
             indexSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = false,
+            aggregatorSupport = setOf(AggregatorSupport.MINMAX),
             anySupport = true,
         ),
         OBJECT_ID(
@@ -184,7 +192,7 @@ object TypeDescriptor {
             indexSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = false,
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
         ),
         UUID(
@@ -197,7 +205,7 @@ object TypeDescriptor {
             indexSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = false,
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
         ),
         BINARY(
@@ -210,7 +218,7 @@ object TypeDescriptor {
             indexSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregator = false,
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
         ),
         MIXED(
@@ -222,8 +230,8 @@ object TypeDescriptor {
             primaryKeySupport = false,
             indexSupport = true,
             canBeNull = allCollectionTypes,
-            canBeNotNull = setOf(),
-            aggregator = true,
+            canBeNotNull = emptySet(),
+            aggregatorSupport = AggregatorSupport.NONE,
             anySupport = false,
         );
 
@@ -253,8 +261,6 @@ object TypeDescriptor {
         MutableRealmInt::class to CoreFieldType.MUTABLE_REALM_INT,
         RealmObject::class to CoreFieldType.OBJECT
     )
-    // Classifiers for types that can be used in aggregate queries
-    val aggregateClassifiers = classifiers.filter { it.value.aggregator }
     // Classifiers that are allowed in RealmAny
     // The deprecated variant of ObjectId is not allowed as it was already deprecated when RealmAny
     // was added
