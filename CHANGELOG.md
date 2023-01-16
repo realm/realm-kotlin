@@ -22,7 +22,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] Added support for App functions, see documentation for more details. (Issue [#1110](https://github.com/realm/realm-kotlin/pull/1110))
 
 ### Fixed
-* Windows binaries for JVM did not statically link the C++ runtime, which could lead to crashes it wasn't preinstalled. (Issue [#XXX]())
+* Windows binaries for JVM did not statically link the C++ runtime, which could lead to crashes it wasn't preinstalled. (Issue [#1211](https://github.com/realm/realm-kotlin/pull/1211))
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * `RealmUUID` did not calculate the correct `hashCode`, so putting it in a `HashSet` resulted in duplicates.
