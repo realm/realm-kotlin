@@ -18,11 +18,16 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
+import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
  * functionality.
+ *
+ * User profile and custom data can be accessed using the extension functions [User.profileAsBsonDocument]
+ * and [User.customDataAsBsonDocument].
  *
  * The user is used to configure synchronized realms with [SyncConfiguration.Builder].
  *
