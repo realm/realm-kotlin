@@ -17,7 +17,6 @@
 package io.realm.kotlin.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import androidx.test.platform.app.InstrumentationRegistry
 import io.realm.kotlin.internal.interop.CoreErrorConverter
 import io.realm.kotlin.internal.interop.RealmCoreException
 import io.realm.kotlin.internal.interop.RealmCoreInvalidQueryException
@@ -62,7 +61,7 @@ class CinteropTest {
 
     @Test
     fun version() {
-        assertEquals("13.0.0", realmc.realm_get_library_version())
+        assertEquals("13.2.0", realmc.realm_get_library_version())
     }
 
     // Test various schema migration with automatic flag:
@@ -681,7 +680,8 @@ class CinteropTest {
 
     @Test
     fun parentChildRelationship() {
-        val context = InstrumentationRegistry.getInstrumentation().context
+        val path =
+            Files.createTempDirectory("android_tests").absolutePathString() + "/c_api_test.realm"
 
         System.loadLibrary("realmc")
         println(realmc.realm_get_library_version())
@@ -749,7 +749,7 @@ class CinteropTest {
 
         val config: Long = realmc.realm_config_new()
 
-        realmc.realm_config_set_path(config, context.filesDir.absolutePath + "/c_api_link.realm")
+        realmc.realm_config_set_path(config, path)
         realmc.realm_config_set_schema(config, realmSchemaNew)
         realmc.realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config, 1)

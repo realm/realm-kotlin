@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -73,7 +74,11 @@ actual object RealmInterop {
     }
 
     actual fun realm_refresh(realm: RealmPointer) {
-        realmc.realm_refresh(realm.cptr())
+        // Only returns `true` if the version changed, `false` if the version
+        // was already at the latest. Errors will be represented by the actual
+        // return value, so just ignore this out parameter.
+        val didRefresh = booleanArrayOf(false)
+        realmc.realm_refresh(realm.cptr(), didRefresh)
     }
 
     actual fun realm_schema_new(schema: List<Pair<ClassInfo, List<PropertyInfo>>>): RealmSchemaPointer {
@@ -448,6 +453,25 @@ actual object RealmInterop {
 
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
         realmc.realm_object_add_int(obj.cptr(), key.key, value)
+    }
+
+    actual fun <T> realm_object_get_parent(
+        obj: RealmObjectPointer,
+        block: (ClassKey, RealmObjectPointer) -> T
+    ): T {
+        val objectPointerArray = longArrayOf(0)
+        val classKeyPointerArray = longArrayOf(0)
+
+        realmc.realm_object_get_parent(
+            /* object = */ obj.cptr(),
+            /* parent = */ objectPointerArray,
+            /* class_key = */ classKeyPointerArray
+        )
+
+        val classKey = ClassKey(classKeyPointerArray[0])
+        val objectPointer = LongPointerWrapper<RealmObjectT>(objectPointerArray[0])
+
+        return block(classKey, objectPointer)
     }
 
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
@@ -1004,8 +1028,10 @@ actual object RealmInterop {
         realmc.sync_after_client_reset_handler(syncConfig.cptr(), afterHandler)
     }
 
-    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
-        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean {
+        val didRun = booleanArrayOf(false)
+        realmc.realm_sync_immediately_run_file_actions(app.cptr(), syncPath, didRun)
+        return didRun.first()
     }
 
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
@@ -1082,21 +1108,27 @@ actual object RealmInterop {
         appId: String,
         networkTransport: RealmNetworkTransportPointer,
         baseUrl: String?,
-        platform: String,
-        platformVersion: String,
-        sdkVersion: String,
+        connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer {
         val config = realmc.realm_app_config_new(appId, networkTransport.cptr())
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
-        realmc.realm_app_config_set_platform(config, platform)
-        realmc.realm_app_config_set_platform_version(config, platformVersion)
-        realmc.realm_app_config_set_sdk_version(config, sdkVersion)
+        // From https://github.com/realm/realm-kotlin/issues/407
+        realmc.realm_app_config_set_local_app_name(config, "")
+        realmc.realm_app_config_set_local_app_version(config, "")
 
-        // TODO Fill in appropriate app meta data
-        //  https://github.com/realm/realm-kotlin/issues/407
-        realmc.realm_app_config_set_local_app_version(config, "APP_VERSION")
+        // Sync Connection Parameters
+        realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
+        realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
+        realmc.realm_app_config_set_platform(config, connectionParams.platform)
+        realmc.realm_app_config_set_platform_version(config, connectionParams.platformVersion)
+        realmc.realm_app_config_set_cpu_arch(config, connectionParams.cpuArch)
+        realmc.realm_app_config_set_device_name(config, connectionParams.device)
+        realmc.realm_app_config_set_device_version(config, connectionParams.deviceVersion)
+        realmc.realm_app_config_set_framework_name(config, connectionParams.framework)
+        realmc.realm_app_config_set_framework_version(config, connectionParams.frameworkVersion)
+
         return LongPointerWrapper(config)
     }
 
@@ -1228,10 +1260,10 @@ actual object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         name: String,
-        serializedArgs: String,
+        serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedArgs, callback)
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
     }
 
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
@@ -1293,6 +1325,22 @@ actual object RealmInterop {
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(
                 results.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_list(
+                list.cptr(),
                 query,
                 count.toLong(),
                 args.second.value

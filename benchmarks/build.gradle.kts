@@ -29,7 +29,6 @@ allprojects {
         }
         google()
         mavenCentral()
-        maven(uri("https://oss.sonatype.org/content/repositories/snapshots"))
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

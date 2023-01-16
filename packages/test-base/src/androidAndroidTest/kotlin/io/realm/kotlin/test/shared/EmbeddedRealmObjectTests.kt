@@ -28,13 +28,18 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.EmbeddedParentWithPrimaryKey
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.embedded.embeddedSchemaWithPrimaryKey
+import io.realm.kotlin.ext.parent
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -57,6 +62,47 @@ class EmbeddedRealmObjectTests {
     @AfterTest
     fun tearDown() {
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun parent() {
+        realm.writeBlocking {
+            val parent = copyToRealm(
+                EmbeddedParent().apply {
+                    id = RealmUUID.random().toString()
+                    child = EmbeddedChild()
+                }
+            )
+            parent.child!!.let { child ->
+                child.parent<EmbeddedParent>().let { backlinkParent: EmbeddedParent ->
+                    assertNotNull(backlinkParent)
+                    assertIs<EmbeddedParent>(backlinkParent)
+                    assertEquals(parent.id, backlinkParent.id)
+                }
+
+                child.parent<TypedRealmObject>().let { backlinkParent: TypedRealmObject ->
+                    assertNotNull(backlinkParent)
+                    assertIs<TypedRealmObject>(backlinkParent)
+                    assertIs<EmbeddedParent>(backlinkParent)
+                    assertEquals(parent.id, backlinkParent.id)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun parentWrongType_throws() {
+        realm.writeBlocking {
+            val parent = copyToRealm(
+                EmbeddedParent().apply {
+                    child = EmbeddedChild()
+                }
+            )
+            val child = parent.child!!
+            assertFailsWith<ClassCastException>("io.realm.kotlin.entities.embedded.EmbeddedParent cannot be cast to io.realm.kotlin.entities.embedded.EmbeddedChild") {
+                val parentFromChild: EmbeddedChild = child.parent()
+            }
+        }
     }
 
     @Test
@@ -168,7 +214,10 @@ class EmbeddedRealmObjectTests {
                 EmbeddedParentWithPrimaryKey().apply {
                     id = 1
                     child = EmbeddedChildWithPrimaryKeyParent("child3")
-                    children = realmListOf(EmbeddedChildWithPrimaryKeyParent("child4"), EmbeddedChildWithPrimaryKeyParent("child5"))
+                    children = realmListOf(
+                        EmbeddedChildWithPrimaryKeyParent("child4"),
+                        EmbeddedChildWithPrimaryKeyParent("child5")
+                    )
                 },
                 UpdatePolicy.ALL
             )

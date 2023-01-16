@@ -21,7 +21,9 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -34,9 +36,17 @@ internal interface InternalTypedRealm : TypedRealm {
     override val configuration: InternalConfiguration
     val realmReference: RealmReference
 
+    // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
+    //  update, but requires that we initialize it all on the actual schema update to allow freezing
+    //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
+    //  initialization it would probably be acceptable to initialize on schema updates
+    override fun schema(): RealmSchema {
+        return RealmSchemaImpl.fromTypedRealm(realmReference.dbPointer, realmReference.schemaMetadata)
+    }
+
     override fun <T : BaseRealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
         val className = configuration.mediator.companionOf(clazz).`io_realm_kotlin_className`
-        return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, null, query, *args)
+        return ObjectQuery(realmReference, realmReference.schemaMetadata.getOrThrow(className).classKey, clazz, configuration.mediator, query, args)
     }
 
     private fun <T : BaseRealmObject> copyObjectFromRealm(obj: T, depth: UInt, closeAfterCopy: Boolean, cache: ManagedToUnmanagedObjectCache): T {

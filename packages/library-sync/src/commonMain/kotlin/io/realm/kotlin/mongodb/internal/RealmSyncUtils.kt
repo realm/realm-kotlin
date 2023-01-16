@@ -28,6 +28,7 @@ import io.realm.kotlin.mongodb.exceptions.WrongSyncTypeException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
 
+@PublishedApi
 internal fun <T, R> channelResultCallback(
     channel: Channel<Result<R>>,
     success: (T) -> R

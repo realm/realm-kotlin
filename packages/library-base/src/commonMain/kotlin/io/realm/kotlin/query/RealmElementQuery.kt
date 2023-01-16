@@ -19,6 +19,7 @@ package io.realm.kotlin.query
 import io.realm.kotlin.Deleteable
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -47,6 +48,10 @@ public interface RealmElementQuery<T : BaseRealmObject> : Deleteable {
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+     * the elements in a timely manner the coroutine scope will be cancelled with a
+     * [CancellationException].
      *
      * **It is not allowed to call [asFlow] on queries generated from a [MutableRealm].**
      *

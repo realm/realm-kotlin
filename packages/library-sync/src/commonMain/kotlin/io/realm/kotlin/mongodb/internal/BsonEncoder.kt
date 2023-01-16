@@ -17,21 +17,15 @@
 
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.ObjectIdImpl
-import io.realm.kotlin.internal.ObjectIdSerializer
-import io.realm.kotlin.internal.RealmInstantSerializer
-import io.realm.kotlin.internal.RealmUUIDSerializer
-import io.realm.kotlin.internal.toMillis
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.plus
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
@@ -59,107 +53,96 @@ import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.BsonValue
+import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * Bson encoder based on the `Json` encoder from the `KSerializer`. To avoid using any
- * experimental `KSerializer` APIs and to maximize compatibility it only supports a predefined set
- * of types:
- * - Primitives, Realm, Bson, Lists and Map types for encoding.
+ * Bson encoder that avoids using any experimental `KSerializer` APIs. To maximize compatibility it
+ * only supports a limited type set:
+ * - Primitives, Realm, Bson, Collections and Map types for encoding.
  * - Primitives, Realm and Bson types for decoding.
  */
-public object BsonEncoder {
-    // We need to define these serializers as contextual because they are not available in the
-    // serializer module.
-    private val realmSerializersModule = SerializersModule {
-        contextual(ObjectId::class, ObjectIdSerializer)
-        contextual(RealmUUID::class, RealmUUIDSerializer)
-        contextual(RealmInstant::class, RealmInstantSerializer)
-    }
-
-    public val serializersModule: SerializersModule =
-        Json.serializersModule.plus(realmSerializersModule)
-
+@PublishedApi
+internal object BsonEncoder {
     /**
-     * Encodes a given value into a [BsonValue]. Only primitives, Realm, Bson, lists and maps types
+     * Encodes a given value into a [BsonValue]. Only primitives, Realm, Bson, collections and maps types
      * are supported.
      *
      * @param value value to encode.
-     * @return EJSON encoded String.
+     * @return [BsonValue] representing [value].
      */
-    public fun encodeToBsonValue(value: Any?): BsonValue = toBsonValue(value)
+    @PublishedApi
+    internal fun encodeToBsonValue(value: Any?): BsonValue = toBsonValue(value)
 
     /**
-     * Decodes a [BsonValue] into a [T] value. Only primitives, Realm, Bson types are supported.
+     * Decodes a [BsonValue] into a value of the [resultClass] class. Only primitives, Realm, Bson types are supported.
      *
-     * Uses the given serialization strategy to perform a manual decode of the [BsonValue].
-     *
-     * @param T type of the decoded value.
-     * @param deserializationStrategy strategy for decoding the result.
+     * @param resultClass class of the decoded value.
      * @param bsonValue value to decode.
-     * @return decoded [T] value.
+     * @return decoded value.
      */
-    @Suppress("UNCHECKED_CAST", "IMPLICIT_CAST_TO_ANY", "ComplexMethod", "LongMethod")
-    public fun <T : Any?> decodeFromBsonValue(
-        deserializationStrategy: DeserializationStrategy<T>,
+    @PublishedApi
+    @Suppress("ComplexMethod", "LongMethod", "NestedBlockDepth")
+    internal fun decodeFromBsonValue(
+        resultClass: KClass<*>?,
         bsonValue: BsonValue,
-    ): T {
-        return if (bsonValue == BsonNull && deserializationStrategy != serializer<BsonNull>()) {
-            null
-        } else {
-            with(serializersModule) {
-                when (deserializationStrategy) {
-                    serializer<Byte>() -> {
-                        deserializeNumber(bsonValue, "Byte") {
+    ): Any? {
+        return when {
+            resultClass == null || bsonValue == BsonNull && resultClass != BsonNull::class -> null
+            else -> {
+                when (resultClass) {
+                    Byte::class -> {
+                        deserializeNumber(bsonValue, Byte::class.simpleName) {
                             it.intValue().toByte()
                         }
                     }
-                    serializer<Short>() -> {
-                        deserializeNumber(bsonValue, "Short") {
+                    Short::class -> {
+                        deserializeNumber(bsonValue, Short::class.simpleName) {
                             it.intValue().toShort()
                         }
                     }
-                    serializer<Int>() -> {
-                        deserializeNumber(bsonValue, "Int") {
+                    Int::class -> {
+                        deserializeNumber(bsonValue, Int::class.simpleName) {
                             it.intValue()
                         }
                     }
-                    serializer<Long>() -> {
-                        deserializeNumber(bsonValue, "Long") {
+                    Long::class -> {
+                        deserializeNumber(bsonValue, Long::class.simpleName) {
                             it.longValue()
                         }
                     }
-                    serializer<Float>() -> {
-                        deserializeNumber(bsonValue, "Float") {
+                    Float::class -> {
+                        deserializeNumber(bsonValue, Float::class.simpleName) {
                             it.doubleValue().toFloat()
                         }
                     }
-                    serializer<Double>() -> {
-                        deserializeNumber(bsonValue, "Double") {
+                    Double::class -> {
+                        deserializeNumber(bsonValue, Double::class.simpleName) {
                             it.doubleValue()
                         }
                     }
-                    serializer<Boolean>() -> {
+                    Boolean::class -> {
                         require(bsonValue.bsonType == BsonType.BOOLEAN) {
                             "A 'BsonBoolean' is required to deserialize a 'Boolean'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonBoolean
                         bsonValue.value
                     }
-                    serializer<String>() -> {
+                    String::class -> {
                         require(bsonValue.bsonType == BsonType.STRING) {
                             "A 'BsonString' is required to deserialize a 'String'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonString
                         bsonValue.value
                     }
-                    serializer<Char>() -> {
+                    Char::class -> {
                         require(bsonValue.bsonType == BsonType.STRING) {
                             "A 'BsonString' is required to deserialize a 'Char'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonString
                         bsonValue.value[0]
                     }
-                    serializer<ByteArray>() -> {
+                    ByteArray::class -> {
                         require(bsonValue.bsonType == BsonType.BINARY) {
                             "A 'BsonBinary' is required to deserialize a 'ByteArray'. Type '${bsonValue.bsonType}' found."
                         }
@@ -169,36 +152,35 @@ public object BsonEncoder {
                         }
                         bsonValue.data
                     }
-                    serializer<BsonArray>(),
-                    serializer<BsonBinary>(),
-                    serializer<BsonBoolean>(),
-                    serializer<BsonDBPointer>(),
-                    serializer<BsonDateTime>(),
-                    serializer<BsonDecimal128>(),
-                    serializer<BsonDocument>(),
-                    serializer<BsonDouble>(),
-                    serializer<BsonInt32>(),
-                    serializer<BsonInt64>(),
-                    serializer<BsonJavaScript>(),
-                    serializer<BsonJavaScriptWithScope>(),
-                    serializer<BsonMaxKey>(),
-                    serializer<BsonMinKey>(),
-                    serializer<BsonNull>(),
-                    serializer<BsonObjectId>(),
-                    serializer<BsonRegularExpression>(),
-                    serializer<BsonString>(),
-                    serializer<BsonSymbol>(),
-                    serializer<BsonTimestamp>(),
-                    serializer<BsonUndefined>(),
-                    serializer<BsonValue>() -> bsonValue
-                    serializer<MutableRealmInt>() -> {
-                        require(bsonValue.bsonType == BsonType.INT64) {
-                            "A 'BsonInt64' is required to deserialize a 'MutableRealmInt'. Type '${bsonValue.bsonType}' found."
+                    BsonArray::class,
+                    BsonBinary::class,
+                    BsonBoolean::class,
+                    BsonDBPointer::class,
+                    BsonDateTime::class,
+                    BsonDecimal128::class,
+                    BsonDocument::class,
+                    BsonDouble::class,
+                    BsonInt32::class,
+                    BsonInt64::class,
+                    BsonJavaScript::class,
+                    BsonJavaScriptWithScope::class,
+                    BsonMaxKey::class,
+                    BsonMinKey::class,
+                    BsonNull::class,
+                    BsonObjectId::class,
+                    BsonRegularExpression::class,
+                    BsonString::class,
+                    BsonSymbol::class,
+                    BsonTimestamp::class,
+                    BsonUndefined::class,
+                    Any::class,
+                    BsonValue::class -> bsonValue
+                    MutableRealmInt::class -> {
+                        deserializeNumber(bsonValue, "MutableRealmInt") {
+                            MutableRealmInt.create(it.longValue())
                         }
-                        MutableRealmInt.create(bsonValue.asInt64().value)
                     }
-
-                    serializer<RealmUUID>() -> {
+                    RealmUUID::class -> {
                         require(bsonValue.bsonType == BsonType.BINARY) {
                             "A 'BsonBinary' is required to deserialize a 'RealmUUID'. Type '${bsonValue.bsonType}' found."
                         }
@@ -208,31 +190,52 @@ public object BsonEncoder {
                         }
                         RealmUUID.from(bsonValue.data)
                     }
-                    serializer<ObjectId>() -> {
+                    ObjectId::class -> {
                         require(bsonValue.bsonType == BsonType.OBJECT_ID) {
                             "A 'BsonObjectId' is required to deserialize a 'ObjectId'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonObjectId
                         ObjectId.from(bsonValue.toByteArray())
                     }
-                    serializer<RealmInstant>() -> {
+                    RealmInstant::class -> {
                         require(bsonValue.bsonType == BsonType.DATE_TIME) {
                             "A 'BsonDateTime' is required to deserialize a 'RealmInstant'. Type '${bsonValue.bsonType}' found."
                         }
                         bsonValue as BsonDateTime
-                        bsonValue.value.toRealmInstant()
+                        bsonValue.value.milliseconds.toRealmInstant()
+                    }
+                    RealmAny::class -> {
+                        when (bsonValue.bsonType) {
+                            BsonType.BOOLEAN -> RealmAny.create(bsonValue.asBoolean().value)
+                            BsonType.INT32 -> RealmAny.create(bsonValue.asInt32().value)
+                            BsonType.INT64 -> RealmAny.create(bsonValue.asInt64().value)
+                            BsonType.STRING -> RealmAny.create(bsonValue.asString().value)
+                            BsonType.DOUBLE -> RealmAny.create(bsonValue.asDouble().value)
+                            BsonType.BINARY -> {
+                                with(bsonValue.asBinary()) {
+                                    when (this.type) {
+                                        BsonBinarySubType.UUID_STANDARD.value ->
+                                            RealmAny.create(RealmUUID.Companion.from(this.data))
+                                        else -> RealmAny.create(this.data)
+                                    }
+                                }
+                            }
+                            BsonType.OBJECT_ID -> RealmAny.create(bsonValue.asObjectId())
+                            BsonType.DATE_TIME -> RealmAny.create(bsonValue.asDateTime().value)
+                            else -> throw IllegalArgumentException("Cannot decode a ${bsonValue.bsonType} into RealmAny.")
+                        }
                     }
                     else -> {
-                        throw IllegalArgumentException("Unsupported deserializer. Only Bson and primitives types deserializers are supported.")
+                        throw IllegalArgumentException("Unsupported type '${resultClass.simpleName}'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.")
                     }
                 }
             }
-        } as T
+        }
     }
 
     private inline fun <T : Number> deserializeNumber(
         bsonValue: BsonValue,
-        type: String,
+        type: String?,
         block: (BsonNumber) -> T
     ): T {
         require(
@@ -252,15 +255,32 @@ public object BsonEncoder {
 
     private fun Collection<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })
 
+    private fun Array<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })
+
     private fun Map<*, *>.asBsonDocument() = BsonDocument(
-        map { entry ->
-            if (entry.key == null) {
+        map { (key, value) ->
+            if (key == null) {
                 throw IllegalArgumentException("Failed to convert Map to BsonDocument. Keys don't support null values.")
             }
-            if (!String::class.isInstance(entry.key)) {
-                throw IllegalArgumentException("Failed to convert Map to BsonDocument. Key type must be String, ${entry.key!!::class.simpleName} found.")
+            if (!String::class.isInstance(key)) {
+                throw IllegalArgumentException("Failed to convert Map to BsonDocument. Key type must be String, ${key::class.simpleName} found.")
             }
-            BsonElement(entry.key as String, toBsonValue(entry.value))
+            BsonElement(key as String, toBsonValue(value))
+        }
+    )
+
+    private fun RealmAny.asBsonValue(): BsonValue = toBsonValue(
+        when (type) {
+            RealmAny.Type.INT -> asLong()
+            RealmAny.Type.BOOL -> asBoolean()
+            RealmAny.Type.STRING -> asString()
+            RealmAny.Type.BINARY -> asByteArray()
+            RealmAny.Type.TIMESTAMP -> asRealmInstant()
+            RealmAny.Type.FLOAT -> asFloat()
+            RealmAny.Type.DOUBLE -> asDouble()
+            RealmAny.Type.OBJECT_ID -> asObjectId()
+            RealmAny.Type.UUID -> asRealmUUID()
+            RealmAny.Type.OBJECT -> asRealmObject()
         }
     )
 
@@ -280,12 +300,14 @@ public object BsonEncoder {
             is MutableRealmInt -> BsonInt64(value.toLong())
             is RealmUUID -> BsonBinary(BsonBinarySubType.UUID_STANDARD, value.bytes)
             is ObjectId -> BsonObjectId((value as ObjectIdImpl).bytes)
-            is RealmInstant -> BsonDateTime(value.toMillis())
+            is RealmInstant -> BsonDateTime(value.toDuration().inWholeMilliseconds)
             is BsonValue -> value
             null -> BsonNull
+            is RealmAny -> value.asBsonValue()
+            is Array<*> -> value.asBsonArray()
             is Collection<*> -> value.asBsonArray()
             is Map<*, *> -> value.asBsonDocument()
-            else -> throw IllegalArgumentException("Failed to convert arguments, type '${value::class.simpleName}' not supported. Only Bson, primitives, lists and maps are valid arguments types.")
+            else -> throw IllegalArgumentException("Failed to convert arguments, type '${value::class.simpleName}' not supported. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, Array, Collection, Map and primitives are valid arguments types.")
         }
     }
 }
