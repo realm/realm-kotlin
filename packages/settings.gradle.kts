@@ -20,6 +20,10 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Project setup - See './CONTRIBUTING.md' for description of the project structure and various options.
+        getPropertyValue("testRepository")?.let {
+            maven("file://${rootDir.absolutePath}/$it")
+        }
     }
 }
 fun getPropertyValue(propertyName: String): String? {
@@ -30,14 +34,6 @@ fun getPropertyValue(propertyName: String): String? {
     return systemValue
 }
 
-// Project setup - See './CONTRIBUTING.md' for description of the project structure and various options.
-getPropertyValue("testRepository")?.let {
-    dependencyResolutionManagement {
-        repositories {
-            maven("file://${rootDir.absolutePath}/$it")
-        }
-    }
-}
 (getPropertyValue("includeSdkModules")?.let { it.toBoolean() } ?: true).let {
     if (it) {
         include(":gradle-plugin")

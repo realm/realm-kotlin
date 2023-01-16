@@ -651,6 +651,14 @@ expect object RealmInterop {
         callback: AppCallback<Unit>
     )
 
+    fun realm_app_call_function(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        serializedEjsonArgs: String, // as ejson
+        callback: AppCallback<String>
+    )
+
     // Sync config
     fun realm_config_set_sync_config(
         realmConfiguration: RealmConfigurationPointer,
