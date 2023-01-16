@@ -22,7 +22,7 @@
   <1>.<2>$Companion Companion;
 }
 
-## Required to make introspection by reflection in NullabilityTests work
+## Required to make asserted messages in FunctionTests and BsonEncoder work
 -keep class io.realm.kotlin.types.MutableRealmInt
 -keep class io.realm.kotlin.types.RealmUUID
 -keep class io.realm.kotlin.types.RealmList
