@@ -77,8 +77,6 @@ internal object BsonEncoder {
     /**
      * Decodes a [BsonValue] into a value of the [resultClass] class. Only primitives, Realm, Bson types are supported.
      *
-     * Uses the given serialization strategy to perform a manual decode of the [BsonValue].
-     *
      * @param resultClass class of the decoded value.
      * @param bsonValue value to decode.
      * @return decoded value.
