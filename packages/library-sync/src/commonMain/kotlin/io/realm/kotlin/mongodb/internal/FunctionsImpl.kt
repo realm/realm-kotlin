@@ -19,32 +19,35 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions
 import kotlinx.coroutines.channels.Channel
-import kotlinx.serialization.DeserializationStrategy
 import org.mongodb.kbson.serialization.Bson
+import kotlin.reflect.KClass
 
+@PublishedApi
 internal class FunctionsImpl(
     override val app: AppImpl,
     override val user: UserImpl
 ) : Functions {
-    override suspend fun <T : Any?> call(
+    @PublishedApi
+    internal suspend fun callInternal(
         name: String,
-        deserializationStrategy: DeserializationStrategy<T>,
-        vararg args: Any?
-    ): T = Channel<Result<T>>(1).use { channel ->
+        resultClass: KClass<*>,
+        args: Array<out Any?>
+    ): Any? = Channel<Result<Any?>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
             name = name,
-            serializedArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList())),
+            serializedEjsonArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList())),
             callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T
                 BsonEncoder.decodeFromBsonValue(
-                    deserializationStrategy = deserializationStrategy,
+                    resultClass = resultClass,
                     bsonValue = Bson(ejsonEncodedObject)
                 )
             }
         )
+
         return channel.receive().getOrThrow()
     }
 }

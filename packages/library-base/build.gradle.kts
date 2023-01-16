@@ -16,7 +16,6 @@
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    kotlin("plugin.serialization") version Versions.kotlin
     id("com.android.library")
     id("realm-publisher")
     id("org.jetbrains.dokka")
@@ -40,7 +39,7 @@ val versionDirectory = "$buildDir/generated/source/version/"
 kotlin {
     jvm()
     android("android") {
-        publishLibraryVariants("release", "debug")
+        publishLibraryVariants("release")
     }
     ios()
     iosSimulatorArm64()
@@ -61,7 +60,6 @@ kotlin {
                 api(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.kserializer}")
             }
             kotlin.srcDir(versionDirectory)
         }
@@ -173,6 +171,9 @@ android {
     }
 
     buildTypes {
+        getByName("debug") {
+            consumerProguardFiles("proguard-rules-consumer-common.pro")
+        }
         getByName("release") {
             consumerProguardFiles("proguard-rules-consumer-common.pro")
         }

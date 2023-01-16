@@ -16,7 +16,6 @@
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    kotlin("plugin.serialization") version Versions.kotlin
     id("com.android.library")
     id("realm-publisher")
     id("org.jetbrains.dokka")
@@ -37,7 +36,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 kotlin {
     jvm()
     android("android") {
-        publishLibraryVariants("release", "debug")
+        publishLibraryVariants("release")
     }
     iosX64()
     iosArm64()
@@ -67,7 +66,6 @@ kotlin {
 
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.kserializer}")
             }
         }
 

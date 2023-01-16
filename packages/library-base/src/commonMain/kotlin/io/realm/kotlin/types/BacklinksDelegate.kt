@@ -24,11 +24,24 @@ import kotlin.reflect.KProperty
  * Delegate for backlinks collections. Backlinks are used to establish reverse relationships
  * between Realm models.
  *
- * See [backlinks] on how to define inverse relationships in your model.
+ * See [RealmObject.backlinks] on how to define inverse relationships in your model.
  */
 public interface BacklinksDelegate<T : TypedRealmObject> {
     public operator fun getValue(
         reference: RealmObject,
         targetProperty: KProperty<*>
     ): RealmResults<T>
+}
+
+/**
+ * Delegate for backlinks on [EmbeddedRealmObject]. Backlinks are used to establish reverse relationships
+ * between Realm models.
+ *
+ * See [EmbeddedRealmObject.backlinks] on how to define inverse relationships in your model.
+ */
+public interface EmbeddedBacklinksDelegate<T : TypedRealmObject> {
+    public operator fun getValue(
+        reference: EmbeddedRealmObject,
+        targetProperty: KProperty<*>
+    ): T
 }

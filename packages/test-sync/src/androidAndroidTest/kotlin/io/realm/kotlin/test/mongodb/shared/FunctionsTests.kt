@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-// We use internal serialization APIs for testing purposes. No leaks to the public API.
-@file:OptIn(InternalSerializationApi::class)
 @file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.internal.toMillis
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.call
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -42,17 +39,27 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.SUM_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.types.RealmInstant
-import kotlinx.serialization.InternalSerializationApi
+import io.realm.kotlin.types.RealmList
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBoolean
+import org.mongodb.kbson.BsonDBPointer
+import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonDouble
 import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonInt64
+import org.mongodb.kbson.BsonJavaScript
+import org.mongodb.kbson.BsonJavaScriptWithScope
+import org.mongodb.kbson.BsonMaxKey
+import org.mongodb.kbson.BsonMinKey
 import org.mongodb.kbson.BsonNull
+import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonRegularExpression
 import org.mongodb.kbson.BsonString
+import org.mongodb.kbson.BsonSymbol
+import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import kotlin.test.AfterTest
@@ -64,10 +71,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 
 class FunctionsTests {
-//    @Serializable
-//    private data class Dog(var name: String? = null)
+    private data class Dog(var name: String? = null)
 
 //    private val looperThread = BlockingLooperThread()
 
@@ -143,7 +151,7 @@ class FunctionsTests {
     }
 
     // Facilitates debugging by executing the functions on its own block.
-    private inline fun <reified T : Any?> Functions.callBlocking(
+    private inline fun <reified T> Functions.callBlocking(
         name: String,
         vararg args: Any?,
     ): T = runBlocking {
@@ -280,31 +288,48 @@ class FunctionsTests {
                     )
                 }
                 BsonType.DATE_TIME -> {
-                    // JVM and Darwing platform's RealmInstant have better precission than BsonDateTime
-                    // we create a RealmInstant with loose of precision
-                    val nowWithPrecisionLoose = RealmInstant.now().toMillis()
-                    val now = nowWithPrecisionLoose.toRealmInstant()
-
+                    // RealmInstant has better precision (nanoseconds) than BsonDateTime (millis)
+                    // Here we create a RealmInstant with loose of precision to match BsonDateTime
+                    val nowAsDuration: Duration = RealmInstant.now().toDuration()
+                    val nowInMilliseconds = nowAsDuration.inWholeMilliseconds.milliseconds
+                    val now = nowInMilliseconds.toRealmInstant()
                     assertEquals(
                         now,
                         functions.callBlocking<RealmInstant>(FIRST_ARG_FUNCTION.name, now)
                     )
+
+                    BsonDateTime().let {
+                        assertEquals(it, functions.callBlocking(FIRST_ARG_FUNCTION.name, it))
+                    }
                 }
-                BsonType.UNDEFINED,
+                BsonType.UNDEFINED -> assertEquals(
+                    BsonUndefined,
+                    functions.callBlocking(FIRST_ARG_FUNCTION.name, BsonUndefined)
+                )
                 BsonType.NULL -> {
-                    assertNull(functions.callBlocking(FIRST_ARG_FUNCTION.name, null))
+                    assertEquals(
+                        BsonNull,
+                        functions.callBlocking(FIRST_ARG_FUNCTION.name, BsonNull)
+                    )
+                    assertNull(functions.callBlocking<String?>(FIRST_ARG_FUNCTION.name, null))
                 }
-                BsonType.REGULAR_EXPRESSION,
-                BsonType.SYMBOL,
-                BsonType.DB_POINTER,
-                BsonType.JAVASCRIPT,
-                BsonType.JAVASCRIPT_WITH_SCOPE,
-                BsonType.TIMESTAMP,
-                BsonType.END_OF_DOCUMENT,
-                BsonType.MIN_KEY,
-                BsonType.MAX_KEY -> {
-                    // Relying on org.bson codec providers for conversion, so skipping explicit
-                    // tests for these more exotic types
+                BsonType.REGULAR_EXPRESSION -> assertTypeOfFirstArgFunction(BsonRegularExpression(""))
+                BsonType.SYMBOL -> assertTypeOfFirstArgFunction(BsonSymbol(""))
+                BsonType.JAVASCRIPT -> assertTypeOfFirstArgFunction(BsonJavaScript(""))
+                BsonType.JAVASCRIPT_WITH_SCOPE -> assertTypeOfFirstArgFunction(
+                    BsonJavaScriptWithScope("", BsonDocument())
+                )
+                BsonType.TIMESTAMP -> assertTypeOfFirstArgFunction(BsonTimestamp())
+                BsonType.MIN_KEY -> assertTypeOfFirstArgFunction(BsonMinKey)
+                BsonType.MAX_KEY -> assertTypeOfFirstArgFunction(BsonMaxKey)
+                BsonType.DB_POINTER -> assertTypeOfFirstArgFunction(
+                    BsonDBPointer(
+                        namespace = "namespace",
+                        id = BsonObjectId()
+                    )
+                )
+                BsonType.END_OF_DOCUMENT -> {
+                    // Not a real Bson type
                 }
                 else -> {
                     fail("Unsupported BsonType $type")
@@ -317,6 +342,20 @@ class FunctionsTests {
         value: T
     ): T = functions.callBlocking<T>(FIRST_ARG_FUNCTION.name, value).also {
         assertEquals(value, it)
+    }
+
+    @Test
+    fun unsupportedArgumentTypeThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("Failed to convert arguments, type 'Dog' not supported. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, Array, Collection, Map and primitives are valid arguments types.") {
+            functions.callBlocking<Int>(FIRST_ARG_FUNCTION.name, Dog())
+        }
+    }
+
+    @Test
+    fun unsupportedReturnTypeThrows() {
+        assertFailsWithMessage<IllegalArgumentException>("Unsupported type 'RealmList'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.") {
+            functions.callBlocking<RealmList<String>>(FIRST_ARG_FUNCTION.name, "hello world")
+        }
     }
 
 //    @Test
@@ -453,7 +492,7 @@ class FunctionsTests {
 
     @Test
     fun unknownFunction() {
-        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionNotFound(26)] function not found: 'unknown'") {
+        assertFailsWithMessage<FunctionExecutionException>("function not found: 'unknown'") {
             runBlocking {
                 functions.call<String>("unknown", 32)
             }

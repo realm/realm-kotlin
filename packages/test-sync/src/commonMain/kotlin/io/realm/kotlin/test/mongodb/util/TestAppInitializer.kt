@@ -287,30 +287,6 @@ object TestAppInitializer {
         )
     }
 
-    // Enables forward as patch functionality as a HTTPS endpoint on the baas app.
-    private suspend fun AppServicesClient.enableForwardAsPatch(app: BaasApp) = with(app) {
-        addFunction(forwardAsPatch).let { function: Function ->
-            addEndpoint(
-                """
-                {
-                  "route": "/forwardAsPatch",
-                  "function_name": "${function.name}",
-                  "function_id": "${function._id}",
-                  "http_method": "POST",
-                  "validation_method": "NO_VALIDATION",
-                  "secret_id": "",
-                  "secret_name": "",
-                  "create_user_on_auth": false,
-                  "fetch_custom_user_data": false,
-                  "respond_result": false,
-                  "disabled": false,
-                  "return_type": "JSON"
-                }       
-                """.trimIndent()
-            )
-        }
-    }
-
     suspend fun AppServicesClient.addEmailProvider(
         app: BaasApp,
         autoConfirm: Boolean = true,
@@ -344,8 +320,6 @@ object TestAppInitializer {
         app: BaasApp,
         block: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
     ) = with(app) {
-        enableForwardAsPatch(app)
-
         addFunction(insertDocument)
         addFunction(queryDocument)
         addFunction(deleteDocument)
@@ -384,35 +358,6 @@ object TestAppInitializer {
 
         setDevelopmentMode(true)
     }
-
-    private val forwardAsPatch = Function(
-        name = "forwardAsPatch",
-        runAsSystem = true,
-        source =
-        """
-        exports = async function (request, response) {
-            try {
-              if(request.body === undefined) {
-                throw new Error(`Request body was not defined.`)
-              }
-              const forwardRequest = JSON.parse(request.body.text());
-              
-              const forwardResponse = await context.http.patch({
-                url: forwardRequest.url,
-                body: JSON.parse(forwardRequest.body),
-                headers: context.request.requestHeaders,
-                encodeBodyAsJSON: true
-              });
-              
-              response.setStatusCode(forwardResponse.statusCode);
-          } catch (error) {
-            response.setStatusCode(400);
-            response.setBody(error.message);
-          }
-        }
-        
-        """.trimIndent()
-    )
 
     private val insertDocument = Function(
         name = "insertDocument",

@@ -29,7 +29,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
-import io.realm.kotlin.internal.util.trySendCloseOnBufferOverflow
+import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
@@ -125,7 +125,7 @@ internal open class SyncSessionImpl(
                     progressMode == ProgressMode.INDEFINITELY
                 ) { transferredBytes: Long, totalBytes: Long ->
                     val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
-                    trySendCloseOnBufferOverflow(progress)
+                    trySendWithBufferOverflowCheck(progress)
                     if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
                         close()
                     }
@@ -213,9 +213,8 @@ internal open class SyncSessionImpl(
                 }
             }
             // We need to refresh the public Realm when downloading to make the changes visible
-            // to users immediately.
-            // We need to refresh the public Realm when uploading in order to support functionality
-            // like `Realm.writeCopyTo()` which require that all changes are uploaded.
+            // to users immediately, this include functionality like `Realm.writeCopyTo()` which
+            // require that all changes are uploaded.
             realm.refresh()
             when (result) {
                 is Boolean -> return result
@@ -224,6 +223,10 @@ internal open class SyncSessionImpl(
             }
         } catch (ex: TimeoutCancellationException) {
             // Don't throw if timeout is hit, instead just return false per the API contract.
+            // However, since the download might have made progress and integrated some changesets,
+            // we should still refresh the public facing Realm, so it reflect however far
+            // Sync has gotten.
+            realm.refresh()
             return false
         } finally {
             channel.close()

@@ -18,6 +18,8 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
@@ -25,6 +27,7 @@ import kotlin.reflect.KProperty1
 // TODO Public due to being a transitive dependency to Mediator.
 @Suppress("VariableNaming")
 public interface RealmObjectCompanion {
+    public val `io_realm_kotlin_class`: KClass<out TypedRealmObject>
     public val `io_realm_kotlin_className`: String
     public val `io_realm_kotlin_fields`: Map<String, KProperty1<BaseRealmObject, Any?>>
     public val `io_realm_kotlin_primaryKey`: KMutableProperty1<*, *>?

@@ -16,8 +16,10 @@
 
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.ObjectIdImpl
@@ -43,16 +45,19 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -135,6 +140,7 @@ class QueryTests {
                     bsonObjectIdField = BsonObjectId("507f191e810c19729de860eb")
                     uuidField = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d77")
                     binaryField = byteArrayOf(43)
+                    realmAnyField = RealmAny.create(43)
                     nullableRealmObject = objectWithDefaults
                 }
             )
@@ -226,6 +232,9 @@ class QueryTests {
                         .run {
                             assertContentEquals(value, binaryField)
                         }
+                }
+                RealmStorageType.ANY -> {
+                    checkQuery(QuerySample::realmAnyField, RealmAny.create("Hello"))
                 }
                 else -> fail("Unknown type: $type")
             }
@@ -760,6 +769,28 @@ class QueryTests {
     }
 
     @Test
+    fun sort_realmAny() {
+        realm.writeBlocking {
+            QUERY_REALM_ANY_VALUES.forEach {
+                copyToRealm(QuerySample().apply { realmAnyField = it })
+            }
+        }
+
+        // No filter, multiple sortings
+        realm.query<QuerySample>()
+            .sort(QuerySample::realmAnyField.name to Sort.DESCENDING)
+            .find { results ->
+                val managedRealmAny = assertNotNull(results.first().realmAnyField)
+                val expected = REALM_ANY_MAX.asRealmObject(QuerySample::class)
+                val actual = managedRealmAny.asRealmObject(QuerySample::class)
+                assertEquals(expected.stringField, actual.stringField)
+                // Boolean is the "lowest" but it is not the last element since we also have null
+                assertEquals(REALM_ANY_MIN, results[results.size - 2].realmAnyField)
+                assertEquals(null, results.last().realmAnyField)
+            }
+    }
+
+    @Test
     fun sort_throwsIfInvalidProperty() {
         assertFailsWith<IllegalArgumentException> {
             realm.query<QuerySample>()
@@ -1190,16 +1221,17 @@ class QueryTests {
                     .sum(propertyDescriptor.property.name, propertyDescriptor.clazz)
 
                 val sumValueBefore = sumQuery.find()
-                if (sumValueBefore is Number) {
-                    assertEquals(0, sumValueBefore.toInt())
+                when (sumValueBefore) {
+                    is Number -> assertEquals(0, sumValueBefore.toInt())
+                    is Decimal128 -> assertEquals(Decimal128("0"), sumValueBefore)
                 }
 
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+                saveData(propertyDescriptor)
 
                 val sumValueAfter = sumQuery.find()
-                if (sumValueAfter is Number) {
-                    assertEquals(expectedSum, sumValueAfter)
+                when (sumValueAfter) {
+                    is Number -> assertEquals(expectedSum, sumValueAfter)
+                    is Decimal128 -> assertEquals(expectedSum, sumValueAfter)
                 }
             }
 
@@ -1223,41 +1255,71 @@ class QueryTests {
     }
 
     @Test
-    fun sum_find_throwsIfRealmInstant() {
+    fun sum_find_intPropertyCoercedCorrectly() {
+        sum_find_numericPropertiesCoercedCorrectly(QuerySample::intField)
+    }
+
+    @Test
+    fun sum_find_doublePropertyCoercedCorrectly() {
+        sum_find_numericPropertiesCoercedCorrectly(QuerySample::doubleField)
+    }
+
+    @Test
+    fun sum_find_floatPropertyCoercedCorrectly() {
+        sum_find_numericPropertiesCoercedCorrectly(QuerySample::floatField)
+    }
+
+    @Test
+    fun sum_throwsIfRealmInstant() {
         assertFailsWith<IllegalArgumentException> {
             realm.query<QuerySample>()
                 .sum(timestampDescriptor.property.name, timestampDescriptor.clazz)
-                .find() // The sum is only evaluated after obtaining results!
         }
 
         assertFailsWith<IllegalArgumentException> {
             realm.query<QuerySample>()
                 .sum(nullableTimestampDescriptor.property.name, nullableTimestampDescriptor.clazz)
-                .find() // The sum is only evaluated after obtaining results!
         }
     }
 
     @Test
-    fun sum_find_throwsIfInvalidProperty() {
-        // Sum of an invalid primitive
-        assertFailsWith<IllegalArgumentException> {
+    fun sum_throwsIfInvalidProperty() {
+        // Numeric to something else, only test Int or Short or Long for RLM_PROPERTY_TYPE_INT columns
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .sum<String>(QuerySample::intField.name)
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .sum<String>(QuerySample::floatField.name)
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .sum<String>(QuerySample::doubleField.name)
+        }
+
+        // Max of an invalid primitive
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
             realm.query<QuerySample>()
                 .sum<Int>(QuerySample::stringField.name)
-                .find()
         }
 
-        // Sum of a non-numerical RealmList
-        assertFailsWith<IllegalArgumentException> {
+        // Max of a non-numerical RealmList
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
             realm.query<QuerySample>()
                 .sum<Int>(QuerySample::stringListField.name)
-                .find()
         }
 
-        // Sum of an object
-        assertFailsWith<IllegalArgumentException> {
+        // Max of an object
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
             realm.query<QuerySample>()
                 .sum<Int>(QuerySample::child.name)
-                .find()
+        }
+
+        // Max of a RealmAny column
+        assertFailsWithMessage<IllegalArgumentException>("RealmAny properties cannot be aggregated") {
+            realm.query<QuerySample>()
+                .sum<Int>(QuerySample::realmAnyField.name)
         }
     }
 
@@ -1320,56 +1382,11 @@ class QueryTests {
     }
 
     @Test
-    fun sum_find_throwsIfInvalidType() {
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .sum<String>(QuerySample::intField.name)
-                .find()
-        }
-    }
-
-    @Test
     fun sum_asFlow() {
         for (propertyDescriptor in allPropertyDescriptorsForSum) {
             asFlowAggregatorAssertions(AggregatorQueryType.SUM, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.SUM, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.SUM, propertyDescriptor)
-        }
-    }
-
-    @Test
-    fun sum_asFlow_throwsIfInvalidType() {
-        val value1 = 2
-        val value2 = 7
-
-        realm.writeBlocking {
-            copyToRealm(QuerySample(intField = value1))
-            copyToRealm(QuerySample(intField = value2))
-        }
-
-        runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .sum<String>(QuerySample::intField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid property type"))
-            }
-        }
-    }
-
-    @Test
-    fun sum_asFlow_throwsIfInvalidProperty() {
-        runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .sum<String>(QuerySample::stringField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid query formulation"))
-            }
         }
     }
 
@@ -1444,14 +1461,32 @@ class QueryTests {
                     .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
 
                 assertNull(maxQuery.find())
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
-                assertEquals(expectedMax, maxQuery.find())
+
+                saveData(propertyDescriptor)
+                val queryMax = maxQuery.find()
+
+                if (expectedMax is RealmAny) {
+                    // The MAX of a RealmAny column is RealmObject, compare by field
+                    val expected = expectedMax.asRealmObject(QuerySample::class)
+                    val actual = (queryMax as RealmAny).asRealmObject(QuerySample::class)
+                    assertEquals(expected.stringField, actual.stringField)
+                } else {
+                    assertEquals(expectedMax, queryMax)
+                }
             }
 
             realm.query(QuerySample::class)
                 .max(propertyDescriptor.property.name, propertyDescriptor.clazz)
-                .find { maxValue -> assertEquals(expectedMax, maxValue) }
+                .find { maxValue ->
+                    // The MAX of a RealmAny column is RealmObject, compare by field
+                    if (expectedMax is RealmAny) {
+                        val expected = expectedMax.asRealmObject(QuerySample::class)
+                        val actual = (maxValue as RealmAny).asRealmObject(QuerySample::class)
+                        assertEquals(expected.stringField, actual.stringField)
+                    } else {
+                        assertEquals(expectedMax, maxValue)
+                    }
+                }
 
             // Make sure to delete all objects after assertions as aggregators to clean state and
             // avoid "null vs 0" results when testing
@@ -1465,42 +1500,58 @@ class QueryTests {
     }
 
     @Test
-    fun max_find_throwsIfInvalidProperty() {
-        // Max of an invalid primitive
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .max<Int>(QuerySample::stringField.name)
-                .find()
-        }
-
-        // Max of a non-numerical RealmList
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .max<Int>(QuerySample::stringListField.name)
-                .find()
-        }
-
-        // Max of an object
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .max<Int>(QuerySample::child.name)
-                .find()
-        }
+    fun max_find_intPropertyCoercedCorrectly() {
+        max_find_numericPropertiesCoercedCorrectly(QuerySample::intField)
     }
 
     @Test
-    fun max_find_throwsIfInvalidType() {
-        realm.writeBlocking {
-            copyToRealm(QuerySample(intField = 1))
-            copyToRealm(QuerySample(intField = 2))
-        }
+    fun max_find_doublePropertyCoercedCorrectly() {
+        max_find_numericPropertiesCoercedCorrectly(QuerySample::doubleField)
+    }
 
-        // TODO this won't fail unless we have previously stored something, otherwise it returns
-        //  null and nothing will trigger an exception!
-        assertFailsWith<IllegalArgumentException> {
+    @Test
+    fun max_find_floatPropertyCoercedCorrectly() {
+        max_find_numericPropertiesCoercedCorrectly(QuerySample::floatField)
+    }
+
+    @Test
+    fun max_throwsIfInvalidProperty() {
+        // Numeric to something else, only test Int or Short or Long for RLM_PROPERTY_TYPE_INT columns
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
             realm.query<QuerySample>()
                 .max<String>(QuerySample::intField.name)
-                .find()
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .max<String>(QuerySample::floatField.name)
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .max<String>(QuerySample::doubleField.name)
+        }
+
+        // Max of an invalid primitive
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .max<Int>(QuerySample::stringField.name)
+        }
+
+        // Max of a non-numerical RealmList
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .max<Int>(QuerySample::stringListField.name)
+        }
+
+        // Max of an object
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .max<Int>(QuerySample::child.name)
+        }
+
+        // Max of a RealmAny column
+        assertFailsWithMessage<IllegalArgumentException>("RealmAny properties cannot be aggregated") {
+            realm.query<QuerySample>()
+                .max<Int>(QuerySample::realmAnyField.name)
         }
     }
 
@@ -1510,50 +1561,6 @@ class QueryTests {
             asFlowAggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MAX, propertyDescriptor)
-        }
-    }
-
-    @Test
-    fun max_asFlow_throwsIfInvalidType() {
-        val value1 = 2
-        val value2 = 7
-
-        realm.writeBlocking {
-            copyToRealm(QuerySample(intField = value1))
-            copyToRealm(QuerySample(intField = value2))
-        }
-
-        runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .max<String>(QuerySample::intField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid property type"))
-            }
-        }
-    }
-
-    @Test
-    fun max_asFlow_throwsIfInvalidProperty() {
-        val value1 = 2
-        val value2 = 7
-
-        realm.writeBlocking {
-            copyToRealm(QuerySample(intField = value1))
-            copyToRealm(QuerySample(intField = value2))
-        }
-
-        runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .max<String>(QuerySample::stringField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid query formulation"))
-            }
         }
     }
 
@@ -1628,8 +1635,7 @@ class QueryTests {
                     .min(propertyDescriptor.property.name, propertyDescriptor.clazz)
 
                 assertNull(minQuery.find())
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+                saveData(propertyDescriptor)
                 assertEquals(expectedMin, minQuery.find())
             }
 
@@ -1649,42 +1655,58 @@ class QueryTests {
     }
 
     @Test
-    fun min_find_throwsIfInvalidProperty() {
-        // Min of an invalid primitive
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .min<Int>(QuerySample::stringField.name)
-                .find()
-        }
-
-        // Min of a non-numerical RealmList
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .min<Int>(QuerySample::stringListField.name)
-                .find()
-        }
-
-        // Min of an object
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>()
-                .min<Int>(QuerySample::child.name)
-                .find()
-        }
+    fun min_find_intPropertyCoercedCorrectly() {
+        min_find_numericPropertiesCoercedCorrectly(QuerySample::intField)
     }
 
     @Test
-    fun min_find_throwsIfInvalidType() {
-        realm.writeBlocking {
-            copyToRealm(QuerySample().apply { intField = 1 })
-            copyToRealm(QuerySample().apply { intField = 2 })
-        }
+    fun min_find_doublePropertyCoercedCorrectly() {
+        min_find_numericPropertiesCoercedCorrectly(QuerySample::doubleField)
+    }
 
-        // TODO this won't fail unless we have previously stored something, otherwise it returns
-        //  null and nothing will trigger an exception!
-        assertFailsWith<IllegalArgumentException> {
+    @Test
+    fun min_find_floatPropertyCoercedCorrectly() {
+        min_find_numericPropertiesCoercedCorrectly(QuerySample::floatField)
+    }
+
+    @Test
+    fun min_throwsIfInvalidProperty() {
+        // Numeric to something else, only test Int or Short or Long for RLM_PROPERTY_TYPE_INT columns
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
             realm.query<QuerySample>()
                 .min<String>(QuerySample::intField.name)
-                .find()
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .min<String>(QuerySample::floatField.name)
+        }
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .min<String>(QuerySample::doubleField.name)
+        }
+
+        // Max of an invalid primitive
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .min<Int>(QuerySample::stringField.name)
+        }
+
+        // Max of a non-numerical RealmList
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .min<Int>(QuerySample::stringListField.name)
+        }
+
+        // Max of an object
+        assertFailsWithMessage<IllegalArgumentException>("Conversion not possible between") {
+            realm.query<QuerySample>()
+                .min<Int>(QuerySample::child.name)
+        }
+
+        // Max of a RealmAny column
+        assertFailsWithMessage<IllegalArgumentException>("RealmAny properties cannot be aggregated") {
+            realm.query<QuerySample>()
+                .min<Int>(QuerySample::realmAnyField.name)
         }
     }
 
@@ -1694,50 +1716,6 @@ class QueryTests {
             asFlowAggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MIN, propertyDescriptor)
-        }
-    }
-
-    @Test
-    fun min_asFlow_throwsIfInvalidType() {
-        val value1 = 2
-        val value2 = 7
-
-        realm.writeBlocking {
-            copyToRealm(QuerySample(intField = value1))
-            copyToRealm(QuerySample(intField = value2))
-        }
-
-        runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .min<String>(QuerySample::intField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid property type"))
-            }
-        }
-    }
-
-    @Test
-    fun min_asFlow_throwsIfInvalidProperty() {
-        val value1 = 2
-        val value2 = 7
-
-        realm.writeBlocking {
-            copyToRealm(QuerySample(intField = value1))
-            copyToRealm(QuerySample(intField = value2))
-        }
-
-        runBlocking {
-            assertFailsWith<IllegalArgumentException> {
-                realm.query<QuerySample>()
-                    .min<String>(QuerySample::stringField.name)
-                    .asFlow()
-                    .collect { /* No-op */ }
-            }.let {
-                assertTrue(it.message!!.contains("Invalid query formulation"))
-            }
         }
     }
 
@@ -2013,6 +1991,18 @@ class QueryTests {
     // Class instantiation with property setting helpers
     // --------------------------------------------------
 
+    private fun MutableRealm.saveData(propertyDescriptor: PropertyDescriptor) {
+        copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
+        copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+
+        // Add all values for RealmAny manually
+        if (propertyDescriptor.clazz == RealmAny::class) {
+            for (i in 2 until QUERY_REALM_ANY_VALUES.size) {
+                copyToRealm(getInstance(propertyDescriptor, QuerySample(), i))
+            }
+        }
+    }
+
     /**
      * Creates a [QuerySample] object and sets a value in the property specified by
      * [PropertyDescriptor.property]. The [index] parameter specifies which value from the dataset
@@ -2070,6 +2060,12 @@ class QueryTests {
                 instance,
                 property as KMutableProperty1<C, RealmInstant?>,
                 values as List<RealmInstant?>,
+                index
+            )
+            RealmAny::class -> setProperty(
+                instance,
+                property as KMutableProperty1<C, RealmAny?>,
+                values as List<RealmAny?>,
                 index
             )
             else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
@@ -2153,6 +2149,11 @@ class QueryTests {
                 AggregatorQueryType.MAX -> TIMESTAMP_VALUES.maxOrNull()!!
                 AggregatorQueryType.SUM -> throw IllegalArgumentException("SUM is not allowed on timestamp fields.")
             }
+            RealmAny::class -> when (type) {
+                AggregatorQueryType.MIN -> REALM_ANY_MIN
+                AggregatorQueryType.MAX -> REALM_ANY_MAX
+                AggregatorQueryType.SUM -> REALM_ANY_SUM
+            }
             else -> throw IllegalArgumentException("Only numerical properties and timestamps are allowed.")
         }
 
@@ -2207,6 +2208,7 @@ class QueryTests {
                 AggregatorQueryType.SUM -> when (aggregatedValue) {
                     is Number -> assertEquals(0, aggregatedValue.toInt())
                     is Char -> assertEquals(0, aggregatedValue.code)
+                    is Decimal128 -> assertEquals(Decimal128("0"), aggregatedValue)
                     else -> throw IllegalStateException("Expected a Number or a Char but got $aggregatedValue.")
                 }
                 else -> assertNull(aggregatedValue)
@@ -2214,35 +2216,79 @@ class QueryTests {
 
             // Trigger an emission
             realm.writeBlocking {
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+                saveData(propertyDescriptor)
             }
 
             val receivedAggregate = channel.receive()
-            when (type) {
-                AggregatorQueryType.SUM -> when (receivedAggregate) {
-                    is Number -> assertEquals(expectedAggregate, receivedAggregate)
-                    is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
+            when (propertyDescriptor.clazz) {
+                RealmAny::class -> when (type) {
+                    AggregatorQueryType.MIN -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asBoolean()
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asBoolean()
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.MAX -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.SUM ->
+                        assertEquals(expectedAggregate, receivedAggregate)
                 }
-                else -> assertEquals(expectedAggregate, receivedAggregate)
+                else -> when (type) {
+                    AggregatorQueryType.MIN -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.MAX -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.SUM -> when (receivedAggregate) {
+                        is Number -> assertEquals(expectedAggregate, receivedAggregate)
+                        is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
+                        is Decimal128 -> assertEquals(expectedAggregate, receivedAggregate)
+                    }
+                }
             }
 
             // Attempt to fool the flow by not changing the aggregations
             // This should NOT trigger an emission
+            // NOTE - if the aggregated value is a RealmObject the value WILL BE EMITTED
             realm.writeBlocking {
                 // First delete the existing data within the transaction
                 delete(query<QuerySample>())
 
                 // Then insert the same data - which should result in the same aggregated values
                 // Therefore not emitting anything
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+                saveData(propertyDescriptor)
             }
 
             // Should not receive anything and should time out
-            assertFailsWith<TimeoutCancellationException> {
-                withTimeout(100) {
-                    channel.receive()
+            // NOTE - if the aggregated value is a RealmObject the value WILL BE EMITTED
+            when (propertyDescriptor.clazz) {
+                RealmAny::class -> when (type) {
+                    AggregatorQueryType.SUM -> assertFailsWith<TimeoutCancellationException> {
+                        withTimeout(100) { channel.receive() }
+                    }
+                    // MAX for RealmAny is RealmObject so emitted objects will not be the same
+                    // even though they may the same at a structural level
+                    AggregatorQueryType.MAX -> {
+                        val receivedRepeatedAggregate = channel.receive()
+                        val actualString = (receivedRepeatedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        val expectedString = (expectedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        assertEquals(expectedString, actualString)
+                    }
+                    AggregatorQueryType.MIN -> assertFailsWith<TimeoutCancellationException> {
+                        withTimeout(100) { channel.receive() }
+                    }
+                }
+                else -> assertFailsWith<TimeoutCancellationException> {
+                    withTimeout(100) { channel.receive() }
                 }
             }
 
@@ -2256,6 +2302,7 @@ class QueryTests {
                 AggregatorQueryType.SUM -> when (finalAggregatedValue) {
                     is Number -> assertEquals(0, finalAggregatedValue.toInt())
                     is Char -> assertEquals(0, finalAggregatedValue.code)
+                    is Decimal128 -> assertEquals(Decimal128("0"), finalAggregatedValue)
                     else -> throw IllegalStateException("Expected a Number or a Char but got $finalAggregatedValue.")
                 }
                 else -> assertNull(finalAggregatedValue)
@@ -2284,8 +2331,7 @@ class QueryTests {
 
         runBlocking {
             realm.writeBlocking {
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 0))
-                copyToRealm(getInstance(propertyDescriptor, QuerySample(), 1))
+                saveData(propertyDescriptor)
             }
 
             val observer = async {
@@ -2312,12 +2358,36 @@ class QueryTests {
             }
 
             val receivedAggregate = channel.receive()
-            when (type) {
-                AggregatorQueryType.SUM -> when (receivedAggregate) {
-                    is Number -> assertEquals(expectedAggregate, receivedAggregate)
-                    is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
+            when (propertyDescriptor.clazz) {
+                RealmAny::class -> when (type) {
+                    AggregatorQueryType.MIN -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asBoolean()
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asBoolean()
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.MAX -> {
+                        val actualValue = (receivedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        val expectedValue = (expectedAggregate as RealmAny)
+                            .asRealmObject<QuerySample>()
+                            .stringField
+                        assertEquals(expectedValue, actualValue)
+                    }
+                    AggregatorQueryType.SUM ->
+                        assertEquals(expectedAggregate, receivedAggregate)
                 }
-                else -> assertEquals(expectedAggregate, receivedAggregate)
+                else -> when (type) {
+                    AggregatorQueryType.MIN -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.MAX -> assertEquals(expectedAggregate, receivedAggregate)
+                    AggregatorQueryType.SUM -> when (receivedAggregate) {
+                        is Number -> assertEquals(expectedAggregate, receivedAggregate)
+                        is Char -> assertEquals(expectedAggregate, receivedAggregate.code)
+                        is Decimal128 -> assertEquals(expectedAggregate, receivedAggregate)
+                    }
+                }
             }
 
             // Now delete objects to trigger a new emission
@@ -2330,6 +2400,7 @@ class QueryTests {
                 AggregatorQueryType.SUM -> when (aggregatedValue) {
                     is Number -> assertEquals(0, aggregatedValue.toInt())
                     is Char -> assertEquals(0, aggregatedValue.code)
+                    is Decimal128 -> assertEquals(Decimal128("0"), aggregatedValue)
                     else -> throw IllegalStateException("Expected a Number or a Char but got $aggregatedValue.")
                 }
                 else -> assertNull(aggregatedValue)
@@ -2413,6 +2484,10 @@ class QueryTests {
                         assertEquals(0, initialAggregate1.code)
                         assertEquals(0, (initialAggregate2 as Char).code)
                     }
+                    is Decimal128 -> {
+                        assertEquals(Decimal128("0"), initialAggregate1)
+                        assertEquals(Decimal128("0"), initialAggregate2)
+                    }
                 }
                 else -> {
                     assertNull(initialAggregate1)
@@ -2430,8 +2505,30 @@ class QueryTests {
 
             // Assert emission and that the original channel hasn't been received
             val receivedAggregate = channel2.receive()
-            val expectedAggregate = propertyDescriptor.values[0]
-            assertEquals(expectedAggregate, receivedAggregate)
+            if (propertyDescriptor.clazz == RealmAny::class) {
+                when (type) {
+                    AggregatorQueryType.SUM -> {
+                        val expectedRealmAnyValue =
+                            (propertyDescriptor.values as List<RealmAny?>)[0]
+                        if (expectedRealmAnyValue?.type != RealmAny.Type.INT) {
+                            throw IllegalArgumentException("Wrong RealmAny value to compare. Expected 'INT' but was '${expectedRealmAnyValue?.type}'.")
+                        }
+                        val asLong = expectedRealmAnyValue.asLong()
+                        assertEquals(Decimal128(asLong.toString()), receivedAggregate)
+                    }
+                    else -> {
+                        val expectedRealmAnyValue =
+                            (propertyDescriptor.values as List<RealmAny?>)[0]
+                        if (expectedRealmAnyValue?.type != RealmAny.Type.INT) {
+                            throw IllegalArgumentException("Wrong RealmAny value to compare. Expected 'INT' but was '${expectedRealmAnyValue?.type}'.")
+                        }
+                        assertEquals(expectedRealmAnyValue, receivedAggregate)
+                    }
+                }
+            } else {
+                val expectedAggregate = propertyDescriptor.values[0]
+                assertEquals(expectedAggregate, receivedAggregate)
+            }
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -2442,6 +2539,121 @@ class QueryTests {
             // avoid "null vs 0" results when testing
             cleanUpBetweenProperties()
         }
+    }
+
+    // ----------------
+    // Coercion helpers
+    // ----------------
+
+    private fun <T : Any> sum_find_numericPropertiesCoercedCorrectly(
+        property: KMutableProperty1<QuerySample, T>
+    ) {
+        val sum = 3
+        realm.writeBlocking {
+            for (i in 1..3) {
+                val sample = QuerySample().apply {
+                    intField = 1
+                    floatField = 1F
+                    doubleField = 1.0
+                }
+                copyToRealm(sample)
+            }
+        }
+
+        // Long coercion
+        realm.query<QuerySample>()
+            .sum<Long>(property.name)
+            .find {
+                assertEquals(sum.toLong(), assertNotNull(it))
+            }
+
+        // Float coercion
+        realm.query<QuerySample>()
+            .sum<Float>(property.name)
+            .find {
+                assertEquals(sum.toFloat(), assertNotNull(it))
+            }
+
+        // Double coercion
+        realm.query<QuerySample>()
+            .sum<Double>(property.name)
+            .find {
+                assertEquals(sum.toDouble(), assertNotNull(it))
+            }
+    }
+
+    private fun <T : Any> max_find_numericPropertiesCoercedCorrectly(
+        property: KMutableProperty1<QuerySample, T>
+    ) {
+        val max = 3
+        realm.writeBlocking {
+            for (i in 1..max) {
+                val sample = QuerySample().apply {
+                    intField = i
+                    floatField = i.toFloat()
+                    doubleField = i.toDouble()
+                }
+                copyToRealm(sample)
+            }
+        }
+
+        // Long coercion
+        realm.query<QuerySample>()
+            .max<Long>(property.name)
+            .find {
+                assertEquals(max.toLong(), assertNotNull(it))
+            }
+
+        // Float coercion
+        realm.query<QuerySample>()
+            .max<Float>(property.name)
+            .find {
+                assertEquals(max.toFloat(), assertNotNull(it))
+            }
+
+        // Double coercion
+        realm.query<QuerySample>()
+            .max<Double>(property.name)
+            .find {
+                assertEquals(max.toDouble(), assertNotNull(it))
+            }
+    }
+
+    private fun <T : Any> min_find_numericPropertiesCoercedCorrectly(
+        property: KMutableProperty1<QuerySample, T>
+    ) {
+        val min = 1
+        realm.writeBlocking {
+            for (i in min..3) {
+                val sample = QuerySample().apply {
+                    intField = i
+                    floatField = i.toFloat()
+                    doubleField = i.toDouble()
+                }
+                copyToRealm(sample)
+            }
+        }
+
+        // Long coercion
+        realm.query<QuerySample>()
+            .min<Long>(property.name)
+            .find {
+                assertEquals(min.toLong(), assertNotNull(it))
+            }
+
+        // Float coercion
+        realm.query<QuerySample>()
+            .min<Float>(property.name)
+            .find {
+                assertEquals(min.toFloat(), assertNotNull(it))
+            }
+
+        // Double coercion
+        realm.query<QuerySample>()
+            .min<Double>(property.name)
+            .find {
+                assertEquals(min.toDouble(), assertNotNull(it))
+            }
     }
 
     // ------------------------
@@ -2497,6 +2709,11 @@ class QueryTests {
             Char::class,
             if (isNullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
         )
+        RealmAny::class -> PropertyDescriptor(
+            QuerySample::realmAnyField,
+            RealmAny::class,
+            QUERY_REALM_ANY_VALUES
+        )
         else -> throw IllegalArgumentException("Invalid type descriptor: $classifier")
     }
 
@@ -2543,7 +2760,7 @@ class QueryTests {
  * @param clazz field type
  * @param values individual values to be stored in [property]
  */
-private data class PropertyDescriptor(
+private data class PropertyDescriptor constructor(
     val property: KMutableProperty1<QuerySample, *>,
     val clazz: KClass<*>,
     val values: List<Any?>
@@ -2573,6 +2790,9 @@ class QuerySample() : RealmObject {
         this.stringField = stringField
     }
 
+    @PersistedName("persistedNameStringField")
+    var publicNameStringField: String = "Realm"
+
     var stringField: String = "Realm"
     var byteField: Byte = 0
     var charField: Char = 'a'
@@ -2587,6 +2807,8 @@ class QuerySample() : RealmObject {
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
+//    var realmAnyField: RealmAny? = RealmAny.create(42)
+    var realmAnyField: RealmAny? = RealmAny.create("Hello")
 
     var nullableStringField: String? = null
     var nullableByteField: Byte? = null
@@ -2632,3 +2854,15 @@ class QuerySample() : RealmObject {
 
     var child: QuerySample? = null
 }
+
+internal val QUERY_REALM_ANY_OBJECT = RealmAny.create(
+    QuerySample().apply { stringField = "foo" },
+    QuerySample::class
+)
+
+// Use this for QUERY tests as this file does exhaustive testing on all RealmAny types
+internal val QUERY_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + QUERY_REALM_ANY_OBJECT
+
+internal val REALM_ANY_SUM = Decimal128("81") // sum of numerics present in PRIMITIVE_REALM_ANY_VALUES = -12+13+14+15+16L+17F+18.0
+internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
+internal val REALM_ANY_MAX = QUERY_REALM_ANY_OBJECT // RealmObject is "highest" when comparing Mixed types

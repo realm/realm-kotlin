@@ -15,8 +15,6 @@
 package io.realm.kotlin.types
 
 import io.realm.kotlin.internal.ObjectIdImpl
-import io.realm.kotlin.internal.ObjectIdSerializer
-import kotlinx.serialization.Serializable
 
 /**
  * A globally unique identifier for objects.
@@ -27,7 +25,6 @@ import kotlinx.serialization.Serializable
  * A 3-byte incrementing counter, initialized to a random value.
  */
 @Deprecated("Use BSON ObjectId instead", ReplaceWith("org.mongodb.kbson.ObjectId"))
-@Serializable(with = ObjectIdSerializer::class)
 public interface ObjectId : Comparable<ObjectId> {
     public companion object {
         /**

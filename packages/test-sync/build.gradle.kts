@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
-    id("com.android.library")
+    id("com.android.application")
     kotlin("plugin.serialization") version Versions.kotlin
     // Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
     // gradle run, so we just apply the compiler plugin directly as a dependency below instead
@@ -106,6 +106,8 @@ android {
     compileSdkVersion(Versions.Android.compileSdkVersion)
     buildToolsVersion = Versions.Android.buildToolsVersion
 
+    testBuildType = (properties["testBuildType"] ?: "debug") as String
+
     defaultConfig {
         minSdkVersion(Versions.Android.minSdk)
         targetSdkVersion(Versions.Android.targetSdk)
@@ -123,9 +125,12 @@ android {
     }
 
     buildTypes {
-        getByName("release") {
-            isMinifyEnabled = false
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        create("debugMinified") {
+            initWith(getByName("debug"))
+            matchingFallbacks.add("debug")
+            isMinifyEnabled = true
+            isDebuggable = false
+            proguardFiles("proguard-rules-test.pro")
         }
     }
 
@@ -143,9 +148,7 @@ android {
 }
 
 kotlin {
-    android("android") {
-        publishLibraryVariants("release", "debug")
-    }
+    android("android")
     sourceSets {
         val androidMain by getting {
             dependencies {
@@ -162,7 +165,6 @@ kotlin {
                 implementation("androidx.test:runner:${Versions.androidxTest}")
                 implementation("androidx.test:rules:${Versions.androidxTest}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
-                implementation("androidx.multidex:multidex:${Versions.multidex}")
             }
         }
     }

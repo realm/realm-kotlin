@@ -323,7 +323,7 @@ bool realm_object_is_valid(const realm_object_t*);
 
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
-                      bool* erased, bool* out_erased };
+                      bool* erased, bool* out_erased, bool* did_refresh, bool* did_run };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -335,6 +335,13 @@ bool realm_object_is_valid(const realm_object_t*);
 
 // Enable passing uint8_t [64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
 %apply int8_t[] {uint8_t [64]};
+
+// Enable passing uint8_t [2] parameter for realm_decimal128 as Long[]
+%apply int64_t[] {uint64_t w[2]};
+
+%typemap(out) uint64_t w[2] %{
+    $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
+%}
 
 %typemap(freearg) const uint8_t* data;
 %typemap(out) const uint8_t* data %{
