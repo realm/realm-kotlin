@@ -115,6 +115,8 @@ kotlin {
         }
     }
     android("android") {
+        // Changing this will also requires an update to the publishCIPackages task
+        // in /packages/build.gradle.kts
         publishLibraryVariants("release")
     }
     // Cinterops seems sharable across architectures (x86_64/arm) with option of differentiation in
