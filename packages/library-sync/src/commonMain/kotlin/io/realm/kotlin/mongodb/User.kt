@@ -97,6 +97,13 @@ public interface User {
      */
     public val deviceId: String
 
+    /**
+     * Returns a wrapper for invoking App Services Functions.
+     *
+     * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
+     */
+    public val functions: Functions
+
     // FIXME Review around user state
     /**
      * Log the user out of the Realm App. This will unregister them on the device and stop any

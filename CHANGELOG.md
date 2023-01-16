@@ -19,6 +19,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
 * [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))lin/issues/1086))
 * [Sync] `Realm.writeCopyTo(syncConfig)` now support copying a Flexible Sync Realm to another Flexible Sync Realm. 
+* [Sync] Added support for App functions, see documentation for more details. (Issue [#1110](https://github.com/realm/realm-kotlin/pull/1110))
 
 ### Fixed
 * Windows binaries for JVM did not statically link the C++ runtime, which could lead to crashes it wasn't preinstalled. (Issue [#XXX]())
@@ -47,6 +48,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 ### Internal
 * Updated to Realm Core 13.1.2, commit 711c5f0bae2f0b2c3397cec99a81f1ed3f03b5a9.
 * Updated to require Swig 4.1.0.
+* Updated to Kbson 0.2.0.
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 * Added JVM test wrapper as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 
