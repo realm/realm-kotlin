@@ -158,19 +158,6 @@ jobs:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
           path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni
 
-      - name: Get vcpkg submodule commit sha
-        id: vcpkg-cache-key
-        working-directory: packages\external\core\tools\vcpkg\ports
-        shell: powershell
-        run: echo "::set-output name=commit::$(git rev-parse HEAD)"
-
-      - name: Setup Vcpkg
-        uses: friendlyanon/setup-vcpkg@v1
-        with:
-          path: ${{ github.workspace }}\packages\external\core\tools\vcpkg\ports
-          cache-key: vcpkg-windows-${{ hashFiles('${{ github.workspace }}\packages\external\core\tools\vcpkg\vcpkg.json') }}-${{ steps.vcpkg-cache-key.outputs.commit }}
-          cache-restore-keys: vcpkg-windows-${{ steps.vcpkg_cache_key.outputs.commit }}
-
       - name: Build native lib
         shell: powershell
         working-directory: packages
@@ -184,8 +171,6 @@ jobs:
           -DCMAKE_GENERATOR_PLATFORM=x64 `
           -DCMAKE_BUILD_TYPE=Release `
           -DREALM_ENABLE_SYNC=ON `
-          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\packages\external\core\tools\vcpkg\ports\scripts\buildsystems\vcpkg.cmake `
-          -DVCPKG_MANIFEST_DIR=${{ github.workspace }}\packages\external\core\tools\vcpkg `
           -DREALM_NO_TESTS=1 `
           -DVCPKG_TARGET_TRIPLET=x64-windows-static
           cmake --build . --config Release
