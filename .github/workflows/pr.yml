@@ -149,14 +149,14 @@ jobs:
       - name: Setup build cache
         uses: actions/cache@v3
         with:
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir
+          path: ${{ github.workspace }}/packages/cinterop/src/jvmMain/windows-build-dir
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
         with:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/jni-swig-stub/build/generated/sources/jni
+          path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni
 
       - name: Get vcpkg submodule commit sha
         id: vcpkg-cache-key
@@ -167,8 +167,8 @@ jobs:
       - name: Setup Vcpkg
         uses: friendlyanon/setup-vcpkg@v1
         with:
-          path: .\packages\external\core\tools\vcpkg\ports
-          cache-key: vcpkg-windows-${{ hashFiles('.\packages\external\core\tools\vcpkg\vcpkg.json') }}-${{ steps.vcpkg-cache-key.outputs.commit }}
+          path: ${{ github.workspace }}\packages\external\core\tools\vcpkg\ports
+          cache-key: vcpkg-windows-${{ hashFiles('${{ github.workspace }}\packages\external\core\tools\vcpkg\vcpkg.json') }}-${{ steps.vcpkg-cache-key.outputs.commit }}
           cache-restore-keys: vcpkg-windows-${{ steps.vcpkg_cache_key.outputs.commit }}
 
       - name: Build native lib
