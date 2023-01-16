@@ -29,7 +29,7 @@ using namespace realm::jni_util;
     static {
         // using https://developer.android.com/reference/java/lang/System#getProperties()
         if (System.getProperty("java.specification.vendor").contains("Android")) {
-            System.loadLibrary("realmc");
+            com.getkeepsafe.relinker.ReLinker.loadLibrary(context, "realmc", io.realm.kotlin.internal.SDK_VERSION);
         } else {
             // otherwise locate, using reflection, the dependency SoLoader and call load
             // (calling SoLoader directly will create a circular dependency with `jvmMain`)

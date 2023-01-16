@@ -218,6 +218,9 @@ kotlin {
         }
         val androidMain by getting {
             dependsOn(jvm)
+            dependencies {
+                implementation("com.getkeepsafe.relinker:relinker:${Versions.relinker}")
+            }
         }
         val androidTest by getting {
             dependencies {
