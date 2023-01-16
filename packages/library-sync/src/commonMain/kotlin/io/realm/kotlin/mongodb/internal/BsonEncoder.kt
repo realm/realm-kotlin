@@ -92,32 +92,32 @@ internal object BsonEncoder {
             else -> {
                 when (resultClass) {
                     Byte::class -> {
-                        deserializeNumber(bsonValue, "Byte") {
+                        deserializeNumber(bsonValue, Byte::class.simpleName) {
                             it.intValue().toByte()
                         }
                     }
                     Short::class -> {
-                        deserializeNumber(bsonValue, "Short") {
+                        deserializeNumber(bsonValue, Short::class.simpleName) {
                             it.intValue().toShort()
                         }
                     }
                     Int::class -> {
-                        deserializeNumber(bsonValue, "Int") {
+                        deserializeNumber(bsonValue, Int::class.simpleName) {
                             it.intValue()
                         }
                     }
                     Long::class -> {
-                        deserializeNumber(bsonValue, "Long") {
+                        deserializeNumber(bsonValue, Long::class.simpleName) {
                             it.longValue()
                         }
                     }
                     Float::class -> {
-                        deserializeNumber(bsonValue, "Float") {
+                        deserializeNumber(bsonValue, Float::class.simpleName) {
                             it.doubleValue().toFloat()
                         }
                     }
                     Double::class -> {
-                        deserializeNumber(bsonValue, "Double") {
+                        deserializeNumber(bsonValue, Double::class.simpleName) {
                             it.doubleValue()
                         }
                     }
@@ -235,7 +235,7 @@ internal object BsonEncoder {
 
     private inline fun <T : Number> deserializeNumber(
         bsonValue: BsonValue,
-        type: String,
+        type: String?,
         block: (BsonNumber) -> T
     ): T {
         require(

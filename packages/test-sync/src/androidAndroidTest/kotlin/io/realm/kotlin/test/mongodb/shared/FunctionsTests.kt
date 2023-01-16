@@ -164,7 +164,6 @@ class FunctionsTests {
         val i64 = 42L
 
         for (type in BsonType.values()) {
-            println(type)
             when (type) {
                 BsonType.DOUBLE -> {
                     assertEquals(
@@ -346,14 +345,14 @@ class FunctionsTests {
     }
 
     @Test
-    fun unsupportedReturnTypeThrows() {
+    fun unsupportedArgumentTypeThrows() {
         assertFailsWithMessage<IllegalArgumentException>("Failed to convert arguments, type 'Dog' not supported. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, Array, Collection, Map and primitives are valid arguments types.") {
             functions.callBlocking<Int>(FIRST_ARG_FUNCTION.name, Dog())
         }
     }
 
     @Test
-    fun unsupportedArgumentTypeThrows() {
+    fun unsupportedReturnTypeThrows() {
         assertFailsWithMessage<IllegalArgumentException>("Unsupported type 'RealmList'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.") {
             functions.callBlocking<RealmList<String>>(FIRST_ARG_FUNCTION.name, "hello world")
         }
