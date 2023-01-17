@@ -518,6 +518,9 @@ expect object RealmInterop {
     fun realm_user_is_logged_in(user: RealmUserPointer): Boolean
     fun realm_user_log_out(user: RealmUserPointer)
     fun realm_user_get_state(user: RealmUserPointer): CoreUserState
+    fun realm_user_get_profile(user: RealmUserPointer): String
+    fun realm_user_get_custom_data(user: RealmUserPointer): String?
+    fun realm_user_refresh_custom_data(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
 
     // Sync client config
     fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer
@@ -607,11 +610,11 @@ expect object RealmInterop {
     fun realm_app_credentials_new_email_password(username: String, password: String): RealmCredentialsPointer
     fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer
     fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer
-    // fun realm_app_credentials_new_custom_function(document: Any): NativePointer
     fun realm_app_credentials_new_facebook(accessToken: String): RealmCredentialsPointer
     fun realm_app_credentials_new_google_id_token(idToken: String): RealmCredentialsPointer
     fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer
     fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer
+    fun realm_app_credentials_new_custom_function(serializedEjsonPayload: String): RealmCredentialsPointer
     fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider
     fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String
 
@@ -649,6 +652,14 @@ expect object RealmInterop {
         tokenId: String,
         newPassword: String,
         callback: AppCallback<Unit>
+    )
+
+    fun realm_app_call_function(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        serializedEjsonArgs: String, // as ejson
+        callback: AppCallback<String>
     )
 
     // Sync config

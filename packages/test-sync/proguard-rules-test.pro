@@ -21,3 +21,9 @@
 -keepclassmembers class <1>.<2> {
   <1>.<2>$Companion Companion;
 }
+
+## Required to make asserted messages in FunctionTests and BsonEncoder work
+-keep class io.realm.kotlin.types.MutableRealmInt
+-keep class io.realm.kotlin.types.RealmUUID
+-keep class io.realm.kotlin.types.RealmList
+-keep class org.mongodb.kbson.*

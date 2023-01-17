@@ -1895,6 +1895,30 @@ actual object RealmInterop {
         return CoreUserState.of(realm_wrapper.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_user_get_profile(user: RealmUserPointer): String =
+        realm_wrapper.realm_user_get_profile_data(user.cptr()).safeKString()
+
+    actual fun realm_user_get_custom_data(user: RealmUserPointer): String? =
+        realm_wrapper.realm_user_get_custom_data(user.cptr())?.toKString()
+
+    actual fun realm_user_refresh_custom_data(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_refresh_custom_data(
+                app = app.cptr(),
+                user = user.cptr(),
+                callback = staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                userdata = StableRef.create(callback).asCPointer(),
+                userdata_free = staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+            )
+        )
+    }
+
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
@@ -2281,6 +2305,12 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_app_credentials_new_custom_function(serializedEjsonPayload: String): RealmCredentialsPointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_function(serializedEjsonPayload))
+        }
+    }
+
     actual fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
     }
@@ -2428,6 +2458,28 @@ actual object RealmInterop {
                 )
             )
         }
+    }
+
+    actual fun realm_app_call_function(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        serializedEjsonArgs: String,
+        callback: AppCallback<String>
+    ) {
+        realm_wrapper.realm_app_call_function(
+            app.cptr(),
+            user.cptr(),
+            name,
+            serializedEjsonArgs,
+            staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
+                handleAppCallback(userData, error) {
+                    data.safeKString()
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userData -> disposeUserData<AppCallback<String>>(userData) }
+        )
     }
 
     actual fun realm_sync_config_new(
