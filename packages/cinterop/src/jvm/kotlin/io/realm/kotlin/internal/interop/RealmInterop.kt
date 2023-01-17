@@ -1158,6 +1158,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_credentials_new_jwt(jwtToken))
     }
 
+    actual fun realm_app_credentials_new_custom_function(serializedEjsonPayload: String): RealmCredentialsPointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_function(serializedEjsonPayload))
+    }
+
     actual fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
