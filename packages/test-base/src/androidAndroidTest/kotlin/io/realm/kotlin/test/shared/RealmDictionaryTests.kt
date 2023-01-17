@@ -22,8 +22,10 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryOf
+import io.realm.kotlin.ext.realmMapEntryOf
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.util.ErrorCatcher
 import io.realm.kotlin.test.shared.util.GenericTypeSafetyManager
@@ -32,6 +34,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmMapEntrySet
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
@@ -43,6 +46,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -116,7 +120,22 @@ class RealmDictionaryTests {
 
     @Test
     fun realmMapEntryOf() {
-        // TODO will be added when support for dictionary.entries is added
+        val elem = ("A" to 1)
+
+        // Instantiate from individual parameters
+        val fromIndividualValues = realmMapEntryOf(elem.first, elem.second)
+        assertEquals(elem.first, fromIndividualValues.key)
+        assertEquals(elem.second, fromIndividualValues.value)
+
+        // Instantiate from a Pair<K, V>
+        val fromPair = realmMapEntryOf(elem)
+        assertEquals(elem.first, fromPair.key)
+        assertEquals(elem.second, fromPair.value)
+
+        // Instantiate from a Map.Entry<K, V>
+        val fromMapEntry = realmMapEntryOf(realmMapEntryOf(elem))
+        assertEquals(elem.first, fromMapEntry.key)
+        assertEquals(elem.second, fromMapEntry.value)
     }
 
     @Test
@@ -155,7 +174,13 @@ class RealmDictionaryTests {
             .forEach { assertTrue(multipleElementList.contains(Pair(it.key, it.value))) }
 
         // ... or from a RealmMapEntrySet
-        // TODO will be added when support for dictionary.entries is added
+        val mapEntrySet: RealmMapEntrySet<String, Int> = multipleElementList.map {
+            realmMapEntryOf(it.first, it.second)
+        }.toTypedArray().let {
+            mutableSetOf(*it)
+        }
+        mapEntrySet.toRealmDictionary()
+            .forEach { assertTrue(multipleElementList.contains(Pair(it.key, it.value))) }
     }
 
     @Test
@@ -193,42 +218,58 @@ class RealmDictionaryTests {
 
     @Test
     fun entries_size() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_size()
+        }
     }
 
     @Test
     fun entries_add() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_add()
+        }
     }
 
     @Test
     fun entries_addAll() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_addAll()
+        }
     }
 
     @Test
     fun entries_clear() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_clear()
+        }
     }
 
     @Test
     fun entries_iteratorNext() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_iteratorNext()
+        }
     }
 
     @Test
     fun entries_iteratorRemove() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_iteratorRemove()
+        }
     }
 
     @Test
     fun entries_remove() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_remove()
+        }
     }
 
     @Test
     fun entries_removeAll() {
-        // TODO
+        for (tester in managedTesters) {
+            tester.entries_removeAll()
+        }
     }
 
     // TODO missing in the C-API: https://github.com/realm/realm-core/issues/6181
@@ -360,6 +401,14 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun put()
     fun get()
     fun clear()
+    fun entries_size()
+    fun entries_add()
+    fun entries_addAll()
+    fun entries_clear()
+    fun entries_iteratorNext() // This tests also hasNext
+    fun entries_iteratorRemove()
+    fun entries_remove()
+    fun entries_removeAll()
 
     /**
      * Asserts structural equality for two given collections. This is needed to evaluate equality
@@ -477,6 +526,217 @@ internal abstract class ManagedDictionaryTester<T>(
         }
     }
 
+    override fun entries_size() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                assertTrue(dictionary.entries.isEmpty())
+
+                dictionary.putAll(dataSet)
+
+                val entries = dictionary.entries
+                assertEquals(dictionary.size, dataSet.size)
+                assertEquals(dictionary.size, entries.size)
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val entries = dictionary.entries
+            assertEquals(dictionary.size, dataSet.size)
+            assertEquals(dictionary.size, entries.size)
+        }
+    }
+
+    override fun entries_add() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val entries = dictionary.entries
+                assertTrue(entries.add(realmMapEntryOf("REALM", dataSet[0].second)))
+                assertEquals(dictionary.size, entries.size)
+
+                // Adding the same element returns false
+                assertFalse(entries.add(realmMapEntryOf("REALM", dataSet[0].second)))
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_addAll() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val entries = dictionary.entries
+
+                // Reuse same dataSet values, just use different keys. Then add it to the entry set
+                val newDataSet = listOf(
+                    realmMapEntryOf("REALM-1" to dataSet[0].second),
+                    realmMapEntryOf("REALM-2" to dataSet[0].second),
+                )
+                assertTrue(entries.addAll(newDataSet))
+                assertEquals(dictionary.size, entries.size)
+
+                // Adding the same elements returns false
+                assertFalse(entries.addAll(newDataSet))
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_clear() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val entries = dictionary.entries
+                entries.clear()
+                assertTrue(entries.isEmpty())
+                assertTrue(dictionary.isEmpty())
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_iteratorNext() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val iterator = dictionary.entries.iterator()
+                for (i in dataSet.indices) {
+                    assertTrue(iterator.hasNext())
+                    val next = iterator.next()
+                    assertNotNull(next)
+                    assertEquals(dataSet[i].first as T?, next.key as T?)
+                    assertStructuralEquality(dataSet[i].second, next.value)
+                }
+                assertFalse(iterator.hasNext())
+                assertFailsWithMessage<IndexOutOfBoundsException>("Cannot access index") {
+                    iterator.next()
+                }
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_iteratorRemove() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val entries = dictionary.entries
+                val iterator = entries.iterator()
+
+                // Fails when calling remove before calling next
+                assertTrue(iterator.hasNext())
+                assertFailsWithMessage<IllegalStateException>("Could not remove last element returned by the iterator: iterator never returned an element.") {
+                    iterator.remove()
+                }
+                assertTrue(iterator.hasNext())
+
+                for (i in dataSet.indices) {
+                    assertEquals(dataSet.size - i, entries.size)
+                    val next = iterator.next()
+                    assertNotNull(next)
+                    iterator.remove()
+                    assertEquals(dictionary.size, entries.size)
+                }
+                assertTrue(entries.isEmpty())
+                assertTrue(dictionary.isEmpty())
+
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                    iterator.remove()
+                }
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_remove() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val entries = dictionary.entries
+                val entryToRemove = realmMapEntryOf(dataSet[0].first, dataSet[0].second)
+
+                // Check we get true after removing an element
+                assertTrue(entries.remove(entryToRemove))
+                assertEquals(dictionary.size, entries.size)
+                assertEquals(dataSet.size - 1, entries.size)
+                assertEquals(dataSet.size - 1, dictionary.size)
+
+                // Check we get false if we don't remove anything
+                assertFalse(entries.remove(entryToRemove))
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_removeAll() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val entries = dictionary.entries
+                val entriesToRemove = listOf(
+                    realmMapEntryOf(dataSet[0].first, dataSet[0].second),
+                    realmMapEntryOf(dataSet[1].first, dataSet[1].second)
+                )
+
+                // Check we get true after removing an element
+                assertTrue(entries.removeAll(entriesToRemove))
+                assertEquals(dictionary.size, entries.size)
+                assertEquals(dataSet.size - entriesToRemove.size, entries.size)
+                assertEquals(dataSet.size - entriesToRemove.size, dictionary.size)
+
+                // Check we get false if we don't remove anything
+                assertFalse(entries.removeAll(entriesToRemove))
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
     override fun assertContainerAndCleanup(assertion: ((RealmDictionaryContainer) -> Unit)?) {
         val container = realm.query<RealmDictionaryContainer>()
             .first()
@@ -554,14 +814,10 @@ internal class RealmObjectDictionaryTester(
         actualValues: Map<String, RealmDictionaryContainer>
     ) {
         assertEquals(expectedValues.size, actualValues.size)
-        // TODO replace with the commented code below once map.entries is supported
-        expectedValues.forEach {
-            assertEquals(it.second.stringField, actualValues[it.first]?.stringField)
-        }
-//        assertContentEquals(
-//            expectedValues.map { it.second.stringField },
-//            actualValues.map { it.value.stringField }
-//        )
+        assertContentEquals(
+            expectedValues.map { it.second.stringField },
+            actualValues.map { it.value.stringField }
+        )
     }
 
     override fun assertStructuralEquality(

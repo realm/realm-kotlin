@@ -17,6 +17,7 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
+import io.realm.kotlin.internal.UnmanagedRealmMapEntry
 import io.realm.kotlin.internal.asRealmDictionary
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMapMutableEntry
@@ -35,7 +36,7 @@ public fun <T> realmDictionaryOf(vararg elements: Pair<String, T>): RealmDiction
  */
 @Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 public fun <K, V> realmMapEntryOf(pair: Pair<K, V>): RealmMapMutableEntry<K, V> =
-    TODO("Not yet implemented")
+    UnmanagedRealmMapEntry(pair.first, pair.second)
 
 /**
  * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [key]-[value] pair. Entries are used
@@ -44,7 +45,7 @@ public fun <K, V> realmMapEntryOf(pair: Pair<K, V>): RealmMapMutableEntry<K, V> 
  */
 @Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 public fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V> =
-    TODO("Not yet implemented")
+    UnmanagedRealmMapEntry(key, value)
 
 /**
  * Instantiates an **unmanaged** [RealmMapMutableEntry] from another [Map.Entry]. Entries are used
@@ -53,7 +54,7 @@ public fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V> 
  */
 @Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 public fun <K, V> realmMapEntryOf(entry: Map.Entry<K, V>): RealmMapMutableEntry<K, V> =
-    TODO("Not yet implemented")
+    UnmanagedRealmMapEntry(entry.key, entry.value)
 
 // TODO add support for RealmDictionary<T>.copyFromRealm()
 // /**

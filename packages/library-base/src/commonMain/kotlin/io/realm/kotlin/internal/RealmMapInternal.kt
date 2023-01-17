@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
@@ -29,6 +30,7 @@ import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
+import io.realm.kotlin.types.RealmMapEntrySet
 import kotlin.reflect.KClass
 
 // ----------------------------------------------------------------------
@@ -40,8 +42,9 @@ internal abstract class ManagedRealmMap<K, V>(
     val operator: MapOperator<K, V>
 ) : AbstractMutableMap<K, V>(), RealmMap<K, V> {
 
-    override val entries: MutableSet<MutableMap.MutableEntry<K, V>>
-        get() = TODO("Not yet implemented")
+    override val entries: MutableSet<MutableMap.MutableEntry<K, V>> by lazy {
+        RealmMapEntrySetImpl(nativePointer, operator)
+    }
 
     // TODO missing support for Results Dictionary::get_keys() in C-API: https://github.com/realm/realm-core/issues/6181
     override val keys: MutableSet<K>
@@ -317,14 +320,168 @@ internal class ManagedRealmDictionary<E>(
 // EntrySet
 // ----------------------------------------------------------------------
 
-// TODO add RealmMapEntrySetImpl: represents a ManagedRealmMap in the form of an
-//  AbstractMutableSet<MutableMap.MutableEntry<K, V>>(). It is also a managed data structure.
+/**
+ * This class implements the typealias [RealmMapEntrySet] which matches
+ * `MutableSet<MutableMap.MutableEntry<K, V>>`. This class allows operating on a [ManagedRealmMap]
+ * in the form of a [Set] of [MutableMap.MutableEntry] values.
+ *
+ * Deletions are supported by the default semantics in JVM and K/N. These two operations are
+ * equivalent:
+ * ```
+ * dictionary.remove(myKey)
+ * dictionary.entries.remove(myKey, myValue) // implies we know the value of myValue
+ * ```
+ *
+ * Default semantics forbid addition operations though. This is due to `AbstractCollection` not
+ * having implemented this functionality both in JVM and K/N:
+ * ```
+ * dictionary.entries.add(SimpleEntry(myKey, myValue)) // throws UnsupportedOperationException
+ * ```
+ *
+ * However, these semantics don't pose a problem for `RealmMap`s. The [add] function behaves in the
+ * same way [RealmDictionary.put] does:
+ * ```
+ * // these two operations are equivalent and result in [myKey, myValue] being added to dictionary
+ * dictionary[myKey] = myValue
+ * dictionary.entries.add(realmMapEntryOf(myKey, myValue))
+ * ```
+ *
+ * All other [Map] operations are funneled through the corresponding [MapOperator] and are available
+ * from this class. Some of these operations leverage default implementations in
+ * [AbstractMutableSet].
+ */
+internal class RealmMapEntrySetImpl<K, V> constructor(
+    private val nativePointer: RealmMapPointer,
+    private val operator: MapOperator<K, V>
+) : AbstractMutableSet<MutableMap.MutableEntry<K, V>>(), RealmMapEntrySet<K, V> {
 
-// TODO add UnmanagedRealmMapEntry: represents unmanaged entries, used to add unmanaged K-V pairs to
-//  a managed or unmanaged dictionary when working with from dictionary.entries.
+    override val size: Int
+        get() = RealmInterop.realm_dictionary_size(nativePointer).toInt()
 
-// TODO add ManagedRealmMapEntry: represents managed entries obtained when iterating through the
-//  values contained in a (managed) dictionary.entries.
+    override fun add(element: MutableMap.MutableEntry<K, V>): Boolean =
+        operator.insert(element.key, element.value).second
+
+    override fun addAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean =
+        elements.fold(false) { accumulator, entry ->
+            (operator.insert(entry.key, entry.value).second) or accumulator
+        }
+
+    override fun clear() = operator.clear()
+
+    override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> {
+        // TODO how to handle concurrent modifications?
+        return object : MutableIterator<MutableMap.MutableEntry<K, V>> {
+
+            private var cursor = 0 // The position returned by next()
+            private var lastReturned = -1 // The last known returned position
+
+            override fun hasNext(): Boolean = cursor < operator.size
+
+            @Suppress("UNCHECKED_CAST")
+            override fun next(): MutableMap.MutableEntry<K, V> {
+                val position = cursor
+                try {
+                    val entry = operator.getEntry(position)
+                    lastReturned = position
+                    cursor = position + 1
+                    return ManagedRealmMapEntry(
+                        entry.first,
+                        operator
+                    ) as MutableMap.MutableEntry<K, V>
+                } catch (e: RealmException) { // TODO revisit once unified error handling has been merged: https://github.com/realm/realm-kotlin/pull/1188
+                    throw IndexOutOfBoundsException("Cannot access index $position when size is ${operator.size}. Remember to check hasNext() before using next().")
+                }
+            }
+
+            override fun remove() {
+                if (isEmpty()) {
+                    throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
+                }
+                if (lastReturned < 0) {
+                    throw IllegalStateException("Could not remove last element returned by the iterator: iterator never returned an element.")
+                }
+
+                val erased = getterScope {
+                    val keyValuePair = operator.getEntry(lastReturned)
+                    operator.erase(keyValuePair.first)
+                        .second
+                        .also {
+                            if (lastReturned < cursor) {
+                                cursor -= 1
+                            }
+                            lastReturned = -1
+                        }
+                }
+                if (!erased) {
+                    throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
+                }
+            }
+        }
+    }
+
+    override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean =
+        operator.erase(element.key).second
+
+    override fun removeAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean =
+        elements.fold(false) { accumulator, entry ->
+            (operator.erase(entry.key).second) or accumulator
+        }
+}
+
+/**
+ * Naive implementation of [MutableMap.MutableEntry] for adding new elements to a [RealmMap] via the
+ * [RealmMapEntrySet] produced by `RealmMap.entries`.
+ */
+internal class UnmanagedRealmMapEntry<K, V>(
+    override val key: K,
+    value: V
+) : MutableMap.MutableEntry<K, V> {
+
+    private var _value = value
+
+    override val value: V
+        get() = _value
+
+    override fun setValue(newValue: V): V {
+        val oldValue = this._value
+        this._value = newValue
+        return oldValue
+    }
+
+    override fun toString(): String = "UnmanagedRealmMapEntry{$key,$value}"
+    override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
+    override fun equals(other: Any?): Boolean {
+        if (other !is Map.Entry<*, *>) return false
+        return (other.key == other.key) && (other.value == other.value)
+    }
+}
+
+/**
+ * Implementation of a managed [MutableMap.MutableEntry] returned by the [Iterator] from a
+ * [ManagedRealmMap] [RealmMapEntrySet]. It is possible to modify the [value] of the entry. Doing so
+ * results in the managed `RealmMap` being updated as well.
+ */
+internal class ManagedRealmMapEntry<K, V>(
+    override val key: K,
+    private val operator: MapOperator<K, V>
+) : MutableMap.MutableEntry<K, V?> {
+
+    override val value: V?
+        get() = operator.get(key)
+
+    override fun setValue(newValue: V?): V? {
+        val previousValue = operator.get(key)
+        operator.insert(key, newValue)
+        return previousValue
+    }
+
+    override fun toString(): String = "ManagedRealmMapEntry{$key,$value}"
+    override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
+    override fun equals(other: Any?): Boolean {
+        if (other !is Map.Entry<*, *>) return false
+        return (other.key == other.key) && (other.value == other.value)
+    }
+}
 
 // ----------------------------------------------------------------------
 // Internal helpers for factory functions
