@@ -33,7 +33,7 @@ import kotlin.reflect.KType
 
 object TypeDescriptor {
     enum class AggregatorSupport {
-        MINMAX, SUM;
+        MIN, MAX, SUM;
 
         companion object {
             val NONE = emptySet<AggregatorSupport>()
@@ -179,7 +179,7 @@ object TypeDescriptor {
             indexSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
-            aggregatorSupport = setOf(AggregatorSupport.MINMAX),
+            aggregatorSupport = setOf(AggregatorSupport.MIN, AggregatorSupport.MAX),
             anySupport = true,
         ),
         OBJECT_ID(

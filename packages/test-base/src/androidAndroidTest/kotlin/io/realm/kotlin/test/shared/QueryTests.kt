@@ -1431,7 +1431,7 @@ class QueryTests {
     // Aggregators - max
     // ------------------
     @Test
-    fun verifySupportedMinMaxAggregators() {
+    fun verifySupportedMaxAggregators() {
         assertEquals(
             setOf(
                 Byte::class,
@@ -1446,10 +1446,15 @@ class QueryTests {
             ),
             TypeDescriptor.classifiers.filter { (_, coreFieldType) ->
                 coreFieldType.aggregatorSupport.contains(
-                    TypeDescriptor.AggregatorSupport.MINMAX
+                    TypeDescriptor.AggregatorSupport.MAX
                 )
             }.keys
         )
+    }
+
+    @Test
+    fun verifyMinMaxAggragatorSupport() {
+        assertEquals(supportedMinTypes, supportedMaxTypes)
     }
 
     @Test
@@ -1461,7 +1466,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptorsForMinMax) {
+        for (propertyDescriptor in allPropertyDescriptorsForMax) {
             assertions(propertyDescriptor)
         }
     }
@@ -1491,7 +1496,7 @@ class QueryTests {
         }
 
         // Iterate only over nullable properties and insert only null values in said properties
-        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForMinMax) {
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForMax) {
             assertions(nullablePropertyDescriptor)
         }
     }
@@ -1541,7 +1546,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptorsForMinMax) {
+        for (propertyDescriptor in allPropertyDescriptorsForMax) {
             assertions(propertyDescriptor)
         }
     }
@@ -1604,7 +1609,7 @@ class QueryTests {
 
     @Test
     fun max_asFlow() {
-        for (propertyDescriptor in allPropertyDescriptorsForMinMax) {
+        for (propertyDescriptor in allPropertyDescriptorsForMax) {
             asFlowAggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MAX, propertyDescriptor)
@@ -1625,6 +1630,27 @@ class QueryTests {
     // ------------------
     // Aggregators - min
     // ------------------
+    @Test
+    fun verifySupportedMinAggregators() {
+        assertEquals(
+            setOf(
+                Byte::class,
+                Char::class,
+                Short::class,
+                Int::class,
+                Long::class,
+                Float::class,
+                Double::class,
+                BsonDecimal128::class,
+                RealmInstant::class,
+            ),
+            TypeDescriptor.classifiers.filter { (_, coreFieldType) ->
+                coreFieldType.aggregatorSupport.contains(
+                    TypeDescriptor.AggregatorSupport.MIN
+                )
+            }.keys
+        )
+    }
 
     @Test
     fun min_find_emptyTable() {
@@ -1635,7 +1661,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptorsForMinMax) {
+        for (propertyDescriptor in allPropertyDescriptorsForMin) {
             assertions(propertyDescriptor)
         }
     }
@@ -1665,7 +1691,7 @@ class QueryTests {
         }
 
         // Iterate only over nullable properties and insert only null values in said properties
-        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForMinMax) {
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForMin) {
             assertions(nullablePropertyDescriptor)
         }
     }
@@ -1696,7 +1722,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptorsForMinMax) {
+        for (propertyDescriptor in allPropertyDescriptorsForMin) {
             assertions(propertyDescriptor)
         }
     }
@@ -1759,7 +1785,7 @@ class QueryTests {
 
     @Test
     fun min_asFlow() {
-        for (propertyDescriptor in allPropertyDescriptorsForMinMax) {
+        for (propertyDescriptor in allPropertyDescriptorsForMin) {
             asFlowAggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MIN, propertyDescriptor)
@@ -2790,10 +2816,15 @@ class QueryTests {
     private val nullablePropertyDescriptorsForSum = supportedSumTypes.map { getDescriptor(it, true) }
     private val allPropertyDescriptorsForSum: List<PropertyDescriptor> = propertyDescriptorForSum + nullablePropertyDescriptorsForSum
 
-    private val supportedMinMaxTypes = TypeDescriptor.classifiers.filter { (_, coreFieldType) -> coreFieldType.aggregatorSupport.contains(TypeDescriptor.AggregatorSupport.MINMAX) }.keys
-    private val propertyDescriptorForMinMax = supportedMinMaxTypes.map { getDescriptor(it, false) }
-    private val nullablePropertyDescriptorsForMinMax = supportedMinMaxTypes.map { getDescriptor(it, true) }
-    private val allPropertyDescriptorsForMinMax: List<PropertyDescriptor> = propertyDescriptorForMinMax + nullablePropertyDescriptorsForMinMax
+    private val supportedMinTypes = TypeDescriptor.classifiers.filter { (_, coreFieldType) -> coreFieldType.aggregatorSupport.contains(TypeDescriptor.AggregatorSupport.MIN) }.keys
+    private val propertyDescriptorForMin = supportedMinTypes.map { getDescriptor(it, false) }
+    private val nullablePropertyDescriptorsForMin = supportedMinTypes.map { getDescriptor(it, true) }
+    private val allPropertyDescriptorsForMin: List<PropertyDescriptor> = propertyDescriptorForMin + nullablePropertyDescriptorsForMin
+
+    private val supportedMaxTypes = TypeDescriptor.classifiers.filter { (_, coreFieldType) -> coreFieldType.aggregatorSupport.contains(TypeDescriptor.AggregatorSupport.MIN) }.keys
+    private val propertyDescriptorForMax = supportedMaxTypes.map { getDescriptor(it, false) }
+    private val nullablePropertyDescriptorsForMax = supportedMaxTypes.map { getDescriptor(it, true) }
+    private val allPropertyDescriptorsForMax: List<PropertyDescriptor> = propertyDescriptorForMax + nullablePropertyDescriptorsForMax
 
     // TODO figure out whether we need to test aggregators on RealmList<Number> fields
     //  see https://github.com/realm/realm-core/issues/5137

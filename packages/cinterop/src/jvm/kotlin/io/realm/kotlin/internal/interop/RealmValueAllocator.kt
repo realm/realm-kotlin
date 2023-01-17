@@ -54,7 +54,7 @@ object JvmMemAllocator : MemAllocator {
     override fun decimal128Transport(value: Decimal128?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_DECIMAL128) {
             decimal128 = realm_decimal128_t().apply {
-                w = longArrayOf(it.low.toLong(), it.high.toLong())
+                w = ulongArrayOf(it.low, it.high).toLongArray()
             }
         }
 
