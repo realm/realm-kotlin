@@ -477,7 +477,7 @@ class RealmAnyTests {
                     .first()
                     .asFlow()
                     .collect {
-                        sampleChannel.trySend(it)
+                        sampleChannel.send(it)
                     }
             }
             val containerObserver = async {
@@ -485,17 +485,17 @@ class RealmAnyTests {
                     .first()
                     .asFlow()
                     .collect {
-                        containerChannel.trySend(it)
+                        containerChannel.send(it)
                     }
             }
+
+            assertIs<PendingObject<Sample>>(sampleChannel.receive())
+            assertIs<PendingObject<RealmAnyContainer>>(containerChannel.receive())
 
             val unmanagedContainer = RealmAnyContainer(RealmAny.create(Sample()))
             realm.writeBlocking {
                 copyToRealm(unmanagedContainer)
             }
-
-            assertIs<PendingObject<Sample>>(sampleChannel.receive())
-            assertIs<PendingObject<RealmAnyContainer>>(containerChannel.receive())
 
             assertIs<InitialObject<Sample>>(sampleChannel.receive())
             assertIs<InitialObject<RealmAnyContainer>>(containerChannel.receive())
