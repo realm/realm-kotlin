@@ -2305,6 +2305,12 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_app_credentials_new_custom_function(serializedEjsonPayload: String): RealmCredentialsPointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_function(serializedEjsonPayload))
+        }
+    }
+
     actual fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider {
         return AuthProvider.of(realm_wrapper.realm_auth_credentials_get_provider(credentials.cptr()))
     }
