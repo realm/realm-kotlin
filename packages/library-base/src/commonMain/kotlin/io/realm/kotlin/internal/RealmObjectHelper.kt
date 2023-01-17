@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.interop.RealmCorePropertyTypeMismatchException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_get_value
 import io.realm.kotlin.internal.interop.RealmListPointer
+import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
@@ -51,7 +52,6 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ManagedRealmDictionary
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
@@ -386,7 +386,6 @@ internal object RealmObjectHelper {
         return RealmResultsImpl(obj.owner, objects, sourceClassKey, sourceClass, obj.mediator)
     }
 
-    // Cannot call managedRealmList directly from an inline function
     @Suppress("LongParameterList")
     internal fun <R> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -465,7 +464,6 @@ internal object RealmObjectHelper {
     ): ManagedRealmSet<R?> {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
-        // TODO handle RealmAny similarly to getList
         val operatorType = if (realmObjectCompanion == null) {
             if (elementType == RealmAny::class) {
                 CollectionOperatorType.REALM_ANY
@@ -479,7 +477,6 @@ internal object RealmObjectHelper {
         return getSetByKey(obj, key, elementType, operatorType)
     }
 
-    // Cannot call managedRealmList directly from an inline function
     @Suppress("LongParameterList")
     internal fun <R> getSetByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -529,20 +526,44 @@ internal object RealmObjectHelper {
                 mediator,
                 realm,
                 converter(clazz, mediator, realm),
-                clazz,
-                setPtr
+                setPtr,
+                clazz
             )
             else ->
                 throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
         }
     }
 
-    // TODO remove suppress in next PR, needed to avoid static analysis task failing
-    @Suppress("UnusedPrivateMember")
+    @Suppress("UnusedPrivateMember") // TODO remove when parameter is used
     internal inline fun <reified R : Any> getDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): ManagedRealmDictionary<R?> {
+        TODO()
+    }
+
+    @Suppress("LongParameterList", "UnusedPrivateMember") // TODO remove UnusedPrivateMember when parameter is used
+    internal fun <R> getDictionaryByKey(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        key: PropertyKey,
+        elementType: KClass<R & Any>,
+        operatorType: CollectionOperatorType,
+        issueDynamicObject: Boolean = false,
+        issueDynamicMutableObject: Boolean = false
+    ): ManagedRealmDictionary<R> {
+        TODO()
+    }
+
+    @Suppress("LongParameterList", "UnusedPrivateMember") // TODO remove UnusedPrivateMember when parameter is used
+    private fun <R> createDictionaryOperator(
+        dictionaryPtr: RealmMapPointer,
+        clazz: KClass<R & Any>,
+        mediator: Mediator,
+        realm: RealmReference,
+        operatorType: CollectionOperatorType,
+        issueDynamicObject: Boolean = false, // TODO handle when adding support for dynamic realms
+        issueDynamicMutableObject: Boolean = false // TODO handle when adding support for dynamic realms
+    ): MapOperator<String, R> {
         TODO()
     }
 
@@ -622,7 +643,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    // TODO remove suppress in next PR, needed to avoid static analysis task failing
+    // TODO remove UnusedPrivateMember when parameter is used
     @Suppress("UnusedPrivateMember")
     internal inline fun <reified T : Any> setDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -648,7 +669,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod")
+    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod")
     internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -724,6 +745,9 @@ internal object RealmObjectHelper {
                             val elements = accessor.get(source) as RealmSet<*>
                             operator.addAll(elements, updatePolicy, cache)
                         }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                    TODO()
                 }
                 else -> TODO("Collection type ${property.collectionType} is not supported")
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,46 @@
 
 package io.realm.kotlin.ext
 
-// TODO will be added in the next PR
+import io.realm.kotlin.internal.UnmanagedRealmDictionary
+import io.realm.kotlin.internal.asRealmDictionary
+import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmMapMutableEntry
 
-// /**
-//  * Instantiates an **unmanaged** [RealmDictionary].
-//  */
-// public fun <T> realmDictionaryOf(vararg elements: T): RealmDictionary<T> = TODO()
+/**
+ * Instantiates an **unmanaged** [RealmDictionary] from a variable number of [Pair]s of [String]
+ * and [T].
+ */
+public fun <T> realmDictionaryOf(vararg elements: Pair<String, T>): RealmDictionary<T> =
+    if (elements.isNotEmpty()) elements.asRealmDictionary() else UnmanagedRealmDictionary()
 
+/**
+ * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [Pair] of [K] and [V]. Entries are
+ * used by the entry set produced by [RealmDictionary.entries]. It is possible to update the entry
+ * which will result in the underlying [RealmDictionary] to be updated too.
+ */
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+public fun <K, V> realmMapEntryOf(pair: Pair<K, V>): RealmMapMutableEntry<K, V> =
+    TODO("Not yet implemented")
+
+/**
+ * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [key]-[value] pair. Entries are used
+ * by the entry set produced by [RealmDictionary.entries]. It is possible to update the entry
+ * which will result in the underlying [RealmDictionary] to be updated too.
+ */
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+public fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V> =
+    TODO("Not yet implemented")
+
+/**
+ * Instantiates an **unmanaged** [RealmMapMutableEntry] from another [Map.Entry]. Entries are used
+ * by the entry set produced by [RealmDictionary.entries]. It is possible to update the entry
+ * which will result in the underlying [RealmDictionary] to be updated too.
+ */
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+public fun <K, V> realmMapEntryOf(entry: Map.Entry<K, V>): RealmMapMutableEntry<K, V> =
+    TODO("Not yet implemented")
+
+// TODO add support for RealmDictionary<T>.copyFromRealm()
 // /**
 //  * Makes an unmanaged in-memory copy of the elements in a managed [RealmDictionary]. This is a deep
 //  * copy that will copy all referenced objects.
