@@ -1,3 +1,5 @@
+@file:Suppress("invisible_member", "invisible_reference")
+
 package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
@@ -5,6 +7,8 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.internal.toDuration
+import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
@@ -41,6 +45,28 @@ class RealmInstantTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    @Test
+    fun millisConversions() {
+        listOf(
+            0L.milliseconds,
+            1669029663120L.milliseconds,
+            (-1669029663120L).milliseconds
+        ).forEach {
+            assertEquals(it, it.toRealmInstant().toDuration())
+        }
+    }
+
+    @Test
+    fun nanosConversions() {
+        listOf(
+            0L.nanoseconds,
+            1669029663120L.nanoseconds,
+            (-1669029663120L).nanoseconds
+        ).forEach {
+            assertEquals(it, it.toRealmInstant().toDuration())
+        }
     }
 
     // Test both unmanaged and managed boundaries
