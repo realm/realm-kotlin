@@ -17,7 +17,16 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
 import io.realm.kotlin.internal.interop.RealmMapPointer
+import io.realm.kotlin.internal.interop.RealmObjectInterop
+import io.realm.kotlin.internal.interop.getterScope
+import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
 import kotlin.reflect.KClass
@@ -57,11 +66,11 @@ internal abstract class ManagedRealmMap<K, V>(
         TODO("Not yet implemented")
     }
 
-    override fun get(key: K): V? = TODO("Not yet implemented")
+    override fun get(key: K): V? = operator.get(key)
 
-    override fun put(key: K, value: V): V? = TODO("Not yet implemented")
+    override fun put(key: K, value: V): V? = operator.put(key, value)
 
-    override fun remove(key: K): V? = TODO("Not yet implemented")
+    override fun remove(key: K): V? = operator.remove(key)
 }
 
 /**
@@ -74,7 +83,10 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     override val nativePointer: RealmMapPointer
 
     val size: Int
-        get() = TODO("Not yet implemented")
+        get() {
+            realmReference.checkClosed()
+            return RealmInterop.realm_dictionary_size(nativePointer).toInt()
+        }
 
     // This function returns a Pair because it is used by both the Map and the entry Set. Having
     // both different semantics, Map returns the previous value for the key whereas the entry Set
@@ -98,7 +110,8 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): V? {
-        TODO("Not yet implemented")
+        realmReference.checkClosed()
+        return insert(key, value).first
     }
 
     fun putAll(
@@ -106,15 +119,20 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
-        TODO("Not yet implemented")
+        realmReference.checkClosed()
+        for (entry in from) {
+            put(entry.key, entry.value, updatePolicy, cache)
+        }
     }
 
     fun remove(key: K): V? {
-        TODO("Not yet implemented")
+        realmReference.checkClosed()
+        return erase(key).first
     }
 
     fun clear() {
-        TODO("Not yet implemented")
+        realmReference.checkClosed()
+        RealmInterop.realm_dictionary_clear(nativePointer)
     }
 }
 
@@ -132,27 +150,57 @@ internal class PrimitiveMapOperator<K, V>(
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
     ): Pair<V?, Boolean> {
-        // TODO call realm_dictionary_insert when ready and return a Pair with 'previousValue' and 'inserted'
-        TODO("Not yet implemented")
+        realmReference.checkClosed()
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            with(valueConverter) {
+                val valueTransport = publicToRealmValue(value)
+                realm_dictionary_insert(
+                    nativePointer,
+                    keyTransport,
+                    valueTransport
+                ).let {
+                    Pair(realmValueToPublic(it.first), it.second)
+                }
+            }
+        }
     }
 
     override fun erase(key: K): Pair<V?, Boolean> {
         realmReference.checkClosed()
-        // TODO call realm_dictionary_erase when ready and return a Pair with 'previousValue' and 'erased'
-        TODO("Not yet implemented")
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            with(valueConverter) {
+                realm_dictionary_erase(nativePointer, keyTransport).let {
+                    Pair(realmValueToPublic(it.first), it.second)
+                }
+            }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun getEntry(position: Int): Pair<K, V> {
         realmReference.checkClosed()
-        // TODO call realm_dictionary_get when ready and return a Pair with 'key' and 'value'
-        TODO("Not yet implemented")
+        return getterScope {
+            realm_dictionary_get(nativePointer, position)
+                .let {
+                    val key = with(keyConverter) { realmValueToPublic(it.first) }
+                    val value = with(valueConverter) { realmValueToPublic(it.second) }
+                    Pair(key, value)
+                } as Pair<K, V>
+        }
     }
 
     override fun get(key: K): V? {
         realmReference.checkClosed()
-        // TODO call realm_dictionary_find when ready and return 'value'
-        TODO("Not yet implemented")
+
+        // Even though we are getting a value we need to free the data buffers of the string we
+        // send down to Core so we need to use an inputScope
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            val valueTransport = realm_dictionary_find(nativePointer, keyTransport)
+            with(valueConverter) { realmValueToPublic(valueTransport) }
+        }
     }
 }
 
@@ -174,30 +222,83 @@ internal class RealmObjectMapOperator<K, V>(
         cache: UnmanagedToManagedObjectCache
     ): Pair<V?, Boolean> {
         realmReference.checkClosed()
-        // TODO call realm_dictionary_insert when ready and return a Pair with 'previousValue' and 'inserted'
-        TODO("Not yet implemented")
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            val objTransport = realmObjectToRealmReferenceWithImport(
+                value as BaseRealmObject?,
+                mediator,
+                realmReference,
+                updatePolicy,
+                cache
+            ).let {
+                realmObjectTransport(it as RealmObjectInterop)
+            }
+            realm_dictionary_insert(
+                nativePointer,
+                keyTransport,
+                objTransport
+            ).let {
+                val previousObject = realmValueToRealmObject(
+                    it.first,
+                    clazz as KClass<out BaseRealmObject>,
+                    mediator,
+                    realmReference
+                )
+                Pair(previousObject, it.second)
+            } as Pair<V?, Boolean>
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun erase(key: K): Pair<V?, Boolean> {
         realmReference.checkClosed()
-        // TODO call realm_dictionary_erase when ready and return a Pair with 'previousValue' and 'erased'
-        TODO("Not yet implemented")
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            realm_dictionary_erase(nativePointer, keyTransport).let {
+                val previousObject = realmValueToRealmObject(
+                    it.first,
+                    clazz as KClass<out BaseRealmObject>,
+                    mediator,
+                    realmReference
+                )
+                Pair(previousObject, it.second)
+            } as Pair<V?, Boolean>
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun getEntry(position: Int): Pair<K, V> {
         realmReference.checkClosed()
-        // TODO call realm_dictionary_get when ready and return a Pair with 'key' and 'value'
-        TODO("Not yet implemented")
+        return getterScope {
+            realm_dictionary_get(nativePointer, position)
+                .let {
+                    val key = with(keyConverter) { realmValueToPublic(it.first) }
+                    val value = realmValueToRealmObject(
+                        it.second,
+                        clazz as KClass<out BaseRealmObject>,
+                        mediator,
+                        realmReference
+                    )
+                    Pair(key, value)
+                } as Pair<K, V>
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
     override fun get(key: K): V? {
         realmReference.checkClosed()
 
-        // TODO call realm_dictionary_find when ready and return 'value'
-        TODO("Not yet implemented")
+        // Even though we are getting a value we need to free the data buffers of the string we
+        // send down to Core so we need to use an inputScope
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            realmValueToRealmObject(
+                realm_dictionary_find(nativePointer, keyTransport),
+                clazz as KClass<out BaseRealmObject>,
+                mediator,
+                realmReference
+            )
+        } as V?
     }
 }
 

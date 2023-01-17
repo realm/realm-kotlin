@@ -269,7 +269,7 @@ return $jnicall;
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
-               realm_set_t*, realm_async_open_task_t* };
+               realm_set_t*, realm_async_open_task_t*, realm_dictionary_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -376,16 +376,9 @@ bool realm_object_is_valid(const realm_object_t*);
 %ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
 %ignore "_realm_set_from_native_move"; // Not implemented in the C-API
 %ignore "realm_set_assign"; // Not implemented in the C-API
+%ignore "realm_dictionary_assign"; // Not implemented in the C-API
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
-%ignore "realm_get_dictionary";
-%ignore "realm_dictionary_size";
-%ignore "realm_dictionary_get";
-%ignore "realm_dictionary_insert";
-%ignore "realm_dictionary_erase";
-%ignore "realm_dictionary_clear";
-%ignore "realm_dictionary_assign";
-%ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge

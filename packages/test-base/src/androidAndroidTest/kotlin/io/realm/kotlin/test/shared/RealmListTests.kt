@@ -36,6 +36,7 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.shared.util.ErrorCatcher
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
@@ -697,7 +698,7 @@ class RealmListTests {
 // API dimension
 // ----------------------------------------------
 
-internal interface ListApiTester {
+internal interface ListApiTester : ErrorCatcher {
 
     override fun toString(): String
     fun copyToRealm()
@@ -717,29 +718,6 @@ internal interface ListApiTester {
     fun assignField()
 
     // All the other functions are not tested since we rely on implementations from parent classes.
-
-    /**
-     * This method acts as an assertion error catcher in case one of the classifiers we use for
-     * testing fails, ensuring the error message can easily be identified in the log.
-     *
-     * Assertions should be wrapped around this function, e.g.:
-     * ```
-     * override fun specificTest() {
-     *     errorCatcher {
-     *         // Write your test logic here
-     *     }
-     * }
-     * ```
-     *
-     * @param block lambda with the actual test logic to be run
-     */
-    fun errorCatcher(block: () -> Unit) {
-        try {
-            block()
-        } catch (e: AssertionError) {
-            throw AssertionError("'${toString()}' failed - ${e.message}", e)
-        }
-    }
 }
 
 // ----------------------------------------------------------

@@ -115,7 +115,9 @@ public object TypeDescriptor {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
             },
-            canBeNotNull = nullabilityForAll
+            canBeNotNull = nullabilityForAll.toMutableSet().apply {
+                remove(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
+            }
         ),
         FLOAT(
             type = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
@@ -248,7 +250,7 @@ public object TypeDescriptor {
 
     // Utility method to generate cartesian product of classifiers and nullability values according
     // to the support level of the underlying core field type specified in CoreFieldType.
-    fun elementTypes(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
+    private fun elementTypes(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
         classifiers.fold(mutableSetOf()) { acc, classifier ->
             val realmFieldType = TypeDescriptor.classifiers[classifier]
                 ?: error("Unmapped classifier $classifier")
@@ -295,7 +297,8 @@ public object TypeDescriptor {
         .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
     val allSetFieldTypes = elementTypesForSet.filter { it.realmFieldType.setSupport }
         .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_SET, it) }
-    // TODO Dict
+    val allDictionaryFieldTypes = elementTypesForDictionary.filter { it.realmFieldType.dictionarySupport }
+        .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY, it) }
     val allFieldTypes: List<RealmFieldType> = allSingularFieldTypes + allListFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
