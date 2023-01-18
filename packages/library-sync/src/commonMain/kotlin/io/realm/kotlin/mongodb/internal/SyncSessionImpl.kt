@@ -240,6 +240,7 @@ internal open class SyncSessionImpl(
                 CoreSyncSessionState.RLM_SYNC_SESSION_STATE_ACTIVE -> SyncSession.State.ACTIVE
                 CoreSyncSessionState.RLM_SYNC_SESSION_STATE_INACTIVE -> SyncSession.State.INACTIVE
                 CoreSyncSessionState.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN -> SyncSession.State.WAITING_FOR_ACCESS_TOKEN
+                CoreSyncSessionState.RLM_SYNC_SESSION_STATE_PAUSED -> SyncSession.State.PAUSED
                 else -> throw IllegalStateException("Unsupported state: $coreState")
             }
         }
