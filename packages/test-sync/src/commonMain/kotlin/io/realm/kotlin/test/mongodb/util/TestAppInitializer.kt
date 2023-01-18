@@ -353,6 +353,37 @@ object TestAppInitializer {
             }
             """.trimIndent()
         ).let { service: Service ->
+            val dbName = app.clientAppId
+            service.addRule(
+                """
+                {
+                    "database": "$dbName",
+                    "collection": "UserData",
+                    "roles": [
+                        {
+                            "name": "default",
+                            "apply_when": {},
+                            "insert": true,
+                            "delete": true,
+                            "additional_fields": {}
+                        }
+                    ]
+                }
+                """.trimIndent()
+            )
+
+            app.setCustomUserData(
+                """
+                {
+                    "mongo_service_id": ${service._id},
+                    "enabled": true,
+                    "database_name": "$dbName",
+                    "collection_name": "UserData",
+                    "user_id_field": "user_id"
+                }
+                """.trimIndent()
+            )
+
             block(app, service)
         }
 
@@ -415,10 +446,10 @@ object TestAppInitializer {
         source =
         """
         exports = ({mail, id}) => {
-            // Auth function will fail for emails with a domain different to @androidtest.realm.io
+            // Auth function will fail for emails with a domain different to @10gen.com
             // or with id lower than 666
-            if (!new RegExp("@androidtest.realm.io${'$'}").test(mail) || id < 666) {
-                return 0;
+            if (!new RegExp("@10gen.com${'$'}").test(mail) || id < 666) {
+                throw new Error(`Authentication failed`);
             } else {
                 // Use the users email as UID
                 return mail;
