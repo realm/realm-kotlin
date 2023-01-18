@@ -34,10 +34,10 @@ import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
-import io.realm.kotlin.test.assertFailsWithMessage
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.ErrorCatcher
 import io.realm.kotlin.test.GenericTypeSafetyManager
+import io.realm.kotlin.test.assertFailsWithMessage
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
