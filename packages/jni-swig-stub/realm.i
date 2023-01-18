@@ -390,6 +390,8 @@ bool realm_object_is_valid(const realm_object_t*);
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
 %ignore "realm_results_freeze";
+// FIXME realm_websocket_endpoint::protocols are a `const chart **` which is causing problems with Swig. Find a proper typemap for it.
+%ignore "protocols";
 
 // TODO improve typemaps for freeing ByteArrays. At the moment we assume a realm_binary_t can only
 //  be inside a realm_value_t and only those instances are freed properly until we refine their
