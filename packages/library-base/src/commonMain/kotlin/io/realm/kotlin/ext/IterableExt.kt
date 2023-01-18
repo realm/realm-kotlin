@@ -20,8 +20,8 @@ import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.types.RealmDictionary
-import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmDictionaryEntrySet
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 
 /**

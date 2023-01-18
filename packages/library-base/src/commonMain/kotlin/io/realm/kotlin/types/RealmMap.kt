@@ -43,4 +43,3 @@ public typealias RealmDictionaryEntrySet<V> = RealmMapEntrySet<String, V>
  * contained by a [RealmDictionary].
  */
 public typealias RealmDictionaryMutableEntry<V> = RealmMapMutableEntry<String, V>
-
