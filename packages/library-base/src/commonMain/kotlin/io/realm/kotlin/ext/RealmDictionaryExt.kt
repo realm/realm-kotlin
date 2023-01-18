@@ -30,6 +30,17 @@ public fun <T> realmDictionaryOf(vararg elements: Pair<String, T>): RealmDiction
     if (elements.isNotEmpty()) elements.asRealmDictionary() else UnmanagedRealmDictionary()
 
 /**
+ * Instantiates an **unmanaged** [RealmDictionary] from a [Collection] of [Pair]s of [String] and
+ * [T].
+ */
+public fun <T> realmDictionaryOf(elements: Collection<Pair<String, T>>): RealmDictionary<T> =
+    if (elements.isNotEmpty()) {
+        elements.toTypedArray().asRealmDictionary()
+    } else {
+        UnmanagedRealmDictionary()
+    }
+
+/**
  * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [Pair] of [K] and [V]. Entries are
  * used by the entry set produced by [RealmDictionary.entries]. It is possible to update the entry
  * which will result in the underlying [RealmDictionary] to be updated too.

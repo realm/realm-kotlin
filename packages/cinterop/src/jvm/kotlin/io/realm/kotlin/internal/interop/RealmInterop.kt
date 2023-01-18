@@ -572,7 +572,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
-        return LongPointerWrapper(realmc.realm_get_set((obj as LongPointerWrapper).ptr, key.key))
+        return LongPointerWrapper(realmc.realm_get_set(obj.cptr(), key.key))
     }
 
     actual fun realm_set_size(set: RealmSetPointer): Long {
@@ -638,7 +638,7 @@ actual object RealmInterop {
         obj: RealmObjectPointer,
         key: PropertyKey
     ): RealmMapPointer {
-        val ptr = realmc.realm_get_dictionary((obj as LongPointerWrapper).ptr, key.key)
+        val ptr = realmc.realm_get_dictionary(obj.cptr(), key.key)
         return LongPointerWrapper(ptr)
     }
 

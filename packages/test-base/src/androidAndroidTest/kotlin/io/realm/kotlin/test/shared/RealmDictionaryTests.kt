@@ -27,8 +27,8 @@ import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.test.shared.util.ErrorCatcher
-import io.realm.kotlin.test.shared.util.GenericTypeSafetyManager
+import io.realm.kotlin.test.ErrorCatcher
+import io.realm.kotlin.test.GenericTypeSafetyManager
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
@@ -139,7 +139,7 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun realmDictionaryInitializer_realmDictionaryOf() {
+    fun realmDictionaryInitializer_realmDictionaryOf_fromVarargs() {
         // No need to be exhaustive here
         val realmDictionaryFromArgsEmpty: RealmDictionary<String> = realmDictionaryOf()
         assertTrue(realmDictionaryFromArgsEmpty.isEmpty())
@@ -148,6 +148,20 @@ class RealmDictionaryTests {
         val realmDictionaryFromArgs: RealmDictionary<String> = realmDictionaryOf(*args)
 
         realmDictionaryFromArgs.forEach {
+            assertContains(args, Pair(it.key, it.value))
+        }
+    }
+
+    @Test
+    fun realmDictionaryInitializer_realmDictionaryOf_fromCollection() {
+        // No need to be exhaustive here
+        val realmDictionaryFromEmptyList: RealmDictionary<String> = realmDictionaryOf(listOf())
+        assertTrue(realmDictionaryFromEmptyList.isEmpty())
+
+        val args = listOf("A" to "1", "B" to "2")
+        val realmDictionaryFromList: RealmDictionary<String> = realmDictionaryOf(args)
+
+        realmDictionaryFromList.forEach {
             assertContains(args, Pair(it.key, it.value))
         }
     }
@@ -433,7 +447,7 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
 internal abstract class ManagedDictionaryTester<T>(
     override val realm: Realm,
     private val typeSafetyManager: DictionaryTypeSafetyManager<T>,
-    private val classifier: KClassifier
+    override val classifier: KClassifier
 ) : DictionaryApiTester<T, RealmDictionaryContainer> {
 
     override fun toString(): String = classifier.toString()

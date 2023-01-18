@@ -29,8 +29,8 @@ import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.test.shared.util.ErrorCatcher
-import io.realm.kotlin.test.shared.util.GenericTypeSafetyManager
+import io.realm.kotlin.test.ErrorCatcher
+import io.realm.kotlin.test.GenericTypeSafetyManager
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
@@ -71,7 +71,8 @@ class RealmSetTests {
                     getTypeSafety(
                         classifier,
                         false
-                    ) as SetTypeSafetyManager<RealmSetContainer>
+                    ) as SetTypeSafetyManager<RealmSetContainer>,
+                    classifier
                 )
                 ByteArray::class -> ByteArraySetTester(
                     realm,
@@ -79,7 +80,6 @@ class RealmSetTests {
                         classifier,
                         elementType.nullable
                     ) as SetTypeSafetyManager<ByteArray>,
-                    classifier
                 )
                 RealmAny::class -> RealmAnySetTester(
                     realm,
@@ -87,7 +87,6 @@ class RealmSetTests {
                         RealmSetContainer.nullableProperties[classifier]!!,
                         getDataSetForClassifier(classifier, true)
                     ) as SetTypeSafetyManager<RealmAny?>,
-                    classifier
                 )
                 else -> GenericSetTester(
                     realm,
@@ -515,8 +514,11 @@ internal interface SetApiTester<T, Container> : ErrorCatcher {
  */
 internal abstract class ManagedSetTester<T>(
     override val realm: Realm,
-    private val typeSafetyManager: SetTypeSafetyManager<T>
+    private val typeSafetyManager: SetTypeSafetyManager<T>,
+    override val classifier: KClassifier
 ) : SetApiTester<T, RealmSetContainer> {
+
+    override fun toString(): String = classifier.toString()
 
     override fun copyToRealm() {
         val dataSet = typeSafetyManager.dataSetToLoad
@@ -744,10 +746,8 @@ internal abstract class ManagedSetTester<T>(
 internal class GenericSetTester<T>(
     realm: Realm,
     typeSafetyManager: SetTypeSafetyManager<T>,
-    private val classifier: KClassifier
-) : ManagedSetTester<T>(realm, typeSafetyManager) {
-
-    override fun toString(): String = classifier.toString()
+    classifier: KClassifier
+) : ManagedSetTester<T>(realm, typeSafetyManager, classifier) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<T>,
@@ -769,10 +769,7 @@ internal class GenericSetTester<T>(
 internal class RealmAnySetTester(
     realm: Realm,
     typeSafetyManager: SetTypeSafetyManager<RealmAny?>,
-    private val classifier: KClassifier
-) : ManagedSetTester<RealmAny?>(realm, typeSafetyManager) {
-
-    override fun toString(): String = classifier.toString()
+) : ManagedSetTester<RealmAny?>(realm, typeSafetyManager, RealmAny::class) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<RealmAny?>,
@@ -848,10 +845,7 @@ internal class RealmAnySetTester(
 internal class ByteArraySetTester(
     realm: Realm,
     typeSafetyManager: SetTypeSafetyManager<ByteArray>,
-    private val classifier: KClassifier
-) : ManagedSetTester<ByteArray>(realm, typeSafetyManager) {
-
-    override fun toString(): String = classifier.toString()
+) : ManagedSetTester<ByteArray>(realm, typeSafetyManager, ByteArray::class) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<ByteArray>,
@@ -906,10 +900,9 @@ private fun binaryContains(
  */
 internal class RealmObjectSetTester(
     realm: Realm,
-    typeSafetyManager: SetTypeSafetyManager<RealmSetContainer>
-) : ManagedSetTester<RealmSetContainer>(realm, typeSafetyManager) {
-
-    override fun toString(): String = "RealmObjectSetTester"
+    typeSafetyManager: SetTypeSafetyManager<RealmSetContainer>,
+    classifier: KClassifier
+) : ManagedSetTester<RealmSetContainer>(realm, typeSafetyManager, classifier) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<RealmSetContainer>,
