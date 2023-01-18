@@ -34,6 +34,7 @@ import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
@@ -42,8 +43,12 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
+import org.mongodb.kbson.ObjectId
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -53,6 +58,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.fail
 
 @Suppress("LargeClass")
 class RealmAnyTests {
@@ -61,24 +67,6 @@ class RealmAnyTests {
     private lateinit var configuration: RealmConfiguration
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
-
-    // TODO TYPEMETADATA: we should fail in case we forgot to cover the basic type
-    private val supportedTypesAndValues = listOf(
-        Short::class to 10.toShort(),
-        Int::class to 10,
-        Byte::class to 10.toByte(),
-        Char::class to 10.toChar(),
-        Long::class to 10L,
-        Boolean::class to true,
-        String::class to "hello",
-        Float::class to 10F,
-        Double::class to 10.0,
-        BsonObjectId::class to BsonObjectId(),
-        ByteArray::class to byteArrayOf(42, 43, 44),
-        RealmInstant::class to RealmInstant.now(),
-        RealmUUID::class to RealmUUID.random(),
-        Sample::class to Sample()
-    )
 
     @BeforeTest
     fun setup() {
@@ -163,49 +151,8 @@ class RealmAnyTests {
 
     @Test
     fun unmanaged_incorrectTypeThrows() {
-        for (type in supportedTypesAndValues) {
-            when (type.first) {
-                Short::class ->
-                    assertThrowsOnInvalidType(Short::class, RealmAny.create(type.second as Short))
-                Int::class ->
-                    assertThrowsOnInvalidType(Int::class, RealmAny.create(type.second as Int))
-                Byte::class ->
-                    assertThrowsOnInvalidType(Byte::class, RealmAny.create(type.second as Byte))
-                Char::class ->
-                    assertThrowsOnInvalidType(Char::class, RealmAny.create(type.second as Char))
-                Long::class ->
-                    assertThrowsOnInvalidType(Long::class, RealmAny.create(type.second as Long))
-                Boolean::class -> assertThrowsOnInvalidType(
-                    Boolean::class,
-                    RealmAny.create(type.second as Boolean)
-                )
-                String::class ->
-                    assertThrowsOnInvalidType(String::class, RealmAny.create(type.second as String))
-                Float::class ->
-                    assertThrowsOnInvalidType(Float::class, RealmAny.create(type.second as Float))
-                Double::class ->
-                    assertThrowsOnInvalidType(Double::class, RealmAny.create(type.second as Double))
-                BsonObjectId::class -> assertThrowsOnInvalidType(
-                    BsonObjectId::class,
-                    RealmAny.create(type.second as BsonObjectId)
-                )
-                ByteArray::class -> assertThrowsOnInvalidType(
-                    ByteArray::class,
-                    RealmAny.create(type.second as ByteArray)
-                )
-                RealmInstant::class -> assertThrowsOnInvalidType(
-                    RealmInstant::class,
-                    RealmAny.create(type.second as RealmInstant)
-                )
-                RealmUUID::class -> assertThrowsOnInvalidType(
-                    RealmUUID::class,
-                    RealmAny.create(type.second as RealmUUID)
-                )
-                Sample::class -> assertThrowsOnInvalidType(
-                    Sample::class,
-                    RealmAny.create(type.second as Sample, Sample::class)
-                )
-            }
+        supportedRealmAnys.forEach {
+            assertThrowsOnInvalidType(it.key, it.value)
         }
     }
 
@@ -229,8 +176,8 @@ class RealmAnyTests {
 
     @Test
     fun unmanaged_allTypes() {
-        for (type in supportedTypesAndValues) {
-            when (type.first) {
+        for (type in TypeDescriptor.anyClassifiers.keys) {
+            when (type) {
                 Short::class -> {
                     val realmAny = RealmAny.create(10.toShort())
                     assertEquals(10, realmAny.asShort())
@@ -285,6 +232,12 @@ class RealmAnyTests {
                     assertEquals(RealmAny.create(42.0), realmAny)
                     assertEquals(RealmAny.Type.DOUBLE, realmAny.type)
                 }
+                Decimal128::class -> {
+                    val realmAny = RealmAny.create(Decimal128("1.5"))
+                    assertEquals(Decimal128("1.5"), realmAny.asDecimal128())
+                    assertEquals(RealmAny.create(Decimal128("1.5")), realmAny)
+                    assertEquals(RealmAny.Type.DECIMAL128, realmAny.type)
+                }
                 BsonObjectId::class -> {
                     val objectId = BsonObjectId("000000000000000000000000")
                     val realmAny = RealmAny.create(objectId)
@@ -313,14 +266,14 @@ class RealmAnyTests {
                     assertEquals(RealmAny.create(uuid), realmAny)
                     assertEquals(RealmAny.Type.UUID, realmAny.type)
                 }
-                Sample::class -> {
+                RealmObject::class -> {
                     val obj = Sample()
                     val realmAny = RealmAny.create(obj, Sample::class)
                     assertEquals(obj, realmAny.asRealmObject())
                     assertEquals(RealmAny.create(obj, Sample::class), realmAny)
                     assertEquals(RealmAny.Type.OBJECT, realmAny.type)
                 }
-                else -> throw UnsupportedOperationException("Missing testing for type $type")
+                else -> fail("Missing testing for type $type")
             }
         }
     }
@@ -348,89 +301,14 @@ class RealmAnyTests {
 
     @Test
     fun managed_incorrectTypeThrows() {
-        for (type in supportedTypesAndValues) {
-            when (type.first) {
-                Short::class -> assertThrowsOnInvalidType(
-                    Short::class,
-                    createManagedRealmAny { RealmAny.create(10.toShort()) }!!
-                )
-                Int::class -> assertThrowsOnInvalidType(
-                    Int::class,
-                    createManagedRealmAny { RealmAny.create(10) }!!
-                )
-                Byte::class -> assertThrowsOnInvalidType(
-                    Byte::class,
-                    createManagedRealmAny { RealmAny.create(10.toByte()) }!!
-                )
-                Char::class -> assertThrowsOnInvalidType(
-                    Char::class,
-                    createManagedRealmAny { RealmAny.create(10.toChar()) }!!
-                )
-                Long::class -> assertThrowsOnInvalidType(
-                    Long::class,
-                    createManagedRealmAny { RealmAny.create(10L) }!!
-                )
-                Boolean::class -> assertThrowsOnInvalidType(
-                    Boolean::class,
-                    createManagedRealmAny { RealmAny.create(true) }!!
-                )
-                String::class -> assertThrowsOnInvalidType(
-                    String::class,
-                    createManagedRealmAny { RealmAny.create("hello") }!!
-                )
-                Float::class -> assertThrowsOnInvalidType(
-                    Float::class,
-                    createManagedRealmAny { RealmAny.create(10F) }!!
-                )
-                Double::class -> assertThrowsOnInvalidType(
-                    Double::class,
-                    createManagedRealmAny { RealmAny.create(10.0) }!!
-                )
-                BsonObjectId::class -> assertThrowsOnInvalidType(
-                    BsonObjectId::class,
-                    createManagedRealmAny { RealmAny.create(BsonObjectId()) }!!
-                )
-                ByteArray::class -> assertThrowsOnInvalidType(
-                    ByteArray::class,
-                    createManagedRealmAny { RealmAny.create(byteArrayOf(42, 43, 44)) }!!
-                )
-                RealmInstant::class -> assertThrowsOnInvalidType(
-                    RealmInstant::class,
-                    createManagedRealmAny { RealmAny.create(RealmInstant.now()) }!!
-                )
-                RealmUUID::class -> assertThrowsOnInvalidType(
-                    RealmUUID::class,
-                    createManagedRealmAny { RealmAny.create(RealmUUID.random()) }!!
-                )
-                Sample::class -> assertThrowsOnInvalidType(
-                    Sample::class,
-                    createManagedRealmAny { RealmAny.create(Sample(), Sample::class) }!!
-                )
-            }
+        supportedRealmAnys.forEach { (type, value: RealmAny) ->
+            assertThrowsOnInvalidType(type, createManagedRealmAny { value }!!)
         }
     }
 
     @Test
     fun managed_updateThroughAllTypes() {
-        // For each supported type make sure we can set a RealmAny value with all different types
-        for (valueType in supportedTypesAndValues) {
-            when (valueType.first) {
-                Short::class -> loopSupportedTypes(createManagedContainer())
-                Int::class -> loopSupportedTypes(createManagedContainer())
-                Byte::class -> loopSupportedTypes(createManagedContainer())
-                Char::class -> loopSupportedTypes(createManagedContainer())
-                Long::class -> loopSupportedTypes(createManagedContainer())
-                Boolean::class -> loopSupportedTypes(createManagedContainer())
-                String::class -> loopSupportedTypes(createManagedContainer())
-                Float::class -> loopSupportedTypes(createManagedContainer())
-                Double::class -> loopSupportedTypes(createManagedContainer())
-                BsonObjectId::class -> loopSupportedTypes(createManagedContainer())
-                ByteArray::class -> loopSupportedTypes(createManagedContainer())
-                RealmInstant::class -> loopSupportedTypes(createManagedContainer())
-                RealmUUID::class -> loopSupportedTypes(createManagedContainer())
-                Sample::class -> loopSupportedTypes(createManagedContainer())
-            }
-        }
+        loopSupportedTypes(createManagedContainer())
     }
 
     @Test
@@ -602,6 +480,7 @@ class RealmAnyTests {
                 Short::class -> {
                     assertNumericCoercionOverflows(actualValue) { it.asByte() }
                 }
+                else -> fail("Unexpected clazz: $clazz")
             }
         }
     }
@@ -643,36 +522,8 @@ class RealmAnyTests {
 
         // Test we can set a RealmAny value to a field with all supported types
         realm.writeBlocking {
-            supportedTypesAndValues.forEach { candidate ->
-                when (candidate.first) {
-                    Int::class -> setAndAssert(RealmAny.create(candidate.second as Int), container)
-                    Byte::class ->
-                        setAndAssert(RealmAny.create(candidate.second as Byte), container)
-                    Char::class ->
-                        setAndAssert(RealmAny.create(candidate.second as Char), container)
-                    Long::class ->
-                        setAndAssert(RealmAny.create(candidate.second as Long), container)
-                    Boolean::class ->
-                        setAndAssert(RealmAny.create(candidate.second as Boolean), container)
-                    String::class ->
-                        setAndAssert(RealmAny.create(candidate.second as String), container)
-                    Float::class ->
-                        setAndAssert(RealmAny.create(candidate.second as Float), container)
-                    Double::class ->
-                        setAndAssert(RealmAny.create(candidate.second as Double), container)
-                    BsonObjectId::class ->
-                        setAndAssert(RealmAny.create(candidate.second as BsonObjectId), container)
-                    ByteArray::class ->
-                        setAndAssert(RealmAny.create(candidate.second as ByteArray), container)
-                    RealmInstant::class ->
-                        setAndAssert(RealmAny.create(candidate.second as RealmInstant), container)
-                    RealmUUID::class ->
-                        setAndAssert(RealmAny.create(candidate.second as RealmUUID), container)
-                    Sample::class -> setAndAssert(
-                        RealmAny.create(candidate.second as Sample, Sample::class),
-                        container
-                    )
-                }
+            supportedRealmAnys.forEach {
+                setAndAssert(it.value, container)
             }
         }
     }
@@ -680,10 +531,10 @@ class RealmAnyTests {
     /**
      * Exhaustively checks that getting a value using the wrong 'as' function throws an exception.
      */
-    private fun assertThrowsOnInvalidType(excludedType: KClass<*>, value: RealmAny) {
-        supportedTypesAndValues.filter { it.first != excludedType }
+    private fun assertThrowsOnInvalidType(excludedType: KClassifier, value: RealmAny) {
+        TypeDescriptor.anyClassifiers.keys.filter { it != excludedType }
             .forEach { candidateClass ->
-                when (candidateClass.first) {
+                when (candidateClass) {
                     // Exclude these numerals as the underlying value is the same
                     Short::class -> if (excludedType != Short::class &&
                         excludedType != Int::class &&
@@ -737,6 +588,8 @@ class RealmAnyTests {
                         assertFailsWith<IllegalStateException> { value.asFloat() }
                     Double::class ->
                         assertFailsWith<IllegalStateException> { value.asDouble() }
+                    Decimal128::class ->
+                        assertFailsWith<IllegalStateException> { value.asDecimal128() }
                     BsonObjectId::class ->
                         assertFailsWith<IllegalStateException> { value.asObjectId() }
                     ByteArray::class ->
@@ -745,11 +598,59 @@ class RealmAnyTests {
                         assertFailsWith<IllegalStateException> { value.asRealmInstant() }
                     RealmUUID::class ->
                         assertFailsWith<IllegalStateException> { value.asRealmUUID() }
-                    Sample::class -> assertFailsWith<IllegalStateException> {
+                    RealmObject::class -> assertFailsWith<IllegalStateException> {
                         value.asRealmObject<Sample>()
                     }
+                    else -> fail("Untested type: $candidateClass")
                 }
             }
+    }
+
+    companion object {
+        internal val defaultValues: Map<KClassifier, Any> = TypeDescriptor.anyClassifiers.mapValues {
+            when (it.key) {
+                Short::class -> -12.toShort()
+                Int::class -> 13
+                Byte::class -> 14.toByte()
+                Char::class -> 15.toChar()
+                Long::class -> 16L
+                Boolean::class -> false
+                String::class -> "hello"
+                Float::class -> 17F
+                Double::class -> 18.0
+                Decimal128::class -> Decimal128("1")
+                ObjectId::class -> BsonObjectId()
+                ByteArray::class -> byteArrayOf(42, 43, 44)
+                RealmInstant::class -> RealmInstant.now()
+                RealmUUID::class -> RealmUUID.random()
+                RealmObject::class -> Sample()
+                else -> error("RealmAny supporting classifier does not have a default values: ${it.key}")
+            }
+        }
+        val supportedRealmAnys: Map<KClassifier, RealmAny> = defaultValues.mapValues { (type, defaultValue: Any) ->
+            create(defaultValue)
+        }
+
+        fun create(value: Any?): RealmAny = when (value) {
+            is Byte -> RealmAny.create(value)
+            is Char -> RealmAny.create(value)
+            is Short -> RealmAny.create(value)
+            is Int -> RealmAny.create(value)
+            is Long -> RealmAny.create(value)
+            is Boolean -> RealmAny.create(value)
+            is String -> RealmAny.create(value)
+            is Float -> RealmAny.create(value)
+            is Double -> RealmAny.create(value)
+            is BsonDecimal128 -> RealmAny.create(value)
+            is BsonObjectId -> RealmAny.create(value)
+            is ByteArray -> RealmAny.create(value)
+            is RealmInstant -> RealmAny.create(value)
+            is RealmUUID -> RealmAny.create(value)
+            is RealmObject -> RealmAny.create(value, value::class as KClass<out RealmObject>)
+            else -> {
+                fail("Cannot create a RealmValue for value: $value of type ${value?.let { value::class }}")
+            }
+        }
     }
 }
 

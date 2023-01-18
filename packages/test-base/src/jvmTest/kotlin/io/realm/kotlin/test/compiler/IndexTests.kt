@@ -28,6 +28,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.junit.Test
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -45,6 +46,7 @@ class IndexTests {
             Long::class to "1",
             Float::class to "1.4f",
             Double::class to "1.4",
+            Decimal128::class to "BsonDecimal128(\"1.4E100\")",
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()",
@@ -80,6 +82,7 @@ class IndexTests {
                         import io.realm.kotlin.types.annotations.Index
                         import io.realm.kotlin.RealmConfiguration
                         import org.mongodb.kbson.BsonObjectId
+                        import org.mongodb.kbson.BsonDecimal128
 
                         class A : RealmObject {
                             @Index
@@ -99,7 +102,7 @@ class IndexTests {
                     result.exitCode,
                     type.toString()
                 )
-                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(12, 5\\): .*but must be of type")))
+                assertTrue(result.messages.contains(Regex("Indexed key .* is of type .* but must be of type")), result.messages)
             }
         }
     }
@@ -135,7 +138,7 @@ class IndexTests {
                 )
             )
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
-            assertTrue(result.messages.contains("Indexed key indexedKey is of type ${pair.first} but must be of type"))
+            assertTrue(result.messages.contains("Indexed key indexedKey is of type ${pair.first} but must be of type"), result.messages)
         }
     }
 }
