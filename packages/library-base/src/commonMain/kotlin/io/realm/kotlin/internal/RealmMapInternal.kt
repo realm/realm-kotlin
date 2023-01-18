@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
+import io.realm.kotlin.types.RealmMapMutableEntry
 import kotlin.reflect.KClass
 
 // ----------------------------------------------------------------------
@@ -228,6 +229,18 @@ internal class ManagedRealmDictionary<E>(
 // ----------------------------------------------------------------------
 // Internal helpers for factory functions
 // ----------------------------------------------------------------------
+
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+internal fun <K, V> realmMapEntryOf(pair: Pair<K, V>): RealmMapMutableEntry<K, V> =
+    TODO("Not yet implemented")
+
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+internal fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V> =
+    TODO("Not yet implemented")
+
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+internal fun <K, V> realmMapEntryOf(entry: Map.Entry<K, V>): RealmMapMutableEntry<K, V> =
+    TODO("Not yet implemented")
 
 internal fun <T> Map<String, T>.asRealmDictionary(): RealmDictionary<T> =
     UnmanagedRealmDictionary<T>().apply { putAll(this@asRealmDictionary) }
