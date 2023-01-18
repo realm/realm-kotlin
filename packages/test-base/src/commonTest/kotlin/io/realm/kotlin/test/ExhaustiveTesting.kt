@@ -1,6 +1,7 @@
-package io.realm.kotlin.test.shared.util
+package io.realm.kotlin.test
 
 import io.realm.kotlin.MutableRealm
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 
 /**
@@ -43,9 +44,12 @@ internal interface GenericTypeSafetyManager<Type, Container, RealmCollection> {
 }
 
 /**
- *
+ * Provides an execution block collection exhaustive tests. In case the test fails
  */
 internal interface ErrorCatcher {
+
+    val classifier: KClassifier
+
     /**
      * This method acts as an assertion error catcher in case one of the classifiers we use for
      * testing fails, ensuring the error message can easily be identified in the log.
