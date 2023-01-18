@@ -41,6 +41,7 @@ internal abstract class ManagedRealmMap<K, V>(
 ) : AbstractMutableMap<K, V>(), RealmMap<K, V> {
 
     override val entries: MutableSet<MutableMap.MutableEntry<K, V>> by lazy {
+        operator.realmReference.checkClosed()
         RealmMapEntrySetImpl(nativePointer, operator)
     }
 

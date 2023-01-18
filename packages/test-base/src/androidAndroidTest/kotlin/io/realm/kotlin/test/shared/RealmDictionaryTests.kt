@@ -52,6 +52,7 @@ import kotlin.test.assertTrue
 
 class RealmDictionaryTests {
 
+    private val dictionarySchema = setOf(RealmDictionaryContainer::class)
     private val descriptors = TypeDescriptor.allDictionaryFieldTypes
 
     private lateinit var tmpDir: String
@@ -92,9 +93,8 @@ class RealmDictionaryTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(
-            schema = setOf(RealmDictionaryContainer::class)
-        ).directory(tmpDir)
+        val configuration = RealmConfiguration.Builder(schema = dictionarySchema)
+            .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
     }
@@ -145,8 +145,9 @@ class RealmDictionaryTests {
         assertTrue(realmDictionaryFromArgsEmpty.isEmpty())
 
         val args = listOf("A" to "1", "B" to "2").toTypedArray()
-        val realmDictionaryFromArgs: RealmDictionary<String> = realmDictionaryOf(*args)
+        val realmDictionaryFromArgs = realmDictionaryOf(*args)
 
+        assertEquals(args.size, realmDictionaryFromArgs.size)
         realmDictionaryFromArgs.forEach {
             assertContains(args, Pair(it.key, it.value))
         }
@@ -159,8 +160,9 @@ class RealmDictionaryTests {
         assertTrue(realmDictionaryFromEmptyList.isEmpty())
 
         val args = listOf("A" to "1", "B" to "2")
-        val realmDictionaryFromList: RealmDictionary<String> = realmDictionaryOf(args)
+        val realmDictionaryFromList = realmDictionaryOf(args)
 
+        assertEquals(args.size, realmDictionaryFromList.size)
         realmDictionaryFromList.forEach {
             assertContains(args, Pair(it.key, it.value))
         }
@@ -195,6 +197,104 @@ class RealmDictionaryTests {
         }
         mapEntrySet.toRealmDictionary()
             .forEach { assertTrue(multipleElementList.contains(Pair(it.key, it.value))) }
+    }
+
+    @Test
+    fun accessors_getter() {
+        // No need to be exhaustive here
+        val dictionary1 = realmDictionaryOf("A" to 1.toByte())
+        val container1 = RealmDictionaryContainer().apply { byteDictionaryField = dictionary1 }
+
+        realm.writeBlocking {
+            val managedContainer1 = copyToRealm(container1)
+            val managedDictionary1 = managedContainer1.byteDictionaryField
+            assertEquals(dictionary1.size, managedDictionary1.size)
+            assertEquals(dictionary1["A"], managedDictionary1["A"])
+        }
+
+        // Repeat outside transaction
+        realm.query<RealmDictionaryContainer>()
+            .first()
+            .find {
+                val managedDictionary1 = assertNotNull(it).byteDictionaryField
+                assertEquals(dictionary1.size, managedDictionary1.size)
+                assertEquals(dictionary1["A"], managedDictionary1["A"])
+            }
+    }
+
+    @Test
+    fun accessors_setter() {
+        // No need to be exhaustive here
+        val dictionary0 = realmDictionaryOf("RANDOM1" to 13.toByte(), "RANDOM2" to 42.toByte())
+        val dictionary1 = realmDictionaryOf("A" to 1.toByte())
+        val dictionary2 = realmDictionaryOf("X" to 22.toByte())
+        val container1 = RealmDictionaryContainer().apply { byteDictionaryField = dictionary1 }
+        val container2 = RealmDictionaryContainer().apply { byteDictionaryField = dictionary2 }
+
+        realm.writeBlocking {
+            val managedContainer1 = copyToRealm(container1)
+            val managedContainer2 = copyToRealm(container2)
+
+            // Assign an unmanaged dictionary managed1 <- unmanaged0
+            managedContainer1.also {
+                it.byteDictionaryField = dictionary0
+                assertEquals(dictionary0.size, it.byteDictionaryField.size)
+                assertEquals(dictionary0["RANDOM1"], it.byteDictionaryField["RANDOM1"])
+                assertEquals(dictionary0["RANDOM2"], it.byteDictionaryField["RANDOM2"])
+            }
+
+            // Assign a managed dictionary: managed0 <- managed2
+            managedContainer1.also {
+                it.byteDictionaryField = managedContainer2.byteDictionaryField
+                assertEquals(
+                    managedContainer2.byteDictionaryField.size,
+                    managedContainer1.byteDictionaryField.size
+                )
+                assertEquals(
+                    managedContainer2.byteDictionaryField["X"],
+                    managedContainer1.byteDictionaryField["X"],
+                )
+            }
+
+            // Assign the same managed dictionary: managed2 <- managed2
+            managedContainer1.also {
+                it.byteDictionaryField = it.byteDictionaryField
+                assertEquals(dictionary2.size, it.byteDictionaryField.size)
+                assertEquals(dictionary2["X"], it.byteDictionaryField["X"])
+            }
+        }
+    }
+
+    @Test
+    fun closedRealm_readFails() {
+        val realm = getCloseableRealm()
+
+        // No need to be exhaustive here
+        realm.writeBlocking {
+            copyToRealm(RealmDictionaryContainer())
+        }
+
+        val dictionary = realm.query<RealmDictionaryContainer>()
+            .first()
+            .find()
+            ?.byteDictionaryField
+        assertNotNull(dictionary)
+
+        // Close the realm now
+        realm.close()
+        assertFailsWithMessage<IllegalStateException>("Realm has been closed") {
+            dictionary.size
+        }
+        assertFailsWithMessage<IllegalStateException>("Realm has been closed") {
+            dictionary.isEmpty()
+        }
+        assertFailsWithMessage<IllegalStateException>("Realm has been closed") {
+            dictionary["SOMETHING"]
+        }
+        assertFailsWithMessage<IllegalStateException>("Realm has been closed") {
+            dictionary.entries
+        }
+        // TODO add missing entries, containsKey, containsValue, etc.
     }
 
     @Test
@@ -298,6 +398,15 @@ class RealmDictionaryTests {
         // TODO
     }
 
+    private fun getCloseableRealm(): Realm =
+        RealmConfiguration.Builder(schema = dictionarySchema)
+            .directory(tmpDir)
+            .name("closeable.realm")
+            .build()
+            .let {
+                Realm.open(it)
+            }
+
     private fun getTypeSafety(
         classifier: KClassifier,
         nullable: Boolean
@@ -313,6 +422,7 @@ class RealmDictionaryTests {
     }
 
     @Suppress("UNCHECKED_CAST", "ComplexMethod")
+    // TODO add support for Decimal128
     private fun <T> getDataSetForClassifier(
         classifier: KClassifier,
         nullable: Boolean
@@ -397,6 +507,7 @@ class RealmDictionaryTests {
         } else {
             NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
         }
+        // TODO Decimal128
 //        RealmAny::class -> SET_REALM_ANY_VALUES // RealmAny cannot be non-nullable
 //        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
         else -> TODO("Missing classifier for '$classifier'")
