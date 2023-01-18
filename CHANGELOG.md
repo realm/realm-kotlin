@@ -32,7 +32,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * `RealmUUID.random()` would generate the same values when an app was re-launched from Android Studio during development. (Issue [#1123](https://github.com/realm/realm-kotlin/pull/1123)) 
 * Complete flows with an IllegalStateException instead of crashing when notifications cannot be delivered due to insufficient channel capacity (Issue [#1147](https://github.com/realm/realm-kotlin/issues/1147))
 * [Sync] Custom loggers now correctly see both normal and sync events. Before, sync events were just logged directly to LogCat/StdOut.
-* [Sync] When a `SyncSession` was paused using `SyncSession.pause()`, it would sometimes automatically resume the session. (Core Issue [#6085](https://github.com/realm/realm-core/issues/6085))
+* [Sync] When a `SyncSession` was paused using `SyncSession.pause()`, it would sometimes automatically resume the session. `SyncSession.State.PAUSED` has been added, making it explicit when a session is paused. (Core Issue [#6085](https://github.com/realm/realm-core/issues/6085))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

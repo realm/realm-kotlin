@@ -172,8 +172,9 @@ public interface SyncSession {
          * The Realm is open and data will be synchronized between the device and the server
          * if the underlying connection is connected.
          *
-         * The session will remain in this state until the session is either paused or the
-         * Realm is closed. In which case it will become either [PAUSED] or [DYING].
+         * The session will remain in this state until the session is either paused, after
+         * which the session becomes [PAUSED] or the realm is closed, in which case it will
+         * become [DYING].
          */
         ACTIVE,
 
