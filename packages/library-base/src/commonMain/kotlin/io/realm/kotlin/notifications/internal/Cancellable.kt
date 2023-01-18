@@ -18,6 +18,14 @@ package io.realm.kotlin.notifications.internal
 /**
  * A _cancellable_ representing ongoing tasks or subscription that can be cancelled.
  */
-internal interface Cancellable {
-    fun cancel()
+// Made public to be accessible from sync progress listener notifications
+public interface Cancellable {
+    public fun cancel()
+
+    public companion object {
+        public val NO_OP_NOTIFICATION_TOKEN: Cancellable = object : Cancellable {
+            override fun cancel() { /* Do Nothing */
+            }
+        }
+    }
 }

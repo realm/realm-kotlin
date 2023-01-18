@@ -23,6 +23,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.UpdatedList
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -65,6 +66,10 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
+     *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+     * the elements in a timely manner the coroutine scope will be cancelled with a
+     * [CancellationException].
      *
      * @return a flow representing changes to the list.
      */

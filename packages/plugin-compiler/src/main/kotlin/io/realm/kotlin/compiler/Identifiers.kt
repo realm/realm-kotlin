@@ -22,7 +22,10 @@ import org.jetbrains.kotlin.name.Name
 internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "io_realm_kotlin_"
 
-    val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
+    val REALM_OBJECT_COMPANION_CLASS_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}class")
+    val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
@@ -39,18 +42,27 @@ internal object Names {
     // names must match `RealmObjectInternal` properties
     val OBJECT_REFERENCE = Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}objectReference")
 
-    // C-interop methods
-    val REALM_OBJECT_HELPER_GET_VALUE = Name.identifier("getValue")
-    val REALM_OBJECT_HELPER_SET_VALUE = Name.identifier("setValue")
+    val REALM_ACCESSOR_HELPER_GET_STRING = Name.identifier("getString")
+    val REALM_ACCESSOR_HELPER_GET_LONG = Name.identifier("getLong")
+    val REALM_ACCESSOR_HELPER_GET_BOOLEAN = Name.identifier("getBoolean")
+    val REALM_ACCESSOR_HELPER_GET_FLOAT = Name.identifier("getFloat")
+    val REALM_ACCESSOR_HELPER_GET_DOUBLE = Name.identifier("getDouble")
+    val REALM_ACCESSOR_HELPER_GET_INSTANT = Name.identifier("getInstant")
+    val REALM_ACCESSOR_HELPER_GET_OBJECT_ID = Name.identifier("getObjectId")
+    val REALM_ACCESSOR_HELPER_GET_UUID = Name.identifier("getUUID")
+    val REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY = Name.identifier("getByteArray")
+    val REALM_ACCESSOR_HELPER_SET_VALUE = Name.identifier("setValue")
+    val REALM_ACCESSOR_HELPER_GET_REALM_ANY = Name.identifier("getRealmAny")
     val REALM_OBJECT_HELPER_GET_OBJECT = Name.identifier("getObject")
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
-    val REALM_OBJECT_HELPER_SET_EMBEDDED_OBJECT = Name.identifier("setEmbeddedRealmObject")
+    val REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT = Name.identifier("setEmbeddedRealmObject")
+
+    // C-interop methods
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
     val REALM_OBJECT_HELPER_GET_SET = Name.identifier("getSet")
     val REALM_OBJECT_HELPER_SET_SET = Name.identifier("setSet")
     val REALM_OBJECT_HELPER_GET_MUTABLE_INT = Name.identifier("getMutableInt")
-    val REALM_OBJECT_HELPER_SET_MUTABLE_INT = Name.identifier("setMutableInt")
 
     // Schema related names
     val CLASS_INFO_CREATE = Name.identifier("create")
@@ -94,6 +106,7 @@ internal object FqNames {
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PrimaryKey")
     val INDEX_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Index")
     val IGNORE_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Ignore")
+    val PERSISTED_NAME_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PersistedName")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
 
@@ -102,8 +115,10 @@ internal object FqNames {
     val REALM_SET = FqName("io.realm.kotlin.types.RealmSet")
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
     val REALM_BACKLINKS = FqName("io.realm.kotlin.types.BacklinksDelegate")
+    val REALM_EMBEDDED_BACKLINKS = FqName("io.realm.kotlin.types.EmbeddedBacklinksDelegate")
     val REALM_OBJECT_ID = FqName("io.realm.kotlin.types.ObjectId")
     val KBSON_OBJECT_ID = FqName("org.mongodb.kbson.BsonObjectId")
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
+    val REALM_ANY = FqName("io.realm.kotlin.types.RealmAny")
 }

@@ -9,9 +9,6 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
-public actual val RUNTIME: String = "JVM"
-
-@Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val PATH_SEPARATOR: String = File.separator
 
 public actual fun threadId(): ULong {

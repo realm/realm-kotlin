@@ -23,6 +23,7 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.embedded.EmbeddedChild
 import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.copyFromRealm
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.query
@@ -43,6 +44,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
@@ -146,6 +148,73 @@ class CopyFromRealmTests {
         val innerCopy = unmanagedObj.nullableObject!!
         assertFalse(innerCopy.isManaged())
         assertEquals("inner", innerCopy.stringField)
+    }
+
+    @Test
+    fun realmAny_realmObjectReferences() {
+        val inner = Sample().apply { stringField = "inner" }
+
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(Sample().apply { nullableRealmAnyField = RealmAny.create(inner) })
+        }
+        val unmanagedObj = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        val realmAnyField = unmanagedObj.nullableRealmAnyField
+        assertNotNull(realmAnyField)
+        val innerObjectInsideRealmAny = realmAnyField.asRealmObject<Sample>()
+        assertNotNull(innerObjectInsideRealmAny)
+        assertFalse(innerObjectInsideRealmAny.isManaged())
+        assertEquals(inner.stringField, innerObjectInsideRealmAny.stringField)
+    }
+
+    @Test
+    fun realmAny_list_realmObjectReferences() {
+        val inner = Sample().apply { stringField = "inner" }
+
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(Sample().apply { nullableRealmAnyListField = realmListOf(RealmAny.create(inner)) })
+        }
+        val unmanagedObj = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        val realmAnyListField = unmanagedObj.nullableRealmAnyListField
+        assertNotNull(realmAnyListField)
+        assertEquals(1, realmAnyListField.size)
+        val realmAny = assertNotNull(realmAnyListField[0])
+        val innerObjectInsideRealmAny = realmAny.asRealmObject<Sample>()
+        assertNotNull(innerObjectInsideRealmAny)
+        assertFalse(innerObjectInsideRealmAny.isManaged())
+        assertEquals(inner.stringField, innerObjectInsideRealmAny.stringField)
+    }
+
+    @Test
+    fun realmAny_set_realmObjectReferences() {
+        val inner = Sample().apply { stringField = "inner" }
+
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(Sample().apply { nullableRealmAnySetField = realmSetOf(RealmAny.create(inner)) })
+        }
+        val unmanagedObj = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        val realmAnySetField = unmanagedObj.nullableRealmAnySetField
+        assertNotNull(realmAnySetField)
+        assertEquals(1, realmAnySetField.size)
+        val realmAny = assertNotNull(realmAnySetField.iterator().next())
+        val innerObjectInsideRealmAny = realmAny.asRealmObject<Sample>()
+        assertNotNull(innerObjectInsideRealmAny)
+        assertFalse(innerObjectInsideRealmAny.isManaged())
+        assertEquals(inner.stringField, innerObjectInsideRealmAny.stringField)
     }
 
     @Test
@@ -677,6 +746,7 @@ class CopyFromRealmTests {
                 "io.realm.kotlin.types.ObjectId" -> ObjectId.from("635a1a95184a200db8a07bfc")
                 "io.realm.kotlin.types.RealmUUID" -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
                 "io.realm.kotlin.types.MutableRealmInt" -> MutableRealmInt.create(7)
+                "io.realm.kotlin.types.RealmAny" -> RealmAny.create(1)
                 "org.mongodb.kbson.BsonObjectId" -> BsonObjectId("635a1a95184a200db8a07bfc")
                 "io.realm.kotlin.entities.Sample" -> null // Object references are not part of this test, so just return null
                 else -> fail("Missing support for $type")
@@ -706,6 +776,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.ObjectId" -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            "io.realm.kotlin.types.RealmAny" -> realmListOf(RealmAny.create(1))
             "io.realm.kotlin.entities.Sample" -> realmListOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
         }
@@ -737,6 +808,7 @@ class CopyFromRealmTests {
             "io.realm.kotlin.types.ObjectId" -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             "io.realm.kotlin.types.RealmUUID" -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             "org.mongodb.kbson.BsonObjectId" -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            "io.realm.kotlin.types.RealmAny" -> realmSetOf(RealmAny.create(1))
             "io.realm.kotlin.entities.Sample" -> realmSetOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
         }

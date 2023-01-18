@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Realm Inc.
+ * Copyright 2022 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -30,6 +31,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
+import io.realm.kotlin.types.annotations.PersistedName
 import org.mongodb.kbson.BsonObjectId
 import java.util.*
 
@@ -50,19 +52,22 @@ class Sample : RealmObject {
     var byteField: Byte? = 0xA
     var charField: Char? = 'a'
     var shortField: Short? = 17
+
     @Index
     var intField: Int? = 42
     var longField: Long? = 256
     var booleanField: Boolean? = true
     var floatField: Float? = 3.14f
     var doubleField: Double? = 1.19840122
-    var timestampField: RealmInstant? = RealmInstant.from(0,0)
+    var timestampField: RealmInstant? = RealmInstant.from(0, 0)
     var objectIdField: ObjectId? = ObjectId.create()
     var bsonObjectIdField: BsonObjectId? = BsonObjectId()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = null
     var mutableRealmInt: MutableRealmInt? = MutableRealmInt.create(42)
     var child: Child? = null
+
+    var nullableRealmAny: RealmAny? = RealmAny.create(42)
 
     // List types
     var stringListField: RealmList<String> = realmListOf()
@@ -97,6 +102,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+    var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
 
     // Set types
     var stringSetField: RealmSet<String> = realmSetOf()
@@ -130,9 +136,20 @@ class Sample : RealmObject {
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+    var nullableRealmAnySetField: RealmSet<RealmAny?> = realmSetOf()
 
     val linkingObjectsByList by backlinks(Sample::objectListField)
     val linkingObjectsBySet by backlinks(Sample::objectSetField)
+
+    // @PersistedName annotations
+    // Using positional argument
+    @PersistedName("persistedNameStringField")
+    var publicNameStringField: String? = ""
+    // Using named argument
+    @PersistedName(name = "persistedNameChildField")
+    var publicNameChildField: Child? = null
+    @PersistedName("persistedNameLinkingObjectsField")
+    val publicNameLinkingObjectsField by backlinks(Sample::objectSetField)
 
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
 }
@@ -140,12 +157,15 @@ class Sample : RealmObject {
 class Child : RealmObject {
     var name: String? = "Child-default"
     val linkingObjectsByObject by backlinks(Sample::child)
+
+    @PersistedName(name = "persistedNameParent")
+    val publicNameParent by backlinks(Sample::publicNameChildField)
 }
 
-class EmbeddedParent: RealmObject {
+class EmbeddedParent : RealmObject {
     var child: EmbeddedChild? = null
 }
 
-class EmbeddedChild: EmbeddedRealmObject {
+class EmbeddedChild : EmbeddedRealmObject {
     var name: String? = "Embedded-child"
 }

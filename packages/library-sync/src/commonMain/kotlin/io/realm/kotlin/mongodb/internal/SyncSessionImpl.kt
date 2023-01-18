@@ -16,21 +16,34 @@
 
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.internal.InternalConfiguration
+import io.realm.kotlin.internal.NotificationToken
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
+import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
+import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.sync.Direction
+import io.realm.kotlin.mongodb.sync.Progress
+import io.realm.kotlin.mongodb.sync.ProgressMode
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
+import io.realm.kotlin.notifications.internal.Cancellable
+import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
+import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
@@ -89,6 +102,39 @@ internal open class SyncSessionImpl(
 
     override fun resume() {
         RealmInterop.realm_sync_session_resume(nativePointer)
+    }
+
+    @Suppress("invisible_member", "invisible_reference")
+    override fun progress(
+        direction: Direction,
+        progressMode: ProgressMode,
+    ): Flow<Progress> {
+        if ((configuration as InternalConfiguration).isFlexibleSyncConfiguration) {
+            throw UnsupportedOperationException("Progress listeners are not supported for Flexible Sync.")
+        }
+
+        return callbackFlow {
+            val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+            token.value = NotificationToken(
+                RealmInterop.realm_sync_session_register_progress_notifier(
+                    nativePointer,
+                    when (direction) {
+                        Direction.DOWNLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD
+                        Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
+                    },
+                    progressMode == ProgressMode.INDEFINITELY
+                ) { transferredBytes: Long, totalBytes: Long ->
+                    val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
+                    trySendWithBufferOverflowCheck(progress)
+                    if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
+                        close()
+                    }
+                }
+            )
+            awaitClose {
+                token.value.cancel()
+            }
+        }
     }
 
     /**
@@ -167,9 +213,8 @@ internal open class SyncSessionImpl(
                 }
             }
             // We need to refresh the public Realm when downloading to make the changes visible
-            // to users immediately.
-            // We need to refresh the public Realm when uploading in order to support functionality
-            // like `Realm.writeCopyTo()` which require that all changes are uploaded.
+            // to users immediately, this include functionality like `Realm.writeCopyTo()` which
+            // require that all changes are uploaded.
             realm.refresh()
             when (result) {
                 is Boolean -> return result
@@ -178,6 +223,10 @@ internal open class SyncSessionImpl(
             }
         } catch (ex: TimeoutCancellationException) {
             // Don't throw if timeout is hit, instead just return false per the API contract.
+            // However, since the download might have made progress and integrated some changesets,
+            // we should still refresh the public facing Realm, so it reflect however far
+            // Sync has gotten.
+            realm.refresh()
             return false
         } finally {
             channel.close()
