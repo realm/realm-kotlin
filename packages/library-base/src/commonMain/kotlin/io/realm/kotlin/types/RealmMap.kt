@@ -16,6 +16,9 @@
 
 package io.realm.kotlin.types
 
+import io.realm.kotlin.internal.RealmMapEntrySet
+import io.realm.kotlin.internal.RealmMapMutableEntry
+
 /**
  * TODO
  */
@@ -28,14 +31,15 @@ public interface RealmMap<K, V> : MutableMap<K, V>
 public interface RealmDictionary<E> : RealmMap<String, E>
 
 /**
- * Convenience alias for `MutableSet<MutableMap.MutableEntry<K, V>>`. This is the output produced by
- * [Map.entries] and represents a [RealmDictionary] in the form of a [MutableSet] of
- * [RealmMapMutableEntry] values.
+ * Convenience alias for `MutableSet<MutableMap.MutableEntry<String, V>>`.
+ *
+ * The output produced by [RealmDictionary.entries] matches this alias and represents a
+ * [RealmDictionary] in the form of a [MutableSet] of [RealmDictionaryMutableEntry] values.
  */
-public typealias RealmMapEntrySet<K, V> = MutableSet<MutableMap.MutableEntry<K, V>>
+public typealias RealmDictionaryEntrySet<V> = RealmMapEntrySet<String, V>
 
 /**
- * Convenience alias for `MutableMap.MutableEntry<K, V>`. Represents the `K`-`V` pairs contained by
- * a [RealmMap].
+ * Convenience alias for `RealmMapMutableEntry<String, V>`. Represents the `String`-`V` pairs
+ * contained by a [RealmDictionary].
  */
-public typealias RealmMapMutableEntry<K, V> = MutableMap.MutableEntry<K, V>
+public typealias RealmDictionaryMutableEntry<V> = RealmMapMutableEntry<String, V>

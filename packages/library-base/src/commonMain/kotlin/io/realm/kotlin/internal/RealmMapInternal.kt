@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
-import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
@@ -30,7 +29,6 @@ import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
-import io.realm.kotlin.types.RealmMapEntrySet
 import kotlin.reflect.KClass
 
 // ----------------------------------------------------------------------
@@ -380,17 +378,16 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
             @Suppress("UNCHECKED_CAST")
             override fun next(): MutableMap.MutableEntry<K, V> {
                 val position = cursor
-                try {
-                    val entry = operator.getEntry(position)
-                    lastReturned = position
-                    cursor = position + 1
-                    return ManagedRealmMapEntry(
-                        entry.first,
-                        operator
-                    ) as MutableMap.MutableEntry<K, V>
-                } catch (e: RealmException) { // TODO revisit once unified error handling has been merged: https://github.com/realm/realm-kotlin/pull/1188
+                if (position >= size) {
                     throw IndexOutOfBoundsException("Cannot access index $position when size is ${operator.size}. Remember to check hasNext() before using next().")
                 }
+                val entry = operator.getEntry(position)
+                lastReturned = position
+                cursor = position + 1
+                return ManagedRealmMapEntry(
+                    entry.first,
+                    operator
+                ) as MutableMap.MutableEntry<K, V>
             }
 
             override fun remove() {
@@ -484,8 +481,23 @@ internal class ManagedRealmMapEntry<K, V>(
 }
 
 // ----------------------------------------------------------------------
-// Internal helpers for factory functions
+// Internal type alias and helpers for factory functions
 // ----------------------------------------------------------------------
+
+internal typealias RealmMapEntrySet<K, V> = MutableSet<MutableMap.MutableEntry<K, V>>
+
+internal typealias RealmMapMutableEntry<K, V> = MutableMap.MutableEntry<K, V>
+
+internal fun <K, V> realmMapEntryOf(pair: Pair<K, V>): RealmMapMutableEntry<K, V> =
+    UnmanagedRealmMapEntry(pair.first, pair.second)
+
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+internal fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V> =
+    UnmanagedRealmMapEntry(key, value)
+
+@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
+internal fun <K, V> realmMapEntryOf(entry: Map.Entry<K, V>): RealmMapMutableEntry<K, V> =
+    UnmanagedRealmMapEntry(entry.key, entry.value)
 
 internal fun <T> Map<String, T>.asRealmDictionary(): RealmDictionary<T> =
     UnmanagedRealmDictionary<T>().apply { putAll(this@asRealmDictionary) }

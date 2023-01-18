@@ -21,20 +21,20 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryEntryOf
 import io.realm.kotlin.ext.realmDictionaryOf
-import io.realm.kotlin.ext.realmMapEntryOf
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.query.find
-import io.realm.kotlin.test.assertFailsWithMessage
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.ErrorCatcher
 import io.realm.kotlin.test.GenericTypeSafetyManager
+import io.realm.kotlin.test.assertFailsWithMessage
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmDictionaryEntrySet
 import io.realm.kotlin.types.RealmInstant
-import io.realm.kotlin.types.RealmMapEntrySet
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
@@ -123,17 +123,17 @@ class RealmDictionaryTests {
         val elem = ("A" to 1)
 
         // Instantiate from individual parameters
-        val fromIndividualValues = realmMapEntryOf(elem.first, elem.second)
+        val fromIndividualValues = realmDictionaryEntryOf(elem.first, elem.second)
         assertEquals(elem.first, fromIndividualValues.key)
         assertEquals(elem.second, fromIndividualValues.value)
 
         // Instantiate from a Pair<K, V>
-        val fromPair = realmMapEntryOf(elem)
+        val fromPair = realmDictionaryEntryOf(elem)
         assertEquals(elem.first, fromPair.key)
         assertEquals(elem.second, fromPair.value)
 
         // Instantiate from a Map.Entry<K, V>
-        val fromMapEntry = realmMapEntryOf(realmMapEntryOf(elem))
+        val fromMapEntry = realmDictionaryEntryOf(realmDictionaryEntryOf(elem))
         assertEquals(elem.first, fromMapEntry.key)
         assertEquals(elem.second, fromMapEntry.value)
     }
@@ -188,8 +188,8 @@ class RealmDictionaryTests {
             .forEach { assertTrue(multipleElementList.contains(Pair(it.key, it.value))) }
 
         // ... or from a RealmMapEntrySet
-        val mapEntrySet: RealmMapEntrySet<String, Int> = multipleElementList.map {
-            realmMapEntryOf(it.first, it.second)
+        val mapEntrySet: RealmDictionaryEntrySet<Int> = multipleElementList.map {
+            realmDictionaryEntryOf(it.first, it.second)
         }.toTypedArray().let {
             mutableSetOf(*it)
         }
@@ -572,11 +572,11 @@ internal abstract class ManagedDictionaryTester<T>(
                 val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
                 dictionary.putAll(dataSet)
                 val entries = dictionary.entries
-                assertTrue(entries.add(realmMapEntryOf("REALM", dataSet[0].second)))
+                assertTrue(entries.add(realmDictionaryEntryOf("REALM", dataSet[0].second)))
                 assertEquals(dictionary.size, entries.size)
 
                 // Adding the same element returns false
-                assertFalse(entries.add(realmMapEntryOf("REALM", dataSet[0].second)))
+                assertFalse(entries.add(realmDictionaryEntryOf("REALM", dataSet[0].second)))
             }
         }
 
@@ -596,8 +596,8 @@ internal abstract class ManagedDictionaryTester<T>(
 
                 // Reuse same dataSet values, just use different keys. Then add it to the entry set
                 val newDataSet = listOf(
-                    realmMapEntryOf("REALM-1" to dataSet[0].second),
-                    realmMapEntryOf("REALM-2" to dataSet[0].second),
+                    realmDictionaryEntryOf("REALM-1" to dataSet[0].second),
+                    realmDictionaryEntryOf("REALM-2" to dataSet[0].second),
                 )
                 assertTrue(entries.addAll(newDataSet))
                 assertEquals(dictionary.size, entries.size)
@@ -704,7 +704,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
                 dictionary.putAll(dataSet)
                 val entries = dictionary.entries
-                val entryToRemove = realmMapEntryOf(dataSet[0].first, dataSet[0].second)
+                val entryToRemove = realmDictionaryEntryOf(dataSet[0].first, dataSet[0].second)
 
                 // Check we get true after removing an element
                 assertTrue(entries.remove(entryToRemove))
@@ -731,8 +731,8 @@ internal abstract class ManagedDictionaryTester<T>(
                 dictionary.putAll(dataSet)
                 val entries = dictionary.entries
                 val entriesToRemove = listOf(
-                    realmMapEntryOf(dataSet[0].first, dataSet[0].second),
-                    realmMapEntryOf(dataSet[1].first, dataSet[1].second)
+                    realmDictionaryEntryOf(dataSet[0].first, dataSet[0].second),
+                    realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second)
                 )
 
                 // Check we get true after removing an element

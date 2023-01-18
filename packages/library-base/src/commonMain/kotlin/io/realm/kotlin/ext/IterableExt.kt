@@ -20,8 +20,8 @@ import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmDictionaryEntrySet
 import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmMapEntrySet
 import io.realm.kotlin.types.RealmSet
 
 /**
@@ -73,9 +73,9 @@ public fun <T> Iterable<Pair<String, T>>.toRealmDictionary(): RealmDictionary<T>
 
 /**
  * Instantiates an **unmanaged** [RealmDictionary] containing all the elements of the receiver
- * [RealmMapEntrySet].
+ * [RealmDictionaryEntrySet].
  */
-public fun <T> RealmMapEntrySet<String, T>.toRealmDictionary(): RealmDictionary<T> {
+public fun <T> RealmDictionaryEntrySet<T>.toRealmDictionary(): RealmDictionary<T> {
     return when (size) {
         0 -> UnmanagedRealmDictionary()
         else -> map { Pair(it.key, it.value) }
