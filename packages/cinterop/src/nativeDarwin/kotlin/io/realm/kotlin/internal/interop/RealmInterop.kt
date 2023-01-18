@@ -2506,28 +2506,6 @@ actual object RealmInterop {
         }
     }
 
-    actual fun realm_app_call_function(
-        app: RealmAppPointer,
-        user: RealmUserPointer,
-        name: String,
-        serializedEjsonArgs: String,
-        callback: AppCallback<String>
-    ) {
-        realm_wrapper.realm_app_call_function(
-            app.cptr(),
-            user.cptr(),
-            name,
-            serializedEjsonArgs,
-            staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
-                handleAppCallback(userData, error) {
-                    data.safeKString()
-                }
-            },
-            StableRef.create(callback).asCPointer(),
-            staticCFunction { userData -> disposeUserData<AppCallback<String>>(userData) }
-        )
-    }
-
     actual fun realm_sync_config_new(
         user: RealmUserPointer,
         partition: String

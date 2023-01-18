@@ -1286,16 +1286,6 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_app_call_function(
-        app: RealmAppPointer,
-        user: RealmUserPointer,
-        name: String,
-        serializedEjsonArgs: String,
-        callback: AppCallback<String>
-    ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
-    }
-
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
             // Stop the session immediately when the Realm is closed, so the lifecycle of the
