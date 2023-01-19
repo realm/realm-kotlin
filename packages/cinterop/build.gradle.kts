@@ -671,3 +671,10 @@ realmPublish {
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
 }
+
+tasks.named("clean") {
+    doLast {
+        delete(buildJVMSharedLibs.get().outputs)
+        delete(project.file(".cxx"))
+    }
+}
