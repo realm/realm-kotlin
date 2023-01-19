@@ -28,7 +28,6 @@ import io.realm.kotlin.internal.interop.realm_sync_session_resync_mode_e
 import io.realm.kotlin.internal.interop.realm_sync_session_state_e
 import io.realm.kotlin.internal.interop.realm_user_state_e
 import io.realm.kotlin.internal.interop.sync.AuthProvider
-import io.realm.kotlin.internal.interop.sync.ClientErrorCode
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.ErrorCategory

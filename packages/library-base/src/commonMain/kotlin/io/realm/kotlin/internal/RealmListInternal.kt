@@ -164,11 +164,22 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
     val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
     val queryPointer = inputScope {
         val queryArgs = convertToQueryArgs(args)
-        RealmInterop.realm_query_parse_for_list(
-            this@query.nativePointer,
-            query,
-            queryArgs
-        )
+        try {
+            RealmInterop.realm_query_parse_for_list(
+                this@query.nativePointer,
+                query,
+                queryArgs
+            )
+            // TODO Request core to remap these exceptions
+        } catch (e: IndexOutOfBoundsException) {
+            throw IllegalArgumentException(e.message, e.cause)
+        } catch (e: IllegalStateException) {
+            if (e.message?.contains("List is no longer valid") == true) {
+                throw e
+            } else {
+                throw IllegalArgumentException(e.message, e.cause)
+            }
+        }
     }
     return ObjectBoundQuery(
         parent,

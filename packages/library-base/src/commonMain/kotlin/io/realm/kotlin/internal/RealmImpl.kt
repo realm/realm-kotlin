@@ -20,7 +20,6 @@ import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
-import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
@@ -213,21 +212,12 @@ public class RealmImpl private constructor(
         }
         val internalConfig = (configuration as InternalConfiguration)
         val configPtr = internalConfig.createNativeConfiguration()
-//        try {
-            RealmInterop.realm_convert_with_config(
-                realmReference.dbPointer,
-                configPtr,
-                false // We don't want to expose 'merge_with_existing' all the way to the SDK - see docs in the C-API
-            )
-//        } catch (ex: RealmException) {
-//            if (ex.message?.contains("Could not write file as not all client changes are integrated in server") == true) {
-//                throw IllegalStateException(ex.message)
-//            } else if (ex.message?.contains("Realm cannot be converted to a flexible sync realm unless flexible sync is already enabled") == true) {
-//                throw IllegalArgumentException(ex.message)
-//            } else {
-//                throw ex
-//            }
-//        }
+
+        RealmInterop.realm_convert_with_config(
+            realmReference.dbPointer,
+            configPtr,
+            false // We don't want to expose 'merge_with_existing' all the way to the SDK - see docs in the C-API
+        )
     }
 
     override fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {

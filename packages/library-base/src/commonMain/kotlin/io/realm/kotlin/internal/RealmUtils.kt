@@ -188,14 +188,19 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
         val target = if (hasPrimaryKey) {
             inputScope {
-                create(
-                    mediator,
-                    realmReference,
-                    element::class,
-                    className,
-                    convertArg(primaryKey),
-                    updatePolicy
-                )
+                try {
+                    create(
+                        mediator,
+                        realmReference,
+                        element::class,
+                        className,
+                        convertArg(primaryKey),
+                        updatePolicy
+                    )
+                } catch (e: IllegalStateException) {
+                    // TODO Request core to remap this exception
+                    throw IllegalArgumentException(e.message, e.cause)
+                }
             }
         } else {
             create(mediator, realmReference, element::class, className)

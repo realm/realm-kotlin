@@ -16,10 +16,8 @@
 
 package io.realm.kotlin.internal.query
 
-
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.dynamic.DynamicRealm
-import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
@@ -27,7 +25,6 @@ import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.RealmValueConverter
 import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.interop.ClassKey
-import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_max

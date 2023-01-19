@@ -70,11 +70,18 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         )
 
     override fun query(query: String, vararg args: Any?): RealmQuery<E> = inputScope {
-        val queryPointer = RealmInterop.realm_query_parse_for_results(
-            nativePointer,
-            query,
-            convertToQueryArgs(args)
-        )
+        val queryPointer = try {
+            RealmInterop.realm_query_parse_for_results(
+                nativePointer,
+                query,
+                convertToQueryArgs(args)
+            )
+            // TODO Request core to remap these exceptions
+        } catch (e: IndexOutOfBoundsException) {
+            throw IllegalArgumentException(e.message, e.cause)
+        } catch (e: IllegalStateException) {
+            throw IllegalArgumentException(e.message, e.cause)
+        }
         ObjectQuery(
             realm,
             classKey,
