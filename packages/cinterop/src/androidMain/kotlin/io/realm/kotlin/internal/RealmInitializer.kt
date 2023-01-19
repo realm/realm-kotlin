@@ -13,12 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.internal.platform
+package io.realm.kotlin.internal
 
 import android.content.Context
 import androidx.startup.Initializer
-import io.realm.kotlin.internal.SDK_VERSION
-import io.realm.kotlin.internal.loadAndroidNativeLibs
 import java.io.File
 
 /**

@@ -39,6 +39,9 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
     transformJvm = false
 }
 
+// Directory for generated Version.kt holding VERSION constant
+val versionDirectory = "$buildDir/generated/source/version/"
+
 // Types of builds supported
 enum class BuildType(val type: String, val buildDirSuffix: String) {
     DEBUG( type ="Debug", buildDirSuffix = "-dbg"),
@@ -205,6 +208,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 api("org.mongodb.kbson:kbson:${Versions.kbson}")
             }
+            kotlin.srcDir(versionDirectory)
         }
         val commonTest by getting
         val jvm by creating {
@@ -219,6 +223,7 @@ kotlin {
         val androidMain by getting {
             dependsOn(jvm)
             dependencies {
+                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("com.getkeepsafe.relinker:relinker:${Versions.relinker}")
             }
         }
@@ -673,4 +678,27 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
+}
+
+// Generate code with version constant
+tasks.create("generateSdkVersionConstant") {
+    val outputDir = file(versionDirectory)
+
+    inputs.property("version", project.version)
+    outputs.dir(outputDir)
+
+    doLast {
+        val versionFile = file("$outputDir/io/realm/kotlin/internal/Version.kt")
+        versionFile.parentFile.mkdirs()
+        versionFile.writeText(
+            """
+            // Generated file. Do not edit!
+            package io.realm.kotlin.internal
+            public const val SDK_VERSION: String = "${project.version}"
+            """.trimIndent()
+        )
+    }
+}
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    dependsOn("generateSdkVersionConstant")
 }
