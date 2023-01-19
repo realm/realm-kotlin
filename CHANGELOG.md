@@ -23,6 +23,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] Added support for App functions, see documentation for more details. (Issue [#1110](https://github.com/realm/realm-kotlin/pull/1110))
 * [Sync] Added support for custom App Services Function authentication. (Issue [#741](https://github.com/realm/realm-kotlin/issues/741))
 * [Sync] Add support for accessing user auth profile metadata and custom data through the extension functions 'User.profileAsBsonDocument()' and 'User.customDataAsBsonDocument()'. (Issue [#750](https://github.com/realm/realm-kotlin/pull/750))
+* [Sync] Add support for `App.callResetPasswordFunction` (Issue [#744](https://github.com/realm/realm-kotlin/issues/744))
 
 ### Fixed
 * Windows binaries for JVM did not statically link the C++ runtime, which could lead to crashes if it wasn't preinstalled. (Issue [#1211](https://github.com/realm/realm-kotlin/pull/1211))
