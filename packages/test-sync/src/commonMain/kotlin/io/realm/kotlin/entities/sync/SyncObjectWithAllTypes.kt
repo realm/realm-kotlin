@@ -16,17 +16,20 @@
 
 package io.realm.kotlin.entities.sync
 
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.Decimal128
 import kotlin.random.Random
 
 private typealias FieldDataFactory = (SyncObjectWithAllTypes) -> Unit
@@ -48,6 +51,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanField: Boolean = true
     var doubleField: Double = 0.0
     var floatField: Float = 0.0.toFloat()
+    var decimal128Field: Decimal128 = Decimal128("0")
     var realmInstantField: RealmInstant = RealmInstant.MIN
     var objectIdField: ObjectId = ObjectId.create()
     var realmUUIDField: RealmUUID = RealmUUID.random()
@@ -65,12 +69,15 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanNullableField: Boolean? = null
     var doubleNullableField: Double? = null
     var floatNullableField: Float? = null
+    var decimal128NullableField: Decimal128? = null
     var realmInstantNullableField: RealmInstant? = null
     var objectIdNullableField: ObjectId? = null
     var realmUUIDNullableField: RealmUUID? = null
     var binaryNullableField: ByteArray? = null
     var objectNullableField: SyncObjectWithAllTypes? = null
     var mutableRealmIntNullableField: MutableRealmInt? = null
+    var nullableRealmAnyField: RealmAny? = null
+    var nullableRealmAnyForObjectField: RealmAny? = null
 
     // RealmLists
     var stringRealmList: RealmList<String> = realmListOf("hello world")
@@ -82,11 +89,14 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanRealmList: RealmList<Boolean> = realmListOf(true)
     var doubleRealmList: RealmList<Double> = realmListOf(0.0)
     var floatRealmList: RealmList<Float> = realmListOf(0.0.toFloat())
+    var decimal128RealmList: RealmList<Decimal128> = realmListOf(Decimal128("0.0"))
     var realmInstantRealmList: RealmList<RealmInstant> = realmListOf(RealmInstant.MIN)
     var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
     var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
     var binaryRealmList: RealmList<ByteArray> = realmListOf(byteArrayOf(42))
     var objectRealmList: RealmList<SyncObjectWithAllTypes> = realmListOf()
+
+    var nullableRealmAnyRealmList: RealmList<RealmAny?> = realmListOf(RealmAny.create(42))
 
     // Nullable RealmLists of primitive values, not currently supported by Sync
     // Nullable Object lists, not currently supported by Core
@@ -101,11 +111,14 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanRealmSet: RealmSet<Boolean> = realmSetOf(true)
     var doubleRealmSet: RealmSet<Double> = realmSetOf(0.0)
     var floatRealmSet: RealmSet<Float> = realmSetOf(0.0.toFloat())
+    var decimal128RealmSet: RealmSet<Decimal128> = realmSetOf(Decimal128("0.0"))
     var realmInstantRealmSet: RealmSet<RealmInstant> = realmSetOf(RealmInstant.MIN)
     var objectIdRealmSet: RealmSet<ObjectId> = realmSetOf(ObjectId.create())
     var realmUUIDRealmSet: RealmSet<RealmUUID> = realmSetOf(RealmUUID.random())
     var binaryRealmSet: RealmSet<ByteArray> = realmSetOf(byteArrayOf(42))
     var objectRealmSet: RealmSet<SyncObjectWithAllTypes> = realmSetOf()
+
+    var nullableRealmAnyRealmSet: RealmSet<RealmAny?> = realmSetOf(RealmAny.create(42))
 
     // RealmSets of nullable primitive values, not currently supported by Sync
     // RealmSets of nullable objects, not currently supported by Core
@@ -249,6 +262,35 @@ class SyncObjectWithAllTypes : RealmObject {
                                     },
                                 )
                             }
+                            RealmStorageType.DECIMAL128 -> {
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                        obj.decimal128Field = Decimal128("1.234")
+                                        obj.decimal128NullableField = Decimal128("1.234")
+                                        obj.decimal128RealmList =
+                                            realmListOf(
+                                                Decimal128("1.234"),
+                                                Decimal128.NEGATIVE_INFINITY,
+                                                Decimal128.POSITIVE_INFINITY
+                                            )
+                                        obj.decimal128RealmSet =
+                                            realmSetOf(
+                                                Decimal128("1.234"),
+                                                Decimal128.NEGATIVE_INFINITY,
+                                                Decimal128.POSITIVE_INFINITY
+                                            )
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                        assertEquals(Decimal128("1.234"), obj.decimal128Field)
+                                        assertEquals(Decimal128("1.234"), obj.decimal128NullableField)
+                                        assertEquals(Decimal128("1.234"), obj.decimal128RealmList[0])
+                                        assertEquals(Decimal128.NEGATIVE_INFINITY, obj.decimal128RealmList[1])
+                                        assertEquals(Decimal128.POSITIVE_INFINITY, obj.decimal128RealmList[2])
+                                        assertSetContains(Decimal128.NEGATIVE_INFINITY, obj.decimal128RealmSet)
+                                        assertSetContains(Decimal128.POSITIVE_INFINITY, obj.decimal128RealmSet)
+                                    },
+                                )
+                            }
                             RealmStorageType.TIMESTAMP -> {
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
@@ -373,6 +415,78 @@ class SyncObjectWithAllTypes : RealmObject {
                                             byteArrayOf(11, 33),
                                             obj.binaryRealmSet
                                         )
+                                    },
+                                )
+                            }
+                            RealmStorageType.ANY -> {
+                                val realmAnyValues = listOf(
+                                    RealmAny.create(42),
+                                    RealmAny.create("hello"),
+                                    RealmAny.create(
+                                        SyncObjectWithAllTypes().apply {
+                                            stringField = "Custom"
+                                        }
+                                    )
+                                )
+                                // Don't reuse the same object in collections as we would be saving the same PK
+                                val realmAnyListValues = listOf(
+                                    realmAnyValues[0],
+                                    realmAnyValues[1],
+                                    RealmAny.create(
+                                        SyncObjectWithAllTypes().apply {
+                                            stringField = "List_element"
+                                        }
+                                    )
+                                )
+                                val realmAnySetValues = listOf(
+                                    realmAnyValues[0],
+                                    realmAnyValues[1],
+                                    RealmAny.create(
+                                        SyncObjectWithAllTypes().apply {
+                                            stringField = "Set_element"
+                                        }
+                                    )
+                                )
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                        obj.nullableRealmAnyField = realmAnyValues[0]
+                                        obj.nullableRealmAnyForObjectField = realmAnyValues[2]
+                                        obj.nullableRealmAnyRealmList = realmListOf(realmAnyListValues[0], realmAnyListValues[1], realmAnyListValues[2], null)
+                                        obj.nullableRealmAnyRealmSet = realmSetOf(realmAnySetValues[0], realmAnySetValues[1], realmAnySetValues[2], null)
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                        // Check RealmAny containing an object
+                                        assertEquals(
+                                            realmAnyValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField,
+                                            obj.nullableRealmAnyForObjectField?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                        )
+
+                                        // Check RealmAny field containing a primitive
+                                        assertEquals(realmAnyValues[0], obj.nullableRealmAnyField)
+
+                                        // Check list of RealmAny values
+                                        assertEquals(realmAnyListValues[0], obj.nullableRealmAnyRealmList[0])
+                                        assertEquals(realmAnyListValues[1], obj.nullableRealmAnyRealmList[1])
+                                        assertEquals(
+                                            realmAnyListValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField,
+                                            obj.nullableRealmAnyRealmList[2]?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                        )
+                                        assertEquals(null, obj.nullableRealmAnyRealmList[3])
+
+                                        // Check set of RealmAny values
+                                        assertSetContains(realmAnySetValues[0], obj.nullableRealmAnyRealmSet)
+                                        assertSetContains(realmAnySetValues[1], obj.nullableRealmAnyRealmSet)
+                                        assertSetContains(null, obj.nullableRealmAnyRealmSet)
+
+                                        // Extremely irritating to check this since none of the helpers are useful
+                                        obj.nullableRealmAnyRealmSet
+                                            .first {
+                                                it?.type == RealmAny.Type.OBJECT
+                                            }.also {
+                                                val expected = realmAnySetValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField
+                                                val actual = it?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                                assertEquals(expected, actual)
+                                            }
                                     },
                                 )
                             }

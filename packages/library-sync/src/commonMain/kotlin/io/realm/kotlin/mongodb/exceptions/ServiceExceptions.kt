@@ -135,3 +135,12 @@ public class InvalidCredentialsException internal constructor(message: String) :
  */
 public class CredentialsCannotBeLinkedException internal constructor(message: String) :
     ServiceException(message)
+
+/**
+ * Exception indicating that an Atlas Function failed to execute. The exact reason for the error can
+ * be found in [Throwable.message].
+ *
+ * @see [io.realm.kotlin.mongodb.Functions.call]
+ */
+public class FunctionExecutionException internal constructor(message: String) :
+    ServiceException(message)

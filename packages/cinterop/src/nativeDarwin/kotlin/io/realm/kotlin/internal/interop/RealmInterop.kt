@@ -93,6 +93,7 @@ import realm_wrapper.realm_app_error_t
 import realm_wrapper.realm_app_user_apikey_t
 import realm_wrapper.realm_binary_t
 import realm_wrapper.realm_class_info_t
+import realm_wrapper.realm_class_key_tVar
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
 import realm_wrapper.realm_error_t
@@ -863,6 +864,29 @@ actual object RealmInterop {
 
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
         checkedBooleanResult(realm_wrapper.realm_object_add_int(obj.cptr(), key.key, value))
+    }
+
+    actual fun <T> realm_object_get_parent(
+        obj: RealmObjectPointer,
+        block: (ClassKey, RealmObjectPointer) -> T
+    ): T {
+        memScoped {
+            val objectPointerArray = allocArray<CPointerVar<realm_object_t>>(1)
+            val classKeyPointerArray = allocArray<realm_class_key_tVar>(1)
+
+            checkedBooleanResult(
+                realm_wrapper.realm_object_get_parent(
+                    `object` = obj.cptr(),
+                    parent = objectPointerArray,
+                    class_key = classKeyPointerArray
+                )
+            )
+
+            val classKey = ClassKey(classKeyPointerArray[0].toLong())
+            val objectPointer = CPointerWrapper<RealmObjectT>(objectPointerArray[0])
+
+            return block(classKey, objectPointer)
+        }
     }
 
     actual fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
@@ -1882,6 +1906,30 @@ actual object RealmInterop {
         return CoreUserState.of(realm_wrapper.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_user_get_profile(user: RealmUserPointer): String =
+        realm_wrapper.realm_user_get_profile_data(user.cptr()).safeKString()
+
+    actual fun realm_user_get_custom_data(user: RealmUserPointer): String? =
+        realm_wrapper.realm_user_get_custom_data(user.cptr())?.toKString()
+
+    actual fun realm_user_refresh_custom_data(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        callback: AppCallback<Unit>
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_refresh_custom_data(
+                app = app.cptr(),
+                user = user.cptr(),
+                callback = staticCFunction { userData, error ->
+                    handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                },
+                userdata = StableRef.create(callback).asCPointer(),
+                userdata_free = staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+            )
+        )
+    }
+
     actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
@@ -2053,10 +2101,14 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String) {
-        checkedBooleanResult(
-            realm_wrapper.realm_sync_immediately_run_file_actions(app.cptr(), syncPath)
-        )
+    actual fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean {
+        memScoped {
+            val didRun = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_sync_immediately_run_file_actions(app.cptr(), syncPath, didRun.ptr)
+            )
+            return didRun.value
+        }
     }
 
     actual fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer {
@@ -2182,21 +2234,25 @@ actual object RealmInterop {
         appId: String,
         networkTransport: RealmNetworkTransportPointer,
         baseUrl: String?,
-        platform: String,
-        platformVersion: String,
-        sdkVersion: String
+        connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
-
-        realm_wrapper.realm_app_config_set_platform(appConfig, platform)
-        realm_wrapper.realm_app_config_set_platform_version(appConfig, platformVersion)
-        realm_wrapper.realm_app_config_set_sdk_version(appConfig, sdkVersion)
-
-        // TODO Fill in appropriate app meta data
-        //  https://github.com/realm/realm-kotlin/issues/407
-        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "APP_VERSION")
-
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
+
+        // From https://github.com/realm/realm-kotlin/issues/407
+        realm_wrapper.realm_app_config_set_local_app_name(appConfig, "")
+        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "")
+
+        // Sync Connection Parameters
+        realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
+        realm_wrapper.realm_app_config_set_sdk_version(appConfig, connectionParams.sdkVersion)
+        realm_wrapper.realm_app_config_set_platform(appConfig, connectionParams.platform)
+        realm_wrapper.realm_app_config_set_platform_version(appConfig, connectionParams.platformVersion)
+        realm_wrapper.realm_app_config_set_cpu_arch(appConfig, connectionParams.cpuArch)
+        realm_wrapper.realm_app_config_set_device_name(appConfig, connectionParams.device)
+        realm_wrapper.realm_app_config_set_device_version(appConfig, connectionParams.deviceVersion)
+        realm_wrapper.realm_app_config_set_framework_name(appConfig, connectionParams.framework)
+        realm_wrapper.realm_app_config_set_framework_version(appConfig, connectionParams.frameworkVersion)
 
         return CPointerWrapper(appConfig)
     }
@@ -2257,6 +2313,12 @@ actual object RealmInterop {
     actual fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer {
         memScoped {
             return CPointerWrapper(realm_wrapper.realm_app_credentials_new_jwt(jwtToken))
+        }
+    }
+
+    actual fun realm_app_credentials_new_custom_function(serializedEjsonPayload: String): RealmCredentialsPointer {
+        memScoped {
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_function(serializedEjsonPayload))
         }
     }
 
@@ -2407,6 +2469,28 @@ actual object RealmInterop {
                 )
             )
         }
+    }
+
+    actual fun realm_app_call_function(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        serializedEjsonArgs: String,
+        callback: AppCallback<String>
+    ) {
+        realm_wrapper.realm_app_call_function(
+            app.cptr(),
+            user.cptr(),
+            name,
+            serializedEjsonArgs,
+            staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
+                handleAppCallback(userData, error) {
+                    data.safeKString()
+                }
+            },
+            StableRef.create(callback).asCPointer(),
+            staticCFunction { userData -> disposeUserData<AppCallback<String>>(userData) }
+        )
     }
 
     actual fun realm_sync_config_new(

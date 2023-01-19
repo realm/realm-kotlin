@@ -23,17 +23,19 @@ import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.junit.Test
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class IndexTests {
     @Test
-    fun `index supportness`() {
+    fun `index support`() {
         // TODO Consider placing these in PropertyDescriptor.kt for reuse
         val defaults = mapOf<KClassifier, Any>(
             Boolean::class to true,
@@ -44,13 +46,15 @@ class IndexTests {
             Long::class to "1",
             Float::class to "1.4f",
             Double::class to "1.4",
+            Decimal128::class to "BsonDecimal128(\"1.4E100\")",
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
             ObjectId::class to "ObjectId.create()",
             BsonObjectId::class to "BsonObjectId()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
-            MutableRealmInt::class to "MutableRealmInt.create(42)"
+            MutableRealmInt::class to "MutableRealmInt.create(42)",
+            RealmAny::class to "RealmAny(42)"
         )
         for (type in allFieldTypes) {
             // TODO Consider adding verification of compiler errors when marking collection
@@ -71,12 +75,14 @@ class IndexTests {
                     """
                         import io.realm.kotlin.types.MutableRealmInt
                         import io.realm.kotlin.types.ObjectId
+                        import io.realm.kotlin.types.RealmAny
                         import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.RealmObject
                         import io.realm.kotlin.types.RealmUUID
                         import io.realm.kotlin.types.annotations.Index
                         import io.realm.kotlin.RealmConfiguration
                         import org.mongodb.kbson.BsonObjectId
+                        import org.mongodb.kbson.BsonDecimal128
 
                         class A : RealmObject {
                             @Index
@@ -96,7 +102,7 @@ class IndexTests {
                     result.exitCode,
                     type.toString()
                 )
-                assertTrue(result.messages.contains(Regex("sources/indexing.kt: \\(11, 5\\): .*but must be of type")))
+                assertTrue(result.messages.contains(Regex("Indexed key .* is of type .* but must be of type")), result.messages)
             }
         }
     }
@@ -132,7 +138,7 @@ class IndexTests {
                 )
             )
             assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "anyType")
-            assertTrue(result.messages.contains("Indexed key indexedKey is of type ${pair.first} but must be of type"))
+            assertTrue(result.messages.contains("Indexed key indexedKey is of type ${pair.first} but must be of type"), result.messages)
         }
     }
 }

@@ -325,10 +325,9 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
 
 void app_complete_void_callback(void *userdata, const realm_app_error_t *error) {
     auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
-    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+    static JavaMethod java_notify_onerror(env, JavaClassGlobalDef::app_callback(), "onError",
                                           "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
-    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+    static JavaMethod java_notify_onsuccess(env, JavaClassGlobalDef::app_callback(), "onSuccess",
                                             "(Ljava/lang/Object;)V");
     static JavaClass unit_class(env, "kotlin/Unit");
     static JavaMethod unit_constructor(env, unit_class, "<init>", "()V");
@@ -347,10 +346,9 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
 
 void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error) {
     auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
-    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+    static JavaMethod java_notify_onerror(env, JavaClassGlobalDef::app_callback(), "onError",
                                           "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
-    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+    static JavaMethod java_notify_onsuccess(env, JavaClassGlobalDef::app_callback(), "onSuccess",
                                             "(Ljava/lang/Object;)V");
 
     static JavaClass native_pointer_class(env, "io/realm/kotlin/internal/interop/LongPointerWrapper");
@@ -393,10 +391,9 @@ jobject create_api_key_wrapper(JNIEnv* env, const realm_app_user_apikey_t* key_d
 
 void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* apikey, const realm_app_error_t* error) {
     auto env = get_env(true);
-    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
-    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+    static JavaMethod java_notify_onerror(env, JavaClassGlobalDef::app_callback(), "onError",
                                           "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
-    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+    static JavaMethod java_notify_onsuccess(env, JavaClassGlobalDef::app_callback(), "onSuccess",
                                             "(Ljava/lang/Object;)V");
     if (error) {
         jobject app_exception = convert_to_jvm_app_error(env, error);
@@ -409,15 +406,40 @@ void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api
     }
 }
 
+void app_string_callback(realm_userdata_t userdata, const char *serialized_ejson_response,
+                         const realm_app_error_t *error) {
+    auto env = get_env(true);
+    static JavaMethod java_notify_onerror(
+            env,
+            JavaClassGlobalDef::app_callback(),
+            "onError",
+
+            "(Lio/realm/kotlin/internal/interop/sync/AppError;)V"
+    );
+    static JavaMethod java_notify_onsuccess(
+            env,
+            JavaClassGlobalDef::app_callback(),
+            "onSuccess",
+            "(Ljava/lang/Object;)V"
+    );
+    if (error) {
+        jobject app_exception = convert_to_jvm_app_error(env, error);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
+        jni_check_exception(env);
+    } else {
+        jstring jserialized_ejson_response = to_jstring(env, serialized_ejson_response);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, jserialized_ejson_response);
+        jni_check_exception(env);
+    }
+}
 
 void app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t* keys, size_t count, realm_app_error_t* error) {
     auto env = get_env(true);
     static JavaClass api_key_wrapper_class(env, "io/realm/kotlin/internal/interop/sync/ApiKeyWrapper");
 
-    static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/AppCallback");
-    static JavaMethod java_notify_onerror(env, java_callback_class, "onError",
+    static JavaMethod java_notify_onerror(env, JavaClassGlobalDef::app_callback(), "onError",
                                           "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
-    static JavaMethod java_notify_onsuccess(env, java_callback_class, "onSuccess",
+    static JavaMethod java_notify_onsuccess(env, JavaClassGlobalDef::app_callback(), "onSuccess",
                                             "(Ljava/lang/Object;)V");
     if (error) {
         jobject app_exception = convert_to_jvm_app_error(env, error);

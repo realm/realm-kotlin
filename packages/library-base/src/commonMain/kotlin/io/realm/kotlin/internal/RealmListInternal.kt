@@ -162,26 +162,24 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
     args: Array<out Any?>
 ): RealmQuery<E> {
     val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
-    return ObjectQuery.tryCatchCoreException {
-        val queryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args)
-            RealmInterop.realm_query_parse_for_list(
-                this@query.nativePointer,
-                query,
-                queryArgs
-            )
-        }
-        ObjectBoundQuery(
-            parent,
-            ObjectQuery(
-                operator.realmReference,
-                operator.classKey,
-                operator.clazz,
-                operator.mediator,
-                queryPointer,
-            )
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        RealmInterop.realm_query_parse_for_list(
+            this@query.nativePointer,
+            query,
+            queryArgs
         )
     }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer,
+        )
+    )
 }
 
 // Cloned from https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/collections/AbstractList.kt
@@ -245,8 +243,7 @@ internal class PrimitiveListOperator<E>(
         return getterScope {
             val transport = realm_list_get(nativePointer, index.toLong())
             with(converter) {
-                val publicValue = realmValueToPublic(transport)
-                publicValue as E
+                realmValueToPublic(transport) as E
             }
         }
     }
@@ -285,7 +282,8 @@ internal class PrimitiveListOperator<E>(
     override fun copy(
         realmReference: RealmReference,
         nativePointer: RealmListPointer
-    ): ListOperator<E> = PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
+    ): ListOperator<E> =
+        PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
 }
 
 internal abstract class BaseRealmObjectListOperator<E>(

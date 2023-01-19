@@ -26,6 +26,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.headers
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
@@ -36,7 +37,6 @@ import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SerialName
@@ -97,7 +97,8 @@ data class Function(
     val name: String,
     val source: String? = null,
     @SerialName("run_as_system") val runAsSystem: Boolean? = null,
-    val private: Boolean? = null
+    val private: Boolean? = null,
+    @SerialName("can_evaluate") val canEvaluate: JsonObject? = null
 )
 
 @Serializable
@@ -228,7 +229,10 @@ class AppServicesClient(
         httpClient.close()
     }
 
-    suspend fun getOrCreateApp(appName: String, initializer: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit): BaasApp =
+    suspend fun getOrCreateApp(
+        appName: String,
+        initializer: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
+    ): BaasApp =
         getApp(appName) ?: createApp(appName) {
             initialize(this, initializer)
         }
@@ -256,22 +260,6 @@ class AppServicesClient(
 
     val BaasApp.url: String
         get() = "$groupUrl/apps/${this._id}"
-
-    suspend fun BaasApp.sendPatchRequest(url: String, requestBody: String) =
-        repeat(2) {
-            httpClient.request("$baseUrl/app/${this.clientAppId}/endpoint/forwardAsPatch") {
-                this.method = HttpMethod.Post
-                setBody(
-                    buildJsonObject {
-                        put("url", url)
-                        put("body", requestBody)
-                    }
-                )
-                contentType(ContentType.Application.Json)
-            }
-
-            delay(1000)
-        }
 
     suspend fun BaasApp.addFunction(function: Function): Function =
         withContext(dispatcher) {
@@ -340,12 +328,13 @@ class AppServicesClient(
             }
         }
 
-    suspend fun BaasApp.setCustomUserData(userDataConfig: String) =
+    suspend fun BaasApp.setCustomUserData(userDataConfig: String): HttpResponse =
         withContext(dispatcher) {
-            sendPatchRequest(
-                url = "$url/custom_user_data",
-                requestBody = userDataConfig
-            )
+            httpClient.request("$url/custom_user_data") {
+                this.method = HttpMethod.Patch
+                setBody(Json.parseToJsonElement(userDataConfig))
+                contentType(ContentType.Application.Json)
+            }
         }
 
     suspend fun BaasApp.addEndpoint(endpoint: String) =
@@ -381,10 +370,11 @@ class AppServicesClient(
     suspend fun AuthProvider.updateConfig(block: MutableMap<String, JsonElement>.() -> Unit) {
         mutableMapOf<String, JsonElement>().apply {
             block()
-            app!!.sendPatchRequest(
-                url,
-                JsonObject(mapOf("config" to JsonObject(this))).toString()
-            )
+            httpClient.request(url) {
+                this.method = HttpMethod.Patch
+                setBody(JsonObject(mapOf("config" to JsonObject(this@apply))))
+                contentType(ContentType.Application.Json)
+            }
         }
     }
 
@@ -393,10 +383,11 @@ class AppServicesClient(
 
     suspend fun Service.setSyncConfig(config: String) =
         withContext(dispatcher) {
-            app!!.sendPatchRequest(
-                url = "$url/config",
-                requestBody = config
-            )
+            httpClient.request("$url/config") {
+                this.method = HttpMethod.Patch
+                setBody(Json.parseToJsonElement(config))
+                contentType(ContentType.Application.Json)
+            }
         }
 
     suspend fun Service.addRule(rule: String): JsonObject =
@@ -481,7 +472,11 @@ class AppServicesClient(
         } ?: mapOf("state" to JsonPrimitive(syncEnabled))
 
         val configObj = JsonObject(mapOf("sync" to JsonObject(content)))
-        sendPatchRequest(url, configObj.toString())
+        httpClient.request(url) {
+            this.method = HttpMethod.Patch
+            setBody(configObj)
+            contentType(ContentType.Application.Json)
+        }
     }
 
     suspend fun BaasApp.pauseSync() =

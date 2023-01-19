@@ -25,7 +25,8 @@ actual enum class CoreSyncSessionState(
     RLM_SYNC_SESSION_STATE_DYING(realm_sync_session_state.RLM_SYNC_SESSION_STATE_DYING),
     RLM_SYNC_SESSION_STATE_ACTIVE(realm_sync_session_state.RLM_SYNC_SESSION_STATE_ACTIVE),
     RLM_SYNC_SESSION_STATE_INACTIVE(realm_sync_session_state.RLM_SYNC_SESSION_STATE_INACTIVE),
-    RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN(realm_sync_session_state.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN);
+    RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN(realm_sync_session_state.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN),
+    RLM_SYNC_SESSION_STATE_PAUSED(realm_sync_session_state.RLM_SYNC_SESSION_STATE_PAUSED);
 
     companion object {
         fun of(state: realm_sync_session_state_e): CoreSyncSessionState {

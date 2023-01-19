@@ -18,11 +18,16 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
+import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
  * functionality.
+ *
+ * User profile and custom data can be accessed using the extension functions [User.profileAsBsonDocument]
+ * and [User.customDataAsBsonDocument].
  *
  * The user is used to configure synchronized realms with [SyncConfiguration.Builder].
  *
@@ -96,6 +101,18 @@ public interface User {
      * Returns a unique identifier for the device the user logged in to.
      */
     public val deviceId: String
+
+    /**
+     * Returns a wrapper for invoking App Services Functions.
+     *
+     * [Atlas Functions documentation](https://www.mongodb.com/docs/atlas/app-services/functions/)
+     */
+    public val functions: Functions
+
+    /**
+     * Re-fetch custom user data from the Realm App.
+     */
+    public suspend fun refreshCustomData()
 
     // FIXME Review around user state
     /**

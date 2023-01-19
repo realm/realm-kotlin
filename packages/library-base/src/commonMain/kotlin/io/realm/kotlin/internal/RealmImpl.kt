@@ -212,23 +212,22 @@ public class RealmImpl private constructor(
             throw IllegalArgumentException("File already exists at: ${configuration.path}. Realm can only write a copy to an empty path.")
         }
         val internalConfig = (configuration as InternalConfiguration)
-        if (internalConfig.isFlexibleSyncConfiguration) {
-            throw IllegalArgumentException("Creating a copy of a Realm where the target has Flexible Sync enabled is currently not supported.")
-        }
         val configPtr = internalConfig.createNativeConfiguration()
-        try {
+//        try {
             RealmInterop.realm_convert_with_config(
                 realmReference.dbPointer,
                 configPtr,
                 false // We don't want to expose 'merge_with_existing' all the way to the SDK - see docs in the C-API
             )
-        } catch (ex: RealmException) {
-            if (ex.message?.contains("Could not write file as not all client changes are integrated in server") == true) {
-                throw IllegalStateException(ex.message)
-            } else {
-                throw ex
-            }
-        }
+//        } catch (ex: RealmException) {
+//            if (ex.message?.contains("Could not write file as not all client changes are integrated in server") == true) {
+//                throw IllegalStateException(ex.message)
+//            } else if (ex.message?.contains("Realm cannot be converted to a flexible sync realm unless flexible sync is already enabled") == true) {
+//                throw IllegalArgumentException(ex.message)
+//            } else {
+//                throw ex
+//            }
+//        }
     }
 
     override fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {

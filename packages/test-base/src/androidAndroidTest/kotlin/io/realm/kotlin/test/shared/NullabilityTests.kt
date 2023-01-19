@@ -23,10 +23,11 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
-import kotlin.reflect.KClassifier
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -87,8 +88,11 @@ class NullabilityTests {
     @Test
     fun safeNullGetterAndSetter() {
         realm.writeBlocking {
-            val nullableFieldTypes: MutableSet<KClassifier> = TypeDescriptor.allSingularFieldTypes.map { it.elementType }.filter { it.nullable }
-                .map { it.classifier }.toMutableSet()
+            val nullableFieldTypes = TypeDescriptor.allSingularFieldTypes
+                .map { it.elementType }
+                .filter { it.nullable }
+                .map { it.classifier }
+                .toMutableSet()
 
             copyToRealm(Nullability()).also { nullableObj: Nullability ->
                 fun <T> testProperty(property: KMutableProperty1<Nullability, T?>, value: T) {
@@ -112,6 +116,7 @@ class NullabilityTests {
                 testProperty(Nullability::longNullability, 123L)
                 testProperty(Nullability::floatNullable, 123.456f)
                 testProperty(Nullability::doubleField, 123.456)
+                testProperty(Nullability::decimal128Field, Decimal128("123.456"))
                 testProperty(Nullability::objectField, null)
                 testProperty(Nullability::timestampField, RealmInstant.from(42, 420))
                 testProperty(Nullability::objectIdField, ObjectId.from("507f191e810c19729de860ea"))
@@ -119,6 +124,7 @@ class NullabilityTests {
                 testProperty(Nullability::uuidField, RealmUUID.random())
                 testProperty(Nullability::binaryField, byteArrayOf(42))
                 testProperty(Nullability::mutableRealmIntField, MutableRealmInt.create(42))
+                testProperty(Nullability::realmAnyField, RealmAny.create(42))
                 // Manually removing RealmObject as nullableFieldTypes is not referencing the
                 // explicit subtype (Nullability). Don't know how to make the linkage without
                 // so it also works on Native.

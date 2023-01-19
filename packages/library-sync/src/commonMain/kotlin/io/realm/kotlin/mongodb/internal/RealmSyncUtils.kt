@@ -15,6 +15,7 @@ import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.ConnectionException
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.SyncException
@@ -26,6 +27,7 @@ import io.realm.kotlin.mongodb.exceptions.WrongSyncTypeException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
 
+@PublishedApi
 internal fun <T, R> channelResultCallback(
     channel: Channel<Result<R>>,
     success: (T) -> R
@@ -247,7 +249,12 @@ internal fun convertAppError(appError: AppError): Throwable {
                 ErrorCode.RLM_ERR_BAD_REQUEST -> {
                     BadRequestException(msg)
                 }
-                else -> ServiceException(msg, appError.code)
+                ErrorCode.RLM_ERR_FUNCTION_NOT_FOUND,
+                ErrorCode.RLM_ERR_EXECUTION_TIME_LIMIT_EXCEEDED,
+                ErrorCode.RLM_ERR_FUNCTION_EXECUTION_ERROR -> {
+                    FunctionExecutionException(msg)
+                }
+                else -> ServiceException(message = msg, errorCode = appError.code)
             }
         }
         else -> AppException(msg)

@@ -36,6 +36,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -177,6 +178,7 @@ class MutableRealmTests {
             booleanField = false
             floatField = 42.42f
             doubleField = 42.42
+            decimal128Field = Decimal128("1.8446744073709551618E-6157")
             timestampField = RealmInstant.from(42, 42)
 
             nullableStringField = "UPDATED"
@@ -188,6 +190,7 @@ class MutableRealmTests {
             nullableBooleanField = false
             nullableFloatField = 42.42f
             nullableDoubleField = 42.42
+            nullableDecimal128Field = Decimal128("1.8446744073709551618E-6157")
             nullableTimestampField = RealmInstant.from(42, 42)
             nullableObject = this
 
@@ -228,6 +231,7 @@ class MutableRealmTests {
             assertEquals(false, booleanField)
             assertEquals(42.42f, floatField)
             assertEquals(42.42, doubleField)
+            assertEquals(Decimal128("1.8446744073709551618E-6157"), decimal128Field)
             assertEquals(RealmInstant.from(42, 42), timestampField)
 
             assertEquals("UPDATED", nullableStringField)
@@ -239,6 +243,7 @@ class MutableRealmTests {
             assertEquals(false, nullableBooleanField)
             assertEquals(42.42f, nullableFloatField)
             assertEquals(42.42, nullableDoubleField)
+            assertEquals(Decimal128("1.8446744073709551618E-6157"), nullableDecimal128Field)
             assertEquals(RealmInstant.from(42, 42), nullableTimestampField)
             assertEquals(primaryKey, nullableObject!!.primaryKey)
 

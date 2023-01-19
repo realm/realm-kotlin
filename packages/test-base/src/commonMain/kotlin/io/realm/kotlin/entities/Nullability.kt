@@ -18,10 +18,12 @@ package io.realm.kotlin.entities
 
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 
 class Nullability : RealmObject {
     var stringNullable: String? = null
@@ -36,11 +38,13 @@ class Nullability : RealmObject {
 
     var floatNullable: Float? = null
     var doubleField: Double? = null
+    var decimal128Field: Decimal128? = null
     var timestampField: RealmInstant? = null
     var objectIdField: ObjectId? = null
     var bsonObjectIdField: BsonObjectId? = null
     var uuidField: RealmUUID? = null
     var binaryField: ByteArray? = null
     var mutableRealmIntField: MutableRealmInt? = null
+    var realmAnyField: RealmAny? = null
     var objectField: Nullability? = null
 }
