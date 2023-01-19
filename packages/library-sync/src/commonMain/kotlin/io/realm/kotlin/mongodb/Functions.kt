@@ -13,17 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.realm.kotlin.mongodb
 
-package io.realm.kotlin.internal.interop.sync
+import io.realm.kotlin.mongodb.ext.call
 
 /**
- * Wrapper around C-API `realm_sync_session_state`
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3177
+ * A Functions manager to call remote Atlas Functions for the associated Atlas App Services Application.
+ *
+ * Functions are invoked using the extension function [Functions.call].
+ *
+ * @see [User.functions]
  */
-expect enum class CoreSyncSessionState {
-    RLM_SYNC_SESSION_STATE_DYING,
-    RLM_SYNC_SESSION_STATE_ACTIVE,
-    RLM_SYNC_SESSION_STATE_INACTIVE,
-    RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN,
-    RLM_SYNC_SESSION_STATE_PAUSED;
+public interface Functions {
+    /**
+     * The [App] that this function manager is associated with.
+     */
+    public val app: App
+
+    /**
+     * The [User] that this function manager is authenticated with.
+     */
+    public val user: User
 }

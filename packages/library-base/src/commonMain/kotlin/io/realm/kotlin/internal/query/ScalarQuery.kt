@@ -52,6 +52,7 @@ import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 
@@ -133,6 +134,7 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
         PropertyType.RLM_PROPERTY_TYPE_INT -> primitiveTypeConverters[Long::class]!!
         PropertyType.RLM_PROPERTY_TYPE_FLOAT -> primitiveTypeConverters[Float::class]!!
         PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> primitiveTypeConverters[Double::class]!!
+        PropertyType.RLM_PROPERTY_TYPE_DECIMAL128 -> primitiveTypeConverters[Decimal128::class]!!
         PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> primitiveTypeConverters[RealmInstant::class]!!
         PropertyType.RLM_PROPERTY_TYPE_MIXED -> realmAnyConverter(mediator, realmReference)
         else -> throw IllegalArgumentException("Conversion not possible between '$type' and '${type.simpleName}'.")
@@ -217,6 +219,7 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
         PropertyType.RLM_PROPERTY_TYPE_FLOAT -> primitiveTypeConverters[Double::class]!!
         PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> primitiveTypeConverters[Double::class]!!
         PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP -> primitiveTypeConverters[RealmInstant::class]!!
+        PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
         PropertyType.RLM_PROPERTY_TYPE_MIXED -> primitiveTypeConverters[Decimal128::class]!!
         else -> throw IllegalArgumentException("Conversion not possible between '$type' and '${type.simpleName}'.")
     }
@@ -275,6 +278,11 @@ private fun <T : Any> queryTypeValidator(
         // RealmAny can only be coerced to RealmAny
         if (type != RealmAny::class) {
             throw IllegalArgumentException("RealmAny properties cannot be aggregated as '${type.simpleName}'. Use RealmAny as output type instead.")
+        }
+    } else if (fieldType == PropertyType.RLM_PROPERTY_TYPE_DECIMAL128) {
+        // Decimal128 can only be coerced to Decimal128
+        if (type != BsonDecimal128::class) {
+            throw IllegalArgumentException("Decimal128 properties cannot be aggregated as '${type.simpleName}'. Use Decimal128 as output type instead.")
         }
     } else if (validateTimestamp && fieldType == PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP) {
         // Timestamps cannot be summed and cannot be coerced
@@ -352,8 +360,9 @@ private fun <T : Any> coerceType(
             }
         }
         // Core TIMESTAMP cannot be coerced to any type other than RealmInstant
+        ValueType.RLM_TYPE_DECIMAL128,
         ValueType.RLM_TYPE_TIMESTAMP -> {
-            converter.realmValueToPublic(transport) as RealmInstant?
+            converter.realmValueToPublic(transport)
         }
         else -> throw IllegalArgumentException("Cannot coerce type of property '$propertyName' to '${coercedType.simpleName}'.")
     } as T?

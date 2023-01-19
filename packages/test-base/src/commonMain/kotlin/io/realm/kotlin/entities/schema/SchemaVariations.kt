@@ -29,6 +29,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 
 /**
  * Class used for testing of the schema API; thus, doesn't exhaust modeling features but provides
@@ -51,6 +52,7 @@ class SchemaVariations : RealmObject {
     var date: RealmInstant = RealmInstant.from(0, 0)
     var objectId: ObjectId = ObjectId.create()
     var bsonObjectId: BsonObjectId = BsonObjectId()
+    var decimal128: Decimal128 = Decimal128("1")
     var uuid: RealmUUID = RealmUUID.random()
     var binary: ByteArray = byteArrayOf(22, 66)
 
@@ -68,6 +70,7 @@ class SchemaVariations : RealmObject {
     var longList: RealmList<Long> = realmListOf()
     var floatList: RealmList<Float> = realmListOf()
     var doubleList: RealmList<Double> = realmListOf()
+    var decimal128List: RealmList<Decimal128> = realmListOf()
     var stringList: RealmList<String> = realmListOf()
     var dateList: RealmList<RealmInstant> = realmListOf()
     var objectIdList: RealmList<ObjectId> = realmListOf()
@@ -89,6 +92,7 @@ class SchemaVariations : RealmObject {
     var longSet: RealmSet<Long> = realmSetOf()
     var floatSet: RealmSet<Float> = realmSetOf()
     var doubleSet: RealmSet<Double> = realmSetOf()
+    var decimal128Set: RealmSet<Decimal128> = realmSetOf()
     var stringSet: RealmSet<String> = realmSetOf()
     var dateSet: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSet: RealmSet<ObjectId> = realmSetOf()

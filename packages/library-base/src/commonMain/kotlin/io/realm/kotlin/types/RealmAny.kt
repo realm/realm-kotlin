@@ -97,7 +97,7 @@ public interface RealmAny {
      * Supported Realm data types that can be stored in a `RealmAny` instance.
      */
     public enum class Type {
-        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, OBJECT_ID, UUID, OBJECT
+        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT
     }
 
     /**
@@ -177,6 +177,12 @@ public interface RealmAny {
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `Double`.
      */
     public fun asDouble(): Double
+
+    /**
+     * Returns the value from this `RealmAny` as a [Decimal128].
+     * @throws [IllegalStateException] if the stored value cannot be safely converted to `Decimal128`.
+     */
+    public fun asDecimal128(): Decimal128
 
     /**
      * Returns the value from this `RealmAny` as a [BsonObjectId].
@@ -273,6 +279,12 @@ public interface RealmAny {
          */
         public fun create(value: Double): RealmAny =
             RealmAnyImpl(Type.DOUBLE, Double::class, value)
+
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [Decimal128] value.
+         */
+        public fun create(value: Decimal128): RealmAny =
+            RealmAnyImpl(Type.DECIMAL128, Decimal128::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [BsonObjectId] value.
