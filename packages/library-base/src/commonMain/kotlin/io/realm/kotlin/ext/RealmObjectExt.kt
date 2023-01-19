@@ -47,7 +47,7 @@ import kotlin.reflect.KProperty1
  *
  * ```
  * class Parent : RealmObject {
- *  var children: List<Child>? = null
+ *  var children: RealmList<Child>? = null
  * }
  *
  * class Child : RealmObject {
