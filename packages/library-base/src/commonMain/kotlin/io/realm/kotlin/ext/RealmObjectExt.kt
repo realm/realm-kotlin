@@ -19,6 +19,7 @@ package io.realm.kotlin.ext
 import io.realm.kotlin.internal.BacklinksDelegateImpl
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -45,11 +46,11 @@ import kotlin.reflect.KProperty1
  * backlinks on a one-to-many relationship:
  *
  * ```
- * class Parent {
+ * class Parent : RealmObject {
  *  var children: List<Child>? = null
  * }
  *
- * class Child {
+ * class Child : RealmObject {
  *  val parents: RealmResults<Parent> by backlinks(Parent::children)
  * }
  * ```
@@ -66,17 +67,16 @@ import kotlin.reflect.KProperty1
  * @return delegate for the backlinks collection.
  */
 @Suppress("UnusedPrivateMember")
-public fun <T : TypedRealmObject> backlinks(
+public fun <T : TypedRealmObject> RealmObject.backlinks(
     sourceProperty: KProperty1<T, *>,
     sourceClass: KClass<T>
-): BacklinksDelegate<T> =
-    BacklinksDelegateImpl(sourceClass)
+): BacklinksDelegate<T> = BacklinksDelegateImpl(sourceClass)
 
 /**
  * Returns a [BacklinksDelegate] that represents the inverse relationship between two Realm
  * models.
  *
- * Reified convenience wrapper for [backlinks].
+ * Reified convenience wrapper for [RealmObject.backlinks].
  */
-public inline fun <reified T : TypedRealmObject> backlinks(sourceProperty: KProperty1<T, *>): BacklinksDelegate<T> =
+public inline fun <reified T : TypedRealmObject> RealmObject.backlinks(sourceProperty: KProperty1<T, *>): BacklinksDelegate<T> =
     backlinks(sourceProperty, T::class)

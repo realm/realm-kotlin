@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
+import io.realm.kotlin.types.TypedRealmObject
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -91,7 +92,7 @@ class GenerationExtensionTest {
         fun assertGeneratedIR() {
             val outputFile = File("${outputDir()}/main/01_AFTER.ValidateIrBeforeLowering.ir")
             stripInputPath(outputFile, fileMap)
-            val expected = File("${expectedDir()}/00_ValidateIrBeforeLowering.ir").readText()
+            val expected = File("${expectedDir()}/01_AFTER.ValidateIrBeforeLowering.ir").readText()
             val actual = outputFile.readText()
             assertEquals(expected, actual)
         }
@@ -175,12 +176,14 @@ class GenerationExtensionTest {
             "booleanField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "floatField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "decimal128Field" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "bsonObjectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "byteArrayField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
             "mutableRealmInt" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableRealmAny" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // RealmObject
             "child" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -218,6 +221,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableRealmAnyListField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Set types
             "stringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -251,16 +255,22 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableRealmAnySetField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Linking objects
             "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
             "linkingObjectsBySet" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+
+            // @PersistedName annotated fields
+            "persistedNameStringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "persistedNameChildField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "persistedNameLinkingObjectsField" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->
             val expectedType =
                 expectedProperties[property.name] ?: error("Property not found: ${property.name}")
-            assertEquals(expectedType, property.type)
+            assertEquals(expectedType, property.type, property.name)
         }
 
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()
@@ -370,6 +380,8 @@ class GenerationExtensionTest {
                         get() = TODO("Not yet implemented")
                     override val properties: List<PropertyMetadata>
                         get() = TODO("Not yet implemented")
+                    override val clazz: KClass<out TypedRealmObject>?
+                        get() = TODO("Not yet implemented")
                     override val className: String
                         get() = TODO("Not yet implemented")
                     override val primaryKeyProperty: PropertyMetadata?
@@ -385,6 +397,10 @@ class GenerationExtensionTest {
                     override fun get(propertyName: String): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
+                }
+
+                override fun get(classKey: ClassKey): ClassMetadata? {
+                    TODO("Not yet implemented")
                 }
             }
     }

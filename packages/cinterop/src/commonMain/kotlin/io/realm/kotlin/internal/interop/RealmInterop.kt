@@ -119,6 +119,89 @@ typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscript
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
 
+/**
+ * Class for grouping and normalizing values we want to send as part of
+ * logging in Sync Users.
+ */
+@Suppress("LongParameterList")
+class SyncConnectionParams(
+    sdkVersion: String,
+    platform: String,
+    platformVersion: String,
+    cpuArch: String,
+    device: String,
+    deviceVersion: String,
+    framework: Runtime,
+    frameworkVersion: String
+) {
+    val sdkName = "Kotlin"
+    val sdkVersion: String
+    val platform: String
+    val platformVersion: String
+    val cpuArch: String
+    val device: String
+    val deviceVersion: String
+    val framework: String
+    val frameworkVersion: String
+
+    enum class Runtime(public val description: String) {
+        JVM("JVM"),
+        ANDROID("Android"),
+        NATIVE("Native")
+    }
+
+    init {
+        this.sdkVersion = sdkVersion
+        this.platform = normalizePlatformValue(platform)
+        this.platformVersion = platformVersion
+        this.cpuArch = normalizeCpuArch(cpuArch)
+        this.device = device
+        this.deviceVersion = deviceVersion
+        this.framework = framework.description
+        this.frameworkVersion = frameworkVersion
+    }
+
+    private fun normalizeCpuArch(cpuArch: String): String {
+        return if (cpuArch.isEmpty()) {
+            return ""
+        } else if (Regex("x86.64", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
+            "x86_64"
+        } else if (cpuArch.contains("x86", ignoreCase = true)) {
+            "x86"
+        } else if (Regex("v7a", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
+            "armeabi-v7a"
+        } else if (
+            Regex("arm64", RegexOption.IGNORE_CASE).find(cpuArch) != null ||
+            cpuArch.equals("aarch64", ignoreCase = true)
+        ) {
+            "arm64"
+        } else {
+            "Unknown ($cpuArch)"
+        }
+    }
+
+    private fun normalizePlatformValue(platform: String): String {
+        return if (platform.isEmpty()) {
+            return ""
+        } else if (platform.contains("windows", ignoreCase = true)) {
+            "Windows"
+        } else if (platform.contains("linux", ignoreCase = true)) {
+            "Linux"
+        } else if (
+            Regex("mac( )?os", setOf(RegexOption.IGNORE_CASE)).find(platform) != null ||
+            platform.equals("NSMACHOperatingSystem", ignoreCase = true)
+        ) {
+            "MacOS"
+        } else if (platform.contains("ios", ignoreCase = true)) {
+            "iOS"
+        } else if (platform.contains("android", ignoreCase = true)) {
+            "Android"
+        } else {
+            "Unknown ($platform)"
+        }
+    }
+}
+
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
     fun realm_value_get(value: RealmValue): Any?
@@ -245,6 +328,10 @@ expect object RealmInterop {
     )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
+    fun <T> realm_object_get_parent(
+        obj: RealmObjectPointer,
+        block: (ClassKey, RealmObjectPointer) -> T
+    ): T
 
     // list
     fun realm_get_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
@@ -289,6 +376,7 @@ expect object RealmInterop {
         query: String,
         args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer
+    fun realm_query_parse_for_list(list: RealmListPointer, query: String, args: Pair<Int, RealmQueryArgsTransport>): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long
@@ -431,6 +519,9 @@ expect object RealmInterop {
     fun realm_user_is_logged_in(user: RealmUserPointer): Boolean
     fun realm_user_log_out(user: RealmUserPointer)
     fun realm_user_get_state(user: RealmUserPointer): CoreUserState
+    fun realm_user_get_profile(user: RealmUserPointer): String
+    fun realm_user_get_custom_data(user: RealmUserPointer): String?
+    fun realm_user_refresh_custom_data(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>)
 
     // Sync client config
     fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer
@@ -475,7 +566,7 @@ expect object RealmInterop {
         syncConfig: RealmSyncConfigurationPointer,
         afterHandler: SyncAfterClientResetHandler
     )
-    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String)
+    fun realm_sync_immediately_run_file_actions(app: RealmAppPointer, syncPath: String): Boolean
 
     // SyncSession
     fun realm_sync_session_get(realm: RealmPointer): RealmSyncSessionPointer
@@ -511,9 +602,7 @@ expect object RealmInterop {
         appId: String,
         networkTransport: RealmNetworkTransportPointer,
         baseUrl: String? = null,
-        platform: String,
-        platformVersion: String,
-        sdkVersion: String
+        connectionParams: SyncConnectionParams
     ): RealmAppConfigurationPointer
     fun realm_app_config_set_base_url(appConfig: RealmAppConfigurationPointer, baseUrl: String)
 
@@ -522,11 +611,11 @@ expect object RealmInterop {
     fun realm_app_credentials_new_email_password(username: String, password: String): RealmCredentialsPointer
     fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer
     fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer
-    // fun realm_app_credentials_new_custom_function(document: Any): NativePointer
     fun realm_app_credentials_new_facebook(accessToken: String): RealmCredentialsPointer
     fun realm_app_credentials_new_google_id_token(idToken: String): RealmCredentialsPointer
     fun realm_app_credentials_new_google_auth_code(authCode: String): RealmCredentialsPointer
     fun realm_app_credentials_new_jwt(jwtToken: String): RealmCredentialsPointer
+    fun realm_app_credentials_new_custom_function(serializedEjsonPayload: String): RealmCredentialsPointer
     fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider
     fun realm_app_credentials_serialize_as_json(credentials: RealmCredentialsPointer): String
 
@@ -564,6 +653,14 @@ expect object RealmInterop {
         tokenId: String,
         newPassword: String,
         callback: AppCallback<Unit>
+    )
+
+    fun realm_app_call_function(
+        app: RealmAppPointer,
+        user: RealmUserPointer,
+        name: String,
+        serializedEjsonArgs: String, // as ejson
+        callback: AppCallback<String>
     )
 
     // Sync config

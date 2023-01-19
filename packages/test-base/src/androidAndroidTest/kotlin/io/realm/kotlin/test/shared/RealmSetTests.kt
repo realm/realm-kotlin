@@ -22,6 +22,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.set.RealmSetContainer
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
@@ -30,6 +31,7 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -38,6 +40,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -75,6 +78,14 @@ class RealmSetTests {
                         classifier,
                         elementType.nullable
                     ) as SetTypeSafetyManager<ByteArray>,
+                    classifier
+                )
+                RealmAny::class -> RealmAnySetTester(
+                    realm,
+                    NullableSet(
+                        RealmSetContainer.nullableProperties[classifier]!!,
+                        getDataSetForClassifier(classifier, true)
+                    ) as SetTypeSafetyManager<RealmAny?>,
                     classifier
                 )
                 else -> GenericSetTester(
@@ -449,6 +460,7 @@ class RealmSetTests {
         Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
         Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
         Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
@@ -456,6 +468,7 @@ class RealmSetTests {
         RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
         ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
         RealmObject::class -> SET_OBJECT_VALUES // Don't use the one from RealmListTests!!!
+        RealmAny::class -> SET_REALM_ANY_VALUES // RealmAny cannot be non-nullable
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 }
@@ -482,14 +495,14 @@ internal interface SetApiTester<T, Container> {
      * Asserts structural equality for two given collections. This is needed to evaluate equality
      * contents of ByteArrays and RealmObjects.
      */
-    fun assertStructuralEquality(expected: Collection<T>, actual: Collection<T>)
+    fun assertStructuralEquality(expectedValues: Collection<T>, actualValues: Collection<T>)
 
     /**
-     * Checks whether [element] is contained in a [collection]. This comes in handy when checking
+     * Checks whether [actualElement] is contained in a [expectedCollection]. This comes in handy when checking
      * whether elements yielded by `iterator.next()` are contained in a specific `Collection` since
      * we need to do the equality assertion at a structural level.
      */
-    fun structuralContains(collection: Collection<T>, element: T?): Boolean
+    fun structuralContains(expectedCollection: Collection<T>, actualElement: T?): Boolean
 
     /**
      * Assertions on the container outside the write transaction plus cleanup.
@@ -532,7 +545,8 @@ internal abstract class ManagedSetTester<T>(
         val dataSet = typeSafetyManager.dataSetToLoad
 
         val assertions = { container: RealmSetContainer ->
-            assertStructuralEquality(dataSet, typeSafetyManager.getCollection(container))
+            val actualValues = typeSafetyManager.getCollection(container)
+            assertStructuralEquality(dataSet, actualValues)
         }
 
         errorCatcher {
@@ -650,7 +664,8 @@ internal abstract class ManagedSetTester<T>(
                 assertFailsWith<NoSuchElementException> { (iterator.next()) }
                 set.addAll(dataSet)
                 while (iterator.hasNext()) {
-                    assertTrue(structuralContains(dataSet, iterator.next()))
+                    val element = iterator.next()
+                    assertTrue(structuralContains(dataSet, element))
                 }
             }
         }
@@ -741,7 +756,7 @@ internal abstract class ManagedSetTester<T>(
 
         // Clean up
         realm.writeBlocking {
-            delete(assertNotNull(findLatest(container)))
+            delete(query<RealmSetContainer>())
         }
     }
 }
@@ -757,15 +772,97 @@ internal class GenericSetTester<T>(
 
     override fun toString(): String = classifier.toString()
 
-    override fun assertStructuralEquality(expected: Collection<T>, actual: Collection<T>) {
-        assertEquals(expected.size, actual.size)
-        actual.forEach {
-            assertTrue(expected.contains(it))
+    override fun assertStructuralEquality(
+        expectedValues: Collection<T>,
+        actualValues: Collection<T>
+    ) {
+        assertEquals(expectedValues.size, actualValues.size)
+        actualValues.forEach {
+            assertTrue(expectedValues.contains(it))
         }
     }
 
-    override fun structuralContains(collection: Collection<T>, element: T?): Boolean =
-        collection.contains(element)
+    override fun structuralContains(expectedCollection: Collection<T>, actualElement: T?): Boolean =
+        expectedCollection.contains(actualElement)
+}
+
+/**
+ * Tester for RealmAny.
+ */
+internal class RealmAnySetTester(
+    realm: Realm,
+    typeSafetyManager: SetTypeSafetyManager<RealmAny?>,
+    private val classifier: KClassifier
+) : ManagedSetTester<RealmAny?>(realm, typeSafetyManager) {
+
+    override fun toString(): String = classifier.toString()
+
+    override fun assertStructuralEquality(
+        expectedValues: Collection<RealmAny?>,
+        actualValues: Collection<RealmAny?>
+    ) {
+        assertEquals(expectedValues.size, actualValues.size)
+        actualValues.forEach { actual ->
+            when (actual) {
+                null -> assertTrue(expectedValues.contains(null))
+                else -> when (actual.type) {
+                    RealmAny.Type.OBJECT -> {
+                        val stringsFromObjects = expectedValues.filter {
+                            it != null && it.type == RealmAny.Type.OBJECT
+                        }.map {
+                            it?.asRealmObject<RealmSetContainer>()
+                                ?.stringField
+                        }
+                        val stringFromRealmAny =
+                            actual.asRealmObject<RealmSetContainer>().stringField
+                        stringsFromObjects.contains(stringFromRealmAny)
+                    }
+                    RealmAny.Type.BINARY -> {
+                        val binaryValues = expectedValues.filter {
+                            it != null && it.type == RealmAny.Type.BINARY
+                        }.map {
+                            it!!.asByteArray()
+                        }
+                        val binaryFromRealmAny = actual.asByteArray()
+                        binaryContains(binaryValues, binaryFromRealmAny)
+                    }
+                    else -> assertTrue(expectedValues.contains(actual))
+                }
+            }
+        }
+    }
+
+    override fun structuralContains(
+        expectedCollection: Collection<RealmAny?>,
+        actualElement: RealmAny?
+    ): Boolean {
+        return when (actualElement) {
+            null -> expectedCollection.contains(null)
+            else -> when (actualElement.type) {
+                RealmAny.Type.OBJECT -> {
+                    val stringsFromObjects = expectedCollection.filter {
+                        it != null && it.type == RealmAny.Type.OBJECT
+                    }.map {
+                        it?.asRealmObject<RealmSetContainer>()
+                            ?.stringField
+                    }
+                    val stringFromRealmAny =
+                        actualElement.asRealmObject<RealmSetContainer>().stringField
+                    stringsFromObjects.contains(stringFromRealmAny)
+                }
+                RealmAny.Type.BINARY -> {
+                    val binaryValues = expectedCollection.filter {
+                        it != null && it.type == RealmAny.Type.BINARY
+                    }.map {
+                        it?.asByteArray()
+                    }
+                    val binaryFromRealmAny = actualElement.asByteArray()
+                    binaryContains(binaryValues, binaryFromRealmAny)
+                }
+                else -> expectedCollection.contains(actualElement)
+            }
+        }
+    }
 }
 
 /**
@@ -780,16 +877,16 @@ internal class ByteArraySetTester(
     override fun toString(): String = classifier.toString()
 
     override fun assertStructuralEquality(
-        expected: Collection<ByteArray>,
-        actual: Collection<ByteArray>
+        expectedValues: Collection<ByteArray>,
+        actualValues: Collection<ByteArray>
     ) {
-        assertEquals(expected.size, actual.size)
+        assertEquals(expectedValues.size, actualValues.size)
 
         // We can't iterate by index on the set and the positions are not guaranteed to be the same
         // as in the dataset so to compare the values are the same we need to bend over backwards...
         var successfulAssertions = 0
-        actual.forEach { actualByteArray ->
-            expected.forEach { expectedByteArray ->
+        actualValues.forEach { actualByteArray ->
+            expectedValues.forEach { expectedByteArray ->
                 try {
                     assertContentEquals(expectedByteArray, actualByteArray)
                     successfulAssertions += 1
@@ -798,28 +895,33 @@ internal class ByteArraySetTester(
                 }
             }
         }
-        if (successfulAssertions != expected.size) {
-            fail("Not all the elements in the ByteArray were found in the expected dataset - there were only $successfulAssertions although ${expected.size} were expected.")
+        if (successfulAssertions != expectedValues.size) {
+            fail("Not all the elements in the ByteArray were found in the expected dataset - there were only $successfulAssertions although ${expectedValues.size} were expected.")
         }
     }
 
     override fun structuralContains(
-        collection: Collection<ByteArray>,
-        element: ByteArray?
-    ): Boolean {
-        // We need to iterate over the collection and check IF ONE AND ONLY ONE of the byte arrays
-        // contained in it matches the contents of the given 'element' byte array.
-        var successfulAssertions = 0
-        collection.forEach { expectedByteArray ->
-            try {
-                assertContentEquals(expectedByteArray, element)
-                successfulAssertions += 1
-            } catch (e: AssertionError) {
-                // Do nothing, the byte arrays might be structurally equal in the next iteration
-            }
+        expectedCollection: Collection<ByteArray>,
+        actualElement: ByteArray?
+    ): Boolean = binaryContains(expectedCollection, actualElement)
+}
+
+private fun binaryContains(
+    collection: Collection<ByteArray?>,
+    element: ByteArray?
+): Boolean {
+    // We need to iterate over the collection and check IF ONE AND ONLY ONE of the byte arrays
+    // contained in it matches the contents of the given 'element' byte array.
+    var successfulAssertions = 0
+    collection.forEach { expectedByteArray ->
+        try {
+            assertContentEquals(expectedByteArray, element)
+            successfulAssertions += 1
+        } catch (e: AssertionError) {
+            // Do nothing, the byte arrays might be structurally equal in the next iteration
         }
-        return successfulAssertions == 1
     }
+    return successfulAssertions == 1
 }
 
 /**
@@ -833,26 +935,26 @@ internal class RealmObjectSetTester(
     override fun toString(): String = "RealmObjectSetTester"
 
     override fun assertStructuralEquality(
-        expected: Collection<RealmSetContainer>,
-        actual: Collection<RealmSetContainer>
+        expectedValues: Collection<RealmSetContainer>,
+        actualValues: Collection<RealmSetContainer>
     ) {
-        assertEquals(expected.size, actual.size)
+        assertEquals(expectedValues.size, actualValues.size)
         assertContentEquals(
-            expected.map { it.stringField },
-            actual.map { it.stringField }
+            expectedValues.map { it.stringField },
+            actualValues.map { it.stringField }
         )
     }
 
     override fun structuralContains(
-        collection: Collection<RealmSetContainer>,
-        element: RealmSetContainer?
+        expectedCollection: Collection<RealmSetContainer>,
+        actualElement: RealmSetContainer?
     ): Boolean {
-        assertNotNull(element)
+        assertNotNull(actualElement)
 
         // Map 'stringField' properties from the original dataset and check whether
         // 'element.stringField' is present - if so, both objects are equal
-        return collection.map { it.stringField }
-            .contains(element.stringField)
+        return expectedCollection.map { it.stringField }
+            .contains(actualElement.stringField)
     }
 }
 
@@ -994,4 +1096,12 @@ internal val SET_OBJECT_VALUES2 = listOf(
 internal val SET_OBJECT_VALUES3 = listOf(
     RealmSetContainer().apply { stringField = "G" },
     RealmSetContainer().apply { stringField = "H" }
+)
+
+// Use this for SET tests as this file does exhaustive testing on all RealmAny types. Ensuring that
+// we eliminate duplicates in REALM_ANY_PRIMITIVE_VALUES as the test infrastructure relies on
+// SET_REALM_ANY_VALUES to hold unique values.
+internal val SET_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES.toSet().toList() + RealmAny.create(
+    RealmSetContainer().apply { stringField = "hello" },
+    RealmSetContainer::class
 )

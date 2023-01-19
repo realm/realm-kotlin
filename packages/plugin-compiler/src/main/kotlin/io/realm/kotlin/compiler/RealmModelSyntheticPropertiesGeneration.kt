@@ -29,6 +29,7 @@ import io.realm.kotlin.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.kotlin.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
 import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
+import io.realm.kotlin.compiler.FqNames.REALM_ANY
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
@@ -43,6 +44,7 @@ import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
 import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_IS_EMBEDDED
@@ -53,6 +55,7 @@ import io.realm.kotlin.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -78,6 +81,7 @@ import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
@@ -87,9 +91,11 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.constructors
@@ -137,6 +143,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmObjectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
     private val objectIdType: IrType = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID).defaultType
     private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
+    private val realmAnyType: IrType = pluginContext.lookupClassOrThrow(REALM_ANY).defaultType
 
     private val kMutableProperty1Class: IrClass =
         pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
@@ -194,6 +201,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
     private val indexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
+            booleanType,
             byteType,
             charType,
             shortType,
@@ -203,7 +211,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmInstantType,
             objectIdType,
             realmObjectIdType,
-            realmUUIDType
+            realmUUIDType,
+            realmAnyType
         ).map { it.classifierOrFail }
     }
 
@@ -223,16 +232,44 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
     }
 
+    /**
+     * Add RealmObjectCompanion.io_realm_kotlin_fields: Map<String, KProperty1<BaseRealmObject, Any?>>
+     *
+     * ```
+     * companion object : RealmObjectCompanion {                    // <--- TODO Double check
+     *      override val io_realm_kotlin_fields: Map<String, KProperty1<BaseRealmObject, Any?>> =
+     *          mapOf<String, KProperty1<BaseRealmObject, Any?>>(
+     *              Pair("propertyName", ClassName::property),      // same as: "propertyName" to ClassName::property
+     *              ...
+     *          )
+     * }
+     * ```
+     */
     @Suppress("LongMethod")
     fun addCompanionFields(
-        className: String,
+        clazz: IrClass,
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
+        val className = clazz.name.identifier
         val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
+        companion.addValueProperty(
+            pluginContext,
+            realmObjectCompanionInterface,
+            REALM_OBJECT_COMPANION_CLASS_MEMBER,
+            pluginContext.irBuiltIns.kClassClass.defaultType
+        ) { startOffset, endOffset ->
+            IrClassReferenceImpl(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                type = clazz.symbol.starProjectedType,
+                symbol = clazz.symbol,
+                classType = clazz.defaultType
+            )
+        }
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -241,7 +278,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         ) { startOffset, endOffset ->
             IrConstImpl.string(startOffset, endOffset, pluginContext.irBuiltIns.stringType, className)
         }
-        // Add RealmObjectCompanion.io_realm_kotlin_fields: Map<String, KMutableProperty1<*, *>>
+        // Add io_realm_kotlin_fields
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -266,10 +303,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         UNDEFINED_OFFSET,
                         pluginContext.irBuiltIns.arrayClass.typeWith(companionFieldsElementType),
                         type,
+                        // Generate list of properties: List<Pair<String, KMutableProperty1<*, *>>>
                         properties!!.entries.map {
                             val property = it.value.declaration
                             val propertyType = if (it.value.isComputed) realmObjectPropertyType else
                                 realmObjectMutablePropertyType
+                            // Pair<String, KMutableProperty1<*, *>>()
                             IrConstructorCallImpl.fromSymbolOwner(
                                 startOffset = startOffset,
                                 endOffset = endOffset,
@@ -284,7 +323,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         startOffset,
                                         endOffset,
                                         pluginContext.irBuiltIns.stringType,
-                                        property.name.identifier
+                                        it.value.persistedName
                                     )
                                 )
                                 putValueArgument(
@@ -369,6 +408,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val fields: MutableMap<String, SchemaProperty> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
+        // A map for tracking the property names and their source locations to ensure uniqueness
+        val persistedAndPublicNameToLocation = mutableMapOf<String, CompilerMessageSourceLocation>()
+
         val primaryKeyFields =
             fields.filter { it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION) }
 
@@ -378,7 +420,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
-            1 -> primaryKeyFields.entries.first().key
+            1 -> primaryKeyFields.entries.first().value.persistedName
             else -> {
                 logError("RealmObject can only have one primary key", irClass.locationOf())
                 null
@@ -473,18 +515,30 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         ?: fatalError("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
                                     logError(
                                         "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
                                         property.locationOf()
                                     )
                                 }
+                                val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
                                 if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
                                     logError(
                                         "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
                                         property.locationOf()
                                     )
+                                }
+
+                                val location = property.locationOf()
+                                val persistedName = value.persistedName
+                                val publicName = value.publicName
+
+                                // Ensure that the names are valid and do not conflict with prior persisted or public names
+                                ensureValidName(persistedName, persistedAndPublicNameToLocation, location)
+                                persistedAndPublicNameToLocation[persistedName] = location
+                                if (value.hasPersistedNameAnnotation) {
+                                    ensureValidName(publicName, persistedAndPublicNameToLocation, location)
+                                    persistedAndPublicNameToLocation[publicName] = location
                                 }
 
                                 IrCallImpl(
@@ -497,10 +551,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 ).apply {
                                     dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
-                                    // Name
-                                    putValueArgument(arg++, irString(entry.key))
+                                    // Persisted name
+                                    putValueArgument(arg++, irString(persistedName))
                                     // Public name
-                                    putValueArgument(arg++, irString(""))
+                                    putValueArgument(arg++, irString(publicName))
                                     // Type
                                     putValueArgument(
                                         arg++,
@@ -562,8 +616,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(
                                         arg++,
                                         if (type == linkingObjectType) {
-                                            val targetProperty = getLinkingObjectPropertyName(backingField)
-                                            irString(targetProperty.identifier)
+                                            val targetPropertyName = getLinkingObjectPropertyName(backingField)
+                                            irString(targetPropertyName)
                                         } else {
                                             irString("")
                                         }
@@ -735,4 +789,33 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             endOffset,
             IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType)
         )
+
+    /**
+     * Ensure that persisted and public property names are unique.
+     *
+     * @param name the name to check uniqueness of
+     * @param existingNames the persisted and public names already parsed by the compiler
+     * @param location the location of the current property being parsed
+     */
+    private fun ensureValidName(name: String, existingNames: MutableMap<String, CompilerMessageSourceLocation>, location: CompilerMessageSourceLocation) {
+        if (name.isEmpty()) {
+            logError(
+                "Names must contain at least 1 character.",
+                location
+            )
+        }
+        if (existingNames.containsKey(name)) {
+            val duplicationLocation = existingNames[name]!!
+            if (location.line == duplicationLocation.line) {
+                // The message passed will only be contained in the compiler messages if `logDebug`
+                // or `logError` is used, not `logWarn` or `logInfo`. Thus, we opt for `logDebug` here.
+                logDebug("The Kotlin name and the persisted name are the same value: '$name'")
+            } else {
+                logError(
+                    "Kotlin names and persisted names must be unique. '$name' has already been used for the field on line ${duplicationLocation.line}.",
+                    location
+                )
+            }
+        }
+    }
 }

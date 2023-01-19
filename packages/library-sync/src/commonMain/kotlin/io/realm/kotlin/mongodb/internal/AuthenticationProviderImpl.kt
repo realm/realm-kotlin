@@ -41,6 +41,7 @@ internal class AuthenticationProviderImpl private constructor() {
                 AuthProvider.RLM_AUTH_PROVIDER_CUSTOM -> AuthenticationProvider.JWT
                 AuthProvider.RLM_AUTH_PROVIDER_EMAIL_PASSWORD -> AuthenticationProvider.EMAIL_PASSWORD
                 AuthProvider.RLM_AUTH_PROVIDER_USER_API_KEY -> AuthenticationProvider.API_KEY
+                AuthProvider.RLM_AUTH_PROVIDER_FUNCTION -> AuthenticationProvider.CUSTOM_FUNCTION
                 else -> null
             }
         }

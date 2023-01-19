@@ -19,9 +19,9 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'master', 'releases', 'next-major' ]
+releaseBranches = [ 'main', 'releases', 'next-major' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
-slackNotificationBranches = [ 'master', 'releases', 'next-major' ]
+slackNotificationBranches = [ 'main', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
 currentBranch = (env.CHANGE_BRANCH == null) ? env.BRANCH_NAME : env.CHANGE_BRANCH
 
@@ -227,6 +227,22 @@ pipeline {
                         ])
                     }
                 }
+                stage('Minified Sync Tests - Android') {
+                    when { expression { runTests } }
+                    steps {
+                        testWithServer([
+                            {
+                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PincludeSdkModules=false -PtestBuildType=debugMinified')
+                            }
+                        ])
+                        sh 'rm mapping.zip || true'
+                        zip([
+                            'zipFile': 'mapping.zip',
+                            'archive': true,
+                            'glob': 'packages/test-sync/build/outputs/mapping/debugMinified/mapping.txt'
+                        ])
+                    }
+                }
                 stage('Gradle Plugin Integration Tests') {
                     when { expression { runTests } }
                     steps {
@@ -254,7 +270,7 @@ pipeline {
                     }
                 }
                 stage('Track build metrics') {
-                    when { expression { currentBranch == "master" } }
+                    when { expression { currentBranch == "main" } }
                     steps {
                         trackBuildMetrics(version)
                     }
@@ -490,7 +506,7 @@ def testWithServer(tasks) {
 
             mongoDbRealmContainer = mdbRealmImage.run("--rm -i -t -d -p9090:9090 -p26000:26000 -e AWS_ACCESS_KEY_ID='$BAAS_AWS_ACCESS_KEY_ID' -e AWS_SECRET_ACCESS_KEY='$BAAS_AWS_SECRET_ACCESS_KEY'")
 
-            // Techinically this is only needed for Android, but since all tests are
+            // Technically, this is only needed for Android, but since all tests are
             // executed on same host and tasks are grouped in same stage we just do it
             // here
             forwardAdbPorts()

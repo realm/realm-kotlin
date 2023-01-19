@@ -178,6 +178,19 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+// Reuse void callback typemap as template for callbacks returning a string
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+(realm_return_string_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_return_string_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_return_string_func_t>(app_string_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // Reuse void callback typemap as template for callbacks returning a list of api keys
 %apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
 (realm_return_apikey_list_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free)
@@ -310,7 +323,7 @@ bool realm_object_is_valid(const realm_object_t*);
 
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
-                      bool* erased, bool* out_erased };
+                      bool* erased, bool* out_erased, bool* did_refresh, bool* did_run };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -322,6 +335,13 @@ bool realm_object_is_valid(const realm_object_t*);
 
 // Enable passing uint8_t [64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
 %apply int8_t[] {uint8_t [64]};
+
+// Enable passing uint8_t [2] parameter for realm_decimal128 as Long[]
+%apply int64_t[] {uint64_t w[2]};
+
+%typemap(out) uint64_t w[2] %{
+    $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
+%}
 
 %typemap(freearg) const uint8_t* data;
 %typemap(out) const uint8_t* data %{
@@ -370,6 +390,8 @@ bool realm_object_is_valid(const realm_object_t*);
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
 %ignore "realm_results_freeze";
+// FIXME realm_websocket_endpoint::protocols are a `const chart **` which is causing problems with Swig. Find a proper typemap for it.
+%ignore "protocols";
 
 // TODO improve typemaps for freeing ByteArrays. At the moment we assume a realm_binary_t can only
 //  be inside a realm_value_t and only those instances are freed properly until we refine their

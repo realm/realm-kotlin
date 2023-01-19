@@ -1,6 +1,7 @@
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmInstantImpl
+import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
@@ -14,7 +15,6 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
 import platform.Foundation.NSDate
 import platform.Foundation.NSError
-import platform.Foundation.NSProcessInfo
 import platform.Foundation.NSURL
 import platform.Foundation.timeIntervalSince1970
 import platform.posix.pthread_threadid_np
@@ -22,10 +22,11 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
-public actual val RUNTIME: String = "Native"
-// These causes memory mapping rendering MemoryTests to fail, so only initialize them if actually needed
-public actual val OS_NAME: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemName() }
-public actual val OS_VERSION: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemVersionString }
+public actual val RUNTIME: SyncConnectionParams.Runtime = SyncConnectionParams.Runtime.NATIVE
+
+@Suppress("MayBeConst") // Cannot make expect/actual const
+public actual val RUNTIME_VERSION: String = ""
+
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val PATH_SEPARATOR: String = "/"
 
@@ -56,17 +57,18 @@ public actual fun epochInSeconds(): Long =
  */
 @Suppress("MagicNumber")
 internal actual fun currentTime(): RealmInstant {
-    val secs = NSDate().timeIntervalSince1970
-    val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
-    return if (millis < RealmInstant.MIN.epochSeconds * 1000) {
-        RealmInstant.MIN
-    } else if (millis > RealmInstant.MAX.epochSeconds * 1000) {
-        RealmInstant.MAX
-    } else {
-        RealmInstantImpl(
-            millis.floorDiv(1000.toLong()),
-            (millis.mod(1000.toLong()) * 1000).toInt()
-        )
+    val secs: Double = NSDate().timeIntervalSince1970
+    return when {
+        // We can't convert the MIN value to ms - it is initialized with Long.MIN_VALUE and
+        // multiplying it by 1000 will cause overflow. We have to compare directly against seconds
+        secs < RealmInstant.MIN.epochSeconds -> RealmInstant.MIN
+        // Similarly here, compare to seconds instead to avoid overflow with Long.MAX_VALUE
+        secs > RealmInstant.MAX.epochSeconds -> RealmInstant.MAX
+        else -> {
+            val millis = (secs * 1000 + if (secs > 0) 0.5 else -0.5).toLong()
+            val nanos = millis.mod(1000L) * 1000000L
+            RealmInstantImpl(millis.floorDiv(1000L), nanos.toInt())
+        }
     }
 }
 
@@ -113,7 +115,7 @@ public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
 public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
     val dir = NSURL.fileURLWithPath(directoryPath, isDirectory = true)
     preparePath(directoryPath, dir)
-    return NSURL.fileURLWithPath(filename, dir).absoluteString?.removePrefix("file://")
+    return NSURL.fileURLWithPath(filename, dir).path
         ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
 }
 

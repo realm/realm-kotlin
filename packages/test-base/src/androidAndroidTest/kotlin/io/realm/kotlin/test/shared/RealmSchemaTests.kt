@@ -120,7 +120,7 @@ public class RealmSchemaTests {
                 assertEquals(RealmStorageType.STRING, storageType)
                 assertFalse(isNullable)
                 assertTrue(isPrimaryKey)
-                assertFalse(isIndexed)
+                assertFalse(isIndexed) // See https://github.com/realm/realm-core/issues/6187
             }
             assertFalse(isNullable)
         }
@@ -178,8 +178,8 @@ public class RealmSchemaTests {
         // Property options
         @Suppress("invisible_member")
         val propertyTypeMap =
-            RealmPropertyType.subTypes.map { it to RealmStorageType.values().toMutableSet() }.toMap()
-                .toMutableMap()
+            RealmPropertyType.subTypes.map { it to RealmStorageType.values().toMutableSet() }
+                .toMap().toMutableMap()
 
         val schema = realm.schema()
 

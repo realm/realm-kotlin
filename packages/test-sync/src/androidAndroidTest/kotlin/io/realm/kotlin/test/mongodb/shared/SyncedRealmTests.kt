@@ -31,12 +31,16 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
+import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.InitialSubscriptionsCallback
+import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.sync.SyncSession.ErrorHandler
@@ -46,6 +50,9 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.schema.RealmClass
+import io.realm.kotlin.schema.RealmSchema
+import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -58,7 +65,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -80,6 +86,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.nanoseconds
@@ -639,6 +646,53 @@ class SyncedRealmTests {
         }
     }
 
+    // After https://github.com/realm/realm-core/pull/5784 was merged, ObjectStore will now
+    // return the full on-disk schema from ObjectStore, but for typed Realms the user visible schema
+    // should still only return classes and properties that was defined by the user.
+    @Test
+    fun onlyLocalSchemaIsVisible() = runBlocking {
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val user1 = app.createUserAndLogIn(email1, password1)
+        val user2 = app.createUserAndLogIn(email2, password2)
+
+        createSyncConfig(
+            user = user1,
+            partitionValue = partitionValue,
+            schema = setOf(SyncObjectWithAllTypes::class, ChildPk::class)
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                realm.syncSession.uploadAllLocalChanges()
+                val schema: RealmSchema = realm.schema()
+                val childPkSchema: RealmClass? = schema["ChildPk"]
+                assertNotNull(childPkSchema)
+                assertNotNull(childPkSchema["name"])
+                assertNotNull(childPkSchema["age"])
+                assertNotNull(childPkSchema["link"])
+                assertNotNull(childPkSchema["linkedFrom"])
+            }
+        }
+        createSyncConfig(
+            user = user2,
+            partitionValue = partitionValue,
+            schema = setOf(io.realm.kotlin.entities.sync.subset.ChildPk::class)
+        ).let { config ->
+            Realm.open(config).use { realm ->
+                // Make sure that server schema changes are integrated
+                realm.syncSession.downloadAllServerChanges(60.seconds)
+                val schema: RealmSchema = realm.schema()
+                assertNull(schema["SyncObjectWithAllTypes"])
+                val childPkSchema: RealmClass? = schema["ChildPk"]
+                assertNotNull(childPkSchema)
+                assertNotNull(childPkSchema["name"])
+                assertFalse((childPkSchema["_id"]!!.type as ValuePropertyType).isIndexed)
+                assertNull(childPkSchema["age"])
+                assertNull(childPkSchema["link"])
+                assertNull(childPkSchema["linkedFrom"])
+            }
+        }
+    }
+
     @Suppress("LongMethod")
     @Test
     fun mutableRealmInt_convergesAcrossClients() = runBlocking {
@@ -1018,6 +1072,91 @@ class SyncedRealmTests {
     }
 
     @Test
+    fun writeCopyTo_flexibleSyncToFlexibleSync() = runBlocking {
+        val flexApp = TestApp(
+            logLevel = io.realm.kotlin.log.LogLevel.ALL,
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
+        val section = Random.nextInt()
+        val (email1, password1) = randomEmail() to "password1234"
+        val (email2, password2) = randomEmail() to "password1234"
+        val user1 = flexApp.createUserAndLogIn(email1, password1)
+        val user2 = flexApp.createUserAndLogIn(email2, password2)
+        val syncConfig1 = createFlexibleSyncConfig(
+            user = user1,
+            name = "sync1.realm",
+            errorHandler = { _, error ->
+                fail(error.toString())
+            },
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            ),
+            initialSubscriptions = { realm: Realm ->
+                realm.query<FlexParentObject>("section = $0", section).subscribe(name = "parentSubscription")
+            }
+        )
+        val syncConfig2 = createFlexibleSyncConfig(
+            user = user2,
+            name = "sync2.realm",
+            errorHandler = { _, error ->
+                fail(error.toString())
+            },
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
+        )
+
+        Realm.open(syncConfig1).use { flexRealm1: Realm ->
+            // It is not possible to use `writeCopyTo` if data is written to the Realm before
+            // the SubscriptionSet is `COMPLETE`. Work around the issue for now.
+            flexRealm1.subscriptions.waitForSynchronization(30.seconds)
+            flexRealm1.write {
+                copyToRealm(
+                    FlexParentObject(section).apply {
+                        name = "User1Object"
+                    }
+                )
+            }
+            flexRealm1.syncSession.uploadAllLocalChanges(30.seconds)
+            assertEquals(SubscriptionSetState.COMPLETE, flexRealm1.subscriptions.state)
+            // Copy to another flex RealmRealm
+            flexRealm1.writeCopyTo(syncConfig2)
+            assertTrue(fileExists(syncConfig2.path))
+
+            // Open the copied Realm and verify we can read and write data
+            Realm.open(syncConfig2).use { flexRealm2: Realm ->
+                // Subscriptions are copied
+                assertEquals(1, flexRealm2.subscriptions.size)
+                assertEquals("parentSubscription", flexRealm2.subscriptions.first().name)
+                assertEquals(SubscriptionSetState.COMPLETE, flexRealm2.subscriptions.state)
+
+                // As is data
+                assertEquals(1, flexRealm2.query<FlexParentObject>().count().find())
+                assertEquals("User1Object", flexRealm2.query<FlexParentObject>().first().find()!!.name)
+
+                flexRealm2.subscriptions.waitForSynchronization(30.seconds)
+                flexRealm2.write {
+                    copyToRealm(
+                        FlexParentObject(section).apply {
+                            name = "User2Object"
+                        }
+                    )
+                }
+                flexRealm2.syncSession.uploadAllLocalChanges(30.seconds)
+                assertEquals(2, flexRealm2.query<FlexParentObject>().count().find())
+            }
+        }
+        flexApp.close()
+    }
+
+    @Test
     fun writeCopyTo_dataNotUploaded_throws() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
         val user1 = app.createUserAndLogIn(email1, password1)
@@ -1108,11 +1247,68 @@ class SyncedRealmTests {
         //    the first time should still work.
         try {
             realm1.syncSession.pause()
-            assertEquals(SyncSession.State.INACTIVE, realm1.syncSession.state)
+            assertEquals(SyncSession.State.PAUSED, realm1.syncSession.state)
         } finally {
             realm1.close()
             flexApp.close()
         }
+    }
+
+    /**
+     * Logged collecting all logs it has seen.
+     */
+    private class CustomLogCollector(
+        override val tag: String,
+        override val level: LogLevel
+    ) : RealmLogger {
+
+        private val _logs = mutableListOf<String>()
+        public val logs: List<String>
+            get() = _logs
+
+        override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+            val logMessage: String = message!!
+            _logs.add(logMessage)
+        }
+    }
+
+    @Test
+    fun customLoggersReceiveSyncLogs() = runBlocking {
+        val customLogger = CustomLogCollector("CUSTOM", LogLevel.DEBUG)
+        val section = Random.nextInt()
+        val flexApp = TestApp(
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+                it.log(level = LogLevel.DEBUG, listOf(customLogger))
+            }
+        )
+        val (email, password) = randomEmail() to "password1234"
+        val user = flexApp.createUserAndLogIn(email, password)
+        val syncConfig = createFlexibleSyncConfig(
+            user = user,
+            name = "flex.realm",
+            initialSubscriptions = { realm: Realm ->
+                realm.query<FlexParentObject>("section = $0", section).subscribe()
+            }
+        )
+        Realm.open(syncConfig).use { flexSyncRealm: Realm ->
+            flexSyncRealm.writeBlocking {
+                copyToRealm(
+                    FlexParentObject().apply {
+                        name = "local object"
+                    }
+                )
+            }
+            flexSyncRealm.syncSession.uploadAllLocalChanges()
+        }
+        assertTrue(customLogger.logs.isNotEmpty())
+        assertTrue(
+            customLogger.logs
+                .filter { it.contains("Connection[1]: Negotiated protocol version:") }
+                .isNotEmpty()
+        )
+        flexApp.close()
     }
 
 //    @Test

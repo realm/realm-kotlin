@@ -32,6 +32,7 @@ import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
+import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -189,6 +190,7 @@ class SampleTests {
                 booleanField = false
                 floatField = 1.99f
                 doubleField = 1.19851106
+                decimal128Field = Decimal128("2.155544073709551618E-6157")
                 timestampField = RealmInstant.from(42, 420)
             }
         }
@@ -206,6 +208,7 @@ class SampleTests {
                 assertFalse(objects[0].booleanField)
                 assertEquals(1.99f, objects[0].floatField)
                 assertEquals(1.19851106, objects[0].doubleField)
+                assertEquals(Decimal128("2.155544073709551618E-6157"), objects[0].decimal128Field)
                 assertEquals(RealmInstant.from(42, 420), objects[0].timestampField)
             }
 
@@ -253,6 +256,12 @@ class SampleTests {
         realm.query<Sample>("doubleField == $0", 1.19851106)
             .find { objects ->
                 assertEquals(1, objects.size)
+            }
+
+        realm.query<Sample>("decimal128Field >= $0", Decimal128("2.155544073709551618E-6157"))
+            .find { objects ->
+                assertEquals(1, objects.size)
+                assertEquals(Decimal128("2.155544073709551618E-6157"), objects[0].decimal128Field)
             }
 
         realm.query<Sample>("timestampField == $0", RealmInstant.from(42, 420))
