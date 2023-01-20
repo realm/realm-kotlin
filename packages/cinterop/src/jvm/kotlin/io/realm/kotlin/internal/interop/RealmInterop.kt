@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -1511,10 +1510,19 @@ actual object RealmInterop {
     }
 
     // TODO OPTIMIZE Getting a range
-    actual fun realm_results_get(results: RealmResultsPointer, index: Long): Link {
+    actual fun realm_results_get_object(results: RealmResultsPointer, index: Long): Link {
         val value = realm_value_t()
         realmc.realm_results_get(results.cptr(), index, value)
         return value.asLink()
+    }
+
+    actual fun MemAllocator.realm_results_get_value(
+        results: RealmResultsPointer,
+        index: Long
+    ): RealmValue {
+        val value = allocRealmValueT()
+        realmc.realm_results_get(results.cptr(), index, value)
+        return RealmValue(value)
     }
 
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {

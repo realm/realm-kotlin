@@ -106,7 +106,6 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
-import realm_wrapper.realm_object_as_link
 import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
@@ -1082,7 +1081,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_dictionary_clear(dictionary: RealmMapPointer) {
-        realm_wrapper.realm_dictionary_clear(dictionary.cptr())
+        checkedBooleanResult(
+            realm_wrapper.realm_dictionary_clear(dictionary.cptr())
+        )
     }
 
     actual fun realm_dictionary_size(dictionary: RealmMapPointer): Long {
@@ -1366,7 +1367,7 @@ actual object RealmInterop {
         return RealmValue(struct)
     }
 
-    actual fun realm_results_get(results: RealmResultsPointer, index: Long): Link {
+    actual fun realm_results_get_object(results: RealmResultsPointer, index: Long): Link {
         memScoped {
             val value = alloc<realm_value_t>()
             checkedBooleanResult(
@@ -1377,6 +1378,20 @@ actual object RealmInterop {
                 )
             )
             return value.asLink()
+        }
+    }
+
+    actual fun MemAllocator.realm_results_get_value(results: RealmResultsPointer, index: Long): RealmValue {
+        memScoped {
+            val value = alloc<realm_value_t>()
+            checkedBooleanResult(
+                realm_wrapper.realm_results_get(
+                    results.cptr(),
+                    index.toULong(),
+                    value.ptr
+                )
+            )
+            return RealmValue(value)
         }
     }
 

@@ -402,6 +402,61 @@ class RealmDictionaryTests {
         }
     }
 
+    @Test
+    fun values_get() {
+        for (tester in managedTesters) {
+            tester.values_get()
+        }
+    }
+
+    @Test
+    fun values_addThrows() {
+        // No need to be exhaustive here
+        managedTesters[0].values_addTrows()
+    }
+
+    @Test
+    fun values_clear() {
+        for (tester in managedTesters) {
+            tester.values_clear()
+        }
+    }
+
+    @Test
+    fun values_iteratorNext() {
+        for (tester in managedTesters) {
+            tester.values_iteratorNext()
+        }
+    }
+
+    @Test
+    fun values_iteratorRemove() {
+        for (tester in managedTesters) {
+            tester.values_iteratorRemove()
+        }
+    }
+
+    @Test
+    fun values_iteratorConcurrentModification() {
+        for (tester in managedTesters) {
+            tester.values_iteratorConcurrentModification()
+        }
+    }
+
+    @Test
+    fun values_remove() {
+        for (tester in managedTesters) {
+            tester.values_remove()
+        }
+    }
+
+    @Test
+    fun values_removeAll() {
+        for (tester in managedTesters) {
+            tester.values_removeAll()
+        }
+    }
+
     // TODO missing in the C-API: https://github.com/realm/realm-core/issues/6181
     @Test
     fun containsKey() {
@@ -552,6 +607,14 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun entries_iteratorConcurrentModification()
     fun entries_remove()
     fun entries_removeAll()
+    fun values_get()
+    fun values_addTrows()
+    fun values_clear()
+    fun values_iteratorNext() // This tests also hasNext
+    fun values_iteratorRemove() // This tests also hasNext
+    fun values_iteratorConcurrentModification()
+    fun values_remove()
+    fun values_removeAll()
 
     /**
      * Asserts structural equality for two given collections. This is needed to evaluate equality
@@ -566,6 +629,8 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
      * Asserts structural equality for two given values.
      */
     fun assertStructuralEquality(expectedValue: T?, actualValue: T?)
+
+    fun structuralContains(receiver: Collection<T?>, element: T?): Boolean
 
     /**
      * Assertions on the container outside the write transaction plus cleanup.
@@ -789,9 +854,21 @@ internal abstract class ManagedDictionaryTester<T>(
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
-        assertContainerAndCleanup()
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val iterator = dictionary.entries.iterator()
+            for (i in dataSet.indices) {
+                assertTrue(iterator.hasNext())
+                val next = iterator.next()
+                assertNotNull(next)
+                assertEquals(dataSet[i].first as T?, next.key as T?)
+                assertStructuralEquality(dataSet[i].second, next.value)
+            }
+            assertFalse(iterator.hasNext())
+            assertFailsWithMessage<IndexOutOfBoundsException>("Cannot access index") {
+                iterator.next()
+            }
+        }
     }
 
     override fun entries_iteratorNext_managedEntry_setValue() {
@@ -990,6 +1067,306 @@ internal abstract class ManagedDictionaryTester<T>(
         }
     }
 
+    override fun values_get() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val values = dictionary.values
+                dataSet.forEach {
+                    assertTrue(structuralContains(values, it.second))
+                }
+                dictionary.forEach {
+                    assertTrue(structuralContains(values, it.value))
+                }
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val values = dictionary.values
+            dataSet.forEach {
+                assertTrue(structuralContains(values, it.second))
+            }
+            dictionary.forEach {
+                assertTrue(structuralContains(values, it.value))
+            }
+        }
+    }
+
+    override fun values_addTrows() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                val values = dictionary.values
+                assertFailsWithMessage<UnsupportedOperationException>("Adding values to a dictionary through 'dictionary.values' is not allowed") {
+                    values.add(dataSet[0].second)
+                }
+                assertFailsWithMessage<UnsupportedOperationException>("Adding values to a dictionary through 'dictionary.values' is not allowed") {
+                    values.addAll(listOf(dataSet[0].second))
+                }
+                assertTrue(dictionary.isEmpty())
+                assertTrue(values.isEmpty())
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val values = dictionary.values
+            assertTrue(dictionary.isEmpty())
+            assertTrue(values.isEmpty())
+        }
+    }
+
+    override fun values_clear() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val values = dictionary.values
+                values.clear()
+                assertTrue(values.isEmpty())
+                assertTrue(dictionary.isEmpty())
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val values = dictionary.values
+            // TODO revisit exception assertion once unified error handling is merged
+            assertFailsWith<RealmException> {
+                values.clear()
+            }
+            assertTrue(values.isEmpty())
+            assertTrue(dictionary.isEmpty())
+        }
+    }
+
+    override fun values_iteratorNext() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+        val assertions = { values: MutableCollection<T> ->
+            val iterator = values.iterator()
+            for (i in dataSet.indices) {
+                assertTrue(iterator.hasNext())
+                val next = iterator.next()
+                assertStructuralEquality(dataSet[i].second, next)
+            }
+            assertFalse(iterator.hasNext())
+            assertFailsWithMessage<IndexOutOfBoundsException>("Cannot access index") {
+                iterator.next()
+            }
+        }
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+
+                // Test iterator on an empty dictionary
+                val iterator = dictionary.values.iterator()
+                assertFalse(iterator.hasNext())
+                assertFailsWithMessage<IndexOutOfBoundsException>("Cannot access index") {
+                    iterator.next()
+                }
+
+                dictionary.putAll(dataSet)
+                assertions.invoke(dictionary.values)
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            assertions.invoke(dictionary.values)
+        }
+    }
+
+    override fun values_iteratorRemove() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val values = dictionary.values
+                val iterator = values.iterator()
+
+                // Fails when calling remove before calling next
+                assertTrue(iterator.hasNext())
+                assertFailsWithMessage<IllegalStateException>("Could not remove last element returned by the iterator: iterator never returned an element.") {
+                    iterator.remove()
+                }
+                assertTrue(iterator.hasNext())
+
+                for (i in dataSet.indices) {
+                    assertEquals(dataSet.size - i, values.size)
+                    val next = iterator.next()
+                    assertStructuralEquality(dataSet[i].second, next)
+                    iterator.remove()
+                    assertEquals(dictionary.size, values.size)
+                }
+                assertTrue(values.isEmpty())
+                assertTrue(dictionary.isEmpty())
+
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                    iterator.remove()
+                }
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val values = dictionary.values
+            // TODO revisit exception assertion once unified error handling is merged
+            assertFailsWith<RealmException> {
+                values.clear()
+            }
+            assertTrue(values.isEmpty())
+            assertTrue(dictionary.isEmpty())
+        }
+    }
+
+    override fun values_iteratorConcurrentModification() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                dictionary.values.also { values ->
+                    // Add something to the dictionary to trigger a ConcurrentModificationException
+                    val addIterator = values.iterator()
+                    addIterator.next()
+                    dictionary["SOMETHING_NEW"] = dataSet[0].second
+                    assertFailsWith<ConcurrentModificationException> {
+                        addIterator.remove()
+                    }
+
+                    // Remove something from the dictionary to trigger a ConcurrentModificationException
+                    val removeIterator = values.iterator()
+                    removeIterator.next()
+                    dictionary.remove("SOMETHING_NEW")
+                    assertFailsWith<ConcurrentModificationException> {
+                        removeIterator.remove()
+                    }
+
+                    // Clear the dictionary to trigger a ConcurrentModificationException
+                    val clearIterator = values.iterator()
+                    clearIterator.next()
+                    dictionary.clear()
+                    assertFailsWith<ConcurrentModificationException> {
+                        clearIterator.remove()
+                    }
+                }
+
+                // Dictionary is empty now, putAll elements and test again with values - remember additions are not allowed
+                dictionary.putAll(dataSet)
+                dictionary["SOMETHING_NEW"] = dataSet[0].second
+                dictionary.values.also { values ->
+                    // Ignore ByteArray and RealmObject since elements cannot be removed using the remove API
+                    if (classifier != ByteArray::class && classifier != RealmObject::class) {
+                        // Remove something from the entry set to trigger a ConcurrentModificationException
+                        val removeIterator = values.iterator()
+                        removeIterator.next()
+                        values.remove(dataSet[0].second)
+                        assertFailsWith<ConcurrentModificationException> {
+                            removeIterator.remove()
+                        }
+                    }
+
+                    // Clear the entry set to trigger a ConcurrentModificationException
+                    val clearIterator = values.iterator()
+                    clearIterator.next()
+                    values.clear()
+                    assertFailsWith<ConcurrentModificationException> {
+                        clearIterator.remove()
+                    }
+                }
+            }
+        }
+
+        // Makes no sense to test concurrent modifications outside the transaction, so clean up only
+        assertContainerAndCleanup()
+    }
+
+    override fun values_remove() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val values = dictionary.values
+                val valueToRemove = dataSet[0].second
+
+                // Ignore ByteArray and RealmObject since elements cannot be removed using the remove API
+                if (classifier != ByteArray::class && classifier != RealmObject::class) {
+                    // Check we get true after removing an element
+                    assertTrue(values.remove(valueToRemove))
+                    assertEquals(dictionary.size, values.size)
+                    assertEquals(dataSet.size - 1, values.size)
+                    assertEquals(dataSet.size - 1, dictionary.size)
+
+                    // Check we get false if we don't remove anything
+                    assertFalse(values.remove(valueToRemove))
+                }
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val values = typeSafetyManager.getCollection(container)
+                .values
+
+            // Ignore ByteArray and RealmObject since elements cannot be removed using the remove API
+            if (classifier != ByteArray::class && classifier != RealmObject::class) {
+                // TODO revisit exception assertion once unified error handling is merged
+                assertFailsWith<RealmException> {
+                    values.remove(dataSet[1].second)
+                }
+            }
+        }
+    }
+
+    override fun values_removeAll() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val values = dictionary.values
+                val valuesToRemove = listOf(dataSet[0].second)
+
+                // Ignore ByteArray and RealmObject since elements cannot be removed using the removeAll API
+                if (classifier != ByteArray::class && classifier != RealmObject::class) {
+                    // Check we get true after removing an element
+                    assertTrue(values.removeAll(valuesToRemove))
+                    assertEquals(dictionary.size, values.size)
+                    assertEquals(dataSet.size - valuesToRemove.size, values.size)
+                    assertEquals(dataSet.size - valuesToRemove.size, values.size)
+
+                    // Check we get false if we don't remove anything
+                    assertFalse(values.removeAll(valuesToRemove))
+                }
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val values = typeSafetyManager.getCollection(container)
+                .values
+
+            // Ignore ByteArray and RealmObject since elements cannot be removed using the removeAll API
+            if (classifier != ByteArray::class && classifier != RealmObject::class) {
+                // TODO revisit exception assertion once unified error handling is merged
+                assertFailsWith<RealmException> {
+                    values.removeAll(values)
+                }
+            }
+        }
+    }
+
     override fun assertContainerAndCleanup(assertion: ((RealmDictionaryContainer) -> Unit)?) {
         val container = realm.query<RealmDictionaryContainer>()
             .first()
@@ -1029,6 +1406,10 @@ internal class GenericDictionaryTester<T>(
     override fun assertStructuralEquality(expectedValue: T?, actualValue: T?) {
         assertEquals(expectedValue, actualValue)
     }
+
+    override fun structuralContains(receiver: Collection<T?>, element: T?): Boolean {
+        return receiver.contains(element)
+    }
 }
 
 /**
@@ -1051,6 +1432,12 @@ internal class ByteArrayTester(
 
     override fun assertStructuralEquality(expectedValue: ByteArray?, actualValue: ByteArray?) {
         assertContentEquals(expectedValue, actualValue)
+    }
+
+    override fun structuralContains(receiver: Collection<ByteArray?>, element: ByteArray?): Boolean {
+        return receiver.fold(false) { accumulator, value ->
+            value.contentEquals(element) or accumulator
+        }
     }
 }
 
@@ -1078,6 +1465,15 @@ internal class RealmObjectDictionaryTester(
         actualValue: RealmDictionaryContainer?
     ) {
         assertEquals(expectedValue?.stringField, actualValue?.stringField)
+    }
+
+    override fun structuralContains(
+        receiver: Collection<RealmDictionaryContainer?>,
+        element: RealmDictionaryContainer?
+    ): Boolean {
+        return receiver.fold(false) { accumulator, value ->
+            (value?.stringField == element?.stringField) or accumulator
+        }
     }
 }
 

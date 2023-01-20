@@ -63,7 +63,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
     override fun get(index: Int): E =
-        RealmInterop.realm_results_get(nativePointer, index.toLong()).toRealmObject(
+        RealmInterop.realm_results_get_object(nativePointer, index.toLong()).toRealmObject(
             clazz = clazz,
             mediator = mediator,
             realm = realm
