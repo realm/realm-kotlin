@@ -926,6 +926,16 @@ actual object RealmInterop {
         return CoreUserState.of(realmc.realm_user_get_state(user.cptr()))
     }
 
+    actual fun realm_user_get_profile(user: RealmUserPointer): String =
+        realmc.realm_user_get_profile_data(user.cptr())
+
+    actual fun realm_user_get_custom_data(user: RealmUserPointer): String? =
+        realmc.realm_user_get_custom_data(user.cptr())
+
+    actual fun realm_user_refresh_custom_data(app: RealmAppPointer, user: RealmUserPointer, callback: AppCallback<Unit>) {
+        realmc.realm_app_refresh_custom_data(app.cptr(), user.cptr(), callback)
+    }
+
     actual fun realm_clear_cached_apps() {
         realmc.realm_clear_cached_apps()
     }
@@ -1158,6 +1168,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_app_credentials_new_jwt(jwtToken))
     }
 
+    actual fun realm_app_credentials_new_custom_function(serializedEjsonPayload: String): RealmCredentialsPointer {
+        return LongPointerWrapper(realmc.realm_app_credentials_new_function(serializedEjsonPayload))
+    }
+
     actual fun realm_auth_credentials_get_provider(credentials: RealmCredentialsPointer): AuthProvider {
         return AuthProvider.of(realmc.realm_auth_credentials_get_provider(credentials.cptr()))
     }
@@ -1254,6 +1268,22 @@ actual object RealmInterop {
         callback: AppCallback<String>
     ) {
         realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
+    }
+
+    actual fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_call_reset_password_function(
+            app.cptr(),
+            email,
+            newPassword,
+            serializedEjsonPayload,
+            callback
+        )
     }
 
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {

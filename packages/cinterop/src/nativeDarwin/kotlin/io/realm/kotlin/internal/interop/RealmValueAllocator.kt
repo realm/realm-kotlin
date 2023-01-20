@@ -28,6 +28,7 @@ import kotlinx.cinterop.ptr
 import kotlinx.cinterop.set
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
+import org.mongodb.kbson.Decimal128
 import platform.posix.memcpy
 import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_value_t
@@ -65,6 +66,14 @@ class NativeMemAllocator : MemTrackingAllocator {
 
     override fun doubleTransport(value: Double?): RealmValue =
         createTransport(value, realm_value_type.RLM_TYPE_DOUBLE) { dnum = it }
+
+    override fun decimal128Transport(value: Decimal128?): RealmValue =
+        createTransport(value, realm_value_type.RLM_TYPE_DECIMAL128) {
+            decimal128.apply {
+                w[0] = it.low
+                w[1] = it.high
+            }
+        }
 
     override fun objectIdTransport(value: ByteArray?): RealmValue =
         createTransport(value, realm_value_type.RLM_TYPE_OBJECT_ID) {

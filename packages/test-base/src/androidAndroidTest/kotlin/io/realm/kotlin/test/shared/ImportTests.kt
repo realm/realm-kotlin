@@ -33,6 +33,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -89,6 +90,7 @@ class ImportTests {
                 Boolean::class -> assertEquals(true, managed.booleanField)
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
+                Decimal128::class -> assertEquals(Decimal128("1.8446744073709551618E-6157"), managed.decimal128Field)
                 RealmInstant::class -> assertEquals(RealmInstant.from(100, 1000), managed.timestampField)
                 ObjectId::class -> assertEquals(ObjectId.from("507f1f77bcf86cd799439011"), managed.objectIdField)
                 BsonObjectId::class -> assertEquals(BsonObjectId("507f1f77bcf86cd799439011"), managed.bsonObjectIdField)
