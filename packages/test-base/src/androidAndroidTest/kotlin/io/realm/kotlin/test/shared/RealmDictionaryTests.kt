@@ -20,6 +20,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
+import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryEntryOf
 import io.realm.kotlin.ext.realmDictionaryOf
@@ -295,7 +296,7 @@ class RealmDictionaryTests {
         assertFailsWithMessage<IllegalStateException>("Realm has been closed") {
             dictionary.entries
         }
-        // TODO add missing entries, containsKey, containsValue, etc.
+        // TODO add missing containsKey, containsValue, etc.
     }
 
     @Test
@@ -363,6 +364,13 @@ class RealmDictionaryTests {
     fun entries_iteratorNext() {
         for (tester in managedTesters) {
             tester.entries_iteratorNext()
+        }
+    }
+
+    @Test
+    fun entries_iteratorNext_managedEntry_setValue() {
+        for (tester in managedTesters) {
+            tester.entries_iteratorNext_managedEntry_setValue()
         }
     }
 
@@ -539,6 +547,7 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun entries_addAll()
     fun entries_clear()
     fun entries_iteratorNext() // This tests also hasNext
+    fun entries_iteratorNext_managedEntry_setValue()
     fun entries_iteratorRemove()
     fun entries_iteratorConcurrentModification()
     fun entries_remove()
@@ -700,9 +709,11 @@ internal abstract class ManagedDictionaryTester<T>(
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
-        assertContainerAndCleanup()
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val entries = dictionary.entries
+            assertEquals(dictionary.size, entries.size)
+        }
     }
 
     override fun entries_addAll() {
@@ -727,9 +738,11 @@ internal abstract class ManagedDictionaryTester<T>(
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
-        assertContainerAndCleanup()
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val entries = dictionary.entries
+            assertEquals(dictionary.size, entries.size)
+        }
     }
 
     override fun entries_clear() {
@@ -746,9 +759,12 @@ internal abstract class ManagedDictionaryTester<T>(
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
-        assertContainerAndCleanup()
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val entries = dictionary.entries
+            assertTrue(dictionary.isEmpty())
+            assertTrue(entries.isEmpty())
+        }
     }
 
     override fun entries_iteratorNext() {
@@ -770,6 +786,30 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertFailsWithMessage<IndexOutOfBoundsException>("Cannot access index") {
                     iterator.next()
                 }
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_iteratorNext_managedEntry_setValue() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val iterator = dictionary.entries.iterator()
+                val nextEntry: MutableMap.MutableEntry<String, T> = iterator.next()
+                val expectedPreviousValue = nextEntry.value
+                val actualPreviousValue = nextEntry.setValue(dataSet[1].second)
+                assertStructuralEquality(expectedPreviousValue, actualPreviousValue)
+
+                val expected = dataSet[1].second
+                val actual = dictionary[dataSet[1].first]
+                assertStructuralEquality(expected, actual)
             }
         }
 
@@ -811,9 +851,12 @@ internal abstract class ManagedDictionaryTester<T>(
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
-        assertContainerAndCleanup()
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val entries = dictionary.entries
+            assertTrue(dictionary.isEmpty())
+            assertTrue(entries.isEmpty())
+        }
     }
 
     override fun entries_iteratorConcurrentModification() {
@@ -823,26 +866,63 @@ internal abstract class ManagedDictionaryTester<T>(
             realm.writeBlocking {
                 val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
                 dictionary.putAll(dataSet)
-                val entries = dictionary.entries
-                val iterator = entries.iterator()
-                iterator.next()
+                dictionary.entries.also { entries ->
+                    // Add something to the dictionary to trigger a ConcurrentModificationException
+                    val addIterator = entries.iterator()
+                    addIterator.next()
+                    dictionary["SOMETHING_NEW"] = dataSet[0].second
+                    assertFailsWith<ConcurrentModificationException> {
+                        addIterator.remove()
+                    }
 
-                // Remove something from the dictionary to trigger a ConcurrentModificationException
-                dictionary.remove(dataSet[0].first)
-                assertFailsWith<ConcurrentModificationException> {
-                    iterator.remove()
+                    // Remove something from the dictionary to trigger a ConcurrentModificationException
+                    val removeIterator = entries.iterator()
+                    removeIterator.next()
+                    dictionary.remove("SOMETHING_NEW")
+                    assertFailsWith<ConcurrentModificationException> {
+                        removeIterator.remove()
+                    }
+
+                    // Clear the dictionary to trigger a ConcurrentModificationException
+                    val clearIterator = entries.iterator()
+                    clearIterator.next()
+                    dictionary.clear()
+                    assertFailsWith<ConcurrentModificationException> {
+                        clearIterator.remove()
+                    }
                 }
 
-                // Remove something from the entry set to trigger a ConcurrentModificationException
-                entries.remove(realmDictionaryEntryOf(dataSet[1]))
-                assertFailsWith<ConcurrentModificationException> {
-                    iterator.remove()
+                // Dictionary is empty now, putAll elements and test again with entry set
+                dictionary.putAll(dataSet)
+                dictionary.entries.also { entries ->
+                    // Add something to the entry set to trigger a ConcurrentModificationException
+                    val addIterator = entries.iterator()
+                    addIterator.next()
+                    entries.add(realmDictionaryEntryOf("SOMETHING" to dataSet[0].second))
+                    assertFailsWith<ConcurrentModificationException> {
+                        addIterator.remove()
+                    }
+
+                    // Remove something from the entry set to trigger a ConcurrentModificationException
+                    val removeIterator = entries.iterator()
+                    removeIterator.next()
+                    entries.remove(realmDictionaryEntryOf("SOMETHING" to dataSet[0].second))
+                    assertFailsWith<ConcurrentModificationException> {
+                        removeIterator.remove()
+                    }
+
+                    // Clear the entry set to trigger a ConcurrentModificationException
+                    val clearIterator = entries.iterator()
+                    clearIterator.next()
+                    entries.clear()
+                    assertFailsWith<ConcurrentModificationException> {
+                        clearIterator.remove()
+                    }
                 }
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
+        // Makes no sense to test concurrent modifications outside the transaction, so clean up only
         assertContainerAndCleanup()
     }
 
@@ -867,9 +947,14 @@ internal abstract class ManagedDictionaryTester<T>(
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
-        assertContainerAndCleanup()
+        assertContainerAndCleanup { container ->
+            val entries = typeSafetyManager.getCollection(container)
+                .entries
+            // TODO revisit exception assertion once unified error handling is merged
+            assertFailsWith<RealmException> {
+                entries.remove(realmDictionaryEntryOf(dataSet[0].first, dataSet[0].second))
+            }
+        }
     }
 
     override fun entries_removeAll() {
@@ -881,8 +966,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 dictionary.putAll(dataSet)
                 val entries = dictionary.entries
                 val entriesToRemove = listOf(
-                    realmDictionaryEntryOf(dataSet[0].first, dataSet[0].second),
-                    realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second)
+                    realmDictionaryEntryOf(dataSet[0].first, dataSet[0].second)
                 )
 
                 // Check we get true after removing an element
@@ -896,9 +980,14 @@ internal abstract class ManagedDictionaryTester<T>(
             }
         }
 
-        // No need to test during cleanup since we can only modify a dictionary while running a
-        // transaction and that has already been tested above
-        assertContainerAndCleanup()
+        assertContainerAndCleanup { container ->
+            val entries = typeSafetyManager.getCollection(container)
+                .entries
+            // TODO revisit exception assertion once unified error handling is merged
+            assertFailsWith<RealmException> {
+                entries.removeAll(entries)
+            }
+        }
     }
 
     override fun assertContainerAndCleanup(assertion: ((RealmDictionaryContainer) -> Unit)?) {
