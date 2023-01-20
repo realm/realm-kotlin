@@ -46,6 +46,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -373,6 +374,13 @@ class RealmDictionaryTests {
     }
 
     @Test
+    fun entries_iteratorConcurrentModification() {
+        for (tester in managedTesters) {
+            tester.entries_iteratorConcurrentModification()
+        }
+    }
+
+    @Test
     fun entries_remove() {
         for (tester in managedTesters) {
             tester.entries_remove()
@@ -532,6 +540,7 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun entries_clear()
     fun entries_iteratorNext() // This tests also hasNext
     fun entries_iteratorRemove()
+    fun entries_iteratorConcurrentModification()
     fun entries_remove()
     fun entries_removeAll()
 
@@ -797,6 +806,36 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertTrue(dictionary.isEmpty())
 
                 assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                    iterator.remove()
+                }
+            }
+        }
+
+        // No need to test during cleanup since we can only modify a dictionary while running a
+        // transaction and that has already been tested above
+        assertContainerAndCleanup()
+    }
+
+    override fun entries_iteratorConcurrentModification() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val entries = dictionary.entries
+                val iterator = entries.iterator()
+                iterator.next()
+
+                // Remove something from the dictionary to trigger a ConcurrentModificationException
+                dictionary.remove(dataSet[0].first)
+                assertFailsWith<ConcurrentModificationException> {
+                    iterator.remove()
+                }
+
+                // Remove something from the entry set to trigger a ConcurrentModificationException
+                entries.remove(realmDictionaryEntryOf(dataSet[1]))
+                assertFailsWith<ConcurrentModificationException> {
                     iterator.remove()
                 }
             }

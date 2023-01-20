@@ -81,6 +81,8 @@ internal abstract class ManagedRealmMap<K, V>(
  */
 internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
 
+    // Modification counter used to detect concurrent writes from the iterator
+    var modCount: Int
     val keyConverter: RealmValueConverter<K>
     override val nativePointer: RealmMapPointer
 
@@ -130,11 +132,13 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun remove(key: K): V? {
         realmReference.checkClosed()
         return erase(key).first
+            .also { modCount += 1 }
     }
 
     fun clear() {
         realmReference.checkClosed()
         RealmInterop.realm_dictionary_clear(nativePointer)
+        modCount += 1
     }
 }
 
@@ -145,6 +149,8 @@ internal class PrimitiveMapOperator<K, V>(
     override val keyConverter: RealmValueConverter<K>,
     override val nativePointer: RealmMapPointer
 ) : MapOperator<K, V> {
+
+    override var modCount: Int = 0
 
     override fun insert(
         key: K,
@@ -165,7 +171,7 @@ internal class PrimitiveMapOperator<K, V>(
                     Pair(realmValueToPublic(it.first), it.second)
                 }
             }
-        }
+        }.also { modCount += 1 }
     }
 
     override fun erase(key: K): Pair<V?, Boolean> {
@@ -177,7 +183,7 @@ internal class PrimitiveMapOperator<K, V>(
                     Pair(realmValueToPublic(it.first), it.second)
                 }
             }
-        }
+        }.also { modCount += 1 }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -216,6 +222,8 @@ internal class RealmObjectMapOperator<K, V>(
     private val clazz: KClass<V & Any>
 ) : MapOperator<K, V> {
 
+    override var modCount: Int = 0
+
     @Suppress("UNCHECKED_CAST")
     override fun insert(
         key: K,
@@ -248,7 +256,7 @@ internal class RealmObjectMapOperator<K, V>(
                 )
                 Pair(previousObject, it.second)
             } as Pair<V?, Boolean>
-        }
+        }.also { modCount += 1 }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -265,7 +273,7 @@ internal class RealmObjectMapOperator<K, V>(
                 )
                 Pair(previousObject, it.second)
             } as Pair<V?, Boolean>
-        }
+        }.also { modCount += 1 }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -368,16 +376,24 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
     override fun clear() = operator.clear()
 
     override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> {
-        // TODO how to handle concurrent modifications?
         return object : MutableIterator<MutableMap.MutableEntry<K, V>> {
 
+            private var expectedModCount = operator.modCount // Current modifications in the map
             private var cursor = 0 // The position returned by next()
             private var lastReturned = -1 // The last known returned position
 
-            override fun hasNext(): Boolean = cursor < operator.size
+            override fun hasNext(): Boolean {
+                operator.realmReference.checkClosed()
+                checkConcurrentModification()
+
+                return cursor < operator.size
+            }
 
             @Suppress("UNCHECKED_CAST")
             override fun next(): MutableMap.MutableEntry<K, V> {
+                operator.realmReference.checkClosed()
+                checkConcurrentModification()
+
                 val position = cursor
                 if (position >= size) {
                     throw IndexOutOfBoundsException("Cannot access index $position when size is ${operator.size}. Remember to check hasNext() before using next().")
@@ -392,6 +408,9 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
             }
 
             override fun remove() {
+                operator.realmReference.checkClosed()
+                checkConcurrentModification()
+
                 if (isEmpty()) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
                 }
@@ -410,8 +429,15 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
                             lastReturned = -1
                         }
                 }
+                expectedModCount = operator.modCount
                 if (!erased) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
+                }
+            }
+
+            private fun checkConcurrentModification() {
+                if (operator.modCount != expectedModCount) {
+                    throw ConcurrentModificationException("The underlying RealmDictionary was modified while iterating over its entry set.")
                 }
             }
         }
