@@ -1088,7 +1088,7 @@ actual object RealmInterop {
     actual fun realm_dictionary_size(dictionary: RealmMapPointer): Long {
         memScoped {
             val size = alloc<ULongVar>()
-            realm_wrapper.realm_dictionary_size(dictionary.cptr(), size.ptr)
+            checkedBooleanResult(realm_wrapper.realm_dictionary_size(dictionary.cptr(), size.ptr))
             return size.value.toLong()
         }
     }
@@ -1106,11 +1106,13 @@ actual object RealmInterop {
         memScoped {
             val found = alloc<BooleanVar>()
             val struct = allocRealmValueT()
-            realm_wrapper.realm_dictionary_find(
-                dictionary.cptr(),
-                mapKey.value.readValue(),
-                struct.ptr,
-                found.ptr
+            checkedBooleanResult(
+                realm_wrapper.realm_dictionary_find(
+                    dictionary.cptr(),
+                    mapKey.value.readValue(),
+                    struct.ptr,
+                    found.ptr
+                )
             )
             return RealmValue(struct)
         }
@@ -1122,11 +1124,13 @@ actual object RealmInterop {
     ): Pair<RealmValue, RealmValue> {
         val keyTransport = allocRealmValueT()
         val valueTransport = allocRealmValueT()
-        realm_wrapper.realm_dictionary_get(
-            dictionary.cptr(),
-            pos.toULong(),
-            keyTransport.ptr,
-            valueTransport.ptr
+        checkedBooleanResult(
+            realm_wrapper.realm_dictionary_get(
+                dictionary.cptr(),
+                pos.toULong(),
+                keyTransport.ptr,
+                valueTransport.ptr
+            )
         )
         return Pair(RealmValue(keyTransport), RealmValue(valueTransport))
     }
@@ -1141,12 +1145,14 @@ actual object RealmInterop {
             realm_dictionary_find(dictionary, mapKey)
             val index = alloc<ULongVar>()
             val inserted = alloc<BooleanVar>()
-            realm_wrapper.realm_dictionary_insert(
-                dictionary.cptr(),
-                mapKey.value.readValue(),
-                value.value.readValue(),
-                index.ptr,
-                inserted.ptr
+            checkedBooleanResult(
+                realm_wrapper.realm_dictionary_insert(
+                    dictionary.cptr(),
+                    mapKey.value.readValue(),
+                    value.value.readValue(),
+                    index.ptr,
+                    inserted.ptr
+                )
             )
             return Pair(previousValue, inserted.value)
         }
@@ -1159,10 +1165,12 @@ actual object RealmInterop {
         memScoped {
             val previousValue = realm_dictionary_find(dictionary, mapKey)
             val erased = alloc<BooleanVar>()
-            realm_wrapper.realm_dictionary_erase(
-                dictionary.cptr(),
-                mapKey.value.readValue(),
-                erased.ptr
+            checkedBooleanResult(
+                realm_wrapper.realm_dictionary_erase(
+                    dictionary.cptr(),
+                    mapKey.value.readValue(),
+                    erased.ptr
+                )
             )
             return Pair(previousValue, erased.value)
         }
