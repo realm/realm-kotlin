@@ -136,7 +136,7 @@ class RealmConfigurationTests {
 
     @Test
     fun directory_withSpace() {
-        val realmDir = tmpDir + "/dir with space"
+        val realmDir = tmpDir + PATH_SEPARATOR + "dir with space"
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .build()
@@ -234,7 +234,7 @@ class RealmConfigurationTests {
             .directory(tmpDir)
             .name(name)
             .build()
-        assertEquals("$tmpDir/$name", config.path)
+        assertEquals("$tmpDir$PATH_SEPARATOR$name", config.path)
         // Just verifying that we can open the realm
         Realm.open(config).use { }
     }
