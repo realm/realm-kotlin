@@ -90,144 +90,121 @@ internal object BsonEncoder {
         return when {
             resultClass == null || bsonValue == BsonNull && resultClass != BsonNull::class -> null
             else -> {
-                when (resultClass) {
-                    Byte::class -> {
-                        deserializeNumber(bsonValue, Byte::class.simpleName) {
-                            it.intValue().toByte()
+                try {
+                    when (resultClass) {
+                        Byte::class -> {
+                            deserializeNumber(bsonValue, Byte::class.simpleName) {
+                                it.intValue().toByte()
+                            }
                         }
-                    }
-                    Short::class -> {
-                        deserializeNumber(bsonValue, Short::class.simpleName) {
-                            it.intValue().toShort()
+                        Short::class -> {
+                            deserializeNumber(bsonValue, Short::class.simpleName) {
+                                it.intValue().toShort()
+                            }
                         }
-                    }
-                    Int::class -> {
-                        deserializeNumber(bsonValue, Int::class.simpleName) {
-                            it.intValue()
+                        Int::class -> {
+                            deserializeNumber(bsonValue, Int::class.simpleName) {
+                                it.intValue()
+                            }
                         }
-                    }
-                    Long::class -> {
-                        deserializeNumber(bsonValue, Long::class.simpleName) {
-                            it.longValue()
+                        Long::class -> {
+                            deserializeNumber(bsonValue, Long::class.simpleName) {
+                                it.longValue()
+                            }
                         }
-                    }
-                    Float::class -> {
-                        deserializeNumber(bsonValue, Float::class.simpleName) {
-                            it.doubleValue().toFloat()
+                        Float::class -> {
+                            deserializeNumber(bsonValue, Float::class.simpleName) {
+                                it.doubleValue().toFloat()
+                            }
                         }
-                    }
-                    Double::class -> {
-                        deserializeNumber(bsonValue, Double::class.simpleName) {
-                            it.doubleValue()
+                        Double::class -> {
+                            deserializeNumber(bsonValue, Double::class.simpleName) {
+                                it.doubleValue()
+                            }
                         }
-                    }
-                    Boolean::class -> {
-                        require(bsonValue.bsonType == BsonType.BOOLEAN) {
-                            "A 'BsonBoolean' is required to deserialize a 'Boolean'. Type '${bsonValue.bsonType}' found."
+                        Boolean::class -> {
+                            bsonValue.asBoolean().value
                         }
-                        bsonValue as BsonBoolean
-                        bsonValue.value
-                    }
-                    String::class -> {
-                        require(bsonValue.bsonType == BsonType.STRING) {
-                            "A 'BsonString' is required to deserialize a 'String'. Type '${bsonValue.bsonType}' found."
+                        String::class -> {
+                            bsonValue.asString().value
                         }
-                        bsonValue as BsonString
-                        bsonValue.value
-                    }
-                    Char::class -> {
-                        require(bsonValue.bsonType == BsonType.STRING) {
-                            "A 'BsonString' is required to deserialize a 'Char'. Type '${bsonValue.bsonType}' found."
+                        Char::class -> {
+                            bsonValue.asString().value[0]
                         }
-                        bsonValue as BsonString
-                        bsonValue.value[0]
-                    }
-                    ByteArray::class -> {
-                        require(bsonValue.bsonType == BsonType.BINARY) {
-                            "A 'BsonBinary' is required to deserialize a 'ByteArray'. Type '${bsonValue.bsonType}' found."
+                        ByteArray::class -> {
+                            val bsonBinary = bsonValue.asBinary()
+                            require(bsonBinary.type == BsonBinarySubType.BINARY.value) {
+                                "A 'BsonBinary' with subtype 'BsonBinarySubType.BINARY' is required to deserialize a 'ByteArray'."
+                            }
+                            bsonBinary.data
                         }
-                        bsonValue as BsonBinary
-                        require(bsonValue.type == BsonBinarySubType.BINARY.value) {
-                            "A 'BsonBinary' with subtype 'BsonBinarySubType.BINARY' is required to deserialize a 'ByteArray'."
+                        BsonArray::class -> bsonValue.asArray()
+                        BsonBinary::class -> bsonValue.asBinary()
+                        BsonBoolean::class -> bsonValue.asBoolean()
+                        BsonDBPointer::class -> bsonValue.asDBPointer()
+                        BsonDateTime::class -> bsonValue.asDateTime()
+                        BsonDecimal128::class -> bsonValue.asDecimal128()
+                        BsonDocument::class -> bsonValue
+                        BsonDouble::class -> bsonValue.asDouble()
+                        BsonInt32::class -> bsonValue.asInt32()
+                        BsonInt64::class -> bsonValue.asInt64()
+                        BsonJavaScript::class -> bsonValue.asJavaScript()
+                        BsonJavaScriptWithScope::class -> bsonValue.asJavaScriptWithScope()
+                        BsonMaxKey::class -> bsonValue.asBsonMaxKey()
+                        BsonMinKey::class -> bsonValue.asBsonMinKey()
+                        BsonNull::class -> bsonValue.asBsonNull()
+                        BsonObjectId::class -> bsonValue.asObjectId()
+                        BsonRegularExpression::class -> bsonValue.asRegularExpression()
+                        BsonString::class -> bsonValue.asString()
+                        BsonSymbol::class -> bsonValue.asSymbol()
+                        BsonTimestamp::class -> bsonValue.asTimestamp()
+                        BsonUndefined::class -> bsonValue.asBsonUndefined()
+                        BsonValue::class -> bsonValue
+                        MutableRealmInt::class -> {
+                            deserializeNumber(bsonValue, "MutableRealmInt") {
+                                MutableRealmInt.create(it.longValue())
+                            }
                         }
-                        bsonValue.data
-                    }
-                    BsonArray::class,
-                    BsonBinary::class,
-                    BsonBoolean::class,
-                    BsonDBPointer::class,
-                    BsonDateTime::class,
-                    BsonDecimal128::class,
-                    BsonDocument::class,
-                    BsonDouble::class,
-                    BsonInt32::class,
-                    BsonInt64::class,
-                    BsonJavaScript::class,
-                    BsonJavaScriptWithScope::class,
-                    BsonMaxKey::class,
-                    BsonMinKey::class,
-                    BsonNull::class,
-                    BsonObjectId::class,
-                    BsonRegularExpression::class,
-                    BsonString::class,
-                    BsonSymbol::class,
-                    BsonTimestamp::class,
-                    BsonUndefined::class,
-                    Any::class,
-                    BsonValue::class -> bsonValue
-                    MutableRealmInt::class -> {
-                        deserializeNumber(bsonValue, "MutableRealmInt") {
-                            MutableRealmInt.create(it.longValue())
+                        RealmUUID::class -> {
+                            val bsonBinary = bsonValue.asBinary()
+                            require(bsonBinary.type == BsonBinarySubType.UUID_STANDARD.value) {
+                                "A 'BsonBinary' with subtype 'BsonBinarySubType.UUID_STANDARD' is required to deserialize a 'RealmUUID'"
+                            }
+                            RealmUUID.from(bsonBinary.data)
                         }
-                    }
-                    RealmUUID::class -> {
-                        require(bsonValue.bsonType == BsonType.BINARY) {
-                            "A 'BsonBinary' is required to deserialize a 'RealmUUID'. Type '${bsonValue.bsonType}' found."
+                        ObjectId::class -> {
+                            ObjectId.from(bsonValue.asObjectId().toByteArray())
                         }
-                        bsonValue as BsonBinary
-                        require(bsonValue.type == BsonBinarySubType.UUID_STANDARD.value) {
-                            "A 'BsonBinary' with subtype 'BsonBinarySubType.UUID_STANDARD' is required to deserialize a 'RealmUUID'"
+                        RealmInstant::class -> {
+                            bsonValue.asDateTime().value.milliseconds.toRealmInstant()
                         }
-                        RealmUUID.from(bsonValue.data)
-                    }
-                    ObjectId::class -> {
-                        require(bsonValue.bsonType == BsonType.OBJECT_ID) {
-                            "A 'BsonObjectId' is required to deserialize a 'ObjectId'. Type '${bsonValue.bsonType}' found."
-                        }
-                        bsonValue as BsonObjectId
-                        ObjectId.from(bsonValue.toByteArray())
-                    }
-                    RealmInstant::class -> {
-                        require(bsonValue.bsonType == BsonType.DATE_TIME) {
-                            "A 'BsonDateTime' is required to deserialize a 'RealmInstant'. Type '${bsonValue.bsonType}' found."
-                        }
-                        bsonValue as BsonDateTime
-                        bsonValue.value.milliseconds.toRealmInstant()
-                    }
-                    RealmAny::class -> {
-                        when (bsonValue.bsonType) {
-                            BsonType.BOOLEAN -> RealmAny.create(bsonValue.asBoolean().value)
-                            BsonType.INT32 -> RealmAny.create(bsonValue.asInt32().value)
-                            BsonType.INT64 -> RealmAny.create(bsonValue.asInt64().value)
-                            BsonType.STRING -> RealmAny.create(bsonValue.asString().value)
-                            BsonType.DOUBLE -> RealmAny.create(bsonValue.asDouble().value)
-                            BsonType.BINARY -> {
-                                with(bsonValue.asBinary()) {
-                                    when (this.type) {
-                                        BsonBinarySubType.UUID_STANDARD.value ->
-                                            RealmAny.create(RealmUUID.Companion.from(this.data))
-                                        else -> RealmAny.create(this.data)
+                        RealmAny::class -> {
+                            when (bsonValue.bsonType) {
+                                BsonType.BOOLEAN -> RealmAny.create(bsonValue.asBoolean().value)
+                                BsonType.INT32 -> RealmAny.create(bsonValue.asInt32().value)
+                                BsonType.INT64 -> RealmAny.create(bsonValue.asInt64().value)
+                                BsonType.STRING -> RealmAny.create(bsonValue.asString().value)
+                                BsonType.DOUBLE -> RealmAny.create(bsonValue.asDouble().value)
+                                BsonType.BINARY -> {
+                                    with(bsonValue.asBinary()) {
+                                        when (this.type) {
+                                            BsonBinarySubType.UUID_STANDARD.value ->
+                                                RealmAny.create(RealmUUID.Companion.from(this.data))
+                                            else -> RealmAny.create(this.data)
+                                        }
                                     }
                                 }
+                                BsonType.OBJECT_ID -> RealmAny.create(bsonValue.asObjectId())
+                                BsonType.DATE_TIME -> RealmAny.create(bsonValue.asDateTime().value)
+                                else -> throw IllegalArgumentException("Cannot decode a ${bsonValue.bsonType} into RealmAny.")
                             }
-                            BsonType.OBJECT_ID -> RealmAny.create(bsonValue.asObjectId())
-                            BsonType.DATE_TIME -> RealmAny.create(bsonValue.asDateTime().value)
-                            else -> throw IllegalArgumentException("Cannot decode a ${bsonValue.bsonType} into RealmAny.")
+                        }
+                        else -> {
+                            throw IllegalArgumentException("Unsupported type '${resultClass.simpleName}'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.")
                         }
                     }
-                    else -> {
-                        throw IllegalArgumentException("Unsupported type '${resultClass.simpleName}'. Only Bson, MutableRealmInt, RealmUUID, ObjectId, RealmInstant, RealmAny, and primitives are valid decoding types.")
-                    }
+                } catch (e: BsonInvalidOperationException) {
+                    throw BsonInvalidOperationException("Cannot decode BsonValue \"$bsonValue\" of type ${bsonValue.bsonType} into ${resultClass.simpleName}", e)
                 }
             }
         }
@@ -238,16 +215,8 @@ internal object BsonEncoder {
         type: String?,
         block: (BsonNumber) -> T
     ): T {
-        require(
-            bsonValue.bsonType == BsonType.INT32 ||
-                bsonValue.bsonType == BsonType.INT64 ||
-                bsonValue.bsonType == BsonType.DOUBLE
-        ) {
-            "A 'BsonNumber' is required to deserialize a '$type'. Type '${bsonValue.bsonType}' found."
-        }
-
-        return block(bsonValue as BsonNumber).also {
-            if (bsonValue.doubleValue() != it.toDouble()) {
+        return block(bsonValue.asNumber()).also {
+            if (bsonValue.asNumber().doubleValue() != it.toDouble()) {
                 throw BsonInvalidOperationException("Could not convert ${bsonValue.bsonType} to a $type without losing precision")
             }
         }
@@ -278,6 +247,7 @@ internal object BsonEncoder {
             RealmAny.Type.TIMESTAMP -> asRealmInstant()
             RealmAny.Type.FLOAT -> asFloat()
             RealmAny.Type.DOUBLE -> asDouble()
+            RealmAny.Type.DECIMAL128 -> asDecimal128()
             RealmAny.Type.OBJECT_ID -> asObjectId()
             RealmAny.Type.UUID -> asRealmUUID()
             RealmAny.Type.OBJECT -> asRealmObject()

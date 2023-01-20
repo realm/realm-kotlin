@@ -174,6 +174,7 @@ class GenerationExtensionTest {
             "booleanField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
             "floatField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
             "doubleField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "decimal128Field" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "timestampField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
             "objectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "bsonObjectIdField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
@@ -267,7 +268,7 @@ class GenerationExtensionTest {
         properties.map { property ->
             val expectedType =
                 expectedProperties[property.name] ?: error("Property not found: ${property.name}")
-            assertEquals(expectedType, property.type)
+            assertEquals(expectedType, property.type, property.name)
         }
 
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()

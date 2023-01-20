@@ -53,6 +53,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.random.Random
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
@@ -632,6 +633,7 @@ class RealmListTests {
         Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
         Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
         Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
@@ -1319,6 +1321,7 @@ internal class ManagedRealmAnyListTester constructor(
                     assertEquals(expected.asRealmInstant(), actual.asRealmInstant())
                 RealmAny.Type.FLOAT -> assertEquals(expected.asFloat(), actual.asFloat())
                 RealmAny.Type.DOUBLE -> assertEquals(expected.asDouble(), actual.asDouble())
+                RealmAny.Type.DECIMAL128 -> assertEquals(expected.asDecimal128(), actual.asDecimal128())
                 RealmAny.Type.OBJECT_ID -> assertEquals(expected.asObjectId(), actual.asObjectId())
                 RealmAny.Type.UUID -> assertEquals(
                     expected.asRealmUUID(),
@@ -1370,6 +1373,9 @@ internal val SHORT_VALUES = listOf<Short>(1, 2)
 internal val BYTE_VALUES = listOf<Byte>(1, 2)
 internal val FLOAT_VALUES = listOf(1F, 2F)
 internal val DOUBLE_VALUES = listOf(1.0, 2.0)
+val DECIMAL128_MIN_VALUE = Decimal128("-2.000000000000000000000000000000000E+600")
+val DECIMAL128_MAX_VALUE = Decimal128("2.000000000000000000000000000000000E+601")
+internal val DECIMAL128_VALUES = listOf(DECIMAL128_MAX_VALUE, DECIMAL128_MIN_VALUE)
 internal val BOOLEAN_VALUES = listOf(true, false)
 internal val TIMESTAMP_VALUES =
     listOf(RealmInstant.from(0, 0), RealmInstant.from(42, 420))
@@ -1400,22 +1406,9 @@ internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.
 // as a base for both lists and sets and they use different container classes in their logic.
 // Do NOT use this list directly in your tests unless you have a good reason to ignore RealmAny
 // instances containing a RealmObject.
-internal val REALM_ANY_PRIMITIVE_VALUES = listOf(
-    RealmAny.create((-12).toShort()),
-    RealmAny.create(13),
-    RealmAny.create(14.toByte()),
-    RealmAny.create(15.toChar()),
-    RealmAny.create(16L),
-    RealmAny.create(false),
-    RealmAny.create("Hello"),
-    RealmAny.create(17F),
-    RealmAny.create(18.0),
-    RealmAny.create(BsonObjectId("507f191e810c19729de860ea")),
-    RealmAny.create(byteArrayOf(19)),
-    RealmAny.create(RealmInstant.from(42, 420)),
-    RealmAny.create(RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")),
-    null
-)
+internal val REALM_ANY_PRIMITIVE_VALUES =
+    TypeDescriptor.anyClassifiers.filterValues { it.isPrimitive }
+        .map { RealmAnyTests.create(RealmAnyTests.defaultValues[it.key]) } + null
 internal val REALM_ANY_REALM_OBJECT = RealmAny.create(
     RealmListContainer().apply { stringField = "hello" },
     RealmListContainer::class
@@ -1432,6 +1425,7 @@ internal val NULLABLE_SHORT_VALUES = SHORT_VALUES + null
 internal val NULLABLE_BYTE_VALUES = BYTE_VALUES + null
 internal val NULLABLE_FLOAT_VALUES = FLOAT_VALUES + null
 internal val NULLABLE_DOUBLE_VALUES = DOUBLE_VALUES + null
+internal val NULLABLE_DECIMAL128_VALUES = DECIMAL128_VALUES + null
 internal val NULLABLE_BOOLEAN_VALUES = BOOLEAN_VALUES + null
 internal val NULLABLE_TIMESTAMP_VALUES = TIMESTAMP_VALUES + null
 internal val NULLABLE_OBJECT_ID_VALUES = OBJECT_ID_VALUES + null
