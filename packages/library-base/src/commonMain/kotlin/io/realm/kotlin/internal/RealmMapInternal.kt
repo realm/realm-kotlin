@@ -518,11 +518,9 @@ internal typealias RealmMapMutableEntry<K, V> = MutableMap.MutableEntry<K, V>
 internal fun <K, V> realmMapEntryOf(pair: Pair<K, V>): RealmMapMutableEntry<K, V> =
     UnmanagedRealmMapEntry(pair.first, pair.second)
 
-@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 internal fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V> =
     UnmanagedRealmMapEntry(key, value)
 
-@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 internal fun <K, V> realmMapEntryOf(entry: Map.Entry<K, V>): RealmMapMutableEntry<K, V> =
     UnmanagedRealmMapEntry(entry.key, entry.value)
 
