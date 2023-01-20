@@ -130,6 +130,11 @@ class GenerationExtensionTest {
             owner = MockRealmReference(),
             mediator = MockMediator()
         )
+        val companionObject = sampleModel::class.companionObjectInstance
+
+        assertTrue(companionObject is RealmObjectCompanion)
+
+        val (table, properties) = companionObject.`io_realm_kotlin_schema`()
 
         // Accessing getters/setters
         sampleModel.`io_realm_kotlin_objectReference` = realmObjectReference
@@ -329,7 +334,9 @@ class GenerationExtensionTest {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins
+//            compilerPlugins = plugins,
+            componentRegistrars = plugins
+//            compilerPluginRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
                 "-Xjvm-default=enable",
@@ -346,7 +353,7 @@ class GenerationExtensionTest {
             sources = listOf(source)
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf("-Xjvm-default=enable")
         }.compile()

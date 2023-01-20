@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package io.realm.kotlin.test.util
 
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -22,7 +24,7 @@ import io.realm.kotlin.compiler.Registrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
 object Compiler {
-    @OptIn(ExperimentalCompilerApi::class)
+//    @OptIn(ExperimentalCompilerApi::class)
     fun compileFromSource(
         source: SourceFile,
         plugins: List<Registrar> = listOf(Registrar())
@@ -31,7 +33,7 @@ object Compiler {
             sources = listOf(source)
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf("-Xjvm-default=enable")
         }.compile()

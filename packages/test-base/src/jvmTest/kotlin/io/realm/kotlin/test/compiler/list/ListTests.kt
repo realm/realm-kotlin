@@ -23,6 +23,7 @@ import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals
@@ -30,6 +31,7 @@ import kotlin.test.assertTrue
 
 // Cannot trigger these from within the IDE due to https://youtrack.jetbrains.com/issue/KT-46195
 // Execute the tests from the CLI with `./gradlew jvmTest`
+@OptIn(ExperimentalCompilerApi::class)
 class ListTests {
 
     private val baseSupportedPrimitiveClasses = TypeDescriptor.elementTypesForList

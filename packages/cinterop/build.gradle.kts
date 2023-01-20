@@ -266,7 +266,7 @@ kotlin {
     targets.all {
         compilations.all {
             kotlinOptions {
-                freeCompilerArgs += listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
+                freeCompilerArgs += listOf("-opt-in=kotlin.ExperimentalUnsignedTypes")
             }
         }
     }
@@ -354,7 +354,7 @@ val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(buildType)
 }
 
-val buildJVMSharedLibs by tasks.registering {
+val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     buildSharedLibrariesForJVM()
 }
 
@@ -669,5 +669,12 @@ realmPublish {
             "Wrapper for interacting with Realm Kotlin native code. This artifact is not " +
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
+    }
+}
+
+tasks.named("clean") {
+    doLast {
+        delete(project.file(".cxx"))
+        delete(buildJVMSharedLibs.get().outputs)
     }
 }

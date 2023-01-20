@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package io.realm.kotlin.test.compiler.set
 
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -23,6 +25,7 @@ import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.assertEquals

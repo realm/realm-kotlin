@@ -52,10 +52,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
+import kotlin.time.Duration.Companion.milliseconds
 
-@OptIn(ExperimentalTime::class)
 class RealmTests {
 
     companion object {
@@ -311,7 +309,7 @@ class RealmTests {
                     copyToRealm(Parent())
                     // realm.close is blocking until write block is done, so we cannot wait on
                     // specific external events, so just sleep a bit :/
-                    PlatformUtils.sleep(Duration.Companion.milliseconds(100))
+                    PlatformUtils.sleep(100.milliseconds)
                 }
             }
         }

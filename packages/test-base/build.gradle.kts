@@ -85,7 +85,7 @@ kotlin {
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.jvmTarget = Versions.jvmTarget
-        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+//        kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
     }
 }
 
@@ -172,7 +172,7 @@ kotlin {
             dependencies {
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
-                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+                implementation("dev.zacsweers.kctfork:core:${Versions.kotlinCompileTesting}")
             }
         }
         val jvmTest by getting {
