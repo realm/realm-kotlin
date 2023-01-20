@@ -32,7 +32,8 @@ actual enum class ErrorCategory(
     RLM_ERR_CAT_JSON_ERROR("Json", realm_error_category_e.RLM_ERR_CAT_JSON_ERROR),
     RLM_ERR_CAT_SERVICE_ERROR("Service", realm_error_category_e.RLM_ERR_CAT_SERVICE_ERROR),
     RLM_ERR_CAT_HTTP_ERROR("Http", realm_error_category_e.RLM_ERR_CAT_HTTP_ERROR),
-    RLM_ERR_CAT_CUSTOM_ERROR("Custom", realm_error_category_e.RLM_ERR_CAT_CUSTOM_ERROR);
+    RLM_ERR_CAT_CUSTOM_ERROR("Custom", realm_error_category_e.RLM_ERR_CAT_CUSTOM_ERROR),
+    RLM_ERR_CAT_WEBSOCKET_ERROR("Websocket", realm_error_category_e.RLM_ERR_CAT_WEBSOCKET_ERROR);
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ErrorCategory? =
