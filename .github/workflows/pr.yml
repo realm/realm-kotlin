@@ -241,6 +241,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
 
       # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
@@ -356,6 +358,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
 
       # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
@@ -458,11 +462,6 @@ jobs:
           key: ${{ github.job }}
           max-size: '2.0G'
 
-      - name: Create custom ccache runner
-        run: |
-          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
-
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -471,6 +470,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
 
       - name: Debug environment
         run: |
@@ -555,6 +556,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
 
       - name: Build packages
         working-directory: packages
@@ -631,6 +634,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
 
       - name: Build packages
         working-directory: packages
@@ -707,6 +712,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
 
       - name: Build packages
         working-directory: packages
