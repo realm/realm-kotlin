@@ -5,8 +5,10 @@ on:
     - '**.md'
 env:
   REALM_DISABLE_ANALYTICS: true
-  CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
-  CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
+  # CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
+  # CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
+  CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
+  CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
   RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
 
 jobs:
@@ -441,7 +443,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.23.1'
+          cmake-version: '3.22.1'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -455,6 +457,11 @@ jobs:
         with:
           key: ${{ github.job }}
           max-size: '2.0G'
+
+      - name: Create custom ccache runner
+        run: |
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
 
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
