@@ -563,13 +563,6 @@ jobs:
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -PignoreNativeLibs=true
 
-      - name: Store CMake logs
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          path: ./packages/external/core/build-macos_universal/CMakeFiles
-          name: macos-arm64-cmake-logs
-
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
