@@ -568,7 +568,7 @@ jobs:
         if: always()
         with:
           path: ./packages/external/core/build-macos_universal/CMakeFiles
-          key: macos-arm64-cmake-logs
+          name: macos-arm64-cmake-logs
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
