@@ -5,8 +5,10 @@ on:
     - '**.md'
 env:
   REALM_DISABLE_ANALYTICS: true
-  CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
-  CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
+  # CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
+  # CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
+  CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
+  CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
   RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
 
 jobs:
@@ -149,27 +151,14 @@ jobs:
       - name: Setup build cache
         uses: actions/cache@v3
         with:
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir
+          path: ${{ github.workspace }}/packages/cinterop/src/jvmMain/windows-build-dir
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
         with:
           name: jni-stub-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/jni-swig-stub/build/generated/sources/jni
-
-      - name: Get vcpkg submodule commit sha
-        id: vcpkg-cache-key
-        working-directory: packages/external/core/tools/vcpkg/ports
-        shell: powershell
-        run: echo "::set-output name=commit::$(git rev-parse HEAD)"
-
-      - name: Setup Vcpkg
-        uses: friendlyanon/setup-vcpkg@v1
-        with:
-          path: ./packages/external/core/tools/vcpkg/ports
-          cache-key: vcpkg-windows-${{ hashFiles('./packages/external/core/tools/vcpkg/vcpkg.json') }}-${{ steps.vcpkg-cache-key.outputs.commit }}
-          cache-restore-keys: vcpkg-windows-${{ steps.vcpkg_cache_key.outputs.commit }}
+          path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni
 
       - name: Build native lib
         shell: powershell
@@ -184,8 +173,6 @@ jobs:
           -DCMAKE_GENERATOR_PLATFORM=x64 `
           -DCMAKE_BUILD_TYPE=Release `
           -DREALM_ENABLE_SYNC=ON `
-          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}\packages\external\core\tools\vcpkg\ports\scripts\buildsystems\vcpkg.cmake `
-          -DVCPKG_MANIFEST_DIR=${{ github.workspace }}\packages\external\core\tools\vcpkg `
           -DREALM_NO_TESTS=1 `
           -DVCPKG_TARGET_TRIPLET=x64-windows-static
           cmake --build . --config Release
@@ -231,7 +218,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -254,6 +241,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
@@ -346,7 +335,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -369,6 +358,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
@@ -456,7 +447,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -479,6 +470,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Debug environment
         run: |
@@ -540,7 +533,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -563,6 +556,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Build packages
         working-directory: packages
@@ -616,7 +611,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -639,6 +634,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Build packages
         working-directory: packages
@@ -692,7 +689,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -715,6 +712,8 @@ jobs:
         run: |
           ccache --set-config="compiler_check=content"
           ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Build packages
         working-directory: packages

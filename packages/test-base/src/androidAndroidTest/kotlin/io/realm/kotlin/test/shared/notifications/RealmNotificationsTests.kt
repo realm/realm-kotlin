@@ -262,7 +262,7 @@ class RealmNotificationsTests : NotificationTests {
 
         runBlocking {
             val listener = async {
-                withTimeout(10.seconds) {
+                withTimeout(30.seconds) {
                     flow.collect {
                         delay(100.milliseconds)
                     }

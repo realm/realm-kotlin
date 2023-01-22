@@ -37,6 +37,8 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 kotlin {
     jvm()
     android("android") {
+        // Changing this will also requires an update to the publishCIPackages task
+        // in /packages/build.gradle.kts
         publishLibraryVariants("release")
     }
     iosX64()
