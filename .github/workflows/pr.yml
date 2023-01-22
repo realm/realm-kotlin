@@ -218,7 +218,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -335,7 +335,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -447,7 +447,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -533,7 +533,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -618,7 +618,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -696,7 +696,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.12
         with:
-          cmake-version: '3.22.1'
+          cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
