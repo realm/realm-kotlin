@@ -242,7 +242,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
@@ -359,7 +359,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
@@ -471,7 +471,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Debug environment
         run: |
@@ -557,7 +557,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Build packages
         working-directory: packages
@@ -635,7 +635,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Build packages
         working-directory: packages
@@ -713,7 +713,7 @@ jobs:
           ccache --set-config="compiler_check=content"
           ccache --show-config
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
-          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang          
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
       - name: Build packages
         working-directory: packages
