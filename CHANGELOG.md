@@ -53,10 +53,11 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 ### Internal
 * Updated to Realm Core 13.2.0, commit 5a119d8cb2eaac60c298532af2c9ae789af0c9e6.
 * Updated to require Swig 4.1.0.
+* Updated AndroidxStartup to 1.1.1.
 * Updated to Kbson 0.2.0.
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 * Added JVM test wrapper as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
-
+* Use Relinker when loading native libs on Android.
 
 ## 1.5.3 (YYYY-MM-DD)
 
