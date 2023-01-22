@@ -140,7 +140,7 @@ class RealmConfigurationTests {
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .build()
-        assertEquals("$realmDir/${Realm.DEFAULT_FILE_NAME}", config.path)
+        assertEquals("$realmDir$PATH_SEPARATOR${Realm.DEFAULT_FILE_NAME}", config.path)
         // Just verifying that we can open the realm
         Realm.open(config).use { }
     }
