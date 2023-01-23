@@ -24,12 +24,15 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
+import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.UserIdentity
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.serialization.Bson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -57,6 +60,35 @@ public class UserImpl(
         get() = RealmInterop.realm_user_get_refresh_token(nativePointer)
     override val deviceId: String
         get() = RealmInterop.realm_user_get_device_id(nativePointer)
+    override val functions: Functions by lazy { FunctionsImpl(app, this) }
+
+    @PublishedApi
+    internal fun profileAsBsonDocumentInternal(): BsonDocument {
+        return Bson(RealmInterop.realm_user_get_profile(nativePointer)) as BsonDocument
+    }
+
+    @PublishedApi
+    internal fun customDataAsBsonDocumentInternal(): BsonDocument? {
+        return RealmInterop.realm_user_get_custom_data(nativePointer)
+            ?.let { ejsonCustomData: String ->
+                Bson(ejsonCustomData) as BsonDocument
+            }
+    }
+
+    override suspend fun refreshCustomData() {
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_user_refresh_custom_data(
+                app = app.nativePointer,
+                user = nativePointer,
+                callback = channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }
+            )
+            return channel.receive()
+                .getOrThrow()
+        }
+    }
+
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {
             UserIdentity(it.id, getProviderFromCore(it.provider))

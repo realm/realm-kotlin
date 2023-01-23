@@ -26,6 +26,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.headers
 import io.ktor.client.request.request
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
@@ -97,7 +98,8 @@ data class Function(
     val name: String,
     val source: String? = null,
     @SerialName("run_as_system") val runAsSystem: Boolean? = null,
-    val private: Boolean? = null
+    val private: Boolean? = null,
+    @SerialName("can_evaluate") val canEvaluate: JsonObject? = null
 )
 
 @Serializable
@@ -327,7 +329,7 @@ class AppServicesClient(
             }
         }
 
-    suspend fun BaasApp.setCustomUserData(userDataConfig: String) =
+    suspend fun BaasApp.setCustomUserData(userDataConfig: String): HttpResponse =
         withContext(dispatcher) {
             httpClient.request("$url/custom_user_data") {
                 this.method = HttpMethod.Patch

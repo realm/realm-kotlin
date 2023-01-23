@@ -17,6 +17,8 @@ package io.realm.kotlin.test.mongodb.util
 
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 object TestAppInitializer {
     // Setups a test app
@@ -355,6 +357,37 @@ object TestAppInitializer {
             }
             """.trimIndent()
         ).let { service: Service ->
+            val dbName = app.clientAppId
+            service.addRule(
+                """
+                {
+                    "database": "$dbName",
+                    "collection": "UserData",
+                    "roles": [
+                        {
+                            "name": "default",
+                            "apply_when": {},
+                            "insert": true,
+                            "delete": true,
+                            "additional_fields": {}
+                        }
+                    ]
+                }
+                """.trimIndent()
+            )
+
+            app.setCustomUserData(
+                """
+                {
+                    "mongo_service_id": ${service._id},
+                    "enabled": true,
+                    "database_name": "$dbName",
+                    "collection_name": "UserData",
+                    "user_id_field": "user_id"
+                }
+                """.trimIndent()
+            )
+
             block(app, service)
         }
 
@@ -417,10 +450,10 @@ object TestAppInitializer {
         source =
         """
         exports = ({mail, id}) => {
-            // Auth function will fail for emails with a domain different to @androidtest.realm.io
+            // Auth function will fail for emails with a domain different to @10gen.com
             // or with id lower than 666
-            if (!new RegExp("@androidtest.realm.io${'$'}").test(mail) || id < 666) {
-                return 0;
+            if (!new RegExp("@10gen.com${'$'}").test(mail) || id < 666) {
+                throw new Error(`Authentication failed`);
             } else {
                 // Use the users email as UID
                 return mail;
@@ -516,5 +549,96 @@ object TestAppInitializer {
         }
         
         """.trimIndent()
+    )
+
+    val FIRST_ARG_FUNCTION = Function(
+        name = "firstArg",
+        source =
+        """
+        exports = function(arg){
+          // Returns first argument
+          return arg
+        };
+        
+        """.trimIndent()
+    )
+
+    val SUM_FUNCTION = Function(
+        name = "sum",
+        source =
+        """
+        exports = function(...args) {
+            return parseInt(args.reduce((a,b) => a + b, 0));
+        };
+        
+        """.trimIndent()
+    )
+
+    val NULL_FUNCTION = Function(
+        name = "null",
+        source =
+        """
+        exports = function(arg){
+          return null;
+        };
+        
+        """.trimIndent()
+    )
+
+    val ERROR_FUNCTION = Function(
+        name = "error",
+        source =
+        """
+        exports = function(arg){
+          return unknown;
+        };
+        
+        """.trimIndent()
+    )
+
+    val VOID_FUNCTION = Function(
+        name = "void",
+        source =
+        """
+        exports = function(arg){
+          return void(0);
+        };
+        
+        """.trimIndent()
+    )
+
+    val AUTHORIZED_ONLY_FUNCTION = Function(
+        name = "authorizedOnly",
+        source =
+        """
+        exports = function(arg){
+          /*
+            Accessing application's values:
+            var x = context.values.get("value_name");
+        
+            Accessing a mongodb service:
+            var collection = context.services.get("mongodb-atlas").db("dbname").collection("coll_name");
+            var doc = collection.findOne({owner_id: context.user.id});
+        
+            To call other named functions:
+            var result = context.functions.execute("function_name", arg1, arg2);
+        
+            Try running in the console below.
+          */
+          return {arg: context.user};
+        };
+        
+        """.trimIndent(),
+        canEvaluate = Json.decodeFromString(
+            """
+            {
+                "%%user.data.email": {
+                    "%in": [
+                        "authorizeduser@example.org"
+                    ]
+                }
+            }
+            """.trimIndent()
+        )
     )
 }

@@ -108,7 +108,7 @@ class SyncSessionTests {
 
                 // pausing the session sets it in Inactive state
                 realm.syncSession.pause()
-                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
+                assertEquals(SyncSession.State.PAUSED, realm.syncSession.state)
 
                 // resuming the session sets it in Active state
                 realm.syncSession.resume()
@@ -146,11 +146,11 @@ class SyncSessionTests {
 
                 // resuming an active session should do nothing
                 realm.syncSession.pause()
-                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
+                assertEquals(SyncSession.State.PAUSED, realm.syncSession.state)
 
                 // resuming an active session should do nothing
                 realm.syncSession.pause()
-                assertEquals(SyncSession.State.INACTIVE, realm.syncSession.state)
+                assertEquals(SyncSession.State.PAUSED, realm.syncSession.state)
             }
         }
     }

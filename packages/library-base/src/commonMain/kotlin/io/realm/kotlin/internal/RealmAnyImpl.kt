@@ -22,6 +22,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
 
@@ -73,6 +74,8 @@ internal class RealmAnyImpl<T : Any> constructor(
     override fun asFloat(): Float = getValue(RealmAny.Type.FLOAT) as Float
 
     override fun asDouble(): Double = getValue(RealmAny.Type.DOUBLE) as Double
+
+    override fun asDecimal128(): Decimal128 = getValue(RealmAny.Type.DECIMAL128) as Decimal128
 
     override fun asObjectId(): BsonObjectId = getValue(RealmAny.Type.OBJECT_ID) as BsonObjectId
 

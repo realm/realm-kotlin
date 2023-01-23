@@ -195,7 +195,8 @@ public interface Realm : TypedRealm {
      * to write it by using [Configuration.path].
      * @throws IllegalArgumentException if [targetConfiguration] points to a file that already
      * exists.
-     * @throws IllegalArgumentException if [targetConfiguration] has Flexible Sync enabled.
+     * @throws IllegalArgumentException if [targetConfiguration] has Flexible Sync enabled and
+     * the Realm being copied doesn't.
      * @throws IllegalStateException if this Realm is a synchronized Realm, and not all client
      * changes are integrated in the server.
      */

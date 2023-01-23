@@ -5,10 +5,12 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.checkForBufferOverFlow
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
+import io.realm.kotlin.schema.RealmSchema
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -57,6 +59,14 @@ internal class SuspendableNotifier(
                 sdkError("Failed to emit snapshot version")
             }
         }
+
+        // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
+        //  update, but requires that we initialize it all on the actual schema update to allow freezing
+        //  it. If we make the schema backed by the actual realm_class_info_t/realm_property_info_t
+        //  initialization it would probably be acceptable to initialize on schema updates
+        override fun schema(): RealmSchema {
+            return RealmSchemaImpl.fromTypedRealm(realmReference.dbPointer, realmReference.schemaMetadata)
+        }
     }
 
     private val realmInitializer = lazy { NotifierRealm() }
@@ -64,16 +74,15 @@ internal class SuspendableNotifier(
     private val realm: NotifierRealm by realmInitializer
 
     /**
-     * FIXME Currently this is a hacked implementation that only does the correct thing if
-     *  other RealmResults or RealmObjects are being observed. But all writes should also flow
-     *  from [SuspendableWriter], so no Realm updates will be lost to end users.
-     *
      * Listen to changes to a Realm.
      *
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    internal fun realmChanged(): Flow<FrozenRealmReference> {
+    internal suspend fun realmChanged(): Flow<FrozenRealmReference> {
+        // Touching realm will open the underlying realm and register change listeners, but must
+        // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
+        withContext(dispatcher) { realm }
         return _realmChanged.asSharedFlow()
     }
 

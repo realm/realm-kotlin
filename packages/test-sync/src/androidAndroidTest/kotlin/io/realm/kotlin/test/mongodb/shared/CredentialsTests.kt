@@ -24,6 +24,8 @@ import io.realm.kotlin.mongodb.GoogleAuthType
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.exceptions.AppException
+import io.realm.kotlin.mongodb.exceptions.AuthException
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -60,6 +62,7 @@ class CredentialsTests {
                 AuthenticationProvider.FACEBOOK -> facebook()
                 AuthenticationProvider.GOOGLE -> continue // Ignore, see below
                 AuthenticationProvider.JWT -> jwt()
+                AuthenticationProvider.CUSTOM_FUNCTION -> customFunction()
             }
             assertEquals(value, credentials.authenticationProvider)
         }
@@ -86,6 +89,7 @@ class CredentialsTests {
                     AuthenticationProvider.FACEBOOK -> Credentials.facebook("")
                     AuthenticationProvider.GOOGLE -> throw IllegalArgumentException("Test below as a special case")
                     AuthenticationProvider.JWT -> Credentials.jwt("")
+                    AuthenticationProvider.CUSTOM_FUNCTION -> throw IllegalArgumentException("No check required")
                 }
             }
         }
@@ -125,19 +129,17 @@ class CredentialsTests {
         return creds
     }
 
-    // TODO See https://github.com/realm/realm-kotlin/issues/742
-    // fun customFunction(): Credentials {
-    //     val mail = TestHelper.getRandomEmail()
-    //     val id = 666 + TestHelper.getRandomId()
-    //     val creds = mapOf(
-    //         "mail" to mail,
-    //         "id" to id
-    //     ).let { Credentials.customFunction(Document(it)) }
-    //     assertEquals(Credentials.Provider.CUSTOM_FUNCTION, creds.identityProvider)
-    //     assertTrue(creds.asJson().contains(mail))
-    //     assertTrue(creds.asJson().contains(id.toString()))
-    //     return creds
-    // }
+    private fun customFunction(): Credentials {
+        val mail = TestHelper.randomEmail()
+        val id = 700
+        val credentials = Credentials.customFunction(
+            payload = mapOf("mail" to mail, "id" to id)
+        )
+        assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, credentials.authenticationProvider)
+        assertJsonContains(credentials, mail)
+        assertJsonContains(credentials, id.toString())
+        return credentials
+    }
 
     private fun emailPassword(): Credentials {
         val creds = Credentials.emailPassword("foo@bar.com", "secret")
@@ -185,7 +187,9 @@ class CredentialsTests {
         val credsImpl = creds as io.realm.kotlin.mongodb.internal.CredentialsImpl
 
         // Treat the JSON as a largely opaque value.
-        assertTrue(credsImpl.asJson().contains(subString))
+        credsImpl.asJson().let {
+            assertTrue(it.contains(subString), "[$it] does not contain [$subString]")
+        }
     }
 
     @Test
@@ -229,22 +233,15 @@ class CredentialsTests {
                         val apiKeyUser = app.login(Credentials.apiKey(key.value!!))
                         assertEquals(user.id, apiKeyUser.id)
                     }
-
-// TODO Enable this when https://github.com/realm/realm-kotlin/issues/741 is complete.
-
-//                    Credentials.Provider.CUSTOM_FUNCTION -> {
-//                        val customFunction = mapOf(
-//                            "mail" to TestHelper.getRandomEmail(),
-//                            "id" to 666 + TestHelper.getRandomId()
-//                        ).let {
-//                            Credentials.customFunction(Document(it))
-//                        }
-//
-//                        // We are not testing the authentication function itself, but rather that the
-//                        // credentials work
-//                        val functionUser = app.login(customFunction)
-//                        assertNotNull(functionUser)
-//                    }
+                    AuthenticationProvider.CUSTOM_FUNCTION -> {
+                        val credentials = Credentials.customFunction(
+                            payload = mapOf("mail" to TestHelper.randomEmail(), "id" to 700)
+                        )
+                        // We are not testing the authentication function itself, but rather that the
+                        // credentials work
+                        val functionUser = app.login(credentials)
+                        assertNotNull(functionUser)
+                    }
                     AuthenticationProvider.EMAIL_PASSWORD -> {
                         val (email, password) = TestHelper.randomEmail() to "password1234"
                         val user = app.createUserAndLogIn(email, password)
@@ -272,6 +269,21 @@ class CredentialsTests {
                         expectInvalidSession(app, Credentials.jwt("jwt-token"))
                     else -> error("Untested provider: $provider")
                 }
+            }
+        }
+    }
+
+    @Test
+    fun customFunction_authExceptionThrownOnError() {
+        app = TestApp()
+
+        val credentials = Credentials.customFunction(
+            payload = mapOf("mail" to TestHelper.randomEmail(), "id" to 0)
+        )
+
+        assertFailsWithMessage<AuthException>("[Service][AuthError(47)] error executing auth function: Error: Authentication failed.") {
+            runBlocking {
+                app.login(credentials)
             }
         }
     }
