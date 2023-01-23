@@ -106,7 +106,7 @@ internal open class SyncSessionImpl(
     }
 
     @Suppress("invisible_member", "invisible_reference")
-    override fun progress(
+    override fun progressAsFlow(
         direction: Direction,
         progressMode: ProgressMode,
     ): Flow<Progress> {
@@ -139,8 +139,9 @@ internal open class SyncSessionImpl(
             }
         }
     }
+
     @Suppress("invisible_member") // To be able to use RealmImpl.scopedFlow from library-base
-    override fun connectionState(): Flow<ConnectionStateChange> = realm.scopedFlow {
+    override fun connectionStateAsFlow(): Flow<ConnectionStateChange> = realm.scopedFlow {
         callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             token.value = NotificationToken(

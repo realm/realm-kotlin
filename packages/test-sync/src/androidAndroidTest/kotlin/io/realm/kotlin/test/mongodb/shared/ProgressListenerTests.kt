@@ -98,7 +98,7 @@ class ProgressListenerTests {
                     // We are not sure when the realm actually knows of the remote changes and consider
                     // them current, so wait a bit
                     delay(1.seconds)
-                    realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
+                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
                         .run {
                             withTimeout(TIMEOUT) {
                                 assertTrue(last().isTransferComplete)
@@ -122,7 +122,7 @@ class ProgressListenerTests {
             uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
 
             Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-                val flow = realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
                     .completionCounter()
                 withTimeout(TIMEOUT) {
                     flow.takeWhile { completed -> completed < 3 }
@@ -143,7 +143,7 @@ class ProgressListenerTests {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
                 realm.writeSampleData(TEST_SIZE, idOffset = TEST_SIZE * i, timeout = TIMEOUT)
-                realm.syncSession.progress(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).run {
+                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).run {
                     withTimeout(TIMEOUT) {
                         assertTrue(last().isTransferComplete)
                     }
@@ -155,7 +155,7 @@ class ProgressListenerTests {
     @Test
     fun uploadProgressListener_indefinitely() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-            val flow = realm.syncSession.progress(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
                 .completionCounter()
 
             withTimeout(TIMEOUT) {
@@ -176,14 +176,14 @@ class ProgressListenerTests {
 
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             assertFailsWith<RuntimeException> {
-                realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
                     .collect {
                         @Suppress("TooGenericExceptionThrown")
                         throw RuntimeException("Crashing progress flow")
                     }
             }
 
-            val flow = realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+            val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
             withTimeout(TIMEOUT) {
                 flow.first { it.isTransferComplete }
             }
@@ -198,7 +198,7 @@ class ProgressListenerTests {
 
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             // Setup a flow that we are just going to cancel
-            val flow = realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+            val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
             supervisorScope {
                 val mutex = Mutex(true)
                 val task = async {
@@ -212,7 +212,7 @@ class ProgressListenerTests {
             }
 
             // Verify that progress listeners still work
-            realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES).run {
+            realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES).run {
                 withTimeout(TIMEOUT) {
                     flow.first { it.isTransferComplete }
                 }
@@ -229,10 +229,10 @@ class ProgressListenerTests {
                 assertTrue { realm.syncSession.downloadAllServerChanges() }
                 // Ensure that progress listeners are triggered at least one time even though there
                 // is no data
-                realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES).first()
-                realm.syncSession.progress(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).first()
-                realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY).first()
-                realm.syncSession.progress(Direction.UPLOAD, ProgressMode.INDEFINITELY).first()
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES).first()
+                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).first()
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY).first()
+                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY).first()
             }
         }
     }
@@ -246,7 +246,7 @@ class ProgressListenerTests {
             assertFailsWithMessage<UnsupportedOperationException>(
                 "Progress listeners are not supported for Flexible Sync"
             ) {
-                realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
             }
         }
     }
@@ -257,7 +257,7 @@ class ProgressListenerTests {
         val user = app.createUserAndLogIn()
         val realm = Realm.open(createSyncConfig(user))
         try {
-            val flow = realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+            val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
             val job = async {
                 withTimeout(10.seconds) {
                     flow.collect { }

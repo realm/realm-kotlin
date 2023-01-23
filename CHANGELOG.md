@@ -18,13 +18,13 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Added support for reverse relationships through the `backlinks` delegate on `EmbeddedObjects`. See the function documentation for more details. (Issue [#1134](https://github.com/realm/realm-kotlin/issues/1134))
 * Added support for `@PersistedName` annotations for mapping a Kotlin field name to the underlying field name persisted in the Realm. (Issue [#590](https://github.com/realm/realm-kotlin/issues/590))
 * [Sync] `App.close()` have been added so it is possible to close underlying ressources used by the app instance.
-* [Sync] Add support for progress listeners with `SyncSession.progress`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))lin/issues/1086))
+* [Sync] Add support for progress listeners with `SyncSession.progressAsFlow(...)`. (Issue [#428](https://github.com/realm/realm-kotlin/issues/428))lin/issues/1086))
 * [Sync] `Realm.writeCopyTo(syncConfig)` now support copying a Flexible Sync Realm to another Flexible Sync Realm. 
 * [Sync] Added support for App functions, see documentation for more details. (Issue [#1110](https://github.com/realm/realm-kotlin/pull/1110))
 * [Sync] Added support for custom App Services Function authentication. (Issue [#741](https://github.com/realm/realm-kotlin/issues/741))
 * [Sync] Add support for accessing user auth profile metadata and custom data through the extension functions 'User.profileAsBsonDocument()' and 'User.customDataAsBsonDocument()'. (Issue [#750](https://github.com/realm/realm-kotlin/pull/750))
 * [Sync] Add support for `App.callResetPasswordFunction` (Issue [#744](https://github.com/realm/realm-kotlin/issues/744))
-* [Sync] Add support for connection state and connection state change listerners with `SyncSession.connectionState` and `SyncSession.connectionState(). (Issue [#429](https://github.com/realm/realm-kotlin/issues/429))
+* [Sync] Add support for connection state and connection state change listerners with `SyncSession.connectionState` and `SyncSession.connectionStateAsFlow(). (Issue [#429](https://github.com/realm/realm-kotlin/issues/429))
 
 ### Fixed
 * Windows binaries for JVM did not statically link the C++ runtime, which could lead to crashes if it wasn't preinstalled. (Issue [#1211](https://github.com/realm/realm-kotlin/pull/1211))

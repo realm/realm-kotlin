@@ -586,7 +586,7 @@ class SyncSessionTests {
     @Test
     fun connectionState_asFlow() = runBlocking {
         Realm.open(createSyncConfig(user)).use { realm: Realm ->
-            val flow = realm.syncSession.connectionState()
+            val flow = realm.syncSession.connectionStateAsFlow()
             // Adopted from realm-java tests ...
             // Sometimes the connection is already established and then we cannot expect any
             // updates, but as this is highly likely just safely ignore this to avoid flaky tests
@@ -607,7 +607,7 @@ class SyncSessionTests {
     fun connectionState_completeOnClose() = runBlocking {
         val realm = Realm.open(createSyncConfig(user))
         try {
-            val flow1 = realm.syncSession.connectionState()
+            val flow1 = realm.syncSession.connectionStateAsFlow()
             val job = async {
                 withTimeout(10.seconds) {
                     flow1.collect { }

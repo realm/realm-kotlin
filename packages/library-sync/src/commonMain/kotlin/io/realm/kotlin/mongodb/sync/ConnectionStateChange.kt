@@ -23,6 +23,6 @@ package io.realm.kotlin.mongodb.sync
  * @property oldState the sync session's old connection state.
  * @property newState the sync session's new connection state.
  *
- * @see SyncSession.connectionState
+ * @see SyncSession.connectionStateAsFlow
  */
 public data class ConnectionStateChange(val oldState: ConnectionState, val newState: ConnectionState)

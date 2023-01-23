@@ -73,6 +73,8 @@ public class RealmImpl private constructor(
     internal val writer =
         SuspendableWriter(this, writeDispatcherHolder.dispatcher)
 
+    // Internal flow to ease monitoring of realm state for closing active flows then the realm is
+    // closed.
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -298,6 +300,11 @@ public class RealmImpl private constructor(
             }
         }
     }
+
+    /**
+     * Internal state to be able to make a [State] flow that we can easily monitor and use to close
+     * flows within a coroutine context.
+     */
     internal enum class State { OPEN, CLOSED, }
 
     /**
