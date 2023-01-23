@@ -198,7 +198,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
                         updatePolicy
                     )
                 } catch (e: IllegalStateException) {
-                    // TODO Request core to remap this exception
+                    // TODO https://github.com/realm/realm-core/issues/6223
                     throw IllegalArgumentException(e.message, e.cause)
                 }
             }

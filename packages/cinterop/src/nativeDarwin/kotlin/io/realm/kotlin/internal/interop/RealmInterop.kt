@@ -148,7 +148,7 @@ private fun throwOnError() {
                 errorCode = error.error.value.toInt(),
                 message = error.message?.toKString(),
                 path = error.path?.toKString(),
-                userError = null // TODO set to the user defined error
+                userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
             )
 
             realm_clear_last_error()
@@ -529,7 +529,7 @@ actual object RealmInterop {
                                 errorCode = err.error.value.toInt(),
                                 message = err.message?.toKString(),
                                 path = err.path?.toKString(),
-                                userError = null // TODO set to the user defined error
+                                userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
                             )
                         )
                     } else {

@@ -170,7 +170,7 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
                 query,
                 queryArgs
             )
-            // TODO Request core to remap these exceptions
+            // TODO https://github.com/realm/realm-core/issues/6224
         } catch (e: IndexOutOfBoundsException) {
             throw IllegalArgumentException(e.message, e.cause)
         } catch (e: IllegalStateException) {

@@ -95,7 +95,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
                     convertToQueryArgs(arguments)
                 )
             } catch (e: IllegalStateException) {
-                // TODO Request core to remap this exception
+                // TODO https://github.com/realm/realm-core/issues/6224
                 throw IllegalArgumentException(e.message, e.cause)
             }
             ObjectQuery(appendedQuery, this@ObjectQuery)
@@ -203,7 +203,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
 
             try {
                 RealmInterop.realm_query_parse(realmReference.dbPointer, classKey, filter, queryArgs)
-                // TODO Request core to remap these exceptions
+                // TODO https://github.com/realm/realm-core/issues/6224
             } catch (e: IndexOutOfBoundsException) {
                 throw IllegalArgumentException(e.message, e.cause)
             } catch (e: IllegalStateException) {

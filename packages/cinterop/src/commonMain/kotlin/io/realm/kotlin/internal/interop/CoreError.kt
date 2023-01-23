@@ -29,9 +29,9 @@ class CoreError(
     val path: String?,
     val userError: Throwable?
 ) {
-    val category = CategoryFlag(categories) // TODO multiple categories?
+    val category = CategoryFlag(categories)
     val errorCode = ErrorCode.of(errorCode)
-    val message: String = "[$errorCode]: $message" // TODO review message output
+    val message: String = "[$errorCode]: $message"
 }
 
 data class CategoryFlag(val categoryCode: Int) {
