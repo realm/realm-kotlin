@@ -33,7 +33,6 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -200,24 +199,13 @@ class RealmNotificationsTests : NotificationTests {
     @Test
     fun closingRealmCompletesFlow() {
         runBlocking {
-            val c = Channel<RealmChange<*>>(1)
-            val cancelledChannel = Channel<Boolean>(1)
-
             val observer = async {
-                realm.asFlow()
-                    .onCompletion {
-                        // Signal completion
-                        cancelledChannel.send(true)
-                    }
-                    .collect {
-                        c.trySend(it)
-                    }
+                realm.asFlow().collect { }
             }
             realm.close()
-            cancelledChannel.receive()
-            assertTrue(observer.isCompleted)
-            observer.cancel()
-            c.close()
+            withTimeout(5.seconds) {
+                observer.await()
+            }
         }
     }
 

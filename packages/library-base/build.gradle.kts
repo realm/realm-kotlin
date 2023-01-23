@@ -32,9 +32,6 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
     transformJvm = false
 }
 
-// Directory for generated Version.kt holding VERSION constant
-val versionDirectory = "$buildDir/generated/source/version/"
-
 // Common Kotlin configuration
 kotlin {
     jvm()
@@ -61,7 +58,6 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
-            kotlin.srcDir(versionDirectory)
         }
 
         commonTest {
@@ -79,7 +75,6 @@ kotlin {
         val androidMain by getting {
             dependsOn(jvm)
             dependencies {
-                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
@@ -251,27 +246,4 @@ publishing {
     // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
     // completely, hence the .get() below.
     common.artifact(tasks.named("dokkaJar").get())
-}
-
-// Generate code with version constant
-tasks.create("generateSdkVersionConstant") {
-    val outputDir = file(versionDirectory)
-
-    inputs.property("version", project.version)
-    outputs.dir(outputDir)
-
-    doLast {
-        val versionFile = file("$outputDir/io/realm/kotlin/internal/Version.kt")
-        versionFile.parentFile.mkdirs()
-        versionFile.writeText(
-            """
-            // Generated file. Do not edit!
-            package io.realm.kotlin.internal
-            public const val SDK_VERSION: String = "${project.version}"
-            """.trimIndent()
-        )
-    }
-}
-tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
-    dependsOn("generateSdkVersionConstant")
 }

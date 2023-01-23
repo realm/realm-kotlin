@@ -62,6 +62,7 @@ private:
         , m_io_realm_kotlin_internal_interop_core_error_utils(env, "io/realm/kotlin/internal/interop/CoreErrorUtils", false)
         , m_io_realm_kotlin_internal_interop_sync_async_open_callback(env, "io/realm/kotlin/internal/interop/AsyncOpenCallback", false)
         , m_io_realm_kotlin_internal_interop_progress_callback(env, "io/realm/kotlin/internal/interop/ProgressCallback", false)
+        , m_io_realm_kotlin_internal_interop_app_callback(env, "io/realm/kotlin/internal/interop/AppCallback", false)
         , m_io_realm_kotlin_internal_interop_connection_state_change_callback(env, "io/realm/kotlin/internal/interop/ConnectionStateChangeCallback", false)
     {
     }
@@ -85,6 +86,7 @@ private:
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_core_error_utils;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_async_open_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_progress_callback;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_app_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_connection_state_change_callback;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
@@ -191,6 +193,11 @@ public:
     inline static const jni_util::JavaClass& progress_callback()
     {
         return instance()->m_io_realm_kotlin_internal_interop_progress_callback;
+    }
+
+    inline static const jni_util::JavaClass& app_callback()
+    {
+        return instance()->m_io_realm_kotlin_internal_interop_app_callback;
     }
 
     inline static const jni_util::JavaClass& connection_state_change_callback()

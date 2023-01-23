@@ -64,8 +64,10 @@ public class RealmImpl private constructor(
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
-    private val realmFlow =
-        MutableSharedFlow<RealmChange<Realm>>() // Realm notifications emit their initial state when subscribed to
+    private val realmFlow = MutableSharedFlow<RealmChange<Realm>>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     private val notifier =
         SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
     internal val writer =
