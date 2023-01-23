@@ -190,14 +190,6 @@ internal class SyncConfigurationImpl(
                     partitionValue.toJson()
                 )
             }
-//            val nativeSyncConfig: RealmSyncConfigurationPointer = if (partitionValue == null) {
-//                RealmInterop.realm_flx_sync_config_new(user.nativePointer)
-//            } else {
-//                RealmInterop.realm_sync_config_new(
-//                    user.nativePointer,
-//                    partitionValue.toJson()
-//                )
-//            }
 
             RealmInterop.realm_sync_config_set_error_handler(
                 nativeSyncConfig,
@@ -331,7 +323,6 @@ private class RecoverUnsyncedChangesHelper constructor(
                 realmAfter: LiveRealmPointer,
                 didRecover: Boolean
             ) {
-                println("-------> === onAfterReset 1")
                 // Needed to allow writes on the Mutable after Realm
                 RealmInterop.realm_begin_write(realmAfter)
 

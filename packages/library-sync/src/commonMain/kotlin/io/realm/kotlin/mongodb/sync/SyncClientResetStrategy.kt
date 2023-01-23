@@ -46,7 +46,7 @@ public interface AutomaticClientResetStrategy : SyncClientResetStrategy {
      * as in [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
      *
      * @param session [SyncSession] this error happened on.
-     * @param exception   [ClientResetRequiredException] the specific Client Reset error.
+     * @param exception [ClientResetRequiredException] the specific Client Reset error.
      */
     public fun onManualResetFallback(session: SyncSession, exception: ClientResetRequiredException)
 }
