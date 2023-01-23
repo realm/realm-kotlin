@@ -16,17 +16,30 @@
 
 package io.realm.kotlin.types
 
+/**
+ * TODO
+ */
+// TODO flow and Deleteable
 public interface RealmMap<K, V> : MutableMap<K, V>
 
+/**
+ * TODO
+ */
 public interface RealmDictionary<E> : RealmMap<String, E>
 
-internal class UnmanagedRealmDictionary<E> : RealmDictionary<E>, MutableMap<String, E> by mutableMapOf()
+internal typealias RealmMapEntrySet<K, V> = MutableSet<MutableMap.MutableEntry<K, V>>
 
-internal class ManagedRealmDictionary<E> : AbstractMutableMap<String, E>(), RealmDictionary<E> {
-    override val entries: MutableSet<MutableMap.MutableEntry<String, E>>
-        get() = TODO("Not yet implemented")
+internal typealias RealmMapMutableEntry<K, V> = MutableMap.MutableEntry<K, V>
 
-    override fun put(key: String, value: E): E? {
-        TODO("Not yet implemented")
-    }
-}
+/**
+ * Convenience alias for `MutableSet<MutableMap.MutableEntry<String, V>>`. This is the output
+ * produced by [RealmDictionary.entries] and represents a [RealmDictionary] in the form of a
+ * [MutableSet] of [RealmDictionaryMutableEntry] values.
+ */
+public typealias RealmDictionaryEntrySet<V> = RealmMapEntrySet<String, V>
+
+/**
+ * Convenience alias for `RealmMapMutableEntry<String, V>`. Represents the `String`-`V` pairs
+ * contained by a [RealmDictionary].
+ */
+public typealias RealmDictionaryMutableEntry<V> = RealmMapMutableEntry<String, V>

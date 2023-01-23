@@ -63,6 +63,7 @@ interface FrozenRealmT : RealmT
 interface RealmObjectT : CapiT
 interface RealmListT : CapiT
 interface RealmSetT : CapiT
+interface RealmMapT : CapiT
 interface RealmResultsT : CapiT
 interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
@@ -82,6 +83,7 @@ typealias FrozenRealmPointer = NativePointer<FrozenRealmT>
 typealias RealmObjectPointer = NativePointer<RealmObjectT>
 typealias RealmListPointer = NativePointer<RealmListT>
 typealias RealmSetPointer = NativePointer<RealmSetT>
+typealias RealmMapPointer = NativePointer<RealmMapT>
 typealias RealmResultsPointer = NativePointer<RealmResultsT>
 typealias RealmQueryPointer = NativePointer<RealmQueryT>
 typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
