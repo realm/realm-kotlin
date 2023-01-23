@@ -71,6 +71,19 @@ import kotlin.time.Duration.Companion.minutes
 
 class SyncClientResetIntegrationTests {
 
+    /**
+     * Defines a Client Reset testing environment. This class is used for both PBS and FLX since
+     * individual tests perform the same assertions, whether a PBS or a FLX app.
+     *
+     * Things to take into account:
+     * - [insertElement] is used to populate the realm and also to write objects during Client Reset
+     * to test the different states of the before and after realm instances.
+     * - [recoverData] does all things recovery: query for the object we expect to be in the before
+     * realm and copies the data to the after realm.
+     * - [configBuilderGenerator] allows custom configuration of the [TestApp]
+     * - [recoveryDisabled] indicates whether or not the app to be created should have recovery mode
+     * enabled.
+     */
     @Suppress("LongParameterList")
     class TestEnvironment<T : RealmObject> constructor(
         val clazz: KClass<T>,
@@ -86,6 +99,10 @@ class SyncClientResetIntegrationTests {
         private fun countObjects(realm: TypedRealm): Long = getObjects(realm).count().find()
         private val logChannel: Channel<ClientResetLogEvents> = Channel(5)
 
+        /**
+         * Runs the test. Steps as follows: create an app, create a user, log in execute your test
+         * logic.
+         */
         fun performTest(
             block: TestEnvironment<T>.(
                 syncMode: SyncMode,
@@ -125,9 +142,12 @@ class SyncClientResetIntegrationTests {
 
         private val defaultTimeout = 1.minutes
 
-        private fun createFlxTemplate(
+        /**
+         * Factory for FLX testing environments.
+         */
+        private fun createFlxEnvironment(
             appName: String,
-            openRealmTimeout: Duration = defaultTimeout,
+            openRealmTimeout: Duration,
             recoveryDisabled: Boolean = false
         ): TestEnvironment<out RealmObject> = TestEnvironment(
             clazz = FlexParentObject::class,
@@ -175,7 +195,10 @@ class SyncClientResetIntegrationTests {
             }
         )
 
-        private fun createPbsTemplate(
+        /**
+         * Factory for PBS testing environments.
+         */
+        private fun createPbsEnvironment(
             appName: String,
             recoveryDisabled: Boolean = false
         ): TestEnvironment<out RealmObject> = TestEnvironment(
@@ -213,6 +236,9 @@ class SyncClientResetIntegrationTests {
             }
         )
 
+        /**
+         * Starts a test for PBS given an environment and a custom test logic.
+         */
         fun performPbsTest(
             environment: TestEnvironment<out RealmObject>? = null,
             block: TestEnvironment<out RealmObject>.(
@@ -222,12 +248,15 @@ class SyncClientResetIntegrationTests {
                 builder: SyncConfiguration.Builder
             ) -> Unit
         ) {
-            environment ?: createPbsTemplate(TEST_APP_PARTITION)
+            environment ?: createPbsEnvironment(TEST_APP_PARTITION)
                 .also {
                     it.performTest(block)
                 }
         }
 
+        /**
+         * Starts a test for FLX given an environment and a custom test logic.
+         */
         fun performFlxTest(
             environment: TestEnvironment<out RealmObject>? = null,
             openRealmTimeout: Duration = defaultTimeout,
@@ -238,7 +267,7 @@ class SyncClientResetIntegrationTests {
                 builder: SyncConfiguration.Builder
             ) -> Unit
         ) {
-            environment ?: createFlxTemplate(TEST_APP_FLEX, openRealmTimeout)
+            environment ?: createFlxEnvironment(TEST_APP_FLEX, openRealmTimeout)
                 .also {
                     it.performTest(block)
                 }
@@ -262,8 +291,8 @@ class SyncClientResetIntegrationTests {
     }
 
     /**
-     * This class allows us to inspect if the default client reset strategies actually log the client
-     * reset events.
+     * This class allows us to inspect if the default client reset strategies actually log the
+     * client reset events.
      */
     private class ClientResetLoggerInspector(
         val channel: Channel<ClientResetLogEvents>
@@ -322,7 +351,7 @@ class SyncClientResetIntegrationTests {
 
     @Test
     fun discardUnsyncedChanges_discards_flx() {
-        performFlxTest{ syncMode, app, user, builder ->
+        performFlxTest { syncMode, app, user, builder ->
             discardUnsyncedChanges_discards(syncMode, app, user, builder)
         }
     }
@@ -1215,7 +1244,7 @@ class SyncClientResetIntegrationTests {
     @Test
     fun recoverOrDiscardUnsyncedChanges_discards_pbs() = runBlocking {
         val suffix = Random.nextLong(1000, 9999)
-        val environment = createPbsTemplate("PBS-NO-RECOVERY_$suffix", recoveryDisabled = true)
+        val environment = createPbsEnvironment("PBS-NO-RECOVERY_$suffix", recoveryDisabled = true)
         performPbsTest(environment) { syncMode, app, user, builder ->
             recoverOrDiscardUnsyncedChanges_discards(syncMode, app, user, builder)
         }
@@ -1224,7 +1253,7 @@ class SyncClientResetIntegrationTests {
     @Test
     fun recoverOrDiscardUnsyncedChanges_discards_flx() = runBlocking {
         val suffix = Random.nextLong(1000, 9999)
-        val environment = createPbsTemplate("PBS-NO-RECOVERY_$suffix", recoveryDisabled = true)
+        val environment = createPbsEnvironment("PBS-NO-RECOVERY_$suffix", recoveryDisabled = true)
         performFlxTest(environment) { syncMode, app, user, builder ->
             recoverOrDiscardUnsyncedChanges_discards(syncMode, app, user, builder)
         }
