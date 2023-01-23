@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.test
 
 import io.realm.kotlin.internal.platform.OS_NAME
@@ -26,8 +25,8 @@ import kotlin.test.assertTrue
 class PlatformInfoTest {
     @Test
     fun platformInfo() {
-        assertEquals("Native", RUNTIME)
-        assertEquals("NSMACHOperatingSystem", OS_NAME)
+        assertEquals("Native", RUNTIME.description)
+        assertEquals("iOS", OS_NAME)
         assertTrue(OS_VERSION.startsWith("Version "))
     }
 }

@@ -126,11 +126,8 @@ tasks.register("publishCIPackages") {
             }
             "android" -> {
                 dependsOn(
-                    ":cinterop:publishAndroidDebugPublicationToTestRepository",
                     ":cinterop:publishAndroidReleasePublicationToTestRepository",
-                    ":library-base:publishAndroidDebugPublicationToTestRepository",
                     ":library-base:publishAndroidReleasePublicationToTestRepository",
-                    ":library-sync:publishAndroidDebugPublicationToTestRepository",
                     ":library-sync:publishAndroidReleasePublicationToTestRepository",
                 )
             }

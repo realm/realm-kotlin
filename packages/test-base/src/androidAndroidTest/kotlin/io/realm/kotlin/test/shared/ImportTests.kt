@@ -20,16 +20,20 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor.classifiers
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -86,6 +90,7 @@ class ImportTests {
                 Boolean::class -> assertEquals(true, managed.booleanField)
                 Float::class -> assertEquals(3.14f, managed.floatField)
                 Double::class -> assertEquals(1.19840122, managed.doubleField)
+                Decimal128::class -> assertEquals(Decimal128("1.8446744073709551618E-6157"), managed.decimal128Field)
                 RealmInstant::class -> assertEquals(RealmInstant.from(100, 1000), managed.timestampField)
                 ObjectId::class -> assertEquals(ObjectId.from("507f1f77bcf86cd799439011"), managed.objectIdField)
                 BsonObjectId::class -> assertEquals(BsonObjectId("507f1f77bcf86cd799439011"), managed.bsonObjectIdField)
@@ -93,6 +98,7 @@ class ImportTests {
                 RealmObject::class -> assertEquals(null, managed.nullableObject)
                 ByteArray::class -> assertContentEquals(byteArrayOf(42), managed.binaryField)
                 MutableRealmInt::class -> assertEquals(MutableRealmInt.create(42), managed.mutableRealmIntField)
+                RealmAny::class -> assertEquals(null, managed.nullableRealmAnyField)
                 else -> error("Untested type: $type")
             }
         }
@@ -223,5 +229,51 @@ class ImportTests {
         }
 
         assertEquals(1L, realm.query(Sample::class).count().find())
+    }
+
+    @Test
+    fun importRealmAnyWithUnmanagedObject() {
+        val unmanagedObject = Sample().apply { stringField = "INNER" }
+        val realmAny = RealmAny.create(unmanagedObject)
+        val managedObject = realm.writeBlocking {
+            val container = Sample().apply {
+                stringField = "OUTER"
+                nullableRealmAnyField = realmAny
+            }
+            copyToRealm(container)
+        }
+
+        // Now we should have two Sample objects: the container and the INNER
+        assertEquals(2, realm.query<Sample>().count().find())
+        val expected = unmanagedObject.stringField
+        val actual = managedObject.nullableRealmAnyField
+            ?.asRealmObject<Sample>()
+            ?.stringField
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun importRealmAnyToManagedObjectWithUnmanagedObject() {
+        val unmanagedObject = Sample().apply { stringField = "INNER" }
+        val realmAny = RealmAny.create(unmanagedObject)
+        val managedObject = realm.writeBlocking {
+            val container = Sample().apply {
+                stringField = "OUTER"
+            }
+            copyToRealm(container)
+        }
+        val latestManaged = realm.writeBlocking {
+            val latestContainer = assertNotNull(findLatest(managedObject))
+            latestContainer.nullableRealmAnyField = realmAny
+            latestContainer
+        }
+
+        // Now we should have two Sample objects: the container and the INNER
+        assertEquals(2, realm.query<Sample>().count().find())
+        val expected = unmanagedObject.stringField
+        val actual = latestManaged.nullableRealmAnyField
+            ?.asRealmObject<Sample>()
+            ?.stringField
+        assertEquals(expected, actual)
     }
 }

@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.entities.sync
 
+import io.realm.kotlin.ext.backlinks
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlin.random.Random
@@ -24,4 +26,8 @@ class ChildPk : RealmObject {
     @Suppress("VariableNaming")
     @PrimaryKey var _id: String = Random.nextLong().toString()
     var name: String = "DEFAULT"
+    var age: Int = 0
+
+    var link: ChildPk? = null
+    val linkedFrom: RealmResults<ChildPk> by backlinks(ChildPk::link)
 }

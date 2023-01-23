@@ -31,12 +31,16 @@ buildscript {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
     }
 }
+
 apply(plugin = "kotlinx-atomicfu")
 // AtomicFu cannot transform JVM code. Throws
 // ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
 project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
     transformJvm = false
 }
+
+// Directory for generated Version.kt holding VERSION constant
+val versionDirectory = "$buildDir/generated/source/version/"
 
 // Types of builds supported
 enum class BuildType(val type: String, val buildDirSuffix: String) {
@@ -115,7 +119,9 @@ kotlin {
         }
     }
     android("android") {
-        publishLibraryVariants("release", "debug")
+        // Changing this will also requires an update to the publishCIPackages task
+        // in /packages/build.gradle.kts
+        publishLibraryVariants("release")
     }
     // Cinterops seems sharable across architectures (x86_64/arm) with option of differentiation in
     // the def, but not across platforms in the current target "hierarchy"
@@ -202,9 +208,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-
                 api("org.mongodb.kbson:kbson:${Versions.kbson}")
             }
+            kotlin.srcDir(versionDirectory)
         }
         val commonTest by getting
         val jvm by creating {
@@ -218,6 +224,10 @@ kotlin {
         }
         val androidMain by getting {
             dependsOn(jvm)
+            dependencies {
+                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+                implementation("com.getkeepsafe.relinker:relinker:${Versions.relinker}")
+            }
         }
         val androidTest by getting {
             dependencies {
@@ -384,6 +394,7 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
         add("-DREALM_ENABLE_SYNC=1")
         add("-DREALM_NO_TESTS=1")
         add("-DREALM_BUILD_LIB_ONLY=true")
+		add("-DREALM_CORE_SUBMODULE_BUILD=true")
     }
     return args.toTypedArray()
 }
@@ -688,4 +699,27 @@ realmPublish {
             "supposed to be consumed directly, but through " +
             "'io.realm.kotlin:gradle-plugin:${Realm.version}' instead."
     }
+}
+
+// Generate code with version constant
+tasks.create("generateSdkVersionConstant") {
+    val outputDir = file(versionDirectory)
+
+    inputs.property("version", project.version)
+    outputs.dir(outputDir)
+
+    doLast {
+        val versionFile = file("$outputDir/io/realm/kotlin/internal/Version.kt")
+        versionFile.parentFile.mkdirs()
+        versionFile.writeText(
+            """
+            // Generated file. Do not edit!
+            package io.realm.kotlin.internal
+            public const val SDK_VERSION: String = "${project.version}"
+            """.trimIndent()
+        )
+    }
+}
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    dependsOn("generateSdkVersionConstant")
 }

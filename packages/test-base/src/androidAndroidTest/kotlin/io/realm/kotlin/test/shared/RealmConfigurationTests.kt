@@ -135,6 +135,17 @@ class RealmConfigurationTests {
     }
 
     @Test
+    fun directory_withSpace() {
+        val realmDir = tmpDir + PATH_SEPARATOR + "dir with space"
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(realmDir)
+            .build()
+        assertEquals("$realmDir$PATH_SEPARATOR${Realm.DEFAULT_FILE_NAME}", config.path)
+        // Just verifying that we can open the realm
+        Realm.open(config).use { }
+    }
+
+    @Test
     fun directory_endsWithSeparator() {
         val realmDir = appFilesDirectory() + PATH_SEPARATOR
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
@@ -214,6 +225,18 @@ class RealmConfigurationTests {
         ) {
             builder.name("${PATH_SEPARATOR}foo.realm")
         }
+    }
+
+    @Test
+    fun name_withSpace() {
+        val name = "name with space.realm"
+        val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
+            .directory(tmpDir)
+            .name(name)
+            .build()
+        assertEquals("$tmpDir$PATH_SEPARATOR$name", config.path)
+        // Just verifying that we can open the realm
+        Realm.open(config).use { }
     }
 
     @Test

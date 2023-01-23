@@ -167,12 +167,12 @@ public object CoreExceptionConverter {
             is RealmCoreDeleteOpenRealmException,
             is RealmCoreFileAccessErrorException,
             is RealmCoreFilePermissionDeniedException,
+            is RealmCoreInvalidatedObjectException,
             is RealmCoreLogicException -> IllegalStateException("$message: RealmCoreException(${cause.message})", cause)
             is RealmCoreNoneException,
             is RealmCoreUnknownException,
             is RealmCoreNotClonableException,
             is RealmCoreWrongThreadException,
-            is RealmCoreInvalidatedObjectException,
             is RealmCoreInvalidPropertyException,
             is RealmCoreMissingPropertyValueException,
             is RealmCorePropertyTypeMismatchException,

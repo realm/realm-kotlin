@@ -60,11 +60,11 @@ object Versions {
         const val ndkVersion = "23.2.8568313"
     }
     const val androidxBenchmarkPlugin = "1.2.0-alpha05" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
-    const val androidxStartup = "1.1.0" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
+    const val androidxStartup = "1.1.1" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
     const val androidxJunit = "1.1.3" // https://maven.google.com/web/index.html#androidx.test.ext:junit
     const val androidxTest = "1.4.0" // https://maven.google.com/web/index.html#androidx.test:rules
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
-    const val atomicfu = "0.18.3" // https://github.com/Kotlin/kotlinx.atomicfu
+    const val atomicfu = "0.18.5" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.22.1 is available through the Android SDK.
     // Build also tested successfully with 3.21.4 (latest release).
@@ -80,16 +80,17 @@ object Versions {
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
     const val kotlin = "1.7.20" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
-    const val latestKotlin = "1.7.20" // https://kotlinlang.org/docs/eap.html#build-details
+    const val latestKotlin = "1.8.0-RC" // https://kotlinlang.org/docs/eap.html#build-details
     const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "2.1.2" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.2.0" // https://square.github.io/okio/#releases
+    const val relinker = "1.4.5" // https://github.com/KeepSafe/ReLinker
     const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
-    const val kbson = "0.1.0" // https://github.com/mongodb/kbson
+    const val kbson = "0.2.0" // https://github.com/mongodb/kbson
 }
 
 // Could be actual Dependency objects

@@ -1,6 +1,7 @@
 package io.realm.kotlin
 
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -23,7 +24,7 @@ public interface TypedRealm : BaseRealm {
      */
     public fun <T : BaseRealmObject> query(
         clazz: KClass<T>,
-        query: String = "TRUEPREDICATE",
+        query: String = TRUE_PREDICATE,
         vararg args: Any?
     ): RealmQuery<T>
 
