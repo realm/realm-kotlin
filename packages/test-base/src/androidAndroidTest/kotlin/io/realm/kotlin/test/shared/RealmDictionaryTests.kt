@@ -457,6 +457,13 @@ class RealmDictionaryTests {
         }
     }
 
+    @Test
+    fun values_retainAll() {
+        for (tester in managedTesters) {
+            tester.values_retainAll()
+        }
+    }
+
     // TODO missing in the C-API: https://github.com/realm/realm-core/issues/6181
     @Test
     fun containsKey() {
@@ -615,6 +622,7 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun values_iteratorConcurrentModification()
     fun values_remove()
     fun values_removeAll()
+    fun values_retainAll()
 
     /**
      * Asserts structural equality for two given collections. This is needed to evaluate equality
@@ -1363,6 +1371,40 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertFailsWith<RealmException> {
                     values.removeAll(values)
                 }
+            }
+        }
+    }
+
+    override fun values_retainAll() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val values = dictionary.values
+                val valuesToIntersect = listOf(dataSet[0].second)
+
+                // Ignore ByteArray and RealmObject since elements cannot be removed using the retainAll API
+                if (classifier != ByteArray::class && classifier != RealmObject::class) {
+                    // Check we get true after removing an element
+                    assertTrue(values.retainAll(valuesToIntersect))
+                    assertEquals(dictionary.size, values.size)
+                    assertEquals(valuesToIntersect.size, values.size)
+
+                    // Check we get false if we don't intersect anything
+                    assertFalse(values.retainAll(valuesToIntersect))
+                }
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val values = typeSafetyManager.getCollection(container)
+                .values
+
+            // Ignore ByteArray and RealmObject since elements cannot be removed using the retainAll API
+            if (classifier != ByteArray::class && classifier != RealmObject::class) {
+                assertFalse(values.retainAll(values))
             }
         }
     }
