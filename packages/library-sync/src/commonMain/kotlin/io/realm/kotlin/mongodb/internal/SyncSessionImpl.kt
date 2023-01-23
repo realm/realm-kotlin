@@ -52,7 +52,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 
 internal open class SyncSessionImpl(
-    private val realm: RealmImpl?,
+    initializerRealm: RealmImpl?,
     internal val nativePointer: RealmSyncSessionPointer
 ) : SyncSession {
 
@@ -65,18 +65,13 @@ internal open class SyncSessionImpl(
     // current implementation.
     constructor(ptr: RealmSyncSessionPointer) : this(null, ptr)
 
+    private val _realm: RealmImpl? = initializerRealm
+    private val realm: RealmImpl
+        get() = _realm ?: throw IllegalStateException("Operation is not allowed inside a `SyncSession.ErrorHandler`.")
+
     override val configuration: SyncConfiguration
         // TODO Get the sync config w/o ever throwing
-        get() {
-            // Currently `realm` is only `null` when a SyncSession is created for use inside an
-            // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
-            // out in the error message.
-            if (realm == null) {
-                throw IllegalStateException("The configuration is not available when inside a `SyncSession.ErrorHandler`.")
-            }
-
-            return realm.configuration as SyncConfiguration
-        }
+        get() = realm.configuration as SyncConfiguration
 
     override val user: User
         get() = configuration.user
@@ -118,47 +113,51 @@ internal open class SyncSessionImpl(
         if ((configuration as InternalConfiguration).isFlexibleSyncConfiguration) {
             throw UnsupportedOperationException("Progress listeners are not supported for Flexible Sync.")
         }
-
-        return callbackFlow {
+        return realm.scopedFlow {
+            callbackFlow {
+                val token: AtomicRef<Cancellable> =
+                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+                token.value = NotificationToken(
+                    RealmInterop.realm_sync_session_register_progress_notifier(
+                        nativePointer,
+                        when (direction) {
+                            Direction.DOWNLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD
+                            Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
+                        },
+                        progressMode == ProgressMode.INDEFINITELY
+                    ) { transferredBytes: Long, totalBytes: Long ->
+                        val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
+                        trySendWithBufferOverflowCheck(progress)
+                        if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
+                            close()
+                        }
+                    }
+                )
+                awaitClose {
+                    token.value.cancel()
+                }
+            }
+        }
+    }
+    @Suppress("invisible_member") // To be able to use RealmImpl.scopedFlow from library-base
+    override fun connectionState(): Flow<ConnectionStateChange> = realm.scopedFlow {
+        callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             token.value = NotificationToken(
-                RealmInterop.realm_sync_session_register_progress_notifier(
-                    nativePointer,
-                    when (direction) {
-                        Direction.DOWNLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD
-                        Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
-                    },
-                    progressMode == ProgressMode.INDEFINITELY
-                ) { transferredBytes: Long, totalBytes: Long ->
-                    val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
-                    trySendWithBufferOverflowCheck(progress)
-                    if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
-                        close()
-                    }
+                RealmInterop.realm_sync_session_register_connection_state_change_callback(
+                    nativePointer
+                ) { oldState: Int, newState: Int ->
+                    trySendWithBufferOverflowCheck(
+                        ConnectionStateChange(
+                            connectionStateFrom(CoreConnectionState.of(oldState)),
+                            connectionStateFrom(CoreConnectionState.of(newState))
+                        )
+                    )
                 }
             )
             awaitClose {
                 token.value.cancel()
             }
-        }
-    }
-
-    override fun connectionState(): Flow<ConnectionStateChange> = callbackFlow {
-        val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-        token.value = NotificationToken(
-            RealmInterop.realm_sync_session_register_connection_state_change_callback(
-                nativePointer
-            ) { oldState: Int, newState: Int ->
-                trySendWithBufferOverflowCheck(
-                    ConnectionStateChange(
-                        connectionStateFrom(CoreConnectionState.of(oldState)),
-                        connectionStateFrom(CoreConnectionState.of(newState))
-                    )
-                )
-            }
-        )
-        awaitClose {
-            token.value.cancel()
         }
     }
 
@@ -190,17 +189,6 @@ internal open class SyncSessionImpl(
      * @return `true` if the job completed before the timeout was hit, `false` otherwise.
      */
     private suspend fun waitForChanges(direction: TransferDirection, timeout: Duration): Boolean {
-        // Currently `realm` is only `null` when a SyncSession is created for use inside an
-        // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
-        // out in the error message.
-        if (realm == null) {
-            throw IllegalStateException(
-                """
-                Uploading and downloading changes is not allowed when inside 
-                a `SyncSession.ErrorHandler`.
-                """.trimIndent()
-            )
-        }
         Validation.require(timeout.isPositive()) {
             "'timeout' must be > 0. It was: $timeout"
         }

@@ -251,6 +251,27 @@ class ProgressListenerTests {
         }
     }
 
+    @Test
+    fun completesOnClose() = runBlocking {
+        val app = TestApp(TEST_APP_PARTITION)
+        val user = app.createUserAndLogIn()
+        val realm = Realm.open(createSyncConfig(user))
+        try {
+            val flow = realm.syncSession.progress(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+            val job = async {
+                withTimeout(10.seconds) {
+                    flow.collect { }
+                }
+            }
+            realm.close()
+            job.await()
+        } finally {
+            if (!realm.isClosed()) {
+                realm.close()
+            }
+        }
+    }
+
     private suspend fun Realm.writeSampleData(count: Int, idOffset: Int = 0, timeout: Duration? = null) {
         write {
             for (i in idOffset until count + idOffset) {

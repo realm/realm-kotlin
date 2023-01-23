@@ -43,6 +43,7 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -555,7 +556,7 @@ class SyncSessionTests {
 
             // Validate that the session was captured and that the configuration cannot be accessed.
             assertIs<SyncSession>(session)
-            assertFailsWithMessage<IllegalStateException>("The configuration is not available") {
+            assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a") {
                 session.configuration
             }
 
@@ -586,17 +587,37 @@ class SyncSessionTests {
     fun connectionState_asFlow() = runBlocking {
         Realm.open(createSyncConfig(user)).use { realm: Realm ->
             val flow = realm.syncSession.connectionState()
-            val initialState = realm.syncSession.connectionState
             // Adopted from realm-java tests ...
             // Sometimes the connection is already established and then we cannot expect any
-            // updates, but as this is highly likely just safely ignore this to avoid flaky tests on CI
-            if (initialState != ConnectionState.CONNECTED) {
-                val (oldState, newState) = withTimeout(10.seconds) { flow.first() }
+            // updates, but as this is highly likely just safely ignore this to avoid flaky tests
+            // on CI
+            try {
+                val (oldState, newState) = withTimeout(5.seconds) { flow.first() }
                 assertNotEquals(oldState, newState)
                 assertEquals(realm.syncSession.connectionState, newState)
-            } else {
+            } catch (e: TimeoutCancellationException) {
+                assertTrue { realm.syncSession.connectionState == ConnectionState.CONNECTED }
                 // Make some visible sign that we have skipped waiting for events
                 println("Skipping flow tests as connection is already established")
+            }
+        }
+    }
+
+    @Test
+    fun connectionState_completeOnClose() = runBlocking {
+        val realm = Realm.open(createSyncConfig(user))
+        try {
+            val flow1 = realm.syncSession.connectionState()
+            val job = async {
+                withTimeout(10.seconds) {
+                    flow1.collect { }
+                }
+            }
+            realm.close()
+            job.await()
+        } finally {
+            if (!realm.isClosed()) {
+                realm.close()
             }
         }
     }
