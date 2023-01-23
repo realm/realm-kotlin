@@ -433,8 +433,7 @@ expect object RealmInterop {
     ): RealmValue
 
     // FIXME OPTIMIZE Get many
-    fun realm_results_get_object(results: RealmResultsPointer, index: Long): Link
-    fun MemAllocator.realm_results_get_value(results: RealmResultsPointer, index: Long): RealmValue
+    fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer

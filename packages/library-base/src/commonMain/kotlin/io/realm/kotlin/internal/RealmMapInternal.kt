@@ -22,7 +22,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
-import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get_value
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
 import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmResultsPointer
@@ -54,7 +54,6 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     override val size: Int
         get() = operator.size
 
-    // TODO update RealmResults to hold primitive values
     override val values: MutableCollection<V> by lazy {
         operator.realmReference.checkClosed()
         val resultsPointer = RealmInterop.realm_dictionary_to_results(nativePointer)
@@ -117,7 +116,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun getValue(resultsPointer: RealmResultsPointer, index: Int): V? {
         return getterScope {
             with(valueConverter) {
-                val transport = realm_results_get_value(resultsPointer, index.toLong())
+                val transport = realm_results_get(resultsPointer, index.toLong())
                 realmValueToPublic(transport)
             } as V
         }
@@ -227,8 +226,7 @@ internal class PrimitiveMapOperator<K, V> constructor(
     }
 }
 
-@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
-internal class RealmObjectMapOperator<K, V>(
+internal class RealmObjectMapOperator<K, V> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val valueConverter: RealmValueConverter<V>,
@@ -343,35 +341,31 @@ internal class ManagedRealmDictionary<E> constructor(
 // ----------------------------------------------------------------------
 
 /**
- * The semantics of [MutableMap.values] establish a connection between these values and the map itself,
- * which representing its values as a [MutableCollection] of [K] values.
+ * The semantics of [MutableMap.values] establish a connection between these values and the map
+ * itself. This collection represents the map's values as a [MutableCollection] of [K] values.
  *
- * The default implementation of `MutableMap.values` allows removals but no additions - which makes
- * sense since keys are nowhere to be found in this data structure, so we disallow them as well.
+ * The default implementation of `MutableMap.values` in Kotlin allows removals but no additions -
+ * which makes sense since keys are nowhere to be found in this data structure.
  *
- * The implementation is carried out by calling `realm_dictionary_to_results`, which (surprisingly)
- * returns a `realm_results_t` struct. Since the current `RealmResults` implementation is bound by
+ * The implementation uses `realm_dictionary_to_results` internally, which (surprisingly) returns a
+ * `realm_results_t` struct. Since the current `RealmResults` implementation is bound by
  * `RealmObject` we cannot use them to contain a map's values since maps of primitive values are
  * also supported. A separate implementation these `realm_results_t` was chosen over adapting the
  * current results infrastructure since the collection must be mutable too, and the current results
  * implementation is not.
  *
- * TODO implement as deleteable?
  * TODO allow observing for all types or only objects?
  */
 internal class RealmMapValues<K, V> constructor(
     private val nativePointer: RealmMapPointer,
     private val resultsPointer: RealmResultsPointer,
     private val operator: MapOperator<K, V>
-) : MutableCollection<V>, AbstractList<V>() {
+) : MutableCollection<V>, AbstractCollection<V>() {
 
     override val size: Int
         get() = operator.size
 
     private val entrySet by lazy { RealmMapEntrySetImpl(nativePointer, operator) }
-
-    @Suppress("UNCHECKED_CAST")
-    override fun get(index: Int): V = operator.getValue(resultsPointer, index) as V
 
     override fun add(element: V): Boolean =
         throw UnsupportedOperationException("Adding values to a dictionary through 'dictionary.values' is not allowed.")
@@ -383,8 +377,11 @@ internal class RealmMapValues<K, V> constructor(
 
     override fun iterator(): MutableIterator<V> =
         object : RealmMapGenericIterator<K, V>(operator) {
+            override fun next(): V = calculateNext()
+
             @Suppress("UNCHECKED_CAST")
-            override fun next(): V = calculateNext().value as V
+            override fun getNext(position: Int): V =
+                operator.getValue(resultsPointer, position) as V
         }
 
     override fun remove(element: V): Boolean {
@@ -399,7 +396,7 @@ internal class RealmMapValues<K, V> constructor(
         }
 
     override fun retainAll(elements: Collection<V>): Boolean {
-        // FIXME optimize: highly inefficient but we are lacking proper functions to find and delete values by position or if they are contained
+        // FIXME optimize, consider requesting a C-API function that does all this (though it is a very niche case)
         val elementsToDelete = entrySet.fold(mutableListOf<V>()) { accumulator, element ->
             accumulator.also {
                 val entryValue = element.value
@@ -428,6 +425,8 @@ internal abstract class RealmMapGenericIterator<K, T>(
     private var expectedModCount = operator.modCount // Current modifications in the map
     private var cursor = 0 // The position returned by next()
     private var lastReturned = -1 // The last known returned position
+
+    abstract fun getNext(position: Int): T
 
     override fun hasNext(): Boolean {
         operator.realmReference.checkClosed()
@@ -465,7 +464,7 @@ internal abstract class RealmMapGenericIterator<K, T>(
     }
 
     // Returns an entry which can be used by the children iterators
-    protected fun calculateNext(): MutableMap.MutableEntry<K, *> {
+    protected fun calculateNext(): T {
         operator.realmReference.checkClosed()
         checkConcurrentModification()
 
@@ -473,10 +472,10 @@ internal abstract class RealmMapGenericIterator<K, T>(
         if (position >= operator.size) {
             throw IndexOutOfBoundsException("Cannot access index $position when size is ${operator.size}. Remember to check hasNext() before using next().")
         }
-        val entry = operator.getEntry(position)
+        val next = getNext(position)
         lastReturned = position
         cursor = position + 1
-        return ManagedRealmMapEntry(entry.first, operator)
+        return next
     }
 
     private fun checkConcurrentModification() {
@@ -540,9 +539,13 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
 
     override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> =
         object : RealmMapGenericIterator<K, MutableMap.MutableEntry<K, V>>(operator) {
+            override fun next(): MutableMap.MutableEntry<K, V> = calculateNext()
+
             @Suppress("UNCHECKED_CAST")
-            override fun next(): MutableMap.MutableEntry<K, V> =
-                calculateNext() as MutableMap.MutableEntry<K, V>
+            override fun getNext(position: Int): MutableMap.MutableEntry<K, V> {
+                val pair = operator.getEntry(position)
+                return ManagedRealmMapEntry(pair.first, operator) as MutableMap.MutableEntry<K, V>
+            }
         }
 
     override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean =

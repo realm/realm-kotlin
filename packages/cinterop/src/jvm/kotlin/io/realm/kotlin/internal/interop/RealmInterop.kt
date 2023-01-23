@@ -1510,13 +1510,7 @@ actual object RealmInterop {
     }
 
     // TODO OPTIMIZE Getting a range
-    actual fun realm_results_get_object(results: RealmResultsPointer, index: Long): Link {
-        val value = realm_value_t()
-        realmc.realm_results_get(results.cptr(), index, value)
-        return value.asLink()
-    }
-
-    actual fun MemAllocator.realm_results_get_value(
+    actual fun MemAllocator.realm_results_get(
         results: RealmResultsPointer,
         index: Long
     ): RealmValue {

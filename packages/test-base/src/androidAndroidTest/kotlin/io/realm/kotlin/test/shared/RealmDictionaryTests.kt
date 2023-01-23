@@ -403,13 +403,6 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun values_get() {
-        for (tester in managedTesters) {
-            tester.values_get()
-        }
-    }
-
-    @Test
     fun values_addThrows() {
         // No need to be exhaustive here
         managedTesters[0].values_addTrows()
@@ -614,7 +607,6 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun entries_iteratorConcurrentModification()
     fun entries_remove()
     fun entries_removeAll()
-    fun values_get()
     fun values_addTrows()
     fun values_clear()
     fun values_iteratorNext() // This tests also hasNext
@@ -1075,35 +1067,6 @@ internal abstract class ManagedDictionaryTester<T>(
         }
     }
 
-    override fun values_get() {
-        val dataSet = typeSafetyManager.dataSetToLoad
-
-        errorCatcher {
-            realm.writeBlocking {
-                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
-                dictionary.putAll(dataSet)
-                val values = dictionary.values
-                dataSet.forEach {
-                    assertTrue(structuralContains(values, it.second))
-                }
-                dictionary.forEach {
-                    assertTrue(structuralContains(values, it.value))
-                }
-            }
-        }
-
-        assertContainerAndCleanup { container ->
-            val dictionary = typeSafetyManager.getCollection(container)
-            val values = dictionary.values
-            dataSet.forEach {
-                assertTrue(structuralContains(values, it.second))
-            }
-            dictionary.forEach {
-                assertTrue(structuralContains(values, it.value))
-            }
-        }
-    }
-
     override fun values_addTrows() {
         val dataSet = typeSafetyManager.dataSetToLoad
 
@@ -1476,7 +1439,10 @@ internal class ByteArrayTester(
         assertContentEquals(expectedValue, actualValue)
     }
 
-    override fun structuralContains(receiver: Collection<ByteArray?>, element: ByteArray?): Boolean {
+    override fun structuralContains(
+        receiver: Collection<ByteArray?>,
+        element: ByteArray?
+    ): Boolean {
         return receiver.fold(false) { accumulator, value ->
             value.contentEquals(element) or accumulator
         }

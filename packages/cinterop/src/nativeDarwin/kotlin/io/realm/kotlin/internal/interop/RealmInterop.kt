@@ -1367,21 +1367,7 @@ actual object RealmInterop {
         return RealmValue(struct)
     }
 
-    actual fun realm_results_get_object(results: RealmResultsPointer, index: Long): Link {
-        memScoped {
-            val value = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_results_get(
-                    results.cptr(),
-                    index.toULong(),
-                    value.ptr
-                )
-            )
-            return value.asLink()
-        }
-    }
-
-    actual fun MemAllocator.realm_results_get_value(results: RealmResultsPointer, index: Long): RealmValue {
+    actual fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue {
         memScoped {
             val value = alloc<realm_value_t>()
             checkedBooleanResult(
