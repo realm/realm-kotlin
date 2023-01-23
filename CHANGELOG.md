@@ -68,7 +68,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * None.
 
 ### Fixed
-* None.
+* Fix missing `Realm.asFlow()`-events from remote updates on synced realms. (Issue [#1070](https://github.com/realm/realm-kotlin/issues/1070))
 
 ### Compatibility
 * This release is compatible with the following Kotlin releases:
@@ -82,7 +82,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Added test wrapper for Gradle 7.6 as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 
 
 ## 1.5.2 (2023-01-10)
