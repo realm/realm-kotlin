@@ -179,7 +179,9 @@ internal class ManagedRealmSet<E>(
 /**
  * Operator interface abstracting the connection between the API and and the interop layer.
  */
-internal interface SetOperator<E> : CollectionOperator<E> {
+internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
+
+    override val nativePointer: RealmSetPointer
 
     fun add(
         element: E,
@@ -211,16 +213,16 @@ internal interface SetOperator<E> : CollectionOperator<E> {
 internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<E>,
-    private val nativePointer: RealmSetPointer
+    override val valueConverter: RealmValueConverter<E>,
+    override val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            with(converter) {
+            with(valueConverter) {
                 val transport = realm_set_get(nativePointer, index.toLong())
-                with(converter) {
+                with(valueConverter) {
                     realmValueToPublic(transport)
                 }
             } as E
@@ -233,7 +235,7 @@ internal class PrimitiveSetOperator<E>(
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
         return inputScope {
-            with(converter) {
+            with(valueConverter) {
                 val transport = publicToRealmValue(element)
                 RealmInterop.realm_set_insert(nativePointer, transport)
             }
@@ -242,7 +244,7 @@ internal class PrimitiveSetOperator<E>(
 
     override fun contains(element: E): Boolean {
         return inputScope {
-            with(converter) {
+            with(valueConverter) {
                 val transport = publicToRealmValue(element)
                 RealmInterop.realm_set_find(nativePointer, transport)
             }
@@ -253,15 +255,15 @@ internal class PrimitiveSetOperator<E>(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<E> =
-        PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
+        PrimitiveSetOperator(mediator, realmReference, valueConverter, nativePointer)
 }
 
 internal class RealmObjectSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<E>,
-    private val clazz: KClass<E & Any>,
-    private val nativePointer: RealmSetPointer
+    override val valueConverter: RealmValueConverter<E>,
+    override val nativePointer: RealmSetPointer,
+    private val clazz: KClass<E & Any>
 ) : SetOperator<E> {
 
     override fun add(
@@ -285,7 +287,7 @@ internal class RealmObjectSetOperator<E>(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            with(converter) {
+            with(valueConverter) {
                 realm_set_get(nativePointer, index.toLong())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
@@ -317,7 +319,7 @@ internal class RealmObjectSetOperator<E>(
     ): SetOperator<E> {
         val converter =
             converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectSetOperator(mediator, realmReference, converter, clazz, nativePointer)
+        return RealmObjectSetOperator(mediator, realmReference, converter, nativePointer, clazz)
     }
 }
 

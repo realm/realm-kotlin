@@ -16,8 +16,11 @@
 
 package io.realm.kotlin.ext
 
+import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.UnmanagedRealmSet
+import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmDictionaryEntrySet
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 
@@ -47,4 +50,35 @@ public fun <T> Iterable<T>.toRealmSet(): RealmSet<T> {
         }
     }
     return UnmanagedRealmSet<T>().apply { addAll(this@toRealmSet) }
+}
+
+/**
+ * Instantiates an **unmanaged** [RealmDictionary] containing all the elements of this iterable of
+ * [Pair]s of [String]s and [T]s.
+ */
+public fun <T> Iterable<Pair<String, T>>.toRealmDictionary(): RealmDictionary<T> {
+    if (this is Collection) {
+        return when (size) {
+            0 -> UnmanagedRealmDictionary()
+            1 -> realmDictionaryOf(if (this is List) get(0) else iterator().next())
+            else -> UnmanagedRealmDictionary<T>().apply {
+                this.putAll(this@toRealmDictionary)
+            }
+        }
+    }
+    return UnmanagedRealmDictionary<T>().apply {
+        this.putAll(this@toRealmDictionary)
+    }
+}
+
+/**
+ * Instantiates an **unmanaged** [RealmDictionary] containing all the elements of the receiver
+ * [RealmDictionaryEntrySet].
+ */
+public fun <T> RealmDictionaryEntrySet<T>.toRealmDictionary(): RealmDictionary<T> {
+    return when (size) {
+        0 -> UnmanagedRealmDictionary()
+        else -> map { Pair(it.key, it.value) }
+            .toRealmDictionary()
+    }
 }

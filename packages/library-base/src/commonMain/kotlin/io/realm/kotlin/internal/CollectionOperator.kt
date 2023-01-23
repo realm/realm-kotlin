@@ -16,10 +16,14 @@
 
 package io.realm.kotlin.internal
 
-internal interface CollectionOperator<E> {
+import io.realm.kotlin.internal.interop.CapiT
+import io.realm.kotlin.internal.interop.NativePointer
+
+internal interface CollectionOperator<E, T> {
     val mediator: Mediator
     val realmReference: RealmReference
-    val converter: RealmValueConverter<E>
+    val valueConverter: RealmValueConverter<E>
+    val nativePointer: NativePointer<out CapiT>
 }
 
 internal enum class CollectionOperatorType {
