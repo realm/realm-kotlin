@@ -140,7 +140,7 @@ public class RealmImpl private constructor(
                 }
             }
             if (!realmStateFlow.tryEmit(State.OPEN)) {
-                log.warn("Cannot signal internal close")
+                log.warn("Cannot signal internal open")
             }
         } catch (ex: Throwable) {
             // Something went wrong initializing Realm, delete the file, so initialization logic
