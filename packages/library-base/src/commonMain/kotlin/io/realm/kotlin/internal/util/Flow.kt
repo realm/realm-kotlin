@@ -37,7 +37,7 @@ internal fun <T, S> Flow<T>.terminateWhen(
                 if (it.isClosed || completionPredicate(it.getOrThrow())) {
                     this@channelFlow.close()
                     it.exceptionOrNull()
-                        ?.let { this@channelFlow.cancel("Could retrieve element", it) }
+                        ?.let { this@channelFlow.cancel("Couldn't retrieve element", it) }
                     false
                 } else {
                     true
@@ -47,7 +47,7 @@ internal fun <T, S> Flow<T>.terminateWhen(
                 if (it.isClosed) {
                     this@channelFlow.close()
                     it.exceptionOrNull()
-                        ?.let { this@channelFlow.cancel("Could retrieve element", it) }
+                        ?.let { this@channelFlow.cancel("Couldn't retrieve element", it) }
                     false
                 } else {
                     this@channelFlow.trySendWithBufferOverflowCheck(it.getOrThrow())?.let {
