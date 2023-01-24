@@ -50,6 +50,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
@@ -726,29 +727,30 @@ class CopyFromRealmTests {
         accessor: KMutableProperty1<BaseRealmObject, Any?>
     ): Any? {
         val type: KType = accessor.returnType
-        type.classifier
         if (type.isMarkedNullable) {
             return null
         } else {
-            return when (type.toString()) {
+            return when (type.classifier) {
                 // Make sure these values are different than default values in Sample class
-                "kotlin.String" -> "foo"
-                "kotlin.Byte" -> 0x5.toByte()
-                "kotlin.Char" -> 'b'
-                "kotlin.Short" -> 3.toShort()
-                "kotlin.Int" -> 4
-                "kotlin.Long" -> 7L
-                "kotlin.Boolean" -> false
-                "kotlin.Float" -> 1.23.toFloat()
-                "kotlin.Double" -> 1.234
-                "kotlin.ByteArray" -> byteArrayOf(43)
-                "io.realm.kotlin.types.RealmInstant" -> RealmInstant.from(1, 100)
-                "io.realm.kotlin.types.ObjectId" -> ObjectId.from("635a1a95184a200db8a07bfc")
-                "io.realm.kotlin.types.RealmUUID" -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
-                "io.realm.kotlin.types.MutableRealmInt" -> MutableRealmInt.create(7)
-                "io.realm.kotlin.types.RealmAny" -> RealmAny.create(1)
-                "org.mongodb.kbson.BsonObjectId" -> BsonObjectId("635a1a95184a200db8a07bfc")
-                "io.realm.kotlin.entities.Sample" -> null // Object references are not part of this test, so just return null
+                String::class -> "foo"
+                Byte::class -> 0x5.toByte()
+                Char::class -> 'b'
+                Short::class -> 3.toShort()
+                Int::class -> 4
+                Long::class -> 7L
+                Boolean::class -> false
+                Float::class -> 1.23.toFloat()
+                Double::class -> 1.234
+                ByteArray::class -> byteArrayOf(43)
+                RealmInstant::class -> RealmInstant.from(1, 100)
+                ObjectId::class -> ObjectId.from("635a1a95184a200db8a07bfc")
+                RealmUUID::class -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
+                MutableRealmInt::class -> MutableRealmInt.create(7)
+                RealmAny::class -> RealmAny.create(1)
+                BsonObjectId::class -> BsonObjectId("635a1a95184a200db8a07bfc")
+                Decimal128::class -> Decimal128("1.8446744073709551618E-615")
+                Sample::class -> null // Object references are not part of this test, so just return null
+
                 else -> fail("Missing support for $type")
             }
         }
@@ -761,23 +763,24 @@ class CopyFromRealmTests {
     ): List<Any?> {
         val type: KType = accessor.returnType
         val genericType: KType = type.arguments.first().type!! // This will only support a single explicit generic arguments.
-        val list: MutableList<Any?> = when (genericType.toString().removeSuffix("?")) {
-            "kotlin.String" -> realmListOf("foo", "bar")
-            "kotlin.Byte" -> realmListOf(1.toByte(), 2.toByte())
-            "kotlin.Char" -> realmListOf('a', 'b')
-            "kotlin.Short" -> realmListOf(3.toShort(), 4.toShort())
-            "kotlin.Int" -> realmListOf(5, 6)
-            "kotlin.Long" -> realmListOf(7.toLong(), 8.toLong())
-            "kotlin.Boolean" -> realmListOf(true, false)
-            "kotlin.Float" -> realmListOf(1.23.toFloat(), 1.34.toFloat())
-            "kotlin.Double" -> realmListOf(1.234, 1.345)
-            "kotlin.ByteArray" -> realmListOf(byteArrayOf(42), byteArrayOf(43))
-            "io.realm.kotlin.types.RealmInstant" -> realmListOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
-            "io.realm.kotlin.types.ObjectId" -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
-            "io.realm.kotlin.types.RealmUUID" -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
-            "org.mongodb.kbson.BsonObjectId" -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
-            "io.realm.kotlin.types.RealmAny" -> realmListOf(RealmAny.create(1))
-            "io.realm.kotlin.entities.Sample" -> realmListOf() // Object references are not part of this test
+        val list: MutableList<Any?> = when (genericType.classifier) {
+            String::class -> realmListOf("foo", "bar")
+            Byte::class -> realmListOf(1.toByte(), 2.toByte())
+            Char::class -> realmListOf('a', 'b')
+            Short::class -> realmListOf(3.toShort(), 4.toShort())
+            Int::class -> realmListOf(5, 6)
+            Long::class -> realmListOf(7.toLong(), 8.toLong())
+            Boolean::class -> realmListOf(true, false)
+            Float::class -> realmListOf(1.23.toFloat(), 1.34.toFloat())
+            Double::class -> realmListOf(1.234, 1.345)
+            ByteArray::class -> realmListOf(byteArrayOf(42), byteArrayOf(43))
+            RealmInstant::class -> realmListOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
+            ObjectId::class -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
+            RealmUUID::class -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
+            BsonObjectId::class -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            Decimal128::class -> realmListOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
+            RealmAny::class -> realmListOf(RealmAny.create(1))
+            Sample::class -> realmListOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
         }
         if (prop.isNullable) {
@@ -793,23 +796,24 @@ class CopyFromRealmTests {
     ): Set<Any?> {
         val type: KType = accessor.returnType
         val genericType: KType = type.arguments.first().type!!
-        val set: MutableSet<Any?> = when (genericType.toString().removeSuffix("?")) {
-            "kotlin.String" -> realmSetOf("foo", "bar")
-            "kotlin.Byte" -> realmSetOf(1.toByte(), 2.toByte())
-            "kotlin.Char" -> realmSetOf('a', 'b')
-            "kotlin.Short" -> realmSetOf(3.toShort(), 4.toShort())
-            "kotlin.Int" -> realmSetOf(5, 6)
-            "kotlin.Long" -> realmSetOf(7.toLong(), 8.toLong())
-            "kotlin.Boolean" -> realmSetOf(true, false)
-            "kotlin.Float" -> realmSetOf(1.23.toFloat(), 1.34.toFloat())
-            "kotlin.Double" -> realmSetOf(1.234, 1.345)
-            "kotlin.ByteArray" -> realmSetOf(byteArrayOf(42), byteArrayOf(43))
-            "io.realm.kotlin.types.RealmInstant" -> realmSetOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
-            "io.realm.kotlin.types.ObjectId" -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
-            "io.realm.kotlin.types.RealmUUID" -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
-            "org.mongodb.kbson.BsonObjectId" -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
-            "io.realm.kotlin.types.RealmAny" -> realmSetOf(RealmAny.create(1))
-            "io.realm.kotlin.entities.Sample" -> realmSetOf() // Object references are not part of this test
+        val set: MutableSet<Any?> = when (genericType.classifier) {
+            String::class -> realmSetOf("foo", "bar")
+            Byte::class -> realmSetOf(1.toByte(), 2.toByte())
+            Char::class -> realmSetOf('a', 'b')
+            Short::class -> realmSetOf(3.toShort(), 4.toShort())
+            Int::class -> realmSetOf(5, 6)
+            Long::class -> realmSetOf(7.toLong(), 8.toLong())
+            Boolean::class -> realmSetOf(true, false)
+            Float::class -> realmSetOf(1.23.toFloat(), 1.34.toFloat())
+            Double::class -> realmSetOf(1.234, 1.345)
+            ByteArray::class -> realmSetOf(byteArrayOf(42), byteArrayOf(43))
+            RealmInstant::class -> realmSetOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
+            ObjectId::class -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
+            RealmUUID::class -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
+            BsonObjectId::class -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
+            Decimal128::class -> realmSetOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
+            RealmAny::class -> realmSetOf(RealmAny.create(1))
+            Sample::class -> realmSetOf() // Object references are not part of this test
             else -> fail("Missing support for $genericType")
         }
         if (prop.isNullable) {

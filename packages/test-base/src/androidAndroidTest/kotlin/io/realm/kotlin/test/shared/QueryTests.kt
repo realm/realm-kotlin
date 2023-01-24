@@ -56,6 +56,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
@@ -135,6 +136,7 @@ class QueryTests {
                     booleanField = false
                     floatField = 1F
                     doubleField = 1.0
+                    decimal128Field = Decimal128("2.8446744073709551618E-6151")
                     timestampField = RealmInstant.from(100, 1001)
                     objectIdField = ObjectId.from("507f191e810c19729de860eb")
                     bsonObjectIdField = BsonObjectId("507f191e810c19729de860eb")
@@ -185,6 +187,10 @@ class QueryTests {
                 RealmStorageType.DOUBLE -> {
                     checkQuery(QuerySample::doubleField, 1.0)
                 }
+                RealmStorageType.DECIMAL128 -> {
+                    checkQuery(QuerySample::decimal128Field, Decimal128("2.8446744073709551618E-6151"))
+                }
+
                 RealmStorageType.TIMESTAMP -> {
                     checkQuery(QuerySample::timestampField, RealmInstant.from(100, 1001))
                 }
@@ -1149,7 +1155,27 @@ class QueryTests {
 
     // ------------------
     // Aggregators - sum
-    // ------------------
+    // --------timestampField----------
+    @Test
+    fun verifySupportedSumAggregators() {
+        assertEquals(
+            setOf(
+                Byte::class,
+                Char::class,
+                Short::class,
+                Int::class,
+                Long::class,
+                Float::class,
+                Double::class,
+                BsonDecimal128::class
+            ),
+            TypeDescriptor.classifiers.filter { (_, coreFieldType) ->
+                coreFieldType.aggregatorSupport.contains(
+                    TypeDescriptor.AggregatorSupport.SUM
+                )
+            }.keys
+        )
+    }
 
     @Test
     fun sum_find_emptyTable() {
@@ -1273,12 +1299,12 @@ class QueryTests {
     fun sum_throwsIfRealmInstant() {
         assertFailsWith<IllegalArgumentException> {
             realm.query<QuerySample>()
-                .sum(timestampDescriptor.property.name, timestampDescriptor.clazz)
+                .sum(QuerySample::timestampField.name, RealmInstant::class)
         }
 
         assertFailsWith<IllegalArgumentException> {
             realm.query<QuerySample>()
-                .sum(nullableTimestampDescriptor.property.name, nullableTimestampDescriptor.clazz)
+                .sum(QuerySample::nullableTimestampField.name, RealmInstant::class)
         }
     }
 
@@ -1404,6 +1430,32 @@ class QueryTests {
     // ------------------
     // Aggregators - max
     // ------------------
+    @Test
+    fun verifySupportedMaxAggregators() {
+        assertEquals(
+            setOf(
+                Byte::class,
+                Char::class,
+                Short::class,
+                Int::class,
+                Long::class,
+                Float::class,
+                Double::class,
+                BsonDecimal128::class,
+                RealmInstant::class,
+            ),
+            TypeDescriptor.classifiers.filter { (_, coreFieldType) ->
+                coreFieldType.aggregatorSupport.contains(
+                    TypeDescriptor.AggregatorSupport.MAX
+                )
+            }.keys
+        )
+    }
+
+    @Test
+    fun verifyMinMaxAggragatorSupport() {
+        assertEquals(supportedMinTypes, supportedMaxTypes)
+    }
 
     @Test
     fun max_find_emptyTable() {
@@ -1414,7 +1466,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptors) {
+        for (propertyDescriptor in allPropertyDescriptorsForMax) {
             assertions(propertyDescriptor)
         }
     }
@@ -1444,7 +1496,7 @@ class QueryTests {
         }
 
         // Iterate only over nullable properties and insert only null values in said properties
-        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForMax) {
             assertions(nullablePropertyDescriptor)
         }
     }
@@ -1494,7 +1546,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptors) {
+        for (propertyDescriptor in allPropertyDescriptorsForMax) {
             assertions(propertyDescriptor)
         }
     }
@@ -1557,7 +1609,7 @@ class QueryTests {
 
     @Test
     fun max_asFlow() {
-        for (propertyDescriptor in allPropertyDescriptors) {
+        for (propertyDescriptor in allPropertyDescriptorsForMax) {
             asFlowAggregatorAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MAX, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MAX, propertyDescriptor)
@@ -1578,6 +1630,27 @@ class QueryTests {
     // ------------------
     // Aggregators - min
     // ------------------
+    @Test
+    fun verifySupportedMinAggregators() {
+        assertEquals(
+            setOf(
+                Byte::class,
+                Char::class,
+                Short::class,
+                Int::class,
+                Long::class,
+                Float::class,
+                Double::class,
+                BsonDecimal128::class,
+                RealmInstant::class,
+            ),
+            TypeDescriptor.classifiers.filter { (_, coreFieldType) ->
+                coreFieldType.aggregatorSupport.contains(
+                    TypeDescriptor.AggregatorSupport.MIN
+                )
+            }.keys
+        )
+    }
 
     @Test
     fun min_find_emptyTable() {
@@ -1588,7 +1661,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptors) {
+        for (propertyDescriptor in allPropertyDescriptorsForMin) {
             assertions(propertyDescriptor)
         }
     }
@@ -1618,7 +1691,7 @@ class QueryTests {
         }
 
         // Iterate only over nullable properties and insert only null values in said properties
-        for (nullablePropertyDescriptor in nullablePropertyDescriptors) {
+        for (nullablePropertyDescriptor in nullablePropertyDescriptorsForMin) {
             assertions(nullablePropertyDescriptor)
         }
     }
@@ -1649,7 +1722,7 @@ class QueryTests {
         }
 
         // Iterate over all properties
-        for (propertyDescriptor in allPropertyDescriptors) {
+        for (propertyDescriptor in allPropertyDescriptorsForMin) {
             assertions(propertyDescriptor)
         }
     }
@@ -1712,7 +1785,7 @@ class QueryTests {
 
     @Test
     fun min_asFlow() {
-        for (propertyDescriptor in allPropertyDescriptors) {
+        for (propertyDescriptor in allPropertyDescriptorsForMin) {
             asFlowAggregatorAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowDeleteObservableAssertions(AggregatorQueryType.MIN, propertyDescriptor)
             asFlowCancel(AggregatorQueryType.MIN, propertyDescriptor)
@@ -2038,6 +2111,12 @@ class QueryTests {
                 values as List<Double?>,
                 index
             )
+            Decimal128::class -> setProperty(
+                instance,
+                property as KMutableProperty1<C, Decimal128?>,
+                values as List<Decimal128?>,
+                index
+            )
             Float::class -> setProperty(
                 instance,
                 property as KMutableProperty1<C, Float?>,
@@ -2127,6 +2206,11 @@ class QueryTests {
                 AggregatorQueryType.MIN -> DOUBLE_VALUES.minOrNull()!!
                 AggregatorQueryType.MAX -> DOUBLE_VALUES.maxOrNull()!!
                 AggregatorQueryType.SUM -> DOUBLE_VALUES.sum()
+            }
+            Decimal128::class -> when (type) {
+                AggregatorQueryType.MIN -> DECIMAL128_MIN_VALUE
+                AggregatorQueryType.MAX -> DECIMAL128_MAX_VALUE
+                AggregatorQueryType.SUM -> Decimal128("1.800000000000000000000000000000000E+601")
             }
             Float::class -> when (type) {
                 AggregatorQueryType.MIN -> FLOAT_VALUES.minOrNull()!!
@@ -2699,6 +2783,16 @@ class QueryTests {
             Double::class,
             if (isNullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
         )
+        Decimal128::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableDecimal128Field else QuerySample::decimal128Field,
+            Decimal128::class,
+            if (isNullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
+        )
+        RealmInstant::class -> PropertyDescriptor(
+            if (isNullable) QuerySample::nullableTimestampField else QuerySample::timestampField,
+            RealmInstant::class,
+            if (isNullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
+        )
         Byte::class -> PropertyDescriptor(
             if (isNullable) QuerySample::nullableByteField else QuerySample::byteField,
             Byte::class,
@@ -2717,37 +2811,20 @@ class QueryTests {
         else -> throw IllegalArgumentException("Invalid type descriptor: $classifier")
     }
 
-    private val basePropertyDescriptors =
-        TypeDescriptor.aggregateClassifiers.keys.map { getDescriptor(it) }
+    private val supportedSumTypes = TypeDescriptor.classifiers.filter { (_, coreFieldType) -> coreFieldType.aggregatorSupport.contains(TypeDescriptor.AggregatorSupport.SUM) }.keys
+    private val propertyDescriptorForSum = supportedSumTypes.map { getDescriptor(it, false) }
+    private val nullablePropertyDescriptorsForSum = supportedSumTypes.map { getDescriptor(it, true) }
+    private val allPropertyDescriptorsForSum: List<PropertyDescriptor> = propertyDescriptorForSum + nullablePropertyDescriptorsForSum
 
-    private val timestampDescriptor = PropertyDescriptor(
-        QuerySample::timestampField,
-        RealmInstant::class,
-        TIMESTAMP_VALUES
-    )
+    private val supportedMinTypes = TypeDescriptor.classifiers.filter { (_, coreFieldType) -> coreFieldType.aggregatorSupport.contains(TypeDescriptor.AggregatorSupport.MIN) }.keys
+    private val propertyDescriptorForMin = supportedMinTypes.map { getDescriptor(it, false) }
+    private val nullablePropertyDescriptorsForMin = supportedMinTypes.map { getDescriptor(it, true) }
+    private val allPropertyDescriptorsForMin: List<PropertyDescriptor> = propertyDescriptorForMin + nullablePropertyDescriptorsForMin
 
-    private val propertyDescriptors = basePropertyDescriptors + timestampDescriptor
-
-    private val propertyDescriptorsForSum = basePropertyDescriptors
-
-    private val nullableBasePropertyDescriptors =
-        TypeDescriptor.aggregateClassifiers.keys.map { getDescriptor(it, true) }
-
-    private val nullableTimestampDescriptor = PropertyDescriptor(
-        QuerySample::nullableTimestampField,
-        RealmInstant::class,
-        TIMESTAMP_VALUES
-    )
-
-    private val nullablePropertyDescriptors =
-        nullableBasePropertyDescriptors + nullableTimestampDescriptor
-
-    private val nullablePropertyDescriptorsForSum = nullableBasePropertyDescriptors
-
-    private val allPropertyDescriptorsForSum =
-        propertyDescriptorsForSum + nullablePropertyDescriptorsForSum
-
-    private val allPropertyDescriptors = propertyDescriptors + nullablePropertyDescriptors
+    private val supportedMaxTypes = TypeDescriptor.classifiers.filter { (_, coreFieldType) -> coreFieldType.aggregatorSupport.contains(TypeDescriptor.AggregatorSupport.MIN) }.keys
+    private val propertyDescriptorForMax = supportedMaxTypes.map { getDescriptor(it, false) }
+    private val nullablePropertyDescriptorsForMax = supportedMaxTypes.map { getDescriptor(it, true) }
+    private val allPropertyDescriptorsForMax: List<PropertyDescriptor> = propertyDescriptorForMax + nullablePropertyDescriptorsForMax
 
     // TODO figure out whether we need to test aggregators on RealmList<Number> fields
     //  see https://github.com/realm/realm-core/issues/5137
@@ -2802,6 +2879,7 @@ class QuerySample() : RealmObject {
     var booleanField: Boolean = true
     var floatField: Float = 0F
     var doubleField: Double = 0.0
+    var decimal128Field: Decimal128 = Decimal128("1.84467440737095E-6157")
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f191e810c19729de860ea")
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
@@ -2819,6 +2897,7 @@ class QuerySample() : RealmObject {
     var nullableBooleanField: Boolean? = null
     var nullableFloatField: Float? = null
     var nullableDoubleField: Double? = null
+    var nullableDecimal128Field: Decimal128? = null
     var nullableTimestampField: RealmInstant? = null
     var nullableObjectIdField: ObjectId? = null
     var nullableBsonObjectIdField: BsonObjectId? = null
@@ -2834,6 +2913,7 @@ class QuerySample() : RealmObject {
     var booleanListField: RealmList<Boolean> = realmListOf()
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
+    var decimal128ListField: RealmList<Decimal128> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
@@ -2848,6 +2928,7 @@ class QuerySample() : RealmObject {
     var nullableBooleanListField: RealmList<Boolean?> = realmListOf()
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
+    var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
@@ -2863,6 +2944,6 @@ internal val QUERY_REALM_ANY_OBJECT = RealmAny.create(
 // Use this for QUERY tests as this file does exhaustive testing on all RealmAny types
 internal val QUERY_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + QUERY_REALM_ANY_OBJECT
 
-internal val REALM_ANY_SUM = Decimal128("81") // sum of numerics present in PRIMITIVE_REALM_ANY_VALUES = -12+13+14+15+16L+17F+18.0
+internal val REALM_ANY_SUM = Decimal128("82") // sum of numerics present in PRIMITIVE_REALM_ANY_VALUES = -12+13+14+15+16L+17F+18.0+Decimal128("1")
 internal val REALM_ANY_MIN = RealmAny.create(false) // Boolean is the "lowest" type when comparing Mixed types
 internal val REALM_ANY_MAX = QUERY_REALM_ANY_OBJECT // RealmObject is "highest" when comparing Mixed types

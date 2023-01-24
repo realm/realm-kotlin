@@ -58,7 +58,7 @@ class SetTests {
                 "nonNullableSet.kt",
                 NON_NULLABLE_SET_CODE.format(nonNullableType)
             )
-            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
         }
     }
 
@@ -103,7 +103,7 @@ class SetTests {
         supportedPrimitiveTypes.forEach { primitiveType ->
             val result =
                 createFileAndCompile("nullableTypeSet.kt", NULLABLE_TYPE_CODE.format(primitiveType))
-            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
         }
     }
 
@@ -151,6 +151,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonDecimal128
 
 import java.lang.Exception
 
@@ -168,6 +169,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonDecimal128
 
 import java.lang.Exception
 
@@ -185,6 +187,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonDecimal128
 
 import java.lang.Exception
 

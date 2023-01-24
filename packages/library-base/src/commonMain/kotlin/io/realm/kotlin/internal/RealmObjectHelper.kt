@@ -63,6 +63,7 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -200,6 +201,7 @@ internal object RealmObjectHelper {
                 is Timestamp -> setValueTransportByKey(obj, key, timestampTransport(value))
                 is Float -> setValueTransportByKey(obj, key, floatTransport(value))
                 is Double -> setValueTransportByKey(obj, key, doubleTransport(value))
+                is Decimal128 -> setValueTransportByKey(obj, key, decimal128Transport(value))
                 is BsonObjectId -> setValueTransportByKey(
                     obj,
                     key,
@@ -271,6 +273,11 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Double? = getterScope { getValue(obj, propertyName)?.let { realmValueToDouble(it) } }
+
+    internal inline fun getDecimal128(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Decimal128? = getterScope { getValue(obj, propertyName)?.let { realmValueToDecimal128(it) } }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -1258,6 +1265,7 @@ internal object RealmObjectHelper {
                         PropertyType.RLM_PROPERTY_TYPE_BINARY,
                         PropertyType.RLM_PROPERTY_TYPE_FLOAT,
                         PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                        PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
                         PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                         PropertyType.RLM_PROPERTY_TYPE_UUID -> {

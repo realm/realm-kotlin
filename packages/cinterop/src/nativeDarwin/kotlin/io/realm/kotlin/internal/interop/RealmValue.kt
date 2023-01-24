@@ -61,10 +61,9 @@ actual value class RealmValue actual constructor(
         }
     }
 
-    actual inline fun getDecimal128Array(): ULongArray = ULongArray(2).apply {
-        (0 until 2).map {
-            this[it] = value.decimal128.w[it].toULong()
-        }
+    actual inline fun getDecimal128Array(): ULongArray {
+        val w = value.decimal128.w
+        return ulongArrayOf(w[0], w[1])
     }
 
     actual inline fun getLink(): Link = value.asLink()

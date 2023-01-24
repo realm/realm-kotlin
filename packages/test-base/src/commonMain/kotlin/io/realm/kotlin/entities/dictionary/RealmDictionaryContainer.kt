@@ -23,6 +23,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 
 class RealmDictionaryContainer : RealmObject {
@@ -42,6 +43,7 @@ class RealmDictionaryContainer : RealmObject {
     var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
     var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
+    var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
 
     var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
     var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
@@ -57,6 +59,7 @@ class RealmDictionaryContainer : RealmObject {
     var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
     var nullableUUIDDictionaryField: RealmDictionary<RealmUUID?> = realmDictionaryOf()
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
+    var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
     var nullableObjectDictionaryField: RealmDictionary<RealmDictionaryContainer?> = realmDictionaryOf()
 //    var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf() // TODO
 
@@ -77,6 +80,7 @@ class RealmDictionaryContainer : RealmObject {
             BsonObjectId::class to RealmDictionaryContainer::bsonObjectIdDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
             RealmUUID::class to RealmDictionaryContainer::uuidDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
             ByteArray::class to RealmDictionaryContainer::binaryDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
+            Decimal128::class to RealmDictionaryContainer::decimal128DictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
         ).toMap()
 
         @Suppress("UNCHECKED_CAST")
@@ -95,7 +99,8 @@ class RealmDictionaryContainer : RealmObject {
             BsonObjectId::class to RealmDictionaryContainer::nullableBsonObjectIdDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             RealmUUID::class to RealmDictionaryContainer::nullableUUIDDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             ByteArray::class to RealmDictionaryContainer::nullableBinaryDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
-            RealmObject::class to RealmDictionaryContainer::nullableObjectDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>
+            Decimal128::class to RealmDictionaryContainer::nullableDecimal128DictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
+            RealmObject::class to RealmDictionaryContainer::nullableObjectDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
 //            RealmAny::class to RealmDictionaryContainer::nullableRealmAnyDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>> // TODO
         ).toMap()
     }
