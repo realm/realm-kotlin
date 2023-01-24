@@ -1368,17 +1368,15 @@ actual object RealmInterop {
     }
 
     actual fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue {
-        memScoped {
-            val value = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_results_get(
-                    results.cptr(),
-                    index.toULong(),
-                    value.ptr
-                )
+        val value = allocRealmValueT()
+        checkedBooleanResult(
+            realm_wrapper.realm_results_get(
+                results.cptr(),
+                index.toULong(),
+                value.ptr
             )
-            return RealmValue(value)
-        }
+        )
+        return RealmValue(value)
     }
 
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
