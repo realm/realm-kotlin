@@ -139,7 +139,9 @@ public class RealmImpl private constructor(
                     updateRealmPointer(realmReference)
                 }
             }
-            realmStateFlow.tryEmit(State.OPEN)
+            if (!realmStateFlow.tryEmit(State.OPEN)) {
+                log.warn("Cannot signal internal close")
+            }
         } catch (ex: Throwable) {
             // Something went wrong initializing Realm, delete the file, so initialization logic
             // can run again.
