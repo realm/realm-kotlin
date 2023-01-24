@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required(VERSION 3.15.0)
 project(RealmKotlin)
 find_package(JNI)
 set(SWIG_JNI_GENERATED "${CMAKE_SOURCE_DIR}/../../../jni-swig-stub/build/generated/sources/jni")
@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 if (CMAKE_SYSTEM_NAME MATCHES "^Windows")
     MESSAGE("Building JNI for Windows")
     set(CMAKE_CXX_STANDARD_REQUIRED ON)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
     set(REALM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/src" "${JAVA_INCLUDE_PATH}" "${JAVA_INCLUDE_PATH}/win32" "${CINTEROP_JNI}" "${SWIG_JNI_GENERATED}" "${SWIG_JNI_HELPERS}")
 
 elseif (CMAKE_SYSTEM_NAME MATCHES "^Android")

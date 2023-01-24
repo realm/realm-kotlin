@@ -1270,6 +1270,22 @@ actual object RealmInterop {
         realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
     }
 
+    actual fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_call_reset_password_function(
+            app.cptr(),
+            email,
+            newPassword,
+            serializedEjsonPayload,
+            callback
+        )
+    }
+
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
             // Stop the session immediately when the Realm is closed, so the lifecycle of the
