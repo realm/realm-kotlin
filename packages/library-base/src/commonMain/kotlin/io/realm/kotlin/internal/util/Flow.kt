@@ -25,18 +25,29 @@ import kotlinx.coroutines.selects.whileSelect
  * Flow wrapper that will terminate the flow once the [completionFlow] emits an element that
  * satisfies the [completionPredicate].
  */
-internal fun <T, S> Flow<T>.terminateWhen(completionFlow: Flow<S>, completionPredicate: (S) -> Boolean): Flow<T> =
+internal fun <T, S> Flow<T>.terminateWhen(
+    completionFlow: Flow<S>,
+    completionPredicate: (S) -> Boolean
+): Flow<T> =
     channelFlow<T> {
         val completionChannel = completionFlow.produceIn(this@channelFlow)
         val elementChannel = produceIn(this@channelFlow)
         whileSelect {
-            completionChannel.onReceive {
-                if (completionPredicate(it)) this@channelFlow.close()
-                true
+            completionChannel.onReceiveCatching {
+                if (it.isClosed || completionPredicate(it.getOrThrow())) {
+                    this@channelFlow.close()
+                    it.exceptionOrNull()
+                        ?.let { this@channelFlow.cancel("Could retrieve element", it) }
+                    false
+                } else {
+                    true
+                }
             }
             elementChannel.onReceiveCatching {
                 if (it.isClosed) {
                     this@channelFlow.close()
+                    it.exceptionOrNull()
+                        ?.let { this@channelFlow.cancel("Could retrieve element", it) }
                     false
                 } else {
                     this@channelFlow.trySendWithBufferOverflowCheck(it.getOrThrow())?.let {
