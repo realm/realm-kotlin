@@ -16,19 +16,13 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.query.ObjectBoundQuery
-import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
+import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 
 /**
  * Class that binds a RealmResults to an Object lifecycle. Flows resulting from this class would be
@@ -77,26 +71,4 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
  * deleted. It is used on sub-queries and backlinks.
  */
 internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObject>): Flow<T> =
-    channelFlow {
-        // Listen for object deletions
-        reference.asFlow()
-            .map { it is DeletedObject }
-            .onStart { false }
-            .distinctUntilChanged()
-            // Combine object deletion events with the actual result changes
-            .combine(this@bind) { deleted: Boolean, resultsChange: T -> deleted to resultsChange }
-            // We just collect the flow instead of the using the fusing functionality like produceIn
-            // as the fusing operations will fuse backpressure strategy to our internal flows and
-            // we cannot allow that as we rely on some of the internal events for the logic to work.
-            .collect { (deleted, resultChange) ->
-                if (deleted) {
-                    close()
-                } else {
-                    trySendWithBufferOverflowCheck(resultChange)?.let {
-                        // Cancel scope if the user does not keep up to signal that we are loosing
-                        // events
-                        cancel(it)
-                    }
-                }
-            }
-    }
+    this.terminateWhen(reference.asFlow()) { it is DeletedObject }
