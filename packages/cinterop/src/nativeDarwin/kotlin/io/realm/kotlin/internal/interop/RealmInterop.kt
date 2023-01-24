@@ -2577,6 +2577,30 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_call_reset_password_function(
+                    app.cptr(),
+                    email,
+                    newPassword.toRString(this),
+                    serializedEjsonPayload,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
+    }
+
     actual fun realm_sync_config_new(
         user: RealmUserPointer,
         partition: String

@@ -33,13 +33,13 @@ import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonBoolean
 import org.mongodb.kbson.BsonDateTime
+import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonDouble
 import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonInt64
 import org.mongodb.kbson.BsonInvalidOperationException
 import org.mongodb.kbson.BsonNull
-import org.mongodb.kbson.BsonNumber
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonRegularExpression
 import org.mongodb.kbson.BsonString
@@ -57,7 +57,6 @@ class BsonEncoderTests {
     private class DecoderAsserter(
         val type: KClass<*>,
         val value: Any? = null,
-        val bsonType: KClass<*>,
         val bsonValue: BsonValue
     )
 
@@ -71,61 +70,56 @@ class BsonEncoderTests {
                 Byte::class -> DecoderAsserter(
                     type = Byte::class,
                     value = 10.toByte(),
-                    bsonType = BsonNumber::class,
                     bsonValue = BsonInt32(10.toByte().toInt()),
                 )
                 Short::class -> DecoderAsserter(
                     type = Short::class,
                     value = 20.toShort(),
-                    bsonType = BsonNumber::class,
                     bsonValue = BsonInt32(20.toShort().toInt())
                 )
                 Int::class -> DecoderAsserter(
                     type = Int::class,
                     value = 30,
-                    bsonType = BsonNumber::class,
                     bsonValue = BsonInt32(30)
                 )
                 Long::class -> DecoderAsserter(
                     type = Long::class,
                     value = 40L,
-                    bsonType = BsonNumber::class,
                     bsonValue = BsonInt64(40L)
                 )
                 Float::class -> DecoderAsserter(
                     type = Float::class,
                     value = 50F,
-                    bsonType = BsonNumber::class,
                     bsonValue = BsonDouble(50F.toDouble())
                 )
                 Double::class -> DecoderAsserter(
                     type = Double::class,
                     value = 2.0,
-                    bsonType = BsonNumber::class,
                     bsonValue = BsonDouble(2.0)
+                )
+                BsonDecimal128::class -> DecoderAsserter(
+                    type = BsonDecimal128::class,
+                    value = BsonDecimal128("1.2345E678"),
+                    bsonValue = BsonDecimal128("1.2345E678")
                 )
                 Boolean::class -> DecoderAsserter(
                     type = Boolean::class,
                     value = true,
-                    bsonType = BsonBoolean::class,
                     bsonValue = BsonBoolean.TRUE_VALUE
                 )
                 String::class -> DecoderAsserter(
                     type = String::class,
                     value = "hello world",
-                    bsonType = BsonString::class,
                     bsonValue = BsonString("hello world")
                 )
                 Char::class -> DecoderAsserter(
                     type = Char::class,
                     value = 'c',
-                    bsonType = BsonString::class,
                     bsonValue = BsonString('c'.toString())
                 )
                 ByteArray::class -> DecoderAsserter(
                     type = ByteArray::class,
                     value = byteArrayOf(0x00, 0x01, 0x03),
-                    bsonType = BsonBinary::class,
                     bsonValue = BsonBinary(
                         BsonBinarySubType.BINARY,
                         byteArrayOf(0x00, 0x01, 0x03)
@@ -134,13 +128,11 @@ class BsonEncoderTests {
                 ByteArray::class -> DecoderAsserter(
                     type = ByteArray::class,
                     value = null,
-                    bsonType = BsonNull::class,
                     bsonValue = BsonNull
                 )
                 MutableRealmInt::class -> DecoderAsserter(
                     type = MutableRealmInt::class,
                     value = MutableRealmInt.create(15),
-                    bsonType = BsonNumber::class,
                     bsonValue = BsonInt64(15),
                 )
                 RealmUUID::class -> RealmUUID.from("ffffffff-ffff-ffff-ffff-ffffffffffff")
@@ -148,7 +140,6 @@ class BsonEncoderTests {
                         DecoderAsserter(
                             type = RealmUUID::class,
                             value = uuid,
-                            bsonType = BsonBinary::class,
                             bsonValue = BsonBinary(BsonBinarySubType.UUID_STANDARD, uuid.bytes),
                         )
                     }
@@ -156,7 +147,6 @@ class BsonEncoderTests {
                     DecoderAsserter(
                         type = ObjectId::class,
                         value = objectId,
-                        bsonType = BsonObjectId::class,
                         bsonValue = objectId.asBsonObjectId(),
                     )
                 }
@@ -167,7 +157,6 @@ class BsonEncoderTests {
                     DecoderAsserter(
                         type = RealmInstant::class,
                         value = instant,
-                        bsonType = BsonDateTime::class,
                         bsonValue = BsonDateTime(instant.toDuration().inWholeMilliseconds),
                     )
                 }
@@ -178,7 +167,6 @@ class BsonEncoderTests {
     private val listValueAsserter = DecoderAsserter(
         type = List::class,
         value = primitiveAsserters.map { it.value },
-        bsonType = BsonArray::class,
         bsonValue = BsonArray(primitiveAsserters.map { it.bsonValue })
     )
 
@@ -188,7 +176,6 @@ class BsonEncoderTests {
         value = primitiveAsserters.mapIndexed { index, asserter ->
             "$index" to asserter.value
         }.toMap(),
-        bsonType = BsonDocument::class,
         bsonValue = BsonDocument(
             primitiveAsserters.mapIndexed { index, asserter ->
                 "$index" to asserter.bsonValue
@@ -276,7 +263,7 @@ class BsonEncoderTests {
     @Test
     fun decodeFromBsonElement_throwsWrongType() {
         primitiveAsserters.forEach { asserter ->
-            assertFailsWithMessage<IllegalArgumentException>("A '${asserter.bsonType.simpleName}' is required to deserialize a '${asserter.type.simpleName}'. Type 'REGULAR_EXPRESSION' found.") {
+            assertFailsWithMessage<BsonInvalidOperationException>("Cannot decode BsonValue") {
                 BsonEncoder.decodeFromBsonValue(
                     resultClass = asserter.type,
                     bsonValue = BsonRegularExpression("")
@@ -311,7 +298,7 @@ class BsonEncoderTests {
         numericalClassifiers.map {
             it.key as KClass<*> to BsonDouble(1.3)
         }.forEach { (clazz: KClass<*>, bsonValue: BsonValue) ->
-            assertFailsWithMessage<BsonInvalidOperationException>("Could not convert DOUBLE to a ${clazz.simpleName} without losing precision") {
+            assertFailsWithMessage<BsonInvalidOperationException>("Cannot decode BsonValue") {
                 BsonEncoder.decodeFromBsonValue(
                     resultClass = clazz,
                     bsonValue = bsonValue

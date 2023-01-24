@@ -18,16 +18,4 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
           package="io.realm.kotlin">
-
-    <application>
-        <provider
-                android:name="androidx.startup.InitializationProvider"
-                tools:node="merge"
-                android:authorities="${applicationId}.androidx-startup"
-                android:exported="false">
-            <meta-data
-                    android:name="io.realm.kotlin.internal.platform.RealmInitializer"
-                    android:value="androidx.startup" />
-        </provider>
-    </application>
 </manifest>
