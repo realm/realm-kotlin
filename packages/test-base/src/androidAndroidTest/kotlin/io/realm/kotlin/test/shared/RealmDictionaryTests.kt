@@ -39,6 +39,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -500,10 +501,7 @@ class RealmDictionaryTests {
         }
         BsonObjectId::class -> if (nullable) {
             NULLABLE_BSON_OBJECT_ID_VALUES.mapIndexed { i, value ->
-                Pair(
-                    KEYS_FOR_NULLABLE[i],
-                    value
-                )
+                Pair(KEYS_FOR_NULLABLE[i], value)
             }
         } else {
             BSON_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
@@ -523,7 +521,11 @@ class RealmDictionaryTests {
         } else {
             NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
         }
-        // TODO Decimal128
+        Decimal128::class -> if (nullable) {
+            NULLABLE_DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+        } else {
+            DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+        }
 //        RealmAny::class -> SET_REALM_ANY_VALUES // RealmAny cannot be non-nullable
 //        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
         else -> TODO("Missing classifier for '$classifier'")

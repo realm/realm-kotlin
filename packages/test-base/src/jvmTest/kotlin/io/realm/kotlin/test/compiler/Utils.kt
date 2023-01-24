@@ -48,6 +48,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonObjectId
 
 import java.lang.Exception

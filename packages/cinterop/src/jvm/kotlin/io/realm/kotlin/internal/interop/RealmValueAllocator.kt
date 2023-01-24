@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
+import org.mongodb.kbson.Decimal128
 
 /**
  * Singleton object as we just rely on GC'ed realm_value_ts and don't keep track of the actual
@@ -49,6 +50,13 @@ object JvmMemAllocator : MemAllocator {
 
     override fun doubleTransport(value: Double?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_DOUBLE) { dnum = it }
+
+    override fun decimal128Transport(value: Decimal128?): RealmValue =
+        createTransport(value, realm_value_type_e.RLM_TYPE_DECIMAL128) {
+            decimal128 = realm_decimal128_t().apply {
+                w = ulongArrayOf(it.low, it.high).toLongArray()
+            }
+        }
 
     override fun objectIdTransport(value: ByteArray?): RealmValue =
         createTransport(value, realm_value_type_e.RLM_TYPE_OBJECT_ID) {

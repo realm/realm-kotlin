@@ -27,6 +27,7 @@ import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -115,6 +116,7 @@ class NullabilityTests {
                 testProperty(Nullability::longNullability, 123L)
                 testProperty(Nullability::floatNullable, 123.456f)
                 testProperty(Nullability::doubleField, 123.456)
+                testProperty(Nullability::decimal128Field, Decimal128("123.456"))
                 testProperty(Nullability::objectField, null)
                 testProperty(Nullability::timestampField, RealmInstant.from(42, 420))
                 testProperty(Nullability::objectIdField, ObjectId.from("507f191e810c19729de860ea"))

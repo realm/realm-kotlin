@@ -54,6 +54,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.test.runTest
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -196,6 +197,13 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.set(name, null)
                                 assertEquals(null, dynamicSample.getNullableValue<Double>(name))
                             }
+                            RealmStorageType.DECIMAL128 -> {
+                                val value = Decimal128("1.84467440731231618E-615")
+                                dynamicSample.set(name, value)
+                                assertEquals(value, dynamicSample.getNullableValue(name))
+                                dynamicSample.set(name, null)
+                                assertEquals(null, dynamicSample.getNullableValue<Decimal128>(name))
+                            }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.from(100, 100)
                                 dynamicSample.set(name, value)
@@ -325,6 +333,11 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.set(name, 4.2)
                                 assertEquals(4.2, dynamicSample.getValue(name))
                             }
+                            RealmStorageType.DECIMAL128 -> {
+                                val value = Decimal128("1.84467440731231618E-615")
+                                dynamicSample.set(name, value)
+                                assertEquals(value, dynamicSample.getValue(name))
+                            }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.from(100, 100)
                                 dynamicSample.set(name, value)
@@ -443,6 +456,15 @@ class DynamicMutableRealmObjectTests {
                                 dynamicSample.getNullableValueList<Double>(property.name).add(null)
                                 val listOfNullable =
                                     dynamicSample.getNullableValueList(property.name, Double::class)
+                                assertEquals(value, listOfNullable[0])
+                                assertEquals(null, listOfNullable[1])
+                            }
+                            RealmStorageType.DECIMAL128 -> {
+                                val value = Decimal128("1.84467440731231618E-615")
+                                dynamicSample.getNullableValueList<Decimal128>(property.name).add(value)
+                                dynamicSample.getNullableValueList<Decimal128>(property.name).add(null)
+                                val listOfNullable =
+                                    dynamicSample.getNullableValueList(property.name, Decimal128::class)
                                 assertEquals(value, listOfNullable[0])
                                 assertEquals(null, listOfNullable[1])
                             }
@@ -636,6 +658,13 @@ class DynamicMutableRealmObjectTests {
                                     value,
                                     dynamicSample.getValueList(property.name, Double::class)[0]
                                 )
+                            }
+                            RealmStorageType.DECIMAL128 -> {
+                                val value = Decimal128("1.84467440731231618E-615")
+                                dynamicSample.getValueList<Decimal128>(property.name).add(value)
+                                val listOfNullable =
+                                    dynamicSample.getValueList(property.name, Decimal128::class)
+                                assertEquals(value, listOfNullable[0])
                             }
                             RealmStorageType.TIMESTAMP -> {
                                 val value = RealmInstant.from(100, 100)
