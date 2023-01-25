@@ -957,9 +957,6 @@ internal abstract class ManagedDictionaryTester<T>(
                             clearIterator.remove()
                         }
                     }
-
-                    // Dictionary is empty again, put stuff in it to test outside transaction
-                    dictionary.putAll(dataSet)
                 }
             }
 
