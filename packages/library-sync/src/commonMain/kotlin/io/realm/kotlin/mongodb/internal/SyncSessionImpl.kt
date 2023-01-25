@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncSessionTransferCompletionCallback
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
@@ -31,6 +32,8 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.sync.ConnectionState
+import io.realm.kotlin.mongodb.sync.ConnectionStateChange
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
 import io.realm.kotlin.mongodb.sync.ProgressMode
@@ -49,7 +52,7 @@ import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 
 internal open class SyncSessionImpl(
-    private val realm: RealmImpl?,
+    initializerRealm: RealmImpl?,
     internal val nativePointer: RealmSyncSessionPointer
 ) : SyncSession {
 
@@ -61,6 +64,26 @@ internal open class SyncSessionImpl(
     // throwing an IllegalStateException. Mostly because that is by far the easiest with the
     // current implementation.
     constructor(ptr: RealmSyncSessionPointer) : this(null, ptr)
+
+    private val _realm: RealmImpl? = initializerRealm
+    private val realm: RealmImpl
+        get() = _realm ?: throw IllegalStateException("Operation is not allowed inside a `SyncSession.ErrorHandler`.")
+
+    override val configuration: SyncConfiguration
+        // TODO Get the sync config w/o ever throwing
+        get() = realm.configuration as SyncConfiguration
+
+    override val user: User
+        get() = configuration.user
+
+    override val state: SyncSession.State
+        get() {
+            val state = RealmInterop.realm_sync_session_state(nativePointer)
+            return SyncSessionImpl.stateFrom(state)
+        }
+
+    override val connectionState: ConnectionState
+        get() = connectionStateFrom(RealmInterop.realm_sync_connection_state(nativePointer))
 
     private enum class TransferDirection {
         UPLOAD, DOWNLOAD
@@ -74,28 +97,6 @@ internal open class SyncSessionImpl(
         return waitForChanges(TransferDirection.UPLOAD, timeout)
     }
 
-    override val state: SyncSession.State
-        get() {
-            val state = RealmInterop.realm_sync_session_state(nativePointer)
-            return SyncSessionImpl.stateFrom(state)
-        }
-
-    override val configuration: SyncConfiguration
-        // TODO Get the sync config w/o ever throwing
-        get() {
-            // Currently `realm` is only `null` when a SyncSession is created for use inside an
-            // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
-            // out in the error message.
-            if (realm == null) {
-                throw IllegalStateException("The configuration is not available when inside a `SyncSession.ErrorHandler`.")
-            }
-
-            return realm.configuration as SyncConfiguration
-        }
-
-    override val user: User
-        get() = configuration.user
-
     override fun pause() {
         RealmInterop.realm_sync_session_pause(nativePointer)
     }
@@ -105,30 +106,54 @@ internal open class SyncSessionImpl(
     }
 
     @Suppress("invisible_member", "invisible_reference")
-    override fun progress(
+    override fun progressAsFlow(
         direction: Direction,
         progressMode: ProgressMode,
     ): Flow<Progress> {
         if ((configuration as InternalConfiguration).isFlexibleSyncConfiguration) {
             throw UnsupportedOperationException("Progress listeners are not supported for Flexible Sync.")
         }
+        return realm.scopedFlow {
+            callbackFlow {
+                val token: AtomicRef<Cancellable> =
+                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+                token.value = NotificationToken(
+                    RealmInterop.realm_sync_session_register_progress_notifier(
+                        nativePointer,
+                        when (direction) {
+                            Direction.DOWNLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD
+                            Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
+                        },
+                        progressMode == ProgressMode.INDEFINITELY
+                    ) { transferredBytes: Long, totalBytes: Long ->
+                        val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
+                        trySendWithBufferOverflowCheck(progress)
+                        if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
+                            close()
+                        }
+                    }
+                )
+                awaitClose {
+                    token.value.cancel()
+                }
+            }
+        }
+    }
 
-        return callbackFlow {
+    @Suppress("invisible_member") // To be able to use RealmImpl.scopedFlow from library-base
+    override fun connectionStateAsFlow(): Flow<ConnectionStateChange> = realm.scopedFlow {
+        callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
             token.value = NotificationToken(
-                RealmInterop.realm_sync_session_register_progress_notifier(
-                    nativePointer,
-                    when (direction) {
-                        Direction.DOWNLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_DOWNLOAD
-                        Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
-                    },
-                    progressMode == ProgressMode.INDEFINITELY
-                ) { transferredBytes: Long, totalBytes: Long ->
-                    val progress = Progress(transferredBytes.toULong(), totalBytes.toULong())
-                    trySendWithBufferOverflowCheck(progress)
-                    if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
-                        close()
-                    }
+                RealmInterop.realm_sync_session_register_connection_state_change_callback(
+                    nativePointer
+                ) { oldState: Int, newState: Int ->
+                    trySendWithBufferOverflowCheck(
+                        ConnectionStateChange(
+                            connectionStateFrom(CoreConnectionState.of(oldState)),
+                            connectionStateFrom(CoreConnectionState.of(newState))
+                        )
+                    )
                 }
             )
             awaitClose {
@@ -165,17 +190,6 @@ internal open class SyncSessionImpl(
      * @return `true` if the job completed before the timeout was hit, `false` otherwise.
      */
     private suspend fun waitForChanges(direction: TransferDirection, timeout: Duration): Boolean {
-        // Currently `realm` is only `null` when a SyncSession is created for use inside an
-        // ErrorHandler, and we expect this to be the only place, so it is safe to spell this
-        // out in the error message.
-        if (realm == null) {
-            throw IllegalStateException(
-                """
-                Uploading and downloading changes is not allowed when inside 
-                a `SyncSession.ErrorHandler`.
-                """.trimIndent()
-            )
-        }
         Validation.require(timeout.isPositive()) {
             "'timeout' must be > 0. It was: $timeout"
         }
@@ -242,6 +256,14 @@ internal open class SyncSessionImpl(
                 CoreSyncSessionState.RLM_SYNC_SESSION_STATE_WAITING_FOR_ACCESS_TOKEN -> SyncSession.State.WAITING_FOR_ACCESS_TOKEN
                 CoreSyncSessionState.RLM_SYNC_SESSION_STATE_PAUSED -> SyncSession.State.PAUSED
                 else -> throw IllegalStateException("Unsupported state: $coreState")
+            }
+        }
+        internal fun connectionStateFrom(coreConnectionState: CoreConnectionState): ConnectionState {
+            return when (coreConnectionState) {
+                CoreConnectionState.RLM_SYNC_CONNECTION_STATE_DISCONNECTED -> ConnectionState.DISCONNECTED
+                CoreConnectionState.RLM_SYNC_CONNECTION_STATE_CONNECTING -> ConnectionState.CONNECTING
+                CoreConnectionState.RLM_SYNC_CONNECTION_STATE_CONNECTED -> ConnectionState.CONNECTED
+                else -> throw IllegalStateException("Unsupported connection state: $coreConnectionState")
             }
         }
     }
