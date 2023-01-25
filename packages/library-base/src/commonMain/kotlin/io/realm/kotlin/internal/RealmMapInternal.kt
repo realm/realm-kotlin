@@ -444,11 +444,16 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
     }
 
     override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean =
-        operator.erase(element.key).second
+        operator.get(element.key).let { value ->
+            when {
+                element.value != value -> false
+                else -> operator.erase(element.key).second
+            }
+        }
 
     override fun removeAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean =
         elements.fold(false) { accumulator, entry ->
-            (operator.erase(entry.key).second) or accumulator
+            remove(entry) or accumulator
         }
 }
 
@@ -476,7 +481,7 @@ internal class UnmanagedRealmMapEntry<K, V>(
     override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
     override fun equals(other: Any?): Boolean {
         if (other !is Map.Entry<*, *>) return false
-        return (other.key == other.key) && (other.value == other.value)
+        return (this.key == other.key) && (this.value == other.value)
     }
 }
 
@@ -503,7 +508,7 @@ internal class ManagedRealmMapEntry<K, V>(
     override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
     override fun equals(other: Any?): Boolean {
         if (other !is Map.Entry<*, *>) return false
-        return (other.key == other.key) && (other.value == other.value)
+        return (this.key == other.key) && (this.value == other.value)
     }
 }
 
