@@ -69,6 +69,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -1262,17 +1264,24 @@ class SyncedRealmTests {
         override val level: LogLevel
     ) : RealmLogger {
 
+        private val mutex = Mutex()
         private val _logs = mutableListOf<String>()
         /**
          * Returns a snapshot of the current state of the logs.
          */
         val logs: List<String>
-            get() = synchronized(_logs) { _logs.toList() }
+            get() = runBlocking {
+                mutex.withLock {
+                    _logs.toList()
+                }
+            }
 
         override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
             val logMessage: String = message!!
-            synchronized(_logs) {
-                _logs.add(logMessage)
+            runBlocking {
+                mutex.withLock {
+                    _logs.add(logMessage)
+                }
             }
         }
     }
@@ -1310,6 +1319,9 @@ class SyncedRealmTests {
         assertTrue(customLogger.logs.isNotEmpty())
         assertTrue(
             customLogger.logs
+                .onEach {
+                    delay(100)
+                }
                 .filter { it.contains("Connection[1]: Negotiated protocol version:") }
                 .isNotEmpty()
         )
