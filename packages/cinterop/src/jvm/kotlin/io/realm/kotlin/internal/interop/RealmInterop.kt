@@ -19,6 +19,7 @@ package io.realm.kotlin.internal.interop
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
@@ -1126,6 +1127,9 @@ actual object RealmInterop {
     actual fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState {
         return CoreSyncSessionState.of(realmc.realm_sync_session_get_state(syncSession.cptr()))
     }
+    actual fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState {
+        return CoreConnectionState.of(realmc.realm_sync_session_get_connection_state(syncSession.cptr()))
+    }
 
     actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
         realmc.realm_sync_session_pause(syncSession.cptr())
@@ -1162,6 +1166,19 @@ actual object RealmInterop {
                 syncSession.cptr(),
                 direction.nativeValue,
                 isStreaming,
+                callback
+            ),
+            managed = false
+        )
+    }
+
+    actual fun realm_sync_session_register_connection_state_change_callback(
+        syncSession: RealmSyncSessionPointer,
+        callback: ConnectionStateChangeCallback,
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.realm_sync_session_register_connection_state_change_callback(
+                syncSession.cptr(),
                 callback
             ),
             managed = false

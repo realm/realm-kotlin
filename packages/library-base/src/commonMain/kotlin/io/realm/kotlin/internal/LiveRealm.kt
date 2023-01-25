@@ -84,6 +84,10 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         realmReference.refreshSchemaMetadata()
     }
 
+    internal fun refresh() {
+        RealmInterop.realm_refresh(realmReference.dbPointer)
+    }
+
     internal fun unregisterCallbacks() {
         realmChangeRegistration.cancel()
         schemaChangeRegistration.cancel()

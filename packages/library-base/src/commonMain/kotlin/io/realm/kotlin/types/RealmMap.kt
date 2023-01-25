@@ -40,6 +40,6 @@ public typealias RealmDictionaryEntrySet<V> = RealmMapEntrySet<String, V>
 
 /**
  * Convenience alias for `RealmMapMutableEntry<String, V>`. Represents the `String`-`V` pairs
- * contained by a [RealmDictionary].
+ * stored by a [RealmDictionary].
  */
 public typealias RealmDictionaryMutableEntry<V> = RealmMapMutableEntry<String, V>

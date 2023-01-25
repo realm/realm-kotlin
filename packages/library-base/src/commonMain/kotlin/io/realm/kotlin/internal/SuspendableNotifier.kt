@@ -99,6 +99,9 @@ internal class SuspendableNotifier(
                     kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
                 withContext(dispatcher) {
                     ensureActive()
+                    // Ensure that the live realm is always up to date to avoid registering
+                    // notifications on newer objects.
+                    realm.refresh()
                     val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
                         ?: error("Cannot listen for changes on a deleted Realm reference")
                     val interopCallback: io.realm.kotlin.internal.interop.Callback<RealmChangesPointer> =

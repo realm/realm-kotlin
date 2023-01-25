@@ -17,7 +17,7 @@
 package io.realm.kotlin.mongodb.sync
 
 /**
- * A **progress indicator** emitted by flows created from [SyncSession.progress].
+ * A **progress indicator** emitted by flows created from [SyncSession.progressAsFlow].
  */
 public data class Progress(
     /**

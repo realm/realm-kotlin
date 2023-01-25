@@ -57,7 +57,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     override val values: MutableCollection<V> by lazy {
         operator.realmReference.checkClosed()
         val resultsPointer = RealmInterop.realm_dictionary_to_results(nativePointer)
-        RealmMapValues(nativePointer, resultsPointer, operator)
+        RealmMapValues(resultsPointer, operator)
     }
 
     override fun clear() = operator.clear()
@@ -342,7 +342,7 @@ internal class ManagedRealmDictionary<E> constructor(
 
 /**
  * The semantics of [MutableMap.values] establish a connection between these values and the map
- * itself. This collection represents the map's values as a [MutableCollection] of [K] values.
+ * itself. This collection represents the map's values as a [MutableCollection] of [V] values.
  *
  * The default implementation of `MutableMap.values` in Kotlin allows removals but no additions -
  * which makes sense since keys are nowhere to be found in this data structure.
@@ -353,19 +353,14 @@ internal class ManagedRealmDictionary<E> constructor(
  * also supported. A separate implementation these `realm_results_t` was chosen over adapting the
  * current results infrastructure since the collection must be mutable too, and the current results
  * implementation is not.
- *
- * TODO allow observing for all types or only objects?
  */
 internal class RealmMapValues<K, V> constructor(
-    private val nativePointer: RealmMapPointer,
     private val resultsPointer: RealmResultsPointer,
     private val operator: MapOperator<K, V>
-) : MutableCollection<V>, AbstractCollection<V>() {
+) : AbstractMutableCollection<V>() {
 
     override val size: Int
         get() = operator.size
-
-    private val entrySet by lazy { RealmMapEntrySetImpl(nativePointer, operator) }
 
     override fun add(element: V): Boolean =
         throw UnsupportedOperationException("Adding values to a dictionary through 'dictionary.values' is not allowed.")
@@ -383,30 +378,6 @@ internal class RealmMapValues<K, V> constructor(
             override fun getNext(position: Int): V =
                 operator.getValue(resultsPointer, position) as V
         }
-
-    override fun remove(element: V): Boolean {
-        val keyToDelete = entrySet.find { it.value == element }
-            ?.key ?: return false
-        return operator.erase(keyToDelete).second
-    }
-
-    override fun removeAll(elements: Collection<V>): Boolean =
-        elements.fold(false) { accumulator, element ->
-            remove(element) or accumulator
-        }
-
-    override fun retainAll(elements: Collection<V>): Boolean {
-        // FIXME optimize, consider requesting a C-API function that does all this (though it is a very niche case)
-        val elementsToDelete = entrySet.fold(mutableListOf<V>()) { accumulator, element ->
-            accumulator.also {
-                val entryValue = element.value
-                if (!elements.contains(entryValue)) {
-                    it.add(entryValue)
-                }
-            }
-        }.toList()
-        return removeAll(elementsToDelete)
-    }
 }
 
 // ----------------------------------------------------------------------
@@ -418,7 +389,7 @@ internal class RealmMapValues<K, V> constructor(
  * by `entries` returns [MutableMap.MutableEntry] whereas the one used by `values` returns [T] when
  * calling [next].
  */
-internal abstract class RealmMapGenericIterator<K, T>(
+internal abstract class RealmMapGenericIterator<K, T> constructor(
     private val operator: MapOperator<K, *>
 ) : MutableIterator<T> {
 

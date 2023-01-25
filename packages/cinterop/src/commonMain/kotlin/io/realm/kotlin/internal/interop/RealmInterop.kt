@@ -20,6 +20,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
@@ -603,6 +604,7 @@ expect object RealmInterop {
         callback: SyncSessionTransferCompletionCallback
     )
     fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState
+    fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState
     fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_handle_error_for_testing(
@@ -618,6 +620,11 @@ expect object RealmInterop {
         direction: ProgressDirection,
         isStreaming: Boolean,
         callback: ProgressCallback,
+    ): RealmNotificationTokenPointer
+
+    fun realm_sync_session_register_connection_state_change_callback(
+        syncSession: RealmSyncSessionPointer,
+        callback: ConnectionStateChangeCallback,
     ): RealmNotificationTokenPointer
 
     // AppConfig
