@@ -265,6 +265,7 @@ expect object RealmInterop {
         config: RealmConfigurationPointer,
         mergeWithExisting: Boolean
     )
+    fun realm_compact(config: RealmConfigurationPointer): Boolean
 
     fun realm_get_schema(realm: RealmPointer): RealmSchemaPointer
     fun realm_get_schema_version(realm: RealmPointer): Long

@@ -108,6 +108,14 @@ public interface Realm : TypedRealm {
                 )
             }
         }
+
+        /**
+         *
+         */
+        public fun compactRealm(configuration: Configuration): Boolean {
+            // FIXME How to handle dispatchers and cleanup?
+            return RealmInterop.realm_compact((configuration as InternalConfiguration).createNativeConfiguration())
+        }
     }
 
     /**

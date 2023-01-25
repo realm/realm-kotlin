@@ -28,6 +28,8 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
+import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.TestHelper.getRandomKey
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -54,6 +56,7 @@ import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.milliseconds
+
 
 @OptIn(ExperimentalTime::class)
 class RealmTests {
@@ -628,6 +631,100 @@ class RealmTests {
             }
         }
     }
+
+    @Test
+    fun compactRealm() {
+        realm.close()
+        assertTrue(Realm.compactRealm(configuration))
+        realm = Realm.open(configuration)
+    }
+
+    @Test
+    fun compactRealm_failsIfOpen() {
+        assertFalse(Realm.compactRealm(realm.configuration))
+    }
+
+    @Test
+    fun compactRealm_encryptedEmptyRealm() {
+        realm.close() // Close test realm shared between all tests
+        val realmConfig: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("compactEncrypted.realm")
+            .encryptionKey(getRandomKey())
+            .build()
+        Realm.open(realmConfig).close()
+        assertTrue(Realm.compactRealm(realmConfig))
+        realm = Realm.open(realmConfig)
+        assertFalse(realm.isClosed())
+    }
+//
+//    @Test
+//    fun compactRealm_encryptedPopulatedRealm() {
+//        val DATA_SIZE = 100
+//        val realmConfig: RealmConfiguration =
+//            configFactory.createConfiguration("enc.realm", getRandomKey())
+//        var realm: Realm = Realm.getInstance(realmConfig)
+//        populateTestRealm(realm, DATA_SIZE)
+//        realm.close()
+//        assertTrue(Realm.compactRealm(realmConfig))
+//        realm = Realm.getInstance(realmConfig)
+//        assertFalse(realm.isClosed())
+//        assertEquals(DATA_SIZE, realm.where(AllTypes::class.java).count())
+//        realm.close()
+//    }
+//
+//    @Test
+//    @Throws(IOException::class)
+//    fun compactRealm_emptyRealm() {
+//        val REALM_NAME = "test.realm"
+//        val realmConfig: RealmConfiguration = configFactory.createConfiguration(REALM_NAME)
+//        val realm: Realm = Realm.getInstance(realmConfig)
+//        realm.close()
+//        val before: Long = File(realmConfig.path).length()
+//        assertTrue(Realm.compactRealm(realmConfig))
+//        val after: Long = File(realmConfig.path).length()
+//        assertTrue(before >= after)
+//    }
+//
+//    @Test
+//    @Throws(IOException::class)
+//    fun compactRealm_populatedRealm() {
+//        val REALM_NAME = "test.realm"
+//        val realmConfig: RealmConfiguration = configFactory.createConfiguration(REALM_NAME)
+//        val realm: Realm = Realm.getInstance(realmConfig)
+//        populateTestRealm(realm, 100)
+//        realm.close()
+//        val before: Long = File(realmConfig.path).length()
+//        assertTrue(Realm.compactRealm(realmConfig))
+//        val after: Long = File(realmConfig.path).length()
+//        assertTrue(before >= after)
+//    }
+//
+//    @Test
+//    fun compactRealm_onExternalStorage() {
+//        val externalFilesDir: File = context.getExternalFilesDir(null)
+//        val config: RealmConfiguration = configFactory.createConfigurationBuilder()
+//            .directory(externalFilesDir)
+//            .name("external.realm")
+//            .build()
+//        Realm.deleteRealm(config)
+//        var realm: Realm = Realm.getInstance(config)
+//        realm.close()
+//        assertTrue(Realm.compactRealm(config))
+//        realm = Realm.getInstance(config)
+//        realm.close()
+//        Realm.deleteRealm(config)
+//    }
+//
+//    private fun populateTestRealmForCompact(realm: Realm, sizeInMB: Int) {
+//        val oneMBData = ByteArray(1024 * 1024)
+//        realm.beginTransaction()
+//        for (i in 0 until sizeInMB) {
+//            realm.createObject(AllTypes::class.java).setColumnBinary(oneMBData)
+//        }
+//        realm.commitTransaction()
+//    }
+
 
     // TODO Cannot verify intermediate versions as they are now spread across user facing, notifier
     //  and writer realms. Tests were anyway ignored, so don't really know what to do with these.

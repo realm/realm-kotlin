@@ -255,6 +255,12 @@ actual object RealmInterop {
         realmc.realm_convert_with_config(realm.cptr(), config.cptr(), mergeWithExisting)
     }
 
+    actual fun realm_compact(config: RealmConfigurationPointer): Boolean {
+        val didCompact = booleanArrayOf(false)
+        realmc.realm_compact(config.cptr(), didCompact)
+        return didCompact.first()
+    }
+
     actual fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean {
         return realmc.realm_schema_validate(schema.cptr(), mode.nativeValue.toLong())
     }

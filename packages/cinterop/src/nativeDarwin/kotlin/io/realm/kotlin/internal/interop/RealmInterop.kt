@@ -608,6 +608,16 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_compact(config: RealmConfigurationPointer): Boolean {
+        memScoped {
+            val didCompact = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_compact(config.cptr(), didCompact.ptr)
+            )
+            return didCompact.value
+        }
+    }
+
     actual fun realm_get_schema(realm: RealmPointer): RealmSchemaPointer {
         return CPointerWrapper(realm_wrapper.realm_get_schema(realm.cptr()))
     }
