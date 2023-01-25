@@ -572,7 +572,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
-        return LongPointerWrapper(realmc.realm_get_set((obj as LongPointerWrapper).ptr, key.key))
+        return LongPointerWrapper(realmc.realm_get_set(obj.cptr(), key.key))
     }
 
     actual fun realm_set_size(set: RealmSetPointer): Long {
@@ -632,6 +632,72 @@ actual object RealmInterop {
 
     actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
         return realmc.realm_set_is_valid(set.cptr())
+    }
+
+    actual fun realm_get_dictionary(
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmMapPointer {
+        val ptr = realmc.realm_get_dictionary(obj.cptr(), key.key)
+        return LongPointerWrapper(ptr)
+    }
+
+    actual fun realm_dictionary_clear(dictionary: RealmMapPointer) {
+        realmc.realm_dictionary_clear(dictionary.cptr())
+    }
+
+    actual fun realm_dictionary_size(dictionary: RealmMapPointer): Long {
+        val size = LongArray(1)
+        realmc.realm_dictionary_size(dictionary.cptr(), size)
+        return size[0]
+    }
+
+    actual fun realm_dictionary_to_results(
+        dictionary: RealmMapPointer
+    ): RealmResultsPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_to_results(dictionary.cptr()))
+    }
+
+    actual fun MemAllocator.realm_dictionary_find(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue {
+        val found = BooleanArray(1)
+        val struct = allocRealmValueT()
+        realmc.realm_dictionary_find(dictionary.cptr(), mapKey.value, struct, found)
+        return RealmValue(struct)
+    }
+
+    actual fun MemAllocator.realm_dictionary_get(
+        dictionary: RealmMapPointer,
+        pos: Int
+    ): Pair<RealmValue, RealmValue> {
+        val keyTransport = allocRealmValueT()
+        val valueTransport = allocRealmValueT()
+        realmc.realm_dictionary_get(dictionary.cptr(), pos.toLong(), keyTransport, valueTransport)
+        return Pair(RealmValue(keyTransport), RealmValue(valueTransport))
+    }
+
+    actual fun MemAllocator.realm_dictionary_insert(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue,
+        value: RealmValue
+    ): Pair<RealmValue, Boolean> {
+        val previousValue = realm_dictionary_find(dictionary, mapKey)
+        val index = LongArray(1)
+        val inserted = BooleanArray(1)
+        realmc.realm_dictionary_insert(dictionary.cptr(), mapKey.value, value.value, index, inserted)
+        return Pair(previousValue, inserted[0])
+    }
+
+    actual fun MemAllocator.realm_dictionary_erase(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Pair<RealmValue, Boolean> {
+        val previousValue = realm_dictionary_find(dictionary, mapKey)
+        val erased = BooleanArray(1)
+        realmc.realm_dictionary_erase(dictionary.cptr(), mapKey.value, erased)
+        return Pair(previousValue, erased[0])
     }
 
     actual fun realm_object_add_notification_callback(
