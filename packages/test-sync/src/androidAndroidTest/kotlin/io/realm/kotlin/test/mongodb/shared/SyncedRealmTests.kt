@@ -1263,12 +1263,17 @@ class SyncedRealmTests {
     ) : RealmLogger {
 
         private val _logs = mutableListOf<String>()
-        public val logs: List<String>
-            get() = _logs
+        /**
+         * Returns a snapshot of the current state of the logs.
+         */
+        val logs: List<String>
+            get() = synchronized(_logs) { _logs.toList() }
 
         override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
             val logMessage: String = message!!
-            _logs.add(logMessage)
+            synchronized(_logs) {
+                _logs.add(logMessage)
+            }
         }
     }
 
