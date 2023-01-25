@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.sync.ConnectionState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
@@ -38,9 +39,12 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -525,7 +529,7 @@ class SyncSessionTests {
 
             // Validate that the session was captured and that the configuration cannot be accessed.
             assertIs<SyncSession>(session)
-            assertFailsWithMessage<IllegalStateException>("The configuration is not available") {
+            assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a") {
                 session.configuration
             }
 
@@ -540,6 +544,54 @@ class SyncSessionTests {
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             assertSame(user, realm.syncSession.user)
+        }
+    }
+
+    @Test
+    fun connectionState() = runBlocking {
+        Realm.open(createSyncConfig(user)).use { realm: Realm ->
+            // We don't know what the state will be, but just verify that we can retrieve it
+            // without issues
+            assertNotNull(realm.syncSession.connectionState)
+        }
+    }
+
+    @Test
+    fun connectionState_asFlow() = runBlocking {
+        Realm.open(createSyncConfig(user)).use { realm: Realm ->
+            val flow = realm.syncSession.connectionStateAsFlow()
+            // Adopted from realm-java tests ...
+            // Sometimes the connection is already established and then we cannot expect any
+            // updates, but as this is highly likely just safely ignore this to avoid flaky tests
+            // on CI
+            try {
+                val (oldState, newState) = withTimeout(5.seconds) { flow.first() }
+                assertNotEquals(oldState, newState)
+                assertEquals(realm.syncSession.connectionState, newState)
+            } catch (e: TimeoutCancellationException) {
+                assertTrue { realm.syncSession.connectionState == ConnectionState.CONNECTED }
+                // Make some visible sign that we have skipped waiting for events
+                println("Skipping flow tests as connection is already established")
+            }
+        }
+    }
+
+    @Test
+    fun connectionState_completeOnClose() = runBlocking {
+        val realm = Realm.open(createSyncConfig(user))
+        try {
+            val flow1 = realm.syncSession.connectionStateAsFlow()
+            val job = async {
+                withTimeout(10.seconds) {
+                    flow1.collect { }
+                }
+            }
+            realm.close()
+            job.await()
+        } finally {
+            if (!realm.isClosed()) {
+                realm.close()
+            }
         }
     }
 

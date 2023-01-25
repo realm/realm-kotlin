@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,12 @@
 package io.realm.kotlin.mongodb.sync
 
 /**
- * A **direction** indicates whether a given [Progress]-flow created with
- * [SyncSession.progressAsFlow] is reporting changes when either uploading or downloading data.
+ * A **connection state change** indicates a change in the [SyncSession]'s underlying connection
+ * state.
+ *
+ * @property oldState the sync session's old connection state.
+ * @property newState the sync session's new connection state.
+ *
+ * @see SyncSession.connectionStateAsFlow
  */
-public enum class Direction {
-    /**
-     * Used to pass to [SyncSession.progressAsFlow] to create a flow that reports [Progress]
-     * when downloading data from the server.
-     */
-    DOWNLOAD,
-    /**
-     * Used to pass to [SyncSession.progressAsFlow] to create a flow that reports [Progress]
-     * when uploading data from the device to the server.
-     */
-    UPLOAD,
-}
+public data class ConnectionStateChange(val oldState: ConnectionState, val newState: ConnectionState)
