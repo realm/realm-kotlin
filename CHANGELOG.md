@@ -38,6 +38,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Prevent "Cannot listen for changes on a deleted Realm reference"-exceptions when notifier is not up-to-date with newest updates from write transaction.
 * [Sync] Custom loggers now correctly see both normal and sync events. Before, sync events were just logged directly to LogCat/StdOut.
 * [Sync] When a `SyncSession` was paused using `SyncSession.pause()`, it would sometimes automatically resume the session. `SyncSession.State.PAUSED` has been added, making it explicit when a session is paused. (Core Issue [#6085](https://github.com/realm/realm-core/issues/6085))
+* Allow defining properties with the field name as the persisted name. ([#1240](https://github.com/realm/realm-kotlin/issues/1240))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

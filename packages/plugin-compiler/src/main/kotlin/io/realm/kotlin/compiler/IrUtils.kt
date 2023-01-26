@@ -286,24 +286,25 @@ data class SchemaProperty(
     val publicName: String
 
     init {
-        if (hasPersistedNameAnnotation) {
-            getPersistedName(declaration).let { persistedName ->
-                if (persistedName.isEmpty()) {
-                    logError(
-                        "Names must contain at least 1 character.",
-                        declaration.locationOf()
-                    )
-                }
+        val declarationName = declaration.name.identifier
+        val persistedAnnotationName: String? = if (hasPersistedNameAnnotation) getPersistedName(declaration) else null
 
-                // Set the persisted name to the name passed to `@PersistedName`
-                this.persistedName = persistedName
-                // Set the public name to the original Kotlin name
-                // We only set it if the persisted and public names are different because core does
-                // would detect it as a duplicated name.
-                publicName = if (persistedName == declaration.name.identifier) NO_ALIAS else declaration.name.identifier
+        // We only set it if the persisted and public names are different because core does
+        // would detect it as a duplicated name.
+        if (hasPersistedNameAnnotation && persistedAnnotationName!! != declarationName) {
+            persistedAnnotationName.ifEmpty {
+                logError(
+                    "Names must contain at least 1 character.",
+                    declaration.locationOf()
+                )
             }
+
+            // Set the persisted name to the name passed to `@PersistedName`
+            persistedName = persistedAnnotationName
+            // Set the public name to the original Kotlin name
+            publicName = declarationName
         } else {
-            persistedName = declaration.name.identifier
+            persistedName = declarationName
             publicName = NO_ALIAS
         }
     }
