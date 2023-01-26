@@ -26,6 +26,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryEntryOf
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.toRealmDictionary
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.ErrorCatcher
 import io.realm.kotlin.test.GenericTypeSafetyManager
@@ -58,7 +59,12 @@ import kotlin.test.assertTrue
 
 class RealmDictionaryTests {
 
-    private val dictionarySchema = setOf(RealmDictionaryContainer::class)
+    private val dictionarySchema = setOf(
+        RealmDictionaryContainer::class,
+        DictionaryLevel1::class,
+        DictionaryLevel2::class,
+        DictionaryLevel3::class
+    )
     private val descriptors = TypeDescriptor.allDictionaryFieldTypes
 
     private lateinit var tmpDir: String
@@ -266,6 +272,12 @@ class RealmDictionaryTests {
                     val actual = assertNotNull(managedDictionary["A"])
                     assertEquals(expected.stringField, actual.stringField)
                 }
+
+            realm.query<RealmDictionaryContainer>()
+                .count()
+                .find {
+                    assertEquals(2L, it)
+                }
         }
 
         // Cleanup between assertions for convenience
@@ -337,6 +349,12 @@ class RealmDictionaryTests {
                     val actual = actualAny.asRealmObject<RealmDictionaryContainer>()
                     assertEquals(RealmAny.Type.OBJECT, actualAny.type)
                     assertEquals(expected.stringField, actual.stringField)
+                }
+
+            realm.query<RealmDictionaryContainer>()
+                .count()
+                .find {
+                    assertEquals(2L, it)
                 }
         }
     }
@@ -545,9 +563,11 @@ class RealmDictionaryTests {
                     managedContainer2.nullableRealmAnyDictionaryField.size,
                     managedContainer1.nullableRealmAnyDictionaryField.size
                 )
-                val expectedAny = assertNotNull(managedContainer2.nullableRealmAnyDictionaryField["X"])
+                val expectedAny =
+                    assertNotNull(managedContainer2.nullableRealmAnyDictionaryField["X"])
                 val expected = expectedAny.asRealmObject<RealmDictionaryContainer>()
-                val actualAny = assertNotNull(managedContainer1.nullableRealmAnyDictionaryField["X"])
+                val actualAny =
+                    assertNotNull(managedContainer1.nullableRealmAnyDictionaryField["X"])
                 assertEquals(RealmAny.Type.OBJECT, actualAny.type)
                 val actual = actualAny.asRealmObject<RealmDictionaryContainer>()
                 assertEquals(expected.stringField, actual.stringField)
@@ -600,8 +620,145 @@ class RealmDictionaryTests {
     }
 
     @Test
+    @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     fun nestedObjectTest() {
-        // TODO
+        realm.writeBlocking {
+            val level1_1 = DictionaryLevel1("l1_1")
+            val level1_2 = DictionaryLevel1("l1_2")
+            val level2_1 = DictionaryLevel2("l2_1")
+            val level2_2 = DictionaryLevel2("l2_2")
+            val level3_1 = DictionaryLevel3("l3_1")
+            val level3_2 = DictionaryLevel3("l3_2")
+
+            level1_1.dictionary["level2_1"] = level2_1
+            level1_2.dictionary.putAll(setOf("level2_1" to level2_1, "level2_2" to level2_2))
+
+            level2_1.dictionary["level3_1"] = level3_1
+            level2_2.dictionary.putAll(setOf("level3_1" to level3_1, "level3_2" to level3_2))
+
+            level3_1.dictionary["level1_1"] = level1_1
+            level3_2.dictionary.putAll(setOf("level1_1" to level1_1, "level1_2" to level1_2))
+
+            copyToRealm(level1_2) // this includes the graph of all 6 objects
+        }
+
+        val objectsL1: RealmResults<DictionaryLevel1> = realm.query<DictionaryLevel1>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL2: RealmResults<DictionaryLevel2> = realm.query<DictionaryLevel2>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+        val objectsL3: RealmResults<DictionaryLevel3> = realm.query<DictionaryLevel3>()
+            .query("""name BEGINSWITH "l" SORT(name ASC)""")
+            .find()
+
+        assertEquals(2, objectsL1.count())
+        assertEquals(2, objectsL2.count())
+        assertEquals(2, objectsL3.count())
+
+        // Checking dictionary contain the expected object - insertion order is irrelevant here
+        assertEquals("l1_1", objectsL1[0].name)
+        assertEquals(1, objectsL1[0].dictionary.size)
+
+        assertNotNull(
+            objectsL1[0].dictionary.entries.find {
+                assertNotNull(it.value).name == "l2_1"
+            }
+        )
+
+        assertEquals("l1_2", objectsL1[1].name)
+        assertEquals(2, objectsL1[1].dictionary.size)
+        assertNotNull(
+            objectsL1[1].dictionary.entries.find {
+                assertNotNull(it.value).name == "l2_1"
+            }
+        )
+        assertNotNull(
+            objectsL1[1].dictionary.entries.find {
+                assertNotNull(it.value).name == "l2_2"
+            }
+        )
+
+        assertEquals("l2_1", objectsL2[0].name)
+        assertEquals(1, objectsL2[0].dictionary.size)
+        assertNotNull(
+            objectsL2[0].dictionary.entries.find {
+                assertNotNull(it.value).name == "l3_1"
+            }
+        )
+
+        assertEquals("l2_2", objectsL2[1].name)
+        assertEquals(2, objectsL2[1].dictionary.size)
+        assertNotNull(
+            objectsL2[1].dictionary.entries.find {
+                assertNotNull(it.value).name == "l3_1"
+            }
+        )
+        assertNotNull(
+            objectsL2[1].dictionary.entries.find {
+                assertNotNull(it.value).name == "l3_2"
+            }
+        )
+
+        assertEquals("l3_1", objectsL3[0].name)
+        assertEquals(1, objectsL3[0].dictionary.size)
+        assertNotNull(
+            objectsL3[0].dictionary.entries.find {
+                assertNotNull(it.value).name == "l1_1"
+            }
+        )
+
+        assertEquals("l3_2", objectsL3[1].name)
+        assertEquals(2, objectsL3[1].dictionary.size)
+        assertNotNull(
+            objectsL3[1].dictionary.entries.find {
+                assertNotNull(it.value).name == "l1_1"
+            }
+        )
+        assertNotNull(
+            objectsL3[1].dictionary.entries.find {
+                assertNotNull(it.value).name == "l1_2"
+            }
+        )
+
+        // Following circular links
+        assertEquals("l1_1", objectsL1[0].name)
+        assertEquals(1, objectsL1[0].dictionary.size)
+        assertNotNull(
+            objectsL1[0].dictionary.entries.find {
+                assertNotNull(it.value).name == "l2_1"
+            }
+        )
+        assertNotNull(
+            objectsL1[0].dictionary.entries.find {
+                assertNotNull(it.value).dictionary.size == 1
+            }
+        )
+        assertNotNull(
+            objectsL1[0].dictionary.entries.find { l2entry ->
+                assertNotNull(l2entry.value)
+                    .dictionary
+                    .entries
+                    .find { l3entry ->
+                        assertNotNull(l3entry.value).name == "l3_1"
+                    } != null
+            }
+        )
+        assertNotNull(
+            objectsL1[0].dictionary.entries.find { l2entry ->
+                assertNotNull(l2entry.value)
+                    .dictionary
+                    .entries
+                    .find { l3entry ->
+                        assertNotNull(l3entry.value)
+                            .dictionary
+                            .entries
+                            .find { l1entry ->
+                                assertNotNull(l1entry.value).name == "l1_1"
+                            } != null
+                    } != null
+            }
+        )
     }
 
     @Test
@@ -1904,13 +2061,28 @@ internal class RealmAnyDictionaryTester(
             RealmAny.Type.INT -> assertEquals(expectedValue.asInt(), actualValue?.asInt())
             RealmAny.Type.BOOL -> assertEquals(expectedValue.asBoolean(), actualValue?.asBoolean())
             RealmAny.Type.STRING -> assertEquals(expectedValue.asString(), actualValue?.asString())
-            RealmAny.Type.BINARY -> assertContentEquals(expectedValue.asByteArray(), actualValue?.asByteArray())
-            RealmAny.Type.TIMESTAMP -> assertEquals(expectedValue.asRealmInstant(), actualValue?.asRealmInstant())
+            RealmAny.Type.BINARY -> assertContentEquals(
+                expectedValue.asByteArray(),
+                actualValue?.asByteArray()
+            )
+            RealmAny.Type.TIMESTAMP -> assertEquals(
+                expectedValue.asRealmInstant(),
+                actualValue?.asRealmInstant()
+            )
             RealmAny.Type.FLOAT -> assertEquals(expectedValue.asFloat(), actualValue?.asFloat())
             RealmAny.Type.DOUBLE -> assertEquals(expectedValue.asDouble(), actualValue?.asDouble())
-            RealmAny.Type.DECIMAL128 -> assertEquals(expectedValue.asDecimal128(), actualValue?.asDecimal128())
-            RealmAny.Type.OBJECT_ID -> assertEquals(expectedValue.asObjectId(), actualValue?.asObjectId())
-            RealmAny.Type.UUID -> assertEquals(expectedValue.asRealmUUID(), actualValue?.asRealmUUID())
+            RealmAny.Type.DECIMAL128 -> assertEquals(
+                expectedValue.asDecimal128(),
+                actualValue?.asDecimal128()
+            )
+            RealmAny.Type.OBJECT_ID -> assertEquals(
+                expectedValue.asObjectId(),
+                actualValue?.asObjectId()
+            )
+            RealmAny.Type.UUID -> assertEquals(
+                expectedValue.asRealmUUID(),
+                actualValue?.asRealmUUID()
+            )
             RealmAny.Type.OBJECT -> {
                 val expectedObj = expectedValue.asRealmObject<RealmDictionaryContainer>()
                 val actualObj = actualValue?.asRealmObject<RealmDictionaryContainer>()
@@ -2006,4 +2178,30 @@ private val DICTIONARY_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY
 
 internal val NULLABLE_DICTIONARY_OBJECT_VALUES = DICTIONARY_OBJECT_VALUES + null
 
-// TODO add circular dependency data and tests
+// Circular dependencies with dictionaries
+class DictionaryLevel1() : RealmObject {
+    var name: String = ""
+    var dictionary: RealmDictionary<DictionaryLevel2?> = realmDictionaryOf()
+
+    constructor(name: String) : this() {
+        this.name = name
+    }
+}
+
+class DictionaryLevel2() : RealmObject {
+    var name: String = ""
+    var dictionary: RealmDictionary<DictionaryLevel3?> = realmDictionaryOf()
+
+    constructor(name: String) : this() {
+        this.name = name
+    }
+}
+
+class DictionaryLevel3() : RealmObject {
+    var name: String = ""
+    var dictionary: RealmDictionary<DictionaryLevel1?> = realmDictionaryOf()
+
+    constructor(name: String) : this() {
+        this.name = name
+    }
+}
