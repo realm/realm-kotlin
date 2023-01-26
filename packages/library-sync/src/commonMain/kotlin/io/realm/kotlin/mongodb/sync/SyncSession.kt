@@ -46,11 +46,6 @@ import kotlin.time.Duration
 public interface SyncSession {
 
     /**
-     * The current session state. See [State] for more details about each state.
-     */
-    public val state: State
-
-    /**
      * The [SyncConfiguration] responsible for controlling the session.
      *
      * @throws IllegalStateException if accessed from inside a [SyncSession.ErrorHandler] due to session errors.
@@ -61,6 +56,16 @@ public interface SyncSession {
      * The [User] used to authenticate the session on Atlas App Services.
      */
     public val user: User
+
+    /**
+     * The current session state. See [State] for more details about each state.
+     */
+    public val state: State
+
+    /**
+     * The current [ConnectionState].
+     */
+    public val connectionState: ConnectionState
 
     /**
      * Calling this method will block until all known remote changes have been downloaded and
@@ -127,15 +132,28 @@ public interface SyncSession {
      * means that it is possible for one [Progress] instance to report
      * `isTransferComplete = true` and subsequent instances to report `isTransferComplete = false`.
      *
+     * The flow will be completed if the realm is closed.
+     *
      * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume the
      * elements in a timely manner the flow will be completed with an [IllegalStateException].
      *
      * @throws UnsupportedOperationException if invoked on a realm with Flexible Sync enabled.
      */
-    public fun progress(
+    public fun progressAsFlow(
         direction: Direction,
         progressMode: ProgressMode,
     ): Flow<Progress>
+
+    /**
+     * Create a [Flow] of [ConnectionStateChange]-events to receive notifications of updates to the
+     * session's connection state.
+     *
+     * The flow will be completed if the realm is closed.
+     *
+     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
+     * the elements in a timely manner the flow will be completed with an [IllegalStateException].
+     */
+    public fun connectionStateAsFlow(): Flow<ConnectionStateChange>
 
     /**
      * Interface used to report any session errors.
@@ -172,10 +190,18 @@ public interface SyncSession {
          * The Realm is open and data will be synchronized between the device and the server
          * if the underlying connection is connected.
          *
-         * The session will remain in this state until the Realm
-         * is closed. In which case it will become [DYING].
+         * The session will remain in this state until the session is either paused, after
+         * which the session becomes [PAUSED] or the realm is closed, in which case it will
+         * become [DYING].
          */
         ACTIVE,
+
+        /**
+         * The Realm is open and has a connection to the server, but no data is allowed to be
+         * transferred between the device and the server. Call [SyncSession.resume] to start
+         * transferring data again. The state will then become [ACTIVE].
+         */
+        PAUSED,
 
         /**
          * The Realm was closed, but still contains data that needs to be synchronized to the server.

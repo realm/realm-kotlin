@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
@@ -106,7 +107,6 @@ import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
-import realm_wrapper.realm_object_as_link
 import realm_wrapper.realm_object_id_t
 import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
@@ -1071,6 +1071,101 @@ actual object RealmInterop {
 
     actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
         return realm_wrapper.realm_set_is_valid(set.cptr())
+    }
+
+    actual fun realm_get_dictionary(
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmMapPointer {
+        val ptr = realm_wrapper.realm_get_dictionary(obj.cptr(), key.key)
+        return CPointerWrapper(ptr)
+    }
+
+    actual fun realm_dictionary_clear(dictionary: RealmMapPointer) {
+        realm_wrapper.realm_dictionary_clear(dictionary.cptr())
+    }
+
+    actual fun realm_dictionary_size(dictionary: RealmMapPointer): Long {
+        memScoped {
+            val size = alloc<ULongVar>()
+            realm_wrapper.realm_dictionary_size(dictionary.cptr(), size.ptr)
+            return size.value.toLong()
+        }
+    }
+
+    actual fun realm_dictionary_to_results(
+        dictionary: RealmMapPointer
+    ): RealmResultsPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_to_results(dictionary.cptr()))
+    }
+
+    actual fun MemAllocator.realm_dictionary_find(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue {
+        memScoped {
+            val found = alloc<BooleanVar>()
+            val struct = allocRealmValueT()
+            realm_wrapper.realm_dictionary_find(
+                dictionary.cptr(),
+                mapKey.value.readValue(),
+                struct.ptr,
+                found.ptr
+            )
+            return RealmValue(struct)
+        }
+    }
+
+    actual fun MemAllocator.realm_dictionary_get(
+        dictionary: RealmMapPointer,
+        pos: Int
+    ): Pair<RealmValue, RealmValue> {
+        val keyTransport = allocRealmValueT()
+        val valueTransport = allocRealmValueT()
+        realm_wrapper.realm_dictionary_get(
+            dictionary.cptr(),
+            pos.toULong(),
+            keyTransport.ptr,
+            valueTransport.ptr
+        )
+        return Pair(RealmValue(keyTransport), RealmValue(valueTransport))
+    }
+
+    actual fun MemAllocator.realm_dictionary_insert(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue,
+        value: RealmValue
+    ): Pair<RealmValue, Boolean> {
+        memScoped {
+            val previousValue = realm_dictionary_find(dictionary, mapKey)
+            realm_dictionary_find(dictionary, mapKey)
+            val index = alloc<ULongVar>()
+            val inserted = alloc<BooleanVar>()
+            realm_wrapper.realm_dictionary_insert(
+                dictionary.cptr(),
+                mapKey.value.readValue(),
+                value.value.readValue(),
+                index.ptr,
+                inserted.ptr
+            )
+            return Pair(previousValue, inserted.value)
+        }
+    }
+
+    actual fun MemAllocator.realm_dictionary_erase(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Pair<RealmValue, Boolean> {
+        memScoped {
+            val previousValue = realm_dictionary_find(dictionary, mapKey)
+            val erased = alloc<BooleanVar>()
+            realm_wrapper.realm_dictionary_erase(
+                dictionary.cptr(),
+                mapKey.value.readValue(),
+                erased.ptr
+            )
+            return Pair(previousValue, erased.value)
+        }
     }
 
     actual fun realm_query_parse(
@@ -2142,6 +2237,11 @@ actual object RealmInterop {
         return CoreSyncSessionState.of(value)
     }
 
+    actual fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState =
+        CoreConnectionState.of(
+            realm_wrapper.realm_sync_session_get_connection_state(syncSession.cptr()).value.toInt()
+        )
+
     actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
         realm_wrapper.realm_sync_session_pause(syncSession.cptr())
     }
@@ -2185,6 +2285,27 @@ actual object RealmInterop {
                 StableRef.create(callback).asCPointer(),
                 staticCFunction { userdata ->
                     disposeUserData<ProgressCallback>(userdata)
+                }
+            ),
+            managed = false
+        )
+    }
+
+    actual fun realm_sync_session_register_connection_state_change_callback(
+        syncSession: RealmSyncSessionPointer,
+        callback: ConnectionStateChangeCallback,
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_sync_session_register_connection_state_change_callback(
+                syncSession.cptr(),
+                staticCFunction<COpaquePointer?, realm_wrapper.realm_sync_connection_state, realm_wrapper.realm_sync_connection_state, Unit> { userData, oldState, newState ->
+                    safeUserData<ConnectionStateChangeCallback>(userData).run {
+                        onChange(oldState.value.toInt(), newState.value.toInt())
+                    }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<ConnectionStateChangeCallback>(userdata)
                 }
             ),
             managed = false
@@ -2480,6 +2601,30 @@ actual object RealmInterop {
             StableRef.create(callback).asCPointer(),
             staticCFunction { userData -> disposeUserData<AppCallback<String>>(userData) }
         )
+    }
+
+    actual fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_call_reset_password_function(
+                    app.cptr(),
+                    email,
+                    newPassword.toRString(this),
+                    serializedEjsonPayload,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
     }
 
     actual fun realm_sync_config_new(

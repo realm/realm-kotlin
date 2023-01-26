@@ -29,6 +29,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.Decimal128
 import kotlin.random.Random
 
 private typealias FieldDataFactory = (SyncObjectWithAllTypes) -> Unit
@@ -50,6 +51,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanField: Boolean = true
     var doubleField: Double = 0.0
     var floatField: Float = 0.0.toFloat()
+    var decimal128Field: Decimal128 = Decimal128("0")
     var realmInstantField: RealmInstant = RealmInstant.MIN
     var objectIdField: ObjectId = ObjectId.create()
     var realmUUIDField: RealmUUID = RealmUUID.random()
@@ -67,6 +69,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanNullableField: Boolean? = null
     var doubleNullableField: Double? = null
     var floatNullableField: Float? = null
+    var decimal128NullableField: Decimal128? = null
     var realmInstantNullableField: RealmInstant? = null
     var objectIdNullableField: ObjectId? = null
     var realmUUIDNullableField: RealmUUID? = null
@@ -86,6 +89,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanRealmList: RealmList<Boolean> = realmListOf(true)
     var doubleRealmList: RealmList<Double> = realmListOf(0.0)
     var floatRealmList: RealmList<Float> = realmListOf(0.0.toFloat())
+    var decimal128RealmList: RealmList<Decimal128> = realmListOf(Decimal128("0.0"))
     var realmInstantRealmList: RealmList<RealmInstant> = realmListOf(RealmInstant.MIN)
     var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
     var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
@@ -107,6 +111,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var booleanRealmSet: RealmSet<Boolean> = realmSetOf(true)
     var doubleRealmSet: RealmSet<Double> = realmSetOf(0.0)
     var floatRealmSet: RealmSet<Float> = realmSetOf(0.0.toFloat())
+    var decimal128RealmSet: RealmSet<Decimal128> = realmSetOf(Decimal128("0.0"))
     var realmInstantRealmSet: RealmSet<RealmInstant> = realmSetOf(RealmInstant.MIN)
     var objectIdRealmSet: RealmSet<ObjectId> = realmSetOf(ObjectId.create())
     var realmUUIDRealmSet: RealmSet<RealmUUID> = realmSetOf(RealmUUID.random())
@@ -254,6 +259,35 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(Double.MAX_VALUE, obj.doubleRealmList[2])
                                         assertSetContains(Double.MIN_VALUE, obj.doubleRealmSet)
                                         assertSetContains(Double.MAX_VALUE, obj.doubleRealmSet)
+                                    },
+                                )
+                            }
+                            RealmStorageType.DECIMAL128 -> {
+                                Pair(
+                                    { obj: SyncObjectWithAllTypes ->
+                                        obj.decimal128Field = Decimal128("1.234")
+                                        obj.decimal128NullableField = Decimal128("1.234")
+                                        obj.decimal128RealmList =
+                                            realmListOf(
+                                                Decimal128("1.234"),
+                                                Decimal128.NEGATIVE_INFINITY,
+                                                Decimal128.POSITIVE_INFINITY
+                                            )
+                                        obj.decimal128RealmSet =
+                                            realmSetOf(
+                                                Decimal128("1.234"),
+                                                Decimal128.NEGATIVE_INFINITY,
+                                                Decimal128.POSITIVE_INFINITY
+                                            )
+                                    },
+                                    { obj: SyncObjectWithAllTypes ->
+                                        assertEquals(Decimal128("1.234"), obj.decimal128Field)
+                                        assertEquals(Decimal128("1.234"), obj.decimal128NullableField)
+                                        assertEquals(Decimal128("1.234"), obj.decimal128RealmList[0])
+                                        assertEquals(Decimal128.NEGATIVE_INFINITY, obj.decimal128RealmList[1])
+                                        assertEquals(Decimal128.POSITIVE_INFINITY, obj.decimal128RealmList[2])
+                                        assertSetContains(Decimal128.NEGATIVE_INFINITY, obj.decimal128RealmSet)
+                                        assertSetContains(Decimal128.POSITIVE_INFINITY, obj.decimal128RealmSet)
                                     },
                                 )
                             }

@@ -26,11 +26,11 @@ using namespace realm::jni_util;
 // Manual additions to java module class
 %pragma(java) modulecode=%{
     // Trigger loading of shared library when the swig wrapper is loaded
+    // This is only done on JVM. On Android, the native code is manually 
+    // loaded using the RealmInitializer class.
     static {
         // using https://developer.android.com/reference/java/lang/System#getProperties()
-        if (System.getProperty("java.specification.vendor").contains("Android")) {
-            System.loadLibrary("realmc");
-        } else {
+        if (!System.getProperty("java.specification.vendor").contains("Android")) {
             // otherwise locate, using reflection, the dependency SoLoader and call load
             // (calling SoLoader directly will create a circular dependency with `jvmMain`)
             try {
@@ -217,6 +217,20 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+
+// reuse void callback type as template for `realm_sync_connection_state_changed_func_t` function
+%apply (realm_app_void_completion_func_t callback, void* userdata, realm_free_userdata_func_t userdata_free) {
+    (realm_sync_connection_state_changed_func_t, void* userdata, realm_free_userdata_func_t userdata_free)
+};
+%typemap(in) (realm_sync_connection_state_changed_func_t, void* userdata, realm_free_userdata_func_t userdata_free) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_sync_connection_state_changed_func_t>(realm_sync_session_connection_state_change_callback);
+    $2 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $3 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // Core isn't strict about naming their callbacks, so sometimes SWIG cannot map correctly :/
 %typemap(jstype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
 %typemap(jtype) (realm_sync_on_subscription_state_changed_t, void* userdata, realm_free_userdata_func_t userdata_free) "Object" ;
@@ -269,7 +283,8 @@ return $jnicall;
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
-               realm_set_t*, realm_async_open_task_t* };
+               realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
+                realm_sync_session_connection_state_notification_token_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -376,20 +391,15 @@ bool realm_object_is_valid(const realm_object_t*);
 %ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
 %ignore "_realm_set_from_native_move"; // Not implemented in the C-API
 %ignore "realm_set_assign"; // Not implemented in the C-API
+%ignore "realm_dictionary_assign"; // Not implemented in the C-API
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
-%ignore "realm_get_dictionary";
-%ignore "realm_dictionary_size";
-%ignore "realm_dictionary_get";
-%ignore "realm_dictionary_insert";
-%ignore "realm_dictionary_erase";
-%ignore "realm_dictionary_clear";
-%ignore "realm_dictionary_assign";
-%ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
 %ignore "realm_results_freeze";
+// FIXME realm_websocket_endpoint::protocols are a `const chart **` which is causing problems with Swig. Find a proper typemap for it.
+%ignore "protocols";
 
 // TODO improve typemaps for freeing ByteArrays. At the moment we assume a realm_binary_t can only
 //  be inside a realm_value_t and only those instances are freed properly until we refine their

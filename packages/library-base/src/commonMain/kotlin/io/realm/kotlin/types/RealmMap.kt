@@ -32,9 +32,10 @@ internal typealias RealmMapEntrySet<K, V> = MutableSet<MutableMap.MutableEntry<K
 internal typealias RealmMapMutableEntry<K, V> = MutableMap.MutableEntry<K, V>
 
 /**
- * Convenience alias for `MutableSet<MutableMap.MutableEntry<String, V>>`. This is the output
- * produced by [RealmDictionary.entries] and represents a [RealmDictionary] in the form of a
- * [MutableSet] of [RealmDictionaryMutableEntry] values.
+ * Convenience alias for `MutableSet<MutableMap.MutableEntry<String, V>>`.
+ *
+ * The output produced by [RealmDictionary.entries] matches this alias and represents a
+ * [RealmDictionary] in the form of a [MutableSet] of [RealmDictionaryMutableEntry] values.
  */
 public typealias RealmDictionaryEntrySet<V> = RealmMapEntrySet<String, V>
 

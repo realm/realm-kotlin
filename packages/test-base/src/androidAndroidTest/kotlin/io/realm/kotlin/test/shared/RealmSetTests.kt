@@ -28,6 +28,8 @@ import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.ErrorCatcher
+import io.realm.kotlin.test.GenericTypeSafetyManager
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
@@ -40,6 +42,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
@@ -69,7 +72,8 @@ class RealmSetTests {
                     getTypeSafety(
                         classifier,
                         false
-                    ) as SetTypeSafetyManager<RealmSetContainer>
+                    ) as SetTypeSafetyManager<RealmSetContainer>,
+                    classifier
                 )
                 ByteArray::class -> ByteArraySetTester(
                     realm,
@@ -77,15 +81,13 @@ class RealmSetTests {
                         classifier,
                         elementType.nullable
                     ) as SetTypeSafetyManager<ByteArray>,
-                    classifier
                 )
                 RealmAny::class -> RealmAnySetTester(
                     realm,
-                    NullableSet(
+                    SetTypeSafetyManager(
                         RealmSetContainer.nullableProperties[classifier]!!,
                         getDataSetForClassifier(classifier, true)
                     ) as SetTypeSafetyManager<RealmAny?>,
-                    classifier
                 )
                 else -> GenericSetTester(
                     realm,
@@ -436,11 +438,11 @@ class RealmSetTests {
 
     private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): SetTypeSafetyManager<*> =
         when {
-            nullable -> NullableSet(
+            nullable -> SetTypeSafetyManager(
                 property = RealmSetContainer.nullableProperties[classifier]!!,
                 dataSetToLoad = getDataSetForClassifier(classifier, true)
             )
-            else -> NonNullableSet(
+            else -> SetTypeSafetyManager(
                 property = RealmSetContainer.nonNullableProperties[classifier]!!,
                 dataSetToLoad = getDataSetForClassifier(classifier, false)
             )
@@ -459,6 +461,7 @@ class RealmSetTests {
         Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
         Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
         Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+        Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
         String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
         RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
         ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
@@ -474,7 +477,7 @@ class RealmSetTests {
 /**
  * Tester interface defining the operations that have to be tested exhaustively.
  */
-internal interface SetApiTester<T, Container> {
+internal interface SetApiTester<T, Container> : ErrorCatcher {
 
     val realm: Realm
 
@@ -506,29 +509,6 @@ internal interface SetApiTester<T, Container> {
      * Assertions on the container outside the write transaction plus cleanup.
      */
     fun assertContainerAndCleanup(assertion: (Container) -> Unit)
-
-    /**
-     * This method acts as an assertion error catcher in case one of the classifiers we use for
-     * testing fails, ensuring the error message can easily be identified in the log.
-     *
-     * Assertions should be wrapped around this function, e.g.:
-     * ```
-     * override fun specificTest() {
-     *     errorCatcher {
-     *         // Write your test logic here
-     *     }
-     * }
-     * ```
-     *
-     * @param block lambda with the actual test logic to be run
-     */
-    fun errorCatcher(block: () -> Unit) {
-        try {
-            block()
-        } catch (e: AssertionError) {
-            throw AssertionError("'${toString()}' failed - ${e.message}", e)
-        }
-    }
 }
 
 /**
@@ -536,8 +516,11 @@ internal interface SetApiTester<T, Container> {
  */
 internal abstract class ManagedSetTester<T>(
     override val realm: Realm,
-    private val typeSafetyManager: SetTypeSafetyManager<T>
+    private val typeSafetyManager: SetTypeSafetyManager<T>,
+    override val classifier: KClassifier
 ) : SetApiTester<T, RealmSetContainer> {
+
+    override fun toString(): String = classifier.toString()
 
     override fun copyToRealm() {
         val dataSet = typeSafetyManager.dataSetToLoad
@@ -765,10 +748,8 @@ internal abstract class ManagedSetTester<T>(
 internal class GenericSetTester<T>(
     realm: Realm,
     typeSafetyManager: SetTypeSafetyManager<T>,
-    private val classifier: KClassifier
-) : ManagedSetTester<T>(realm, typeSafetyManager) {
-
-    override fun toString(): String = classifier.toString()
+    classifier: KClassifier
+) : ManagedSetTester<T>(realm, typeSafetyManager, classifier) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<T>,
@@ -790,10 +771,7 @@ internal class GenericSetTester<T>(
 internal class RealmAnySetTester(
     realm: Realm,
     typeSafetyManager: SetTypeSafetyManager<RealmAny?>,
-    private val classifier: KClassifier
-) : ManagedSetTester<RealmAny?>(realm, typeSafetyManager) {
-
-    override fun toString(): String = classifier.toString()
+) : ManagedSetTester<RealmAny?>(realm, typeSafetyManager, RealmAny::class) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<RealmAny?>,
@@ -869,10 +847,7 @@ internal class RealmAnySetTester(
 internal class ByteArraySetTester(
     realm: Realm,
     typeSafetyManager: SetTypeSafetyManager<ByteArray>,
-    private val classifier: KClassifier
-) : ManagedSetTester<ByteArray>(realm, typeSafetyManager) {
-
-    override fun toString(): String = classifier.toString()
+) : ManagedSetTester<ByteArray>(realm, typeSafetyManager, ByteArray::class) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<ByteArray>,
@@ -927,10 +902,9 @@ private fun binaryContains(
  */
 internal class RealmObjectSetTester(
     realm: Realm,
-    typeSafetyManager: SetTypeSafetyManager<RealmSetContainer>
-) : ManagedSetTester<RealmSetContainer>(realm, typeSafetyManager) {
-
-    override fun toString(): String = "RealmObjectSetTester"
+    typeSafetyManager: SetTypeSafetyManager<RealmSetContainer>,
+    classifier: KClassifier
+) : ManagedSetTester<RealmSetContainer>(realm, typeSafetyManager, classifier) {
 
     override fun assertStructuralEquality(
         expectedValues: Collection<RealmSetContainer>,
@@ -957,91 +931,16 @@ internal class RealmObjectSetTester(
 }
 
 /**
- * Dataset container and helper operations. Given a [property] this manager returns the appropriate
- * [dataSetToLoad] for exhaustive type testing.
- *
- * TODO could also be used for RealmLists - https://github.com/realm/realm-kotlin/issues/941
+ * Dataset container for RealmSets, can be either nullable or non-nullable.
  */
-internal interface GenericTypeSafetyManager<Type, Container, RealmCollection> {
-
-    /**
-     * Property from the [Container] class containing a [RealmCollection] attribute.
-     */
-    val property: KMutableProperty1<Container, RealmCollection>
-
-    /**
-     * Dataset used to test the validity of the [RealmCollection] operations.
-     *
-     * See 'RealmListTests' for values used here.
-     */
-    val dataSetToLoad: List<Type>
-
-    override fun toString(): String // Default implementation not allowed as it comes from "Any"
-
-    /**
-     * Creates a managed [Container] from which we can access the [property] pointing to an empty,
-     * managed [RealmCollection].
-     */
-    fun createContainerAndGetCollection(realm: MutableRealm): RealmCollection
-
-    /**
-     * Creates a managed [Container] whose [property] contains a pre-populated [RealmCollection].
-     */
-    fun createPrePopulatedContainer(): Container
-
-    /**
-     * Convenience function that retrieves the given [property] for the provided [container].
-     */
-    fun getCollection(container: Container): RealmCollection
-}
-
-/**
- * Dataset container for RealmSets, can be either nullable and non-nullable.
- */
-internal interface SetTypeSafetyManager<T> :
-    GenericTypeSafetyManager<T, RealmSetContainer, RealmSet<T>> {
-    override fun getCollection(container: RealmSetContainer): RealmSet<T> = property.get(container)
-}
-
-/**
- * Dataset container for nullable RealmSets.
- */
-internal class NullableSet<T>(
-    override val property: KMutableProperty1<RealmSetContainer, RealmSet<T?>>,
-    override val dataSetToLoad: List<T?>
-) : SetTypeSafetyManager<T?> {
-
-    override fun toString(): String = property.name
-
-    override fun createContainerAndGetCollection(realm: MutableRealm): RealmSet<T?> {
-        val container = RealmSetContainer().let {
-            realm.copyToRealm(it)
-        }
-        return property.get(container)
-            .also { set ->
-                assertNotNull(set)
-                assertTrue(set.isEmpty())
-            }
-    }
-
-    override fun createPrePopulatedContainer(): RealmSetContainer =
-        RealmSetContainer().also {
-            property.get(it)
-                .apply {
-                    addAll(dataSetToLoad)
-                }
-        }
-}
-
-/**
- * Manager for non-nullable RealmSets.
- */
-internal class NonNullableSet<T>(
+internal class SetTypeSafetyManager<T>(
     override val property: KMutableProperty1<RealmSetContainer, RealmSet<T>>,
     override val dataSetToLoad: List<T>
-) : SetTypeSafetyManager<T> {
+) : GenericTypeSafetyManager<T, RealmSetContainer, RealmSet<T>> {
 
     override fun toString(): String = property.name
+
+    override fun getCollection(container: RealmSetContainer): RealmSet<T> = property.get(container)
 
     override fun createContainerAndGetCollection(realm: MutableRealm): RealmSet<T> {
         val container = RealmSetContainer().let {
@@ -1096,8 +995,10 @@ internal val SET_OBJECT_VALUES3 = listOf(
     RealmSetContainer().apply { stringField = "H" }
 )
 
-// Use this for SET tests as this file does exhaustive testing on all RealmAny types
-internal val SET_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + RealmAny.create(
+// Use this for SET tests as this file does exhaustive testing on all RealmAny types. Ensuring that
+// we eliminate duplicates in REALM_ANY_PRIMITIVE_VALUES as the test infrastructure relies on
+// SET_REALM_ANY_VALUES to hold unique values.
+internal val SET_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES.toSet().toList() + RealmAny.create(
     RealmSetContainer().apply { stringField = "hello" },
     RealmSetContainer::class
 )

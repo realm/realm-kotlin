@@ -1,5 +1,6 @@
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.internal.RealmInitializer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger

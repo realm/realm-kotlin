@@ -20,6 +20,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
@@ -365,6 +366,29 @@ expect object RealmInterop {
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
     fun realm_set_is_valid(set: RealmSetPointer): Boolean
 
+    // dictionary
+    fun realm_get_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer
+    fun realm_dictionary_clear(dictionary: RealmMapPointer)
+    fun realm_dictionary_size(dictionary: RealmMapPointer): Long
+    fun realm_dictionary_to_results(dictionary: RealmMapPointer): RealmResultsPointer
+    fun MemAllocator.realm_dictionary_find(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue
+    fun MemAllocator.realm_dictionary_get(
+        dictionary: RealmMapPointer,
+        pos: Int
+    ): Pair<RealmValue, RealmValue>
+    fun MemAllocator.realm_dictionary_insert(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue,
+        value: RealmValue
+    ): Pair<RealmValue, Boolean>
+    fun MemAllocator.realm_dictionary_erase(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Pair<RealmValue, Boolean>
+
     // query
     fun realm_query_parse(
         realm: RealmPointer,
@@ -580,6 +604,7 @@ expect object RealmInterop {
         callback: SyncSessionTransferCompletionCallback
     )
     fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState
+    fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState
     fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_handle_error_for_testing(
@@ -595,6 +620,11 @@ expect object RealmInterop {
         direction: ProgressDirection,
         isStreaming: Boolean,
         callback: ProgressCallback,
+    ): RealmNotificationTokenPointer
+
+    fun realm_sync_session_register_connection_state_change_callback(
+        syncSession: RealmSyncSessionPointer,
+        callback: ConnectionStateChangeCallback,
     ): RealmNotificationTokenPointer
 
     // AppConfig
@@ -653,6 +683,13 @@ expect object RealmInterop {
         token: String,
         tokenId: String,
         newPassword: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
         callback: AppCallback<Unit>
     )
 

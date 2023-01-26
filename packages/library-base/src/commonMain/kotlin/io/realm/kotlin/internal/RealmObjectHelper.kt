@@ -63,6 +63,7 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
@@ -200,6 +201,7 @@ internal object RealmObjectHelper {
                 is Timestamp -> setValueTransportByKey(obj, key, timestampTransport(value))
                 is Float -> setValueTransportByKey(obj, key, floatTransport(value))
                 is Double -> setValueTransportByKey(obj, key, doubleTransport(value))
+                is Decimal128 -> setValueTransportByKey(obj, key, decimal128Transport(value))
                 is BsonObjectId -> setValueTransportByKey(
                     obj,
                     key,
@@ -271,6 +273,11 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): Double? = getterScope { getValue(obj, propertyName)?.let { realmValueToDouble(it) } }
+
+    internal inline fun getDecimal128(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String
+    ): Decimal128? = getterScope { getValue(obj, propertyName)?.let { realmValueToDecimal128(it) } }
 
     internal inline fun getInstant(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -534,15 +541,26 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("UnusedPrivateMember") // TODO remove when parameter is used
     internal inline fun <reified R : Any> getDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): ManagedRealmDictionary<R?> {
-        TODO()
+        val elementType = R::class
+        val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        val operatorType = if (realmObjectCompanion == null) {
+            if (elementType == RealmAny::class) {
+                CollectionOperatorType.REALM_ANY
+            } else {
+                CollectionOperatorType.PRIMITIVE
+            }
+        } else {
+            CollectionOperatorType.REALM_OBJECT
+        }
+        val key = obj.propertyInfoOrThrow(propertyName).key
+        return getDictionaryByKey(obj, key, elementType, operatorType)
     }
 
-    @Suppress("LongParameterList", "UnusedPrivateMember") // TODO remove UnusedPrivateMember when parameter is used
+    @Suppress("LongParameterList")
     internal fun <R> getDictionaryByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
@@ -551,10 +569,20 @@ internal object RealmObjectHelper {
         issueDynamicObject: Boolean = false,
         issueDynamicMutableObject: Boolean = false
     ): ManagedRealmDictionary<R> {
-        TODO()
+        val dictionaryPtr = RealmInterop.realm_get_dictionary(obj.objectPointer, key)
+        val operator = createDictionaryOperator<R>(
+            dictionaryPtr,
+            elementType,
+            obj.mediator,
+            obj.owner,
+            operatorType,
+            issueDynamicObject,
+            issueDynamicMutableObject,
+        )
+        return ManagedRealmDictionary(dictionaryPtr, operator)
     }
 
-    @Suppress("LongParameterList", "UnusedPrivateMember") // TODO remove UnusedPrivateMember when parameter is used
+    @Suppress("LongParameterList", "UnusedPrivateMember")
     private fun <R> createDictionaryOperator(
         dictionaryPtr: RealmMapPointer,
         clazz: KClass<R & Any>,
@@ -564,7 +592,26 @@ internal object RealmObjectHelper {
         issueDynamicObject: Boolean = false, // TODO handle when adding support for dynamic realms
         issueDynamicMutableObject: Boolean = false // TODO handle when adding support for dynamic realms
     ): MapOperator<String, R> {
-        TODO()
+        return when (operatorType) {
+            CollectionOperatorType.PRIMITIVE -> PrimitiveMapOperator(
+                mediator,
+                realm,
+                converter(clazz, mediator, realm),
+                converter(String::class, mediator, realm),
+                dictionaryPtr
+            )
+            CollectionOperatorType.REALM_ANY -> TODO()
+            CollectionOperatorType.REALM_OBJECT -> RealmObjectMapOperator(
+                mediator,
+                realm,
+                converter(clazz, mediator, realm),
+                converter(String::class, mediator, realm),
+                dictionaryPtr,
+                clazz
+            )
+            else ->
+                throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
+        }
     }
 
     internal fun setValueTransportByKey(
@@ -643,8 +690,6 @@ internal object RealmObjectHelper {
         }
     }
 
-    // TODO remove UnusedPrivateMember when parameter is used
-    @Suppress("UnusedPrivateMember")
     internal inline fun <reified T : Any> setDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
@@ -652,10 +697,19 @@ internal object RealmObjectHelper {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
-        TODO()
+        val existingDictionary = getDictionary<T>(obj, col)
+        if (dictionary !is ManagedRealmDictionary<T> || !RealmInterop.realm_equals(
+                existingDictionary.nativePointer,
+                dictionary.nativePointer
+            )
+        ) {
+            existingDictionary.also {
+                it.clear()
+                it.operator.putAll(dictionary, updatePolicy, cache)
+            }
+        }
     }
 
-    @Suppress("LongParameterList")
     internal fun assign(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -669,7 +723,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    @Suppress("LongParameterList", "NestedBlockDepth", "LongMethod", "ComplexMethod")
+    @Suppress("NestedBlockDepth", "LongMethod", "ComplexMethod")
     internal fun assignTyped(
         target: BaseRealmObject,
         source: BaseRealmObject,
@@ -747,7 +801,15 @@ internal object RealmObjectHelper {
                         }
                 }
                 CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
-                    TODO()
+                    // We cannot use setDictionary as that requires the type, so we need to retrieve
+                    // the existing dictionary, wipe it and insert new elements
+                    @Suppress("UNCHECKED_CAST")
+                    (accessor.get(target) as ManagedRealmDictionary<Any?>)
+                        .run {
+                            clear()
+                            val elements = accessor.get(source) as RealmDictionary<*>
+                            operator.putAll(elements, updatePolicy, cache)
+                        }
                 }
                 else -> TODO("Collection type ${property.collectionType} is not supported")
             }
@@ -1203,6 +1265,7 @@ internal object RealmObjectHelper {
                         PropertyType.RLM_PROPERTY_TYPE_BINARY,
                         PropertyType.RLM_PROPERTY_TYPE_FLOAT,
                         PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                        PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
                         PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                         PropertyType.RLM_PROPERTY_TYPE_UUID -> {

@@ -18,6 +18,7 @@
 
 package io.realm.kotlin.internal.interop
 
+import org.mongodb.kbson.Decimal128
 import kotlin.jvm.JvmName
 
 /**
@@ -57,9 +58,14 @@ interface MemAllocator {
     fun floatTransport(value: Float?): RealmValue
 
     /**
-     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_TIMESTAMP`.
+     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_DOUBLE`.
      */
     fun doubleTransport(value: Double?): RealmValue
+
+    /**
+     * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_DECIMAL128`.
+     */
+    fun decimal128Transport(value: Decimal128?): RealmValue
 
     /**
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_OBJECT_ID` from
