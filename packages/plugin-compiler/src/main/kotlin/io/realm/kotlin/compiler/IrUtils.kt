@@ -271,6 +271,7 @@ data class CoreType(
     val nullable: Boolean
 )
 
+private const val NO_ALIAS = ""
 // FIXME use PropertyType instead of "type: String", consider using a common/shared type when implementing public schema
 //  see (https://github.com/realm/realm-kotlin/issues/238)
 data class SchemaProperty(
@@ -299,11 +300,11 @@ data class SchemaProperty(
                 // Set the public name to the original Kotlin name
                 // We only set it if the persisted and public names are different because core does
                 // would detect it as a duplicated name.
-                publicName = if (persistedName == declaration.name.identifier) "" else declaration.name.identifier
+                publicName = if (persistedName == declaration.name.identifier) NO_ALIAS else declaration.name.identifier
             }
         } else {
             persistedName = declaration.name.identifier
-            publicName = ""
+            publicName = NO_ALIAS
         }
     }
 
