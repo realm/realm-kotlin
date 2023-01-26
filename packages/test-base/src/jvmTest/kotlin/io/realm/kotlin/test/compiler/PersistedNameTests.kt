@@ -67,8 +67,6 @@ class PersistedNameTests {
         )
 
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-        val compilerLog = result.messages
-        assertContains(compilerLog, "The Kotlin name and the persisted name are the same value: 'sameName'")
     }
 
     @Test

@@ -286,10 +286,21 @@ data class SchemaProperty(
 
     init {
         if (hasPersistedNameAnnotation) {
-            // Set the persisted name to the name passed to `@PersistedName`
-            persistedName = getPersistedName(declaration)
-            // Set the public name to the original Kotlin name
-            publicName = declaration.name.identifier
+            getPersistedName(declaration).let { persistedName ->
+                if (persistedName.isEmpty()) {
+                    logError(
+                        "Names must contain at least 1 character.",
+                        declaration.locationOf()
+                    )
+                }
+
+                // Set the persisted name to the name passed to `@PersistedName`
+                this.persistedName = persistedName
+                // Set the public name to the original Kotlin name
+                // We only set it if the persisted and public names are different because core does
+                // would detect it as a duplicated name.
+                publicName = if (persistedName == declaration.name.identifier) "" else declaration.name.identifier
+            }
         } else {
             persistedName = declaration.name.identifier
             publicName = ""
