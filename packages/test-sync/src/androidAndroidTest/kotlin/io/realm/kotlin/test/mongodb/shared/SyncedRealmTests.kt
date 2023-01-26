@@ -1319,9 +1319,6 @@ class SyncedRealmTests {
         assertTrue(customLogger.logs.isNotEmpty())
         assertTrue(
             customLogger.logs
-                .onEach {
-                    delay(100)
-                }
                 .filter { it.contains("Connection[1]: Negotiated protocol version:") }
                 .isNotEmpty()
         )
