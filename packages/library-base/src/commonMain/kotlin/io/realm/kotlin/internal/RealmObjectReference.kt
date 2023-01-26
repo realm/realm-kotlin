@@ -51,8 +51,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
     RealmStateHolder,
     RealmObjectInterop,
     InternalDeleteable,
-    Observable<RealmObjectReference<out BaseRealmObject>, ObjectChange<out BaseRealmObject>>,
-    Flowable<ObjectChange<out BaseRealmObject>> {
+    Observable<RealmObjectReference<T>, ObjectChange<T>> {
 
     public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
 
@@ -80,28 +79,28 @@ public class RealmObjectReference<T : BaseRealmObject>(
 
     override fun freeze(
         frozenRealm: RealmReference
-    ): RealmObjectReference<out BaseRealmObject>? {
+    ): RealmObjectReference<T>? {
         return RealmInterop.realm_object_resolve_in(
             objectPointer,
             frozenRealm.dbPointer
         )?.let { pointer: RealmObjectPointer ->
             newObjectReference(frozenRealm, pointer)
-        }
+        } as RealmObjectReference<T>?
     }
 
-    override fun thaw(liveRealm: RealmReference): RealmObjectReference<out BaseRealmObject>? {
+    override fun thaw(liveRealm: RealmReference): RealmObjectReference<T>? {
         return thaw(liveRealm, type)
     }
 
     public fun thaw(
         liveRealm: RealmReference,
         clazz: KClass<out BaseRealmObject>
-    ): RealmObjectReference<out BaseRealmObject>? {
+    ): RealmObjectReference<T>? {
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(objectPointer, dbPointer)
             ?.let { pointer: RealmObjectPointer ->
                 newObjectReference(liveRealm, pointer, clazz)
-            }
+            } as RealmObjectReference<T>?
     }
 
     override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
@@ -115,9 +114,9 @@ public class RealmObjectReference<T : BaseRealmObject>(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: RealmChangesPointer,
-        channel: SendChannel<ObjectChange<out BaseRealmObject>>
+        channel: SendChannel<ObjectChange<T>>
     ): ChannelResult<Unit>? {
-        val frozenObject: RealmObjectReference<out BaseRealmObject>? = this.freeze(frozenRealm)
+        val frozenObject: RealmObjectReference<T>? = this.freeze(frozenRealm)
 
         return if (frozenObject == null) {
             channel
@@ -127,7 +126,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
                 }
         } else {
             val changedFieldNames = frozenObject.getChangedFieldNames(change)
-            val obj: BaseRealmObject = frozenObject.toRealmObject()
+            val obj: T = frozenObject.toRealmObject()
 
             // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
             if (changedFieldNames.isEmpty()) {
@@ -148,7 +147,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
         }.toTypedArray()
     }
 
-    override fun asFlow(): Flow<ObjectChange<out BaseRealmObject>> {
+    override fun asFlow(): Flow<ObjectChange<T>> {
         return this.owner.owner.registerObserver(this)
     }
 
