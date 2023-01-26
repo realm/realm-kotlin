@@ -54,6 +54,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
@@ -335,12 +336,12 @@ class SyncSessionTests {
             val deferred = async { Realm.open(config) }
             val session = channel.receive()
             try {
-                assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
                     runBlocking {
                         session.uploadAllLocalChanges()
                     }
                 }
-                assertFailsWithMessage<IllegalStateException>("Uploading and downloading changes is not allowed") {
+                assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
                     runBlocking {
                         session.downloadAllServerChanges()
                     }
