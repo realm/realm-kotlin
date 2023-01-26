@@ -1,4 +1,32 @@
-## 1.6.0 (YYYY-MM-DD)
+## 1.7.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.6.0 (2023-01-25)
 
 This release will bump the Realm file format from version 22 to 23. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
 
@@ -29,6 +57,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
 
 ### Fixed
+* Fix missing `Realm.asFlow()`-events from remote updates on synced realms. (Issue [#1070](https://github.com/realm/realm-kotlin/issues/1070))
 * Windows binaries for JVM did not statically link the C++ runtime, which could lead to crashes if it wasn't preinstalled. (Issue [#1211](https://github.com/realm/realm-kotlin/pull/1211))
 * Internal dispatcher threads would leak when closing Realms. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
 * Realm finalizer thread would prevent JVM main thread from exiting. (Issue [#818](https://github.com/realm/realm-kotlin/issues/818))
@@ -53,7 +82,6 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Minimum Android Gradle Plugin version: 4.0.0.
 * Minimum Android SDK: 16.
 
-
 ### Internal
 * Updated to Realm Core 13.2.0, commit 5a119d8cb2eaac60c298532af2c9ae789af0c9e6.
 * Updated to require Swig 4.1.0.
@@ -62,31 +90,6 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
 * Added JVM test wrapper as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 * Use Relinker when loading native libs on Android.
-
-## 1.5.3 (YYYY-MM-DD)
-
-### Breaking Changes
-* None.
-
-### Enhancements
-* None.
-
-### Fixed
-* Fix missing `Realm.asFlow()`-events from remote updates on synced realms. (Issue [#1070](https://github.com/realm/realm-kotlin/issues/1070))
-
-### Compatibility
-* This release is compatible with the following Kotlin releases:
-  * Kotlin 1.7.20 and above.
-  * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above.
-  * AtomicFu 0.18.3 and above.
-  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-* Minimum Gradle version: 6.7.1.
-* Minimum Android Gradle Plugin version: 4.0.0.
-* Minimum Android SDK: 16.
-
-### Internal
-* Added test wrapper for Gradle 7.6 as a workaround for https://youtrack.jetbrains.com/issue/KT-54634
 
 
 ## 1.5.2 (2023-01-10)
