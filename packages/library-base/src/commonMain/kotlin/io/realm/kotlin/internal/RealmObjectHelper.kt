@@ -600,7 +600,13 @@ internal object RealmObjectHelper {
                 converter(String::class, mediator, realm),
                 dictionaryPtr
             )
-            CollectionOperatorType.REALM_ANY -> TODO()
+            CollectionOperatorType.REALM_ANY -> PrimitiveMapOperator(
+                mediator,
+                realm,
+                realmAnyConverter(mediator, realm, issueDynamicObject, issueDynamicMutableObject),
+                converter(String::class, mediator, realm),
+                dictionaryPtr
+            ) as MapOperator<String, R>
             CollectionOperatorType.REALM_OBJECT -> RealmObjectMapOperator(
                 mediator,
                 realm,

@@ -18,6 +18,7 @@ package io.realm.kotlin.entities.dictionary
 
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -61,7 +62,7 @@ class RealmDictionaryContainer : RealmObject {
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
     var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
     var nullableObjectDictionaryField: RealmDictionary<RealmDictionaryContainer?> = realmDictionaryOf()
-//    var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf() // TODO
+    var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf()
 
     companion object {
         @Suppress("UNCHECKED_CAST")
@@ -101,7 +102,7 @@ class RealmDictionaryContainer : RealmObject {
             ByteArray::class to RealmDictionaryContainer::nullableBinaryDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             Decimal128::class to RealmDictionaryContainer::nullableDecimal128DictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             RealmObject::class to RealmDictionaryContainer::nullableObjectDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
-//            RealmAny::class to RealmDictionaryContainer::nullableRealmAnyDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>> // TODO
+            RealmAny::class to RealmDictionaryContainer::nullableRealmAnyDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>
         ).toMap()
     }
 }
