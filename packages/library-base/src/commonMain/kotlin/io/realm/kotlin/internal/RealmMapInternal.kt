@@ -316,7 +316,9 @@ internal class RealmObjectMapOperator<K, V>(
 // Dictionary
 // ----------------------------------------------------------------------
 
-internal class UnmanagedRealmDictionary<E> : RealmDictionary<E>, MutableMap<String, E> by mutableMapOf()
+internal class UnmanagedRealmDictionary<E>(
+    dictionary: Map<String, E> = mutableMapOf()
+) : RealmDictionary<E>, MutableMap<String, E> by dictionary.toMutableMap()
 
 internal class ManagedRealmDictionary<E>(
     nativePointer: RealmMapPointer,
