@@ -98,6 +98,17 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
             return KeySet(nativePointer, this)
         }
 
+    fun insertInternal(
+        key: K,
+        value: V?,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    ): Pair<V?, Boolean>
+    fun eraseInternal(key: K): Pair<V?, Boolean>
+    fun getEntryInternal(position: Int): Pair<K, V>
+    fun getInternal(key: K): V?
+    fun containsValueInternal(value: V): Boolean
+
     // This function returns a Pair because it is used by both the Map and the entry Set. Having
     // both different semantics, Map returns the previous value for the key whereas the entry Set
     // returns whether the element was inserted successfully.
@@ -132,17 +143,6 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         realmReference.checkClosed()
         return containsValueInternal(value)
     }
-
-    fun insertInternal(
-        key: K,
-        value: V?,
-        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: UnmanagedToManagedObjectCache = mutableMapOf()
-    ): Pair<V?, Boolean>
-    fun eraseInternal(key: K): Pair<V?, Boolean>
-    fun getEntryInternal(position: Int): Pair<K, V>
-    fun getInternal(key: K): V?
-    fun containsValueInternal(value: V): Boolean
 
     @Suppress("UNCHECKED_CAST")
     fun getValue(resultsPointer: RealmResultsPointer, index: Int): V? {
