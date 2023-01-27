@@ -111,7 +111,7 @@ val packages: List<String> = File(localMavenRepo, "io/realm/kotlin").listFiles()
     .filter { file -> !file.isHidden && file.isDirectory }
     .map { file -> file.name }
 
-println("Found the following packages: ${packages.joinToString { " - $it" }}")
+println("Found the following packages: ${packages.joinToString { " - $it\n" }}")
 packages.forEach { packageName ->
     debug("Uploading package: $packageName")
     val packageDirectory = File(localMavenRepo, "io/realm/kotlin/$packageName/$version")
