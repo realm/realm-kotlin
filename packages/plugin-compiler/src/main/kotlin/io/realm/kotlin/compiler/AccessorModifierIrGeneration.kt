@@ -992,7 +992,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == mutableRealmIntegerClassId
     }
 
-    @Suppress("ReturnCount")
+    @Suppress("ReturnCount", "LongMethod")
     private fun getCollectionGenericCoreType(
         collectionType: CollectionType,
         declaration: IrProperty
