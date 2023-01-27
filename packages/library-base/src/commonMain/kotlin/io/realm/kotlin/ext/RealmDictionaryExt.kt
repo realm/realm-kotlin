@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.ext
 
+import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.asRealmDictionary
 import io.realm.kotlin.internal.realmMapEntryOf
@@ -42,7 +43,7 @@ public fun <T> realmDictionaryOf(elements: Collection<Pair<String, T>>): RealmDi
 
 /**
  * Instantiates an **unmanaged** [RealmDictionaryMutableEntry] from a [Pair] of [String] and [V]
- * that can be added to en entry set produced by [RealmDictionary.entries]. It is possible to add an
+ * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
  * unmanaged entry to a dictionary entry set. This will result in the underlying
  * [RealmDictionary] being updated.
  */
@@ -51,7 +52,7 @@ public fun <V> realmDictionaryEntryOf(pair: Pair<String, V>): RealmDictionaryMut
 
 /**
  * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [key]-[value] pair
- * that can be added to en entry set produced by [RealmDictionary.entries]. It is possible to add an
+ * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
  * unmanaged entry to a dictionary entry set. This will result in the underlying
  * [RealmDictionary] being updated.
  */
@@ -60,7 +61,7 @@ public fun <V> realmDictionaryEntryOf(key: String, value: V): RealmDictionaryMut
 
 /**
  * Instantiates an **unmanaged** [RealmMapMutableEntry] from another [Map.Entry]
- * that can be added to en entry set produced by [RealmDictionary.entries]. It is possible to add an
+ * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
  * unmanaged entry to a dictionary entry set. This will result in the underlying
  * [RealmDictionary] being updated.
  */
