@@ -276,7 +276,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir
+          path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release
 
       - name: Build packages
         working-directory: packages
