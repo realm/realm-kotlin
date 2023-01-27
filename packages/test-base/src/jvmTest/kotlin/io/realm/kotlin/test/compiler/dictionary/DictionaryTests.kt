@@ -17,117 +17,58 @@
 package io.realm.kotlin.test.compiler.dictionary
 
 import com.tschuchort.compiletesting.KotlinCompilation
-import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.compiler.CollectionType
+import io.realm.kotlin.test.compiler.CollectionTests
+import io.realm.kotlin.test.compiler.EMBEDDED_CLASS
+import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.compiler.getCode
-import io.realm.kotlin.test.util.Compiler.compileFromSource
-import io.realm.kotlin.test.util.TypeDescriptor
-import io.realm.kotlin.types.RealmAny
-import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.test.compiler.globalNonNullableTypes
 import org.junit.Test
-import kotlin.reflect.KClass
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
-// Cannot trigger these from within the IDE due to https://youtrack.jetbrains.com/issue/KT-46195
-// Execute the tests from the CLI with `./gradlew jvmTest`
-class DictionaryTests {
-
-    private val baseSupportedPrimitiveClasses = TypeDescriptor.elementTypesForDictionary
-        .filter { it.classifier != RealmObject::class } // Cannot have "pure" RealmDictionary<RealmObject>
-
-    private val nonNullableTypes = baseSupportedPrimitiveClasses
-        .filter { it.classifier != RealmAny::class } // No non-nullable RealmDictionary<RealmAny> allowed
-        .map { (it.classifier as KClass<*>).simpleName!! }
-        .toSet() // Remove duplicates from nullable types
-        .plus(listOf("SampleClass", "EmbeddedClass")) // Add object classes manually - see name in code strings in Utils.kt
-
-    private val supportedPrimitiveTypes = baseSupportedPrimitiveClasses
-        .map { (it.classifier as KClass<*>).simpleName!! }
-        .toSet() // Remove duplicates from nullable types
+class DictionaryTests : CollectionTests(
+    CollectionType.DICTIONARY,
+    globalNonNullableTypes // Objects can only be nullable so test separately
+) {
 
     // ------------------------------------------------
-    // RealmDictionary<E>
+    // RealmDictionary<RealmObject>
     // ------------------------------------------------
 
-    // - supported types
+    // - Non-nullable RealmObject fails
     @Test
-    fun `non-nullable dictionary`() {
-        // TODO optimize: see comment in TypeDescriptor.elementTypesForDictionary
-        nonNullableTypes.forEach { nonNullableType ->
-            val result = createFileAndCompile(
-                "nonNullableDictionary.kt",
-                getCode(
-                    collectionType = CollectionType.DICTIONARY,
-                    elementType = nonNullableType,
-                    nullableElementType = false,
-                    nullableField = false
-                )
-            )
-            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-        }
-    }
-
-    // - RealmAny fails if non-nullable (mixed is always non-null)
-    // - Other unsupported types fail too (nullability is irrelevant in this case)
-    @Test
-    fun `unsupported non-nullable dictionary - fails`() {
-        val unsupportedNonNullableTypes =
-            listOf(Exception::class.simpleName!!, RealmAny::class.simpleName!!)
-        unsupportedNonNullableTypes.forEach { nonNullableType ->
-            val result = createFileAndCompile(
-                "unsupportedNonNullableDictionary.kt",
-                getCode(
-                    collectionType = CollectionType.DICTIONARY,
-                    elementType = nonNullableType,
-                    nullableElementType = false,
-                    nullableField = false
-                )
-            )
-            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-            assertTrue(result.messages.contains("Unsupported type for RealmDictionary"))
-        }
-    }
-
-    // - Other unsupported types fail too
-    @Test
-    fun `unsupported type in dictionary - fails`() {
-        val result = compileFromSource(
-            SourceFile.kotlin(
-                "unsupportedTypeDictionary.kt",
-                getCode(
-                    collectionType = CollectionType.DICTIONARY,
-                    elementType = "A",
-                    nullableElementType = false,
-                    nullableField = false
-                )
+    fun `non-nullable RealmObject dictionary`() {
+        val result = createFileAndCompile(
+            "nonNullableRealmObjectDictionary.kt",
+            getCode(
+                collectionType = CollectionType.DICTIONARY,
+                elementType = OBJECT_CLASS,
+                nullableElementType = false,
+                nullableField = false
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for RealmDictionary: 'A'"))
+    }
+
+    // - Non-nullable EmbeddedRealmObject fails
+    @Test
+    fun `non-nullable EmbeddedRealmObject dictionary`() {
+        val result = createFileAndCompile(
+            "nonNullableRealmObjectDictionary.kt",
+            getCode(
+                collectionType = CollectionType.DICTIONARY,
+                elementType = EMBEDDED_CLASS,
+                nullableElementType = false,
+                nullableField = false
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
     }
 
     // ------------------------------------------------
     // RealmDictionary<E?>
     // ------------------------------------------------
-
-    // - supported types
-    @Test
-    fun `nullable primitive type dictionary`() {
-        supportedPrimitiveTypes.forEach { nullableType ->
-            val result = createFileAndCompile(
-                "nullableTypeDictionary.kt",
-                getCode(
-                    collectionType = CollectionType.DICTIONARY,
-                    elementType = nullableType,
-                    nullableElementType = true,
-                    nullableField = false
-                )
-            )
-            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-        }
-    }
 
     // - RealmObject works
     // Unlike lists and sets, dictionaries of objects/embedded objects may contain null values.
@@ -137,7 +78,7 @@ class DictionaryTests {
             "nullableRealmObjectDictionary.kt",
             getCode(
                 collectionType = CollectionType.DICTIONARY,
-                elementType = "SampleClass",
+                elementType = OBJECT_CLASS,
                 nullableElementType = true,
                 nullableField = false
             )
@@ -153,48 +94,11 @@ class DictionaryTests {
             "nullableEmbeddedRealmObjectDictionary.kt",
             getCode(
                 collectionType = CollectionType.DICTIONARY,
-                elementType = "EmbeddedClass",
+                elementType = EMBEDDED_CLASS,
                 nullableElementType = true,
                 nullableField = false
             )
         )
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-    }
-
-    // ------------------------------------------------
-    // RealmDictionary<E>?
-    // ------------------------------------------------
-
-    // - nullable dictionary field fails
-    @Test
-    fun `nullable dictionaries - fails`() {
-        supportedPrimitiveTypes.forEach { primitiveType ->
-            val result = createFileAndCompile(
-                "nullableDictionary.kt",
-                getCode(
-                    collectionType = CollectionType.DICTIONARY,
-                    elementType = primitiveType,
-                    nullableElementType = false,
-                    nullableField = true
-                )
-            )
-            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-            assertTrue(result.messages.contains("a RealmDictionary field cannot be marked as nullable"))
-        }
-    }
-
-    // - star projection fails
-    @Test
-    fun `star projection dictionary - fails`() {
-        // Test that a star-projected dictionary fails to compile
-        // It is not possible to test a dictionary missing generics since this would not even compile
-        val result = compileFromSource(
-            SourceFile.kotlin(
-                "starProjectionDictionary.kt",
-                getCode(CollectionType.DICTIONARY)
-            )
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("RealmDictionary cannot use a '*' projection"))
     }
 }
