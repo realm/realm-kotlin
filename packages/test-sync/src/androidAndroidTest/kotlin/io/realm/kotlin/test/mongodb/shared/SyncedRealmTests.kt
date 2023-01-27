@@ -69,6 +69,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -1262,13 +1264,25 @@ class SyncedRealmTests {
         override val level: LogLevel
     ) : RealmLogger {
 
+        private val mutex = Mutex()
         private val _logs = mutableListOf<String>()
-        public val logs: List<String>
-            get() = _logs
+        /**
+         * Returns a snapshot of the current state of the logs.
+         */
+        val logs: List<String>
+            get() = runBlocking {
+                mutex.withLock {
+                    _logs.toList()
+                }
+            }
 
         override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
             val logMessage: String = message!!
-            _logs.add(logMessage)
+            runBlocking {
+                mutex.withLock {
+                    _logs.add(logMessage)
+                }
+            }
         }
     }
 
