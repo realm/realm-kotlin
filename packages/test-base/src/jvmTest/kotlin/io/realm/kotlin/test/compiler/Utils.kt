@@ -38,6 +38,10 @@ fun getCode(
     )
 }
 
+internal const val UNSUPPORTED_CLASS = "A"
+internal const val EMBEDDED_CLASS = "EmbeddedClass"
+internal const val OBJECT_CLASS = "SampleClass"
+
 private val COLLECTION_CODE = """
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
@@ -53,9 +57,9 @@ import org.mongodb.kbson.BsonObjectId
 
 import java.lang.Exception
 
-class A
-class EmbeddedClass : EmbeddedRealmObject
-class SampleClass : RealmObject {
+class $UNSUPPORTED_CLASS
+class $EMBEDDED_CLASS : EmbeddedRealmObject
+class $OBJECT_CLASS : RealmObject {
     // 1st parameter indicates the collection type: RealmList, RealmSet, RealmDictionary
     // 2nd parameter indicates the contained type: String, Long, etc. - nullability must be handled here
     // 3rd parameter indicates nullability of the field itself
