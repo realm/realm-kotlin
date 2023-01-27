@@ -82,3 +82,10 @@ public fun <T> RealmDictionaryEntrySet<T>.toRealmDictionary(): RealmDictionary<T
             .toRealmDictionary()
     }
 }
+
+/**
+ * Instantiates an **unmanaged** [RealmDictionary] containing all the elements of the receiver
+ * dictionary represented by a [Map] of [String] to [T] pairs.
+ */
+public fun <T> Map<String, T>.toRealmDictionary(): RealmDictionary<T> =
+    UnmanagedRealmDictionary(this)

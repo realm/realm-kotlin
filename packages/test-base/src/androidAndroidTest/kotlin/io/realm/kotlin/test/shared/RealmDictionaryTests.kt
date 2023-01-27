@@ -214,6 +214,16 @@ class RealmDictionaryTests {
         }
         mapEntrySet.toRealmDictionary()
             .forEach { assertTrue(multipleElementList.contains(Pair(it.key, it.value))) }
+
+        // ... or from a dictionary represented by another dictionary, i.e. Map<String, T>
+        val dictionary = mapOf("A" to 1, "B" to 2)
+        dictionary.toRealmDictionary()
+            .let {
+                assertEquals(dictionary.keys.size, it.keys.size)
+                assertTrue(it.keys.containsAll(dictionary.keys))
+                assertEquals(dictionary.values.size, it.values.size)
+                assertTrue(it.values.containsAll(dictionary.values))
+            }
     }
 
     @Test
