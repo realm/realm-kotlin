@@ -19,19 +19,18 @@ package io.realm.kotlin.test.compiler.list
 import com.tschuchort.compiletesting.KotlinCompilation
 import io.realm.kotlin.compiler.CollectionType
 import io.realm.kotlin.test.compiler.CollectionTests
+import io.realm.kotlin.test.compiler.EMBEDDED_CLASS
+import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.compiler.getCode
-import io.realm.kotlin.test.compiler.nonNullableTypes
+import io.realm.kotlin.test.compiler.globalNonNullableTypes
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-// Add object class manually - see name in class code strings in Utils.kt
-private val listNonNullableTypes = nonNullableTypes.plus("SampleClass")
-
 class ListTests : CollectionTests(
     CollectionType.LIST,
-    listNonNullableTypes
+    globalNonNullableTypes.plus(listOf(OBJECT_CLASS, EMBEDDED_CLASS)) // Add object class manually - see name in class code strings in Utils.kt
 ) {
 
     // ------------------------------------------------
@@ -46,7 +45,7 @@ class ListTests : CollectionTests(
             "nullableRealmObjectList.kt",
             getCode(
                 collectionType = CollectionType.LIST,
-                elementType = "SampleClass",
+                elementType = OBJECT_CLASS,
                 nullableElementType = true,
                 nullableField = false
             )
@@ -63,7 +62,7 @@ class ListTests : CollectionTests(
             "nullableRealmObjectList.kt",
             getCode(
                 collectionType = CollectionType.LIST,
-                elementType = "EmbeddedClass",
+                elementType = EMBEDDED_CLASS,
                 nullableElementType = true,
                 nullableField = false
             )

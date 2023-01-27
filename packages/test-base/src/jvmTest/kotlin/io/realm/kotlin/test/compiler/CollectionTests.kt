@@ -31,14 +31,13 @@ import kotlin.test.assertTrue
 internal val baseSupportedPrimitiveClasses = TypeDescriptor.elementTypesForList
     .filter { it.classifier != RealmObject::class } // Cannot have "pure" Collection<RealmObject>
 
-internal val nonNullableTypes = baseSupportedPrimitiveClasses
-    .filter { it.classifier != RealmAny::class } // No non-nullable RealmList<RealmAny> allowed
+internal val globalNullablePrimitiveTypes = baseSupportedPrimitiveClasses
     .map { (it.classifier as KClass<*>).simpleName!! }
     .toSet() // Remove duplicates from nullable types
 
-internal val supportedPrimitiveTypes = baseSupportedPrimitiveClasses
-    .map { (it.classifier as KClass<*>).simpleName!! }
-    .toSet() // Remove duplicates from nullable types
+internal val globalNonNullableTypes = globalNullablePrimitiveTypes.toMutableSet()
+    .also { it.remove(RealmAny::class.simpleName) } // RealmAny must always be nullable for collections
+    .toSet()
 
 /**
  * These tests are shared across collections and dictionaries.
@@ -76,7 +75,7 @@ abstract class CollectionTests(
                     nullableField = false
                 )
             )
-            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, "Type '$nonNullableType':")
         }
     }
 
@@ -95,7 +94,7 @@ abstract class CollectionTests(
                         nullableField = false
                     )
                 )
-                assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+                assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Type '$nonNullableType':")
                 assertTrue(result.messages.contains("Unsupported type for ${collectionType.description}"))
             }
     }
@@ -125,7 +124,7 @@ abstract class CollectionTests(
     // - supported types
     @Test
     fun `nullable primitive type collection`() {
-        supportedPrimitiveTypes.forEach { nullableType ->
+        globalNullablePrimitiveTypes.forEach { nullableType ->
             val result = createFileAndCompile(
                 "nullableTypeCollection.kt",
                 getCode(
@@ -135,7 +134,7 @@ abstract class CollectionTests(
                     nullableField = false
                 )
             )
-            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+            assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, "Type '$nullableType':")
         }
     }
 
@@ -146,7 +145,7 @@ abstract class CollectionTests(
     // - nullable collection field fails
     @Test
     fun `nullable collection field - fails`() {
-        supportedPrimitiveTypes.forEach { primitiveType ->
+        globalNullablePrimitiveTypes.forEach { primitiveType ->
             val result = createFileAndCompile(
                 "nullableCollection.kt",
                 getCode(
@@ -156,7 +155,7 @@ abstract class CollectionTests(
                     nullableField = true
                 )
             )
-            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Type '$primitiveType':")
             assertTrue(result.messages.contains("a ${collectionType.description} field cannot be marked as nullable"))
         }
     }

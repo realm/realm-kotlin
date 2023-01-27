@@ -20,20 +20,19 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.compiler.CollectionType
 import io.realm.kotlin.test.compiler.CollectionTests
+import io.realm.kotlin.test.compiler.EMBEDDED_CLASS
+import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.compiler.getCode
-import io.realm.kotlin.test.compiler.nonNullableTypes
+import io.realm.kotlin.test.compiler.globalNonNullableTypes
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-// Add object class manually - see name in class code strings in Utils.kt
-private val setNonNullableTypes = nonNullableTypes.plus("SampleClass")
-
 class SetTests : CollectionTests(
     CollectionType.SET,
-    setNonNullableTypes
+    globalNonNullableTypes.plus(OBJECT_CLASS) // Add object class manually - see name in class code strings in Utils.kt
 ) {
 
     // ------------------------------------------------
@@ -48,7 +47,7 @@ class SetTests : CollectionTests(
                 "unsupportedEmbeddedRealmObjectSet.kt",
                 getCode(
                     collectionType = CollectionType.SET,
-                    elementType = "EmbeddedClass",
+                    elementType = EMBEDDED_CLASS,
                     nullableElementType = false,
                     nullableField = false
                 )
@@ -69,7 +68,7 @@ class SetTests : CollectionTests(
             "nullableRealmObjectSet.kt",
             getCode(
                 collectionType = CollectionType.SET,
-                elementType = "SampleClass",
+                elementType = OBJECT_CLASS,
                 nullableElementType = true,
                 nullableField = false
             )
@@ -86,7 +85,7 @@ class SetTests : CollectionTests(
                 "unsupportedEmbeddedRealmObjectSet.kt",
                 getCode(
                     collectionType = CollectionType.SET,
-                    elementType = "EmbeddedClass",
+                    elementType = EMBEDDED_CLASS,
                     nullableElementType = true,
                     nullableField = false
                 )
