@@ -112,6 +112,7 @@ import realm_wrapper.realm_object_t
 import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_release
+import realm_wrapper.realm_results_t
 import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_set_t
@@ -1022,7 +1023,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_set_find(set: RealmSetPointer, transport: RealmValue): Boolean {
-        // TODO optimize: reuse the same memory allocation
+        // TODO optimize: use MemAllocator
         memScoped {
             val index = alloc<ULongVar>()
             val found = alloc<BooleanVar>()
@@ -1039,7 +1040,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_set_erase(set: RealmSetPointer, transport: RealmValue): Boolean {
-        // TODO optimize: reuse the same memory allocation
+        // TODO optimize: use MemAllocator
         memScoped {
             val erased = alloc<BooleanVar>()
             checkedBooleanResult(
@@ -1105,9 +1106,11 @@ actual object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue {
+        val struct = allocRealmValueT()
+
+        // TODO optimize: use MemAllocator
         memScoped {
             val found = alloc<BooleanVar>()
-            val struct = allocRealmValueT()
             checkedBooleanResult(
                 realm_wrapper.realm_dictionary_find(
                     dictionary.cptr(),
@@ -1142,8 +1145,10 @@ actual object RealmInterop {
         mapKey: RealmValue,
         value: RealmValue
     ): Pair<RealmValue, Boolean> {
+        val previousValue = realm_dictionary_find(dictionary, mapKey)
+
+        // TODO optimize: use MemAllocator
         memScoped {
-            val previousValue = realm_dictionary_find(dictionary, mapKey)
             realm_dictionary_find(dictionary, mapKey)
             val index = alloc<ULongVar>()
             val inserted = alloc<BooleanVar>()
@@ -1164,8 +1169,10 @@ actual object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): Pair<RealmValue, Boolean> {
+        val previousValue = realm_dictionary_find(dictionary, mapKey)
+
+        // TODO optimize: use MemAllocator
         memScoped {
-            val previousValue = realm_dictionary_find(dictionary, mapKey)
             val erased = alloc<BooleanVar>()
             checkedBooleanResult(
                 realm_wrapper.realm_dictionary_erase(
@@ -1175,6 +1182,55 @@ actual object RealmInterop {
                 )
             )
             return Pair(previousValue, erased.value)
+        }
+    }
+
+    actual fun realm_dictionary_contains_key(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Boolean {
+        // TODO optimize: use MemAllocator
+        memScoped {
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_dictionary_contains_key(
+                    dictionary.cptr(),
+                    mapKey.value.readValue(),
+                    found.ptr
+                )
+            )
+            return found.value
+        }
+    }
+
+    actual fun realm_dictionary_contains_value(
+        dictionary: RealmMapPointer,
+        value: RealmValue
+    ): Boolean {
+        // TODO optimize: use MemAllocator
+        memScoped {
+            val index = alloc<ULongVar>()
+            checkedBooleanResult(
+                realm_wrapper.realm_dictionary_contains_value(
+                    dictionary.cptr(),
+                    value.value.readValue(),
+                    index.ptr
+                )
+            )
+            return index.value.toLong() != -1L
+        }
+    }
+
+    actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
+        memScoped {
+            val size = alloc<ULongVar>()
+            val keysPointer = allocArray<CPointerVar<realm_results_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_dictionary_get_keys(dictionary.cptr(), size.ptr, keysPointer)
+            )
+            return keysPointer[0]?.let {
+                CPointerWrapper(it)
+            } ?: throw IllegalArgumentException("There was an error retrieving the dictionary keys.")
         }
     }
 

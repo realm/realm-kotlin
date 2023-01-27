@@ -17,6 +17,8 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
@@ -29,6 +31,7 @@ import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
 import kotlin.reflect.KClass
@@ -47,9 +50,8 @@ internal abstract class ManagedRealmMap<K, V> constructor(
         RealmMapEntrySetImpl(nativePointer, operator)
     }
 
-    // TODO missing support for Results Dictionary::get_keys() in C-API: https://github.com/realm/realm-core/issues/6181
     override val keys: MutableSet<K>
-        get() = TODO("Not yet implemented")
+        get() = operator.keys
 
     override val size: Int
         get() = operator.size
@@ -62,15 +64,9 @@ internal abstract class ManagedRealmMap<K, V> constructor(
 
     override fun clear() = operator.clear()
 
-    override fun containsKey(key: K): Boolean {
-        // TODO missing support for Dictionary::contains(StringData key) in C-API: https://github.com/realm/realm-core/issues/6181
-        TODO("Not yet implemented")
-    }
+    override fun containsKey(key: K): Boolean = operator.containsKey(key)
 
-    override fun containsValue(value: V): Boolean {
-        // TODO missing support for Dictionary::find_any(Mixed value) in C-API: https://github.com/realm/realm-core/issues/6181
-        TODO("Not yet implemented")
-    }
+    override fun containsValue(value: V): Boolean = operator.containsValue(value)
 
     override fun get(key: K): V? = operator.get(key)
 
@@ -96,6 +92,12 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
             return RealmInterop.realm_dictionary_size(nativePointer).toInt()
         }
 
+    val keys: MutableSet<K>
+        get() {
+            realmReference.checkClosed()
+            return KeySet(nativePointer, this)
+        }
+
     // This function returns a Pair because it is used by both the Map and the entry Set. Having
     // both different semantics, Map returns the previous value for the key whereas the entry Set
     // returns whether the element was inserted successfully.
@@ -104,13 +106,43 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         value: V?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
-    ): Pair<V?, Boolean>
+    ): Pair<V?, Boolean> {
+        realmReference.checkClosed()
+        return insertInternal(key, value, updatePolicy, cache)
+    }
 
     // Similarly to insert, Map returns the erased value whereas the entry Set returns whether the
     // element was erased successfully.
-    fun erase(key: K): Pair<V?, Boolean>
-    fun getEntry(position: Int): Pair<K, V>
-    fun get(key: K): V?
+    fun erase(key: K): Pair<V?, Boolean> {
+        realmReference.checkClosed()
+        return eraseInternal(key)
+    }
+
+    fun getEntry(position: Int): Pair<K, V> {
+        realmReference.checkClosed()
+        return getEntryInternal(position)
+    }
+
+    fun get(key: K): V? {
+        realmReference.checkClosed()
+        return getInternal(key)
+    }
+
+    fun containsValue(value: V): Boolean {
+        realmReference.checkClosed()
+        return containsValueInternal(value)
+    }
+
+    fun insertInternal(
+        key: K,
+        value: V?,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    ): Pair<V?, Boolean>
+    fun eraseInternal(key: K): Pair<V?, Boolean>
+    fun getEntryInternal(position: Int): Pair<K, V>
+    fun getInternal(key: K): V?
+    fun containsValueInternal(value: V): Boolean
 
     @Suppress("UNCHECKED_CAST")
     fun getValue(resultsPointer: RealmResultsPointer, index: Int): V? {
@@ -122,6 +154,16 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
+    fun getKey(resultsPointer: RealmResultsPointer, index: Int): K {
+        return getterScope {
+            with(keyConverter) {
+                val transport = realm_results_get(resultsPointer, index.toLong())
+                realmValueToPublic(transport)
+            } as K
+        }
+    }
+
     fun put(
         key: K,
         value: V,
@@ -129,7 +171,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): V? {
         realmReference.checkClosed()
-        return insert(key, value, updatePolicy, cache).first
+        return insertInternal(key, value, updatePolicy, cache).first
     }
 
     fun putAll(
@@ -145,7 +187,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
 
     fun remove(key: K): V? {
         realmReference.checkClosed()
-        return erase(key).first
+        return eraseInternal(key).first
             .also { modCount += 1 }
     }
 
@@ -154,9 +196,21 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         RealmInterop.realm_dictionary_clear(nativePointer)
         modCount += 1
     }
+
+    fun containsKey(key: K): Boolean {
+        realmReference.checkClosed()
+
+        // Even though we are getting a value we need to free the data buffers of the string we
+        // send down to Core so we need to use an inputScope
+        return inputScope {
+            with(keyConverter) {
+                RealmInterop.realm_dictionary_contains_key(nativePointer, publicToRealmValue(key))
+            }
+        }
+    }
 }
 
-internal class PrimitiveMapOperator<K, V> constructor(
+internal open class PrimitiveMapOperator<K, V> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val valueConverter: RealmValueConverter<V>,
@@ -166,13 +220,12 @@ internal class PrimitiveMapOperator<K, V> constructor(
 
     override var modCount: Int = 0
 
-    override fun insert(
+    override fun insertInternal(
         key: K,
         value: V?,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
     ): Pair<V?, Boolean> {
-        realmReference.checkClosed()
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             with(valueConverter) {
@@ -188,8 +241,7 @@ internal class PrimitiveMapOperator<K, V> constructor(
         }.also { modCount += 1 }
     }
 
-    override fun erase(key: K): Pair<V?, Boolean> {
-        realmReference.checkClosed()
+    override fun eraseInternal(key: K): Pair<V?, Boolean> {
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             with(valueConverter) {
@@ -201,8 +253,7 @@ internal class PrimitiveMapOperator<K, V> constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun getEntry(position: Int): Pair<K, V> {
-        realmReference.checkClosed()
+    override fun getEntryInternal(position: Int): Pair<K, V> {
         return getterScope {
             realm_dictionary_get(nativePointer, position)
                 .let {
@@ -213,15 +264,58 @@ internal class PrimitiveMapOperator<K, V> constructor(
         }
     }
 
-    override fun get(key: K): V? {
-        realmReference.checkClosed()
-
+    override fun getInternal(key: K): V? {
         // Even though we are getting a value we need to free the data buffers of the string we
         // send down to Core so we need to use an inputScope
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             val valueTransport = realm_dictionary_find(nativePointer, keyTransport)
             with(valueConverter) { realmValueToPublic(valueTransport) }
+        }
+    }
+
+    override fun containsValueInternal(value: V): Boolean {
+        // Even though we are getting a value we need to free the data buffers of the string values
+        // we send down to Core so we need to use an inputScope
+        return inputScope {
+            with(valueConverter) {
+                RealmInterop.realm_dictionary_contains_value(
+                    nativePointer,
+                    publicToRealmValue(value)
+                )
+            }
+        }
+    }
+}
+
+internal class RealmAnyMapOperator<K> constructor(
+    mediator: Mediator,
+    realmReference: RealmReference,
+    valueConverter: RealmValueConverter<RealmAny?>,
+    keyConverter: RealmValueConverter<K>,
+    nativePointer: RealmMapPointer
+) : PrimitiveMapOperator<K, RealmAny?>(
+    mediator,
+    realmReference,
+    valueConverter,
+    keyConverter,
+    nativePointer
+) {
+    override fun containsValueInternal(value: RealmAny?): Boolean {
+        // Unmanaged objects are never found in a managed dictionary
+        if (value?.type == RealmAny.Type.OBJECT) {
+            if (!value.asRealmObject<RealmObjectInternal>().isManaged()) return false
+        }
+
+        // Even though we are getting a value we need to free the data buffers of the string values
+        // we send down to Core so we need to use an inputScope
+        return inputScope {
+            with(valueConverter) {
+                RealmInterop.realm_dictionary_contains_value(
+                    nativePointer,
+                    publicToRealmValue(value)
+                )
+            }
         }
     }
 }
@@ -238,13 +332,12 @@ internal class RealmObjectMapOperator<K, V> constructor(
     override var modCount: Int = 0
 
     @Suppress("UNCHECKED_CAST")
-    override fun insert(
+    override fun insertInternal(
         key: K,
         value: V?,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
     ): Pair<V?, Boolean> {
-        realmReference.checkClosed()
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             val objTransport = realmObjectToRealmReferenceWithImport(
@@ -273,8 +366,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun erase(key: K): Pair<V?, Boolean> {
-        realmReference.checkClosed()
+    override fun eraseInternal(key: K): Pair<V?, Boolean> {
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             realm_dictionary_erase(nativePointer, keyTransport).let {
@@ -290,8 +382,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun getEntry(position: Int): Pair<K, V> {
-        realmReference.checkClosed()
+    override fun getEntryInternal(position: Int): Pair<K, V> {
         return getterScope {
             realm_dictionary_get(nativePointer, position)
                 .let {
@@ -308,9 +399,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun get(key: K): V? {
-        realmReference.checkClosed()
-
+    override fun getInternal(key: K): V? {
         // Even though we are getting a value we need to free the data buffers of the string we
         // send down to Core so we need to use an inputScope
         return inputScope {
@@ -322,6 +411,22 @@ internal class RealmObjectMapOperator<K, V> constructor(
                 realmReference
             )
         } as V?
+    }
+
+    override fun containsValueInternal(value: V): Boolean {
+        // Unmanaged objects are never found in a managed dictionary
+        if (!(value as RealmObjectInternal).isManaged()) return false
+
+        // Even though we are getting a value we need to free the data buffers of the string we
+        // send down to Core so we need to use an inputScope
+        return inputScope {
+            with(valueConverter) {
+                RealmInterop.realm_dictionary_contains_value(
+                    nativePointer,
+                    publicToRealmValue(value)
+                )
+            }
+        }
     }
 }
 
@@ -335,6 +440,33 @@ internal class ManagedRealmDictionary<E> constructor(
     nativePointer: RealmMapPointer,
     operator: MapOperator<String, E>
 ) : ManagedRealmMap<String, E>(nativePointer, operator), RealmDictionary<E>
+
+// ----------------------------------------------------------------------
+// Keys
+// ----------------------------------------------------------------------
+
+/**
+ * [MutableSet] containing all the keys present in a dictionary. Core returns keys as results.
+ */
+internal class KeySet<K>(
+    nativePointer: RealmMapPointer,
+    private val operator: MapOperator<K, *>
+) : AbstractMutableSet<K>() {
+
+    private val keysPointer = RealmInterop.realm_dictionary_get_keys(nativePointer)
+
+    override val size: Int
+        get() = RealmInterop.realm_results_count(keysPointer).toInt()
+
+    override fun add(element: K): Boolean =
+        throw UnsupportedOperationException("Adding keys to a dictionary through 'dictionary.keys' is not allowed.")
+
+    override fun iterator(): MutableIterator<K> =
+        object : RealmMapGenericIterator<K, K>(operator) {
+            @Suppress("UNCHECKED_CAST")
+            override fun getNext(position: Int): K = operator.getKey(keysPointer, position)
+        }
+}
 
 // ----------------------------------------------------------------------
 // Values
@@ -372,8 +504,6 @@ internal class RealmMapValues<K, V> constructor(
 
     override fun iterator(): MutableIterator<V> =
         object : RealmMapGenericIterator<K, V>(operator) {
-            override fun next(): V = calculateNext()
-
             @Suppress("UNCHECKED_CAST")
             override fun getNext(position: Int): V =
                 operator.getValue(resultsPointer, position) as V
@@ -385,12 +515,12 @@ internal class RealmMapValues<K, V> constructor(
 // ----------------------------------------------------------------------
 
 /**
- * Base iterator used by both [RealmDictionary.values] and [RealmDictionary.entries]. The one used
- * by `entries` returns [MutableMap.MutableEntry] whereas the one used by `values` returns [T] when
- * calling [next].
+ * Base iterator used by [RealmDictionary.keys], [RealmDictionary.values] and
+ * [RealmDictionary.entries]. Upon calling [next] the iterator used by `keys` returns a [K],
+ * `entries` returns a [MutableMap.MutableEntry] whereas the one used by `values` returns a [T].
  */
-internal abstract class RealmMapGenericIterator<K, T> constructor(
-    private val operator: MapOperator<K, *>
+internal abstract class RealmMapGenericIterator<K, T>(
+    protected val operator: MapOperator<K, *>
 ) : MutableIterator<T> {
 
     private var expectedModCount = operator.modCount // Current modifications in the map
@@ -434,8 +564,7 @@ internal abstract class RealmMapGenericIterator<K, T> constructor(
         }
     }
 
-    // Returns an entry which can be used by the children iterators
-    protected fun calculateNext(): T {
+    override fun next(): T {
         operator.realmReference.checkClosed()
         checkConcurrentModification()
 
@@ -510,8 +639,6 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
 
     override fun iterator(): MutableIterator<MutableMap.MutableEntry<K, V>> =
         object : RealmMapGenericIterator<K, MutableMap.MutableEntry<K, V>>(operator) {
-            override fun next(): MutableMap.MutableEntry<K, V> = calculateNext()
-
             @Suppress("UNCHECKED_CAST")
             override fun getNext(position: Int): MutableMap.MutableEntry<K, V> {
                 val pair = operator.getEntry(position)
