@@ -37,6 +37,7 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.InternalConfiguration
+import io.realm.kotlin.schema.DictionaryPropertyType
 import io.realm.kotlin.schema.ListPropertyType
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmProperty
@@ -1062,6 +1063,9 @@ class DynamicMutableRealmObjectTests {
                             else -> error("Model contains untested properties: $property")
                         }
                     }
+                }
+                is DictionaryPropertyType -> {
+                    // TODO add support for dictionaries in dynamic realms
                 }
             }
             // TODO There is currently nothing that assert that we have tested all type

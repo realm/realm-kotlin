@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -727,6 +728,10 @@ actual object RealmInterop {
         } else {
             throw IllegalArgumentException("There was an error retrieving the dictionary keys.")
         }
+    }
+
+    actual fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean {
+        return realmc.realm_dictionary_is_valid(dictionary.cptr())
     }
 
     actual fun realm_object_add_notification_callback(

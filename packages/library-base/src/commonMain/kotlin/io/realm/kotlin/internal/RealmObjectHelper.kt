@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
@@ -1375,6 +1376,66 @@ internal object RealmObjectHelper {
                                 }
                             }
                             accessor.set(target, set)
+                        }
+                        else -> {
+                            throw IllegalStateException("Unknown type: ${property.type}")
+                        }
+                    }
+                }
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                    val elements: RealmDictionary<Any?> = accessor.get(source) as RealmDictionary<Any?>
+                    when (property.type) {
+                        PropertyType.RLM_PROPERTY_TYPE_INT,
+                        PropertyType.RLM_PROPERTY_TYPE_BOOL,
+                        PropertyType.RLM_PROPERTY_TYPE_STRING,
+                        PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                        PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+                        PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                        PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                        PropertyType.RLM_PROPERTY_TYPE_UUID -> {
+                            accessor.set(target, elements.toRealmDictionary())
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                            val detachedRealmAnyDictionary = (elements as RealmDictionary<RealmAny?>).map { entry ->
+                                if (entry.value?.type == RealmAny.Type.OBJECT) {
+                                    if (currentDepth < maxDepth) {
+                                        entry.value?.let { realmAny ->
+                                            createDetachedCopy(
+                                                mediator,
+                                                realmAny.asRealmObject(),
+                                                currentDepth + 1u,
+                                                maxDepth,
+                                                closeAfterCopy,
+                                                cache
+                                            ) as RealmObject
+                                        }?.let {
+                                            Pair(entry.key, RealmAny.create(it))
+                                        } ?: Pair(entry.key, null)
+                                    } else {
+                                        Pair(entry.key, null)
+                                    }
+                                } else {
+                                    Pair(entry.key, entry.value)
+                                }
+                            }
+                            accessor.set(target, detachedRealmAnyDictionary.toRealmDictionary())
+                        }
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                            val dictionary = UnmanagedRealmDictionary<BaseRealmObject>()
+                            if (currentDepth < maxDepth) {
+                                (elements as RealmDictionary<BaseRealmObject>).forEach { entry ->
+                                    dictionary[entry.key] = createDetachedCopy(
+                                        mediator,
+                                        entry.value,
+                                        currentDepth + 1u,
+                                        maxDepth,
+                                        closeAfterCopy,
+                                        cache
+                                    )
+                                }
+                            }
+                            accessor.set(target, dictionary)
                         }
                         else -> {
                             throw IllegalStateException("Unknown type: ${property.type}")

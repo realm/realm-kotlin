@@ -20,6 +20,7 @@ import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.internal.asRealmSet
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -35,12 +36,16 @@ public fun <T> realmSetOf(vararg elements: T): RealmSet<T> =
  * that will copy all referenced objects.
  *
  * @param depth limit of the deep copy. All object references after this depth will be `null`.
- * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
+ * [RealmList], [RealmSet] and [RealmDictionary] variables containing objects will be empty.
+ * Starting depth is 0.
  * @returns an in-memory copy of all input objects.
  * @throws IllegalArgumentException if depth < 0 or, or the list is not valid to copy.
  */
-public inline fun <T : RealmObject> RealmSet<T>.copyFromRealm(depth: UInt = UInt.MAX_VALUE): Set<T> {
-    return this.getRealm<TypedRealm>()?.let { realm ->
-        realm.copyFromRealm(this, depth).toSet()
-    } ?: throw IllegalArgumentException("This RealmSet is unmanaged. Only managed sets can be copied.")
+public inline fun <T : RealmObject> RealmSet<T>.copyFromRealm(
+    depth: UInt = UInt.MAX_VALUE
+): Set<T> {
+    return this.getRealm<TypedRealm>()
+        ?.copyFromRealm(this, depth)
+        ?.toSet()
+        ?: throw IllegalArgumentException("This RealmSet is unmanaged. Only managed sets can be copied.")
 }
