@@ -25,7 +25,7 @@ jobs:
           java-version: 11
 
       - name: Install Kotlin Commandline Tools
-      - uses: fwilhe2/setup-kotlin@0.2.0
+        uses: fwilhe2/setup-kotlin@0.2.0
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
