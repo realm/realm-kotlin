@@ -29,6 +29,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
@@ -39,13 +40,10 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.flattenConcat
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -59,17 +57,26 @@ public class RealmImpl private constructor(
 
     private val realmPointerMutex = Mutex()
 
-    public val notificationDispatcherHolder: DispatcherHolder = configuration.notificationDispatcherFactory.create()
-    public val writeDispatcherHolder: DispatcherHolder = configuration.writeDispatcherFactory.create()
+    public val notificationDispatcherHolder: DispatcherHolder =
+        configuration.notificationDispatcherFactory.create()
+    public val writeDispatcherHolder: DispatcherHolder =
+        configuration.writeDispatcherFactory.create()
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
-    private val realmFlow =
-        MutableSharedFlow<RealmChange<Realm>>() // Realm notifications emit their initial state when subscribed to
+    private val realmFlow = MutableSharedFlow<RealmChange<Realm>>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST
+    )
     private val notifier =
         SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
     internal val writer =
         SuspendableWriter(this, writeDispatcherHolder.dispatcher)
+
+    // Internal flow to ease monitoring of realm state for closing active flows then the realm is
+    // closed.
+    internal val realmStateFlow =
+        MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     // inline classes cannot be lateinit, so use a placeholder instead.
     private var _realmReference: AtomicRef<RealmReference> = atomic(object : RealmReference {
@@ -118,7 +125,8 @@ public class RealmImpl private constructor(
                 // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
                 //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
                 //  frozen pointer and close the live one.
-                val frozenReference = (realmReference as LiveRealmReference).snapshot(this@RealmImpl)
+                val frozenReference =
+                    (realmReference as LiveRealmReference).snapshot(this@RealmImpl)
                 versionTracker.trackAndCloseExpiredReferences(frozenReference)
                 realmReference.close()
                 realmReference = frozenReference
@@ -130,6 +138,9 @@ public class RealmImpl private constructor(
                 notifier.realmChanged().collect { realmReference ->
                     updateRealmPointer(realmReference)
                 }
+            }
+            if (!realmStateFlow.tryEmit(State.OPEN)) {
+                log.warn("Cannot signal internal open")
             }
         } catch (ex: Throwable) {
             // Something went wrong initializing Realm, delete the file, so initialization logic
@@ -207,12 +218,8 @@ public class RealmImpl private constructor(
         }
     }
 
-    override fun asFlow(): Flow<RealmChange<Realm>> {
-        return flowOf(
-            flow { emit(InitialRealmImpl(this@RealmImpl)) },
-            realmFlow.asSharedFlow().takeWhile { !isClosed() }
-        ).flattenConcat()
-    }
+    override fun asFlow(): Flow<RealmChange<Realm>> =
+        scopedFlow { realmFlow.onStart { emit(InitialRealmImpl(this@RealmImpl)) } }
 
     override fun writeCopyTo(configuration: Configuration) {
         if (fileExists(configuration.path)) {
@@ -274,8 +281,10 @@ public class RealmImpl private constructor(
                 // The local realmReference is pointing to a realm reference managed by either the
                 // version tracker, writer or notifier, so it is already closed
                 super.close()
-                realmFlow.emit(UpdatedRealmImpl(this@RealmImpl))
             }
+        }
+        if (!realmStateFlow.tryEmit(State.CLOSED)) {
+            log.warn("Cannot signal internal close")
         }
         notificationDispatcherHolder.close()
         writeDispatcherHolder.close()
@@ -292,6 +301,19 @@ public class RealmImpl private constructor(
                 )
             }
         }
+    }
+
+    /**
+     * Internal state to be able to make a [State] flow that we can easily monitor and use to close
+     * flows within a coroutine context.
+     */
+    internal enum class State { OPEN, CLOSED, }
+
+    /**
+     * Flow wrapper that will complete the flow returned by [block] when the realm is closed.
+     */
+    internal inline fun <T> scopedFlow(crossinline block: () -> Flow<T>): Flow<T> {
+        return block().terminateWhen(realmStateFlow) { state -> state == State.CLOSED }
     }
 }
 
