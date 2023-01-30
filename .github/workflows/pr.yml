@@ -1121,7 +1121,7 @@ jobs:
         needs.test-ios-packages.result == 'success' &&
         needs.test-android-packages-emulator.result == 'success' &&
         needs.test-android-packages-device-farm.result == 'success' &&
-        needs.package-all-artifacts.result == 'success' &&
+        needs.package-all-artifacts.result == 'success'
 
     secrets: inherit
     with:
