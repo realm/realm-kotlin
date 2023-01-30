@@ -723,3 +723,10 @@ tasks.create("generateSdkVersionConstant") {
 tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
     dependsOn("generateSdkVersionConstant")
 }
+
+tasks.named("clean") {
+    doLast {
+        delete(buildJVMSharedLibs.get().outputs)
+        delete(project.file(".cxx"))
+    }
+}
