@@ -78,21 +78,21 @@ jobs:
       id: find-library-version
       run: |
         version=$(grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2)
-        echo "::set-output name=label::$version" 
+        echo "label=$version" >> $GITHUB_OUTPUT
 
     # This also include changes to Realm Core as they are hashed as part of `/packages/external/core`
     - name: Calculate ./packages SHAs 
       id: packages-cache-key
-      run: echo "::set-output name=sha::${{ hashFiles('./packages/**', './buildSrc/**') }}"  
+      run: echo "sha=${{ hashFiles('./packages/**', './buildSrc/**') }}" >> $GITHUB_OUTPUT
 
     - name: Calculate ./benchmarks SHAs 
       id: calculate-benchmarks-cache-key
-      run: echo "::set-output name=sha::${{ hashFiles('./benchmarks/**') }}"  
+      run: echo "sha=${{ hashFiles('./benchmarks/**') }}" >> $GITHUB_OUTPUT  
 
     - name: Calculate Realm Core commit SHA
       id: calculate-core-commit-sha
       working-directory: packages/external/core
-      run: echo "::set-output name=commit::$(git rev-parse HEAD)"
+      run: echo "commit=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
     #
     # For each specific package we need to perform 3 steps:
