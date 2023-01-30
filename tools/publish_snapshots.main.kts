@@ -107,29 +107,25 @@ settingsFile.writeText("""
 
 debug("Upload artifacts for $version")
 
+// Iterate through a local Maven repository and find all Realm Kotlin packages that neeeds to be uploaded.
 val packages: List<String> = File(localMavenRepo, "io/realm/kotlin").listFiles()
     .filter { file -> !file.isHidden && file.isDirectory }
     .map { file -> file.name }
 
-println("Found the following packages: ${packages.joinToString { " - $it\n" }}")
+debug("Found the following packages:\n${packages.joinToString(separator = "") { " - $it\n" }}")
 packages.forEach { packageName ->
-    debug("Uploading package: $packageName")
-    val packageDirectory = File(localMavenRepo, "io/realm/kotlin/$packageName/$version")
-    if (!packageDirectory.exists()) {
-        throw IllegalStateException("$packageDirectory does not exists.")
+    debug("Process package: $packageName")
+    val versionDirectory = File(localMavenRepo, "io/realm/kotlin/$packageName/$version")
+    if (!versionDirectory.exists()) {
+        throw IllegalStateException("$versionDirectory does not exists.")
     }
 
     // Find pom file which _must_ exists.
-    val pomFilePattern = "$packageName-$versionPrefix(-[0-9]{8}.[0-9]{6}-[0-9])?.pom"
-    val pomFile: File = iteratePackageFiles(packageDirectory)
-        .filter {
-            it.name.matches(Regex(pomFilePattern))
-        }
-        .firstOrNull() ?: throw IllegalStateException("Could not find pom file matching: $pomFilePattern in ${packageDirectory.absolutePath}")
+    val (snapshotTimestamp: String, pomFile: File) = findPomFile(versionDirectory, "$packageName-$versionPrefix")
 
     // Find all files from this package that must be uploaded
     val packageData = if (isSnapshot) {
-        findSnapshotFiles(packageDirectory, pomFile, packageName)
+        findSnapshotFiles(versionDirectory, pomFile, "$packageName-$versionPrefix$snapshotTimestamp")
     } else {
         findReleaseFiles()
     }
@@ -152,39 +148,49 @@ fun iteratePackageFiles(directory: File): Sequence<File> {
         }
 }
 
+fun findPomFile(versionDirectory: File, packageAndVersionPrefix: String): Pair<String, File> {
+    val pomFilePattern = "$packageAndVersionPrefix(-[0-9]{8}.[0-9]{6}-[0-9])?.pom"
+    val pomFiles: List<File> = iteratePackageFiles(versionDirectory)
+        .filter {it.name.matches(Regex(pomFilePattern)) }
+        .toList()
+
+    return when(pomFiles.size) {
+        0 -> throw IllegalStateException("Could not find pom file matching: $pomFilePattern in ${versionDirectory.absolutePath}")
+        1 -> Pair(getSnapshotTimestamp(pomFiles.first().name, packageAndVersionPrefix), pomFiles.first())
+        else -> {
+            val snapshots = pomFiles.map { pomFile ->
+                Pair(getSnapshotTimestamp(pomFile.name, packageAndVersionPrefix), pomFile)
+            }.toSet().sortedByDescending { it.first }
+            debug("Found following SNAPSHOT candidates:\n${snapshots.joinToString(separator = "") {" - ${it.first}\n" }}")
+
+            val selectedSnapshot = snapshots.first()
+            debug("Use selected SNAPSHOT: ${selectedSnapshot.first}")
+            return selectedSnapshot
+        }
+    }
+}
+
+/**
+ * From the pom file we can extract the timestamp we expect to see on all other files.
+ */
+fun getSnapshotTimestamp(fileName: String, packageAndVersionPrefix: String): String {
+    return fileName.removePrefix(packageAndVersionPrefix).removeSuffix(".pom")
+}
+
 /**
  * Find all files in a directory that is part of a SNAPSHOT release.
  */
-fun findSnapshotFiles(packageDirectory: File, pomFile: File, packageName: String): PackageData {
-    // From the pom file we can extract the timestamp we expect to see on all other files
-    var snapshotBuildNo = pomFile.name
-            .removePrefix("$packageName-$versionPrefix")
-            .removeSuffix(".pom")
-    println("Using SNAPSHOT timestamp and build: $snapshotBuildNo")
-
-    iteratePackageFiles(packageDirectory).forEach {
-        // Check that we don't have multiple snapshot files present
-        if (!it.name.contains(snapshotBuildNo)) {
-            throw IllegalStateException("Multiple snapshot versions was found. Only " +
-                    "expected $snapshotBuildNo, but found ${it.name}")
-        }
-
-        // Verify that all files have the correct prefix of package name + version
-        if (!it.name.startsWith("$packageName-$versionPrefix")) {
-            throw IllegalStateException("Directory ${packageDirectory.absoluteFile} contain " +
-                    "files from multiple versions. Expected only $version, but found ${it.name}")
-        }
-    }
-
+fun findSnapshotFiles(versionDirectory: File, pomFile: File, packageAndVersionPrefix: String): PackageData {
     val files = mutableListOf<FileDescriptor>()
-    iteratePackageFiles(packageDirectory).forEach {
-        if (it.endsWith((".pom"))) {
+    iteratePackageFiles(versionDirectory).forEach { file: File ->
+        // Ignore files from non-selected SNAPSHOT versions
+        if (!file.name.startsWith(packageAndVersionPrefix)) {
             return@forEach
         }
-        val name = it.name
+        val name = file.name
         val type = name.split(".").last()
         val classifier = name
-            .removePrefix("$packageName-$versionPrefix$snapshotBuildNo")
+            .removePrefix(packageAndVersionPrefix)
             .let { name ->
                 if (name.startsWith(".")) {
                     ""
@@ -197,7 +203,7 @@ fun findSnapshotFiles(packageDirectory: File, pomFile: File, packageName: String
         files.add(file)
     }
 
-    // Categorize file, most importantly find the pom and main file
+    // Categorize files, most importantly find the pom and main file.
     val pomFile = files.first { it.fileName == pomFile.name }
     val mainFile: FileDescriptor = files.filter { file: FileDescriptor ->
         file.classifier.isEmpty() && mainFileTypes.contains(file.type)
@@ -209,7 +215,7 @@ fun findSnapshotFiles(packageDirectory: File, pomFile: File, packageName: String
     val additionalFiles = files.filterNot { it == mainFile || it.fileName == pomFile.fileName }
 
     return PackageData(
-        fullPathToPackage = packageDirectory.absolutePath,
+        fullPathToPackage = versionDirectory.absolutePath,
         pomFile = pomFile,
         mainFile = mainFile,
         additionalFiles = additionalFiles
@@ -218,6 +224,13 @@ fun findSnapshotFiles(packageDirectory: File, pomFile: File, packageName: String
 
 fun findReleaseFiles(): PackageData {
     TODO("Not yet implemented")
+//    iteratePackageFiles(packageDirectory).forEach {
+//        // Verify that all files have the correct prefix of package name + version
+//        if (!it.name.startsWith("$packageName-$versionPrefix")) {
+//            throw IllegalStateException("Directory ${packageDirectory.absoluteFile} contain " +
+//                    "files from multiple versions. Expected only $version, but found ${it.name}")
+//        }
+//    }
 }
 
 fun uploadFiles(files: PackageData) {
