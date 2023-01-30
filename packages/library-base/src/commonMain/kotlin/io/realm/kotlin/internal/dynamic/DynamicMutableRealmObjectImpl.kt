@@ -18,6 +18,7 @@ package io.realm.kotlin.internal.dynamic
 
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.internal.RealmObjectHelper
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
@@ -95,6 +96,36 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
 
     override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject> {
         return getValueSet(propertyName, DynamicMutableRealmObject::class)
+    }
+
+    override fun <T : Any> getValueDictionary(
+        propertyName: String,
+        clazz: KClass<T>
+    ): RealmDictionary<T> {
+        return RealmObjectHelper.dynamicGetDictionary(
+            `io_realm_kotlin_objectReference`!!,
+            propertyName,
+            clazz,
+            nullable = false,
+            issueDynamicMutableObject = true
+        ).let { it as RealmDictionary<T> }
+    }
+
+    override fun <T : Any> getNullableValueDictionary(
+        propertyName: String,
+        clazz: KClass<T>
+    ): RealmDictionary<T?> {
+        return RealmObjectHelper.dynamicGetDictionary(
+            `io_realm_kotlin_objectReference`!!,
+            propertyName,
+            clazz,
+            nullable = true,
+            issueDynamicMutableObject = true
+        )
+    }
+
+    override fun getObjectDictionary(propertyName: String): RealmDictionary<DynamicMutableRealmObject> {
+        return getValueDictionary(propertyName, DynamicMutableRealmObject::class)
     }
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {

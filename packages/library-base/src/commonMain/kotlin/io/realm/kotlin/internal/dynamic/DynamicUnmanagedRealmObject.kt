@@ -2,12 +2,14 @@ package io.realm.kotlin.internal.dynamic
 
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
@@ -54,12 +56,28 @@ internal class DynamicUnmanagedRealmObject(
         clazz: KClass<T>
     ): RealmSet<T?> = properties.getOrPut(propertyName) { realmSetOf<T?>() } as RealmSet<T?>
 
+    override fun <T : Any> getValueDictionary(
+        propertyName: String,
+        clazz: KClass<T>
+    ): RealmDictionary<T> =
+        properties.getOrPut(propertyName) { realmDictionaryOf<T?>() } as RealmDictionary<T>
+
+    override fun <T : Any> getNullableValueDictionary(
+        propertyName: String,
+        clazz: KClass<T>
+    ): RealmDictionary<T?> =
+        properties.getOrPut(propertyName) { realmDictionaryOf<T?>() } as RealmDictionary<T?>
+
     override fun getBacklinks(propertyName: String): RealmResults<out DynamicRealmObject> =
         throw IllegalStateException("Unmanaged dynamic realm objects do not support backlinks.")
 
     override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject> =
         properties.getOrPut(propertyName) { realmSetOf<DynamicMutableRealmObject>() }
             as RealmSet<DynamicMutableRealmObject>
+
+    override fun getObjectDictionary(propertyName: String): RealmDictionary<DynamicMutableRealmObject> =
+        properties.getOrPut(propertyName) { realmDictionaryOf<DynamicMutableRealmObject>() }
+            as RealmDictionary<DynamicMutableRealmObject>
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
         properties[propertyName] = value as Any

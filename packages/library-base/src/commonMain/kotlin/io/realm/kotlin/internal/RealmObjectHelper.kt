@@ -984,6 +984,41 @@ internal object RealmObjectHelper {
         ) as RealmSet<R?>
     }
 
+    internal fun <R : Any> dynamicGetDictionary(
+        obj: RealmObjectReference<out BaseRealmObject>,
+        propertyName: String,
+        clazz: KClass<R>,
+        nullable: Boolean,
+        issueDynamicMutableObject: Boolean = false
+    ): RealmDictionary<R?> {
+        obj.checkValid()
+        val propertyMetadata = checkPropertyType(
+            obj,
+            propertyName,
+            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY,
+            clazz,
+            nullable
+        )
+        val operatorType = if (propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED) {
+            CollectionOperatorType.REALM_ANY
+        } else if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
+            CollectionOperatorType.PRIMITIVE
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
+            CollectionOperatorType.REALM_OBJECT
+        } else {
+            throw IllegalStateException("RealmSets do not support Embedded Objects.")
+        }
+        @Suppress("UNCHECKED_CAST")
+        return getDictionaryByKey(
+            obj,
+            propertyMetadata.key,
+            clazz,
+            operatorType,
+            true,
+            issueDynamicMutableObject
+        ) as RealmDictionary<R?>
+    }
+
     @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     internal fun <R> dynamicSetValue(
         obj: RealmObjectReference<out BaseRealmObject>,
@@ -1096,7 +1131,16 @@ internal object RealmObjectHelper {
                         operator.addAll(value as RealmSet<*>, updatePolicy, cache)
                     }
             }
-            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> TODO("Dictionaries not supported yet.")
+            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                // Similar to sets and lists, we would require the type to call setDictionary
+                @Suppress("UNCHECKED_CAST")
+                dynamicGetDictionary(obj, propertyName, clazz, propertyMetadata.isNullable)
+                    .let { it as ManagedRealmDictionary<Any?> }
+                    .run {
+                        clear()
+                        operator.putAll(value as RealmDictionary<*>, updatePolicy, cache)
+                    }
+            }
             else -> IllegalStateException("Unknown type: ${propertyMetadata.collectionType}")
         }
     }
@@ -1133,6 +1177,7 @@ internal object RealmObjectHelper {
             val collectionType = when (value) {
                 is RealmList<*> -> CollectionType.RLM_COLLECTION_TYPE_LIST
                 is RealmSet<*> -> CollectionType.RLM_COLLECTION_TYPE_SET
+                is RealmDictionary<*> -> CollectionType.RLM_COLLECTION_TYPE_DICTIONARY
                 else -> CollectionType.RLM_COLLECTION_TYPE_NONE
             }
             val realmStorageType = RealmStorageTypeImpl.fromCorePropertyType(propertyInfo.type)
@@ -1176,6 +1221,7 @@ internal object RealmObjectHelper {
             CollectionType.RLM_COLLECTION_TYPE_NONE -> elementTypeString
             CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$elementTypeString>"
             CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<$elementTypeString>"
+            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> "RealmDictionary<$elementTypeString>"
             else -> TODO("Unsupported collection type: $collectionType")
         }
     }
@@ -1334,6 +1380,7 @@ internal object RealmObjectHelper {
                         PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
                         PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                        PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
                         PropertyType.RLM_PROPERTY_TYPE_UUID -> {
                             accessor.set(target, elements.toRealmSet())
                         }
@@ -1393,6 +1440,7 @@ internal object RealmObjectHelper {
                         PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
                         PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
                         PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                        PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
                         PropertyType.RLM_PROPERTY_TYPE_UUID -> {
                             accessor.set(target, elements.toRealmDictionary())
                         }
