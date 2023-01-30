@@ -1,5 +1,3 @@
-@file:Repository("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
-@file:DependsOn("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.3")
 @file:ScriptFileLocation("scriptPath")
 
 import java.io.BufferedReader
@@ -125,7 +123,7 @@ packages.forEach { packageName ->
 
     // Find all files from this package that must be uploaded
     val packageData = if (isSnapshot) {
-        findSnapshotFiles(versionDirectory, pomFile, "$packageName-$versionPrefix$snapshotTimestamp")
+        findSnapshotFiles(versionDirectory, pomFile, "$packageName-$versionPrefix-$snapshotTimestamp")
     } else {
         findReleaseFiles()
     }
@@ -174,7 +172,7 @@ fun findPomFile(versionDirectory: File, packageAndVersionPrefix: String): Pair<S
  * From the pom file we can extract the timestamp we expect to see on all other files.
  */
 fun getSnapshotTimestamp(fileName: String, packageAndVersionPrefix: String): String {
-    return fileName.removePrefix(packageAndVersionPrefix).removeSuffix(".pom")
+    return fileName.removePrefix("$packageAndVersionPrefix-").removeSuffix(".pom")
 }
 
 /**
@@ -224,6 +222,7 @@ fun findSnapshotFiles(versionDirectory: File, pomFile: File, packageAndVersionPr
 
 fun findReleaseFiles(): PackageData {
     TODO("Not yet implemented")
+    // Code needed for supporting uploading release versions
 //    iteratePackageFiles(packageDirectory).forEach {
 //        // Verify that all files have the correct prefix of package name + version
 //        if (!it.name.startsWith("$packageName-$versionPrefix")) {
