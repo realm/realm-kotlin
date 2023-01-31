@@ -16,11 +16,12 @@
 
 package io.realm.kotlin.ext
 
+import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.asRealmDictionary
+import io.realm.kotlin.internal.realmMapEntryOf
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmDictionaryMutableEntry
-import io.realm.kotlin.types.RealmMapMutableEntry
 
 /**
  * Instantiates an **unmanaged** [RealmDictionary] from a variable number of [Pair]s of [String]
@@ -41,31 +42,31 @@ public fun <T> realmDictionaryOf(elements: Collection<Pair<String, T>>): RealmDi
     }
 
 /**
- * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [Pair] of [K] and [V]. Entries are
- * used by the entry set produced by [RealmDictionary.entries]. It is possible to update the entry
- * which will result in the underlying [RealmDictionary] to be updated too.
+ * Instantiates an **unmanaged** [RealmDictionaryMutableEntry] from a [Pair] of [String] and [V]
+ * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
+ * unmanaged entry to a dictionary entry set. This will result in the entry being copied to Realm,
+ * updating the underlying [RealmDictionary].
  */
-@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 public fun <V> realmDictionaryEntryOf(pair: Pair<String, V>): RealmDictionaryMutableEntry<V> =
-    TODO("Not yet implemented")
+    realmMapEntryOf(pair)
 
 /**
- * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [key]-[value] pair. Entries are used
- * by the entry set produced by [RealmDictionary.entries]. It is possible to update the entry
- * which will result in the underlying [RealmDictionary] to be updated too.
+ * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [key]-[value] pair
+ * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
+ * unmanaged entry to a dictionary entry set. This will result in the entry being copied to Realm,
+ * updating the underlying [RealmDictionary].
  */
-@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 public fun <V> realmDictionaryEntryOf(key: String, value: V): RealmDictionaryMutableEntry<V> =
-    TODO("Not yet implemented")
+    realmMapEntryOf(key, value)
 
 /**
- * Instantiates an **unmanaged** [RealmMapMutableEntry] from another [Map.Entry]. Entries are used
- * by the entry set produced by [RealmDictionary.entries]. It is possible to update the entry
- * which will result in the underlying [RealmDictionary] to be updated too.
+ * Instantiates an **unmanaged** [RealmMapMutableEntry] from another [Map.Entry]
+ * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
+ * unmanaged entry to a dictionary entry set. This will result in the entry being copied to Realm,
+ * updating the underlying [RealmDictionary].
  */
-@Suppress("UnusedPrivateMember") // TODO remove when parameter is used
 public fun <V> realmDictionaryEntryOf(entry: Map.Entry<String, V>): RealmDictionaryMutableEntry<V> =
-    TODO("Not yet implemented")
+    realmMapEntryOf(entry)
 
 // TODO add support for RealmDictionary<T>.copyFromRealm()
 // /**

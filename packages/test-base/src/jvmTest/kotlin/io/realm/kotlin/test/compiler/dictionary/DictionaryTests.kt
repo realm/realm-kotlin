@@ -19,23 +19,55 @@ package io.realm.kotlin.test.compiler.dictionary
 import com.tschuchort.compiletesting.KotlinCompilation
 import io.realm.kotlin.compiler.CollectionType
 import io.realm.kotlin.test.compiler.CollectionTests
+import io.realm.kotlin.test.compiler.EMBEDDED_CLASS
+import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.compiler.getCode
-import io.realm.kotlin.test.compiler.nonNullableTypes
+import io.realm.kotlin.test.compiler.globalNonNullableTypes
 import org.junit.Test
 import kotlin.test.assertEquals
 
-// Add object classes manually, remember dictionaries support embedded objects too - see names in class code strings in Utils.kt
-private val dictionaryNonNullableTypes =
-    nonNullableTypes.plus(listOf("SampleClass", "EmbeddedClass"))
-
 class DictionaryTests : CollectionTests(
     CollectionType.DICTIONARY,
-    dictionaryNonNullableTypes
+    globalNonNullableTypes // Objects can only be nullable so test separately
 ) {
 
     // ------------------------------------------------
-    // RealmDictionary<E?> - specific dictionary cases
+    // RealmDictionary<RealmObject>
+    // ------------------------------------------------
+
+    // - Non-nullable RealmObject fails
+    @Test
+    fun `non-nullable RealmObject dictionary`() {
+        val result = createFileAndCompile(
+            "nonNullableRealmObjectDictionary.kt",
+            getCode(
+                collectionType = CollectionType.DICTIONARY,
+                elementType = OBJECT_CLASS,
+                nullableElementType = false,
+                nullableField = false
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+    }
+
+    // - Non-nullable EmbeddedRealmObject fails
+    @Test
+    fun `non-nullable EmbeddedRealmObject dictionary`() {
+        val result = createFileAndCompile(
+            "nonNullableRealmObjectDictionary.kt",
+            getCode(
+                collectionType = CollectionType.DICTIONARY,
+                elementType = EMBEDDED_CLASS,
+                nullableElementType = false,
+                nullableField = false
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+    }
+
+    // ------------------------------------------------
+    // RealmDictionary<E?>
     // ------------------------------------------------
 
     // - RealmObject works
@@ -46,7 +78,7 @@ class DictionaryTests : CollectionTests(
             "nullableRealmObjectDictionary.kt",
             getCode(
                 collectionType = CollectionType.DICTIONARY,
-                elementType = "SampleClass",
+                elementType = OBJECT_CLASS,
                 nullableElementType = true,
                 nullableField = false
             )
@@ -62,7 +94,7 @@ class DictionaryTests : CollectionTests(
             "nullableEmbeddedRealmObjectDictionary.kt",
             getCode(
                 collectionType = CollectionType.DICTIONARY,
-                elementType = "EmbeddedClass",
+                elementType = EMBEDDED_CLASS,
                 nullableElementType = true,
                 nullableField = false
             )

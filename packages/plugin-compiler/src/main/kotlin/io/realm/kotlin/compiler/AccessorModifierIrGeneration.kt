@@ -992,7 +992,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == mutableRealmIntegerClassId
     }
 
-    @Suppress("ReturnCount")
+    @Suppress("ReturnCount", "LongMethod")
     private fun getCollectionGenericCoreType(
         collectionType: CollectionType,
         declaration: IrProperty
@@ -1017,14 +1017,27 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             val isNullable = collectionGenericType.isNullable()
 
             // Lists of objects/embedded objects and sets of object may NOT contain null values, but dictionaries may
-            if (collectionType == CollectionType.SET || collectionType == CollectionType.LIST) {
-                if (isNullable) {
-                    logError(
-                        "Error in field ${declaration.name} - ${collectionType.description} does not support nullable realm objects element types.",
-                        declaration.locationOf()
-                    )
-                    return null
+            when (collectionType) {
+                CollectionType.SET,
+                CollectionType.LIST -> {
+                    if (isNullable) {
+                        logError(
+                            "Error in field ${declaration.name} - ${collectionType.description} does not support nullable realm objects element types.",
+                            declaration.locationOf()
+                        )
+                        return null
+                    }
                 }
+                CollectionType.DICTIONARY -> {
+                    if (!isNullable) {
+                        logError(
+                            "Error in field ${declaration.name} - RealmDictionary does not support non-nullable realm objects element types.",
+                            declaration.locationOf()
+                        )
+                        return null
+                    }
+                }
+                else -> throw IllegalArgumentException("Only collections can be processed here.")
             }
 
             return CoreType(
