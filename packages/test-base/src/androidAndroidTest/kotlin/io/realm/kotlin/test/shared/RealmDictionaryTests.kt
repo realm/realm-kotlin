@@ -415,6 +415,13 @@ class RealmDictionaryTests {
     }
 
     @Test
+    fun entries_equals() {
+        for (tester in managedTesters) {
+            tester.entries_equals()
+        }
+    }
+
+    @Test
     fun entry_equals() {
         for (tester in managedTesters) {
             tester.entry_equals()
@@ -473,6 +480,13 @@ class RealmDictionaryTests {
     fun values_retainAll() {
         for (tester in managedTesters) {
             tester.values_retainAll()
+        }
+    }
+
+    @Test
+    fun values_equals() {
+        for (tester in managedTesters) {
+            tester.values_equals()
         }
     }
 
@@ -627,6 +641,7 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun entries_iteratorConcurrentModification()
     fun entries_remove()
     fun entries_removeAll()
+    fun entries_equals()
     fun entry_equals()
     fun values_addTrows()
     fun values_clear()
@@ -636,10 +651,11 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun values_remove()
     fun values_removeAll()
     fun values_retainAll()
+    fun values_equals()
 
     /**
-     * Asserts structural equality for two given collections. This is needed to evaluate equality
-     * contents of ByteArrays and RealmObjects.
+     * Asserts structural equality for a given collection and a map. This is needed to evaluate
+     * equality contents of ByteArrays and RealmObjects.
      */
     fun assertStructuralEquality(
         expectedValues: List<Pair<String, T>>,
@@ -647,10 +663,23 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     )
 
     /**
+     * Asserts structural equality for two given collection. This is needed to evaluate equality
+     * contents of ByteArrays and RealmObjects.
+     */
+    fun assertStructuralEquality(
+        expectedValues: Collection<T>,
+        actualValues: Collection<T>
+    )
+
+    /**
      * Asserts structural equality for two given values.
      */
     fun assertStructuralEquality(expectedValue: T?, actualValue: T?)
 
+    /**
+     * Asserts whether a collection contains a given element. The assertion for byte arrays is done
+     * at a structural level.
+     */
     fun structuralContains(receiver: Collection<T?>, element: T?): Boolean
 
     /**
@@ -1154,6 +1183,47 @@ internal abstract class ManagedDictionaryTester<T>(
         }
     }
 
+    override fun entries_equals() {
+        // Ignore ByteArray and RealmObject: structural equality cannot be assessed for these types
+        if (classifier != ByteArray::class && classifier != RealmObject::class) {
+            val dataSet = typeSafetyManager.dataSetToLoad
+            val unmanagedEntries = dataSet.toRealmDictionary().entries
+
+            fun assertions(
+                unmanagedEntries: MutableSet<MutableMap.MutableEntry<String, T>>,
+                managedEntries: MutableSet<MutableMap.MutableEntry<String, T>>
+            ) {
+                val unmanagedIterator = unmanagedEntries.iterator()
+                val managedIterator = managedEntries.iterator()
+                while (unmanagedIterator.hasNext() && managedIterator.hasNext()) {
+                    // Instantiate a RealmDictionaryMutableEntry so that equals goes through our
+                    // own implementation
+                    val unmanagedNext = realmDictionaryEntryOf(unmanagedIterator.next())
+                    val managedNext = managedIterator.next()
+                    assertEquals(unmanagedNext, managedNext)
+                }
+            }
+
+            errorCatcher {
+                realm.writeBlocking {
+                    val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary.putAll(dataSet)
+                    val managedEntries = dictionary.entries
+
+                    assertEquals(managedEntries, managedEntries)
+                    assertions(unmanagedEntries, managedEntries)
+                }
+            }
+
+            assertContainerAndCleanup { container ->
+                val managedEntries = typeSafetyManager.getCollection(container)
+                    .entries
+                assertEquals(managedEntries, managedEntries)
+                assertions(unmanagedEntries, managedEntries)
+            }
+        }
+    }
+
     override fun entry_equals() {
         // Ignore ByteArray and RealmObject: structural equality cannot be assessed for these types
         if (classifier != ByteArray::class && classifier != RealmObject::class) {
@@ -1495,6 +1565,29 @@ internal abstract class ManagedDictionaryTester<T>(
         }
     }
 
+    override fun values_equals() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+        val unmanagedValues = realmDictionaryOf(dataSet).values
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+
+                val managedValues = dictionary.values
+                assertEquals(managedValues, managedValues)
+                assertStructuralEquality(unmanagedValues, managedValues)
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val managedValues = typeSafetyManager.getCollection(container)
+                .values
+            assertEquals(managedValues, managedValues)
+            assertStructuralEquality(unmanagedValues, managedValues)
+        }
+    }
+
     override fun assertContainerAndCleanup(assertion: ((RealmDictionaryContainer) -> Unit)?) {
         val container = realm.query<RealmDictionaryContainer>()
             .first()
@@ -1531,6 +1624,14 @@ internal class GenericDictionaryTester<T>(
         }
     }
 
+    override fun assertStructuralEquality(
+        expectedValues: Collection<T>,
+        actualValues: Collection<T>
+    ) {
+        assertEquals(expectedValues.size, actualValues.size)
+        assertContentEquals(expectedValues, actualValues)
+    }
+
     override fun assertStructuralEquality(expectedValue: T?, actualValue: T?) {
         assertEquals(expectedValue, actualValue)
     }
@@ -1555,6 +1656,20 @@ internal class ByteArrayTester(
         assertEquals(expectedValues.size, actualValues.size)
         expectedValues.forEach {
             assertContentEquals(it.second, actualValues[it.first])
+        }
+    }
+
+    override fun assertStructuralEquality(
+        expectedValues: Collection<ByteArray>,
+        actualValues: Collection<ByteArray>
+    ) {
+        assertEquals(expectedValues.size, actualValues.size)
+        val expectedIterator = expectedValues.iterator()
+        val actualIterator = actualValues.iterator()
+        while (expectedIterator.hasNext() && actualIterator.hasNext()) {
+            val expectedNext = expectedIterator.next()
+            val actualNext = actualIterator.next()
+            assertContentEquals(expectedNext, actualNext)
         }
     }
 
@@ -1588,6 +1703,17 @@ internal class RealmObjectDictionaryTester(
         assertContentEquals(
             expectedValues.map { it.second.stringField },
             actualValues.map { it.value.stringField }
+        )
+    }
+
+    override fun assertStructuralEquality(
+        expectedValues: Collection<RealmDictionaryContainer>,
+        actualValues: Collection<RealmDictionaryContainer>
+    ) {
+        assertEquals(expectedValues.size, actualValues.size)
+        assertContentEquals(
+            expectedValues.map { it.stringField },
+            actualValues.map { it.stringField }
         )
     }
 
