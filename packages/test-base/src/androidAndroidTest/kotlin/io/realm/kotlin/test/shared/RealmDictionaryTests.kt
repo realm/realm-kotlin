@@ -1507,6 +1507,7 @@ internal abstract class ManagedDictionaryTester<T>(
                     iterator.next()
 
                     // TODO revisit exception assertion once unified error handling is merged
+                    //  https://github.com/realm/realm-kotlin/pull/1188
                     assertFailsWith<RealmException> {
                         iterator.remove()
                     }
@@ -1515,8 +1516,9 @@ internal abstract class ManagedDictionaryTester<T>(
     }
 
     override fun entries_iteratorConcurrentModification() {
-        // Ignore RealmObject: structural equality cannot be assessed for this type when removing
-        // entries from the entry set
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject: structural equality cannot be assessed for this type when removing
+        //  entries from the entry set
         if (classifier != RealmObject::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
 
@@ -1586,8 +1588,9 @@ internal abstract class ManagedDictionaryTester<T>(
     }
 
     override fun entries_remove() {
-        // Ignore RealmObject: structural equality cannot be assessed for this type when removing
-        // entries from the entry set
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject: structural equality cannot be assessed for this type when removing
+        //  entries from the entry set
         if (classifier != RealmObject::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
 
@@ -1624,6 +1627,7 @@ internal abstract class ManagedDictionaryTester<T>(
 
                 // Removing something that is the dictionary throws outside a transaction
                 // TODO revisit exception assertion once unified error handling is merged
+                //  https://github.com/realm/realm-kotlin/pull/1188
                 assertFailsWith<RealmException> {
                     entries.remove(realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second))
                 }
@@ -1632,8 +1636,9 @@ internal abstract class ManagedDictionaryTester<T>(
     }
 
     override fun entries_removeAll() {
-        // Ignore RealmObject: structural equality cannot be assessed for this type when removing
-        // entries from the entry set
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject: structural equality cannot be assessed for this type when removing
+        //  entries from the entry set
         if (classifier != RealmObject::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
 
@@ -1682,6 +1687,7 @@ internal abstract class ManagedDictionaryTester<T>(
                     realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second),
                 )
                 // TODO revisit exception assertion once unified error handling is merged
+                //  https://github.com/realm/realm-kotlin/pull/1188
                 assertFailsWith<RealmException> {
                     entries.removeAll(shouldThrow)
                 }
@@ -1690,8 +1696,9 @@ internal abstract class ManagedDictionaryTester<T>(
     }
 
     override fun entries_equals() {
-        // Ignore ByteArray and RealmObject: structural equality cannot be assessed for these types
-        if (classifier != ByteArray::class && classifier != RealmObject::class) {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject: structural equality cannot be assessed for this type
+        if (classifier != RealmObject::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
             val unmanagedEntries = dataSet.toRealmDictionary().entries
 
@@ -1712,18 +1719,20 @@ internal abstract class ManagedDictionaryTester<T>(
                         val unmanagedNextRealmAny = unmanagedNext.value as RealmAny?
                         val managedNextRealmAny = managedNext.value as RealmAny?
                         assertEquals(unmanagedNextRealmAny?.type, managedNextRealmAny?.type)
-                        if (unmanagedNextRealmAny?.type == RealmAny.Type.OBJECT) {
-                            val unmanagedObj =
-                                unmanagedNextRealmAny.asRealmObject<RealmDictionaryContainer>()
-                            val managedObj =
-                                managedNextRealmAny?.asRealmObject<RealmDictionaryContainer>()
-                            assertEquals(unmanagedObj.stringField, managedObj?.stringField)
-                        } else if (unmanagedNextRealmAny?.type == RealmAny.Type.BINARY) {
-                            val unmanagedBinary = unmanagedNextRealmAny.asByteArray()
-                            val managedBinary = managedNextRealmAny?.asByteArray()
-                            assertContentEquals(unmanagedBinary, managedBinary)
-                        } else {
-                            assertEquals(unmanagedNext, managedNext)
+                        when (unmanagedNextRealmAny?.type) {
+                            RealmAny.Type.OBJECT -> {
+                                val unmanagedObj =
+                                    unmanagedNextRealmAny.asRealmObject<RealmDictionaryContainer>()
+                                val managedObj =
+                                    managedNextRealmAny?.asRealmObject<RealmDictionaryContainer>()
+                                assertEquals(unmanagedObj.stringField, managedObj?.stringField)
+                            }
+                            RealmAny.Type.BINARY -> {
+                                val unmanagedBinary = unmanagedNextRealmAny.asByteArray()
+                                val managedBinary = managedNextRealmAny?.asByteArray()
+                                assertContentEquals(unmanagedBinary, managedBinary)
+                            }
+                            else -> assertEquals(unmanagedNext, managedNext)
                         }
                     } else {
                         assertEquals(unmanagedNext, managedNext)
@@ -1752,7 +1761,8 @@ internal abstract class ManagedDictionaryTester<T>(
     }
 
     override fun entry_equals() {
-        // Ignore RealmObject: structural equality cannot be assessed for this type
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject: structural equality cannot be assessed for this type
         if (classifier != RealmObject::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
 
@@ -1831,6 +1841,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val dictionary = typeSafetyManager.getCollection(container)
             val values = dictionary.values
             // TODO revisit exception assertion once unified error handling is merged
+            //  https://github.com/realm/realm-kotlin/pull/1188
             assertFailsWith<RealmException> {
                 values.clear()
             }
@@ -1914,6 +1925,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val dictionary = typeSafetyManager.getCollection(container)
             val values = dictionary.values
             // TODO revisit exception assertion once unified error handling is merged
+            //  https://github.com/realm/realm-kotlin/pull/1188
             assertFailsWith<RealmException> {
                 values.clear()
             }
@@ -1921,6 +1933,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val iterator = values.iterator()
             iterator.next()
             // TODO revisit exception assertion once unified error handling is merged
+            //  https://github.com/realm/realm-kotlin/pull/1188
             assertFailsWith<RealmException> {
                 iterator.remove()
             }
@@ -1964,7 +1977,8 @@ internal abstract class ManagedDictionaryTester<T>(
                 dictionary.putAll(dataSet)
                 dictionary["SOMETHING_NEW"] = dataSet[0].second
                 dictionary.values.also { values ->
-                    // Ignore RealmObject: this type cannot be removed using the remove API
+                    // TODO https://github.com/realm/realm-kotlin/issues/1097
+                    //  Ignore RealmObject: this type cannot be removed using the remove API
                     if (classifier != RealmObject::class) {
                         // Remove something from the entry set to get a ConcurrentModificationException
                         val removeIterator = values.iterator()
@@ -2004,7 +2018,8 @@ internal abstract class ManagedDictionaryTester<T>(
                 val values = dictionary.values
                 val valueToRemove = dataSet[0].second
 
-                // Ignore RealmObject: this type cannot be removed using the remove API
+                // TODO https://github.com/realm/realm-kotlin/issues/1097
+                //  Ignore RealmObject: this type cannot be removed using the remove API
                 if (classifier != RealmObject::class) {
                     // Check we get true after removing an element
                     assertTrue(values.remove(valueToRemove))
@@ -2022,9 +2037,11 @@ internal abstract class ManagedDictionaryTester<T>(
             val values = typeSafetyManager.getCollection(container)
                 .values
 
-            // Ignore RealmObject: this type cannot be removed using the remove API
+            // TODO https://github.com/realm/realm-kotlin/issues/1097
+            //  Ignore RealmObject: this type cannot be removed using the remove API
             if (classifier != RealmObject::class) {
                 // TODO revisit exception assertion once unified error handling is merged
+                //  https://github.com/realm/realm-kotlin/pull/1188
                 assertFailsWith<RealmException> {
                     values.remove(dataSet[1].second)
                 }
@@ -2042,7 +2059,8 @@ internal abstract class ManagedDictionaryTester<T>(
                 val values = dictionary.values
                 val valuesToRemove = listOf(dataSet[0].second)
 
-                // Ignore RealmObject: this type cannot be removed using the removeAll API
+                // TODO https://github.com/realm/realm-kotlin/issues/1097
+                //  Ignore RealmObject: this type cannot be removed using the removeAll API
                 if (classifier != RealmObject::class) {
                     // Check we get true after removing an element
                     assertTrue(values.removeAll(valuesToRemove))
@@ -2060,9 +2078,11 @@ internal abstract class ManagedDictionaryTester<T>(
             val values = typeSafetyManager.getCollection(container)
                 .values
 
-            // Ignore RealmObject: this type cannot be removed using the removeAll API
+            // TODO https://github.com/realm/realm-kotlin/issues/1097
+            //  Ignore RealmObject: this type cannot be removed using the removeAll API
             if (classifier != RealmObject::class) {
                 // TODO revisit exception assertion once unified error handling is merged
+                //  https://github.com/realm/realm-kotlin/pull/1188
                 assertFailsWith<RealmException> {
                     values.removeAll(values)
                 }
@@ -2356,6 +2376,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val dictionary = typeSafetyManager.getCollection(container)
             val keys = dictionary.keys
             // TODO revisit exception assertion once unified error handling is merged
+            //  https://github.com/realm/realm-kotlin/pull/1188
             assertFailsWith<RealmException> {
                 keys.clear()
             }
@@ -2363,6 +2384,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val iterator = keys.iterator()
             iterator.next()
             // TODO revisit exception assertion once unified error handling is merged
+            //  https://github.com/realm/realm-kotlin/pull/1188
             assertFailsWith<RealmException> {
                 iterator.remove()
             }
@@ -2627,13 +2649,13 @@ internal class RealmObjectDictionaryTester(
     }
 
     override fun assertStructuralEquality(
-        expectedValues: Collection<RealmDictionaryContainer>,
-        actualValues: Collection<RealmDictionaryContainer>
+        expectedValues: Collection<RealmDictionaryContainer?>,
+        actualValues: Collection<RealmDictionaryContainer?>
     ) {
         assertEquals(expectedValues.size, actualValues.size)
         assertContentEquals(
-            expectedValues.map { it.stringField },
-            actualValues.map { it.stringField }
+            expectedValues.map { it?.stringField },
+            actualValues.map { it?.stringField }
         )
     }
 
