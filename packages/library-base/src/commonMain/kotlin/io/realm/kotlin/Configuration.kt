@@ -18,7 +18,6 @@ package io.realm.kotlin
 
 import io.realm.kotlin.internal.MISSING_PLUGIN_MESSAGE
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
-import io.realm.kotlin.internal.RealmInteropBridge
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.realmObjectCompanionOrNull
 import io.realm.kotlin.log.LogLevel
@@ -197,7 +196,6 @@ public interface Configuration {
                     )
                 }
             }
-            RealmInteropBridge.initialize()
         }
 
         // 'name' must be nullable as it is optional when getting SyncClient's default path!

@@ -38,12 +38,12 @@ bool throw_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
 
-        // Invoke CoreErrorConverter.convertCoreError() to retrieve an exception instance that
+        // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
         // maps to the core error.
         const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
         static JavaMethod error_type_as_exception(jenv,
                                                   error_type_class,
-                                                  "convertCoreError",
+                                                  "asThrowable",
                                                   "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
 
         jstring error_message = (jenv)->NewStringUTF(error.message);
@@ -793,7 +793,7 @@ void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_
         const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
         static JavaMethod error_type_as_exception(env,
                                                   error_type_class,
-                                                  "convertCoreError",
+                                                  "asThrowable",
                                                   "(Lio/realm/kotlin/internal/interop/RealmCoreException;)Ljava/lang/Throwable;", true);
         jstring error_message = (env)->NewStringUTF(message.c_str());
         exception = (env)->CallStaticObjectMethod(

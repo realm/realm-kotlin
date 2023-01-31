@@ -179,8 +179,8 @@ actual enum class ErrorCode(
     override val nativeValue: Int = error.value.toInt()
 
     actual companion object {
-        internal actual fun of(nativeValue: Int): ErrorCode? =
-            values().firstOrNull { value ->
+        internal actual fun of(nativeValue: Int): ErrorCode =
+            values().first() { value ->
                 value.nativeValue == nativeValue
             }
     }

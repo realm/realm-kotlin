@@ -19,8 +19,6 @@ package io.realm.kotlin.test
 import io.realm.kotlin.internal.interop.ClassFlags
 import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.CollectionType
-import io.realm.kotlin.internal.interop.CoreError
-import io.realm.kotlin.internal.interop.CoreErrorConverter
 import io.realm.kotlin.internal.interop.PropertyFlags
 import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.PropertyType
@@ -69,7 +67,6 @@ import realm_wrapper.realm_schema_t
 import realm_wrapper.realm_schema_validate
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_t
-import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -81,19 +78,6 @@ import kotlin.test.assertTrue
 // These test are not thought as being exhaustive, but is more to provide a playground for
 // experiments and maybe more relevant for reproduction of C-API issues.
 class CinteropTest {
-    class TestCoreException(
-        override val message: String?
-    ) : Exception()
-
-    @BeforeTest
-    fun setUp() {
-        CoreErrorConverter.initialize { coreException: CoreError ->
-            TestCoreException(
-                message = coreException.message
-            )
-        }
-    }
-
     @Test
     fun version() {
         assertEquals("13.2.0", realm_get_library_version()!!.toKString())

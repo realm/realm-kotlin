@@ -143,16 +143,16 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val exception = CoreError(
-                categories = error.categories.toInt(),
-                errorCode = error.error.value.toInt(),
-                message = error.message?.toKString(),
+
+            throw CoreErrorConverter.asThrowable(
+                categoriesNativeValue = error.categories.toInt(),
+                errorCodeNativeValue = error.error.value.toInt(),
+                messageNativeValue = error.message?.toKString(),
                 path = error.path?.toKString(),
                 userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
-            )
-
-            realm_clear_last_error()
-            throw CoreErrorConverter.convertCoreError(exception)
+            ).also {
+                realm_clear_last_error()
+            }
         }
     }
 }
@@ -523,14 +523,12 @@ actual object RealmInterop {
                     if (error != null) {
                         val err = alloc<realm_error_t>()
                         realm_wrapper.realm_get_async_error(error, err.ptr)
-                        exception = CoreErrorConverter.convertCoreError(
-                            CoreError(
-                                categories = err.categories.toInt(),
-                                errorCode = err.error.value.toInt(),
-                                message = err.message?.toKString(),
-                                path = err.path?.toKString(),
-                                userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
-                            )
+                        exception = CoreErrorConverter.asThrowable(
+                            categoriesNativeValue = err.categories.toInt(),
+                            errorCodeNativeValue = err.error.value.toInt(),
+                            messageNativeValue = err.message?.toKString(),
+                            path = err.path?.toKString(),
+                            userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
                         )
                     } else {
                         realm_wrapper.realm_release(realm)

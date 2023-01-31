@@ -17,8 +17,6 @@
 package io.realm.kotlin.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.realm.kotlin.internal.interop.CoreError
-import io.realm.kotlin.internal.interop.CoreErrorConverter
 import io.realm.kotlin.internal.interop.realm_class_flags_e
 import io.realm.kotlin.internal.interop.realm_class_info_t
 import io.realm.kotlin.internal.interop.realm_collection_type_e
@@ -31,12 +29,10 @@ import io.realm.kotlin.internal.interop.realm_schema_validation_mode_e
 import io.realm.kotlin.internal.interop.realm_value_t
 import io.realm.kotlin.internal.interop.realm_value_type_e
 import io.realm.kotlin.internal.interop.realmc
-import io.realm.kotlin.internal.interop.sync.ErrorCode
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.nio.file.Files
 import kotlin.io.path.absolutePathString
-import kotlin.test.BeforeTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
@@ -47,31 +43,6 @@ import kotlin.test.assertTrue
 // experiments and maybe more relevant for reproduction of C-API issues.
 @RunWith(AndroidJUnit4::class)
 class CinteropTest {
-
-    class TestCoreException(
-        val errorCode: ErrorCode,
-        override val message: String?
-    ) : Exception()
-
-    inline fun assertFailsWithCoreException(
-        code: ErrorCode,
-        message: String? = null,
-        block: () -> Unit
-    ) {
-        val exception = assertFailsWith<TestCoreException>(message, block)
-        assertEquals(exception.errorCode, code)
-    }
-
-    @BeforeTest
-    fun setup() {
-        System.loadLibrary("realmc")
-        CoreErrorConverter.initialize { coreException: CoreError ->
-            TestCoreException(
-                errorCode = coreException.errorCode!!,
-                message = coreException.message
-            )
-        }
-    }
 
     @Test
     fun version() {
@@ -124,8 +95,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2_renamed_col, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2_renamed_col, 1)
 
-        assertFailsWithCoreException(
-            code = ErrorCode.RLM_ERR_SCHEMA_MISMATCH,
+        assertFailsWith<IllegalStateException>(
             message = "[18]: Migration is required due to the following errors:\n" +
                 "- Property 'foo.int' has been removed.\n" +
                 "- Property 'foo.int_renamed' has been added."
@@ -168,8 +138,7 @@ class CinteropTest {
             assertEquals(0, count[0])
 
             // old column was removed
-            assertFailsWithCoreException(
-                code = ErrorCode.RLM_ERR_INVALID_QUERY,
+            assertFailsWith<IllegalArgumentException>(
                 message = "[36]: 'foo' has no property 'int'"
             ) {
                 realmc.realm_query_parse(
@@ -205,8 +174,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_2, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_2, 2)
 
-        assertFailsWithCoreException(
-            code = ErrorCode.RLM_ERR_SCHEMA_MISMATCH,
+        assertFailsWith<IllegalStateException>(
             message = "[18]: Migration is required due to the following errors:\n" +
                 "- Property 'foo.newColumn' has been added."
         ) {
@@ -249,8 +217,7 @@ class CinteropTest {
         realmc.realm_config_set_schema_mode(config_3, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
         realmc.realm_config_set_schema_version(config_3, 3)
 
-        assertFailsWithCoreException(
-            code = ErrorCode.RLM_ERR_SCHEMA_MISMATCH,
+        assertFailsWith<IllegalStateException>(
             message = "[18]: Migration is required due to the following errors:\n" +
                 "- Property 'foo.int_renamed' has been removed."
         ) {
@@ -611,9 +578,7 @@ class CinteropTest {
         // Missing primary key
         val realmBeginWrite: Boolean = realmc.realm_begin_write(realm)
 
-        assertFailsWithCoreException(
-            code = ErrorCode.RLM_ERR_MISSING_PRIMARY_KEY,
-        ) {
+        assertFailsWith<IllegalArgumentException> {
             val realmObjectCreate: Long = realmc.realm_object_create(realm, bar_info.key)
         }
         realmc.realm_commit(realm)
