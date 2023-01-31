@@ -170,15 +170,8 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
                 query,
                 queryArgs
             )
-            // TODO https://github.com/realm/realm-core/issues/6224
         } catch (e: IndexOutOfBoundsException) {
             throw IllegalArgumentException(e.message, e.cause)
-        } catch (e: IllegalStateException) {
-            if (e.message?.contains("List is no longer valid") == true) {
-                throw e
-            } else {
-                throw IllegalArgumentException(e.message, e.cause)
-            }
         }
     }
     return ObjectBoundQuery(
