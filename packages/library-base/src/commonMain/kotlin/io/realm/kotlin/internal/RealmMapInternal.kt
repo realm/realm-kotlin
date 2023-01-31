@@ -471,7 +471,7 @@ internal abstract class RealmMapGenericIterator<K, T> constructor(
  * equivalent:
  * ```
  * dictionary.remove(myKey)
- * dictionary.entries.remove(myKey, myValue) // implies we know the value of myValue
+ * dictionary.entries.remove(realmDictionaryEntryOf(myKey, myValue)) // implies knowing myValue
  * ```
  *
  * Default semantics forbid addition operations though. This is due to `AbstractCollection` not

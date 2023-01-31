@@ -44,8 +44,8 @@ public fun <T> realmDictionaryOf(elements: Collection<Pair<String, T>>): RealmDi
 /**
  * Instantiates an **unmanaged** [RealmDictionaryMutableEntry] from a [Pair] of [String] and [V]
  * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
- * unmanaged entry to a dictionary entry set. This will result in the underlying
- * [RealmDictionary] being updated.
+ * unmanaged entry to a dictionary entry set. This will result in the entry being copied to Realm,
+ * updating the underlying [RealmDictionary].
  */
 public fun <V> realmDictionaryEntryOf(pair: Pair<String, V>): RealmDictionaryMutableEntry<V> =
     realmMapEntryOf(pair)
@@ -53,8 +53,8 @@ public fun <V> realmDictionaryEntryOf(pair: Pair<String, V>): RealmDictionaryMut
 /**
  * Instantiates an **unmanaged** [RealmMapMutableEntry] from a [key]-[value] pair
  * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
- * unmanaged entry to a dictionary entry set. This will result in the underlying
- * [RealmDictionary] being updated.
+ * unmanaged entry to a dictionary entry set. This will result in the entry being copied to Realm,
+ * updating the underlying [RealmDictionary].
  */
 public fun <V> realmDictionaryEntryOf(key: String, value: V): RealmDictionaryMutableEntry<V> =
     realmMapEntryOf(key, value)
@@ -62,8 +62,8 @@ public fun <V> realmDictionaryEntryOf(key: String, value: V): RealmDictionaryMut
 /**
  * Instantiates an **unmanaged** [RealmMapMutableEntry] from another [Map.Entry]
  * that can be added to an entry set produced by [RealmDictionary.entries]. It is possible to add an
- * unmanaged entry to a dictionary entry set. This will result in the underlying
- * [RealmDictionary] being updated.
+ * unmanaged entry to a dictionary entry set. This will result in the entry being copied to Realm,
+ * updating the underlying [RealmDictionary].
  */
 public fun <V> realmDictionaryEntryOf(entry: Map.Entry<String, V>): RealmDictionaryMutableEntry<V> =
     realmMapEntryOf(entry)
