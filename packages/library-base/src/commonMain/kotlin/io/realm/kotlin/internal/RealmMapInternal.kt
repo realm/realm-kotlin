@@ -112,6 +112,10 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun getInternal(key: K): V?
     fun containsValueInternal(value: V): Boolean
 
+    // Compares two values. Byte arrays are compared structurally. Objects are only equal if the
+    // memory address is the same.
+    fun areValuesEqual(expected: V?, actual: V?): Boolean
+
     // This function returns a Pair because it is used by both the Map and the entry Set. Having
     // both different semantics, Map returns the previous value for the key whereas the entry Set
     // returns whether the element was inserted successfully.
@@ -289,6 +293,12 @@ internal open class PrimitiveMapOperator<K, V> constructor(
             }
         }
     }
+
+    override fun areValuesEqual(expected: V?, actual: V?): Boolean =
+        when (expected) {
+            is ByteArray -> expected.contentEquals(actual?.let { it as ByteArray })
+            else -> expected == actual
+        }
 }
 
 internal class RealmAnyMapOperator<K> constructor(
@@ -350,7 +360,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
                 updatePolicy,
                 cache
             ).let {
-                realmObjectTransport(it as RealmObjectInterop)
+                realmObjectTransport(it as RealmObjectInterop?)
             }
             realm_dictionary_insert(
                 nativePointer,
@@ -417,8 +427,10 @@ internal class RealmObjectMapOperator<K, V> constructor(
     }
 
     override fun containsValueInternal(value: V): Boolean {
-        // Unmanaged objects are never found in a managed dictionary
-        if (!(value as RealmObjectInternal).isManaged()) return false
+        value?.also {
+            // Unmanaged objects are never found in a managed dictionary
+            if (!(it as RealmObjectInternal).isManaged()) return false
+        }
 
         // Even though we are getting a value we need to free the data buffers of the string we
         // send down to Core so we need to use an inputScope
@@ -430,6 +442,12 @@ internal class RealmObjectMapOperator<K, V> constructor(
                 )
             }
         }
+    }
+
+    override fun areValuesEqual(expected: V?, actual: V?): Boolean {
+        // Two objects are only the same if they point to the same memory address
+        if (expected === actual) return true
+        return false
     }
 }
 
@@ -513,6 +531,61 @@ internal class RealmMapValues<K, V> constructor(
             override fun getNext(position: Int): V =
                 operator.getValue(resultsPointer, position) as V
         }
+
+    // Custom implementation to allow removal of byte arrays based on structural equality
+    @Suppress("ReturnCount")
+    override fun remove(element: V): Boolean {
+        val it = iterator()
+        if (element == null) {
+            while (it.hasNext()) {
+                if (it.next() == null) {
+                    it.remove()
+                    return true
+                }
+            }
+        } else {
+            while (it.hasNext()) {
+                if (operator.areValuesEqual(element, it.next())) {
+                    it.remove()
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
+    // Custom implementation to allow removal of byte arrays based on structural equality
+    override fun removeAll(elements: Collection<V>): Boolean =
+        elements.fold(false) { accumulator, value ->
+            remove(value) or accumulator
+        }
+
+    // Custom implementation to allow removal of byte arrays based on structural equality
+    @Suppress("NestedBlockDepth")
+    override fun retainAll(elements: Collection<V>): Boolean {
+        var modified = false
+        val it = iterator()
+        while (it.hasNext()) {
+            val next = it.next()
+            if (next is ByteArray) {
+                val otherIterator = elements.iterator()
+                while (otherIterator.hasNext()) {
+                    val otherNext = otherIterator.next()
+                    if (!next.contentEquals(otherNext as ByteArray?)) {
+                        it.remove()
+                        modified = true
+                        continue // Avoid looping on an already deleted element
+                    }
+                }
+            } else {
+                if (!elements.contains(next)) {
+                    it.remove()
+                    modified = true
+                }
+            }
+        }
+        return modified
+    }
 }
 
 // ----------------------------------------------------------------------
@@ -653,10 +726,14 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
 
     override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean =
         operator.get(element.key).let { value ->
-            when {
-                element.value != value -> false
-                else -> operator.erase(element.key).second
+            when (operator.areValuesEqual(value, element.value)) {
+                true -> operator.erase(element.key).second
+                false -> false
             }
+//            when {
+//                element.value != value -> false
+//                else -> operator.erase(element.key).second
+//            }
         }
 
     override fun removeAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean =
@@ -689,6 +766,17 @@ internal class UnmanagedRealmMapEntry<K, V> constructor(
     override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
     override fun equals(other: Any?): Boolean {
         if (other !is Map.Entry<*, *>) return false
+
+        // Byte arrays are compared at a structural level
+        if (this.value is ByteArray && other.value is ByteArray) {
+            val thisByteArray = this.value as ByteArray
+            val otherByteArray = other.value as ByteArray
+            if (this.key == other.key && thisByteArray.contentEquals(otherByteArray)) {
+                return true
+            }
+            return false
+        }
+
         return (this.key == other.key) && (this.value == other.value)
     }
 }
@@ -716,6 +804,17 @@ internal class ManagedRealmMapEntry<K, V> constructor(
     override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
     override fun equals(other: Any?): Boolean {
         if (other !is Map.Entry<*, *>) return false
+
+        // Byte arrays are compared at a structural level
+        if (this.value is ByteArray && other.value is ByteArray) {
+            val thisByteArray = this.value as ByteArray
+            val otherByteArray = other.value as ByteArray
+            if (this.key == other.key && thisByteArray.contentEquals(otherByteArray)) {
+                return true
+            }
+            return false
+        }
+
         return (this.key == other.key) && (this.value == other.value)
     }
 }
