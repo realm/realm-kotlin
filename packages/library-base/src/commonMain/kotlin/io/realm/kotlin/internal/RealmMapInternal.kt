@@ -108,7 +108,10 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun getEntryInternal(position: Int): Pair<K, V>
     fun getInternal(key: K): V?
     fun containsValueInternal(value: V): Boolean
-    fun assertEquality(expected: V?, actual: V?): Boolean
+
+    // Compares two values. Byte arrays are compared structurally. Objects are only equal if the
+    // memory address is the same.
+    fun areValuesEqual(expected: V?, actual: V?): Boolean
 
     // This function returns a Pair because it is used by both the Map and the entry Set. Having
     // both different semantics, Map returns the previous value for the key whereas the entry Set
@@ -288,7 +291,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
         }
     }
 
-    override fun assertEquality(expected: V?, actual: V?): Boolean =
+    override fun areValuesEqual(expected: V?, actual: V?): Boolean =
         when (expected) {
             is ByteArray -> expected.contentEquals(actual?.let { it as ByteArray })
             else -> expected == actual
@@ -438,7 +441,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
         }
     }
 
-    override fun assertEquality(expected: V?, actual: V?): Boolean {
+    override fun areValuesEqual(expected: V?, actual: V?): Boolean {
         // Two objects are only the same if they point to the same memory address
         if (expected === actual) return true
         return false
@@ -539,7 +542,7 @@ internal class RealmMapValues<K, V> constructor(
             }
         } else {
             while (it.hasNext()) {
-                if (operator.assertEquality(element, it.next())) {
+                if (operator.areValuesEqual(element, it.next())) {
                     it.remove()
                     return true
                 }
@@ -720,7 +723,7 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
 
     override fun remove(element: MutableMap.MutableEntry<K, V>): Boolean =
         operator.get(element.key).let { value ->
-            when (operator.assertEquality(value, element.value)) {
+            when (operator.areValuesEqual(value, element.value)) {
                 true -> operator.erase(element.key).second
                 false -> false
             }
