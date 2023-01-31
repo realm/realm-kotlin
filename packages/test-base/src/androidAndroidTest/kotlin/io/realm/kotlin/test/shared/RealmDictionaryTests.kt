@@ -227,7 +227,7 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun accessors_getter() {
+    fun accessors_getter_primitive() {
         // No need to be exhaustive here. First test with a dictionary of any primitive type
         realmDictionaryOf(
             "A" to 1.toByte()
@@ -250,12 +250,10 @@ class RealmDictionaryTests {
                     assertEquals(dictionary["A"], managedDictionary["A"])
                 }
         }
+    }
 
-        // Cleanup between assertions for convenience
-        realm.writeBlocking {
-            delete(query<RealmDictionaryContainer>())
-        }
-
+    @Test
+    fun accessors_getter_object() {
         // Test with a dictionary of objects
         realmDictionaryOf<RealmDictionaryContainer?>(
             "A" to DICTIONARY_OBJECT_VALUES[0]
@@ -289,12 +287,10 @@ class RealmDictionaryTests {
                     assertEquals(2L, it)
                 }
         }
+    }
 
-        // Cleanup between assertions for convenience
-        realm.writeBlocking {
-            delete(query<RealmDictionaryContainer>())
-        }
-
+    @Test
+    fun accessors_getter_realmAny_primitive() {
         // Test with a dictionary of RealmAny containing a primitive value
         realmDictionaryOf(
             "A" to REALM_ANY_PRIMITIVE_VALUES[0]
@@ -322,12 +318,10 @@ class RealmDictionaryTests {
                     assertEquals(expected, actual)
                 }
         }
+    }
 
-        // Cleanup between assertions for convenience
-        realm.writeBlocking {
-            delete(query<RealmDictionaryContainer>())
-        }
-
+    @Test
+    fun accessors_getter_realmAny_object() {
         // Test with a dictionary of RealmAny containing an object
         realmDictionaryOf<RealmAny?>(
             "A" to REALM_ANY_REALM_OBJECT
@@ -370,7 +364,7 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun accessors_setter() {
+    fun accessors_setter_primitive() {
         // No need to be exhaustive here. First test with a dictionary of any primitive type
         realm.writeBlocking {
             val unmanagedDictionary1 = realmDictionaryOf(
@@ -412,12 +406,10 @@ class RealmDictionaryTests {
                 assertEquals(unmanagedDictionary2["X"], it.byteDictionaryField["X"])
             }
         }
+    }
 
-        // Cleanup between assertions for convenience
-        realm.writeBlocking {
-            delete(query<RealmDictionaryContainer>())
-        }
-
+    @Test
+    fun accessors_setter_object() {
         // Test with a dictionary of objects
         realm.writeBlocking {
             val unmanagedDictionary1 = realmDictionaryOf<RealmDictionaryContainer?>(
@@ -468,12 +460,10 @@ class RealmDictionaryTests {
                 assertEquals(expected.stringField, actual.stringField)
             }
         }
+    }
 
-        // Cleanup between assertions for convenience
-        realm.writeBlocking {
-            delete(query<RealmDictionaryContainer>())
-        }
-
+    @Test
+    fun accessors_setter_realmAny_primitive() {
         // Test with a dictionary of RealmAny containing a primitive value
         realm.writeBlocking {
             val unmanagedDictionary1 = realmDictionaryOf(
@@ -524,12 +514,10 @@ class RealmDictionaryTests {
                 assertEquals(unmanagedDictionary2["X"], it.nullableRealmAnyDictionaryField["X"])
             }
         }
+    }
 
-        // Cleanup between assertions for convenience
-        realm.writeBlocking {
-            delete(query<RealmDictionaryContainer>())
-        }
-
+    @Test
+    fun accessors_setter_realmAny_object() {
         // Test with a dictionary of RealmAny containing objects
         realm.writeBlocking {
             val unmanagedDictionary1 = realmDictionaryOf<RealmAny?>(
