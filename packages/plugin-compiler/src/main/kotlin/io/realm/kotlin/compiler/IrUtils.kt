@@ -289,7 +289,7 @@ data class SchemaProperty(
         val declarationName = declaration.name.identifier
         val persistedAnnotationName: String? = if (hasPersistedNameAnnotation) getPersistedName(declaration) else null
 
-        // We only set the public name if the persisted and public names are different 
+        // We only set the public name if the persisted and public names are different
         // because core would otherwise detect it as a duplicated name and fail.
         if (hasPersistedNameAnnotation && persistedAnnotationName!! != declarationName) {
             persistedAnnotationName.ifEmpty {
