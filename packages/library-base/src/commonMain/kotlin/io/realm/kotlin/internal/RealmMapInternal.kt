@@ -205,7 +205,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         realmReference.checkClosed()
 
         // Even though we are getting a value we need to free the data buffers of the string we
-        // send down to Core so we need to use an inputScope
+        // send down to Core, so we need to use an inputScope.
         return inputScope {
             with(keyConverter) {
                 RealmInterop.realm_dictionary_contains_key(nativePointer, publicToRealmValue(key))
@@ -270,7 +270,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
 
     override fun getInternal(key: K): V? {
         // Even though we are getting a value we need to free the data buffers of the string we
-        // send down to Core so we need to use an inputScope
+        // send down to Core, so we need to use an inputScope.
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             val valueTransport = realm_dictionary_find(nativePointer, keyTransport)
@@ -280,7 +280,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
 
     override fun containsValueInternal(value: V): Boolean {
         // Even though we are getting a value we need to free the data buffers of the string values
-        // we send down to Core so we need to use an inputScope
+        // we send down to Core, so we need to use an inputScope.
         return inputScope {
             with(valueConverter) {
                 RealmInterop.realm_dictionary_contains_value(
@@ -318,7 +318,7 @@ internal class RealmAnyMapOperator<K> constructor(
         }
 
         // Even though we are getting a value we need to free the data buffers of the string values
-        // we send down to Core so we need to use an inputScope
+        // we send down to Core, so we need to use an inputScope.
         return inputScope {
             with(valueConverter) {
                 RealmInterop.realm_dictionary_contains_value(
@@ -411,7 +411,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
     @Suppress("UNCHECKED_CAST")
     override fun getInternal(key: K): V? {
         // Even though we are getting a value we need to free the data buffers of the string we
-        // send down to Core so we need to use an inputScope
+        // send down to Core, so we need to use an inputScope.
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             realmValueToRealmObject(
@@ -430,7 +430,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
         }
 
         // Even though we are getting a value we need to free the data buffers of the string we
-        // send down to Core so we need to use an inputScope
+        // send down to Core, so we need to use an inputScope.
         return inputScope {
             with(valueConverter) {
                 RealmInterop.realm_dictionary_contains_value(
