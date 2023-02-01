@@ -2,7 +2,9 @@
 
 import java.io.BufferedReader
 import java.io.File
+import java.io.FileInputStream
 import java.io.InputStreamReader
+import java.util.Properties
 import kotlin.system.exitProcess
 
 /**
@@ -60,7 +62,12 @@ val gpgPassPhrase = args[3]
 val sonatypeUsername = args[4]
 val sonatypePassword = args[5]
 // Path to the root of the local m2 repo containing the package to release.
-val localMavenRepo = File("$repoPath/packages/build/m2-buildrepo")
+val props: Properties = Properties().also { props ->
+    FileInputStream(File("$repoPath/packages/gradle.properties")).use {
+        props.load(it)
+    }
+}
+val localMavenRepo = File("$repoPath/packages/${props["testRepository"]}")
 // Url to upload the release to
 val mavenCentralStagingUrl="https://oss.sonatype.org/service/local/staging/deploy/maven2"
 // Repository ID used in ~/.m2/settings.xml
@@ -103,14 +110,14 @@ settingsFile.writeText("""
     </settings>
 """.trimIndent())
 
-debug("Upload artifacts for $version")
+debug("Upload artifacts for $version using $localMavenRepo")
 
 // Iterate through a local Maven repository and find all Realm Kotlin packages that neeeds to be uploaded.
 val packages: List<String> = File(localMavenRepo, "io/realm/kotlin").listFiles()
     .filter { file -> !file.isHidden && file.isDirectory }
     .map { file -> file.name }
 
-debug("Found the following packages:\n${packages.joinToString(separator = "") { " - $it\n" }}")
+debug("Found the following packages:\n${packages.joinToString(separator = "\n") { " - $it" }}")
 packages.forEach { packageName ->
     debug("Process package: $packageName")
     val versionDirectory = File(localMavenRepo, "io/realm/kotlin/$packageName/$version")
@@ -140,9 +147,7 @@ fun iteratePackageFiles(directory: File): Sequence<File> {
         .filter { it.isFile }
         .filterNot { ignoreFiles.contains(it.name) }
         .filter { file ->
-            ignoredFileTypes.firstOrNull {fileType ->
-                file.name.endsWith(fileType)
-            } == null
+            ignoredFileTypes.none { fileType -> file.name.endsWith(fileType) }
         }
 }
 
@@ -159,7 +164,7 @@ fun findPomFile(versionDirectory: File, packageAndVersionPrefix: String): Pair<S
             val snapshots = pomFiles.map { pomFile ->
                 Pair(getSnapshotTimestamp(pomFile.name, packageAndVersionPrefix), pomFile)
             }.toSet().sortedByDescending { it.first }
-            debug("Found following SNAPSHOT candidates:\n${snapshots.joinToString(separator = "") {" - ${it.first}\n" }}")
+            debug("Found following SNAPSHOT candidates:\n${snapshots.joinToString(separator = "\n") {" - ${it.first}" }}")
 
             val selectedSnapshot = snapshots.first()
             debug("Use selected SNAPSHOT: ${selectedSnapshot.first}")
