@@ -153,6 +153,7 @@ jobs:
         with:
           path: ./packages/cinterop/src/jvmMain/windows-build-dir
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
+          enableCrossOsArchive: true
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3

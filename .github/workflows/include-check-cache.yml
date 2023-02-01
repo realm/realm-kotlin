@@ -39,7 +39,7 @@ on:
       jni-linux-lib-cache-hit: 
         value: ${{ jobs.check-cache.outputs.jni-linux-lib-cache-hit }}
       jni-windows-lib-cache-hit: 
-        value: ${{ jobs.check-cache-windows.outputs.jni-windows-lib-cache-hit }}
+        value: ${{ jobs.check-cache.outputs.jni-windows-lib-cache-hit }}
       packages-sha: 
         value: ${{ jobs.check-cache.outputs.packages-sha }}
       benchmarks-sha: 
@@ -64,6 +64,7 @@ jobs:
       packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
       jni-swig-stub-cache-hit: ${{ steps.jni-swig-stub-cache.outputs.cache-hit }}
       jni-linux-lib-cache-hit: ${{ steps.jni-linux-lib-cache.outputs.cache-hit }}
+      jni-windows-lib-cache-hit: ${{ steps.jni-windows-lib-cache.outputs.cache-hit }}
       packages-sha: ${{ steps.packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
       core-commit-sha: ${{ steps.calculate-core-commmit-sha.outputs.commit }}
@@ -334,19 +335,6 @@ jobs:
       with:
         path: ./packages/build/m2-buildrepo
 
-  # Caches between Linux and Windows cannot be used, so use Windows runners to verify Windows cache state.
-  # See https://github.com/actions/cache#cache-version
-  check-cache-windows:
-    runs-on: windows-latest
-    name: Check Windows cache 
-    needs: check-cache
-    env:
-      CACHE_SKIP_SAVE: true
-    outputs:  
-      jni-windows-lib-cache-hit: ${{ steps.jni-windows-lib-cache.outputs.cache-hit }}
-
-    steps:
-
     #
     # JNI Windows Lib
     #    
@@ -356,6 +344,7 @@ jobs:
       with:
         path: ./packages/cinterop/src/jvmMain/windows-build-dir
         key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
+        enableCrossOsArchive: true
 
     - name: Save JNI Windows lib package
       uses: actions/upload-artifact@v3
@@ -371,6 +360,45 @@ jobs:
       if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/cinterop/src/jvmMain/windows-build-dir
+
+
+  # # Caches between Linux and Windows cannot be used, so use Windows runners to verify Windows cache state.
+  # # See https://github.com/actions/cache#cache-version
+  # check-cache-windows:
+  #   runs-on: windows-latest
+  #   name: Check Windows cache 
+  #   needs: check-cache
+  #   env:
+  #     CACHE_SKIP_SAVE: true
+  #   outputs:  
+  #     jni-windows-lib-cache-hit: ${{ steps.jni-windows-lib-cache.outputs.cache-hit }}
+
+  #   steps:
+
+  #   #
+  #   # JNI Windows Lib
+  #   #    
+  #   - name: Check JNI Windows lib cache 
+  #     id: jni-windows-lib-cache
+  #     uses: cmelchior/cache@main
+  #     with:
+  #       path: ./packages/cinterop/src/jvmMain/windows-build-dir
+  #       key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
+
+  #   - name: Save JNI Windows lib package
+  #     uses: actions/upload-artifact@v3
+  #     if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
+  #     with:
+  #       name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
+  #       path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll
+  #       retention-days: 1
+
+  #   - name: Delete downloaded JNI Windows lib cache files
+  #     id: delete-cache-windows-lib
+  #     uses: JesseTG/rm@v1.0.3
+  #     if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
+  #     with:
+  #       path: ./packages/cinterop/src/jvmMain/windows-build-dir
 
 
 
