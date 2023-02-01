@@ -216,7 +216,7 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
@@ -333,7 +333,7 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
@@ -445,7 +445,7 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
@@ -531,7 +531,7 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
@@ -609,7 +609,7 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
@@ -687,7 +687,7 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
