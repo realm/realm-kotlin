@@ -730,6 +730,19 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer? {
+        val dictionaryPointer = longArrayOf(0)
+        realmc.realm_set_resolve_in(dictionary.cptr(), realm.cptr(), dictionaryPointer)
+        return if (dictionaryPointer[0] != 0L) {
+            LongPointerWrapper(dictionaryPointer[0])
+        } else {
+            null
+        }
+    }
+
     actual fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean {
         return realmc.realm_dictionary_is_valid(dictionary.cptr())
     }
@@ -795,6 +808,24 @@ actual object RealmInterop {
             realmc.register_notification_cb(
                 set.cptr(),
                 CollectionType.RLM_COLLECTION_TYPE_SET.nativeValue,
+                object : NotificationCallback {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
+                    }
+                }
+            ),
+            managed = false
+        )
+    }
+
+    actual fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.register_notification_cb(
+                map.cptr(),
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY.nativeValue,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
                         callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))

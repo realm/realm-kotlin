@@ -19,6 +19,8 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
@@ -26,14 +28,22 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
 import io.realm.kotlin.internal.interop.RealmMapPointer
+import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.notifications.MapChange
+import io.realm.kotlin.notifications.internal.DeletedDictionaryImpl
+import io.realm.kotlin.notifications.internal.InitialDictionaryImpl
+import io.realm.kotlin.notifications.internal.UpdatedDictionaryImpl
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 // ----------------------------------------------------------------------
@@ -43,7 +53,7 @@ import kotlin.reflect.KClass
 internal abstract class ManagedRealmMap<K, V> constructor(
     internal val nativePointer: RealmMapPointer,
     val operator: MapOperator<K, V>
-) : AbstractMutableMap<K, V>(), RealmMap<K, V> {
+) : AbstractMutableMap<K, V>(), RealmMap<K, V>, Observable<ManagedRealmMap<K, V>, MapChange<K, V>>, Flowable<MapChange<K, V>> {
 
     override val entries: MutableSet<MutableMap.MutableEntry<K, V>> by lazy {
         operator.realmReference.checkClosed()
@@ -73,6 +83,16 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     override fun put(key: K, value: V): V? = operator.put(key, value)
 
     override fun remove(key: K): V? = operator.remove(key)
+
+    override fun asFlow(): Flow<MapChange<K, V>> {
+        operator.realmReference.checkClosed()
+        return operator.realmReference.owner.registerObserver(this)
+    }
+
+    override fun registerForNotification(
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer =
+        RealmInterop.realm_dictionary_add_notification_callback(nativePointer, callback)
 
     internal fun isValid(): Boolean =
         !nativePointer.isReleased() && RealmInterop.realm_dictionary_is_valid(nativePointer)
@@ -215,6 +235,8 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
             }
         }
     }
+
+    fun copy(realmReference: RealmReference, nativePointer: RealmMapPointer): MapOperator<K, V>
 }
 
 internal open class PrimitiveMapOperator<K, V> constructor(
@@ -299,6 +321,12 @@ internal open class PrimitiveMapOperator<K, V> constructor(
             is ByteArray -> expected.contentEquals(actual?.let { it as ByteArray })
             else -> expected == actual
         }
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmMapPointer
+    ): MapOperator<K, V> =
+        PrimitiveMapOperator(mediator, realmReference, valueConverter, keyConverter, nativePointer)
 }
 
 internal class RealmAnyMapOperator<K> constructor(
@@ -452,6 +480,19 @@ internal class RealmObjectMapOperator<K, V> constructor(
         //  https://github.com/realm/realm-kotlin/issues/1097
         return false
     }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmMapPointer
+    ): MapOperator<K, V> = RealmObjectMapOperator(
+        mediator,
+        realmReference,
+        converter<V>(clazz, mediator, realmReference),
+        converter(String::class, mediator, realmReference) as RealmValueConverter<K>,
+        nativePointer,
+        clazz
+    )
 }
 
 // ----------------------------------------------------------------------
@@ -460,12 +501,53 @@ internal class RealmObjectMapOperator<K, V> constructor(
 
 internal class UnmanagedRealmDictionary<E>(
     dictionary: Map<String, E> = mutableMapOf()
-) : RealmDictionary<E>, MutableMap<String, E> by dictionary.toMutableMap()
+) : RealmDictionary<E>, MutableMap<String, E> by dictionary.toMutableMap() {
+    override fun asFlow(): Flow<MapChange<String, E>> =
+        throw UnsupportedOperationException("Unmanaged dictionaries cannot be observed.")
+}
 
 internal class ManagedRealmDictionary<E> constructor(
     nativePointer: RealmMapPointer,
     operator: MapOperator<String, E>
-) : ManagedRealmMap<String, E>(nativePointer, operator), RealmDictionary<E>
+) : ManagedRealmMap<String, E>(nativePointer, operator), RealmDictionary<E> {
+
+    override fun freeze(frozenRealm: RealmReference): ManagedRealmDictionary<E>? {
+        return RealmInterop.realm_dictionary_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
+            ManagedRealmDictionary(it, operator.copy(frozenRealm, it))
+        }
+    }
+
+    override fun thaw(liveRealm: RealmReference): ManagedRealmDictionary<E>? {
+        return RealmInterop.realm_dictionary_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
+            ManagedRealmDictionary(it, operator.copy(liveRealm, it))
+        }
+    }
+
+    override fun emitFrozenUpdate(
+        frozenRealm: RealmReference,
+        change: RealmChangesPointer,
+        channel: SendChannel<MapChange<String, E>>
+    ): ChannelResult<Unit>? {
+        val frozenDictionary: ManagedRealmDictionary<E>? = freeze(frozenRealm)
+        return if (frozenDictionary != null) {
+            val builder = DictionaryChangeSetBuilderImpl(
+                change,
+                operator.copy(frozenRealm, frozenDictionary.nativePointer)
+            )
+
+            if (builder.isEmpty()) {
+                channel.trySend(InitialDictionaryImpl(frozenDictionary))
+            } else {
+                channel.trySend(UpdatedDictionaryImpl(frozenDictionary, builder.build()))
+            }
+        } else {
+            channel.trySend(DeletedDictionaryImpl(UnmanagedRealmDictionary()))
+                .also {
+                    channel.close()
+                }
+        }
+    }
+}
 
 // ----------------------------------------------------------------------
 // Keys

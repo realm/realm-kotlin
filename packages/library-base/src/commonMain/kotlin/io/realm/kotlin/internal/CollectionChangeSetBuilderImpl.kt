@@ -20,8 +20,10 @@ import io.realm.kotlin.internal.interop.ArrayAccessor
 import io.realm.kotlin.internal.interop.CollectionChangeSetBuilder
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.notifications.DictionaryChangeSet
 import io.realm.kotlin.notifications.ListChangeSet
 import io.realm.kotlin.notifications.ListChangeSet.Range
+import io.realm.kotlin.notifications.MapChangeSet
 import io.realm.kotlin.notifications.SetChangeSet
 
 internal abstract class CollectionChangeSetBuilderImpl<T>(
@@ -84,3 +86,32 @@ internal class SetChangeSetBuilderImpl(
             get() = this@SetChangeSetBuilderImpl.deletionIndices.size
     }
 }
+
+// TODO operator is most likely not needed since the changeset should contain the keys instead of the index
+internal abstract class MapChangeSetBuilderImpl<K>(
+    change: RealmChangesPointer,
+    protected val mapOperator: MapOperator<K, *>
+) : CollectionChangeSetBuilderImpl<MapChangeSet<K>>(change)
+
+// TODO operator is most likely not needed since the changeset should contain the keys instead of the index
+internal class DictionaryChangeSetBuilderImpl(
+    change: RealmChangesPointer,
+    mapOperator: MapOperator<String, *>
+) : MapChangeSetBuilderImpl<String>(change, mapOperator) {
+
+    override fun build(): DictionaryChangeSet = object : DictionaryChangeSet {
+        override val deletions: Array<String>
+            get() = this@DictionaryChangeSetBuilderImpl.deletionIndices
+                .map { mapOperator.getEntry(it).first }
+                .toTypedArray()
+        override val insertions: Array<String>
+            get() = this@DictionaryChangeSetBuilderImpl.insertionIndices
+                .map { mapOperator.getEntry(it).first}
+                .toTypedArray()
+        override val changes: Array<String>
+            get() = this@DictionaryChangeSetBuilderImpl.modificationIndices
+                .map { mapOperator.getEntry(it).first }
+                .toTypedArray()
+    }
+}
+

@@ -397,6 +397,11 @@ expect object RealmInterop {
         value: RealmValue
     ): Boolean
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
+    fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer?
+
     fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean
 
     // query
@@ -479,6 +484,10 @@ expect object RealmInterop {
     ): RealmNotificationTokenPointer
     fun realm_set_add_notification_callback(
         set: RealmSetPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
+    fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_object_changes_get_modified_properties(

@@ -89,3 +89,29 @@ public interface SetChangeSet {
      */
     public val deletions: Int
 }
+
+/**
+ * TODO
+ */
+public interface MapChangeSet<K> {
+    /**
+     * TODO
+     */
+    public val deletions: Array<K>
+
+    /**
+     * TODO
+     */
+    public val insertions: Array<K>
+
+    /**
+     * TODO
+     */
+    public val changes: Array<K>
+}
+
+/**
+ * TODO
+ */
+public typealias DictionaryChangeSet = MapChangeSet<String>
+

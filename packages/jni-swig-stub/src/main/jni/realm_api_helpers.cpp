@@ -217,7 +217,13 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
                     on_collection_change // change callback
             );
-        case RLM_COLLECTION_TYPE_DICTIONARY: throw std::runtime_error("Dictionaries are not supported yet.");
+        case RLM_COLLECTION_TYPE_DICTIONARY: return realm_dictionary_add_notification_callback(
+                    reinterpret_cast<realm_dictionary_t*>(collection_ptr),
+                    user_data, // Use the callback as user data
+                    user_data_free,
+                    NULL, // See https://github.com/realm/realm-kotlin/issues/661
+                    on_collection_change // change callback
+            );
     }
 }
 
