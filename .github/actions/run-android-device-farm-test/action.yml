@@ -17,7 +17,7 @@ runs:
   using: "composite"
   steps:
     - name: Run the tests
-      uses: realm/aws-devicefarm/test-application@d94e739490340474f8464f74289a0f48706dd3a3
+      uses: realm/aws-devicefarm/test-application@7b9a91236c456c97e28d384c9e476035d5ea686b
       id: run-tests
       with:
         project_arn: ${{ inputs.project-arn }}
