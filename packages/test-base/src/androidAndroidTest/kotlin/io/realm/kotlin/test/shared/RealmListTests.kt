@@ -1356,7 +1356,7 @@ internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.
 internal val REALM_ANY_PRIMITIVE_VALUES =
     TypeDescriptor.anyClassifiers.filterValues { it.isPrimitive }
         .map { RealmAnyTests.create(RealmAnyTests.defaultValues[it.key]) } + null
-internal val REALM_ANY_REALM_OBJECT = RealmAny.create(
+private val REALM_ANY_REALM_OBJECT = RealmAny.create(
     RealmListContainer().apply { stringField = "hello" },
     RealmListContainer::class
 )

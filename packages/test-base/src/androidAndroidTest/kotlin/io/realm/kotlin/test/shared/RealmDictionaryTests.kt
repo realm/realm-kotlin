@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
 import io.realm.kotlin.exceptions.RealmException
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryEntryOf
 import io.realm.kotlin.ext.realmDictionaryOf
@@ -52,6 +53,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class RealmDictionaryTests {
@@ -63,12 +65,9 @@ class RealmDictionaryTests {
     private lateinit var realm: Realm
 
     private val managedTesters: List<DictionaryApiTester<*, RealmDictionaryContainer>> by lazy {
-        // TODO use mapNotNull to introduce each supported type progressively and return null for
-        //  those types that remain unsupported - remove this hack when all types are supported
-        descriptors.mapNotNull {
+        descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
-                RealmAny::class -> null
                 RealmObject::class -> RealmObjectDictionaryTester(
                     realm,
                     getTypeSafety(
@@ -77,12 +76,20 @@ class RealmDictionaryTests {
                     ) as DictionaryTypeSafetyManager<RealmDictionaryContainer>,
                     classifier
                 )
-                ByteArray::class -> ByteArrayTester(
+                ByteArray::class -> ByteArrayDictionaryTester(
                     realm,
                     getTypeSafety(
                         classifier,
                         elementType.nullable
                     ) as DictionaryTypeSafetyManager<ByteArray>,
+                    classifier
+                )
+                RealmAny::class -> RealmAnyDictionaryTester(
+                    realm,
+                    getTypeSafety(
+                        classifier,
+                        elementType.nullable
+                    ) as DictionaryTypeSafetyManager<RealmAny?>,
                     classifier
                 )
                 else -> GenericDictionaryTester(
@@ -214,50 +221,154 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun accessors_getter() {
-        // No need to be exhaustive here
-        val dictionary1 = realmDictionaryOf("A" to 1.toByte())
-        val container1 = RealmDictionaryContainer().apply { byteDictionaryField = dictionary1 }
-
-        realm.writeBlocking {
-            val managedContainer1 = copyToRealm(container1)
-            val managedDictionary1 = managedContainer1.byteDictionaryField
-            assertEquals(dictionary1.size, managedDictionary1.size)
-            assertEquals(dictionary1["A"], managedDictionary1["A"])
-        }
-
-        // Repeat outside transaction
-        realm.query<RealmDictionaryContainer>()
-            .first()
-            .find {
-                val managedDictionary1 = assertNotNull(it).byteDictionaryField
-                assertEquals(dictionary1.size, managedDictionary1.size)
-                assertEquals(dictionary1["A"], managedDictionary1["A"])
+    fun accessors_getter_primitive() {
+        // No need to be exhaustive here. First test with a dictionary of any primitive type
+        realmDictionaryOf(
+            "A" to 1.toByte()
+        ).also { dictionary ->
+            val container = RealmDictionaryContainer()
+                .apply { byteDictionaryField = dictionary }
+            realm.writeBlocking {
+                val managedContainer = copyToRealm(container)
+                val managedDictionary = managedContainer.byteDictionaryField
+                assertEquals(dictionary.size, managedDictionary.size)
+                assertEquals(dictionary["A"], managedDictionary["A"])
             }
+
+            // Repeat outside transaction
+            realm.query<RealmDictionaryContainer>()
+                .first()
+                .find {
+                    val managedDictionary = assertNotNull(it).byteDictionaryField
+                    assertEquals(dictionary.size, managedDictionary.size)
+                    assertEquals(dictionary["A"], managedDictionary["A"])
+                }
+        }
     }
 
     @Test
-    fun accessors_setter() {
-        // No need to be exhaustive here
-        val dictionary0 = realmDictionaryOf("RANDOM1" to 13.toByte(), "RANDOM2" to 42.toByte())
-        val dictionary1 = realmDictionaryOf("A" to 1.toByte())
-        val dictionary2 = realmDictionaryOf("X" to 22.toByte())
-        val container1 = RealmDictionaryContainer().apply { byteDictionaryField = dictionary1 }
-        val container2 = RealmDictionaryContainer().apply { byteDictionaryField = dictionary2 }
+    fun accessors_getter_object() {
+        // Test with a dictionary of objects
+        realmDictionaryOf<RealmDictionaryContainer?>(
+            "A" to DICTIONARY_OBJECT_VALUES[0]
+        ).also { dictionary ->
+            val container = RealmDictionaryContainer()
+                .apply { nullableObjectDictionaryField = dictionary }
 
-        realm.writeBlocking {
-            val managedContainer1 = copyToRealm(container1)
-            val managedContainer2 = copyToRealm(container2)
-
-            // Assign an unmanaged dictionary managed1 <- unmanaged0
-            managedContainer1.also {
-                it.byteDictionaryField = dictionary0
-                assertEquals(dictionary0.size, it.byteDictionaryField.size)
-                assertEquals(dictionary0["RANDOM1"], it.byteDictionaryField["RANDOM1"])
-                assertEquals(dictionary0["RANDOM2"], it.byteDictionaryField["RANDOM2"])
+            realm.writeBlocking {
+                val managedContainer = copyToRealm(container)
+                val managedDictionary = managedContainer.nullableObjectDictionaryField
+                assertEquals(dictionary.size, managedDictionary.size)
+                val expected = assertNotNull(dictionary["A"])
+                val actual = assertNotNull(managedDictionary["A"])
+                assertEquals(expected.stringField, actual.stringField)
             }
 
-            // Assign a managed dictionary: managed0 <- managed2
+            // Repeat outside transaction
+            realm.query<RealmDictionaryContainer>()
+                .first()
+                .find {
+                    val managedDictionary = assertNotNull(it).nullableObjectDictionaryField
+                    assertEquals(dictionary.size, managedDictionary.size)
+                    val expected = assertNotNull(dictionary["A"])
+                    val actual = assertNotNull(managedDictionary["A"])
+                    assertEquals(expected.stringField, actual.stringField)
+                }
+        }
+    }
+
+    @Test
+    fun accessors_getter_realmAny_primitive() {
+        // Test with a dictionary of RealmAny containing a primitive value
+        realmDictionaryOf(
+            "A" to REALM_ANY_PRIMITIVE_VALUES[0]
+        ).also { dictionary ->
+            val container = RealmDictionaryContainer()
+                .apply { nullableRealmAnyDictionaryField = dictionary }
+
+            realm.writeBlocking {
+                val managedContainer = copyToRealm(container)
+                val managedDictionary = managedContainer.nullableRealmAnyDictionaryField
+                assertEquals(dictionary.size, managedDictionary.size)
+                val expected = assertNotNull(dictionary["A"])
+                val actual = assertNotNull(managedDictionary["A"])
+                assertEquals(expected, actual)
+            }
+
+            // Repeat outside transaction
+            realm.query<RealmDictionaryContainer>()
+                .first()
+                .find {
+                    val managedDictionary = assertNotNull(it).nullableRealmAnyDictionaryField
+                    assertEquals(dictionary.size, managedDictionary.size)
+                    val expected = assertNotNull(dictionary["A"])
+                    val actual = assertNotNull(managedDictionary["A"])
+                    assertEquals(expected, actual)
+                }
+        }
+    }
+
+    @Test
+    fun accessors_getter_realmAny_object() {
+        // Test with a dictionary of RealmAny containing an object
+        realmDictionaryOf<RealmAny?>(
+            "A" to REALM_ANY_REALM_OBJECT
+        ).also { dictionary ->
+            val container = RealmDictionaryContainer()
+                .apply { nullableRealmAnyDictionaryField = dictionary }
+
+            realm.writeBlocking {
+                val managedContainer = copyToRealm(container)
+                val managedDictionary = managedContainer.nullableRealmAnyDictionaryField
+                assertEquals(dictionary.size, managedDictionary.size)
+                val expectedAny = assertNotNull(dictionary["A"])
+                val expected = expectedAny.asRealmObject<RealmDictionaryContainer>()
+                val actualAny = assertNotNull(managedDictionary["A"])
+                val actual = actualAny.asRealmObject<RealmDictionaryContainer>()
+                assertEquals(RealmAny.Type.OBJECT, actualAny.type)
+                assertEquals(expected.stringField, actual.stringField)
+            }
+
+            // Repeat outside transaction
+            realm.query<RealmDictionaryContainer>()
+                .first()
+                .find {
+                    val managedDictionary = assertNotNull(it).nullableRealmAnyDictionaryField
+                    assertEquals(dictionary.size, managedDictionary.size)
+                    val expectedAny = assertNotNull(dictionary["A"])
+                    val expected = expectedAny.asRealmObject<RealmDictionaryContainer>()
+                    val actualAny = assertNotNull(managedDictionary["A"])
+                    val actual = actualAny.asRealmObject<RealmDictionaryContainer>()
+                    assertEquals(RealmAny.Type.OBJECT, actualAny.type)
+                    assertEquals(expected.stringField, actual.stringField)
+                }
+        }
+    }
+
+    @Test
+    fun accessors_setter_primitive() {
+        // No need to be exhaustive here. First test with a dictionary of any primitive type
+        realm.writeBlocking {
+            val unmanagedDictionary1 = realmDictionaryOf(
+                "RANDOM1" to 13.toByte(),
+                "RANDOM2" to 42.toByte()
+            )
+            val unmanagedDictionary2 = realmDictionaryOf("X" to 22.toByte())
+
+            val managedContainer1 = copyToRealm(RealmDictionaryContainer())
+            val managedContainer2 = copyToRealm(
+                RealmDictionaryContainer().apply { byteDictionaryField = unmanagedDictionary2 }
+            )
+
+            // Assign an unmanaged dictionary: managedContainer1.dictionary <- unmanagedDictionary1
+            managedContainer1.also {
+                it.byteDictionaryField = unmanagedDictionary1
+                assertEquals(unmanagedDictionary1.size, it.byteDictionaryField.size)
+                assertEquals(unmanagedDictionary1["RANDOM1"], it.byteDictionaryField["RANDOM1"])
+                assertEquals(unmanagedDictionary1["RANDOM2"], it.byteDictionaryField["RANDOM2"])
+            }
+
+            // Assign a managed dictionary: managedContainer1.dictionary <- managedDictionary2.dictionary
             managedContainer1.also {
                 it.byteDictionaryField = managedContainer2.byteDictionaryField
                 assertEquals(
@@ -270,11 +381,186 @@ class RealmDictionaryTests {
                 )
             }
 
-            // Assign the same managed dictionary: managed2 <- managed2
+            // Assign the same managed dictionary: managedContainer1.dictionary <- managedContainer1.dictionary
             managedContainer1.also {
                 it.byteDictionaryField = it.byteDictionaryField
-                assertEquals(dictionary2.size, it.byteDictionaryField.size)
-                assertEquals(dictionary2["X"], it.byteDictionaryField["X"])
+                assertEquals(unmanagedDictionary2.size, it.byteDictionaryField.size)
+                assertEquals(unmanagedDictionary2["X"], it.byteDictionaryField["X"])
+            }
+        }
+    }
+
+    @Test
+    fun accessors_setter_object() {
+        // Test with a dictionary of objects
+        realm.writeBlocking {
+            val unmanagedDictionary1 = realmDictionaryOf<RealmDictionaryContainer?>(
+                "RANDOM1" to DICTIONARY_OBJECT_VALUES[0],
+                "RANDOM2" to DICTIONARY_OBJECT_VALUES[1]
+            )
+            val unmanagedDictionary2 = realmDictionaryOf<RealmDictionaryContainer?>(
+                "X" to RealmDictionaryContainer().apply { stringField = "hello" }
+            )
+
+            val managedContainer1 = copyToRealm(RealmDictionaryContainer())
+            val managedContainer2 = copyToRealm(
+                RealmDictionaryContainer().apply {
+                    nullableObjectDictionaryField = unmanagedDictionary2
+                }
+            )
+
+            // Assign an unmanaged dictionary: managedContainer1.dictionary <- unmanagedDictionary1
+            managedContainer1.also {
+                it.nullableObjectDictionaryField = unmanagedDictionary1
+                assertEquals(unmanagedDictionary1.size, it.nullableObjectDictionaryField.size)
+                val expected1 = assertNotNull(unmanagedDictionary1["RANDOM1"])
+                val actual1 = assertNotNull(it.nullableObjectDictionaryField["RANDOM1"])
+                assertEquals(expected1.stringField, actual1.stringField)
+                val expected2 = assertNotNull(unmanagedDictionary1["RANDOM2"])
+                val actual2 = assertNotNull(it.nullableObjectDictionaryField["RANDOM2"])
+                assertEquals(expected2.stringField, actual2.stringField)
+            }
+
+            // Assign a managed dictionary: managedContainer1.dictionary <- managedDictionary2.dictionary
+            managedContainer1.also {
+                it.nullableObjectDictionaryField = managedContainer2.nullableObjectDictionaryField
+                assertEquals(
+                    managedContainer2.nullableObjectDictionaryField.size,
+                    managedContainer1.nullableObjectDictionaryField.size
+                )
+                val expected = assertNotNull(managedContainer2.nullableObjectDictionaryField["X"])
+                val actual = assertNotNull(managedContainer1.nullableObjectDictionaryField["X"])
+                assertEquals(expected.stringField, actual.stringField)
+            }
+
+            // Assign the same managed dictionary: managedContainer1.dictionary <- managedContainer1.dictionary
+            managedContainer1.also {
+                it.nullableObjectDictionaryField = it.nullableObjectDictionaryField
+                assertEquals(unmanagedDictionary2.size, it.nullableObjectDictionaryField.size)
+                val expected = assertNotNull(unmanagedDictionary2["X"])
+                val actual = assertNotNull(it.nullableObjectDictionaryField["X"])
+                assertEquals(expected.stringField, actual.stringField)
+            }
+        }
+    }
+
+    @Test
+    fun accessors_setter_realmAny_primitive() {
+        // Test with a dictionary of RealmAny containing a primitive value
+        realm.writeBlocking {
+            val unmanagedDictionary1 = realmDictionaryOf(
+                "RANDOM1" to DICTIONARY_REALM_ANY_VALUES[0],
+                "RANDOM2" to DICTIONARY_REALM_ANY_VALUES[1]
+            )
+            val unmanagedDictionary2 = realmDictionaryOf("X" to DICTIONARY_REALM_ANY_VALUES[2])
+
+            val managedContainer1 = copyToRealm(RealmDictionaryContainer())
+            val managedContainer2 = copyToRealm(
+                RealmDictionaryContainer().apply {
+                    nullableRealmAnyDictionaryField = unmanagedDictionary2
+                }
+            )
+
+            // Assign an unmanaged dictionary: managedContainer1.dictionary <- unmanagedDictionary1
+            managedContainer1.also {
+                it.nullableRealmAnyDictionaryField = unmanagedDictionary1
+                assertEquals(unmanagedDictionary1.size, it.nullableRealmAnyDictionaryField.size)
+                assertEquals(
+                    unmanagedDictionary1["RANDOM1"],
+                    it.nullableRealmAnyDictionaryField["RANDOM1"]
+                )
+                assertEquals(
+                    unmanagedDictionary1["RANDOM2"],
+                    it.nullableRealmAnyDictionaryField["RANDOM2"]
+                )
+            }
+
+            // Assign a managed dictionary: managedContainer1.dictionary <- managedDictionary2.dictionary
+            managedContainer1.also {
+                it.nullableRealmAnyDictionaryField =
+                    managedContainer2.nullableRealmAnyDictionaryField
+                assertEquals(
+                    managedContainer2.nullableRealmAnyDictionaryField.size,
+                    managedContainer1.nullableRealmAnyDictionaryField.size
+                )
+                assertEquals(
+                    managedContainer2.nullableRealmAnyDictionaryField["X"],
+                    managedContainer1.nullableRealmAnyDictionaryField["X"],
+                )
+            }
+
+            // Assign the same managed dictionary: managedContainer1.dictionary <- managedContainer1.dictionary
+            managedContainer1.also {
+                it.nullableRealmAnyDictionaryField = it.nullableRealmAnyDictionaryField
+                assertEquals(unmanagedDictionary2.size, it.nullableRealmAnyDictionaryField.size)
+                assertEquals(unmanagedDictionary2["X"], it.nullableRealmAnyDictionaryField["X"])
+            }
+        }
+    }
+
+    @Test
+    fun accessors_setter_realmAny_object() {
+        // Test with a dictionary of RealmAny containing objects
+        realm.writeBlocking {
+            val unmanagedDictionary1 = realmDictionaryOf<RealmAny?>(
+                "RANDOM1" to REALM_ANY_REALM_OBJECT,
+                "RANDOM2" to REALM_ANY_REALM_OBJECT_2
+            )
+            val unmanagedDictionary2 = realmDictionaryOf<RealmAny?>("X" to REALM_ANY_REALM_OBJECT_3)
+
+            val managedContainer1 = copyToRealm(RealmDictionaryContainer())
+            val managedContainer2 = copyToRealm(
+                RealmDictionaryContainer().apply {
+                    nullableRealmAnyDictionaryField = unmanagedDictionary2
+                }
+            )
+
+            // Assign an unmanaged dictionary: managedContainer1.dictionary <- unmanagedDictionary1
+            managedContainer1.also {
+                it.nullableRealmAnyDictionaryField = unmanagedDictionary1
+                assertEquals(unmanagedDictionary1.size, it.nullableRealmAnyDictionaryField.size)
+
+                val expectedAny1 = assertNotNull(unmanagedDictionary1["RANDOM1"])
+                val expected1 = expectedAny1.asRealmObject<RealmDictionaryContainer>()
+                val actualAny1 = assertNotNull(it.nullableRealmAnyDictionaryField["RANDOM1"])
+                assertEquals(RealmAny.Type.OBJECT, actualAny1.type)
+                val actual1 = actualAny1.asRealmObject<RealmDictionaryContainer>()
+                assertEquals(expected1.stringField, actual1.stringField)
+
+                val expectedAny2 = assertNotNull(unmanagedDictionary1["RANDOM1"])
+                val expected2 = expectedAny2.asRealmObject<RealmDictionaryContainer>()
+                val actualAny2 = assertNotNull(it.nullableRealmAnyDictionaryField["RANDOM1"])
+                assertEquals(RealmAny.Type.OBJECT, actualAny2.type)
+                val actual2 = actualAny2.asRealmObject<RealmDictionaryContainer>()
+                assertEquals(expected2.stringField, actual2.stringField)
+            }
+
+            // Assign a managed dictionary: managedContainer1.dictionary <- managedDictionary2.dictionary
+            managedContainer1.also {
+                it.nullableRealmAnyDictionaryField =
+                    managedContainer2.nullableRealmAnyDictionaryField
+                assertEquals(
+                    managedContainer2.nullableRealmAnyDictionaryField.size,
+                    managedContainer1.nullableRealmAnyDictionaryField.size
+                )
+                val expectedAny = assertNotNull(managedContainer2.nullableRealmAnyDictionaryField["X"])
+                val expected = expectedAny.asRealmObject<RealmDictionaryContainer>()
+                val actualAny = assertNotNull(managedContainer1.nullableRealmAnyDictionaryField["X"])
+                assertEquals(RealmAny.Type.OBJECT, actualAny.type)
+                val actual = actualAny.asRealmObject<RealmDictionaryContainer>()
+                assertEquals(expected.stringField, actual.stringField)
+            }
+
+            // Assign the same managed dictionary: managedContainer1.dictionary <- managedContainer1.dictionary
+            managedContainer1.also {
+                it.nullableRealmAnyDictionaryField = it.nullableRealmAnyDictionaryField
+                assertEquals(unmanagedDictionary2.size, it.nullableRealmAnyDictionaryField.size)
+                val expectedAny = assertNotNull(unmanagedDictionary2["X"])
+                val expected = expectedAny.asRealmObject<RealmDictionaryContainer>()
+                val actualAny = assertNotNull(it.nullableRealmAnyDictionaryField["X"])
+                assertEquals(RealmAny.Type.OBJECT, actualAny.type)
+                val actual = actualAny.asRealmObject<RealmDictionaryContainer>()
+                assertEquals(expected.stringField, actual.stringField)
             }
         }
     }
@@ -613,9 +899,17 @@ class RealmDictionaryTests {
         } else {
             DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
         }
-//        RealmAny::class -> SET_REALM_ANY_VALUES // RealmAny cannot be non-nullable
-//        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
-        else -> TODO("Missing classifier for '$classifier'")
+        RealmAny::class -> {
+            val anyValues = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
+
+            // Generate as many keys as RealmAny values
+            var key = 'A'
+            val keys = anyValues.map { key.also { key += 1 } }
+
+            // Now create pairs of key-RealmAny for the dataset
+            anyValues.mapIndexed { i, value -> Pair(keys[i].toString(), value) }
+        }
+        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 }
 
@@ -658,7 +952,7 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
      * equality contents of ByteArrays and RealmObjects.
      */
     fun assertStructuralEquality(
-        expectedValues: List<Pair<String, T>>,
+        expectedPairs: List<Pair<String, T>>,
         actualValues: Map<String, T>
     )
 
@@ -675,12 +969,6 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
      * Asserts structural equality for two given values.
      */
     fun assertStructuralEquality(expectedValue: T?, actualValue: T?)
-
-    /**
-     * Asserts whether a collection contains a given element. The assertion for byte arrays is done
-     * at a structural level.
-     */
-    fun structuralContains(receiver: Collection<T?>, element: T?): Boolean
 
     /**
      * Assertions on the container outside the write transaction plus cleanup.
@@ -1013,6 +1301,7 @@ internal abstract class ManagedDictionaryTester<T>(
 
     override fun entries_iteratorConcurrentModification() {
         // Ignore ByteArray and RealmObject: structural equality cannot be assessed for these types
+        // when removing entries from the entry set
         if (classifier != ByteArray::class && classifier != RealmObject::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
 
@@ -1200,7 +1489,28 @@ internal abstract class ManagedDictionaryTester<T>(
                     // own implementation
                     val unmanagedNext = realmDictionaryEntryOf(unmanagedIterator.next())
                     val managedNext = managedIterator.next()
-                    assertEquals(unmanagedNext, managedNext)
+
+                    // Special case: RealmAny containing an object
+                    if (classifier == RealmAny::class) {
+                        val unmanagedNextRealmAny = unmanagedNext.value as RealmAny?
+                        val managedNextRealmAny = managedNext.value as RealmAny?
+                        assertEquals(unmanagedNextRealmAny?.type, managedNextRealmAny?.type)
+                        if (unmanagedNextRealmAny?.type == RealmAny.Type.OBJECT) {
+                            val unmanagedObj =
+                                unmanagedNextRealmAny.asRealmObject<RealmDictionaryContainer>()
+                            val managedObj =
+                                managedNextRealmAny?.asRealmObject<RealmDictionaryContainer>()
+                            assertEquals(unmanagedObj.stringField, managedObj?.stringField)
+                        } else if (unmanagedNextRealmAny?.type == RealmAny.Type.BINARY) {
+                            val unmanagedBinary = unmanagedNextRealmAny.asByteArray()
+                            val managedBinary = managedNextRealmAny?.asByteArray()
+                            assertContentEquals(unmanagedBinary, managedBinary)
+                        } else {
+                            assertEquals(unmanagedNext, managedNext)
+                        }
+                    } else {
+                        assertEquals(unmanagedNext, managedNext)
+                    }
                 }
             }
 
@@ -1558,7 +1868,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val values = typeSafetyManager.getCollection(container)
                 .values
 
-            // Ignore ByteArray and RealmObject since elements cannot be removed using the retainAll API
+            // Ignore ByteArray and RealmObject: they cannot be removed using the retainAll API
             if (classifier != ByteArray::class && classifier != RealmObject::class) {
                 assertFalse(values.retainAll(values))
             }
@@ -1615,11 +1925,11 @@ internal class GenericDictionaryTester<T>(
     classifier: KClassifier
 ) : ManagedDictionaryTester<T>(realm, typeSafetyManager, classifier) {
     override fun assertStructuralEquality(
-        expectedValues: List<Pair<String, T>>,
+        expectedPairs: List<Pair<String, T>>,
         actualValues: Map<String, T>
     ) {
-        assertEquals(expectedValues.size, actualValues.size)
-        expectedValues.forEach {
+        assertEquals(expectedPairs.size, actualValues.size)
+        expectedPairs.forEach {
             assertEquals(it.second, actualValues[it.first])
         }
     }
@@ -1635,26 +1945,22 @@ internal class GenericDictionaryTester<T>(
     override fun assertStructuralEquality(expectedValue: T?, actualValue: T?) {
         assertEquals(expectedValue, actualValue)
     }
-
-    override fun structuralContains(receiver: Collection<T?>, element: T?): Boolean {
-        return receiver.contains(element)
-    }
 }
 
 /**
  * Tester for ByteArray.
  */
-internal class ByteArrayTester(
+internal class ByteArrayDictionaryTester(
     realm: Realm,
     typeSafetyManager: DictionaryTypeSafetyManager<ByteArray>,
     classifier: KClassifier
 ) : ManagedDictionaryTester<ByteArray>(realm, typeSafetyManager, classifier) {
     override fun assertStructuralEquality(
-        expectedValues: List<Pair<String, ByteArray>>,
+        expectedPairs: List<Pair<String, ByteArray>>,
         actualValues: Map<String, ByteArray>
     ) {
-        assertEquals(expectedValues.size, actualValues.size)
-        expectedValues.forEach {
+        assertEquals(expectedPairs.size, actualValues.size)
+        expectedPairs.forEach {
             assertContentEquals(it.second, actualValues[it.first])
         }
     }
@@ -1676,13 +1982,81 @@ internal class ByteArrayTester(
     override fun assertStructuralEquality(expectedValue: ByteArray?, actualValue: ByteArray?) {
         assertContentEquals(expectedValue, actualValue)
     }
+}
 
-    override fun structuralContains(
-        receiver: Collection<ByteArray?>,
-        element: ByteArray?
-    ): Boolean {
-        return receiver.fold(false) { accumulator, value ->
-            value.contentEquals(element) or accumulator
+/**
+ * Tester for RealmAny.
+ */
+internal class RealmAnyDictionaryTester(
+    realm: Realm,
+    typeSafetyManager: DictionaryTypeSafetyManager<RealmAny?>,
+    classifier: KClassifier
+) : ManagedDictionaryTester<RealmAny?>(realm, typeSafetyManager, classifier) {
+    override fun assertStructuralEquality(
+        expectedPairs: List<Pair<String, RealmAny?>>,
+        actualValues: Map<String, RealmAny?>
+    ) {
+        assertEquals(expectedPairs.size, actualValues.size)
+        actualValues.forEach { (actualKey, actualValue) ->
+            val expectedKeys = expectedPairs.map { it.first }
+            val expectedValues = expectedPairs.map { it.second }
+            when (actualValue?.type) {
+                RealmAny.Type.OBJECT -> {
+                    val expectedObject = expectedValues.find {
+                        it?.type == RealmAny.Type.OBJECT
+                    }?.asRealmObject<RealmDictionaryContainer>()
+                    val actualObject = actualValue.asRealmObject<RealmDictionaryContainer>()
+                    assertEquals(expectedObject?.stringField, actualObject.stringField)
+                }
+                RealmAny.Type.BINARY -> {
+                    val expectedByteArray = expectedValues.find {
+                        it?.type == RealmAny.Type.BINARY
+                    }?.asByteArray()
+                    val actualByteArray = actualValue.asByteArray()
+                    assertContentEquals(expectedByteArray, actualByteArray)
+                }
+                else -> {
+                    assertTrue(expectedKeys.contains(actualKey))
+                    assertTrue(expectedValues.contains(actualValue))
+                }
+            }
+        }
+    }
+
+    override fun assertStructuralEquality(
+        expectedValues: Collection<RealmAny?>,
+        actualValues: Collection<RealmAny?>
+    ) {
+        assertEquals(expectedValues.size, actualValues.size)
+        val expectedIterator = expectedValues.iterator()
+        val actualIterator = actualValues.iterator()
+        while (expectedIterator.hasNext() && actualIterator.hasNext()) {
+            assertStructuralEquality(expectedIterator.next(), actualIterator.next())
+        }
+    }
+
+    override fun assertStructuralEquality(
+        expectedValue: RealmAny?,
+        actualValue: RealmAny?
+    ) {
+        assertEquals(expectedValue?.type, actualValue?.type)
+        when (expectedValue?.type) {
+            RealmAny.Type.INT -> assertEquals(expectedValue.asInt(), actualValue?.asInt())
+            RealmAny.Type.BOOL -> assertEquals(expectedValue.asBoolean(), actualValue?.asBoolean())
+            RealmAny.Type.STRING -> assertEquals(expectedValue.asString(), actualValue?.asString())
+            RealmAny.Type.BINARY -> assertContentEquals(expectedValue.asByteArray(), actualValue?.asByteArray())
+            RealmAny.Type.TIMESTAMP -> assertEquals(expectedValue.asRealmInstant(), actualValue?.asRealmInstant())
+            RealmAny.Type.FLOAT -> assertEquals(expectedValue.asFloat(), actualValue?.asFloat())
+            RealmAny.Type.DOUBLE -> assertEquals(expectedValue.asDouble(), actualValue?.asDouble())
+            RealmAny.Type.DECIMAL128 -> assertEquals(expectedValue.asDecimal128(), actualValue?.asDecimal128())
+            RealmAny.Type.OBJECT_ID -> assertEquals(expectedValue.asObjectId(), actualValue?.asObjectId())
+            RealmAny.Type.UUID -> assertEquals(expectedValue.asRealmUUID(), actualValue?.asRealmUUID())
+            RealmAny.Type.OBJECT -> {
+                val expectedObj = expectedValue.asRealmObject<RealmDictionaryContainer>()
+                val actualObj = actualValue?.asRealmObject<RealmDictionaryContainer>()
+                assertEquals(expectedObj.stringField, assertNotNull(actualObj).stringField)
+            }
+            null -> assertNull(actualValue)
         }
     }
 }
@@ -1696,12 +2070,12 @@ internal class RealmObjectDictionaryTester(
     classifier: KClassifier
 ) : ManagedDictionaryTester<RealmDictionaryContainer>(realm, typeSafetyManager, classifier) {
     override fun assertStructuralEquality(
-        expectedValues: List<Pair<String, RealmDictionaryContainer>>,
+        expectedPairs: List<Pair<String, RealmDictionaryContainer>>,
         actualValues: Map<String, RealmDictionaryContainer>
     ) {
-        assertEquals(expectedValues.size, actualValues.size)
+        assertEquals(expectedPairs.size, actualValues.size)
         assertContentEquals(
-            expectedValues.map { it.second.stringField },
+            expectedPairs.map { it.second.stringField },
             actualValues.map { it.value.stringField }
         )
     }
@@ -1723,21 +2097,12 @@ internal class RealmObjectDictionaryTester(
     ) {
         assertEquals(expectedValue?.stringField, actualValue?.stringField)
     }
-
-    override fun structuralContains(
-        receiver: Collection<RealmDictionaryContainer?>,
-        element: RealmDictionaryContainer?
-    ): Boolean {
-        return receiver.fold(false) { accumulator, value ->
-            (value?.stringField == element?.stringField) or accumulator
-        }
-    }
 }
 
 /**
  * Dataset container for RealmDictionary, can be either nullable or non-nullable.
  */
-internal class DictionaryTypeSafetyManager<T>(
+internal class DictionaryTypeSafetyManager<T> constructor(
     override val property: KMutableProperty1<RealmDictionaryContainer, RealmDictionary<T>>,
     override val dataSetToLoad: List<Pair<String, T>>
 ) : GenericTypeSafetyManager<Pair<String, T>, RealmDictionaryContainer, RealmDictionary<T>> {
@@ -1775,6 +2140,20 @@ internal val DICTIONARY_OBJECT_VALUES = listOf(
     RealmDictionaryContainer().apply { stringField = "A" },
     RealmDictionaryContainer().apply { stringField = "B" }
 )
+private val REALM_ANY_REALM_OBJECT = RealmAny.create(
+    RealmDictionaryContainer().apply { stringField = "hello" },
+    RealmDictionaryContainer::class
+)
+private val REALM_ANY_REALM_OBJECT_2 = RealmAny.create(
+    RealmDictionaryContainer().apply { stringField = "hello_2" },
+    RealmDictionaryContainer::class
+)
+private val REALM_ANY_REALM_OBJECT_3 = RealmAny.create(
+    RealmDictionaryContainer().apply { stringField = "hello_3" },
+    RealmDictionaryContainer::class
+)
+
+private val DICTIONARY_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
 
 internal val NULLABLE_DICTIONARY_OBJECT_VALUES = DICTIONARY_OBJECT_VALUES + null
 
