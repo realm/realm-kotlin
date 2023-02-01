@@ -1455,6 +1455,23 @@ class DynamicRealmObjectTests {
     }
 
     @Test
+    fun set_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                Sample().apply {
+                    (1..5).forEach { objectSetField.add(Sample().apply { intField = it }) }
+                }
+            )
+        }
+        val dynamicRealm = realm.asDynamicRealm()
+        val dynamicSample = dynamicRealm.query("Sample").find().first()
+
+        val results = dynamicSample.getObjectSet("objectSetField").query("intField > 2").find()
+        assertEquals(3, results.size)
+        results.forEach { assertTrue { it.getValue<Long>("intField") > 2 } }
+    }
+
+    @Test
     fun getListVariants_throwsOnWrongTypes() {
         realm.writeBlocking {
             copyToRealm(Sample())
