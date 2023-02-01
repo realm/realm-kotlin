@@ -28,6 +28,8 @@ import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 
 class RealmSetContainer : RealmObject {
+
+    var id: Int = -1
     var stringField: String = "Realm"
 
     var stringSetField: RealmSet<String> = realmSetOf()

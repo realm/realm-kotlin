@@ -26,10 +26,12 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.ErrorCatcher
 import io.realm.kotlin.test.GenericTypeSafetyManager
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
@@ -38,9 +40,15 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
@@ -55,6 +63,8 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class RealmSetTests {
 
@@ -80,14 +90,14 @@ class RealmSetTests {
                     getTypeSafety(
                         classifier,
                         elementType.nullable
-                    ) as SetTypeSafetyManager<ByteArray>,
+                    ) as SetTypeSafetyManager<ByteArray>
                 )
                 RealmAny::class -> RealmAnySetTester(
                     realm,
                     SetTypeSafetyManager(
                         RealmSetContainer.nullableProperties[classifier]!!,
                         getDataSetForClassifier(classifier, true)
-                    ) as SetTypeSafetyManager<RealmAny?>,
+                    ) as SetTypeSafetyManager<RealmAny?>
                 )
                 else -> GenericSetTester(
                     realm,
@@ -425,6 +435,173 @@ class RealmSetTests {
                     .add(RealmSetContainer())
             }
         }
+    }
+
+    @Test
+    fun setAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmSetContainer()) }
+        val mutex = Mutex(true)
+        val job = async {
+            container.objectSetField.asFlow().collect {
+                mutex.unlock()
+            }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        withTimeout(10.seconds) {
+            job.await()
+        }
+    }
+
+    @Test
+    fun query_objectSet() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmSetContainer().apply {
+                    (1..5).map {
+                        objectSetField.add(RealmSetContainer().apply { stringField = "$it" })
+                    }
+                }
+            )
+        }
+        val objectSetField = container.objectSetField
+        assertEquals(5, objectSetField.size)
+
+        val all: RealmQuery<RealmSetContainer> = container.objectSetField.query()
+        val ids = (1..5).map { it.toString() }.toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.stringField)) }
+        assertTrue { ids.isEmpty() }
+
+        container.objectSetField.query("stringField = $0", 3.toString())
+            .find()
+            .single()
+            .run {
+                assertEquals("3", stringField)
+            }
+    }
+
+    @Test
+    fun queryOnSetAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmSetContainer()) }
+        val mutex = Mutex(true)
+        val listener = async {
+            container.objectSetField.query()
+                .asFlow()
+                .let {
+                    withTimeout(10.seconds) {
+                        it.collect {
+                            mutex.unlock()
+                        }
+                    }
+                }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    fun queryOnSetAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+        val container = realm.write { copyToRealm(RealmSetContainer()) }
+        val flow = container.objectSetField.query().asFlow()
+            .buffer(1)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                assertFailsWith<CancellationException> {
+                    flow.collect { current ->
+                        delay(1000.milliseconds)
+                    }
+                }.message!!.let { message ->
+                    assertEquals(
+                        "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                        message
+                    )
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectSetField.run {
+                    clear()
+                    add(RealmSetContainer().apply { this.id = i })
+                }
+            }
+        }
+        listener.await()
+    }
+
+    // This test shows that our internal logic still works (by closing the flow on deletion events)
+    // even though the public consumer is dropping elements
+    @Test
+    fun queryOnSetAsFlow_backpressureStrategyDoesNotRuinInternalLogic() = runBlocking {
+        val container = realm.write { copyToRealm(RealmSetContainer()) }
+        val flow = container.objectSetField.query().asFlow()
+            .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                flow.collect { current ->
+                    delay(30.milliseconds)
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.objectSetField.run {
+                    clear()
+                    add(RealmSetContainer().apply { this.id = i })
+                }
+            }
+        }
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    fun query_throwsOnSyntaxError() = runBlocking {
+        val instance = realm.write { copyToRealm(RealmSetContainer()) }
+        assertFailsWithMessage<IllegalArgumentException>("syntax error") {
+            instance.objectSetField.query("ASDF = $0 $0")
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnUnmanagedSet() = runBlocking {
+        realm.write {
+            val instance = RealmSetContainer()
+            copyToRealm(instance)
+            assertFailsWithMessage<IllegalArgumentException>("Unmanaged set cannot be queried") {
+                instance.objectSetField.query()
+            }
+            Unit
+        }
+    }
+
+    @Test
+    fun query_throwsOnDeletedSet() = runBlocking {
+        realm.write {
+            val instance = copyToRealm(RealmSetContainer())
+            val objectSetField = instance.objectSetField
+            delete(instance)
+            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+                objectSetField.query()
+            }
+        }
+        Unit
+    }
+
+    @Test
+    fun query_throwsOnClosedSet() = runBlocking {
+        val container = realm.write { copyToRealm(RealmSetContainer()) }
+        val objectSetField = container.objectSetField
+        realm.close()
+
+        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            objectSetField.query()
+        }
+        Unit
     }
 
     private fun getCloseableRealm(): Realm =
