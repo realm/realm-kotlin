@@ -258,7 +258,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_CLASS_MEMBER,
-            pluginContext.irBuiltIns.kClassClass.defaultType
+            pluginContext.irBuiltIns.kClassClass.typeWith(clazz.defaultType)
         ) { startOffset, endOffset ->
             IrClassReferenceImpl(
                 startOffset = startOffset,
