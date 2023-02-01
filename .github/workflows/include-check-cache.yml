@@ -343,7 +343,7 @@ jobs:
       uses: cmelchior/cache@main
       with:
         path: ./packages/cinterop/src/jvmMain/windows-build-dir
-        key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
+        key: jni-windows-lib-${{ steps.packages-cache-key.outputs.sha }}
         enableCrossOsArchive: true
 
     - name: Save JNI Windows lib package
