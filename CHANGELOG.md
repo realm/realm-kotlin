@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
 
 ### Fixed
 * None.
