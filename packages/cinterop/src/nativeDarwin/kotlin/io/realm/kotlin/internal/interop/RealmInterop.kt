@@ -246,19 +246,8 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
 
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
-    private inline fun <reified T : Any> callbackAccessor(
-        userdata: CPointer<out CPointed>?,
-        block: T.() -> Unit
-    ): Boolean = try {
-        block(stableUserData<T>(userdata).get())
-        true    // indicates the callback succeeded
-    } catch (e: Throwable) {
-        // register the error so it is accessible later
-        realm_wrapper.realm_register_user_code_callback_error(StableRef.create(e).asCPointer())
-        false    // indicates the callback failed
-    }
 
-    private inline fun <reified T : Any> callbackBooleanAccessor(
+    private inline fun <reified T : Any> stableUserDataWithErrorPropagation(
         userdata: CPointer<out CPointed>?,
         block: T.() -> Boolean
     ): Boolean = try {
@@ -266,7 +255,7 @@ actual object RealmInterop {
     } catch (e: Throwable) {
         // register the error so it is accessible later
         realm_wrapper.realm_register_user_code_callback_error(StableRef.create(e).asCPointer())
-        false    // indicates the callback failed
+        false // indicates the callback failed
     }
 
     actual fun realm_get_version_id(realm: RealmPointer): Long {
@@ -426,7 +415,7 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_should_compact_on_launch_function(
             config.cptr(),
             staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
-                callbackAccessor<CompactOnLaunchCallback>(userdata){
+                stableUserDataWithErrorPropagation<CompactOnLaunchCallback>(userdata) {
                     invoke(
                         total.toLong(),
                         used.toLong()
@@ -447,7 +436,7 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_migration_function(
             config.cptr(),
             staticCFunction { userData, oldRealm, newRealm, schema ->
-                callbackAccessor<MigrationCallback>(userData){
+                stableUserDataWithErrorPropagation<MigrationCallback>(userData) {
                     migrate(
                         // These realm/schema pointers are only valid for the duraction of the
                         // migration so don't let ownership follow the NativePointer-objects
@@ -455,6 +444,7 @@ actual object RealmInterop {
                         CPointerWrapper(newRealm, false),
                         CPointerWrapper(schema, false),
                     )
+                    true
                 }
             },
             StableRef.create(callback).asCPointer(),
@@ -471,8 +461,9 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_data_initialization_function(
             config.cptr(),
             staticCFunction { userData, _ ->
-                callbackAccessor<DataInitializationCallback>(userData) {
+                stableUserDataWithErrorPropagation<DataInitializationCallback>(userData) {
                     invoke()
+                    true
                 }
             },
             StableRef.create(callback).asCPointer(),
