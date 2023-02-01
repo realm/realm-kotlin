@@ -89,10 +89,10 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> =
         inputScope {
             val appendedQuery = RealmInterop.realm_query_append_query(
-                    queryPointer,
-                    filter,
-                    convertToQueryArgs(arguments)
-                )
+                queryPointer,
+                filter,
+                convertToQueryArgs(arguments)
+            )
             ObjectQuery(appendedQuery, this@ObjectQuery)
         }
 
