@@ -1082,7 +1082,9 @@ actual object RealmInterop {
     }
 
     actual fun realm_dictionary_clear(dictionary: RealmMapPointer) {
-        realm_wrapper.realm_dictionary_clear(dictionary.cptr())
+        checkedBooleanResult(
+            realm_wrapper.realm_dictionary_clear(dictionary.cptr())
+        )
     }
 
     actual fun realm_dictionary_size(dictionary: RealmMapPointer): Long {
@@ -1366,18 +1368,16 @@ actual object RealmInterop {
         return RealmValue(struct)
     }
 
-    actual fun realm_results_get(results: RealmResultsPointer, index: Long): Link {
-        memScoped {
-            val value = alloc<realm_value_t>()
-            checkedBooleanResult(
-                realm_wrapper.realm_results_get(
-                    results.cptr(),
-                    index.toULong(),
-                    value.ptr
-                )
+    actual fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue {
+        val value = allocRealmValueT()
+        checkedBooleanResult(
+            realm_wrapper.realm_results_get(
+                results.cptr(),
+                index.toULong(),
+                value.ptr
             )
-            return value.asLink()
-        }
+        )
+        return RealmValue(value)
     }
 
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
