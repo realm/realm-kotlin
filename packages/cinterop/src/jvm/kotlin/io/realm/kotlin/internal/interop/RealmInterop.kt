@@ -701,6 +701,35 @@ actual object RealmInterop {
         return Pair(previousValue, erased[0])
     }
 
+    actual fun realm_dictionary_contains_key(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Boolean {
+        val found = BooleanArray(1)
+        realmc.realm_dictionary_contains_key(dictionary.cptr(), mapKey.value, found)
+        return found[0]
+    }
+
+    actual fun realm_dictionary_contains_value(
+        dictionary: RealmMapPointer,
+        value: RealmValue
+    ): Boolean {
+        val index = LongArray(1)
+        realmc.realm_dictionary_contains_value(dictionary.cptr(), value.value, index)
+        return index[0] != -1L
+    }
+
+    actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
+        val size = LongArray(1)
+        val keysPointer = longArrayOf(0)
+        realmc.realm_dictionary_get_keys(dictionary.cptr(), size, keysPointer)
+        return if (keysPointer[0] != 0L) {
+            LongPointerWrapper(keysPointer[0])
+        } else {
+            throw IllegalArgumentException("There was an error retrieving the dictionary keys.")
+        }
+    }
+
     actual fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
         callback: Callback<RealmChangesPointer>
