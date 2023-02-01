@@ -447,6 +447,9 @@ internal class RealmObjectMapOperator<K, V> constructor(
     override fun areValuesEqual(expected: V?, actual: V?): Boolean {
         // Two objects are only the same if they point to the same memory address
         if (expected === actual) return true
+
+        // TODO take this into consideration when it's ready
+        //  https://github.com/realm/realm-kotlin/issues/1097
         return false
     }
 }
@@ -730,10 +733,6 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
                 true -> operator.erase(element.key).second
                 false -> false
             }
-//            when {
-//                element.value != value -> false
-//                else -> operator.erase(element.key).second
-//            }
         }
 
     override fun removeAll(elements: Collection<MutableMap.MutableEntry<K, V>>): Boolean =
