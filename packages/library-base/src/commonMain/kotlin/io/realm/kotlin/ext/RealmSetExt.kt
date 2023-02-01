@@ -17,7 +17,6 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
-import io.realm.kotlin.internal.ManagedRealmList
 import io.realm.kotlin.internal.ManagedRealmSet
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.internal.asRealmSet
