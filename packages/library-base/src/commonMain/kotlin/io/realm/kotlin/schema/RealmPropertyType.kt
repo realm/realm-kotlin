@@ -98,15 +98,15 @@ public data class SetPropertyType(
 ) : RealmPropertyType
 
 /**
- * A [RealmPropertyType] describing set properties like [RealmDictionary].
+ * A [RealmPropertyType] describing map properties like [RealmDictionary].
  */
-public data class DictionaryPropertyType(
+public data class MapPropertyType(
     /**
      * The type of elements inside the list.
      */
     override val storageType: RealmStorageType,
     /**
-     * Whether or not the elements inside the list can be `null`.
+     * Whether or not the elements inside the map can be `null`.
      */
     override val isNullable: Boolean = false
 ) : RealmPropertyType

@@ -37,7 +37,7 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.InternalConfiguration
-import io.realm.kotlin.schema.DictionaryPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.ListPropertyType
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmProperty
@@ -1064,7 +1064,7 @@ class DynamicMutableRealmObjectTests {
                         }
                     }
                 }
-                is DictionaryPropertyType -> {
+                is MapPropertyType -> {
                     // TODO add support for dictionaries in dynamic realms
                 }
             }
