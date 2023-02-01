@@ -941,7 +941,6 @@ class RealmDictionaryTests {
         }
     }
 
-
     @Test
     fun containsKey() {
         for (tester in managedTesters) {
@@ -2102,7 +2101,7 @@ internal abstract class ManagedDictionaryTester<T>(
         }
     }
 
-        override fun values_equals() {
+    override fun values_equals() {
         val dataSet = typeSafetyManager.dataSetToLoad
         val unmanagedValues = realmDictionaryOf(dataSet).values
 
