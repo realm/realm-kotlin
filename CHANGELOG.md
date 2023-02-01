@@ -8,6 +8,7 @@
 
 ### Fixed
 * Allow defining properties with the field name as the persisted name. ([#1240](https://github.com/realm/realm-kotlin/issues/1240))
+* Fix compilation error when accessing Realm Kotlin model classes from Java code. ([#1256](https://github.com/realm/realm-kotlin/issues/1256))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
