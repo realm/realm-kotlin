@@ -18,8 +18,8 @@ package io.realm.kotlin.internal.schema
 
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyInfo
-import io.realm.kotlin.schema.DictionaryPropertyType
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.SetPropertyType
@@ -34,7 +34,7 @@ internal data class RealmPropertyImpl(
         is ValuePropertyType -> type.isNullable
         is ListPropertyType -> false
         is SetPropertyType -> false
-        is DictionaryPropertyType -> false
+        is MapPropertyType -> false
     }
 
     companion object {
@@ -57,7 +57,7 @@ internal data class RealmPropertyImpl(
                         storageType,
                         isNullable
                     )
-                    CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> DictionaryPropertyType(
+                    CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> MapPropertyType(
                         storageType,
                         isNullable
                     )

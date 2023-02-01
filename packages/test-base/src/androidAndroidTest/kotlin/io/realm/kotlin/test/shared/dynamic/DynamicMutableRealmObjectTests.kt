@@ -41,8 +41,8 @@ import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.InternalConfiguration
-import io.realm.kotlin.schema.DictionaryPropertyType
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmPropertyType
@@ -993,7 +993,7 @@ class DynamicMutableRealmObjectTests {
                         }
                     }
                 }
-                is DictionaryPropertyType -> {
+                is MapPropertyType -> {
                     if (type.isNullable) {
                         fun <T> assertionsForNullable(
                             dictionaryFromSample: RealmDictionary<T?>,

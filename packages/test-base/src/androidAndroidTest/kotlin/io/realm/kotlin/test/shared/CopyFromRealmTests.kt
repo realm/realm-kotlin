@@ -37,8 +37,8 @@ import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.schema.DictionaryPropertyType
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
@@ -492,7 +492,7 @@ class CopyFromRealmTests {
         // Dynamically set data on the Sample object
         val originalObject = Sample()
         schemaProperties.forEach { prop: RealmProperty ->
-            if (prop.type is DictionaryPropertyType) {
+            if (prop.type is MapPropertyType) {
                 val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
                 val dictionary: RealmDictionary<Any?> = createPrimitiveDictionaryData(prop, accessor)
                 accessor.set(originalObject, dictionary)
@@ -509,7 +509,7 @@ class CopyFromRealmTests {
 
         // Validate that all primitive list fields were round-tripped correctly.
         schemaProperties.forEach { prop: RealmProperty ->
-            if (prop.type is DictionaryPropertyType) {
+            if (prop.type is MapPropertyType) {
                 val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
                 val dictionary: RealmDictionary<Any?> = createPrimitiveDictionaryData(prop, accessor)
 

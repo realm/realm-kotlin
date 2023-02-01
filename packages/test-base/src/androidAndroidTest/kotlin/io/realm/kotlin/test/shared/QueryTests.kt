@@ -2885,7 +2885,6 @@ class QuerySample() : RealmObject {
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
-//    var realmAnyField: RealmAny? = RealmAny.create(42)
     var realmAnyField: RealmAny? = RealmAny.create("Hello")
 
     var nullableStringField: String? = null
