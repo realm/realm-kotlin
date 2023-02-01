@@ -18,8 +18,8 @@ package io.realm.kotlin.internal.schema
 
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyInfo
-import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.SetPropertyType

@@ -37,8 +37,8 @@ import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
