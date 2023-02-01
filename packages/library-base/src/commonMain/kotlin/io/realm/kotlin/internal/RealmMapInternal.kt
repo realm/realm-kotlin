@@ -129,7 +129,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): V? {
         realmReference.checkClosed()
-        return insert(key, value).first
+        return insert(key, value, updatePolicy, cache).first
     }
 
     fun putAll(
