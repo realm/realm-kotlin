@@ -137,7 +137,6 @@ jobs:
     #
     # JNI Stub (JVM)
     #    
-
     - name: Check JNI Swig stub cache 
       id: jni-swig-stub-cache
       uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
@@ -163,7 +162,6 @@ jobs:
     #
     # JNI Linux Lib
     #    
-
     - name: Check JNI Linux lib cache 
       id: jni-linux-lib-cache
       uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
@@ -236,7 +234,7 @@ jobs:
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
 
-      #
+    #
     # MacOS arm64
     #
     - name: Check MacOS arm64 cache 
@@ -352,7 +350,6 @@ jobs:
     #
     # JNI Windows Lib
     #    
-
     - name: Check JNI Windows lib cache 
       id: jni-windows-lib-cache
       uses: nirinchev/cache@d7c96a77c26ab70dd32b202c885cb4b34d95d8a8
@@ -365,7 +362,7 @@ jobs:
       if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
-        path: ./packages/cinterop/src/jvmMain/windows-build-dir/**/*
+        path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll
         retention-days: 1
 
     - name: Delete downloaded JNI Windows lib cache files
