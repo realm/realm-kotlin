@@ -411,7 +411,16 @@ expect object RealmInterop {
         query: String,
         args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer
-    fun realm_query_parse_for_list(list: RealmListPointer, query: String, args: Pair<Int, RealmQueryArgsTransport>): RealmQueryPointer
+    fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer
+    fun realm_query_parse_for_set(
+        set: RealmSetPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long

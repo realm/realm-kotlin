@@ -1484,6 +1484,22 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_query_parse_for_set(
+        set: RealmSetPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_set(
+                set.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
+            )
+        )
+    }
+
     actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
         val value = realm_value_t()
         val found = booleanArrayOf(false)
