@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -1377,6 +1378,22 @@ actual object RealmInterop {
         return LongPointerWrapper(
             realmc.realm_query_parse_for_list(
                 list.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_set(
+        set: RealmSetPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_set(
+                set.cptr(),
                 query,
                 count.toLong(),
                 args.second.value

@@ -17,9 +17,15 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.internal.ManagedRealmList
+import io.realm.kotlin.internal.ManagedRealmSet
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.internal.asRealmSet
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.query
+import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.TRUE_PREDICATE
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -44,3 +50,19 @@ public inline fun <T : RealmObject> RealmSet<T>.copyFromRealm(depth: UInt = UInt
         realm.copyFromRealm(this, depth).toSet()
     } ?: throw IllegalArgumentException("This RealmSet is unmanaged. Only managed sets can be copied.")
 }
+
+/**
+ * Query the objects of a set by the `filter` and `arguments`.
+ *
+ * @param filter the Realm Query Language predicate to append.
+ * @param arguments Realm values for the predicate.
+ */
+public fun <T : BaseRealmObject> RealmSet<T>.query(
+    filter: String = TRUE_PREDICATE,
+    vararg arguments: Any?
+): RealmQuery<T> =
+    if (this is ManagedRealmSet) {
+        query(filter, arguments)
+    } else {
+        throw IllegalArgumentException("Unmanaged set cannot be queried")
+    }
