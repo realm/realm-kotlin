@@ -29,16 +29,19 @@ import io.realm.kotlin.entities.backlink.Recursive
 import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.asDynamicRealm
+import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
-import kotlinx.coroutines.runBlocking
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 
 class BacklinksTests {
     private lateinit var realm: Realm
@@ -50,6 +53,7 @@ class BacklinksTests {
         assertEquals(expectedSize, parents.size)
         assertEquals(expectedSize, parentsByList.size)
         assertEquals(expectedSize, parentsBySet.size)
+        assertEquals(expectedSize, parentsByDictionary.size)
     }
 
     @BeforeTest
@@ -64,11 +68,18 @@ class BacklinksTests {
                     Recursive::class,
                     EmbeddedChild::class
                 )
-            )
-                .directory(tmpDir)
+            ).directory(tmpDir)
                 .build()
 
         realm = Realm.open(configuration)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        if (this::realm.isInitialized && !realm.isClosed()) {
+            realm.close()
+        }
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
@@ -79,6 +90,7 @@ class BacklinksTests {
         parent.child = child
         parent.childSet = realmSetOf(child)
         parent.childList = realmListOf(child)
+        parent.childDictionary = realmDictionaryOf("A" to child)
 
         assertFailsWithMessage<IllegalStateException>("Unmanaged objects don't support backlinks.") {
             child.parents
@@ -94,172 +106,218 @@ class BacklinksTests {
     }
 
     @Test
-    fun managed_multipleChildren() {
-        runBlocking {
-            realm.write {
-                val child = this.copyToRealm(Child())
+    fun managed_childrenDictionaryWithNullValues() {
+        realm.writeBlocking {
+            val child = this.copyToRealm(Child())
 
-                val parents = Array(5) {
-                    this.copyToRealm(Parent(it))
-                }
-
-                child.assertParents(0)
-
-                parents.forEach { parent ->
-                    parent.child = child
-                    parent.childList.add(child)
-                    parent.childSet.add(child)
-                }
-
-                child.assertParents(parents.size)
+            val parents = (1..5).map {
+                this.copyToRealm(Parent(it))
             }
+
+            child.assertParents(0)
+
+            parents.forEach { parent ->
+                parent.childDictionary["A"] = child
+                parent.childDictionary["B"] = null
+            }
+
+            // Putting a null object doesn't affect the backlink tally
+            assertEquals(parents.size, child.parentsByDictionary.size)
+        }
+    }
+
+    @Test
+    fun managed_multipleChildren() {
+        realm.writeBlocking {
+            val child = this.copyToRealm(Child())
+
+            val parents = (1..5).map {
+                this.copyToRealm(Parent(it))
+            }
+
+            child.assertParents(0)
+
+            parents.forEach { parent ->
+                parent.child = child
+                parent.childList.add(child)
+                parent.childSet.add(child)
+                parent.childDictionary["A"] = child
+            }
+
+            child.assertParents(parents.size)
         }
     }
 
     @Test
     fun managed_duplicateChildren() {
-        runBlocking {
-            realm.write {
-                val child = this.copyToRealm(Child())
+        realm.writeBlocking {
+            val child = this.copyToRealm(Child())
 
-                val parents = Array(5) {
-                    this.copyToRealm(Parent(it))
-                }
-
-                child.assertParents(0)
-
-                parents.forEach { parent ->
-                    parent.child = child
-                    parent.childList.add(child)
-                    parent.childList.add(child)
-                    parent.childSet.add(child)
-                    parent.childSet.add(child)
-                }
-
-                assertEquals(5, child.parents.size)
-                assertEquals(10, child.parentsByList.size)
-                assertEquals(5, child.parentsBySet.size)
+            val parents = (1..5).map {
+                this.copyToRealm(Parent(it))
             }
+
+            child.assertParents(0)
+
+            parents.forEach { parent ->
+                parent.child = child
+                parent.childList.add(child)
+                parent.childList.add(child)
+                parent.childSet.add(child)
+                parent.childSet.add(child)
+
+                // Dictionaries allow duplicate values as long as they have different keys
+                parent.childDictionary["A"] = child
+                parent.childDictionary["B"] = child
+            }
+
+            assertEquals(5, child.parents.size)
+            assertEquals(10, child.parentsByList.size)
+            assertEquals(5, child.parentsBySet.size)
+            assertEquals(10, child.parentsByDictionary.size)
         }
     }
 
     @Test
     fun recursive() {
-        runBlocking {
-            val recursive = realm.write {
-                val recursive = this.copyToRealm(Recursive())
-                recursive.recursiveField = recursive
-                recursive
-            }
-            assertEquals(1, recursive.references.size)
-            assertEquals(recursive.name, recursive.references[0].name)
+        val recursive = realm.writeBlocking {
+            val recursive = this.copyToRealm(Recursive())
+            recursive.recursiveField = recursive
+            recursive
         }
+        assertEquals(1, recursive.references.size)
+        assertEquals(recursive.name, recursive.references[0].name)
     }
 
     @Test
     fun dynamic() {
-        runBlocking {
-            realm.write {
-                val child = this.copyToRealm(Child())
+        realm.writeBlocking {
+            val child = this.copyToRealm(Child())
 
-                this.copyToRealm(
-                    Parent().apply
-                    {
-                        this.child = child
-                        this.childSet.add(child)
-                        this.childList.add(child)
-                    }
+            this.copyToRealm(
+                Parent().apply
+                {
+                    this.child = child
+                    this.childSet.add(child)
+                    this.childList.add(child)
+                    this.childDictionary["A"] = child
+                }
+            )
+        }
+
+        realm.asDynamicRealm().query(Child::class.simpleName!!)
+            .first()
+            .find { dynamicObject ->
+                assertNotNull(dynamicObject)
+                assertEquals(1, dynamicObject.getBacklinks(Child::parents.name).size)
+                assertEquals(1, dynamicObject.getBacklinks(Child::parentsByList.name).size)
+                assertEquals(1, dynamicObject.getBacklinks(Child::parentsBySet.name).size)
+                assertEquals(
+                    1,
+                    dynamicObject.getBacklinks(Child::parentsByDictionary.name).size
                 )
             }
-
-            realm.asDynamicRealm().query(Child::class.simpleName!!).first().find()!!
-                .let { dynamicObject ->
-                    assertEquals(1, dynamicObject.getBacklinks(Child::parents.name).size)
-                    assertEquals(1, dynamicObject.getBacklinks(Child::parentsByList.name).size)
-                    assertEquals(1, dynamicObject.getBacklinks(Child::parentsBySet.name).size)
-                }
-        }
     }
 
     @Test
     fun dynamicMissingProperty_throws() {
-        runBlocking {
-            realm.write {
-                this.copyToRealm(Recursive())
-            }
-            realm.asDynamicRealm().let { dynamicRealm ->
-                val child = dynamicRealm.query("Recursive").first().find()!!
-                assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Recursive' doesn't contain a property named 'missing'") {
-                    child.getBacklinks("missing")
+        realm.writeBlocking {
+            this.copyToRealm(Recursive())
+        }
+        realm.asDynamicRealm().let { dynamicRealm ->
+            dynamicRealm.query("Recursive")
+                .first()
+                .find { child ->
+                    assertNotNull(child)
+                    assertFailsWithMessage<IllegalArgumentException>("Schema for type 'Recursive' doesn't contain a property named 'missing'") {
+                        child.getBacklinks("missing")
+                    }
                 }
-            }
         }
     }
 
     @Test
     fun dynamicWrongProperty_throws() {
-        runBlocking {
-            realm.write {
-                this.copyToRealm(Recursive())
-            }
-            realm.asDynamicRealm().let { dynamicRealm ->
-                val child = dynamicRealm.query("Recursive").first().find()!!
-                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'name' as an object reference but schema type is 'class io.realm.kotlin.types.RealmUUID'") {
-                    child.getBacklinks("name")
+        realm.writeBlocking {
+            this.copyToRealm(Recursive())
+        }
+        realm.asDynamicRealm().let { dynamicRealm ->
+            dynamicRealm.query("Recursive")
+                .first()
+                .find { child ->
+                    assertNotNull(child)
+                    assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'name' as an object reference but schema type is 'class io.realm.kotlin.types.RealmUUID'") {
+                        child.getBacklinks("name")
+                    }
                 }
-            }
+        }
 
-            realm.asDynamicRealm().let { dynamicRealm ->
-                val child = dynamicRealm.query("Recursive").first().find()!!
-                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidSet' as an object reference but schema type is 'RealmSet<class io.realm.kotlin.types.RealmUUID>'") {
-                    child.getBacklinks("uuidSet")
+        realm.asDynamicRealm().let { dynamicRealm ->
+            dynamicRealm.query("Recursive")
+                .first()
+                .find { child ->
+                    assertNotNull(child)
+                    assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidSet' as an object reference but schema type is 'RealmSet<class io.realm.kotlin.types.RealmUUID>'") {
+                        child.getBacklinks("uuidSet")
+                    }
                 }
-            }
+        }
 
-            realm.asDynamicRealm().let { dynamicRealm ->
-                val child = dynamicRealm.query("Recursive").first().find()!!
-                assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidList' as an object reference but schema type is 'RealmList<class io.realm.kotlin.types.RealmUUID>'") {
-                    child.getBacklinks("uuidList")
+        realm.asDynamicRealm().let { dynamicRealm ->
+            dynamicRealm.query("Recursive")
+                .first()
+                .find { child ->
+                    assertNotNull(child)
+                    assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidList' as an object reference but schema type is 'RealmList<class io.realm.kotlin.types.RealmUUID>'") {
+                        child.getBacklinks("uuidList")
+                    }
                 }
-            }
+        }
+
+        realm.asDynamicRealm().let { dynamicRealm ->
+            dynamicRealm.query("Recursive")
+                .first()
+                .find { child ->
+                    assertNotNull(child)
+                    assertFailsWithMessage<IllegalArgumentException>("Trying to access property 'uuidDictionary' as an object reference but schema type is 'RealmDictionary<class io.realm.kotlin.types.RealmUUID>'") {
+                        child.getBacklinks("uuidDictionary")
+                    }
+                }
         }
     }
 
     @Test
     fun classNotInSchema() {
-        runBlocking {
-            tmpDir = PlatformUtils.createTempDir()
-            val configuration =
-                RealmConfiguration.Builder(setOf(Child::class))
-                    .directory(tmpDir)
-                    .build()
+        tmpDir = PlatformUtils.createTempDir()
+        val configuration =
+            RealmConfiguration.Builder(setOf(Child::class))
+                .directory(tmpDir)
+                .build()
 
-            assertFailsWithMessage<IllegalStateException>(
-                """
+        assertFailsWithMessage<IllegalStateException>(
+            """
                 - Property 'Child.parents' of type 'linking objects' has unknown object type 'Parent'
                 - Property 'Child.parentsByList' of type 'linking objects' has unknown object type 'Parent'
                 - Property 'Child.parentsBySet' of type 'linking objects' has unknown object type 'Parent'
-                """.trimIndent()
-            ) {
-                Realm.open(configuration)
-            }
+                - Property 'Child.parentsByDictionary' of type 'linking objects' has unknown object type 'Parent'
+            """.trimIndent()
+        ) {
+            Realm.open(configuration)
         }
     }
 
     @Test
     fun fieldNotInClass() {
-        runBlocking {
-            tmpDir = PlatformUtils.createTempDir()
-            val configuration =
-                RealmConfiguration.Builder(setOf(MissingSourceProperty::class))
-                    .directory(tmpDir)
-                    .build()
+        tmpDir = PlatformUtils.createTempDir()
+        val configuration =
+            RealmConfiguration.Builder(setOf(MissingSourceProperty::class))
+                .directory(tmpDir)
+                .build()
 
-            assertFailsWithMessage<IllegalStateException>(
-                "Property 'MissingSourceProperty.reference' declared as origin of linking objects property 'MissingSourceProperty.references' does not exist)"
-            ) {
-                Realm.open(configuration)
-            }
+        assertFailsWithMessage<IllegalStateException>(
+            "Property 'MissingSourceProperty.reference' declared as origin of linking objects property 'MissingSourceProperty.references' does not exist)"
+        ) {
+            Realm.open(configuration)
         }
     }
 
@@ -278,16 +336,21 @@ class BacklinksTests {
                 parent.child = child
                 parent.childList.add(child)
                 parent.childSet.add(child)
+                parent.childDictionary["A"] = child
             }
 
             child.assertParents(parents.size)
         }
 
-        realm.query<Child>().first().find()!!.let { child ->
-            assertEquals(2, child.parents.query("id > 2").find().size)
-            assertEquals(2, child.parentsByList.query("id > 2").find().size)
-            assertEquals(2, child.parentsBySet.query("id > 2").find().size)
-        }
+        realm.query<Child>()
+            .first()
+            .find { child ->
+                assertNotNull(child)
+                assertEquals(2, child.parents.query("id > 2").find().size)
+                assertEquals(2, child.parentsByList.query("id > 2").find().size)
+                assertEquals(2, child.parentsBySet.query("id > 2").find().size)
+                assertEquals(2, child.parentsByDictionary.query("id > 2").find().size)
+            }
     }
 
     @Test
@@ -295,7 +358,7 @@ class BacklinksTests {
         val child = realm.writeBlocking {
             val child = this.copyToRealm(Child())
 
-            val parents = Array(5) {
+            val parents = (1..5).map {
                 this.copyToRealm(Parent(it))
             }
 
@@ -305,16 +368,19 @@ class BacklinksTests {
                 parent.child = child
                 parent.childList.add(child)
                 parent.childSet.add(child)
+                parent.childDictionary["A"] = child
             }
 
-            child.assertParents(parents.size)
-            child
+            child.also {
+                it.assertParents(parents.size)
+            }
         }
 
         listOf(
             child.parents,
             child.parentsByList,
             child.parentsBySet,
+            child.parentsByDictionary
         ).let { linkingObjects ->
             linkingObjects.forEach {
                 assertEquals(5, it.size)
@@ -336,7 +402,7 @@ class BacklinksTests {
         val child = realm.writeBlocking {
             val child = this.copyToRealm(Child())
 
-            val parents = Array(5) {
+            val parents = (1..5).map {
                 this.copyToRealm(Parent(it))
             }
 
@@ -346,16 +412,19 @@ class BacklinksTests {
                 parent.child = child
                 parent.childList.add(child)
                 parent.childSet.add(child)
+                parent.childDictionary["A"] = child
             }
 
-            child.assertParents(parents.size)
-            child
+            child.also {
+                it.assertParents(parents.size)
+            }
         }
 
         listOf(
             child.parents,
             child.parentsByList,
             child.parentsBySet,
+            child.parentsByDictionary
         ).let { linkingObjects ->
             linkingObjects.forEach {
                 assertEquals(5, it.size)
