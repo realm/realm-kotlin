@@ -153,6 +153,7 @@ jobs:
         with:
           path: ./packages/cinterop/src/jvmMain/windows-build-dir
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
+          enableCrossOsArchive: true
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -216,13 +217,13 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
 
@@ -333,13 +334,13 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -445,13 +446,13 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -531,13 +532,13 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -609,13 +610,13 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -687,13 +688,13 @@ jobs:
 
       # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
-        uses: jwlawson/actions-setup-cmake@v1.12
+        uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '3.25.2'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  

@@ -32,8 +32,7 @@ jobs:
           rm -rf /tmp/detekt
           mkdir /tmp/ktlint
           mkdir /tmp/detekt
-          rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/ktlint/ /tmp/ktlint/example/ || true
-          rsync -a --delete --ignore-errors test/build/reports/ktlint/ /tmp/ktlint/test/ || true
+          rsync -a --delete --ignore-errors examples/kmm-sample/shared/build/reports/ktlint/ /tmp/ktlint/example/ || true
           rsync -a --delete --ignore-errors packages/cinterop/build/reports/ktlint/ /tmp/ktlint/cinterop/ || true
           rsync -a --delete --ignore-errors packages/library-base/build/reports/ktlint/ /tmp/ktlint/library-base/ || true
           rsync -a --delete --ignore-errors packages/library-sync/build/reports/ktlint/ /tmp/ktlint/library-sync/ || true
@@ -42,7 +41,7 @@ jobs:
           rsync -a --delete --ignore-errors benchmarks/build/reports/ktlint/ /tmp/ktlint/benchmarks/ || true
 
       - name: Publish Ktlint results    
-        uses: jwgmeligmeyling/checkstyle-github-action@master
+        uses: cmelchior/checkstyle-github-action@master
         if: always()
         with:
           name: Ktlint Results
@@ -75,8 +74,7 @@ jobs:
         run: |
           rm -rf /tmp/detekt
           mkdir /tmp/detekt
-          rsync -a --delete --ignore-errors examples/kmm-sample/androidApp/build/reports/detekt/ /tmp/detekt/example/ || true
-          rsync -a --delete --ignore-errors test/build/reports/detekt/ /tmp/detekt/test/ || true
+          rsync -a --delete --ignore-errors examples/kmm-sample/shared/build/reports/detekt/ /tmp/detekt/example/ || true
           rsync -a --delete --ignore-errors packages/cinterop/build/reports/detekt/ /tmp/detekt/cinterop/ || true
           rsync -a --delete --ignore-errors packages/library-base/build/reports/detekt/ /tmp/detekt/library-base/ || true
           rsync -a --delete --ignore-errors packages/library-sync/build/reports/detekt/ /tmp/detekt/library-sync/ || true
@@ -85,7 +83,7 @@ jobs:
           rsync -a --delete --ignore-errors benchmarks/build/reports/detekt/ /tmp/detekt/benchmarks/ || true
 
       - name: Publish Detekt results    
-        uses: jwgmeligmeyling/checkstyle-github-action@master
+        uses: cmelchior/checkstyle-github-action@master
         if: always()
         with:
           name: Detekt Results
