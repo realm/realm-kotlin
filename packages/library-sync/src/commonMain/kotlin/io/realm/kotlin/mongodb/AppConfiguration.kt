@@ -32,6 +32,7 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
@@ -54,6 +55,22 @@ public interface AppConfiguration {
     public val encryptionKey: ByteArray?
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
+
+    /**
+     * The name of this app. This is only used as part of debug headers sent when making
+     * network requests to App Services application.
+     *
+     * If no name was defined, `null` will be returned.
+     */
+    public val appName: String?
+
+    /**
+     * Version of this app. This is only used as part of debug headers sent when making
+     * network requests to the App Services application.
+     *
+     * If no version was defined, `null` will be returned.
+     */
+    public val appVersion: String?
 
     public companion object {
         /**
@@ -99,6 +116,8 @@ public interface AppConfiguration {
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
+        private var appName: String? = null
+        private var appVersion: String? = null
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -193,6 +212,32 @@ public interface AppConfiguration {
         }
 
         /**
+         * Sets the apps name. This is only used as part of debug headers sent when sending
+         * network requests to the App Services application.
+         *
+         * @param appName app name used to identify the application.
+         * @throws IllegalArgumentException if an empty [appName] is provided.
+         * @return the Builder instance used.
+         */
+        public fun appName(appName: String): Builder = apply {
+            Validation.checkEmpty(appName, "appName")
+            this.appName = appName
+        }
+
+        /**
+         * Sets the apps version. This is only used as part of debug headers sent when sending
+         * network requests to the App Services application.
+         *
+         * @param appVersion app version used to identify the application.
+         * @throws IllegalArgumentException if an empty [appVersion] is provided.
+         * @return the Builder instance used.
+         */
+        public fun appVersion(appVersion: String): Builder = apply {
+            Validation.checkEmpty(appVersion, "appVersion")
+            this.appVersion = appVersion
+        }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -258,7 +303,9 @@ public interface AppConfiguration {
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
                 networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
-                log = appLogger
+                log = appLogger,
+                appName = appName,
+                appVersion = appVersion
             )
         }
     }
