@@ -223,7 +223,7 @@ jobs:
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
 
@@ -340,7 +340,7 @@ jobs:
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -452,7 +452,7 @@ jobs:
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -538,7 +538,7 @@ jobs:
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -616,7 +616,7 @@ jobs:
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
@@ -694,7 +694,7 @@ jobs:
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
-        uses: ashutoshvarma/setup-ninja@master
+        uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
  
