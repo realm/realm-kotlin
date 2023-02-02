@@ -258,7 +258,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_CLASS_MEMBER,
-            pluginContext.irBuiltIns.kClassClass.defaultType
+            pluginContext.irBuiltIns.kClassClass.typeWith(clazz.defaultType)
         ) { startOffset, endOffset ->
             IrClassReferenceImpl(
                 startOffset = startOffset,
@@ -796,19 +796,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
      * @param location the location of the current property being parsed
      */
     private fun ensureValidName(name: String, existingNames: MutableMap<String, CompilerMessageSourceLocation>, location: CompilerMessageSourceLocation) {
-        if (name.isEmpty()) {
-            logError(
-                "Names must contain at least 1 character.",
-                location
-            )
-        }
         if (existingNames.containsKey(name)) {
             val duplicationLocation = existingNames[name]!!
-            if (location.line == duplicationLocation.line) {
-                // The message passed will only be contained in the compiler messages if `logDebug`
-                // or `logError` is used, not `logWarn` or `logInfo`. Thus, we opt for `logDebug` here.
-                logDebug("The Kotlin name and the persisted name are the same value: '$name'")
-            } else {
+            if (location.line != duplicationLocation.line) {
                 logError(
                     "Kotlin names and persisted names must be unique. '$name' has already been used for the field on line ${duplicationLocation.line}.",
                     location

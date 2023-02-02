@@ -480,37 +480,39 @@ internal object RealmObjectHelper {
         } else {
             CollectionOperatorType.REALM_OBJECT
         }
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        return getSetByKey(obj, key, elementType, operatorType)
+        val propertyMetadata = obj.propertyInfoOrThrow(propertyName)
+        return getSetByKey(obj, propertyMetadata, elementType, operatorType)
     }
 
     // Cannot call managedRealmList directly from an inline function
     @Suppress("LongParameterList")
     internal fun <R> getSetByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: PropertyKey,
+        propertyMetadata: PropertyMetadata,
         elementType: KClass<R & Any>,
         operatorType: CollectionOperatorType,
         issueDynamicObject: Boolean = false,
         issueDynamicMutableObject: Boolean = false
     ): ManagedRealmSet<R> {
-        val setPtr = RealmInterop.realm_get_set(obj.objectPointer, key)
+        val setPtr = RealmInterop.realm_get_set(obj.objectPointer, propertyMetadata.key)
         val operator = createSetOperator<R>(
             setPtr,
             elementType,
+            propertyMetadata,
             obj.mediator,
             obj.owner,
             operatorType,
             issueDynamicObject,
             issueDynamicMutableObject,
         )
-        return ManagedRealmSet(setPtr, operator)
+        return ManagedRealmSet(obj, setPtr, operator)
     }
 
     @Suppress("LongParameterList")
     private fun <R> createSetOperator(
         setPtr: RealmSetPointer,
         clazz: KClass<R & Any>,
+        propertyMetadata: PropertyMetadata,
         mediator: Mediator,
         realm: RealmReference,
         operatorType: CollectionOperatorType,
@@ -530,13 +532,17 @@ internal object RealmObjectHelper {
                 realmAnyConverter(mediator, realm, issueDynamicObject, issueDynamicMutableObject),
                 setPtr
             ) as SetOperator<R>
-            CollectionOperatorType.REALM_OBJECT -> RealmObjectSetOperator(
-                mediator,
-                realm,
-                converter(clazz, mediator, realm),
-                clazz,
-                setPtr
-            )
+            CollectionOperatorType.REALM_OBJECT -> {
+                val classKey: ClassKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
+                RealmObjectSetOperator(
+                    mediator,
+                    realm,
+                    converter(clazz, mediator, realm),
+                    setPtr,
+                    clazz,
+                    classKey
+                )
+            }
             else ->
                 throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
         }
@@ -867,7 +873,7 @@ internal object RealmObjectHelper {
         @Suppress("UNCHECKED_CAST")
         return getSetByKey(
             obj,
-            propertyMetadata.key,
+            propertyMetadata,
             clazz,
             operatorType,
             true,
