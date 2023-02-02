@@ -41,7 +41,7 @@ jobs:
           rsync -a --delete --ignore-errors benchmarks/build/reports/ktlint/ /tmp/ktlint/benchmarks/ || true
 
       - name: Publish Ktlint results    
-        uses: cmelchior/checkstyle-github-action
+        uses: cmelchior/checkstyle-github-action@master
         if: always()
         with:
           name: Ktlint Results
@@ -83,7 +83,7 @@ jobs:
           rsync -a --delete --ignore-errors benchmarks/build/reports/detekt/ /tmp/detekt/benchmarks/ || true
 
       - name: Publish Detekt results    
-        uses: cmelchior/checkstyle-github-action
+        uses: cmelchior/checkstyle-github-action@master
         if: always()
         with:
           name: Detekt Results
