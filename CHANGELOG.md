@@ -5,7 +5,8 @@
 
 ### Enhancements
 * Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
-
+* [Sync] Add support for `AppConfiguration.appName` and `AppConfiguration.appVersion` which is debug information sent when connection to App Services, making it easier to identify connections in the server logs. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
+ 
 ### Fixed
 * None.
 

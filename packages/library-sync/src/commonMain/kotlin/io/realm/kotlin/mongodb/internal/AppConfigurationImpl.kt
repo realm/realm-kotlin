@@ -114,9 +114,10 @@ public class AppConfigurationImpl constructor(
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
-    private fun initializeRealmAppConfig(localAppName: String?,
-                                         localAppVersion: String?,
-                                         networkTransport: NetworkTransport
+    private fun initializeRealmAppConfig(
+        localAppName: String?,
+        localAppVersion: String?,
+        networkTransport: NetworkTransport
     ): RealmAppConfigurationPointer {
         return RealmInterop.realm_app_config_new(
             appId = appId,
@@ -136,7 +137,6 @@ public class AppConfigurationImpl constructor(
             )
         ).freeze()
     }
-
 
     private fun initializeSyncClientConfig(sdkInfo: String?, applicationInfo: String?): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
