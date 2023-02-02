@@ -730,6 +730,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean {
+        return realmc.realm_dictionary_is_valid(dictionary.cptr())
+    }
+
     actual fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
         callback: Callback<RealmChangesPointer>

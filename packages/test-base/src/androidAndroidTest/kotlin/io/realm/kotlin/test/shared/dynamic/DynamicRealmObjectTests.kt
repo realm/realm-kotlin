@@ -36,6 +36,7 @@ import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
@@ -1123,6 +1124,9 @@ class DynamicRealmObjectTests {
                             else -> error("Model contains untested properties: $property")
                         }
                     }
+                }
+                is MapPropertyType -> {
+                    // TODO add support for dictionaries in dynamic realms
                 }
                 else -> {
                     // Required `else` branch due to https://youtrack.jetbrains.com/issue/KTIJ-18702

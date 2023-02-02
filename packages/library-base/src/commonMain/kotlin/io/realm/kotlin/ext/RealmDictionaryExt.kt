@@ -16,12 +16,17 @@
 
 package io.realm.kotlin.ext
 
+import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.asRealmDictionary
+import io.realm.kotlin.internal.getRealm
 import io.realm.kotlin.internal.realmMapEntryOf
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmDictionaryMutableEntry
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 
 /**
  * Instantiates an **unmanaged** [RealmDictionary] from a variable number of [Pair]s of [String]
@@ -68,18 +73,20 @@ public fun <V> realmDictionaryEntryOf(key: String, value: V): RealmDictionaryMut
 public fun <V> realmDictionaryEntryOf(entry: Map.Entry<String, V>): RealmDictionaryMutableEntry<V> =
     realmMapEntryOf(entry)
 
-// TODO add support for RealmDictionary<T>.copyFromRealm()
-// /**
-//  * Makes an unmanaged in-memory copy of the elements in a managed [RealmDictionary]. This is a deep
-//  * copy that will copy all referenced objects.
-//  *
-//  * @param depth limit of the deep copy. All object references after this depth will be `null`.
-//  * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
-//  * @returns an in-memory copy of all input objects.
-//  * @throws IllegalArgumentException if depth < 0 or, or the list is not valid to copy.
-//  */
-// public inline fun <T : RealmObject> RealmDictionary<T>.copyFromRealm(
-//     depth: UInt = UInt.MAX_VALUE
-// ): Set<T> {
-//     TODO()
-// }
+/**
+ * Makes an unmanaged in-memory copy of the elements in a managed [RealmDictionary]. This is a deep
+ * copy that will copy all referenced objects.
+ *
+ * @param depth limit of the deep copy. All object references after this depth will be `null`.
+ * [RealmList], [RealmSet] and [RealmDictionary] variables containing objects will be empty.
+ * Starting depth is 0.
+ * @returns an in-memory copy of all input objects.
+ * @throws IllegalArgumentException if depth < 0 or, or the list is not valid to copy.
+ */
+public inline fun <T : RealmObject> RealmDictionary<T?>.copyFromRealm(
+    depth: UInt = UInt.MAX_VALUE
+): RealmDictionary<T?> {
+    return this.getRealm<TypedRealm>()
+        ?.copyFromRealm(this, depth)
+        ?: throw IllegalArgumentException("This RealmDictionary is unmanaged. Only managed dictionaries can be copied.")
+}

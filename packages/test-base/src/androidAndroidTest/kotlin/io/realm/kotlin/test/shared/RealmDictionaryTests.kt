@@ -206,7 +206,7 @@ class RealmDictionaryTests {
         multipleElementList.toRealmDictionary()
             .forEach { assertTrue(multipleElementList.contains(Pair(it.key, it.value))) }
 
-        // ... or from a RealmMapEntrySet
+        // ... or from a RealmMapEntrySet...
         val mapEntrySet: RealmDictionaryEntrySet<Int> = multipleElementList.map {
             realmDictionaryEntryOf(it.first, it.second)
         }.toTypedArray().let {

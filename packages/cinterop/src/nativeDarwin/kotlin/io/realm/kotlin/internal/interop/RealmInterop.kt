@@ -1234,6 +1234,10 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean {
+        return realm_wrapper.realm_dictionary_is_valid(dictionary.cptr())
+    }
+
     actual fun realm_query_parse(
         realm: RealmPointer,
         classKey: ClassKey,

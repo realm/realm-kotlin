@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
@@ -260,6 +261,17 @@ public fun <T : BaseRealm> RealmSet<*>.getRealm(): T? {
         }
         else -> {
             throw IllegalStateException("Unsupported set type: ${this::class}")
+        }
+    }
+}
+public fun <T : BaseRealm> RealmDictionary<*>.getRealm(): T? {
+    return when (this) {
+        is UnmanagedRealmDictionary -> null
+        is ManagedRealmDictionary -> {
+            return this.operator.realmReference.owner as T
+        }
+        else -> {
+            throw IllegalStateException("Unsupported dictionary type: ${this::class}")
         }
     }
 }

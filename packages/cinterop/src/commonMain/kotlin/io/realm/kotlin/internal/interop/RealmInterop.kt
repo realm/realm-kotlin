@@ -397,6 +397,7 @@ expect object RealmInterop {
         value: RealmValue
     ): Boolean
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
+    fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean
 
     // query
     fun realm_query_parse(

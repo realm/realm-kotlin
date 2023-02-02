@@ -25,7 +25,9 @@ import io.realm.kotlin.internal.query
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
 
 /**
@@ -39,12 +41,16 @@ public fun <T> realmListOf(vararg elements: T): RealmList<T> =
  * that will copy all referenced objects.
  *
  * @param depth limit of the deep copy. All object references after this depth will be `null`.
- * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
+ * [RealmList], [RealmSet] and [RealmDictionary] variables containing objects will be empty.
+ * Starting depth is 0.
  * @returns an in-memory copy of all input objects.
  * @throws IllegalArgumentException if depth < 0 or, or the list is not valid to copy.
  */
-public inline fun <reified T : TypedRealmObject> RealmList<T>.copyFromRealm(depth: UInt = UInt.MAX_VALUE): List<T> {
-    return this.getRealm<TypedRealm>()?.copyFromRealm(this, depth)
+public inline fun <reified T : TypedRealmObject> RealmList<T>.copyFromRealm(
+    depth: UInt = UInt.MAX_VALUE
+): List<T> {
+    return this.getRealm<TypedRealm>()
+        ?.copyFromRealm(this, depth)
         ?: throw IllegalArgumentException("This RealmList is unmanaged. Only managed lists can be copied.")
 }
 

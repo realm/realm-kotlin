@@ -73,6 +73,9 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     override fun put(key: K, value: V): V? = operator.put(key, value)
 
     override fun remove(key: K): V? = operator.remove(key)
+
+    internal fun isValid(): Boolean =
+        !nativePointer.isReleased() && RealmInterop.realm_dictionary_is_valid(nativePointer)
 }
 
 /**

@@ -1,8 +1,12 @@
 package io.realm.kotlin
 
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
@@ -29,8 +33,9 @@ public interface TypedRealm : BaseRealm {
     ): RealmQuery<T>
 
     /**
-     * Makes an unmanaged in-memory copy of an already persisted [io.realm.kotlin.types.RealmObject].
-     * This is a deep copy that will copy all referenced objects.
+     * Makes an unmanaged in-memory copy of an already persisted
+     * [io.realm.kotlin.types.RealmObject]. This is a deep copy that will copy all referenced
+     * objects.
      *
      * @param obj managed object to copy from the Realm.
      * @param depth limit of the deep copy. All object references after this depth will be `null`.
@@ -42,17 +47,41 @@ public interface TypedRealm : BaseRealm {
 
     /**
      * Makes an unmanaged in-memory copy of a collection of already persisted
-     * [io.realm.kotlin.types.RealmObject]s. This is a deep copy that will copy all
-     * referenced objects.
+     * [io.realm.kotlin.types.RealmObject]s. This is a deep copy that will copy all referenced
+     * objects.
      *
      * @param collection the list of objects to copy. The collection itself does not need to be
-     * managed by Realm, but can eg. be a normal unmanaged [List] or [Set]. Only requirement is
+     * managed by Realm, but can eg. be a normal unmanaged [List] or [Set]. The only requirement is
      * that all objects inside the collection are managed by Realm.
+     *
      * @param depth limit of the deep copy. All object references after this depth will be `null`.
-     * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
+     * [RealmList] and [RealmSet] variables containing objects will be empty. Starting depth is 0.
      * @returns an in-memory copy of all input objects.
      * @throws IllegalArgumentException if the [collection] is not valid or contains objects that
      * are not valid to copy.
      */
-    public fun <T : TypedRealmObject> copyFromRealm(collection: Iterable<T>, depth: UInt = UInt.MAX_VALUE): List<T>
+    public fun <T : TypedRealmObject> copyFromRealm(
+        collection: Iterable<T>,
+        depth: UInt = UInt.MAX_VALUE
+    ): List<T>
+
+    /**
+     * Makes an unmanaged in-memory copy of a [RealmDictionary] of already persisted
+     * [io.realm.kotlin.types.RealmObject]s. This is a deep copy that will copy all referenced
+     * objects.
+     *
+     * @param dictionary the dictionary of objects to copy. The dictionary itself does not need to
+     * be managed by Realm, but can eg. be a dictionary produced by [realmDictionaryOf]. The only
+     * requirement is that all objects inside the collection are managed by Realm.
+     *
+     * @param depth limit of the deep copy. All object references after this depth will be `null`.
+     * [RealmDictionary] variables containing objects will be empty. Starting depth is 0.
+     * @returns an in-memory copy of the dictionary with all key-value pairs with the input objects.
+     * @throws IllegalArgumentException if the [dictionary] is not valid or contains objects that
+     * are not valid to copy.
+     */
+    public fun <T : TypedRealmObject> copyFromRealm(
+        dictionary: RealmDictionary<T?>,
+        depth: UInt = UInt.MAX_VALUE
+    ): RealmDictionary<T?>
 }
