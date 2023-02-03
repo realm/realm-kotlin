@@ -212,9 +212,9 @@ public interface AppConfiguration {
         }
 
         /**
-         * Sets the apps name. This is only used as part of debug headers sent when sending
-         * network requests to the App Services application.
+         * Sets the debug app name which is added to debug headers for App Services network requests.
          *
+         * The default is `null`. 
          * @param appName app name used to identify the application.
          * @throws IllegalArgumentException if an empty [appName] is provided.
          * @return the Builder instance used.
@@ -225,8 +225,7 @@ public interface AppConfiguration {
         }
 
         /**
-         * Sets the apps version. This is only used as part of debug headers sent when sending
-         * network requests to the App Services application.
+         * Sets the debug app version which is added to debug headers for App Services network requests.
          *
          * @param appVersion app version used to identify the application.
          * @throws IllegalArgumentException if an empty [appVersion] is provided.
