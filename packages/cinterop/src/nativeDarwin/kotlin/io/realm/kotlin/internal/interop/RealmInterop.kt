@@ -1122,6 +1122,22 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_query_parse_for_set(
+        set: RealmSetPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return CPointerWrapper(
+            realm_wrapper.realm_query_parse_for_set(
+                set.cptr(),
+                query,
+                count.toULong(),
+                args.second.value.ptr
+            )
+        )
+    }
+
     actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
         memScoped {
             val found = alloc<BooleanVar>()
@@ -1978,6 +1994,26 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_sync_client_config_set_user_agent_binding_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        bindingInfo: String
+    ) {
+        realm_wrapper.realm_sync_client_config_set_user_agent_binding_info(
+            syncClientConfig.cptr(),
+            bindingInfo
+        )
+    }
+
+    actual fun realm_sync_client_config_set_user_agent_application_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        applicationInfo: String
+    ) {
+        realm_wrapper.realm_sync_client_config_set_user_agent_application_info(
+            syncClientConfig.cptr(),
+            applicationInfo
+        )
+    }
+
     actual fun realm_sync_config_set_error_handler(
         syncConfig: RealmSyncConfigurationPointer,
         errorHandler: SyncErrorCallback
@@ -2254,11 +2290,13 @@ actual object RealmInterop {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
-        // From https://github.com/realm/realm-kotlin/issues/407
-        realm_wrapper.realm_app_config_set_local_app_name(appConfig, "")
-        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "")
-
         // Sync Connection Parameters
+        connectionParams.localAppName?.let { appName ->
+            realm_wrapper.realm_app_config_set_local_app_name(appConfig, appName)
+        }
+        connectionParams.localAppVersion?.let { appVersion ->
+            realm_wrapper.realm_app_config_set_local_app_name(appConfig, appVersion)
+        }
         realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
         realm_wrapper.realm_app_config_set_sdk_version(appConfig, connectionParams.sdkVersion)
         realm_wrapper.realm_app_config_set_platform(appConfig, connectionParams.platform)
