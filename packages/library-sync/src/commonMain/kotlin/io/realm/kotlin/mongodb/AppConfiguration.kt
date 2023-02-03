@@ -57,18 +57,16 @@ public interface AppConfiguration {
     public val syncRootDirectory: String
 
     /**
-     * The name of this app. This is only used as part of debug headers sent when making
-     * network requests to App Services application.
+     * The name of app. This is only used for debugging.
      *
-     * If no name was defined, `null` will be returned.
+     * @see [AppConfiguration.Builder.appName]
      */
     public val appName: String?
 
     /**
-     * Version of this app. This is only used as part of debug headers sent when making
-     * network requests to the App Services application.
+     * The version of the app. This is only used for debugging.
      *
-     * If no version was defined, `null` will be returned.
+     * @see [AppConfiguration.Builder.appVersion]
      */
     public val appVersion: String?
 
@@ -212,9 +210,9 @@ public interface AppConfiguration {
         }
 
         /**
-         * Sets the debug app name which is added to debug headers for App Services network requests.
+         * Sets the debug app name which is added to debug headers for App Services network
+         * requests. The default is `null`.
          *
-         * The default is `null`. 
          * @param appName app name used to identify the application.
          * @throws IllegalArgumentException if an empty [appName] is provided.
          * @return the Builder instance used.
@@ -225,7 +223,8 @@ public interface AppConfiguration {
         }
 
         /**
-         * Sets the debug app version which is added to debug headers for App Services network requests.
+         * Sets the debug app version which is added to debug headers for App Services network
+         * requests. The default is `null`
          *
          * @param appVersion app version used to identify the application.
          * @throws IllegalArgumentException if an empty [appVersion] is provided.
