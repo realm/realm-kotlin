@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
+import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -105,6 +106,14 @@ class GenerationExtensionTest {
     }
 
     @Test
+    fun `Sample compilation`() {
+        val inputs = Files("/sample")
+        val result = compile(inputs)
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        inputs.assertGeneratedIR()
+    }
+
+    @Test
     @Suppress("invisible_member", "invisible_reference")
     fun `implement RealmObjectInternal and generate internal properties`() {
         val inputs = Files("/sample")
@@ -132,8 +141,6 @@ class GenerationExtensionTest {
         // Accessing getters/setters
         sampleModel.`io_realm_kotlin_objectReference` = realmObjectReference
         assertEquals(realmObjectReference, sampleModel.`io_realm_kotlin_objectReference`)
-
-        inputs.assertGeneratedIR()
     }
 
     @Test
@@ -274,7 +281,6 @@ class GenerationExtensionTest {
         val newInstance = companionObject.`io_realm_kotlin_newInstance`()
         assertNotNull(newInstance)
         assertEquals(kClazz, newInstance.javaClass)
-        inputs.assertGeneratedIR()
     }
 
     @Test
@@ -315,13 +321,11 @@ class GenerationExtensionTest {
         // nameProperty.setter.call(sampleModel, "Zepp")
         // get value using the CInterop call
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
-
-        inputs.assertGeneratedIR()
     }
 
     private fun compile(
         inputs: Files,
-        plugins: List<Registrar> = listOf(Registrar())
+        plugins: List<ComponentRegistrar> = listOf(Registrar())
     ): KotlinCompilation.Result =
         KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
