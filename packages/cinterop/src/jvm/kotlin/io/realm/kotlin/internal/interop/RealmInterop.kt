@@ -719,24 +719,6 @@ actual object RealmInterop {
         return index[0] != -1L
     }
 
-    actual fun MemAllocator.realm_dictionary_insert_embedded_test(
-        dictionary: RealmMapPointer,
-        mapKey: RealmValue
-    ): RealmValue {
-        val struct = allocRealmValueT()
-
-        // Returns the new object as a Link to follow convention of other getters and allow to
-        // reuse the converter infrastructure
-        val embedded = realmc.realm_dictionary_insert_embedded(dictionary.cptr(), mapKey.value)
-        val link: realm_link_t = realmc.realm_object_as_link(embedded)
-        return RealmValue(
-            struct.apply {
-                this.type = realm_value_type_e.RLM_TYPE_LINK
-                this.link = link
-            }
-        )
-    }
-
     actual fun realm_dictionary_insert_embedded(
         dictionary: RealmMapPointer,
         mapKey: RealmValue

@@ -402,10 +402,6 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         value: RealmValue
     ): Boolean
-    fun MemAllocator.realm_dictionary_insert_embedded_test(
-        dictionary: RealmMapPointer,
-        mapKey: RealmValue
-    ): RealmValue
     fun realm_dictionary_insert_embedded(
         dictionary: RealmMapPointer,
         mapKey: RealmValue
