@@ -396,6 +396,14 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         value: RealmValue
     ): Boolean
+    fun MemAllocator.realm_dictionary_insert_embedded_test(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue
+    fun realm_dictionary_insert_embedded(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmObjectPointer
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
     fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean
 

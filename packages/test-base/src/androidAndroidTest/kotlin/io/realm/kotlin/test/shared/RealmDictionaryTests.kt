@@ -19,6 +19,7 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
 import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.asRealmObject
@@ -26,6 +27,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryEntryOf
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.toRealmDictionary
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.ErrorCatcher
@@ -40,12 +42,21 @@ import io.realm.kotlin.types.RealmDictionaryEntrySet
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
@@ -56,14 +67,17 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-class RealmDictionaryTests {
+class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests() {
 
     private val dictionarySchema = setOf(
         RealmDictionaryContainer::class,
         DictionaryLevel1::class,
         DictionaryLevel2::class,
-        DictionaryLevel3::class
+        DictionaryLevel3::class,
+        DictionaryEmbeddedLevel1::class
     )
     private val descriptors = TypeDescriptor.allDictionaryFieldTypes
 
@@ -994,6 +1008,207 @@ class RealmDictionaryTests {
         for (tester in managedTesters) {
             tester.keys_iteratorConcurrentModification()
         }
+    }
+
+    // TODO enable and write logic when notifications are ready
+    @Test
+    @Ignore
+    override fun collectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
+//        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+//        val mutex = Mutex(true)
+//        val job = async {
+//            container.nullableObjectDictionaryField.asFlow().collect {
+//                mutex.unlock()
+//            }
+//        }
+//        mutex.lock()
+//        realm.write { delete(findLatest(container)!!) }
+//        withTimeout(10.seconds) {
+//            job.await()
+//        }
+    }
+
+    @Test
+    override fun query_objectCollection() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmDictionaryContainer().apply {
+                    (1..5).map {
+                        nullableObjectDictionaryField[it.toString()] =
+                            RealmDictionaryContainer().apply { stringField = "$it" }
+                    }
+                }
+            )
+        }
+        val objectDictionaryField = container.nullableObjectDictionaryField
+        assertEquals(5, objectDictionaryField.size)
+
+        val all: RealmQuery<RealmDictionaryContainer> =
+            container.nullableObjectDictionaryField.query()
+        val ids = (1..5).map { it.toString() }.toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.stringField)) }
+        assertTrue { ids.isEmpty() }
+
+        container.nullableObjectDictionaryField
+            .query("stringField = $0", 3.toString())
+            .find()
+            .single()
+            .run { assertEquals("3", stringField) }
+    }
+
+    @Test
+    override fun query_embeddedObjectCollection() = runBlocking {
+        val container = realm.write {
+            val container = RealmDictionaryContainer().apply {
+                (1..5).map {
+                    nullableEmbeddedObjectDictionaryField[it.toString()] =
+                        DictionaryEmbeddedLevel1().apply { id = it }
+                }
+            }
+            copyToRealm(container)
+        }
+        val embeddedLevel1RealmList = container.nullableEmbeddedObjectDictionaryField
+        assertEquals(5, embeddedLevel1RealmList.size)
+
+        val all: RealmQuery<DictionaryEmbeddedLevel1> =
+            container.nullableEmbeddedObjectDictionaryField.query()
+        val ids = (1..5).toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.id)) }
+        assertTrue { ids.isEmpty() }
+
+        container.nullableEmbeddedObjectDictionaryField
+            .query("id = $0", 3)
+            .find()
+            .single()
+            .run { assertEquals(3, id) }
+    }
+
+    @Test
+    override fun queryOnCollectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        val mutex = Mutex(true)
+        val listener = async {
+            container.nullableObjectDictionaryField
+                .query()
+                .asFlow()
+                .let {
+                    withTimeout(10.seconds) {
+                        it.collect {
+                            mutex.unlock()
+                        }
+                    }
+                }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    override fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        val flow = container.nullableObjectDictionaryField
+            .query()
+            .asFlow()
+            .buffer(1)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                assertFailsWith<CancellationException> {
+                    flow.collect { current ->
+                        delay(1000.milliseconds)
+                    }
+                }.message!!.let { message ->
+                    assertEquals(
+                        "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                        message
+                    )
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.nullableObjectDictionaryField.run {
+                    clear()
+                    put("A", RealmDictionaryContainer().apply { this.id = i })
+                }
+            }
+        }
+        listener.await()
+    }
+
+    // This test shows that our internal logic still works (by closing the flow on deletion events)
+    // even though the public consumer is dropping elements
+    @Test
+    override fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic() =
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+            val flow = container.nullableObjectDictionaryField.query().asFlow()
+                .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+            val listener = async {
+                withTimeout(10.seconds) {
+                    flow.collect { current ->
+                        delay(30.milliseconds)
+                    }
+                }
+            }
+            (1..100).forEach { i ->
+                realm.write {
+                    findLatest(container)!!.nullableObjectDictionaryField.run {
+                        clear()
+                        put("A", RealmDictionaryContainer().apply { this.id = i })
+                    }
+                }
+            }
+            realm.write { delete(findLatest(container)!!) }
+            listener.await()
+        }
+
+    @Test
+    override fun query_throwsOnSyntaxError() = runBlocking {
+        val instance = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        assertFailsWithMessage<IllegalArgumentException>("syntax error") {
+            instance.nullableObjectDictionaryField.query("ASDF = $0 $0")
+        }
+        Unit
+    }
+
+    @Test
+    override fun query_throwsOnUnmanagedCollection() = runBlocking {
+        realm.write {
+            val instance = RealmDictionaryContainer()
+            copyToRealm(instance)
+            assertFailsWithMessage<IllegalArgumentException>("Unmanaged dictionary values cannot be queried") {
+                instance.nullableObjectDictionaryField.query()
+            }
+            Unit
+        }
+    }
+
+    @Test
+    override fun query_throwsOnDeletedCollection() = runBlocking {
+        realm.write {
+            val instance = copyToRealm(RealmDictionaryContainer())
+            val objectDictionaryField = instance.nullableObjectDictionaryField
+            delete(instance)
+            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+                objectDictionaryField.query()
+            }
+        }
+        Unit
+    }
+
+    @Test
+    override fun query_throwsOnClosedCollection() = runBlocking {
+        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        val objectDictionaryField = container.nullableObjectDictionaryField
+        realm.close()
+
+        assertFailsWithMessage<IllegalStateException>("Realm has been closed") {
+            objectDictionaryField.query()
+        }
+        Unit
     }
 
     private fun getCloseableRealm(): Realm =

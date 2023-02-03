@@ -1221,6 +1221,40 @@ actual object RealmInterop {
         }
     }
 
+    actual fun MemAllocator.realm_dictionary_insert_embedded_test(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue {
+        val struct = allocRealmValueT()
+
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
+        val embedded = realm_wrapper.realm_dictionary_insert_embedded(
+            dictionary.cptr(),
+            mapKey.value.readValue()
+        )
+        val outputStruct = realm_wrapper.realm_object_as_link(embedded).useContents {
+            struct.type = realm_value_type.RLM_TYPE_LINK
+            struct.link.apply {
+                this.target_table = this@useContents.target_table
+                this.target = this@useContents.target
+            }
+            struct
+        }
+        return RealmValue(outputStruct)
+    }
+
+    actual fun realm_dictionary_insert_embedded(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmObjectPointer {
+        val objectPtr = realm_wrapper.realm_dictionary_insert_embedded(
+            dictionary.cptr(),
+            mapKey.value.readValue()
+        )
+        return CPointerWrapper(objectPtr)
+    }
+
     actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
         memScoped {
             val size = alloc<ULongVar>()
