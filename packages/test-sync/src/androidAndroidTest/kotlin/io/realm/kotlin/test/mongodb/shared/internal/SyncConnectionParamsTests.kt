@@ -29,6 +29,8 @@ internal class SyncConnectionParamsTests {
     fun allProperties() {
         val props = SyncConnectionParams(
             sdkVersion = "sdkVersion",
+            localAppName = "appName",
+            localAppVersion = "appVersion",
             platform = "platform",
             platformVersion = "platformVersion",
             cpuArch = "cpuArch",
@@ -39,6 +41,8 @@ internal class SyncConnectionParamsTests {
         )
         assertEquals("Kotlin", props.sdkName)
         assertEquals("sdkVersion", props.sdkVersion)
+        assertEquals("appName", props.localAppName)
+        assertEquals("appVersion", props.localAppVersion)
         assertEquals("Unknown (platform)", props.platform)
         assertEquals("platformVersion", props.platformVersion)
         assertEquals("Unknown (cpuArch)", props.cpuArch)
@@ -63,6 +67,8 @@ internal class SyncConnectionParamsTests {
             entry.value.forEach { platformValue ->
                 val props = SyncConnectionParams(
                     sdkVersion = "",
+                    localAppName = "",
+                    localAppVersion = "",
                     platform = platformValue,
                     platformVersion = "",
                     cpuArch = "",
@@ -87,6 +93,8 @@ internal class SyncConnectionParamsTests {
         unknownPlatforms.forEach { platform ->
             val props = SyncConnectionParams(
                 sdkVersion = "",
+                localAppName = "",
+                localAppVersion = "",
                 platform = platform,
                 platformVersion = "",
                 cpuArch = "",
@@ -113,6 +121,8 @@ internal class SyncConnectionParamsTests {
             entry.value.forEach { cpuArch ->
                 val props = SyncConnectionParams(
                     sdkVersion = "",
+                    localAppName = "",
+                    localAppVersion = "",
                     platform = "",
                     platformVersion = "",
                     cpuArch = cpuArch,
