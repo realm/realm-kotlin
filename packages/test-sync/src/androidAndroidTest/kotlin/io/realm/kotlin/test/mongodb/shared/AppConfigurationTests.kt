@@ -174,49 +174,45 @@ class AppConfigurationTests {
 //        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(file) }
 //    }
 //
-//    @Test
-//    fun appName() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .appName("app-name")
-//            .build()
-//        assertEquals("app-name", config.appName)
-//    }
-//
-//    @Test
-//    fun appName_defaultValue() {
-//        val config = AppConfiguration.Builder(APP_ID).build()
-//        assertEquals(null, config.appName)
-//    }
-//
-//    @Test
-//    fun appName_invalidValuesThrows() {
-//        val builder = AppConfiguration.Builder(APP_ID)
-//
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appName(TestHelper.getNull()) }
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appName("") }
-//    }
-//
-//    @Test
-//    fun appVersion() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .appVersion("app-version")
-//            .build()
-//        assertEquals("app-version", config.appVersion)
-//    }
-//
-//    @Test
-//    fun appVersion_defaultValue() {
-//        val config = AppConfiguration.Builder(APP_ID).build()
-//        assertEquals(null, config.appVersion)
-//    }
-//
-//    @Test
-//    fun appVersion_invalidValuesThrows() {
-//        val builder = AppConfiguration.Builder(APP_ID)
-//
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appVersion(TestHelper.getNull()) }
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appVersion("") }
-//    }
+    @Test
+    fun appName() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .appName("app-name")
+            .build()
+        assertEquals("app-name", config.appName)
+    }
+
+    @Test
+    fun appName_defaultValue() {
+        val config = AppConfiguration.Builder(APP_ID).build()
+        assertEquals(null, config.appName)
+    }
+
+    @Test
+    fun appName_invalidValuesThrows() {
+        val builder = AppConfiguration.Builder(APP_ID)
+        assertFailsWith<IllegalArgumentException> { builder.appName("") }
+    }
+
+    @Test
+    fun appVersion() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .appVersion("app-version")
+            .build()
+        assertEquals("app-version", config.appVersion)
+    }
+
+    @Test
+    fun appVersion_defaultValue() {
+        val config = AppConfiguration.Builder(APP_ID).build()
+        assertEquals(null, config.appVersion)
+    }
+
+    @Test
+    fun appVersion_invalidValuesThrows() {
+        val builder = AppConfiguration.Builder(APP_ID)
+        assertFailsWith<IllegalArgumentException> { builder.appVersion("") }
+    }
 
     @Test
     fun baseUrl() {
