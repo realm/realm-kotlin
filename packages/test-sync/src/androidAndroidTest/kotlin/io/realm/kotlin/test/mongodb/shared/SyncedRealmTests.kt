@@ -1295,6 +1295,8 @@ class SyncedRealmTests {
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
                 it.log(level = LogLevel.DEBUG, listOf(customLogger))
+                it.appName("MyCustomApp")
+                it.appVersion("1.0.0")
             }
         )
         val (email, password) = randomEmail() to "password1234"
@@ -1317,11 +1319,8 @@ class SyncedRealmTests {
             flexSyncRealm.syncSession.uploadAllLocalChanges()
         }
         assertTrue(customLogger.logs.isNotEmpty())
-        assertTrue(
-            customLogger.logs
-                .filter { it.contains("Connection[1]: Negotiated protocol version:") }
-                .isNotEmpty()
-        )
+        assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") })
+        assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") })
         flexApp.close()
     }
 
