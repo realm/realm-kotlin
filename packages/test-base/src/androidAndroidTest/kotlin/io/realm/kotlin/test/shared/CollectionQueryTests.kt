@@ -2,6 +2,9 @@ package io.realm.kotlin.test.shared
 
 import kotlin.test.Test
 
+/**
+ * Tests for queryable collections. Lists, sets and dictionaries must implement these.
+ */
 abstract class CollectionQueryTests {
     @Test
     abstract fun collectionAsFlow_completesWhenParentIsDeleted()
@@ -23,6 +26,10 @@ abstract class CollectionQueryTests {
     abstract fun query_throwsOnClosedCollection()
 }
 
+/**
+ * Similar to the class above but adds testing for embedded objects as well - applicable only to
+ * lists and dictionaries.
+ */
 abstract class EmbeddedObjectCollectionQueryTests : CollectionQueryTests() {
     @Test
     abstract fun query_embeddedObjectCollection()
