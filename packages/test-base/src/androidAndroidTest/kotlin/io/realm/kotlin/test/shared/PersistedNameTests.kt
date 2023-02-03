@@ -388,6 +388,9 @@ class PersistedNameSample : RealmObject {
 
     @PersistedName("persistedNameWithEmoji😊")
     var publicNameWithoutEmoji = "Realm"
+
+    @PersistedName("sameName")
+    var sameName = "Realm"
 }
 
 class PersistedNameParentSample(var id: Int) : RealmObject {
