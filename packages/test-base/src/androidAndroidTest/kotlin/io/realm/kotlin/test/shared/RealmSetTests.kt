@@ -66,7 +66,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmSetTests : CollectionQueryTests() {
+class RealmSetTests : CollectionQueryTests {
 
     private val descriptors = TypeDescriptor.allSetFieldTypes
 

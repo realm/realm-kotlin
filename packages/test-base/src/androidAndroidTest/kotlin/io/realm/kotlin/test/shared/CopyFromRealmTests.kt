@@ -367,7 +367,7 @@ class CopyFromRealmTests {
     fun embeddedObjectLists() {
         // Create object with list of 5 objects
         val sample = EmbeddedParent().apply {
-            children = (1..5).map { i ->
+            childrenList = (1..5).map { i ->
                 EmbeddedChild(i.toString())
             }.toRealmList()
         }
@@ -382,8 +382,8 @@ class CopyFromRealmTests {
         realm.close()
 
         assertNotSame(insertedObj, unmanagedObj)
-        assertNotNull(unmanagedObj.children)
-        val copiedList = unmanagedObj.children
+        assertNotNull(unmanagedObj.childrenList)
+        val copiedList = unmanagedObj.childrenList
         assertEquals(5, copiedList.size)
         copiedList.forEachIndexed { i, el ->
             assertFalse(el.isManaged())

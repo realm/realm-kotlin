@@ -73,7 +73,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmListTests : EmbeddedObjectCollectionQueryTests() {
+class RealmListTests : EmbeddedObjectCollectionQueryTests {
 
     private val descriptors = TypeDescriptor.allListFieldTypes
 

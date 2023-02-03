@@ -5,32 +5,32 @@ import kotlin.test.Test
 /**
  * Tests for queryable collections. Lists, sets and dictionaries must implement these.
  */
-abstract class CollectionQueryTests {
+interface CollectionQueryTests {
     @Test
-    abstract fun collectionAsFlow_completesWhenParentIsDeleted()
+    fun collectionAsFlow_completesWhenParentIsDeleted()
     @Test
-    abstract fun query_objectCollection()
+    fun query_objectCollection()
     @Test
-    abstract fun queryOnCollectionAsFlow_completesWhenParentIsDeleted()
+    fun queryOnCollectionAsFlow_completesWhenParentIsDeleted()
     @Test
-    abstract fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers()
+    fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers()
     @Test
-    abstract fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic()
+    fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic()
     @Test
-    abstract fun query_throwsOnSyntaxError()
+    fun query_throwsOnSyntaxError()
     @Test
-    abstract fun query_throwsOnUnmanagedCollection()
+    fun query_throwsOnUnmanagedCollection()
     @Test
-    abstract fun query_throwsOnDeletedCollection()
+    fun query_throwsOnDeletedCollection()
     @Test
-    abstract fun query_throwsOnClosedCollection()
+    fun query_throwsOnClosedCollection()
 }
 
 /**
- * Similar to the class above but adds testing for embedded objects as well - applicable only to
+ * Similar to the interface above but adds testing for embedded objects as well - applicable only to
  * lists and dictionaries.
  */
-abstract class EmbeddedObjectCollectionQueryTests : CollectionQueryTests() {
+interface EmbeddedObjectCollectionQueryTests : CollectionQueryTests {
     @Test
-    abstract fun query_embeddedObjectCollection()
+    fun query_embeddedObjectCollection()
 }

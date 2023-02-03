@@ -70,7 +70,7 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests() {
+class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
 
     private val dictionarySchema = setOf(
         RealmDictionaryContainer::class,
