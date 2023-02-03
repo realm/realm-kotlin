@@ -33,6 +33,7 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -41,7 +42,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -124,14 +125,20 @@ class RealmNotificationsTests : NotificationTests {
             val c1 = Channel<RealmChange<Realm>>(1)
             val c2 = Channel<RealmChange<Realm>>(1)
             val startingVersion = realm.version()
+
             val observer1 = async {
                 realm.asFlow().collect {
                     c1.send(it)
                 }
             }
+            val observer2Cancelled = Mutex(false)
             val observer2 = async {
                 realm.asFlow().collect {
-                    c2.send(it)
+                    if (!observer2Cancelled.isLocked) {
+                        c2.send(it)
+                    } else {
+                        fail("Should not receive notifications on a canceled scope")
+                    }
                 }
             }
 
@@ -159,12 +166,12 @@ class RealmNotificationsTests : NotificationTests {
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
 
+            // Stop one observer and ensure that we dont receive any more notifications in that scope
             observer2.cancel()
+            observer2Cancelled.lock()
 
             realm.write { /* Do nothing */ }
 
-            // Closing an observer should prevent the channel on receiving further notifications
-            assertTrue(c2.isEmpty)
             // But unclosed channels should receive notifications
             c1.receive().let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
