@@ -1036,9 +1036,9 @@ jobs:
       - name: Run tests
         working-directory: packages
         run: |
-          ./gradlew :test-${{ matrix.os }}:jvmTest \
+          ./gradlew :test-${{ matrix.type }}:jvmTest \
           -PincludeSdkModules=false \
-          -PsyncTest.url=${{ needs.deploy-baas.outputs.atlasUrl }} \
+          -PsyncTest.url=https://cloud-qa.mongodb.com \
           -PsyncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }} \
           --info --no-daemon
 
