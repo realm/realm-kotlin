@@ -983,19 +983,33 @@ jobs:
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
+        type: [base, sync]
         include:
           - os: macos-latest
+            type: base
             test-title: Unit Test Results - Base JVM MacOS x64
           - os: ubuntu-latest
+            type: base
             test-title: Unit Test Results - Base JVM Linux
           - os: windows-latest
+            type: base
             test-title: Unit Test Results - Base JVM Windows
+          - os: macos-latest
+            type: sync
+            test-title: Unit Test Results - Sync JVM MacOS x64
+          - os: ubuntu-latest
+            type: sync
+            test-title: Unit Test Results - Sync JVM Linux
+          - os: windows-latest
+            type: sync
+            test-title: Unit Test Results - Sync JVM Windows
  
     runs-on: ${{ matrix.os }}
-    needs: [check-cache, build-jvm-packages]
+    needs: [check-cache, build-jvm-packages, deploy-baas]
     if: |
-      always() &&
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
+      always() && 
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
+      (needs.deploy-baas.result == 'success')
 
     steps:
       - name: Checkout code
@@ -1020,14 +1034,19 @@ jobs:
 
       - name: Run tests
         working-directory: packages
-        run: ./gradlew :test-base:jvmTest -PincludeSdkModules=false --info --no-daemon
+        run: |
+          ./gradlew :test-${{ matrix.os }}:jvmTest \
+          -PincludeSdkModules=false \
+          -PsyncTest.url=${{ needs.deploy-baas.outputs.atlasUrl }} \
+          -PsyncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }} \
+          --info --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./packages/test-base/build/**/TEST-*.xml
+          path: ./packages/test-${{ matrix.os }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
