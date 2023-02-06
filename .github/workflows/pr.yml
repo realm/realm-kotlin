@@ -1139,7 +1139,7 @@ jobs:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
   cleanup-cluster:
-    uses: ./.github/workflows/cleanup-baas.yml
+    uses: ./.github/workflows/include-cleanup-baas.yml
     if: always()
     name: Cleanup BAAS Cluster
     needs: deploy-cluster
