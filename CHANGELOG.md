@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* Compiler error when multiple fields have `@PersistedName`-annotations that match they Kotlin name. (Issue [#1240](https://github.com/realm/realm-kotlin/issues/1240))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
