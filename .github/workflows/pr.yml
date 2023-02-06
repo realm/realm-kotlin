@@ -15,7 +15,7 @@ jobs:
   static-analysis:
     uses: ./.github/workflows/include-static-analysis.yml
    
-deploy-cluster:
+  deploy-cluster:
     uses: ./.github/workflows/include-deploy-baas.yml
     with:
       BaseUrl: https://realm-qa.mongodb.com
@@ -1138,7 +1138,7 @@ deploy-cluster:
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
-cleanup-cluster:
+  cleanup-cluster:
     uses: ./.github/workflows/cleanup-baas.yml
     if: always()
     name: Cleanup BAAS Cluster
