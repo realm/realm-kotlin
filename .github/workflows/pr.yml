@@ -1040,6 +1040,8 @@ jobs:
           -PincludeSdkModules=false \
           -PsyncTest.url=https://cloud-qa.mongodb.com \
           -PsyncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }} \
+          -PsyncTest.login.public_apikey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
+          -PsyncTest.login.private_apikey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           --info --no-daemon
 
       - name: Publish Unit Test Results

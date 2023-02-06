@@ -239,5 +239,19 @@ buildkonfig {
     defaultConfigs {
         buildConfigField(Type.STRING, "url", properties["syncTest.url"]!! as String)
         buildConfigField(Type.STRING, "appPrefix", properties["syncTest.appNamePrefix"]!! as String)
+        if (properties.containsKey("syncTest.login.email") && properties.containsKey("syncTest.login.password")) {
+            buildConfigField(Type.STRING, "email", properties["syncTest.login.email"]!! as String)
+            buildConfigField(Type.STRING, "password", properties["syncTest.login.password"]!! as String)
+        } else {
+            buildConfigField(Type.STRING, "email", "")
+            buildConfigField(Type.STRING, "password", "")
+        }
+        if (properties.containsKey("syncTest.public_apikey") && properties.containsKey("syncTest.private_apikey")) {
+            buildConfigField(Type.STRING, "publicApiKey", properties["syncTest.public_apikey"]!! as String)
+            buildConfigField(Type.STRING, "privateApiKey", properties["syncTest.private_apikey"]!! as String)
+        } else {
+            buildConfigField(Type.STRING, "publicApiKey", "")
+            buildConfigField(Type.STRING, "privateApiKey", "")
+        }
     }
 }

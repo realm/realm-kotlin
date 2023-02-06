@@ -35,6 +35,7 @@ import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -177,12 +178,19 @@ class AppServicesClient(
             // on different threads.
             // Log in using unauthorized client
             val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
+
+            var loginMethod: String = "local-userpass"
+            var json: Map<String, String> = mapOf("username" to SyncServerConfig.email, "password" to SyncServerConfig.password)
+            if (SyncServerConfig.publicApiKey.isNotEmpty()) {
+                loginMethod = "mongodb-cloud"
+                json = mapOf("username" to SyncServerConfig.publicApiKey, "password" to SyncServerConfig.privateApiKey)
+            }
             val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
                 HttpMethod.Post,
-                "$adminUrl/auth/providers/local-userpass/login"
+                "$adminUrl/auth/providers/$loginMethod/login"
             ) {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf("username" to "unique_user@domain.com", "password" to "password"))
+                setBody(json)
             }
 
             // Setup authorized client for the rest of the requests
