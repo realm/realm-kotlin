@@ -1,0 +1,64 @@
+name: deploy-baas
+"on":
+  workflow_call:
+    inputs:
+      BaseUrl:
+        required: true
+        type: string
+      AtlasBaseUrl:
+        required: true
+        type: string
+    outputs:
+      clusterName:
+        value: ${{ jobs.deploy-baas.outputs.clusterName }}
+    secrets:
+      AtlasProjectId:
+        required: true
+      AtlasPublicKey:
+        required: true
+      AtlasPrivateKey:
+        required: true
+
+jobs:
+  deploy-baas:
+    runs-on: ubuntu-latest
+    name: Deploy Cluster
+    outputs:
+      clusterName: ${{ steps.deploy-cluster.outputs.clusterName }}
+    timeout-minutes: 20
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: false
+        ref: ${{ github.event.pull_request.head.sha }}
+    - uses: realm/ci-actions/mdb-realm/deploy@043cc5a8446748b823957c6ea4d08e6e495ea996
+      id: deploy-cluster
+      with:
+        projectId: ${{ secrets.AtlasProjectId}}
+        realmUrl: ${{ inputs.BaseUrl }}
+        atlasUrl: ${{ inputs.AtlasBaseUrl}}
+        apiKey: ${{ secrets.AtlasPublicKey}}
+        privateApiKey: ${{ secrets.AtlasPrivateKey }}
+        clusterSize: M20
+
+  # deploy-apps:
+  #   name: Deploy Apps
+  #   needs: deploy-baas
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       differentiator: ${{ fromJson(inputs.differentiators) }}
+  #   if: always() && !cancelled() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+  #   steps:
+  #   - name: Checkout code
+  #     uses: actions/checkout@v3
+  #     with:
+  #       submodules: false
+  #       ref: ${{ github.event.pull_request.head.sha }}
+  #   - uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a
+  #     with:
+  #       dotnet-version: 6.0.x
+  #   - name: Deploy Apps
+  #     run: dotnet run . --baasurl=${{ inputs.BaseUrl }} --baascluster=${{ needs.deploy-baas.outputs.clusterName }} --baasapikey=${{ secrets.AtlasPublicKey }} --baasprivateapikey=${{ secrets.AtlasPrivateKey }} --baasprojectid=${{ secrets.AtlasProjectId }} --baasdifferentiator=${{ matrix.differentiator }}
+  #     working-directory: Tools/DeployApps

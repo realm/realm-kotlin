@@ -15,6 +15,16 @@ jobs:
   static-analysis:
     uses: ./.github/workflows/include-static-analysis.yml
    
+deploy-cluster:
+    uses: ./.github/workflows/include-deploy-baas.yml
+    with:
+      BaseUrl: https://realm-qa.mongodb.com
+      AtlasBaseUrl: https://cloud-qa.mongodb.com
+    secrets:
+      AtlasProjectId: ${{ secrets.ATLAS_QA_PROJECT_ID }}
+      AtlasPublicKey: ${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
+      AtlasPrivateKey: ${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
+
   check-cache:
     uses: ./.github/workflows/include-check-cache.yml
 
@@ -1127,4 +1137,17 @@ jobs:
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
+
+cleanup-cluster:
+    uses: ./.github/workflows/cleanup-baas.yml
+    if: always()
+    name: Cleanup BAAS Cluster
+    needs: deploy-cluster
+    with:
+      BaseUrl: https://realm-qa.mongodb.com
+      AtlasBaseUrl: https://cloud-qa.mongodb.com
+    secrets:
+      AtlasProjectId: ${{ secrets.ATLAS_QA_PROJECT_ID }}
+      AtlasPublicKey: ${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
+      AtlasPrivateKey: ${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
 

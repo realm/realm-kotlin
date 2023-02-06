@@ -16,6 +16,7 @@
  */
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -24,6 +25,7 @@ plugins {
     // Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
     // gradle run, so we just apply the compiler plugin directly as a dependency below instead
     // id("io.realm.kotlin")
+    id("com.codingfeline.buildkonfig") version "0.13.3"
 }
 
 
@@ -223,5 +225,19 @@ kotlin {
             val iosMain by getting { dependsOn(nativeDarwin) }
             val iosTest by getting { dependsOn(nativeDarwinTest) }
         }
+    }
+}
+
+// The Device Sync server used by the tests are configured through Gradle properties defined
+// in `<root>/packages/gradle.properties`
+// - 'syncTest.url` defines the root URL for the App Services server. Default is `http://localhost:9090`
+// - 'syncTest.appNamePrefix' is added a differentiator for all apps created by tests. This makes
+//   it possible for builds in parallel to run against the same test server. Default is `test-app`.
+buildkonfig {
+    packageName = "io.realm.kotlin.test.mongodb"
+    objectName = "SyncServerConfig"
+    defaultConfigs {
+        buildConfigField(Type.STRING, "url", properties["syncTest.url"]!! as String)
+        buildConfigField(Type.STRING, "appPrefix", properties["syncTest.appNamePrefix"]!! as String)
     }
 }

@@ -1,0 +1,35 @@
+name: cleanup-baas
+"on":
+  workflow_call:
+    inputs:
+      BaseUrl:
+        required: true
+        type: string
+      AtlasBaseUrl:
+        required: true
+        type: string
+    secrets:
+      AtlasProjectId:
+        required: true
+      AtlasPublicKey:
+        required: true
+      AtlasPrivateKey:
+        required: true
+jobs:
+  cleanup-baas:
+    runs-on: ubuntu-latest
+    name: Cleanup Cluster
+    timeout-minutes: 5
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: false
+        ref: ${{ github.event.pull_request.head.sha }}
+    - uses: realm/ci-actions/mdb-realm/cleanup@043cc5a8446748b823957c6ea4d08e6e495ea996
+      with:
+        projectId: ${{ secrets.AtlasProjectId}}
+        realmUrl: ${{ inputs.BaseUrl }}
+        atlasUrl: ${{ inputs.AtlasBaseUrl}}
+        apiKey: ${{ secrets.AtlasPublicKey}}
+        privateApiKey: ${{ secrets.AtlasPrivateKey }}
