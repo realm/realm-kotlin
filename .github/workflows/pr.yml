@@ -1162,7 +1162,7 @@ jobs:
     uses: ./.github/workflows/include-cleanup-baas.yml
     if: always()
     name: Cleanup BAAS Cluster
-    needs: deploy-baas
+    needs: [deploy-baas, test-jvm-packages]
     with:
       BaseUrl: https://realm-qa.mongodb.com
       AtlasBaseUrl: https://cloud-qa.mongodb.com
