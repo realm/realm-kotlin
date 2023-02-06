@@ -15,7 +15,7 @@ jobs:
   static-analysis:
     uses: ./.github/workflows/include-static-analysis.yml
    
-  deploy-cluster:
+  deploy-baas:
     uses: ./.github/workflows/include-deploy-baas.yml
     with:
       BaseUrl: https://realm-qa.mongodb.com
