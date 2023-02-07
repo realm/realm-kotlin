@@ -237,18 +237,18 @@ buildkonfig {
     packageName = "io.realm.kotlin.test.mongodb"
     objectName = "SyncServerConfig"
     defaultConfigs {
-        buildConfigField(Type.STRING, "url", properties["syncTest.url"]!! as String)
-        buildConfigField(Type.STRING, "appPrefix", properties["syncTest.appNamePrefix"]!! as String)
-        if (properties.containsKey("syncTest.login.email") && properties.containsKey("syncTest.login.password")) {
-            buildConfigField(Type.STRING, "email", properties["syncTest.login.email"]!! as String)
-            buildConfigField(Type.STRING, "password", properties["syncTest.login.password"]!! as String)
+        buildConfigField(Type.STRING, "url", properties["syncTestUrl"]!! as String)
+        buildConfigField(Type.STRING, "appPrefix", properties["syncTestAppNamePrefix"]!! as String)
+        if (properties.containsKey("syncTestLoginEmail") && properties.containsKey("syncTestLoginPassword")) {
+            buildConfigField(Type.STRING, "email", properties["syncTestLoginEmail"]!! as String)
+            buildConfigField(Type.STRING, "password", properties["syncTestLoginPassword"]!! as String)
         } else {
             buildConfigField(Type.STRING, "email", "")
             buildConfigField(Type.STRING, "password", "")
         }
-        if (properties.containsKey("syncTest.login.public_apikey") && properties.containsKey("syncTest.login.private_apikey")) {
-            buildConfigField(Type.STRING, "publicApiKey", properties["syncTest.login.public_apikey"]!! as String)
-            buildConfigField(Type.STRING, "privateApiKey", properties["syncTest.login.private_apikey"]!! as String)
+        if (properties.containsKey("syncTestLoginPublicApiKey") && properties.containsKey("syncTestLoginPrivateApiKey")) {
+            buildConfigField(Type.STRING, "publicApiKey", properties["syncTestLoginPublicApiKey"]!! as String)
+            buildConfigField(Type.STRING, "privateApiKey", properties["syncTestLoginPrivateApiKey"]!! as String)
         } else {
             buildConfigField(Type.STRING, "publicApiKey", "")
             buildConfigField(Type.STRING, "privateApiKey", "")

@@ -1040,11 +1040,11 @@ jobs:
         working-directory: packages
         run: >
           ./gradlew :test-${{ matrix.type }}:jvmTest
-          -Dorg.gradle.project.includeSdkModules=false
-          -Dorg.gradle.project.syncTest.url=https://realm-qa.mongodb.com
-          -Dorg.gradle.project.syncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
-          -Dorg.gradle.project.syncTest.login.public_apikey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
-          -Dorg.gradle.project.syncTest.login.private_apikey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
+          -PincludeSdkModules=false
+          -PsyncTestUrl=https://realm-qa.mongodb.com
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
+          -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -info --no-daemon
 
       - name: Publish Unit Test Results
