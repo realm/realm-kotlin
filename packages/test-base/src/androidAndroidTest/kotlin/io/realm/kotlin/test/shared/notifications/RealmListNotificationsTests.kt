@@ -427,7 +427,9 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
 
             // Await that notifier has signalled the deletion so we are certain that the entity
             // has been deleted
-            flow.await()
+            withTimeout(10.seconds) {
+                flow.await()
+            }
 
             // Verify that a flow on the deleted entity will signal a deletion and complete gracefully
             withTimeout(10.seconds) {
