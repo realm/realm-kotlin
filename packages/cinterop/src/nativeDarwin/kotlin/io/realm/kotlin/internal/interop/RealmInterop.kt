@@ -1788,21 +1788,17 @@ actual object RealmInterop {
             val insertions = allocArray<ULongVar>(1)
             val modifications = allocArray<ULongVar>(1)
 
-            // TODO remove size hack and use output with actual sizes once it's implemented in the C-API
-            //  https://github.com/realm/realm-core/issues/6228
-//            realm_wrapper.realm_dictionary_get_change_sizes(
-//                deletions,
-//                insertions,
-//                modifications
-//            )
-//            val deletionStructs = allocArray<realm_value_t>(deletions[0].toInt())
-//            val insertionStructs = allocArray<realm_value_t>(insertions[0].toInt())
-//            val modificationStructs = allocArray<realm_value_t>(modifications[0].toInt())
-            val deletionStructs = allocArray<realm_value_t>(30)
-            val insertionStructs = allocArray<realm_value_t>(30)
-            val modificationStructs = allocArray<realm_value_t>(30)
-
             realm_wrapper.realm_dictionary_get_changes(
+                change.cptr(),
+                deletions,
+                insertions,
+                modifications
+            )
+            val deletionStructs = allocArray<realm_value_t>(deletions[0].toInt())
+            val insertionStructs = allocArray<realm_value_t>(insertions[0].toInt())
+            val modificationStructs = allocArray<realm_value_t>(modifications[0].toInt())
+
+            realm_wrapper.realm_dictionary_get_changed_keys(
                 change.cptr(),
                 deletionStructs,
                 deletions,
@@ -1823,8 +1819,8 @@ actual object RealmInterop {
             }
 
             builder.initDeletions(deletedKeys.toTypedArray())
-            builder.initDeletions(insertedKeys.toTypedArray())
-            builder.initDeletions(modifiedKeys.toTypedArray())
+            builder.initInsertions(insertedKeys.toTypedArray())
+            builder.initModifications(modifiedKeys.toTypedArray())
         }
     }
 

@@ -937,7 +937,6 @@ actual object RealmInterop {
         builder.initRangesArray(builder::modificationRangesAfter, modificationRangesAfter, modificationRangesCount[0])
     }
 
-    @Suppress("MagicNumber") // TODO remove this once the size hack is removed
     actual fun <R> realm_dictionary_get_changes(
         change: RealmChangesPointer,
         builder: DictionaryChangeSetBuilder<R>
@@ -945,22 +944,17 @@ actual object RealmInterop {
         val deletions = longArrayOf(0)
         val insertions = longArrayOf(0)
         val modifications = longArrayOf(0)
-
-        // TODO remove size hack and use output with actual sizes once it's implemented in the C-API
-        //  https://github.com/realm/realm-core/issues/6228
-//        realmc.realm_dictionary_get_change_sizes(
-//            deletions,
-//            insertions,
-//            modifications
-//        )
-//        val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
-//        val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
-//        val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
-        val deletionStructs = realmc.new_valueArray(30)
-        val insertionStructs = realmc.new_valueArray(30)
-        val modificationStructs = realmc.new_valueArray(30)
-
         realmc.realm_dictionary_get_changes(
+            change.cptr(),
+            deletions,
+            insertions,
+            modifications
+        )
+
+        val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
+        val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
+        val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
+        realmc.realm_dictionary_get_changed_keys(
             change.cptr(),
             deletionStructs,
             deletions,
@@ -971,6 +965,7 @@ actual object RealmInterop {
         )
 
         // TODO optimize - integrate within mem allocator?
+        // Get keys and release array of structs
         val deletedKeys = (0 until deletions[0]).map {
             realmc.valueArray_getitem(deletionStructs, it.toInt()).string
         }
