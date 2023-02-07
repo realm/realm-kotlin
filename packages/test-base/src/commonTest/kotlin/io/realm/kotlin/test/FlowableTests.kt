@@ -4,10 +4,11 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 
 /**
- * All classes (Realm, RealmObject, RealmResults, RealmList) that expose notifications should
- * implement this interface to be sure that we test common behaviour across those classes.
+ * All tests classes that tests classes exposing notifications (Realm, RealmObject, RealmResults,
+ * RealmList) should implement this interface to be sure that we test common behaviour across those
+ * classes.
  */
-interface NotificationTests {
+interface FlowableTests {
 
     // Verify that the initial element in a Flow is the element itself
     // TODO Is this the semantics we want?
@@ -21,11 +22,6 @@ interface NotificationTests {
     // Verify that a flow can be cancelled
     @Test
     fun cancelAsFlow()
-
-    // Verify that `null` is emitted and the Flow is closed whenever the object
-    // being observed is deleted.
-    @Test
-    fun deleteObservable()
 
     // Verify that closing the Realm while inside a flow throws an exception (I think)
     @Test

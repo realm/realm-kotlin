@@ -1,20 +1,15 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
-import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.Validation.sdkError
-import io.realm.kotlin.internal.util.checkForBufferOverFlow
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import io.realm.kotlin.schema.RealmSchema
 import kotlinx.atomicfu.AtomicRef
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
@@ -86,52 +81,19 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T, C> registerObserver(thawableObservable: Thawable<Observable<T, C>>): Flow<C> {
-        var cancelCallback: () -> Unit = {}
-
-        return object :
-            Cancellable,
-            Flow<C> by callbackFlow({
-                cancelCallback = {
-                    cancel()
-                }
-                val token: AtomicRef<Cancellable> =
-                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-                withContext(dispatcher) {
-                    ensureActive()
-                    // Ensure that the live realm is always up to date to avoid registering
-                    // notifications on newer objects.
-                    realm.refresh()
-                    val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
-                        ?: error("Cannot listen for changes on a deleted Realm reference")
-                    val interopCallback: io.realm.kotlin.internal.interop.Callback<RealmChangesPointer> =
-                        object : io.realm.kotlin.internal.interop.Callback<RealmChangesPointer> {
-                            override fun onChange(change: RealmChangesPointer) {
-                                // FIXME How to make sure the Realm isn't closed when handling this?
-                                // Notifications need to be delivered with the version they where created on, otherwise
-                                // the fine-grained notification data might be out of sync.
-                                liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
-                                    ?.run { // this: ChannelResult<T>
-                                        checkForBufferOverFlow()?.let { overflowException: CancellationException ->
-                                            // Cancel scope if the user does not keep up to signal
-                                            // that we are loosing events
-                                            this@callbackFlow.cancel(overflowException)
-                                        }
-                                    }
-                            }
-                        }.freeze<io.realm.kotlin.internal.interop.Callback<RealmChangesPointer>>() // Freeze to allow cleaning up on another thread
-                    val newToken =
-                        NotificationToken(
-                            token = liveRef.registerForNotification(interopCallback)
-                        )
-                    token.value = newToken
-                }
-                awaitClose {
-                    token.value.cancel()
-                }
-            }) {
-            override fun cancel() {
-                cancelCallback()
+    internal fun <T : Observable<T, C>, C> registerObserver(observable: NotificationFlowable<T, C>): Flow<C> {
+        return callbackFlow {
+            val token: AtomicRef<Cancellable> =
+                kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+            withContext(dispatcher) {
+                ensureActive()
+                // Ensure that the live realm is always up to date to avoid registering
+                // notifications on newer objects.
+                realm.refresh()
+                token.value = observable.observable(realm, this@callbackFlow)
+            }
+            awaitClose {
+                token.value.cancel()
             }
         }
     }

@@ -25,14 +25,14 @@ import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.internal.InitialResultsImpl
 import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -121,21 +121,44 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         return RealmInterop.realm_results_add_notification_callback(nativePointer, callback)
     }
 
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<ResultsChange<E>>
-    ): ChannelResult<Unit>? {
-        val frozenResult = freeze(frozenRealm)
+    override fun observable(
+        liveRealm: LiveRealm,
+        channel: ProducerScope<ResultsChange<E>>
+    ): NotificationFlow<RealmResultsImpl<E>, ResultsChange<E>> =
+        object : NotificationFlow<RealmResultsImpl<E>, ResultsChange<E>>(liveRealm, this, channel) {
+            override fun initial(frozenResult: RealmResultsImpl<E>): ResultsChange<E> =
+                InitialResultsImpl(frozenResult)
 
-        val builder = ListChangeSetBuilderImpl(change)
+            override fun update(
+                frozenResult: RealmResultsImpl<E>,
+                change: RealmChangesPointer
+            ): ResultsChange<E>? {
+                val listChangeSetBuilderImpl = ListChangeSetBuilderImpl(change)
+                return if (!listChangeSetBuilderImpl.isEmpty()) {
+                    UpdatedResultsImpl(frozenResult, listChangeSetBuilderImpl.build())
+                } else null
+            }
 
-        return if (builder.isEmpty()) {
-            channel.trySend(InitialResultsImpl(frozenResult))
-        } else {
-            channel.trySend(UpdatedResultsImpl(frozenResult, builder.build()))
+            override fun delete(): ResultsChange<E> {
+                sdkError("Results should never have been deleted")
+            }
         }
-    }
+
+//    override fun emitFrozenUpdate(
+//        frozenRealm: RealmReference,
+//        change: RealmChangesPointer,
+//        channel: SendChannel<ResultsChange<E>>
+//    ): ChannelResult<Unit>? {
+//        val frozenResult: RealmResultsImpl<E> = freeze(frozenRealm)
+//
+//        val builder = ListChangeSetBuilderImpl(change)
+//
+//        return if (builder.isEmpty()) {
+//            channel.trySend(InitialResultsImpl(frozenResult))
+//        } else {
+//            channel.trySend(UpdatedResultsImpl(frozenResult, builder.build()))
+//        }
+//    }
 
     override fun realmState(): RealmState = realm
 

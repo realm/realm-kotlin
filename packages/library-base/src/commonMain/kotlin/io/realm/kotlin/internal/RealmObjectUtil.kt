@@ -122,14 +122,14 @@ internal inline fun <reified T : BaseRealmObject> KClass<T>.realmObjectCompanion
  *
  * This will be `null` for unmanaged objects.
  */
-internal val <T: BaseRealmObject> T.realmObjectReference: RealmObjectReference<T>?
+internal val <T : BaseRealmObject> T.realmObjectReference: RealmObjectReference<T>?
     get() = (this as RealmObjectInternal).`io_realm_kotlin_objectReference` as RealmObjectReference<T>?
 
 /**
  * If the Realm Object is managed it calls the specified function block and returns its result,
  * otherwise returns null.
  */
-internal inline fun <T: BaseRealmObject, R> T.runIfManaged(block: RealmObjectReference<T>.() -> R): R? =
+internal inline fun <T : BaseRealmObject, R> T.runIfManaged(block: RealmObjectReference<T>.() -> R): R? =
     realmObjectReference?.run(block)
 
 /**

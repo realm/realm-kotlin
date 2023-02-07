@@ -9,7 +9,8 @@
 . (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
  
 ### Fixed
-* None.
+* Fix missing initial flow events when registering for events while updating the realm. (Issue [#1151](https://github.com/realm/realm-kotlin/issues/1151))
+* Emit deletion events and terminate flow when registering for notifications on outdated entities instead of throwing. (Issue [#1233](https://github.com/realm/realm-kotlin/issues/1233))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

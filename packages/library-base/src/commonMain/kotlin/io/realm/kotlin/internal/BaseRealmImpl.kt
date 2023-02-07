@@ -63,7 +63,7 @@ public abstract class BaseRealmImpl internal constructor(
         return RealmInterop.realm_get_schema_version(realmReference.dbPointer)
     }
 
-    internal open fun <T, C> registerObserver(t: Thawable<Observable<T, C>>): Flow<C> {
+    internal open fun <T : Observable<T, C>, C> registerObserver(t: NotificationFlowable<T, C>): Flow<C> {
         throw UnsupportedOperationException(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

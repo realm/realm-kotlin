@@ -30,8 +30,7 @@ import io.realm.kotlin.notifications.internal.DeletedObjectImpl
 import io.realm.kotlin.notifications.internal.InitialObjectImpl
 import io.realm.kotlin.notifications.internal.UpdatedObjectImpl
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -111,30 +110,28 @@ public class RealmObjectReference<T : BaseRealmObject>(
         )
     }
 
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<ObjectChange<T>>
-    ): ChannelResult<Unit>? {
-        val frozenObject: RealmObjectReference<T>? = this.freeze(frozenRealm)
-
-        return if (frozenObject == null) {
-            channel
-                .trySend(DeletedObjectImpl())
-                .also {
-                    channel.close()
-                }
-        } else {
-            val changedFieldNames = frozenObject.getChangedFieldNames(change)
-            val obj: T = frozenObject.toRealmObject()
-
-            // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
-            if (changedFieldNames.isEmpty()) {
-                channel.trySend(InitialObjectImpl(obj))
-            } else {
-                channel.trySend(UpdatedObjectImpl(obj, changedFieldNames))
-            }
+    override fun observable(
+        liveRealm: LiveRealm,
+        channel: ProducerScope<ObjectChange<T>>
+    ): NotificationFlow<RealmObjectReference<T>, ObjectChange<T>> = object :
+        NotificationFlow<RealmObjectReference<T>, ObjectChange<T>>(liveRealm, this, channel) {
+        override fun initial(frozenRef: RealmObjectReference<T>): ObjectChange<T> {
+            val obj: T = frozenRef.toRealmObject()
+            return InitialObjectImpl(obj)
         }
+
+        override fun update(
+            frozenObject: RealmObjectReference<T>,
+            change: RealmChangesPointer
+        ): ObjectChange<T>? {
+            val changedFieldNames = frozenObject.getChangedFieldNames(change)
+            return if (!changedFieldNames.isEmpty()) {
+                val obj: T = frozenObject.toRealmObject()
+                UpdatedObjectImpl(obj, changedFieldNames)
+            } else null
+        }
+
+        override fun delete(): ObjectChange<T> = DeletedObjectImpl()
     }
 
     private fun getChangedFieldNames(
