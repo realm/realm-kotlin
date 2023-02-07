@@ -41,6 +41,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 
 val TEST_APP_PARTITION = "${SyncServerConfig.appPrefix}-partition" // With Partion-based Sync
 val TEST_APP_FLEX = "${SyncServerConfig.appPrefix}-flex" // With Flexible Sync
+val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 
 val TEST_SERVER_BASE_URL = SyncServerConfig.url
 const val DEFAULT_PASSWORD = "password1234"

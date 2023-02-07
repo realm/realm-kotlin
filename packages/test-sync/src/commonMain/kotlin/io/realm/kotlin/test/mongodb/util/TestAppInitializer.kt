@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.test.mongodb.util
 
+import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import kotlinx.serialization.decodeFromString
@@ -344,13 +345,18 @@ object TestAppInitializer {
             enable(true)
         }
 
+        val (type: String, config: String) = if (TEST_APP_CLUSTER_NAME.isEmpty()) {
+            Pair("mongodb", "{ \"uri\": \"mongodb://localhost:26000\" }")
+        } else {
+            Pair("mongodb-atlas", "{ \"clusterName\": \"${TEST_APP_CLUSTER_NAME}\" }")
+        }
         addService(
             """
-            {
-                "name": "BackingDB",
-                "type": "mongodb",
-                "config": { "uri": "mongodb://localhost:26000" }
-            }
+        {
+            "name": "BackingDB",
+            "type": "$type",
+            "config": $config
+        }
             """.trimIndent()
         ).let { service: Service ->
             val dbName = app.clientAppId

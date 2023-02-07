@@ -36,6 +36,7 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.mongodb.SyncServerConfig
+import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -449,7 +450,8 @@ class AppServicesClient(
             return runBlocking {
                 httpClient.typedListRequest<Service>(Get, "$url/services")
                     .first {
-                        it.type == "mongodb"
+                        val type = if (TEST_APP_CLUSTER_NAME.isEmpty()) "mongodb" else "mongodb-atlas"
+                        it.type == type
                     }
             }
         }

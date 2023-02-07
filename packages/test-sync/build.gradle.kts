@@ -253,5 +253,6 @@ buildkonfig {
             buildConfigField(Type.STRING, "publicApiKey", "")
             buildConfigField(Type.STRING, "privateApiKey", "")
         }
+        buildConfigField(Type.STRING, "clusterName", properties["syncTestClusterName"] as String? ?: "")
     }
 }
