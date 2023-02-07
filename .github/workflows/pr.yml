@@ -1037,13 +1037,13 @@ jobs:
 
       - name: Run tests
         working-directory: packages
-        run: |
-          ./gradlew :test-${{ matrix.type }}:jvmTest \
-          -PincludeSdkModules=false \
-          -PsyncTest.url=https://realm-qa.mongodb.com \
-          -PsyncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }} \
-          -PsyncTest.login.public_apikey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
-          -PsyncTest.login.private_apikey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
+        run: >
+          ./gradlew :test-${{ matrix.type }}:jvmTest
+          -PincludeSdkModules=false
+          -PsyncTest.url=https://realm-qa.mongodb.com
+          -PsyncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          -PsyncTest.login.public_apikey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
+          -PsyncTest.login.private_apikey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -info --no-daemon
 
       - name: Publish Unit Test Results
