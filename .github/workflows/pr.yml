@@ -10,6 +10,8 @@ env:
   CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
   CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
   RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
+  REALM_QA_URL: https://realm-qa.mongodb.com
+  ATLAS_QA_URL: https://cloud-qa.mongodb.com
 
 jobs:
   static-analysis:
@@ -19,8 +21,8 @@ jobs:
     name: Deploy BAAS Cluster
     uses: ./.github/workflows/include-deploy-baas.yml
     with:
-      BaseUrl: https://realm-qa.mongodb.com
-      AtlasBaseUrl: https://cloud-qa.mongodb.com
+      BaseUrl: ${{ env.REALM_QA_URL }}
+      AtlasBaseUrl: ${{ env.ATLAS_QA_URL }}
     secrets:
       AtlasProjectId: ${{ secrets.ATLAS_QA_PROJECT_ID }}
       AtlasPublicKey: ${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
@@ -1038,7 +1040,7 @@ jobs:
         run: |
           ./gradlew :test-${{ matrix.type }}:jvmTest \
           -PincludeSdkModules=false \
-          -PsyncTest.url=https://realm-qa.mongodb.com \
+          -PsyncTest.url=${{ env.REALM_QA_URL }} \
           -PsyncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }} \
           -PsyncTest.login.public_apikey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
           -PsyncTest.login.private_apikey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
