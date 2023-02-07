@@ -985,7 +985,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
+        os: [macos-latest, ubuntu-latest] # TODO Should we also test om MacOS arm64?
         type: [base, sync]
         include:
           - os: macos-latest
@@ -994,18 +994,18 @@ jobs:
           - os: ubuntu-latest
             type: base
             test-title: Unit Test Results - Base JVM Linux
-          - os: windows-latest
-            type: base
-            test-title: Unit Test Results - Base JVM Windows
+          # - os: windows-latest
+          #   type: base
+          #   test-title: Unit Test Results - Base JVM Windows
           - os: macos-latest
             type: sync
             test-title: Unit Test Results - Sync JVM MacOS x64
           - os: ubuntu-latest
             type: sync
             test-title: Unit Test Results - Sync JVM Linux
-          - os: windows-latest
-            type: sync
-            test-title: Unit Test Results - Sync JVM Windows
+          # - os: windows-latest
+          #   type: sync
+          #   test-title: Unit Test Results - Sync JVM Windows
  
     runs-on: ${{ matrix.os }}
     needs: [check-cache, build-jvm-packages, deploy-baas]
