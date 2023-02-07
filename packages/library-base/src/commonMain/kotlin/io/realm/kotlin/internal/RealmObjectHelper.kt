@@ -954,14 +954,14 @@ internal object RealmObjectHelper {
             clazz,
             nullable
         )
-        val operatorType = if (propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED) {
-            CollectionOperatorType.REALM_ANY
-        } else if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
-            CollectionOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
-            CollectionOperatorType.REALM_OBJECT
-        } else {
-            CollectionOperatorType.EMBEDDED_OBJECT
+        val operatorType = when {
+            propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED ->
+                CollectionOperatorType.REALM_ANY
+            propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT ->
+                CollectionOperatorType.PRIMITIVE
+            !obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject ->
+                CollectionOperatorType.REALM_OBJECT
+            else -> CollectionOperatorType.EMBEDDED_OBJECT
         }
         @Suppress("UNCHECKED_CAST")
         return getListByKey(
@@ -989,14 +989,14 @@ internal object RealmObjectHelper {
             clazz,
             nullable
         )
-        val operatorType = if (propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED) {
-            CollectionOperatorType.REALM_ANY
-        } else if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
-            CollectionOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
-            CollectionOperatorType.REALM_OBJECT
-        } else {
-            throw IllegalStateException("RealmSets do not support Embedded Objects.")
+        val operatorType = when {
+            propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED ->
+                CollectionOperatorType.REALM_ANY
+            propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT ->
+                CollectionOperatorType.PRIMITIVE
+            !obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject ->
+                CollectionOperatorType.REALM_OBJECT
+            else -> throw IllegalStateException("RealmSets do not support Embedded Objects.")
         }
         @Suppress("UNCHECKED_CAST")
         return getSetByKey(
@@ -1024,14 +1024,14 @@ internal object RealmObjectHelper {
             clazz,
             nullable
         )
-        val operatorType = if (propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED) {
-            CollectionOperatorType.REALM_ANY
-        } else if (propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT) {
-            CollectionOperatorType.PRIMITIVE
-        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
-            CollectionOperatorType.REALM_OBJECT
-        } else {
-            throw IllegalStateException("RealmSets do not support Embedded Objects.")
+        val operatorType = when {
+            propertyMetadata.type == PropertyType.RLM_PROPERTY_TYPE_MIXED ->
+                CollectionOperatorType.REALM_ANY
+            propertyMetadata.type != PropertyType.RLM_PROPERTY_TYPE_OBJECT ->
+                CollectionOperatorType.PRIMITIVE
+            !obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject ->
+                CollectionOperatorType.REALM_OBJECT
+            else -> throw IllegalStateException("RealmSets do not support Embedded Objects.")
         }
         @Suppress("UNCHECKED_CAST")
         return getDictionaryByKey(
