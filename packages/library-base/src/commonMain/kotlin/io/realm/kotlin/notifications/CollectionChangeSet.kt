@@ -16,6 +16,7 @@
 package io.realm.kotlin.notifications
 
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.types.RealmDictionary
 
 /**
  * This interface models the changes that can occur to a list.
@@ -111,6 +112,6 @@ public interface MapChangeSet<K> {
 }
 
 /**
- * TODO
+ * Convenience alias for [RealmDictionary] changesets. It represents a [MapChange] of `<String, V>`.
  */
 public typealias DictionaryChangeSet = MapChangeSet<String>

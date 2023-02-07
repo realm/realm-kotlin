@@ -32,23 +32,7 @@ import kotlinx.coroutines.flow.Flow
 /**
  * TODO
  */
-public interface RealmMap<K, V> : MutableMap<K, V> {
-    /**
-     * Observes changes to the RealmMap. The [Flow] will emit [InitialMap] once subscribed, and
-     * then [UpdatedMap] on every change to the map. The flow will continue running indefinitely
-     * until canceled or until the parent object is deleted.
-     *
-     * The change calculations will run on the thread represented by
-     * [RealmConfiguration.Builder.notificationDispatcher].
-     *
-     * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
-     * the elements in a timely manner the coroutine scope will be cancelled with a
-     * [CancellationException].
-     *
-     * @return a flow representing changes to the map.
-     */
-    public fun asFlow(): Flow<MapChange<K, V>>
-}
+public interface RealmMap<K, V> : MutableMap<K, V>
 
 /**
  * TODO
@@ -68,7 +52,7 @@ public interface RealmDictionary<E> : RealmMap<String, E> {
      *
      * @return a flow representing changes to the dictionary.
      */
-    override fun asFlow(): Flow<DictionaryChange<E>>
+    public fun asFlow(): Flow<DictionaryChange<E>>
 }
 
 /**

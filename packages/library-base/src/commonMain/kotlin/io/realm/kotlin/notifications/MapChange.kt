@@ -20,7 +20,7 @@ import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
 
 /**
- * This sealed interface describes the possible changes that can happen to a [RealmDictionary].
+ * This sealed interface describes the possible changes that can happen to a [RealmMap].
  *
  * The states are represented by the specific subclasses [InitialMap], [UpdatedMap] and
  * [DeletedMap]. When the map is deleted an empty map is emitted instead of `null`.
