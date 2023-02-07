@@ -21,10 +21,7 @@ import io.realm.kotlin.internal.RealmMapEntrySet
 import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.notifications.DictionaryChange
 import io.realm.kotlin.notifications.InitialDictionary
-import io.realm.kotlin.notifications.InitialMap
-import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.notifications.UpdatedDictionary
-import io.realm.kotlin.notifications.UpdatedMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
