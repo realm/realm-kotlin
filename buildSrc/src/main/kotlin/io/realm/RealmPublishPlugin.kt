@@ -73,7 +73,7 @@ class RealmPublishPlugin : Plugin<Project> {
 
     private fun configureTestRepository(project: Project) {
         val relativePathToTestRepository: String = getPropertyValue(project, "testRepository")
-        val testRepository = File(project.rootProject.rootDir.absolutePath + File.pathSeparator + relativePathToTestRepository.replace("/", File.pathSeparator))
+        val testRepository = File(project.rootProject.rootDir.absolutePath + File.separator + relativePathToTestRepository.replace("/", File.separator))
         if (relativePathToTestRepository.isNotEmpty()) {
             project.extensions.getByType<PublishingExtension>().apply {
                 repositories {
