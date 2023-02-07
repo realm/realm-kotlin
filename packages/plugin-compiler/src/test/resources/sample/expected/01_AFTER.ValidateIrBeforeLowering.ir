@@ -1771,6 +1771,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-binaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="binaryListField"
                     list: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<kotlin.ByteArray> declared in sample.input.Sample.<set-binaryListField>' type=io.realm.kotlin.types.RealmList<kotlin.ByteArray> origin=null
+      PROPERTY name:decimal128ListField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:decimal128ListField type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmListExtKt.realmListOf): io.realm.kotlin.types.RealmList<T of io.realm.kotlin.ext.RealmListExtKt.realmListOf> declared in io.realm.kotlin.ext.RealmListExtKt' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+              <T>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+        FUN name:<get-decimal128ListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>
+          correspondingProperty: PROPERTY name:decimal128ListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-decimal128ListField> (): io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample'
+              BLOCK type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-decimal128ListField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-decimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:decimal128ListField type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-decimal128ListField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getList <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmList<R of io.realm.kotlin.internal.RealmObjectHelper.getList> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmList<R of io.realm.kotlin.internal.RealmObjectHelper.getList> origin=GET_PROPERTY
+                      <R>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-decimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="decimal128ListField"
+        FUN name:<set-decimal128ListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:decimal128ListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-decimal128ListField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-decimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:decimal128ListField type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-decimal128ListField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample.<set-decimal128ListField>' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setList <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, list: io.realm.kotlin.types.RealmList<T of io.realm.kotlin.internal.RealmObjectHelper.setList>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.UnmanagedToManagedObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-decimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    col: CONST String type=kotlin.String value="decimal128ListField"
+                    list: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample.<set-decimal128ListField>' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
       PROPERTY name:objectListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectListField type:io.realm.kotlin.types.RealmList<sample.input.Sample> visibility:private
           EXPRESSION_BODY
@@ -2619,6 +2672,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableBinaryListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="nullableBinaryListField"
                     list: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<kotlin.ByteArray?> declared in sample.input.Sample.<set-nullableBinaryListField>' type=io.realm.kotlin.types.RealmList<kotlin.ByteArray?> origin=null
+      PROPERTY name:nullableDecimal128ListField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128ListField type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmListOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmListExtKt.realmListOf): io.realm.kotlin.types.RealmList<T of io.realm.kotlin.ext.RealmListExtKt.realmListOf> declared in io.realm.kotlin.ext.RealmListExtKt' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+              <T>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+        FUN name:<get-nullableDecimal128ListField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>
+          correspondingProperty: PROPERTY name:nullableDecimal128ListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-nullableDecimal128ListField> (): io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample'
+              BLOCK type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDecimal128ListField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableDecimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128ListField type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDecimal128ListField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getList <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmList<R of io.realm.kotlin.internal.RealmObjectHelper.getList> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmList<R of io.realm.kotlin.internal.RealmObjectHelper.getList> origin=GET_PROPERTY
+                      <R>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableDecimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="nullableDecimal128ListField"
+        FUN name:<set-nullableDecimal128ListField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:nullableDecimal128ListField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDecimal128ListField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableDecimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128ListField type:io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDecimal128ListField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample.<set-nullableDecimal128ListField>' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setList <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, list: io.realm.kotlin.types.RealmList<T of io.realm.kotlin.internal.RealmObjectHelper.setList>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.UnmanagedToManagedObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableDecimal128ListField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    col: CONST String type=kotlin.String value="nullableDecimal128ListField"
+                    list: GET_VAR '<set-?>: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample.<set-nullableDecimal128ListField>' type=io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
       PROPERTY name:nullableRealmAnyListField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableRealmAnyListField type:io.realm.kotlin.types.RealmList<io.realm.kotlin.types.RealmAny?> visibility:private
           EXPRESSION_BODY
@@ -3414,6 +3520,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-binarySetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="binarySetField"
                     set: GET_VAR '<set-?>: io.realm.kotlin.types.RealmSet<kotlin.ByteArray> declared in sample.input.Sample.<set-binarySetField>' type=io.realm.kotlin.types.RealmSet<kotlin.ByteArray> origin=null
+      PROPERTY name:decimal128SetField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:decimal128SetField type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+              <T>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+        FUN name:<get-decimal128SetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>
+          correspondingProperty: PROPERTY name:decimal128SetField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-decimal128SetField> (): io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample'
+              BLOCK type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-decimal128SetField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-decimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:decimal128SetField type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-decimal128SetField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<R of io.realm.kotlin.internal.RealmObjectHelper.getSet?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<R of io.realm.kotlin.internal.RealmObjectHelper.getSet?> origin=GET_PROPERTY
+                      <R>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-decimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="decimal128SetField"
+        FUN name:<set-decimal128SetField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:decimal128SetField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-decimal128SetField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-decimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:decimal128SetField type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-decimal128SetField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample.<set-decimal128SetField>' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setSet <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, set: io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.internal.RealmObjectHelper.setSet>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.UnmanagedToManagedObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-decimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    col: CONST String type=kotlin.String value="decimal128SetField"
+                    set: GET_VAR '<set-?>: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample.<set-decimal128SetField>' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
       PROPERTY name:objectSetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:objectSetField type:io.realm.kotlin.types.RealmSet<sample.input.Sample> visibility:private
           EXPRESSION_BODY
@@ -4209,6 +4368,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableBinarySetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="nullableBinarySetField"
                     set: GET_VAR '<set-?>: io.realm.kotlin.types.RealmSet<kotlin.ByteArray?> declared in sample.input.Sample.<set-nullableBinarySetField>' type=io.realm.kotlin.types.RealmSet<kotlin.ByteArray?> origin=null
+      PROPERTY name:nullableDecimal128SetField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128SetField type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmSetOf <T> (vararg elements: T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf): io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.ext.RealmSetExtKt.realmSetOf> declared in io.realm.kotlin.ext.RealmSetExtKt' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+              <T>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+        FUN name:<get-nullableDecimal128SetField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>
+          correspondingProperty: PROPERTY name:nullableDecimal128SetField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-nullableDecimal128SetField> (): io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample'
+              BLOCK type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDecimal128SetField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableDecimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128SetField type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDecimal128SetField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getSet <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmSet<R of io.realm.kotlin.internal.RealmObjectHelper.getSet?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmSet<R of io.realm.kotlin.internal.RealmObjectHelper.getSet?> origin=GET_PROPERTY
+                      <R>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableDecimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="nullableDecimal128SetField"
+        FUN name:<set-nullableDecimal128SetField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:nullableDecimal128SetField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDecimal128SetField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableDecimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128SetField type:io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDecimal128SetField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample.<set-nullableDecimal128SetField>' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setSet <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, set: io.realm.kotlin.types.RealmSet<T of io.realm.kotlin.internal.RealmObjectHelper.setSet>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.UnmanagedToManagedObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableDecimal128SetField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    col: CONST String type=kotlin.String value="nullableDecimal128SetField"
+                    set: GET_VAR '<set-?>: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample.<set-nullableDecimal128SetField>' type=io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
       PROPERTY name:nullableRealmAnySetField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableRealmAnySetField type:io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmAny?> visibility:private
           EXPRESSION_BODY
@@ -5004,6 +5216,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-binaryDictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="binaryDictionaryField"
                     dictionary: GET_VAR '<set-?>: io.realm.kotlin.types.RealmDictionary<kotlin.ByteArray> declared in sample.input.Sample.<set-binaryDictionaryField>' type=io.realm.kotlin.types.RealmDictionary<kotlin.ByteArray> origin=null
+      PROPERTY name:decimal128DictionaryField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:decimal128DictionaryField type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmDictionaryOf <T> (vararg elements: kotlin.Pair<kotlin.String, T of io.realm.kotlin.ext.RealmDictionaryExtKt.realmDictionaryOf>): io.realm.kotlin.types.RealmDictionary<T of io.realm.kotlin.ext.RealmDictionaryExtKt.realmDictionaryOf> declared in io.realm.kotlin.ext.RealmDictionaryExtKt' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+              <T>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+        FUN name:<get-decimal128DictionaryField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>
+          correspondingProperty: PROPERTY name:decimal128DictionaryField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-decimal128DictionaryField> (): io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample'
+              BLOCK type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-decimal128DictionaryField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-decimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:decimal128DictionaryField type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-decimal128DictionaryField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getDictionary <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmDictionary<R of io.realm.kotlin.internal.RealmObjectHelper.getDictionary?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmDictionary<R of io.realm.kotlin.internal.RealmObjectHelper.getDictionary?> origin=GET_PROPERTY
+                      <R>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-decimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="decimal128DictionaryField"
+        FUN name:<set-decimal128DictionaryField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:decimal128DictionaryField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-decimal128DictionaryField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-decimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:decimal128DictionaryField type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-decimal128DictionaryField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample.<set-decimal128DictionaryField>' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setDictionary <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, dictionary: io.realm.kotlin.types.RealmDictionary<T of io.realm.kotlin.internal.RealmObjectHelper.setDictionary>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.UnmanagedToManagedObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-decimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    col: CONST String type=kotlin.String value="decimal128DictionaryField"
+                    dictionary: GET_VAR '<set-?>: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample.<set-decimal128DictionaryField>' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> origin=null
       PROPERTY name:nullableStringDictionaryField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableStringDictionaryField type:io.realm.kotlin.types.RealmDictionary<kotlin.String?> visibility:private
           EXPRESSION_BODY
@@ -5746,6 +6011,59 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableBinaryDictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     col: CONST String type=kotlin.String value="nullableBinaryDictionaryField"
                     dictionary: GET_VAR '<set-?>: io.realm.kotlin.types.RealmDictionary<kotlin.ByteArray?> declared in sample.input.Sample.<set-nullableBinaryDictionaryField>' type=io.realm.kotlin.types.RealmDictionary<kotlin.ByteArray?> origin=null
+      PROPERTY name:nullableDecimal128DictionaryField visibility:public modality:FINAL [var]
+        FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128DictionaryField type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private
+          EXPRESSION_BODY
+            CALL 'public final fun realmDictionaryOf <T> (vararg elements: kotlin.Pair<kotlin.String, T of io.realm.kotlin.ext.RealmDictionaryExtKt.realmDictionaryOf>): io.realm.kotlin.types.RealmDictionary<T of io.realm.kotlin.ext.RealmDictionaryExtKt.realmDictionaryOf> declared in io.realm.kotlin.ext.RealmDictionaryExtKt' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+              <T>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+        FUN name:<get-nullableDecimal128DictionaryField> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>
+          correspondingProperty: PROPERTY name:nullableDecimal128DictionaryField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-nullableDecimal128DictionaryField> (): io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample'
+              BLOCK type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                  CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                    $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDecimal128DictionaryField>' type=sample.input.Sample origin=null
+                WHEN type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                  BRANCH
+                    if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                      arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableDecimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      arg1: CONST Null type=kotlin.Nothing? value=null
+                    then: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128DictionaryField type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                      receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-nullableDecimal128DictionaryField>' type=sample.input.Sample origin=null
+                  BRANCH
+                    if: CONST Boolean type=kotlin.Boolean value=true
+                    then: CALL 'internal final fun getDictionary <R> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.internal.ManagedRealmDictionary<R of io.realm.kotlin.internal.RealmObjectHelper.getDictionary?> [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.internal.ManagedRealmDictionary<R of io.realm.kotlin.internal.RealmObjectHelper.getDictionary?> origin=GET_PROPERTY
+                      <R>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                      obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-nullableDecimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                      propertyName: CONST String type=kotlin.String value="nullableDecimal128DictionaryField"
+        FUN name:<set-nullableDecimal128DictionaryField> visibility:public modality:FINAL <> ($this:sample.input.Sample, <set-?>:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>) returnType:kotlin.Unit
+          correspondingProperty: PROPERTY name:nullableDecimal128DictionaryField visibility:public modality:FINAL [var]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>
+          BLOCK_BODY
+            BLOCK type=kotlin.Unit origin=null
+              VAR IR_TEMPORARY_VARIABLE name:tmp0_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val]
+                CALL 'public open fun <get-io_realm_kotlin_objectReference> (): io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=GET_PROPERTY
+                  $this: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDecimal128DictionaryField>' type=sample.input.Sample origin=null
+              WHEN type=kotlin.Unit origin=null
+                BRANCH
+                  if: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQ
+                    arg0: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableDecimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    arg1: CONST Null type=kotlin.Nothing? value=null
+                  then: SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:nullableDecimal128DictionaryField type:io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> visibility:private' type=kotlin.Unit origin=null
+                    receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-nullableDecimal128DictionaryField>' type=sample.input.Sample origin=null
+                    value: GET_VAR '<set-?>: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample.<set-nullableDecimal128DictionaryField>' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
+                BRANCH
+                  if: CONST Boolean type=kotlin.Boolean value=true
+                  then: CALL 'internal final fun setDictionary <T> (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, col: kotlin.String, dictionary: io.realm.kotlin.types.RealmDictionary<T of io.realm.kotlin.internal.RealmObjectHelper.setDictionary>, updatePolicy: io.realm.kotlin.UpdatePolicy, cache: kotlin.collections.MutableMap<io.realm.kotlin.types.BaseRealmObject, io.realm.kotlin.types.BaseRealmObject>{ io.realm.kotlin.internal.RealmUtilsKt.UnmanagedToManagedObjectCache }): kotlin.Unit [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Unit origin=GET_PROPERTY
+                    <T>: org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }
+                    $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+                    obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-nullableDecimal128DictionaryField>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
+                    col: CONST String type=kotlin.String value="nullableDecimal128DictionaryField"
+                    dictionary: GET_VAR '<set-?>: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample.<set-nullableDecimal128DictionaryField>' type=io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> origin=null
       PROPERTY name:nullableRealmAnyDictionaryField visibility:public modality:FINAL [var]
         FIELD PROPERTY_BACKING_FIELD name:nullableRealmAnyDictionaryField type:io.realm.kotlin.types.RealmDictionary<io.realm.kotlin.types.RealmAny?> visibility:private
           EXPRESSION_BODY
@@ -6118,7 +6436,7 @@ MODULE_FRAGMENT name:<main>
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="Sample"
                   primaryKey: CONST String type=kotlin.String value="id"
-                  numProperties: CONST Long type=kotlin.Long value=117
+                  numProperties: CONST Long type=kotlin.Long value=123
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
@@ -6488,6 +6806,17 @@ MODULE_FRAGMENT name:<main>
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="decimal128ListField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DECIMAL128' type=io.realm.kotlin.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.kotlin.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=false
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
                       name: CONST String type=kotlin.String value="objectListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_OBJECT' type=io.realm.kotlin.internal.interop.PropertyType
@@ -6664,6 +6993,17 @@ MODULE_FRAGMENT name:<main>
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="nullableDecimal128ListField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DECIMAL128' type=io.realm.kotlin.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_LIST' type=io.realm.kotlin.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
                       name: CONST String type=kotlin.String value="nullableRealmAnyListField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_MIXED' type=io.realm.kotlin.internal.interop.PropertyType
@@ -6821,6 +7161,17 @@ MODULE_FRAGMENT name:<main>
                       name: CONST String type=kotlin.String value="binarySetField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_BINARY' type=io.realm.kotlin.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_SET' type=io.realm.kotlin.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=false
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="decimal128SetField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DECIMAL128' type=io.realm.kotlin.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_SET' type=io.realm.kotlin.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
@@ -6994,6 +7345,17 @@ MODULE_FRAGMENT name:<main>
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="nullableDecimal128SetField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DECIMAL128' type=io.realm.kotlin.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_SET' type=io.realm.kotlin.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
                       name: CONST String type=kotlin.String value="nullableRealmAnySetField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_MIXED' type=io.realm.kotlin.internal.interop.PropertyType
@@ -7159,6 +7521,17 @@ MODULE_FRAGMENT name:<main>
                       isIndexed: CONST Boolean type=kotlin.Boolean value=false
                     CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
                       $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="decimal128DictionaryField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DECIMAL128' type=io.realm.kotlin.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_DICTIONARY' type=io.realm.kotlin.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=false
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
                       name: CONST String type=kotlin.String value="nullableStringDictionaryField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_STRING' type=io.realm.kotlin.internal.interop.PropertyType
@@ -7305,6 +7678,17 @@ MODULE_FRAGMENT name:<main>
                       name: CONST String type=kotlin.String value="nullableBinaryDictionaryField"
                       publicName: CONST String type=kotlin.String value=""
                       type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_BINARY' type=io.realm.kotlin.internal.interop.PropertyType
+                      collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_DICTIONARY' type=io.realm.kotlin.internal.interop.CollectionType
+                      linkTarget: CONST String type=kotlin.String value=""
+                      linkOriginPropertyName: CONST String type=kotlin.String value=""
+                      isNullable: CONST Boolean type=kotlin.Boolean value=true
+                      isPrimaryKey: CONST Boolean type=kotlin.Boolean value=false
+                      isIndexed: CONST Boolean type=kotlin.Boolean value=false
+                    CALL 'public final fun create (name: kotlin.String, publicName: kotlin.String?, type: io.realm.kotlin.internal.interop.PropertyType, collectionType: io.realm.kotlin.internal.interop.CollectionType, linkTarget: kotlin.String?, linkOriginPropertyName: kotlin.String?, isNullable: kotlin.Boolean, isPrimaryKey: kotlin.Boolean, isIndexed: kotlin.Boolean): io.realm.kotlin.internal.interop.PropertyInfo declared in io.realm.kotlin.internal.interop.PropertyInfo.Companion' type=io.realm.kotlin.internal.interop.PropertyInfo origin=null
+                      $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.PropertyInfo.Companion
+                      name: CONST String type=kotlin.String value="nullableDecimal128DictionaryField"
+                      publicName: CONST String type=kotlin.String value=""
+                      type: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_PROPERTY_TYPE_DECIMAL128' type=io.realm.kotlin.internal.interop.PropertyType
                       collectionType: GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:RLM_COLLECTION_TYPE_DICTIONARY' type=io.realm.kotlin.internal.interop.CollectionType
                       linkTarget: CONST String type=kotlin.String value=""
                       linkOriginPropertyName: CONST String type=kotlin.String value=""
@@ -7618,6 +8002,11 @@ MODULE_FRAGMENT name:<main>
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="decimal128ListField"
+                    second: PROPERTY_REFERENCE 'public final decimal128ListField: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> [var]' field=null getter='public final fun <get-decimal128ListField> (): io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample' setter='public final fun <set-decimal128ListField> (<set-?>: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="objectListField"
                     second: PROPERTY_REFERENCE 'public final objectListField: io.realm.kotlin.types.RealmList<sample.input.Sample> [var]' field=null getter='public final fun <get-objectListField> (): io.realm.kotlin.types.RealmList<sample.input.Sample> declared in sample.input.Sample' setter='public final fun <set-objectListField> (<set-?>: io.realm.kotlin.types.RealmList<sample.input.Sample>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
@@ -7698,6 +8087,11 @@ MODULE_FRAGMENT name:<main>
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="nullableDecimal128ListField"
+                    second: PROPERTY_REFERENCE 'public final nullableDecimal128ListField: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> [var]' field=null getter='public final fun <get-nullableDecimal128ListField> (): io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample' setter='public final fun <set-nullableDecimal128ListField> (<set-?>: io.realm.kotlin.types.RealmList<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="nullableRealmAnyListField"
                     second: PROPERTY_REFERENCE 'public final nullableRealmAnyListField: io.realm.kotlin.types.RealmList<io.realm.kotlin.types.RealmAny?> [var]' field=null getter='public final fun <get-nullableRealmAnyListField> (): io.realm.kotlin.types.RealmList<io.realm.kotlin.types.RealmAny?> declared in sample.input.Sample' setter='public final fun <set-nullableRealmAnyListField> (<set-?>: io.realm.kotlin.types.RealmList<io.realm.kotlin.types.RealmAny?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
@@ -7770,6 +8164,11 @@ MODULE_FRAGMENT name:<main>
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="binarySetField"
                     second: PROPERTY_REFERENCE 'public final binarySetField: io.realm.kotlin.types.RealmSet<kotlin.ByteArray> [var]' field=null getter='public final fun <get-binarySetField> (): io.realm.kotlin.types.RealmSet<kotlin.ByteArray> declared in sample.input.Sample' setter='public final fun <set-binarySetField> (<set-?>: io.realm.kotlin.types.RealmSet<kotlin.ByteArray>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="decimal128SetField"
+                    second: PROPERTY_REFERENCE 'public final decimal128SetField: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> [var]' field=null getter='public final fun <get-decimal128SetField> (): io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample' setter='public final fun <set-decimal128SetField> (<set-?>: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
@@ -7848,6 +8247,11 @@ MODULE_FRAGMENT name:<main>
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="nullableDecimal128SetField"
+                    second: PROPERTY_REFERENCE 'public final nullableDecimal128SetField: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> [var]' field=null getter='public final fun <get-nullableDecimal128SetField> (): io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample' setter='public final fun <set-nullableDecimal128SetField> (<set-?>: io.realm.kotlin.types.RealmSet<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="nullableRealmAnySetField"
                     second: PROPERTY_REFERENCE 'public final nullableRealmAnySetField: io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmAny?> [var]' field=null getter='public final fun <get-nullableRealmAnySetField> (): io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmAny?> declared in sample.input.Sample' setter='public final fun <set-nullableRealmAnySetField> (<set-?>: io.realm.kotlin.types.RealmSet<io.realm.kotlin.types.RealmAny?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
@@ -7923,6 +8327,11 @@ MODULE_FRAGMENT name:<main>
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="decimal128DictionaryField"
+                    second: PROPERTY_REFERENCE 'public final decimal128DictionaryField: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> [var]' field=null getter='public final fun <get-decimal128DictionaryField> (): io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }> declared in sample.input.Sample' setter='public final fun <set-decimal128DictionaryField> (<set-?>: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128{ org.mongodb.kbson.Decimal128Kt.Decimal128 }>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="nullableStringDictionaryField"
                     second: PROPERTY_REFERENCE 'public final nullableStringDictionaryField: io.realm.kotlin.types.RealmDictionary<kotlin.String?> [var]' field=null getter='public final fun <get-nullableStringDictionaryField> (): io.realm.kotlin.types.RealmDictionary<kotlin.String?> declared in sample.input.Sample' setter='public final fun <set-nullableStringDictionaryField> (<set-?>: io.realm.kotlin.types.RealmDictionary<kotlin.String?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
@@ -7990,6 +8399,11 @@ MODULE_FRAGMENT name:<main>
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
                     first: CONST String type=kotlin.String value="nullableBinaryDictionaryField"
                     second: PROPERTY_REFERENCE 'public final nullableBinaryDictionaryField: io.realm.kotlin.types.RealmDictionary<kotlin.ByteArray?> [var]' field=null getter='public final fun <get-nullableBinaryDictionaryField> (): io.realm.kotlin.types.RealmDictionary<kotlin.ByteArray?> declared in sample.input.Sample' setter='public final fun <set-nullableBinaryDictionaryField> (<set-?>: io.realm.kotlin.types.RealmDictionary<kotlin.ByteArray?>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
+                  CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
+                    <class: A>: kotlin.String
+                    <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>
+                    first: CONST String type=kotlin.String value="nullableDecimal128DictionaryField"
+                    second: PROPERTY_REFERENCE 'public final nullableDecimal128DictionaryField: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> [var]' field=null getter='public final fun <get-nullableDecimal128DictionaryField> (): io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }> declared in sample.input.Sample' setter='public final fun <set-nullableDecimal128DictionaryField> (<set-?>: io.realm.kotlin.types.RealmDictionary<org.mongodb.kbson.BsonDecimal128?{ org.mongodb.kbson.Decimal128Kt.Decimal128? }>): kotlin.Unit declared in sample.input.Sample' type=kotlin.reflect.KMutableProperty1<sample.input.Sample, kotlin.Any?> origin=null
                   CONSTRUCTOR_CALL 'public constructor <init> (first: A of kotlin.Pair, second: B of kotlin.Pair) [primary] declared in kotlin.Pair' type=kotlin.Pair<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> origin=null
                     <class: A>: kotlin.String
                     <class: B>: kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>

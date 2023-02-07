@@ -209,6 +209,7 @@ class GenerationExtensionTest {
             "uuidListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128ListField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
@@ -226,6 +227,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128ListField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "nullableRealmAnyListField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Set types
@@ -244,6 +246,7 @@ class GenerationExtensionTest {
             "uuidSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128SetField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
 
             // Nullable set types
             "nullableStringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -260,6 +263,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128SetField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "nullableRealmAnySetField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Dictionary types
@@ -277,6 +281,7 @@ class GenerationExtensionTest {
             "bsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "uuidDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "binaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128DictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
 
             // Nullable dictionary types
             "nullableStringDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -293,6 +298,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128DictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "nullableRealmAnyDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
             "nullableObjectDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "nullableEmbeddedObjectDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
