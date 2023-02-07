@@ -1020,7 +1020,6 @@ class RealmDictionaryTests {
     }
 
     @Suppress("UNCHECKED_CAST", "ComplexMethod")
-    // TODO add support for Decimal128
     private fun <T> getDataSetForClassifier(
         classifier: KClassifier,
         nullable: Boolean
