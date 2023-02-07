@@ -16,7 +16,9 @@
 
 package io.realm.kotlin.ext
 
+import io.realm.kotlin.Realm
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.UnmanagedState
 import io.realm.kotlin.internal.checkNotificationsAvailable
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -28,6 +30,9 @@ import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
@@ -68,19 +73,19 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
 /**
  * Observe changes to a Realm object. The flow would emit an [InitialObject] once subscribed and
  * then, on every change to the object an [UpdatedObject]. If the observed object is deleted from
- * the Realm, the flow would emit a [DeletedObject] and then will complete, otherwise it will continue
- * running until canceled.
+ * the Realm, the flow would emit a [DeletedObject] and then will complete, otherwise it will
+ * continue running until canceled.
  *
- * The change calculations will execute on the thread represented by
- * [Configuration.notificationDispatcher].
+ * The change calculations will be executed on the thread represented by
+ * `Configuration.notificationDispatcher`.
  *
  * The flow has an internal buffer of [Channel.BUFFERED] but if the consumer fails to consume
  * the elements in a timely manner the coroutine scope will be cancelled with a
  * [CancellationException].
  *
  * @return a flow representing changes to the object.
- * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject] from
- * a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
+ * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject]
+ * from a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
 public fun <T : BaseRealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {

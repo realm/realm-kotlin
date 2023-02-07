@@ -4,10 +4,70 @@
 * None.
 
 ### Enhancements
+* Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
+* [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
+* [Sync] Added `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
+* [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
+ 
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.6.2 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
 * None.
 
 ### Fixed
 * None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.6.1 (2023-02-02)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Allow defining properties with the field name as the persisted name. ([#1240](https://github.com/realm/realm-kotlin/issues/1240))
+* Fix compilation error when accessing Realm Kotlin model classes from Java code. ([#1256](https://github.com/realm/realm-kotlin/issues/1256))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -53,8 +113,6 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] Add support for accessing user auth profile metadata and custom data through the extension functions 'User.profileAsBsonDocument()' and 'User.customDataAsBsonDocument()'. (Issue [#750](https://github.com/realm/realm-kotlin/pull/750))
 * [Sync] Add support for `App.callResetPasswordFunction` (Issue [#744](https://github.com/realm/realm-kotlin/issues/744))
 * [Sync] Add support for connection state and connection state change listerners with `SyncSession.connectionState` and `SyncSession.connectionStateAsFlow(). (Issue [#429](https://github.com/realm/realm-kotlin/issues/429))
-* [Sync] Added `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
-* [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
 
 ### Fixed
 * Fix missing `Realm.asFlow()`-events from remote updates on synced realms. (Issue [#1070](https://github.com/realm/realm-kotlin/issues/1070))
