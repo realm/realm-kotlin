@@ -159,7 +159,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     ): Pair<V?, Boolean> {
         realmReference.checkClosed()
         return insertInternal(key, value, updatePolicy, cache)
-            .also { modCount += 1 }
+            .also { modCount++ }
     }
 
     // Similarly to insert, Map returns the erased value whereas the entry Set returns whether the
@@ -167,7 +167,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun erase(key: K): Pair<V?, Boolean> {
         realmReference.checkClosed()
         return eraseInternal(key)
-            .also { modCount += 1 }
+            .also { modCount++ }
     }
 
     fun getEntry(position: Int): Pair<K, V> {
@@ -213,7 +213,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     ): V? {
         realmReference.checkClosed()
         return insertInternal(key, value, updatePolicy, cache).first
-            .also { modCount += 1 }
+            .also { modCount++ }
     }
 
     fun putAll(
@@ -230,13 +230,13 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun remove(key: K): V? {
         realmReference.checkClosed()
         return eraseInternal(key).first
-            .also { modCount += 1 }
+            .also { modCount++ }
     }
 
     fun clear() {
         realmReference.checkClosed()
         RealmInterop.realm_dictionary_clear(nativePointer)
-        modCount += 1
+        modCount++
     }
 
     fun containsKey(key: K): Boolean {
