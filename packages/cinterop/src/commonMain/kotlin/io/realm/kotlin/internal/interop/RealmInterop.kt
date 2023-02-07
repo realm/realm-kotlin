@@ -70,8 +70,6 @@ interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
-interface RealmObjectChangesT : RealmChangesT
-interface RealmCollectionChangesT : RealmChangesT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -506,6 +504,10 @@ expect object RealmInterop {
     fun <T, R> realm_collection_changes_get_ranges(
         change: RealmChangesPointer,
         builder: CollectionChangeSetBuilder<T, R>
+    )
+    fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
     )
 
     // App

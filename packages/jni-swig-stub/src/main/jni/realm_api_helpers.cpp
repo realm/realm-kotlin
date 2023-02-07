@@ -162,20 +162,11 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
     );
 }
 
-realm_notification_token_t *
-register_notification_cb(int64_t collection_ptr, realm_collection_type_e collection_type,
-                         jobject callback) {
-    auto jenv = get_env();
+realm_on_object_change_func_t get_on_object_change() {
+    auto jenv = get_env(true);
     static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
-
-    auto user_data = static_cast<jobject>(get_env()->NewGlobalRef(callback));
-    auto user_data_free = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-
-    // TODO this is instantiated also for object callbacks which shouldn't be the case
-    auto on_collection_change = [](void *userdata, const realm_collection_changes_t *changes) {
+    return [](realm_userdata_t userdata, const realm_object_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
         //  https://github.com/realm/realm-kotlin/issues/889
@@ -185,6 +176,47 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                              on_change_method,
                              reinterpret_cast<jlong>(changes));
     };
+}
+
+realm_on_collection_change_func_t get_on_collection_change() {
+    auto jenv = get_env(true);
+    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
+    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    return [](realm_userdata_t userdata, const realm_collection_changes_t* changes) {
+        // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
+        //  like the C-API error callback below
+        //  https://github.com/realm/realm-kotlin/issues/889
+        auto jenv = get_env(true);
+        jni_check_exception(jenv);
+        jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                             on_change_method,
+                             reinterpret_cast<jlong>(changes));
+    };
+}
+
+realm_on_dictionary_change_func_t get_on_dictionary_change() {
+    auto jenv = get_env(true);
+    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
+    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    return [](realm_userdata_t userdata, const realm_dictionary_changes_t* changes) {
+        // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
+        //  like the C-API error callback below
+        //  https://github.com/realm/realm-kotlin/issues/889
+        auto jenv = get_env(true);
+        jni_check_exception(jenv);
+        jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                             on_change_method,
+                             reinterpret_cast<jlong>(changes));
+    };
+}
+
+realm_notification_token_t *
+register_notification_cb(int64_t collection_ptr, realm_collection_type_e collection_type,
+                         jobject callback) {
+    auto user_data = static_cast<jobject>(get_env()->NewGlobalRef(callback));
+    auto user_data_free = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
 
     switch (collection_type) {
         case RLM_COLLECTION_TYPE_NONE: return realm_object_add_notification_callback(
@@ -192,37 +224,28 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    [](void *userdata, const realm_object_changes_t *changes) { // object change callback
-                        // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
-                        //  like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/889
-                        auto jenv = get_env(true);
-                        jni_check_exception(jenv);
-                        jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                             on_change_method,
-                                             reinterpret_cast<jlong>(changes));
-                    }
+                    get_on_object_change()
             );
         case RLM_COLLECTION_TYPE_LIST: return realm_list_add_notification_callback(
                     reinterpret_cast<realm_list_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    on_collection_change // change callback
+                    get_on_collection_change()
             );
         case RLM_COLLECTION_TYPE_SET: return realm_set_add_notification_callback(
                     reinterpret_cast<realm_set_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    on_collection_change // change callback
+                    get_on_collection_change()
             );
         case RLM_COLLECTION_TYPE_DICTIONARY: return realm_dictionary_add_notification_callback(
                     reinterpret_cast<realm_dictionary_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    on_collection_change // change callback
+                    get_on_dictionary_change()
             );
     }
 }

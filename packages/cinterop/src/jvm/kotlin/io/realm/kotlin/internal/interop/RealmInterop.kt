@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -853,13 +852,15 @@ actual object RealmInterop {
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
+        val wasCleared = BooleanArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
             deletionCount,
             insertionCount,
             modificationCount,
-            movesCount
+            movesCount,
+            wasCleared
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
@@ -889,7 +890,10 @@ actual object RealmInterop {
         builder.movesCount = movesCount[0].toInt()
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(
+        change: RealmChangesPointer,
+        builder: CollectionChangeSetBuilder<T, R>
+    ) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)
@@ -931,6 +935,58 @@ actual object RealmInterop {
         builder.initRangesArray(builder::insertionRanges, insertionRanges, insertRangesCount[0])
         builder.initRangesArray(builder::modificationRanges, modificationRanges, modificationRangesCount[0])
         builder.initRangesArray(builder::modificationRangesAfter, modificationRangesAfter, modificationRangesCount[0])
+    }
+
+    @Suppress("MagicNumber") // TODO remove this once the size hack is removed
+    actual fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
+    ) {
+        val deletions = longArrayOf(0)
+        val insertions = longArrayOf(0)
+        val modifications = longArrayOf(0)
+
+        // TODO remove size hack and use output with actual sizes once it's implemented in the C-API
+        //  https://github.com/realm/realm-core/issues/6228
+//        realmc.realm_dictionary_get_change_sizes(
+//            deletions,
+//            insertions,
+//            modifications
+//        )
+//        val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
+//        val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
+//        val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
+        val deletionStructs = realmc.new_valueArray(30)
+        val insertionStructs = realmc.new_valueArray(30)
+        val modificationStructs = realmc.new_valueArray(30)
+
+        realmc.realm_dictionary_get_changes(
+            change.cptr(),
+            deletionStructs,
+            deletions,
+            insertionStructs,
+            insertions,
+            modificationStructs,
+            modifications
+        )
+
+        // TODO optimize - integrate within mem allocator?
+        val deletedKeys = (0 until deletions[0]).map {
+            realmc.valueArray_getitem(deletionStructs, it.toInt()).string
+        }
+        val insertedKeys = (0 until insertions[0]).map {
+            realmc.valueArray_getitem(insertionStructs, it.toInt()).string
+        }
+        val modifiedKeys = (0 until modifications[0]).map {
+            realmc.valueArray_getitem(modificationStructs, it.toInt()).string
+        }
+        realmc.delete_valueArray(deletionStructs)
+        realmc.delete_valueArray(insertionStructs)
+        realmc.delete_valueArray(modificationStructs)
+
+        builder.initDeletions(deletedKeys.toTypedArray())
+        builder.initInsertions(insertedKeys.toTypedArray())
+        builder.initModifications(modifiedKeys.toTypedArray())
     }
 
     actual fun realm_app_get(

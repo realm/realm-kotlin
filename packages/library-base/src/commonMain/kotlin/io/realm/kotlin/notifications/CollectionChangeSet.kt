@@ -91,21 +91,21 @@ public interface SetChangeSet {
 }
 
 /**
- * TODO
+ * This interface models the changes that can occur to a map.
  */
 public interface MapChangeSet<K> {
     /**
-     * TODO
+     * The keys that have been deleted in this version of the map.
      */
     public val deletions: Array<K>
 
     /**
-     * TODO
+     * The keys that have been inserted in this version of the map.
      */
     public val insertions: Array<K>
 
     /**
-     * TODO
+     * The keys whose values have changed in this version of the map.
      */
     public val changes: Array<K>
 }
@@ -114,4 +114,3 @@ public interface MapChangeSet<K> {
  * TODO
  */
 public typealias DictionaryChangeSet = MapChangeSet<String>
-

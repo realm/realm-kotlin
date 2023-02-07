@@ -16,17 +16,30 @@
 
 package io.realm.kotlin.notifications
 
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
 
 /**
- * TODO
+ * This sealed interface describes the possible changes that can happen to a [RealmDictionary].
+ *
+ * The states are represented by the specific subclasses [InitialMap], [UpdatedMap] and
+ * [DeletedMap]. When the map is deleted an empty map is emitted instead of `null`.
+ *
+ * Since maps do not expose indices your UI components will have to manually handle updates:
+ *
+ * ```
+ * person.addresses.asFlow()
+ *   .collect { mapChange: MapChange<String, Address> ->
+ *       handleChange(mapChange.map)
+ *   }
+ * ```
  */
 public sealed interface MapChange<K, V> {
     public val map: RealmMap<K, V>
 }
 
 /**
- * TODO
+ * Convenience alias for [RealmDictionary] changes. It represents a [MapChange] of `<String, V>`.
  */
 public typealias DictionaryChange<V> = MapChange<String, V>
 
@@ -36,6 +49,11 @@ public typealias DictionaryChange<V> = MapChange<String, V>
  * thread or device updated the object in the meantime.
  */
 public interface InitialMap<K, V> : MapChange<K, V>
+
+/**
+ * Convenience alias for a [RealmDictionary] initial event. It represents an [InitialMap] of
+ * `<String, V>`.
+ */
 public typealias InitialDictionary<V> = InitialMap<String, V>
 
 /**
@@ -44,6 +62,11 @@ public typealias InitialDictionary<V> = InitialMap<String, V>
  * performed on the map.
  */
 public interface UpdatedMap<K, V> : MapChange<K, V>, MapChangeSet<K>
+
+/**
+ * Convenience alias for a [RealmDictionary] update event. It represents an [UpdatedMap] of
+ * `<String, V>`.
+ */
 public typealias UpdatedDictionary<V> = UpdatedMap<String, V>
 
 /**
@@ -51,4 +74,9 @@ public typealias UpdatedDictionary<V> = UpdatedMap<String, V>
  * removes the map. The flow will terminate after observing this event.
  */
 public interface DeletedMap<K, V> : MapChange<K, V>
+
+/**
+ * Convenience alias for a [RealmDictionary] deleted event. It represents a [DeletedMap] of
+ * `<String, V>`.
+ */
 public typealias DeletedDictionary<V> = DeletedMap<String, V>

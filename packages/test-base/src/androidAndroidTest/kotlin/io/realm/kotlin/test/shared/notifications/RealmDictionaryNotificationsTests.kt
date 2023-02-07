@@ -89,7 +89,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                     }
             }
 
-            // Assertion after empty set is emitted
+            // Assertion after empty dictionary is emitted
             channel.receive().let { dictionaryChange ->
                 assertIs<InitialDictionary<*>>(dictionaryChange)
 
@@ -104,13 +104,12 @@ class RealmDictionaryNotificationsTests : NotificationTests {
 
     @Test
     @Suppress("LongMethod")
-    @Ignore // TODO can't check changeset until https://github.com/realm/realm-core/issues/6228 is fixed
     override fun asFlow() {
         val dataSet = NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
             Pair(keys[i], value)
         }
         val container = realm.writeBlocking {
-            // Create an empty container with empty sets
+            // Create an empty container with empty dictionaries
             copyToRealm(RealmDictionaryContainer())
         }
 
@@ -126,51 +125,117 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                     }
             }
 
-//            // Assert a single insertion is reported
-//            realm.writeBlocking {
-//                val queriedContainer = findLatest(container)
-//                val queriedSet = queriedContainer!!.nullableObjectDictionaryField
-//                queriedSet.putAll(dataSet)
-//            }
-//
-//            channel.receive().let { dictionaryChange ->
-//                assertIs<UpdatedDictionary<*>>(dictionaryChange)
-//
-//                assertNotNull(dictionaryChange.map)
-//                assertEquals(dataSet.size, dictionaryChange.map.size)
-//                dictionaryChange.insertions.let { insertions ->
-//                    assertEquals(dataSet.size, insertions.size)
-//                    dataSet.map { it.first }
-//                        .also { keys ->
-//                            keys.containsAll(insertions.toList())
-//                        }
-//                }
-//                assertEquals(0, dictionaryChange.deletions.size)
-//            }
-//
-//            // Assert notification on removal of elements
-//            realm.writeBlocking {
-//                val queriedContainer = findLatest(container)!!
-//                val queriedDictionary = queriedContainer.nullableObjectDictionaryField
-//
-//                // We cannot just remove a RealmObject as equality isn't done at a structural level
-//                // so calling queriedDictionary.removeAll(dataset) won't work
-//                // Use iterator.remove() instead to remove the last element
-//                val iterator = queriedDictionary.iterator()
-//                while (iterator.hasNext()) {
-//                    iterator.next()
-//                }
-//                iterator.remove()
-//            }
-//
-//            channel.receive().let { dictionaryChange ->
-//                assertIs<UpdatedDictionary<*>>(dictionaryChange)
-//
-//                assertNotNull(dictionaryChange.map)
-//                assertEquals(dataSet.size - 1, dictionaryChange.map.size)
-//                assertEquals(1, dictionaryChange.deletions.size)
-//                assertEquals(0, dictionaryChange.insertions.size)
-//            }
+            // Assert a single insertion is reported
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedDictionary = queriedContainer!!.nullableObjectDictionaryField
+                queriedDictionary[dataSet[0].first] = dataSet[0].second
+            }
+
+            channel.receive().let { dictionaryChange ->
+                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+
+                assertNotNull(dictionaryChange.map)
+                assertEquals(1, dictionaryChange.map.size)
+                dictionaryChange.insertions.let { insertions ->
+                    assertEquals(1, insertions.size)
+                    assertEquals(dataSet[0].first, insertions[0])
+                }
+                assertEquals(0, dictionaryChange.deletions.size)
+            }
+
+            // Assert a change to a key is reported
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedDictionary = queriedContainer!!.nullableObjectDictionaryField
+                queriedDictionary[dataSet[0].first] = dataSet[1].second
+            }
+
+            channel.receive().let { dictionaryChange ->
+                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+
+                assertNotNull(dictionaryChange.map)
+                assertEquals(1, dictionaryChange.map.size)
+                dictionaryChange.changes.let { changes ->
+                    assertEquals(1, changes.size)
+                    assertEquals(dataSet[0].first, changes[0])
+                }
+                assertEquals(0, dictionaryChange.deletions.size)
+            }
+
+            // Assert multiple insertions at once are reported
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)
+                val queriedDictionary = queriedContainer!!.nullableObjectDictionaryField
+                queriedDictionary.putAll(dataSet.subList(1, dataSet.size))
+            }
+
+            channel.receive().let { dictionaryChange ->
+                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+
+                assertNotNull(dictionaryChange.map)
+                assertEquals(dataSet.size, dictionaryChange.map.size)
+                dictionaryChange.insertions.let { insertions ->
+                    assertEquals(dataSet.size - 1, insertions.size)
+                    dataSet.map { it.first }
+                        .also { keys ->
+                            keys.containsAll(insertions.toList())
+                        }
+                }
+                assertEquals(0, dictionaryChange.deletions.size)
+            }
+
+            // Assert notification on removal of elements
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)!!
+                val queriedDictionary = queriedContainer.nullableObjectDictionaryField
+                queriedDictionary.remove(dataSet[0].first)
+            }
+
+            channel.receive().let { dictionaryChange ->
+                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+
+                assertNotNull(dictionaryChange.map)
+                assertEquals(dataSet.size - 1, dictionaryChange.map.size)
+                assertEquals(1, dictionaryChange.deletions.size)
+                assertEquals(0, dictionaryChange.insertions.size)
+            }
+
+            // Assert notification on removal of elements via values iterator
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)!!
+                val queriedDictionary = queriedContainer.nullableObjectDictionaryField
+                val iterator = queriedDictionary.values.iterator()
+                iterator.next()
+                iterator.remove()
+            }
+
+            channel.receive().let { dictionaryChange ->
+                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+
+                assertNotNull(dictionaryChange.map)
+                assertEquals(dataSet.size - 2, dictionaryChange.map.size)
+                assertEquals(1, dictionaryChange.deletions.size)
+                assertEquals(0, dictionaryChange.insertions.size)
+            }
+
+            // Assert notification on removal of elements via entry set iterator
+            realm.writeBlocking {
+                val queriedContainer = findLatest(container)!!
+                val queriedDictionary = queriedContainer.nullableObjectDictionaryField
+                val iterator = queriedDictionary.entries.iterator()
+                iterator.next()
+                iterator.remove()
+            }
+
+            channel.receive().let { dictionaryChange ->
+                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+
+                assertNotNull(dictionaryChange.map)
+                assertTrue(dictionaryChange.map.isEmpty())
+                assertEquals(1, dictionaryChange.deletions.size)
+                assertEquals(0, dictionaryChange.insertions.size)
+            }
 
             observer.cancel()
             channel.close()
@@ -193,19 +258,19 @@ class RealmDictionaryNotificationsTests : NotificationTests {
             val observer1 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { flowSet ->
-                        channel1.trySend(flowSet)
+                    .collect { dictionaryChange ->
+                        channel1.trySend(dictionaryChange)
                     }
             }
             val observer2 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { flowSet ->
-                        channel2.trySend(flowSet)
+                    .collect { dictionaryChange ->
+                        channel2.trySend(dictionaryChange)
                     }
             }
 
-            // Ignore first emission with empty sets
+            // Ignore first emission with empty dictionaries
             channel1.receive()
             channel2.receive()
 
@@ -263,8 +328,8 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                     .onCompletion {
                         // Signal completion
                         channel2.send(true)
-                    }.collect { flowSet ->
-                        channel1.send(flowSet)
+                    }.collect { dictionaryChange ->
+                        channel1.send(dictionaryChange)
                     }
             }
 
@@ -296,7 +361,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
     @Test
     @Ignore // FIXME Wait for https://github.com/realm/realm-kotlin/pull/300 to be merged before fleshing this out
     override fun closeRealmInsideFlowThrows() {
-        TODO("Waiting for RealmSet support")
+        TODO("Waiting for RealmDictionary support")
     }
 
     @Test
@@ -309,8 +374,8 @@ class RealmDictionaryNotificationsTests : NotificationTests {
             val observer = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { flowSet ->
-                        channel.trySend(flowSet)
+                    .collect { dictionaryChange ->
+                        channel.trySend(dictionaryChange)
                     }
                 fail("Flow should not be canceled.")
             }

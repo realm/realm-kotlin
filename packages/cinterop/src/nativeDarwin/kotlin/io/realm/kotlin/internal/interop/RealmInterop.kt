@@ -19,6 +19,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get_changes
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -97,6 +98,7 @@ import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_class_key_tVar
 import realm_wrapper.realm_clear_last_error
 import realm_wrapper.realm_clone
+import realm_wrapper.realm_dictionary_t
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_property
 import realm_wrapper.realm_flx_sync_subscription_set_state_e
@@ -1234,6 +1236,25 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer? {
+        memScoped {
+            val dictionaryPointer = allocArray<CPointerVar<realm_dictionary_t>>(1)
+            checkedBooleanResult(
+                realm_wrapper.realm_dictionary_resolve_in(
+                    dictionary.cptr(),
+                    realm.cptr(),
+                    dictionaryPointer
+                )
+            )
+            return dictionaryPointer[0]?.let {
+                CPointerWrapper(it)
+            }
+        }
+    }
+
     actual fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean {
         return realm_wrapper.realm_dictionary_is_valid(dictionary.cptr())
     }
@@ -1624,6 +1645,39 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_dictionary_add_notification_callback(
+                map.cptr(),
+                // Use the callback as user data
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                        ?.dispose()
+                        ?: error("Notification callback data should never be null")
+                },
+                null, // See https://github.com/realm/realm-kotlin/issues/661
+                staticCFunction { userdata, change -> // Change callback
+                    try {
+                        userdata?.asStableRef<Callback<RealmChangesPointer>>()
+                            ?.get()
+                            ?.onChange(CPointerWrapper(realm_clone(change), managed = true))
+                            ?: error("Notification callback data should never be null")
+                    } catch (e: Exception) {
+                        // TODO API-NOTIFICATION Consider catching errors and propagate to error
+                        //  callback like the C-API error callback below
+                        //  https://github.com/realm/realm-kotlin/issues/889
+                        e.printStackTrace()
+                    }
+                },
+            ),
+            managed = false
+        )
+    }
+
     actual fun realm_object_changes_get_modified_properties(change: RealmChangesPointer): List<PropertyKey> {
         val propertyCount = realm_wrapper.realm_object_changes_get_num_modified_properties(change.cptr())
 
@@ -1642,8 +1696,16 @@ actual object RealmInterop {
             val deletionCount = allocArray<ULongVar>(1)
             val modificationCount = allocArray<ULongVar>(1)
             val movesCount = allocArray<ULongVar>(1)
+            val wasCleared = allocArray<BooleanVar>(1)
 
-            realm_wrapper.realm_collection_changes_get_num_changes(change.cptr(), deletionCount, insertionCount, modificationCount, movesCount)
+            realm_wrapper.realm_collection_changes_get_num_changes(
+                change.cptr(),
+                deletionCount,
+                insertionCount,
+                modificationCount,
+                movesCount,
+                wasCleared
+            )
 
             val deletionIndices = initArray<ULongVar>(deletionCount)
             val insertionIndices = initArray<ULongVar>(insertionCount)
@@ -1712,6 +1774,57 @@ actual object RealmInterop {
             builder.initRangesArray(builder::insertionRanges, insertRangesCount, insertionRanges)
             builder.initRangesArray(builder::modificationRanges, modificationRangesCount, modificationRanges)
             builder.initRangesArray(builder::modificationRangesAfter, modificationRangesCount, modificationRangesAfter)
+        }
+    }
+
+    @Suppress("MagicNumber") // TODO remove this once the size hack is removed
+    actual fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
+    ) {
+        // TODO optimize - integrate within mem allocator?
+        memScoped {
+            val deletions = allocArray<ULongVar>(1)
+            val insertions = allocArray<ULongVar>(1)
+            val modifications = allocArray<ULongVar>(1)
+
+            // TODO remove size hack and use output with actual sizes once it's implemented in the C-API
+            //  https://github.com/realm/realm-core/issues/6228
+//            realm_wrapper.realm_dictionary_get_change_sizes(
+//                deletions,
+//                insertions,
+//                modifications
+//            )
+//            val deletionStructs = allocArray<realm_value_t>(deletions[0].toInt())
+//            val insertionStructs = allocArray<realm_value_t>(insertions[0].toInt())
+//            val modificationStructs = allocArray<realm_value_t>(modifications[0].toInt())
+            val deletionStructs = allocArray<realm_value_t>(30)
+            val insertionStructs = allocArray<realm_value_t>(30)
+            val modificationStructs = allocArray<realm_value_t>(30)
+
+            realm_wrapper.realm_dictionary_get_changes(
+                change.cptr(),
+                deletionStructs,
+                deletions,
+                insertionStructs,
+                insertions,
+                modificationStructs,
+                modifications
+            )
+
+            val deletedKeys = (0 until deletions[0].toInt()).map {
+                deletionStructs[it].string.toKotlinString()
+            }
+            val insertedKeys = (0 until insertions[0].toInt()).map {
+                insertionStructs[it].string.toKotlinString()
+            }
+            val modifiedKeys = (0 until modifications[0].toInt()).map {
+                modificationStructs[it].string.toKotlinString()
+            }
+
+            builder.initDeletions(deletedKeys.toTypedArray())
+            builder.initDeletions(insertedKeys.toTypedArray())
+            builder.initDeletions(modifiedKeys.toTypedArray())
         }
     }
 

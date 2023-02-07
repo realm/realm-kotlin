@@ -284,7 +284,8 @@ return $jnicall;
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
                realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
-                realm_sync_session_connection_state_notification_token_t* };
+               realm_sync_session_connection_state_notification_token_t*,
+               realm_dictionary_changes_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -339,7 +340,7 @@ bool realm_object_is_valid(const realm_object_t*);
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
                       bool* erased, bool* out_erased, bool* did_refresh, bool* did_run,
-                      bool* found };
+                      bool* found, bool* out_collection_was_cleared };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };

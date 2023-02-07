@@ -66,6 +66,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     override val size: Int
         get() = operator.size
 
+    // Make it lazy since the values collection is a live collection pointing to the actual map
     override val values: MutableCollection<V> by lazy {
         operator.realmReference.checkClosed()
         val resultsPointer = RealmInterop.realm_dictionary_to_results(nativePointer)
@@ -116,10 +117,6 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
         }
 
     val keys: MutableSet<K>
-        get() {
-            realmReference.checkClosed()
-            return KeySet(nativePointer, this)
-        }
 
     fun insertInternal(
         key: K,
@@ -247,6 +244,11 @@ internal open class PrimitiveMapOperator<K, V> constructor(
     override val nativePointer: RealmMapPointer
 ) : MapOperator<K, V> {
 
+    override val keys: MutableSet<K> by lazy {
+        realmReference.checkClosed()
+        KeySet(nativePointer, this)
+    }
+
     override var modCount: Int = 0
 
     override fun insertInternal(
@@ -369,6 +371,12 @@ internal class RealmObjectMapOperator<K, V> constructor(
     override val nativePointer: RealmMapPointer,
     private val clazz: KClass<V & Any>
 ) : MapOperator<K, V> {
+
+    // Make it lazy since the key collection is a live collection pointing to the actual map
+    override val keys: MutableSet<K> by lazy {
+        realmReference.checkClosed()
+        KeySet(nativePointer, this)
+    }
 
     override var modCount: Int = 0
 
@@ -530,10 +538,7 @@ internal class ManagedRealmDictionary<E> constructor(
     ): ChannelResult<Unit>? {
         val frozenDictionary: ManagedRealmDictionary<E>? = freeze(frozenRealm)
         return if (frozenDictionary != null) {
-            val builder = DictionaryChangeSetBuilderImpl(
-                change,
-                operator.copy(frozenRealm, frozenDictionary.nativePointer)
-            )
+            val builder = DictionaryChangeSetBuilderImpl(change)
 
             if (builder.isEmpty()) {
                 channel.trySend(InitialDictionaryImpl(frozenDictionary))
