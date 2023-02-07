@@ -246,9 +246,9 @@ buildkonfig {
             buildConfigField(Type.STRING, "email", "")
             buildConfigField(Type.STRING, "password", "")
         }
-        if (properties.containsKey("syncTest.public_apikey") && properties.containsKey("syncTest.private_apikey")) {
-            buildConfigField(Type.STRING, "publicApiKey", properties["syncTest.public_apikey"]!! as String)
-            buildConfigField(Type.STRING, "privateApiKey", properties["syncTest.private_apikey"]!! as String)
+        if (properties.containsKey("syncTest.login.public_apikey") && properties.containsKey("syncTest.login.private_apikey")) {
+            buildConfigField(Type.STRING, "publicApiKey", properties["syncTest.login.public_apikey"]!! as String)
+            buildConfigField(Type.STRING, "privateApiKey", properties["syncTest.login.private_apikey"]!! as String)
         } else {
             buildConfigField(Type.STRING, "publicApiKey", "")
             buildConfigField(Type.STRING, "privateApiKey", "")

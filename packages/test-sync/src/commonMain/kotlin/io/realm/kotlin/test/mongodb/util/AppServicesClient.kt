@@ -183,7 +183,7 @@ class AppServicesClient(
             var json: Map<String, String> = mapOf("username" to SyncServerConfig.email, "password" to SyncServerConfig.password)
             if (SyncServerConfig.publicApiKey.isNotEmpty()) {
                 loginMethod = "mongodb-cloud"
-                json = mapOf("username" to SyncServerConfig.publicApiKey, "password" to SyncServerConfig.privateApiKey)
+                json = mapOf("username" to SyncServerConfig.publicApiKey, "apiKey" to SyncServerConfig.privateApiKey)
             }
             val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
                 HttpMethod.Post,
