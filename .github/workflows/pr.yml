@@ -21,8 +21,8 @@ jobs:
     name: Deploy BAAS Cluster
     uses: ./.github/workflows/include-deploy-baas.yml
     with:
-      BaseUrl: ${{ env.REALM_QA_URL }}
-      AtlasBaseUrl: ${{ env.ATLAS_QA_URL }}
+      BaseUrl: https://realm-qa.mongodb.com
+      AtlasBaseUrl: https://cloud-qa.mongodb.com
     secrets:
       AtlasProjectId: ${{ secrets.ATLAS_QA_PROJECT_ID }}
       AtlasPublicKey: ${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
@@ -1040,7 +1040,7 @@ jobs:
         run: |
           ./gradlew :test-${{ matrix.type }}:jvmTest \
           -PincludeSdkModules=false \
-          -PsyncTest.url=${{ env.REALM_QA_URL }} \
+          -PsyncTest.url=https://realm-qa.mongodb.com \
           -PsyncTest.appPrefx=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }} \
           -PsyncTest.login.public_apikey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
           -PsyncTest.login.private_apikey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
