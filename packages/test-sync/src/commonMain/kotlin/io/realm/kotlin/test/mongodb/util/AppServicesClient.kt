@@ -33,6 +33,7 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.mongodb.SyncServerConfig
@@ -134,10 +135,14 @@ class AppServicesClient(
             url: String,
             crossinline block: HttpRequestBuilder.() -> Unit = {}
         ): T {
-            return this@typedRequest.request(url) {
+            val response: HttpResponse = this@typedRequest.request(url) {
                 this.method = method
                 this.apply(block)
-            }.bodyAsText()
+            }
+            if (!response.status.isSuccess()) {
+                throw IllegalStateException("Http request failed: $url. ${response.status}: ${response.bodyAsText()}")
+            }
+            return response.bodyAsText()
                 .let {
                     Json { ignoreUnknownKeys = true }.decodeFromString(
                         T::class.serializer(),
