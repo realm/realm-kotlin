@@ -19,7 +19,6 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.UpdatePolicy
-import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.entities.embedded.EmbeddedChild
 import io.realm.kotlin.entities.embedded.EmbeddedChildWithInitializer
 import io.realm.kotlin.entities.embedded.EmbeddedChildWithPrimaryKeyParent
@@ -32,7 +31,6 @@ import io.realm.kotlin.ext.parent
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
@@ -401,7 +399,6 @@ class EmbeddedRealmObjectTests {
             assertEquals("child1", id)
         }
     }
-
 
     @Test
     fun list_addWithIndex() {
