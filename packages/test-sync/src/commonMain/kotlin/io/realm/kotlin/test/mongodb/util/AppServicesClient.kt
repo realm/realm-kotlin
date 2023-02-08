@@ -257,8 +257,11 @@ class AppServicesClient(
     private suspend fun createApp(
         appName: String,
         initializer: suspend BaasApp.() -> Unit
-    ): BaasApp =
-        withContext(dispatcher) {
+    ): BaasApp {
+        if (appName.length > 32) {
+            throw IllegalArgumentException("App names are restricted to 32 characters: $appName was ${appName.length}")
+        }
+        return withContext(dispatcher) {
             httpClient.typedRequest<BaasApp>(Post, "$groupUrl/apps") {
                 setBody(Json.parseToJsonElement("""{"name": $appName}"""))
                 contentType(ContentType.Application.Json)
@@ -266,6 +269,7 @@ class AppServicesClient(
                 initializer(this)
             }
         }
+    }
 
     val BaasApp.url: String
         get() = "$groupUrl/apps/${this._id}"

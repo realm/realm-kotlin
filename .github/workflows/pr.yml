@@ -989,21 +989,27 @@ jobs:
         type: [base, sync]
         include:
           - os: macos-latest
+            os-id: m
             type: base
             test-title: Unit Test Results - Base JVM MacOS x64
           - os: ubuntu-latest
+            os-id: u
             type: base
             test-title: Unit Test Results - Base JVM Linux
           - os: windows-latest
+            os-id: w
             type: base
             test-title: Unit Test Results - Base JVM Windows
           - os: macos-latest
+            os-id: m
             type: sync
             test-title: Unit Test Results - Sync JVM MacOS x64
           - os: ubuntu-latest
+            os-id: u
             type: sync
             test-title: Unit Test Results - Sync JVM Linux
           - os: windows-latest
+            os-id: w
             type: sync
             test-title: Unit Test Results - Sync JVM Windows
  
@@ -1035,14 +1041,14 @@ jobs:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
-      # Use -D instead of -P since -P fails on Windows when the gradle property contains dots
+      # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
       - name: Run tests
         working-directory: packages
         run: >
           ./gradlew :test-${{ matrix.type }}:jvmTest
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
-          -PsyncTestAppNamePrefix=jvm-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ github.run_id }}-${{ github.run_attempt }}
           -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
           -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
