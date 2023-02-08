@@ -40,7 +40,7 @@ jobs:
         atlasUrl: ${{ inputs.AtlasBaseUrl}}
         apiKey: ${{ secrets.AtlasPublicKey}}
         privateApiKey: ${{ secrets.AtlasPrivateKey }}
-        clusterSize: M20
+        clusterSize: M5
 
   # deploy-apps:
   #   name: Deploy Apps

@@ -50,7 +50,7 @@ internal class KtorNetworkTransportTest {
         val dispatcherFactory = CoroutineDispatcherFactory.unmanaged(dispatcher)
 
         transport = KtorNetworkTransport(
-            timeoutMs = 5000,
+            timeoutMs = 30000,
             dispatcherFactory = dispatcherFactory
         )
 
