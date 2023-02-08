@@ -32,7 +32,6 @@ import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -51,7 +50,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val mediator: Mediator,
     @Suppress("UnusedPrivateMember")
     private val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
+) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreObservable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
 
     internal enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
@@ -121,48 +120,32 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         return RealmInterop.realm_results_add_notification_callback(nativePointer, callback)
     }
 
-    override fun observable(
-        liveRealm: LiveRealm,
-        channel: ProducerScope<ResultsChange<E>>
-    ): NotificationFlow<RealmResultsImpl<E>, ResultsChange<E>> =
-        object : NotificationFlow<RealmResultsImpl<E>, ResultsChange<E>>(liveRealm, this, channel) {
-            override fun initial(frozenResult: RealmResultsImpl<E>): ResultsChange<E> =
-                InitialResultsImpl(frozenResult)
-
-            override fun update(
-                frozenResult: RealmResultsImpl<E>,
-                change: RealmChangesPointer
-            ): ResultsChange<E>? {
-                val listChangeSetBuilderImpl = ListChangeSetBuilderImpl(change)
-                return if (!listChangeSetBuilderImpl.isEmpty()) {
-                    UpdatedResultsImpl(frozenResult, listChangeSetBuilderImpl.build())
-                } else null
-            }
-
-            override fun delete(): ResultsChange<E> {
-                sdkError("Results should never have been deleted")
-            }
-        }
-
-//    override fun emitFrozenUpdate(
-//        frozenRealm: RealmReference,
-//        change: RealmChangesPointer,
-//        channel: SendChannel<ResultsChange<E>>
-//    ): ChannelResult<Unit>? {
-//        val frozenResult: RealmResultsImpl<E> = freeze(frozenRealm)
-//
-//        val builder = ListChangeSetBuilderImpl(change)
-//
-//        return if (builder.isEmpty()) {
-//            channel.trySend(InitialResultsImpl(frozenResult))
-//        } else {
-//            channel.trySend(UpdatedResultsImpl(frozenResult, builder.build()))
-//        }
-//    }
+    override fun changeBuilder(): ChangeBuilder<RealmResultsImpl<E>, ResultsChange<E>> =
+        ResultChangeBuilder()
 
     override fun realmState(): RealmState = realm
 
     internal fun isValid(): Boolean {
         return !nativePointer.isReleased() && !realm.isClosed()
+    }
+}
+
+internal class ResultChangeBuilder<E : BaseRealmObject> : ChangeBuilder<RealmResultsImpl<E>, ResultsChange<E>> {
+    override fun change(
+        frozenRef: RealmResultsImpl<E>?,
+        change: RealmChangesPointer?
+    ): Pair<ResultsChange<E>?, Boolean> {
+        return if (frozenRef != null) {
+            if (change == null) {
+                InitialResultsImpl(frozenRef)
+            } else {
+                val listChangeSetBuilderImpl = ListChangeSetBuilderImpl(change)
+                if (!listChangeSetBuilderImpl.isEmpty()) {
+                    UpdatedResultsImpl<E>(frozenRef, listChangeSetBuilderImpl.build())
+                } else null
+            } to false // Do not close
+        } else {
+            sdkError("Results should never have been deleted")
+        }
     }
 }

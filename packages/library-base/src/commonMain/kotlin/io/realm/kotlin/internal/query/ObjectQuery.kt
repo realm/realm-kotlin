@@ -18,10 +18,9 @@ package io.realm.kotlin.internal.query
 
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.InternalDeleteable
-import io.realm.kotlin.internal.LiveRealm
 import io.realm.kotlin.internal.Mediator
-import io.realm.kotlin.internal.NotificationFlow
 import io.realm.kotlin.internal.NotificationFlowable
+import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
@@ -44,7 +43,6 @@ import io.realm.kotlin.query.RealmScalarQuery
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.query.Sort
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -177,11 +175,8 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator, classKey, clazz)
 
-    override fun observable(
-        liveRealm: LiveRealm,
-        channel: ProducerScope<ResultsChange<E>>
-    ): NotificationFlow<RealmResultsImpl<E>, ResultsChange<E>> =
-        thawResults(liveRealm.realmReference, resultsPointer, classKey, clazz, mediator).observable(liveRealm, channel)
+    override fun observable(): Observable<RealmResultsImpl<E>, ResultsChange<E>> =
+        QueryResultObservable(resultsPointer, classKey, clazz, mediator)
 
     override fun asFlow(): Flow<ResultsChange<E>> {
         return realmReference.owner

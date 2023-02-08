@@ -19,10 +19,9 @@ package io.realm.kotlin.internal.query
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.CoreExceptionConverter
-import io.realm.kotlin.internal.LiveRealm
 import io.realm.kotlin.internal.Mediator
-import io.realm.kotlin.internal.NotificationFlow
 import io.realm.kotlin.internal.NotificationFlowable
+import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.RealmValueConverter
@@ -50,7 +49,6 @@ import io.realm.kotlin.query.RealmScalarQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
@@ -75,15 +73,13 @@ internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
     protected val clazz: KClass<E>
 ) : NotificationFlowable<RealmResultsImpl<E>, ResultsChange<E>> {
 
-    override fun observable(
-        liveRealm: LiveRealm,
-        channel: ProducerScope<ResultsChange<E>>
-    ): NotificationFlow<RealmResultsImpl<E>, ResultsChange<E>> {
-        val liveDbPointer = liveRealm.realmReference.dbPointer
-        val queryResults = RealmInterop.realm_query_find_all(queryPointer)
-        val liveResultPtr = RealmInterop.realm_results_resolve_in(queryResults, liveDbPointer)
-        return RealmResultsImpl(liveRealm.realmReference, liveResultPtr, classKey, clazz, mediator).observable(liveRealm, channel)
-    }
+    override fun observable(): Observable<RealmResultsImpl<E>, ResultsChange<E>> =
+        QueryResultObservable(
+            RealmInterop.realm_query_find_all(queryPointer),
+            classKey,
+            clazz,
+            mediator
+        )
 }
 
 /**

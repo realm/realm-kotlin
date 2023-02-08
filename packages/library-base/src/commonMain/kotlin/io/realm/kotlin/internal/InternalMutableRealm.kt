@@ -21,7 +21,6 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
-import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 internal interface InternalMutableRealm : MutableRealm {
@@ -59,10 +58,6 @@ internal interface InternalMutableRealm : MutableRealm {
     // FIXME Consider adding a delete-all along with query support
     //  https://github.com/realm/realm-kotlin/issues/64
     // fun <T : RealmModel> delete(clazz: KClass<T>)
-
-    fun <T> registerObserver(t: Thawable<T>): Flow<T> {
-        throw IllegalStateException("Changes to RealmResults cannot be observed during a write.")
-    }
 
     override fun delete(deleteable: Deleteable) {
         deleteable.asInternalDeleteable().delete()

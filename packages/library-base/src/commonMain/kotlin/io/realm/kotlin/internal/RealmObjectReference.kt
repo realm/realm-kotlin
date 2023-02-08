@@ -30,7 +30,6 @@ import io.realm.kotlin.notifications.internal.DeletedObjectImpl
 import io.realm.kotlin.notifications.internal.InitialObjectImpl
 import io.realm.kotlin.notifications.internal.UpdatedObjectImpl
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -50,7 +49,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
     RealmStateHolder,
     RealmObjectInterop,
     InternalDeleteable,
-    Observable<RealmObjectReference<T>, ObjectChange<T>> {
+    CoreObservable<RealmObjectReference<T>, ObjectChange<T>> {
 
     public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
 
@@ -110,31 +109,10 @@ public class RealmObjectReference<T : BaseRealmObject>(
         )
     }
 
-    override fun observable(
-        liveRealm: LiveRealm,
-        channel: ProducerScope<ObjectChange<T>>
-    ): NotificationFlow<RealmObjectReference<T>, ObjectChange<T>> = object :
-        NotificationFlow<RealmObjectReference<T>, ObjectChange<T>>(liveRealm, this, channel) {
-        override fun initial(frozenRef: RealmObjectReference<T>): ObjectChange<T> {
-            val obj: T = frozenRef.toRealmObject()
-            return InitialObjectImpl(obj)
-        }
+    override fun changeBuilder(): ChangeBuilder<RealmObjectReference<T>, ObjectChange<T>> =
+        ObjectChangeBuilder()
 
-        override fun update(
-            frozenObject: RealmObjectReference<T>,
-            change: RealmChangesPointer
-        ): ObjectChange<T>? {
-            val changedFieldNames = frozenObject.getChangedFieldNames(change)
-            return if (!changedFieldNames.isEmpty()) {
-                val obj: T = frozenObject.toRealmObject()
-                UpdatedObjectImpl(obj, changedFieldNames)
-            } else null
-        }
-
-        override fun delete(): ObjectChange<T> = DeletedObjectImpl()
-    }
-
-    private fun getChangedFieldNames(
+    internal fun getChangedFieldNames(
         change: RealmChangesPointer
     ): Array<String> {
         return RealmInterop.realm_object_changes_get_modified_properties(
@@ -187,5 +165,27 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.checkNotificationsAva
     }
     if (!isValid()) {
         throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
+    }
+}
+
+internal class ObjectChangeBuilder<E : BaseRealmObject> : ChangeBuilder<RealmObjectReference<E>, ObjectChange<E>> {
+    override fun change(
+        frozenRef: RealmObjectReference<E>?,
+        change: RealmChangesPointer?
+    ): Pair<ObjectChange<E>?, Boolean> {
+        return if (frozenRef != null) {
+            val obj: E = frozenRef.toRealmObject()
+            if (change == null) {
+                InitialObjectImpl(obj)
+            } else {
+                val changedFieldNames = frozenRef.getChangedFieldNames(change)
+                if (!changedFieldNames.isEmpty()) {
+                    val obj: E = frozenRef.toRealmObject()
+                    UpdatedObjectImpl(obj, changedFieldNames)
+                } else null
+            } to false // Do not close
+        } else {
+            DeletedObjectImpl<E>() to true // Close on delete
+        }
     }
 }

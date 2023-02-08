@@ -2,10 +2,9 @@ package io.realm.kotlin.internal.query
 
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.InternalDeleteable
-import io.realm.kotlin.internal.LiveRealm
 import io.realm.kotlin.internal.Mediator
-import io.realm.kotlin.internal.NotificationFlow
 import io.realm.kotlin.internal.NotificationFlowable
+import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.interop.ClassKey
@@ -21,7 +20,6 @@ import io.realm.kotlin.notifications.internal.DeletedObjectImpl
 import io.realm.kotlin.notifications.internal.PendingObjectImpl
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flatMapLatest
@@ -97,12 +95,12 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
      * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
      * The results object is then used to fetch the object with index 0, which can be `null`.
      */
-    override fun observable(
-        liveRealm: LiveRealm,
-        channel: ProducerScope<ResultsChange<E>>
-    ): NotificationFlow<RealmResultsImpl<E>, ResultsChange<E>> {
-        return thawResults(liveRealm.realmReference, RealmInterop.realm_query_find_all(queryPointer), classKey, clazz, mediator).observable(liveRealm, channel)
-    }
+    override fun observable(): Observable<RealmResultsImpl<E>, ResultsChange<E>> = QueryResultObservable(
+        RealmInterop.realm_query_find_all(queryPointer),
+        classKey,
+        clazz,
+        mediator
+    )
 
     override fun delete() {
         // TODO C-API doesn't implement realm_query_delete_all so just fetch the result and delete

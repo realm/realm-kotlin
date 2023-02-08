@@ -1,16 +1,20 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.Validation.sdkError
+import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import io.realm.kotlin.schema.RealmSchema
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -81,7 +85,7 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : Observable<T, C>, C> registerObserver(observable: NotificationFlowable<T, C>): Flow<C> {
+    internal fun <T : CoreObservable<T, C>, C> registerObserver(flowable: NotificationFlowable<T, C>): Flow<C> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> =
                 kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
@@ -90,7 +94,24 @@ internal class SuspendableNotifier(
                 // Ensure that the live realm is always up to date to avoid registering
                 // notifications on newer objects.
                 realm.refresh()
-                token.value = observable.observable(realm, this@callbackFlow)
+                val observable = flowable.observable()
+                val lifeRef = observable.coreObservable(realm)
+                val changeBuilder = observable.changeBuilder()
+                if (lifeRef != null) {
+                    val interopCallback: Callback<RealmChangesPointer> =
+                        object : Callback<RealmChangesPointer> {
+                            override fun onChange(change: RealmChangesPointer) {
+                                // FIXME How to make sure the Realm isn't closed when handling this?
+                                // Notifications need to be delivered with the version they where created on, otherwise
+                                // the fine-grained notification data might be out of sync.
+                                val frozenObservable = lifeRef.freeze(realm.snapshot)
+                                emit(changeBuilder.change(frozenObservable, change))
+                            }
+                        }
+                    token.value = NotificationToken(lifeRef.registerForNotification(interopCallback))
+                }
+                // Initial event
+                emit(changeBuilder.change(lifeRef?.freeze(realm.snapshot)))
             }
             awaitClose {
                 token.value.cancel()
@@ -142,5 +163,15 @@ internal class SuspendableNotifier(
                 }
             }
         }
+    }
+}
+
+private fun <T> ProducerScope<T>.emit(p: Pair<T?, Boolean>) {
+    val (element, shouldClose) = p
+    element?.let {
+        trySendWithBufferOverflowCheck(it)
+    }
+    if (shouldClose) {
+        close()
     }
 }
