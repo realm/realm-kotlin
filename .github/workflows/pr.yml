@@ -1059,7 +1059,7 @@ jobs:
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./packages/test-${{ matrix.os }}/build/**/TEST-*.xml
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
