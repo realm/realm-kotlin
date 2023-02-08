@@ -1031,7 +1031,7 @@ internal object RealmObjectHelper {
                 CollectionOperatorType.PRIMITIVE
             !obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject ->
                 CollectionOperatorType.REALM_OBJECT
-            else -> throw IllegalStateException("RealmSets do not support Embedded Objects.")
+            else -> CollectionOperatorType.EMBEDDED_OBJECT
         }
         @Suppress("UNCHECKED_CAST")
         return getDictionaryByKey(

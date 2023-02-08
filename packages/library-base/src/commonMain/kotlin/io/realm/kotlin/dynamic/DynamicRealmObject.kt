@@ -258,7 +258,7 @@ public interface DynamicRealmObject : BaseRealmObject {
      * name, if trying to retrieve values for non-dictionary properties or if `clazz` doesn't match
      * the property's [RealmStorageType.kClass].
      */
-    public fun getObjectDictionary(propertyName: String): RealmDictionary<out DynamicRealmObject>
+    public fun getObjectDictionary(propertyName: String): RealmDictionary<out DynamicRealmObject?>
 
     /**
      * Returns a backlinks collection referenced by the property name as a [RealmResults].
