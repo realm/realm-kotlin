@@ -20,6 +20,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.schema.RealmStorageType
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -37,6 +38,10 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
     override fun getObjectList(propertyName: String): RealmList<DynamicMutableRealmObject>
 
     override fun getObjectSet(propertyName: String): RealmSet<DynamicMutableRealmObject>
+
+    override fun getObjectDictionary(
+        propertyName: String
+    ): RealmDictionary<DynamicMutableRealmObject>
 
     /**
      * Sets the value for the given field.

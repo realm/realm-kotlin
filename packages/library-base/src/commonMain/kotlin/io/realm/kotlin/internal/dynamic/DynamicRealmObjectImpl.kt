@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
@@ -72,6 +73,25 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
 
     override fun getObjectSet(propertyName: String): RealmSet<out DynamicRealmObject> {
         return getValueSet(propertyName, DynamicRealmObject::class)
+    }
+
+    override fun <T : Any> getValueDictionary(
+        propertyName: String,
+        clazz: KClass<T>
+    ): RealmDictionary<T> {
+        return RealmObjectHelper.dynamicGetDictionary(`io_realm_kotlin_objectReference`!!, propertyName, clazz, false)
+            .let { it as RealmDictionary<T> }
+    }
+
+    override fun <T : Any> getNullableValueDictionary(
+        propertyName: String,
+        clazz: KClass<T>
+    ): RealmDictionary<T?> {
+        return RealmObjectHelper.dynamicGetDictionary(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
+    }
+
+    override fun getObjectDictionary(propertyName: String): RealmDictionary<out DynamicRealmObject> {
+        return getValueDictionary(propertyName, DynamicRealmObject::class)
     }
 
     override fun getBacklinks(propertyName: String): RealmResults<out DynamicRealmObject> {

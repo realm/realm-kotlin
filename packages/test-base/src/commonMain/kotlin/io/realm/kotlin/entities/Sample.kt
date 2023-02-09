@@ -85,7 +85,7 @@ class Sample : RealmObject {
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var uuidListField: RealmList<RealmUUID> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
-//    var decimal128ListField: RealmList<Decimal128> = realmListOf() // TODO add missing tests for dynamic realms
+    var decimal128ListField: RealmList<Decimal128> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -102,7 +102,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
-//    var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf() // TODO add missing tests for dynamic realms
+    var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
     var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
 
     var stringSetField: RealmSet<String> = realmSetOf()
@@ -119,7 +119,7 @@ class Sample : RealmObject {
     var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
-//    var decimal128SetField: RealmSet<Decimal128> = realmSetOf() // TODO add missing tests for dynamic realms
+    var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
     var objectSetField: RealmSet<Sample> = realmSetOf()
 
     var nullableStringSetField: RealmSet<String?> = realmSetOf()
@@ -136,7 +136,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
-//    var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf() // TODO add missing tests for dynamic realms
+    var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
     var nullableRealmAnySetField: RealmSet<RealmAny?> = realmSetOf()
 
     var stringDictionaryField: RealmDictionary<String> = realmDictionaryOf()
@@ -153,7 +153,7 @@ class Sample : RealmObject {
     var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
     var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
-//    var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf() // TODO add missing tests for dynamic realms
+    var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
 
     var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
     var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
@@ -167,11 +167,12 @@ class Sample : RealmObject {
     var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
     var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
     var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
-    var nullableUuidDictionaryField: RealmDictionary<RealmUUID?> = realmDictionaryOf()
+    var nullableUUIDDictionaryField: RealmDictionary<RealmUUID?> = realmDictionaryOf()
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
-//    var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf() // TODO add missing tests for dynamic realms
+    var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
     var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf()
-    var nullableObjectDictionaryField: RealmDictionary<Sample?> = realmDictionaryOf()
+    var nullableObjectDictionaryFieldNotNull: RealmDictionary<Sample?> = realmDictionaryOf()
+    var nullableObjectDictionaryFieldNull: RealmDictionary<Sample?> = realmDictionaryOf()
 
     val objectBacklinks by backlinks(Sample::nullableObject)
     val listBacklinks by backlinks(Sample::objectListField)

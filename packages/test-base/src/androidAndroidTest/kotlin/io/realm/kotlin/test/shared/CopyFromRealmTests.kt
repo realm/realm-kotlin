@@ -549,7 +549,7 @@ class CopyFromRealmTests {
     @Test
     fun objectDictionary() {
         val sample = Sample().apply {
-            nullableObjectDictionaryField = (1..5).map { i ->
+            nullableObjectDictionaryFieldNotNull = (1..5).map { i ->
                 val key = i.toString()
                 val value = Sample().apply { stringField = i.toString() }
                 key to value
@@ -565,11 +565,11 @@ class CopyFromRealmTests {
         realm.close()
 
         assertNotSame(insertedObj, unmanagedObj)
-        assertNotNull(unmanagedObj.nullableObjectDictionaryField)
-        val copiedDictionary: RealmDictionary<Sample?> = unmanagedObj.nullableObjectDictionaryField
+        assertNotNull(unmanagedObj.nullableObjectDictionaryFieldNotNull)
+        val copiedDictionary: RealmDictionary<Sample?> = unmanagedObj.nullableObjectDictionaryFieldNotNull
         assertEquals(5, copiedDictionary.size)
         copiedDictionary.forEach { copiedEntry ->
-            val actual = sample.nullableObjectDictionaryField.filter { expectedEntry ->
+            val actual = sample.nullableObjectDictionaryFieldNotNull.filter { expectedEntry ->
                 assertNotNull(copiedEntry.value).stringField == expectedEntry.value?.stringField
             }.size
 
@@ -608,7 +608,7 @@ class CopyFromRealmTests {
         // Copying collections from a closed Realm should fail
         val managedList: RealmList<Sample> = managedObj.objectListField
         val managedSet: RealmSet<Sample> = managedObj.objectSetField
-        val managedDictionary: RealmDictionary<Sample?> = managedObj.nullableObjectDictionaryField
+        val managedDictionary: RealmDictionary<Sample?> = managedObj.nullableObjectDictionaryFieldNotNull
         val results: RealmResults<Sample> = realm.query<Sample>().find()
 
         realm.close()
@@ -650,13 +650,13 @@ class CopyFromRealmTests {
         val sample = Sample().apply {
             objectListField.add(Sample().apply { stringField = "listObject" })
             objectSetField.add(Sample().apply { stringField = "listObject" })
-            nullableObjectDictionaryField["A"] = Sample().apply { stringField = "listObject" }
+            nullableObjectDictionaryFieldNotNull["A"] = Sample().apply { stringField = "listObject" }
         }
         realm.writeBlocking {
             val liveObj = copyToRealm(sample)
             val liveList = liveObj.objectListField
             val liveSet = liveObj.objectSetField
-            val liveDictionary = liveObj.nullableObjectDictionaryField
+            val liveDictionary = liveObj.nullableObjectDictionaryFieldNotNull
             delete(liveObj)
 
             // Copying deleted objects should fail
@@ -740,7 +740,7 @@ class CopyFromRealmTests {
             nullableObject = topLevelObject
             objectListField = realmListOf(topLevelObject)
             objectSetField = realmSetOf(topLevelObject)
-            nullableObjectDictionaryField = realmDictionaryOf("A" to topLevelObject)
+            nullableObjectDictionaryFieldNotNull = realmDictionaryOf("A" to topLevelObject)
         }
 
         val unmanagedCopy = realm.writeBlocking {
@@ -750,7 +750,7 @@ class CopyFromRealmTests {
         assertSame(unmanagedCopy, unmanagedCopy.nullableObject)
         assertSame(unmanagedCopy, unmanagedCopy.objectListField.first())
         assertSame(unmanagedCopy, unmanagedCopy.objectSetField.first())
-        assertSame(unmanagedCopy, unmanagedCopy.nullableObjectDictionaryField["A"])
+        assertSame(unmanagedCopy, unmanagedCopy.nullableObjectDictionaryFieldNotNull["A"])
     }
 
     @Test
@@ -814,10 +814,10 @@ class CopyFromRealmTests {
                     )
                 }
             )
-            nullableObjectDictionaryField = realmDictionaryOf(
+            nullableObjectDictionaryFieldNotNull = realmDictionaryOf(
                 "A" to Sample().apply {
                     stringField = "dictionary-depth-1"
-                    nullableObjectDictionaryField = realmDictionaryOf(
+                    nullableObjectDictionaryFieldNotNull = realmDictionaryOf(
                         "B" to Sample().apply {
                             stringField = "dictionary-depth-2"
                         }
@@ -834,8 +834,8 @@ class CopyFromRealmTests {
         assertEquals("set-depth-2", managedObj.objectSetField.first().objectSetField.first().stringField)
         assertEquals(
             "dictionary-depth-2",
-            assertNotNull(managedObj.nullableObjectDictionaryField["A"]).let { objLevel1 ->
-                assertNotNull(objLevel1.nullableObjectDictionaryField["B"]).stringField
+            assertNotNull(managedObj.nullableObjectDictionaryFieldNotNull["A"]).let { objLevel1 ->
+                assertNotNull(objLevel1.nullableObjectDictionaryFieldNotNull["B"]).stringField
             }
         )
 
@@ -845,14 +845,14 @@ class CopyFromRealmTests {
         assertEquals("set-depth-1", unmanagedCopy.objectSetField.first().stringField)
         assertEquals(
             "dictionary-depth-1",
-            assertNotNull(unmanagedCopy.nullableObjectDictionaryField["A"]).stringField
+            assertNotNull(unmanagedCopy.nullableObjectDictionaryFieldNotNull["A"]).stringField
         )
         assertNull(unmanagedCopy.nullableObject!!.nullableObject)
         assertEquals(0, unmanagedCopy.objectListField.first().objectListField.size)
         assertEquals(0, unmanagedCopy.objectSetField.first().objectSetField.size)
         assertEquals(
             0,
-            assertNotNull(unmanagedCopy.nullableObjectDictionaryField["A"]).objectSetField.size
+            assertNotNull(unmanagedCopy.nullableObjectDictionaryFieldNotNull["A"]).objectSetField.size
         )
     }
 
@@ -873,7 +873,7 @@ class CopyFromRealmTests {
                 }
             )
             stringDictionaryField = realmDictionaryOf("A" to "foo", "B" to "bar")
-            nullableObjectDictionaryField = realmDictionaryOf(
+            nullableObjectDictionaryFieldNotNull = realmDictionaryOf(
                 "A" to Sample().apply {
                     stringField = "set-depth-1"
                 }
@@ -887,7 +887,7 @@ class CopyFromRealmTests {
         assertNull(unmanagedCopy.nullableObject)
         assertEquals(0, unmanagedCopy.objectListField.size)
         assertEquals(0, unmanagedCopy.objectSetField.size)
-        assertEquals(0, unmanagedCopy.nullableObjectDictionaryField.size)
+        assertEquals(0, unmanagedCopy.nullableObjectDictionaryFieldNotNull.size)
         assertEquals(2, unmanagedCopy.stringListField.size)
         assertEquals(2, unmanagedCopy.stringSetField.size)
         assertEquals(2, unmanagedCopy.stringDictionaryField.size)
