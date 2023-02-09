@@ -116,6 +116,7 @@ public interface AppConfiguration {
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
+        private var httpLogObfuscator: HttpLogObfuscator = HttpLogObfuscator.create()
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -236,6 +237,14 @@ public interface AppConfiguration {
         }
 
         /**
+         * Sets the a [HttpLogObfuscator] used to keep sensitive information in HTTP requests from
+         * being displayed in the log.
+         */
+        public fun logObfuscator(httpLogObfuscator: HttpLogObfuscator): Builder = apply {
+            this.httpLogObfuscator = httpLogObfuscator
+        }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -286,7 +295,10 @@ public interface AppConfiguration {
                     dispatcherFactory = appNetworkDispatcherFactory,
                     logger = object : Logger {
                         override fun log(message: String) {
-                            appLogger.debug(message)
+                            if (logLevel <= LogLevel.DEBUG) {
+                                val obfuscatedMessage = httpLogObfuscator.obfuscate(message)
+                                appLogger.debug(obfuscatedMessage)
+                            }
                         }
                     }
                 ).freeze() // Kotlin network client needs to be frozen before passed to the C-API

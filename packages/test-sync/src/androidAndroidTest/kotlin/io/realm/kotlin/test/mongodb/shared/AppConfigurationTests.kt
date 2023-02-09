@@ -349,21 +349,6 @@ class AppConfigurationTests {
 //        assertEquals(configCodecRegistry, config.defaultCodecRegistry)
 //    }
 //
-//    @Test
-//    fun httpLogObfuscator_null() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .httpLogObfuscator(TestHelper.getNull())
-//            .build()
-//        assertNull(config.httpLogObfuscator)
-//    }
-//
-//    @Test
-//    fun defaultLoginInfoObfuscator() {
-//        val config = AppConfiguration.Builder(APP_ID).build()
-//
-//        val defaultHttpLogObfuscator = HttpLogObfuscator(LOGIN_FEATURE, AppConfiguration.loginObfuscators)
-//        assertEquals(defaultHttpLogObfuscator, config.httpLogObfuscator)
-//    }
 //    // Check that custom headers and auth header renames are correctly used for HTTP requests
 //    // performed from Java.
 //    @Test
