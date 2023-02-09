@@ -65,7 +65,7 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
             .distinctUntilChangedBy { head: BaseRealmObject? ->
                 head?.runIfManaged { RealmInterop.realm_object_get_key(this.objectPointer) }
             }
-            // When head is changed issue flow that emits
+            // When head is changed issue flow that emits object changes
             .flatMapLatest { newHead ->
                 val oldHeadDeleted =
                     oldHead != null && (

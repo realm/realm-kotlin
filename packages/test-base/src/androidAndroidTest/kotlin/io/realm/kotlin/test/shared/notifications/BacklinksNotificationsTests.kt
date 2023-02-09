@@ -27,6 +27,7 @@ import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
@@ -343,14 +344,12 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 copyToRealm(Sample())
             }
 
-            val c = Channel<Int>(capacity = 1)
+            val m = Mutex(true)
             val observer = async {
                 target.objectBacklinks
                     .asFlow()
-                    .filterNot {
-                        it.list.isEmpty()
-                    }.collect {
-                        c.send(it.list.size)
+                    .collect {
+                        m.unlock()
                     }
                 fail("Flow should not be canceled.")
             }
@@ -362,10 +361,14 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     }
                 )
             }
-            assertEquals(1, c.receive())
+
+            // Await that collect is actually collecting
+            withTimeout(10.seconds) {
+                m.lock()
+            }
             realm.close()
+            delay(1.seconds)
             observer.cancel()
-            c.close()
         }
     }
 }

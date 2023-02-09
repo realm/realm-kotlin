@@ -101,7 +101,6 @@ internal class SuspendableNotifier(
                     val interopCallback: Callback<RealmChangesPointer> =
                         object : Callback<RealmChangesPointer> {
                             override fun onChange(change: RealmChangesPointer) {
-                                // FIXME How to make sure the Realm isn't closed when handling this?
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
                                 val frozenObservable = lifeRef.freeze(realm.snapshot)
