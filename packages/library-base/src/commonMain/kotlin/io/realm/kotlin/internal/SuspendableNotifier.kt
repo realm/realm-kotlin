@@ -85,7 +85,7 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreObservable<T, C>, C> registerObserver(flowable: NotificationFlowable<T, C>): Flow<C> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>): Flow<C> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> =
                 kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
@@ -94,7 +94,7 @@ internal class SuspendableNotifier(
                 // Ensure that the live realm is always up to date to avoid registering
                 // notifications on newer objects.
                 realm.refresh()
-                val observable = flowable.observable()
+                val observable = flowable.notifiable()
                 val lifeRef = observable.coreObservable(realm)
                 val changeBuilder = observable.changeBuilder()
                 if (lifeRef != null) {

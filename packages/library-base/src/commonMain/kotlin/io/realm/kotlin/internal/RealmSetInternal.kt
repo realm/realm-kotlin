@@ -62,7 +62,7 @@ internal class ManagedRealmSet<E> constructor(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, CoreObservable<ManagedRealmSet<E>, SetChange<E>>, Versioned by operator.realmReference {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, CoreNotifiable<ManagedRealmSet<E>, SetChange<E>>, Versioned by operator.realmReference {
 
     override val size: Int
         get() {

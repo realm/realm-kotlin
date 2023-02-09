@@ -49,7 +49,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
     RealmStateHolder,
     RealmObjectInterop,
     InternalDeleteable,
-    CoreObservable<RealmObjectReference<T>, ObjectChange<T>> {
+    CoreNotifiable<RealmObjectReference<T>, ObjectChange<T>> {
 
     public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
 

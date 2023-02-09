@@ -244,7 +244,7 @@ public class RealmImpl private constructor(
         }
     }
 
-    override fun <T : CoreObservable<T, C>, C> registerObserver(t: NotificationFlowable<T, C>): Flow<C> {
+    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>): Flow<C> {
         return notifier.registerObserver(t)
     }
 

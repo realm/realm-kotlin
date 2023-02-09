@@ -50,7 +50,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val mediator: Mediator,
     @Suppress("UnusedPrivateMember")
     private val mode: Mode = Mode.RESULTS
-) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreObservable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
+) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreNotifiable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
 
     internal enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.

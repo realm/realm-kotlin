@@ -3,7 +3,7 @@ package io.realm.kotlin.internal.query
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.InternalDeleteable
 import io.realm.kotlin.internal.Mediator
-import io.realm.kotlin.internal.NotificationFlowable
+import io.realm.kotlin.internal.Notifiable
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
@@ -34,7 +34,7 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
     private val classKey: ClassKey,
     private val clazz: KClass<E>,
     private val mediator: Mediator
-) : RealmSingleQuery<E>, InternalDeleteable, NotificationFlowable<RealmResultsImpl<E>, ResultsChange<E>> {
+) : RealmSingleQuery<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>> {
 
     override fun find(): E? {
         val link: Link = RealmInterop.realm_query_find_first(queryPointer) ?: return null
@@ -95,7 +95,7 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
      * Thaw the frozen query result, turning it back into a live, thread-confined RealmResults.
      * The results object is then used to fetch the object with index 0, which can be `null`.
      */
-    override fun observable(): Observable<RealmResultsImpl<E>, ResultsChange<E>> = QueryResultObservable(
+    override fun notifiable(): Notifiable<RealmResultsImpl<E>, ResultsChange<E>> = QueryResultNotifiable(
         RealmInterop.realm_query_find_all(queryPointer),
         classKey,
         clazz,

@@ -19,7 +19,7 @@ package io.realm.kotlin.internal.query
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.InternalDeleteable
 import io.realm.kotlin.internal.Mediator
-import io.realm.kotlin.internal.NotificationFlowable
+import io.realm.kotlin.internal.Notifiable
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
@@ -53,7 +53,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     internal val queryPointer: RealmQueryPointer,
-) : RealmQuery<E>, InternalDeleteable, NotificationFlowable<RealmResultsImpl<E>, ResultsChange<E>> {
+) : RealmQuery<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>> {
 
     private val resultsPointer: RealmResultsPointer by lazy {
         RealmInterop.realm_query_find_all(queryPointer)
@@ -175,8 +175,8 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator, classKey, clazz)
 
-    override fun observable(): Observable<RealmResultsImpl<E>, ResultsChange<E>> =
-        QueryResultObservable(resultsPointer, classKey, clazz, mediator)
+    override fun notifiable(): Notifiable<RealmResultsImpl<E>, ResultsChange<E>> =
+        QueryResultNotifiable(resultsPointer, classKey, clazz, mediator)
 
     override fun asFlow(): Flow<ResultsChange<E>> {
         return realmReference.owner

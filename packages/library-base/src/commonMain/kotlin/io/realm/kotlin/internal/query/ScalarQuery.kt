@@ -20,7 +20,7 @@ import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Mediator
-import io.realm.kotlin.internal.NotificationFlowable
+import io.realm.kotlin.internal.Notifiable
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
@@ -71,10 +71,10 @@ internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
     protected val mediator: Mediator,
     protected val classKey: ClassKey,
     protected val clazz: KClass<E>
-) : NotificationFlowable<RealmResultsImpl<E>, ResultsChange<E>> {
+) : Observable<RealmResultsImpl<E>, ResultsChange<E>> {
 
-    override fun observable(): Observable<RealmResultsImpl<E>, ResultsChange<E>> =
-        QueryResultObservable(
+    override fun notifiable(): Notifiable<RealmResultsImpl<E>, ResultsChange<E>> =
+        QueryResultNotifiable(
             RealmInterop.realm_query_find_all(queryPointer),
             classKey,
             clazz,

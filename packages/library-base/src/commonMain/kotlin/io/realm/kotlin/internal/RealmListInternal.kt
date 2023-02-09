@@ -61,7 +61,7 @@ internal class ManagedRealmList<E>(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmListPointer,
     val operator: ListOperator<E>,
-) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, CoreObservable<ManagedRealmList<E>, ListChange<E>>, Versioned by operator.realmReference {
+) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, CoreNotifiable<ManagedRealmList<E>, ListChange<E>>, Versioned by operator.realmReference {
 
     override val size: Int
         get() {
