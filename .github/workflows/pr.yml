@@ -989,27 +989,27 @@ jobs:
         type: [base, sync]
         include:
           - os: macos-latest
-            os-id: m
+            os-id: mac
             type: base
             test-title: Unit Test Results - Base JVM MacOS x64
           - os: ubuntu-latest
-            os-id: u
+            os-id: ubu
             type: base
             test-title: Unit Test Results - Base JVM Linux
           - os: windows-latest
-            os-id: w
+            os-id: win
             type: base
             test-title: Unit Test Results - Base JVM Windows
           - os: macos-latest
-            os-id: m
+            os-id: mac
             type: sync
             test-title: Unit Test Results - Sync JVM MacOS x64
           - os: ubuntu-latest
-            os-id: u
+            os-id: ubu
             type: sync
             test-title: Unit Test Results - Sync JVM Linux
           - os: windows-latest
-            os-id: w
+            os-id: win
             type: sync
             test-title: Unit Test Results - Sync JVM Windows
  
@@ -1048,7 +1048,7 @@ jobs:
           ./gradlew :test-${{ matrix.type }}:jvmTest
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
-          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
           -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
           -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
@@ -1178,6 +1178,7 @@ jobs:
     with:
       BaseUrl: https://realm-qa.mongodb.com
       AtlasBaseUrl: https://cloud-qa.mongodb.com
+      AppId: ${{ needs.deploy-baas.outputs.appId }}
     secrets:
       AtlasProjectId: ${{ secrets.ATLAS_QA_PROJECT_ID }}
       AtlasPublicKey: ${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}

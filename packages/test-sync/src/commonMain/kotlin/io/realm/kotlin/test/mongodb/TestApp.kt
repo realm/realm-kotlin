@@ -39,8 +39,8 @@ import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 
-val TEST_APP_PARTITION = "${SyncServerConfig.appPrefix}-partition" // With Partion-based Sync
-val TEST_APP_FLEX = "${SyncServerConfig.appPrefix}-flex" // With Flexible Sync
+val TEST_APP_PARTITION = "${SyncServerConfig.appPrefix}-pbs" // With Partion-based Sync
+val TEST_APP_FLEX = "${SyncServerConfig.appPrefix}-flx" // With Flexible Sync
 val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 
 val TEST_SERVER_BASE_URL = SyncServerConfig.url

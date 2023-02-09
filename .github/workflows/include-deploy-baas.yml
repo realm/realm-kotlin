@@ -11,6 +11,8 @@ name: deploy-baas
     outputs:
       clusterName:
         value: ${{ jobs.deploy-baas.outputs.clusterName }}
+      appId: 
+        value: ${{ github.run_id }}-${{ github.run_attempt }}
     secrets:
       AtlasProjectId:
         required: true
@@ -41,24 +43,3 @@ jobs:
         apiKey: ${{ secrets.AtlasPublicKey}}
         privateApiKey: ${{ secrets.AtlasPrivateKey }}
         clusterSize: M5
-
-  # deploy-apps:
-  #   name: Deploy Apps
-  #   needs: deploy-baas
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     matrix:
-  #       differentiator: ${{ fromJson(inputs.differentiators) }}
-  #   if: always() && !cancelled() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v3
-  #     with:
-  #       submodules: false
-  #       ref: ${{ github.event.pull_request.head.sha }}
-  #   - uses: actions/setup-dotnet@607fce577a46308457984d59e4954e075820f10a
-  #     with:
-  #       dotnet-version: 6.0.x
-  #   - name: Deploy Apps
-  #     run: dotnet run . --baasurl=${{ inputs.BaseUrl }} --baascluster=${{ needs.deploy-baas.outputs.clusterName }} --baasapikey=${{ secrets.AtlasPublicKey }} --baasprivateapikey=${{ secrets.AtlasPrivateKey }} --baasprojectid=${{ secrets.AtlasProjectId }} --baasdifferentiator=${{ matrix.differentiator }}
-  #     working-directory: Tools/DeployApps
