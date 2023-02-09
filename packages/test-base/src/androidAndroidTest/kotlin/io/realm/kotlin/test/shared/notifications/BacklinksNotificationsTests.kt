@@ -343,12 +343,12 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 copyToRealm(Sample())
             }
 
-            val m = Mutex(true)
+            val c = Channel<Unit>(capacity = 1)
             val observer = async {
                 target.objectBacklinks
                     .asFlow()
                     .collect {
-                        m.unlock()
+                        c.trySend(Unit)
                     }
                 fail("Flow should not be canceled.")
             }
@@ -363,11 +363,12 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
 
             // Await that collect is actually collecting
             withTimeout(10.seconds) {
-                m.lock()
+                c.receive()
             }
             realm.close()
             delay(1.seconds)
             observer.cancel()
+            c.close()
         }
     }
 }
