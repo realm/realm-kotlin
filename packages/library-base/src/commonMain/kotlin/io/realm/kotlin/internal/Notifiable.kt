@@ -37,7 +37,7 @@ public interface Observable<T : CoreNotifiable<T, C>, C> {
 }
 
 /**
- * A _notifiable_ yields the life reference and change event builder that is used by the
+ * A _notifiable_ yields the live reference and change event builder that is used by the
  * [SuspendableNotifier] to register for notifications with core and convert the core change sets
  * into [C]-change events.
  */
@@ -45,7 +45,7 @@ public interface Notifiable<T : CoreNotifiable<T, C>, C> {
 
     /**
      * Should return the live reference in [liveRealm] that the [SuspendableNotifier] will register
-     * notifications for with Core.
+     * notifications for with Core, or `null` if the entity has been deleted.
      */
     public fun coreObservable(liveRealm: LiveRealm): CoreNotifiable<T, C>?
 
@@ -60,6 +60,17 @@ public interface Notifiable<T : CoreNotifiable<T, C>, C> {
  * appropriate [C]-change event and signal if the events should close the flow.
  */
 public interface ChangeBuilder<T, C> {
+    /**
+     * Return a change event for the given [frozenRef] and core [change].
+     *
+     * @param frozenRef a frozen reference of the original entity, or `null` if the entity is no
+     * longer present in the [SuspendableNotifier]'s live realm.
+     * @param change the core change, or `null` if this is the initial event issued by the
+     * [SuspendableNotifier] at the point of callback registration.
+     * @return a pair with a change event and a signal whether the [SuspendableNotifier] should
+     * cancel the notification registration and complete the flow. If the change event is `null`
+     * the [SuspendableNotifier] will not emit any events to the flow.
+     */
     public fun change(frozenRef: T?, change: RealmChangesPointer? = null): Pair<C?, Boolean>
 }
 
