@@ -157,8 +157,9 @@ class SubscriptionSetTests {
         subscriptions.waitForSynchronization()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         subscriptions.update {
-            // `age` is not a queriable field
-            realm.query<FlexParentObject>("age > 42").subscribe("test2")
+            // `age` is not a queriable field but will be added automatically
+            // LIMIT should fail on the server
+            realm.query<FlexParentObject>("age > 42 LIMIT(1)").subscribe("test2")
         }
         assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
@@ -185,7 +186,7 @@ class SubscriptionSetTests {
         val subscriptions = realm.subscriptions
         assertNull(subscriptions.errorMessage)
         subscriptions.update {
-            realm.query<FlexParentObject>("age > 42").subscribe()
+            realm.query<FlexParentObject>("age > 42 LIMIT(1)").subscribe()
         }
         assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
@@ -250,7 +251,7 @@ class SubscriptionSetTests {
     @Test
     fun waitForSynchronization_error() = runBlocking {
         val updatedSubs = realm.subscriptions.update {
-            realm.query<FlexParentObject>("age > 42").subscribe("test")
+            realm.query<FlexParentObject>("age > 42 LIMIT(1)").subscribe("test")
         }
         assertFailsWith<BadFlexibleSyncQueryException> {
             updatedSubs.waitForSynchronization()

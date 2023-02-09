@@ -37,4 +37,4 @@ jobs:
         apiKey: ${{ secrets.AtlasPublicKey}}
         privateApiKey: ${{ secrets.AtlasPrivateKey }}
     - name: Delete apps
-      run: sh tools/delete-cloud-qa-apps.sh ${{ inputs.AppId }} ${{ secrets.AtlasPublicKey }} ${{ secrets.AtlasPrivateKey }}
+      run: bash tools/delete-cloud-qa-apps.sh ${{ inputs.AppId }} ${{ secrets.AtlasPublicKey }} ${{ secrets.AtlasPrivateKey }}
