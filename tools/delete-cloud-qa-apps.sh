@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 # Script for deleting all apps with a given prefix on `https://realm-qa.mongodb.com`
 # Based on https://www.mongodb.com/docs/atlas/app-services/manage-apps/delete/delete-with-api/

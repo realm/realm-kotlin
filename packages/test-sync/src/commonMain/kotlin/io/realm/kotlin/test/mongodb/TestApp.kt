@@ -128,6 +128,16 @@ open class TestApp private constructor(
     }
 
     companion object {
+
+        // Expose a try-with-resource pattern for Apps
+        inline fun TestApp.use(action: (TestApp) -> Unit) {
+            try {
+                action(this)
+            } finally {
+                this.close()
+            }
+        }
+
         @Suppress("LongParameterList")
         fun build(
             debug: Boolean,

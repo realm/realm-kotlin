@@ -20,6 +20,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
@@ -30,7 +31,9 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.TestApp.Companion.use
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -58,7 +61,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private const val TEST_SIZE = 500
-private val TIMEOUT = 10.seconds
+private val TIMEOUT = 30.seconds
 
 private val schema = setOf(SyncObjectWithAllTypes::class)
 
@@ -95,9 +98,10 @@ class ProgressListenerTests {
                         idOffset = TEST_SIZE * i,
                         timeout = TIMEOUT
                     )
+
                     // We are not sure when the realm actually knows of the remote changes and consider
                     // them current, so wait a bit
-                    delay(1.seconds)
+                    delay(10.seconds)
                     realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
                         .run {
                             withTimeout(TIMEOUT) {
@@ -239,21 +243,23 @@ class ProgressListenerTests {
 
     @Test
     fun throwsOnFlexibleSync() = runBlocking {
-        val app = TestApp(TEST_APP_FLEX)
-        val user = app.createUserAndLogIn()
-        val configuration: SyncConfiguration = SyncConfiguration.create(user, schema)
-        Realm.open(configuration).use { realm ->
-            assertFailsWithMessage<UnsupportedOperationException>(
-                "Progress listeners are not supported for Flexible Sync"
-            ) {
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
+        TestApp(appName = TEST_APP_FLEX, logLevel = LogLevel.DEBUG, builder = {
+            it.syncRootDirectory(PlatformUtils.createTempDir())
+        }).use { app ->
+            val user = app.createUserAndLogIn()
+            val configuration: SyncConfiguration = SyncConfiguration.create(user, schema)
+            Realm.open(configuration).use { realm ->
+                assertFailsWithMessage<UnsupportedOperationException>(
+                    "Progress listeners are not supported for Flexible Sync"
+                ) {
+                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
+                }
             }
         }
     }
 
     @Test
     fun completesOnClose() = runBlocking {
-        val app = TestApp(TEST_APP_PARTITION)
         val user = app.createUserAndLogIn()
         val realm = Realm.open(createSyncConfig(user))
         try {
