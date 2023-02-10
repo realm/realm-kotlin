@@ -507,9 +507,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 }
 
                             val isValidTargetType = targetPropertyType.hasSameClassId(sourceType)
-                            val isValidGenericType = (
-                                targetPropertyType.isRealmList() || targetPropertyType.isRealmSet()
-                                ) && generic!!.type.hasSameClassId(sourceType)
+                            val isValidCollectionType = targetPropertyType.isRealmList() ||
+                                targetPropertyType.isRealmSet() ||
+                                targetPropertyType.isRealmDictionary()
+                            val isValidGenericType = isValidCollectionType &&
+                                generic!!.type.hasSameClassId(sourceType)
 
                             if (!(isValidTargetType || isValidGenericType)) {
                                 val targetPropertyName = getLinkingObjectPropertyName(declaration.backingField!!)

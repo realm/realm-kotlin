@@ -209,6 +209,7 @@ class GenerationExtensionTest {
             "uuidListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128ListField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
@@ -226,6 +227,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128ListField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "nullableRealmAnyListField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Set types
@@ -244,6 +246,7 @@ class GenerationExtensionTest {
             "uuidSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128SetField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
 
             // Nullable set types
             "nullableStringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -260,11 +263,50 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128SetField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "nullableRealmAnySetField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
+
+            // Dictionary types
+            "stringDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "byteDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "charDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "shortDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "intDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "longDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "booleanDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "floatDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "doubleDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "timestampDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            "objectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "bsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "binaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128DictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
+
+            // Nullable dictionary types
+            "nullableStringDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "nullableByteDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableCharDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableShortDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableIntDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableLongDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableBooleanDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "nullableFloatDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "nullableDoubleDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "nullableTimestampDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            "nullableObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableBsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableUUIDDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "nullableBinaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128DictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
+            "nullableRealmAnyDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
+            "nullableObjectDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "nullableEmbeddedObjectDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Linking objects
             "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
             "linkingObjectsBySet" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+            "linkingObjectsByDictionary" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
 
             // @PersistedName annotated fields
             "persistedNameStringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
