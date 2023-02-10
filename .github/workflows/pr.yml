@@ -767,11 +767,12 @@ jobs:
             test-title: Results - Android Sync (Emulator)
  
     runs-on: macos-latest
-    needs: [check-cache, build-android-packages, build-jvm-packages]
+    needs: [check-cache, deploy-baas, build-android-packages, build-jvm-packages]
     if: |
       always() &&
       (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
+      (needs.deploy-baas.result == 'success')
 
     steps:
       - name: Checkout code
@@ -902,10 +903,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     # TODO Do we need to wait for all matrix builds?
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-macos-x64-packages] #, build-macos-arm64-packages] 
+    needs: [check-cache, deploy-baas, build-macos-x64-packages] #, build-macos-arm64-packages] 
     if: |
       always() &&
-      (needs.build-macos-x64-packages.result == 'success' || needs.build-macos-x64-packages.result == 'skipped')
+      (needs.build-macos-x64-packages.result == 'success' || needs.build-macos-x64-packages.result == 'skipped') &&
+      (needs.deploy-baas.result == 'success')
 
     steps:
       - name: Checkout code
@@ -974,10 +976,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     # TODO Do we need to wait for all matrix builds?
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-macos-x64-packages, build-ios-x64-packages] # , build-ios-arm64-packages] 
+    needs: [check-cache, deploy-baas, build-macos-x64-packages, build-ios-x64-packages] # , build-ios-arm64-packages] 
     if: |
       always() &&
-      (needs.build-ios-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped')
+      (needs.build-ios-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped') &&
+      (needs.deploy-baas.result == 'success')
 
     steps:
       - name: Checkout code
@@ -1225,7 +1228,7 @@ jobs:
     uses: ./.github/workflows/include-cleanup-baas.yml
     if: always()
     name: Cleanup BAAS Cluster
-    needs: [deploy-baas, test-jvm-packages]
+    needs: [deploy-baas, test-jvm-packages, test-ios-packages, test-macos-packages, test-android-packages-emulator]
     with:
       BaseUrl: https://realm-qa.mongodb.com
       AtlasBaseUrl: https://cloud-qa.mongodb.com
