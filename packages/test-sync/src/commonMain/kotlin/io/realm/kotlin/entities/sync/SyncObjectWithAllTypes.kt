@@ -17,12 +17,14 @@
 package io.realm.kotlin.entities.sync
 
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -123,6 +125,26 @@ class SyncObjectWithAllTypes : RealmObject {
     // RealmSets of nullable primitive values, not currently supported by Sync
     // RealmSets of nullable objects, not currently supported by Core
 
+    // RealmDictionaries
+    var stringRealmDictionary: RealmDictionary<String> = realmDictionaryOf("A" to "hello world")
+    var byteRealmDictionary: RealmDictionary<Byte> = realmDictionaryOf("A" to 0)
+    var charRealmDictionary: RealmDictionary<Char> = realmDictionaryOf("A" to 0.toChar())
+    var shortRealmDictionary: RealmDictionary<Short> = realmDictionaryOf("A" to 0)
+    var intRealmDictionary: RealmDictionary<Int> = realmDictionaryOf("A" to 0)
+    var longRealmDictionary: RealmDictionary<Long> = realmDictionaryOf("A" to 0)
+    var booleanRealmDictionary: RealmDictionary<Boolean> = realmDictionaryOf("A" to true)
+    var doubleRealmDictionary: RealmDictionary<Double> = realmDictionaryOf("A" to 0.0)
+    var floatRealmDictionary: RealmDictionary<Float> = realmDictionaryOf("A" to 0.0.toFloat())
+    var decimal128RealmDictionary: RealmDictionary<Decimal128> = realmDictionaryOf("A" to Decimal128("0.0"))
+    var realmInstantRealmDictionary: RealmDictionary<RealmInstant> = realmDictionaryOf("A" to RealmInstant.MIN)
+    var objectIdRealmDictionary: RealmDictionary<ObjectId> = realmDictionaryOf("A" to ObjectId.create())
+    var realmUUIDRealmDictionary: RealmDictionary<RealmUUID> = realmDictionaryOf("A" to RealmUUID.random())
+    var binaryRealmDictionary: RealmDictionary<ByteArray> = realmDictionaryOf("A" to byteArrayOf(42))
+
+    // RealmDictionaries of objects can only be nullable, both for Core and Sync
+    var nullableObjectRealmDictionary: RealmDictionary<SyncObjectWithAllTypes?> = realmDictionaryOf()
+    var nullableRealmAnyRealmDictionary: RealmDictionary<RealmAny?> = realmDictionaryOf("A" to RealmAny.create(42))
+
     companion object {
 
         // Mapping between each Core Field type and functions that can insert data for that type
@@ -142,6 +164,7 @@ class SyncObjectWithAllTypes : RealmObject {
                                         obj.intNullableField = 42
                                         obj.intRealmList = realmListOf(42)
                                         obj.intRealmSet = realmSetOf(42)
+                                        obj.intRealmDictionary = realmDictionaryOf("A" to 42)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(MutableRealmInt.create(42), obj.mutableRealmIntField)
@@ -150,6 +173,7 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(42, obj.intNullableField)
                                         assertEquals(42, obj.intRealmList.first())
                                         assertSetContains(42, obj.intRealmSet)
+                                        assertEquals(42, obj.intRealmDictionary["A"])
                                     }
                                 )
                             }
@@ -160,6 +184,7 @@ class SyncObjectWithAllTypes : RealmObject {
                                         obj.booleanNullableField = true
                                         obj.booleanRealmList = realmListOf(true, false)
                                         obj.booleanRealmSet = realmSetOf(true, false)
+                                        obj.booleanRealmDictionary = realmDictionaryOf("A" to true, "B" to false)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(true, obj.booleanField)
@@ -168,6 +193,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(false, obj.booleanRealmList[1])
                                         assertSetContains(true, obj.booleanRealmSet)
                                         assertSetContains(false, obj.booleanRealmSet)
+                                        assertEquals(true, obj.booleanRealmDictionary["A"])
+                                        assertEquals(false, obj.booleanRealmDictionary["B"])
                                     }
                                 )
                             }
@@ -178,6 +205,7 @@ class SyncObjectWithAllTypes : RealmObject {
                                         obj.stringNullableField = "Bar"
                                         obj.stringRealmList = realmListOf("Foo", "")
                                         obj.stringRealmSet = realmSetOf("Foo", "")
+                                        obj.stringRealmDictionary = realmDictionaryOf("A" to "Foo", "B" to "")
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals("Foo", obj.stringField)
@@ -186,6 +214,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals("", obj.stringRealmList[1])
                                         assertSetContains("Foo", obj.stringRealmSet)
                                         assertSetContains("", obj.stringRealmSet)
+                                        assertEquals("Foo", obj.stringRealmDictionary["A"])
+                                        assertEquals("", obj.stringRealmDictionary["B"])
                                     }
                                 )
                             }
@@ -208,6 +238,12 @@ class SyncObjectWithAllTypes : RealmObject {
                                                     stringField = "child2"
                                                 }
                                             )
+                                        obj.nullableObjectRealmDictionary =
+                                            realmDictionaryOf(
+                                                "A" to SyncObjectWithAllTypes().apply {
+                                                    stringField = "child2"
+                                                }
+                                            )
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals("child1", obj.objectField!!.stringField)
@@ -217,6 +253,10 @@ class SyncObjectWithAllTypes : RealmObject {
                                             obj.objectRealmList.first().stringField
                                         )
                                         assertSetContainsObject("child2", obj.objectRealmSet)
+                                        assertEquals(
+                                            "child2",
+                                            obj.nullableObjectRealmDictionary["A"]?.stringField
+                                        )
                                     }
                                 )
                             }
@@ -229,6 +269,12 @@ class SyncObjectWithAllTypes : RealmObject {
                                             realmListOf(1.23F, Float.MIN_VALUE, Float.MAX_VALUE)
                                         obj.floatRealmSet =
                                             realmSetOf(1.23F, Float.MIN_VALUE, Float.MAX_VALUE)
+                                        obj.floatRealmDictionary =
+                                            realmDictionaryOf(
+                                                "A" to 1.23F,
+                                                "B" to Float.MIN_VALUE,
+                                                "C" to Float.MAX_VALUE
+                                            )
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(1.23F, obj.floatField)
@@ -236,8 +282,12 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(1.23F, obj.floatRealmList[0])
                                         assertEquals(Float.MIN_VALUE, obj.floatRealmList[1])
                                         assertEquals(Float.MAX_VALUE, obj.floatRealmList[2])
+                                        assertSetContains(1.23F, obj.floatRealmSet)
                                         assertSetContains(Float.MIN_VALUE, obj.floatRealmSet)
                                         assertSetContains(Float.MAX_VALUE, obj.floatRealmSet)
+                                        assertEquals(1.23F, obj.floatRealmDictionary["A"])
+                                        assertEquals(Float.MIN_VALUE, obj.floatRealmDictionary["B"])
+                                        assertEquals(Float.MAX_VALUE, obj.floatRealmDictionary["C"])
                                     }
                                 )
                             }
@@ -250,6 +300,12 @@ class SyncObjectWithAllTypes : RealmObject {
                                             realmListOf(1.234, Double.MIN_VALUE, Double.MAX_VALUE)
                                         obj.doubleRealmSet =
                                             realmSetOf(1.234, Double.MIN_VALUE, Double.MAX_VALUE)
+                                        obj.doubleRealmDictionary =
+                                            realmDictionaryOf(
+                                                "A" to 1.234,
+                                                "B" to Double.MIN_VALUE,
+                                                "C" to Double.MAX_VALUE
+                                            )
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(1.234, obj.doubleField)
@@ -257,8 +313,12 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(1.234, obj.doubleRealmList[0])
                                         assertEquals(Double.MIN_VALUE, obj.doubleRealmList[1])
                                         assertEquals(Double.MAX_VALUE, obj.doubleRealmList[2])
+                                        assertSetContains(1.234, obj.doubleRealmSet)
                                         assertSetContains(Double.MIN_VALUE, obj.doubleRealmSet)
                                         assertSetContains(Double.MAX_VALUE, obj.doubleRealmSet)
+                                        assertEquals(1.234, obj.doubleRealmDictionary["A"])
+                                        assertEquals(Double.MIN_VALUE, obj.doubleRealmDictionary["B"])
+                                        assertEquals(Double.MAX_VALUE, obj.doubleRealmDictionary["C"])
                                     },
                                 )
                             }
@@ -279,6 +339,12 @@ class SyncObjectWithAllTypes : RealmObject {
                                                 Decimal128.NEGATIVE_INFINITY,
                                                 Decimal128.POSITIVE_INFINITY
                                             )
+                                        obj.decimal128RealmDictionary =
+                                            realmDictionaryOf(
+                                                "A" to Decimal128("1.234"),
+                                                "B" to Decimal128.NEGATIVE_INFINITY,
+                                                "C" to Decimal128.POSITIVE_INFINITY
+                                            )
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(Decimal128("1.234"), obj.decimal128Field)
@@ -286,8 +352,12 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(Decimal128("1.234"), obj.decimal128RealmList[0])
                                         assertEquals(Decimal128.NEGATIVE_INFINITY, obj.decimal128RealmList[1])
                                         assertEquals(Decimal128.POSITIVE_INFINITY, obj.decimal128RealmList[2])
+                                        assertSetContains(Decimal128("1.234"), obj.decimal128RealmSet)
                                         assertSetContains(Decimal128.NEGATIVE_INFINITY, obj.decimal128RealmSet)
                                         assertSetContains(Decimal128.POSITIVE_INFINITY, obj.decimal128RealmSet)
+                                        assertEquals(Decimal128("1.234"), obj.decimal128RealmDictionary["A"])
+                                        assertEquals(Decimal128.NEGATIVE_INFINITY, obj.decimal128RealmDictionary["B"])
+                                        assertEquals(Decimal128.POSITIVE_INFINITY, obj.decimal128RealmDictionary["C"])
                                     },
                                 )
                             }
@@ -301,6 +371,10 @@ class SyncObjectWithAllTypes : RealmObject {
                                             realmListOf(RealmInstant.MIN, RealmInstant.MAX)
                                         obj.realmInstantRealmSet =
                                             realmSetOf(RealmInstant.MIN, RealmInstant.MAX)
+                                        obj.realmInstantRealmDictionary = realmDictionaryOf(
+                                            "A" to RealmInstant.MIN,
+                                            "B" to RealmInstant.MAX
+                                        )
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(
@@ -321,6 +395,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                             RealmInstant.MAX,
                                             obj.realmInstantRealmSet
                                         )
+                                        assertEquals(RealmInstant.MIN, obj.realmInstantRealmDictionary["A"])
+                                        assertEquals(RealmInstant.MAX, obj.realmInstantRealmDictionary["B"])
                                     },
                                 )
                             }
@@ -334,6 +410,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                         obj.objectIdNullableField = randomObjId
                                         obj.objectIdRealmList = realmListOf(minObjId, maxObjId)
                                         obj.objectIdRealmSet = realmSetOf(minObjId, maxObjId)
+                                        obj.objectIdRealmDictionary =
+                                            realmDictionaryOf("A" to minObjId, "B" to maxObjId)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(randomObjId, obj.objectIdField)
@@ -342,6 +420,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(maxObjId, obj.objectIdRealmList[1])
                                         assertSetContains(minObjId, obj.objectIdRealmSet)
                                         assertSetContains(maxObjId, obj.objectIdRealmSet)
+                                        assertEquals(minObjId, obj.objectIdRealmDictionary["A"])
+                                        assertEquals(maxObjId, obj.objectIdRealmDictionary["B"])
                                     },
                                 )
                             }
@@ -355,6 +435,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                         obj.realmUUIDNullableField = uuid1
                                         obj.realmUUIDRealmList = realmListOf(uuid2, uuid3)
                                         obj.realmUUIDRealmSet = realmSetOf(uuid2, uuid3)
+                                        obj.realmUUIDRealmDictionary =
+                                            realmDictionaryOf("A" to uuid2, "B" to uuid3)
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         assertEquals(uuid1, obj.realmUUIDField)
@@ -363,6 +445,8 @@ class SyncObjectWithAllTypes : RealmObject {
                                         assertEquals(uuid3, obj.realmUUIDRealmList[1])
                                         assertSetContains(uuid2, obj.realmUUIDRealmSet)
                                         assertSetContains(uuid3, obj.realmUUIDRealmSet)
+                                        assertEquals(uuid2, obj.realmUUIDRealmDictionary["A"])
+                                        assertEquals(uuid3, obj.realmUUIDRealmDictionary["B"])
                                     },
                                 )
                             }
@@ -380,6 +464,11 @@ class SyncObjectWithAllTypes : RealmObject {
                                             byteArrayOf(22),
                                             byteArrayOf(44, 66),
                                             byteArrayOf(11, 33)
+                                        )
+                                        obj.binaryRealmDictionary = realmDictionaryOf(
+                                            "A" to byteArrayOf(22),
+                                            "B" to byteArrayOf(44, 66),
+                                            "C" to byteArrayOf(11, 33)
                                         )
                                     },
                                     { obj: SyncObjectWithAllTypes ->
@@ -415,6 +504,18 @@ class SyncObjectWithAllTypes : RealmObject {
                                             byteArrayOf(11, 33),
                                             obj.binaryRealmSet
                                         )
+                                        assertContentEquals(
+                                            byteArrayOf(22),
+                                            obj.binaryRealmDictionary["A"]
+                                        )
+                                        assertContentEquals(
+                                            byteArrayOf(44, 66),
+                                            obj.binaryRealmDictionary["B"]
+                                        )
+                                        assertContentEquals(
+                                            byteArrayOf(11, 33),
+                                            obj.binaryRealmDictionary["C"]
+                                        )
                                     },
                                 )
                             }
@@ -447,12 +548,37 @@ class SyncObjectWithAllTypes : RealmObject {
                                         }
                                     )
                                 )
+                                val realmAnyDictionaryValues = listOf(
+                                    realmAnyValues[0],
+                                    realmAnyValues[1],
+                                    RealmAny.create(
+                                        SyncObjectWithAllTypes().apply {
+                                            stringField = "Dictionary_element"
+                                        }
+                                    )
+                                )
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
                                         obj.nullableRealmAnyField = realmAnyValues[0]
                                         obj.nullableRealmAnyForObjectField = realmAnyValues[2]
-                                        obj.nullableRealmAnyRealmList = realmListOf(realmAnyListValues[0], realmAnyListValues[1], realmAnyListValues[2], null)
-                                        obj.nullableRealmAnyRealmSet = realmSetOf(realmAnySetValues[0], realmAnySetValues[1], realmAnySetValues[2], null)
+                                        obj.nullableRealmAnyRealmList = realmListOf(
+                                            realmAnyListValues[0],
+                                            realmAnyListValues[1],
+                                            realmAnyListValues[2],
+                                            null
+                                        )
+                                        obj.nullableRealmAnyRealmSet = realmSetOf(
+                                            realmAnySetValues[0],
+                                            realmAnySetValues[1],
+                                            realmAnySetValues[2],
+                                            null
+                                        )
+                                        obj.nullableRealmAnyRealmDictionary = realmDictionaryOf(
+                                            "A" to realmAnyDictionaryValues[0],
+                                            "B" to realmAnyDictionaryValues[1],
+                                            "C" to realmAnyDictionaryValues[2],
+                                            "D" to null
+                                        )
                                     },
                                     { obj: SyncObjectWithAllTypes ->
                                         // Check RealmAny containing an object
@@ -487,6 +613,15 @@ class SyncObjectWithAllTypes : RealmObject {
                                                 val actual = it?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
                                                 assertEquals(expected, actual)
                                             }
+
+                                        // Check dictionary of RealmAny values
+                                        assertEquals(realmAnyDictionaryValues[0], obj.nullableRealmAnyRealmDictionary["A"])
+                                        assertEquals(realmAnyDictionaryValues[1], obj.nullableRealmAnyRealmDictionary["B"])
+                                        assertEquals(
+                                            realmAnyDictionaryValues[2].asRealmObject<SyncObjectWithAllTypes>().stringField,
+                                            obj.nullableRealmAnyRealmDictionary["C"]?.asRealmObject<SyncObjectWithAllTypes>()?.stringField
+                                        )
+                                        assertEquals(null, obj.nullableRealmAnyRealmDictionary["D"])
                                     },
                                 )
                             }
