@@ -17,12 +17,14 @@
 package sample.input
 
 import io.realm.kotlin.ext.backlinks
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -86,6 +88,7 @@ class Sample : RealmObject {
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var uuidListField: RealmList<RealmUUID> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
+    var decimal128ListField: RealmList<Decimal128> = realmListOf()
     var objectListField: RealmList<Sample> = realmListOf()
     var embeddedRealmObjectListField: RealmList<EmbeddedChild> = realmListOf()
 
@@ -104,6 +107,7 @@ class Sample : RealmObject {
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+    var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
     var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
 
     // Set types
@@ -121,6 +125,7 @@ class Sample : RealmObject {
     var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
+    var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
     var objectSetField: RealmSet<Sample> = realmSetOf()
 
     // Nullable set types - RealmSet<RealmObject?> is not supported nor are embedded objects
@@ -138,10 +143,50 @@ class Sample : RealmObject {
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+    var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
     var nullableRealmAnySetField: RealmSet<RealmAny?> = realmSetOf()
+
+    // Dictionary types - RealmDictionary<RealmObject> is not supported as it must be nullable
+    // Embedded objects are supported and must also be nullable
+    var stringDictionaryField: RealmDictionary<String> = realmDictionaryOf()
+    var byteDictionaryField: RealmDictionary<Byte> = realmDictionaryOf()
+    var charDictionaryField: RealmDictionary<Char> = realmDictionaryOf()
+    var shortDictionaryField: RealmDictionary<Short> = realmDictionaryOf()
+    var intDictionaryField: RealmDictionary<Int> = realmDictionaryOf()
+    var longDictionaryField: RealmDictionary<Long> = realmDictionaryOf()
+    var booleanDictionaryField: RealmDictionary<Boolean> = realmDictionaryOf()
+    var floatDictionaryField: RealmDictionary<Float> = realmDictionaryOf()
+    var doubleDictionaryField: RealmDictionary<Double> = realmDictionaryOf()
+    var timestampDictionaryField: RealmDictionary<RealmInstant> = realmDictionaryOf()
+    var objectIdDictionaryField: RealmDictionary<ObjectId> = realmDictionaryOf()
+    var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
+    var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
+    var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
+    var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
+
+    // Nullable dictionary types - includes objects and embedded objects
+    var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
+    var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
+    var nullableCharDictionaryField: RealmDictionary<Char?> = realmDictionaryOf()
+    var nullableShortDictionaryField: RealmDictionary<Short?> = realmDictionaryOf()
+    var nullableIntDictionaryField: RealmDictionary<Int?> = realmDictionaryOf()
+    var nullableLongDictionaryField: RealmDictionary<Long?> = realmDictionaryOf()
+    var nullableBooleanDictionaryField: RealmDictionary<Boolean?> = realmDictionaryOf()
+    var nullableFloatDictionaryField: RealmDictionary<Float?> = realmDictionaryOf()
+    var nullableDoubleDictionaryField: RealmDictionary<Double?> = realmDictionaryOf()
+    var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
+    var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
+    var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
+    var nullableUUIDDictionaryField: RealmDictionary<RealmUUID?> = realmDictionaryOf()
+    var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
+    var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
+    var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf()
+    var nullableObjectDictionaryField: RealmDictionary<Sample?> = realmDictionaryOf()
+    var nullableEmbeddedObjectDictionaryField: RealmDictionary<EmbeddedChild?> = realmDictionaryOf()
 
     val linkingObjectsByList by backlinks(Sample::objectListField)
     val linkingObjectsBySet by backlinks(Sample::objectSetField)
+    val linkingObjectsByDictionary by backlinks(Sample::nullableObjectDictionaryField)
 
     // @PersistedName annotations
     // Using positional argument
