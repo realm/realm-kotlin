@@ -830,13 +830,15 @@ actual object RealmInterop {
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
+        val collectionWasCleared = BooleanArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
             deletionCount,
             insertionCount,
             modificationCount,
-            movesCount
+            movesCount,
+            collectionWasCleared
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
