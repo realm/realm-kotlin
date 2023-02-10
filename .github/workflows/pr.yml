@@ -816,8 +816,7 @@ jobs:
           script: |
             adb logcat -c
             adb logcat > logcat.txt &
-            cd packages
-            ./gradlew :test-${{ matrix.type }}:jvmTest \
+            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck \
             -PincludeSdkModules=false \
             -PsyncTestUrl=https://realm-qa.mongodb.com \
             -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }} \
@@ -930,6 +929,7 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
+        working-directory: packages
         run: >
           ./gradlew :test-${{ matrix.type }}:macosTest
           -PincludeSdkModules=false
