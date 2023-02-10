@@ -756,6 +756,16 @@ jobs:
   # TODO We should be able to move this into a reusable work-flow
   test-android-packages-emulator:
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [base, sync]
+        include:
+          - type: macos-latest
+            test-title: Results - Android Base (Emulator)
+          - type: sync
+            test-title: Results - Android Sync (Emulator)
+ 
     runs-on: macos-latest
     needs: [check-cache, build-android-packages, build-jvm-packages]
     if: |
@@ -806,13 +816,21 @@ jobs:
           script: |
             adb logcat -c
             adb logcat > logcat.txt &
-            cd packages && ./gradlew :test-base:connectedAndroidTest -PincludeSdkModules=false --info
+            cd packages
+            ./gradlew :test-${{ matrix.type }}:jvmTest \
+            -PincludeSdkModules=false \
+            -PsyncTestUrl=https://realm-qa.mongodb.com \
+            -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }} \
+            -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
+            -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
+            -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }} \
+            -info --stacktrace --no-daemon
 
       - name: Archive LogCat data
         uses: actions/upload-artifact@v3
         if: always() || failure()
         with:
-          name: logcat-base-emulator.txt
+          name: logcat-${{ matrix.type }}-emulator.txt
           path: logcat.txt 
           retention-days: 1
 
@@ -820,8 +838,8 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: Results - Android Base (Emulator)
-          path: ./packages/test-base/build/**/TEST-*.xml
+          name: ${{ matrix.test-title }}
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
@@ -865,12 +883,19 @@ jobs:
   test-macos-packages:
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest] # , macos-arm]
+        type: [base, sync]
         include:
           - os: macos-latest
+            type: base
             package-prefix: macos-x64
             test-title: Unit Test Results - MacOS x64 Base
+          - os: macos-latest
+            type: sync
+            package-prefix: macos-x64
+            test-title: Unit Test Results - MacOS x64 Sync
           # - os: macos-arm
           #   package-prefix: macos-arm64
           #   test-title: Results - MacOS arm64 Base
@@ -905,14 +930,22 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
-        run: cd packages && ./gradlew :test-base:macosTest -PincludeSdkModules=false
+        run: >
+          ./gradlew :test-${{ matrix.type }}:macosTest
+          -PincludeSdkModules=false
+          -PsyncTestUrl=https://realm-qa.mongodb.com
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
+          -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
+          -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
+          -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
+          -info --stacktrace --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./packages/test-base/build/**/TEST-*.xml
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
@@ -921,12 +954,19 @@ jobs:
   test-ios-packages:
     timeout-minutes: 30
     strategy:
+      fail-fast: false
       matrix:
         os: [macos-latest] # , macos-arm]
+        type: [base, sync]
         include:
           - os: macos-latest
+            type: base
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Base
+          - os: macos-latest
+            type: sync
+            package-prefix: x64
+            test-title: Unit Test Results - iOS x64 Sync
           # - os: macos-arm
           #   package-prefix: macos-arm64
           #   test-title: Results - MacOS arm64 Base
@@ -966,15 +1006,25 @@ jobs:
           name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
+      # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
       - name: Run tests
-        run: cd packages && ./gradlew :test-base:iosTest -PincludeSdkModules=false
+        working-directory: packages
+        run: >
+          ./gradlew :test-${{ matrix.type }}:iosTest
+          -PincludeSdkModules=false
+          -PsyncTestUrl=https://realm-qa.mongodb.com
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
+          -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
+          -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
+          -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
+          -info --stacktrace --no-daemon
 
       - name: Publish Unit Test Results
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
           name: ${{ matrix.test-title }} 
-          path: ./packages/test-base/build/**/TEST-*.xml
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
           list-tests: failed
