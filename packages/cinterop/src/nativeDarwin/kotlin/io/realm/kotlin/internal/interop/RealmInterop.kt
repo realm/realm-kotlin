@@ -1696,7 +1696,7 @@ actual object RealmInterop {
             val deletionCount = allocArray<ULongVar>(1)
             val modificationCount = allocArray<ULongVar>(1)
             val movesCount = allocArray<ULongVar>(1)
-            val wasCleared = allocArray<BooleanVar>(1)
+            val collectionWasErased = alloc<BooleanVar>()
 
             realm_wrapper.realm_collection_changes_get_num_changes(
                 change.cptr(),
@@ -1704,7 +1704,7 @@ actual object RealmInterop {
                 insertionCount,
                 modificationCount,
                 movesCount,
-                wasCleared
+                collectionWasErased.ptr
             )
 
             val deletionIndices = initArray<ULongVar>(deletionCount)
