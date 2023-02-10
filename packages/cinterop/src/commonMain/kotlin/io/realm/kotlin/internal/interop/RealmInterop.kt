@@ -127,6 +127,8 @@ typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscri
 @Suppress("LongParameterList")
 class SyncConnectionParams(
     sdkVersion: String,
+    localAppName: String?,
+    localAppVersion: String?,
     platform: String,
     platformVersion: String,
     cpuArch: String,
@@ -136,6 +138,8 @@ class SyncConnectionParams(
     frameworkVersion: String
 ) {
     val sdkName = "Kotlin"
+    val localAppName: String?
+    val localAppVersion: String?
     val sdkVersion: String
     val platform: String
     val platformVersion: String
@@ -153,6 +157,8 @@ class SyncConnectionParams(
 
     init {
         this.sdkVersion = sdkVersion
+        this.localAppName = localAppName
+        this.localAppVersion = localAppVersion
         this.platform = normalizePlatformValue(platform)
         this.platformVersion = platformVersion
         this.cpuArch = normalizeCpuArch(cpuArch)
@@ -553,6 +559,14 @@ expect object RealmInterop {
     fun realm_sync_client_config_set_metadata_encryption_key(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         encryptionKey: ByteArray
+    )
+    fun realm_sync_client_config_set_user_agent_binding_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        bindingInfo: String
+    )
+    fun realm_sync_client_config_set_user_agent_application_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        applicationInfo: String
     )
 
     fun realm_sync_config_new(

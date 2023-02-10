@@ -723,13 +723,15 @@ actual object RealmInterop {
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
+        val collectionWasCleared = BooleanArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
             deletionCount,
             insertionCount,
             modificationCount,
-            movesCount
+            movesCount,
+            collectionWasCleared
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
@@ -997,6 +999,26 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_client_config_set_user_agent_binding_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        bindingInfo: String
+    ) {
+        realmc.realm_sync_client_config_set_user_agent_binding_info(
+            syncClientConfig.cptr(),
+            bindingInfo
+        )
+    }
+
+    actual fun realm_sync_client_config_set_user_agent_application_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        applicationInfo: String
+    ) {
+        realmc.realm_sync_client_config_set_user_agent_application_info(
+            syncClientConfig.cptr(),
+            applicationInfo
+        )
+    }
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
@@ -1131,11 +1153,13 @@ actual object RealmInterop {
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
-        // From https://github.com/realm/realm-kotlin/issues/407
-        realmc.realm_app_config_set_local_app_name(config, "")
-        realmc.realm_app_config_set_local_app_version(config, "")
-
         // Sync Connection Parameters
+        connectionParams.localAppName?.let { appName ->
+            realmc.realm_app_config_set_local_app_name(config, appName)
+        }
+        connectionParams.localAppVersion?.let { appVersion ->
+            realmc.realm_app_config_set_local_app_name(config, appVersion)
+        }
         realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
         realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
         realmc.realm_app_config_set_platform(config, connectionParams.platform)
