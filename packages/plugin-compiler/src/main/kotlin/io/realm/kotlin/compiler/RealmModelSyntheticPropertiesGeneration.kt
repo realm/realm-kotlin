@@ -535,7 +535,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 // Ensure that the names are valid and do not conflict with prior persisted or public names
                                 ensureValidName(persistedName, persistedAndPublicNameToLocation, location)
                                 persistedAndPublicNameToLocation[persistedName] = location
-                                if (value.hasPersistedNameAnnotation) {
+                                if (publicName != "") {
                                     ensureValidName(publicName, persistedAndPublicNameToLocation, location)
                                     persistedAndPublicNameToLocation[publicName] = location
                                 }

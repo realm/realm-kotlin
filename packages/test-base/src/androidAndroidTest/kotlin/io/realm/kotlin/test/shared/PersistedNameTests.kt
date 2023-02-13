@@ -391,6 +391,11 @@ class PersistedNameSample : RealmObject {
 
     @PersistedName("sameName")
     var sameName = "Realm"
+
+    // Ensure that we test that we support multiple fields that have their public name "cleared" in
+    // the underlying schema due to being equal to the persisted name.
+    @PersistedName("sameName2")
+    var sameName2 = "Realm"
 }
 
 class PersistedNameParentSample(var id: Int) : RealmObject {
