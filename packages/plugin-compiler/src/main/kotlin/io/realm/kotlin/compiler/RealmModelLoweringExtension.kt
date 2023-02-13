@@ -108,7 +108,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
 
             // Add body for synthetic companion methods
-            val companion = irClass.companionObject() ?: fatalError("RealmObject without companion")
+            val companion = irClass.companionObject() ?: fatalError("RealmObject without companion: ${irClass.kotlinFqName}")
             generator.addCompanionFields(irClass, companion, SchemaCollector.properties[irClass])
             generator.addSchemaMethodBody(irClass)
             generator.addNewInstanceMethodBody(irClass)
