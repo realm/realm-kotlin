@@ -116,7 +116,7 @@ public interface AppConfiguration {
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
-        private var httpLogObfuscator: HttpLogObfuscator = HttpLogObfuscator.create()
+        private var httpLogObfuscator: HttpLogObfuscator? = HttpLogObfuscator.create()
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -238,9 +238,14 @@ public interface AppConfiguration {
 
         /**
          * Sets the a [HttpLogObfuscator] used to keep sensitive information in HTTP requests from
-         * being displayed in the log.
+         * being displayed in the log. Logs containing tokens, passwords or custom function
+         * arguments and the result of computing these will be obfuscated by default. Logs will not
+         * be obfuscated if the value is set to `null`.
+         *
+         * @param httpLogObfuscator the HTTP log obfuscator to be used. It can be null.
+         * @return the Builder instance used.
          */
-        public fun logObfuscator(httpLogObfuscator: HttpLogObfuscator): Builder = apply {
+        public fun httpLogObfuscator(httpLogObfuscator: HttpLogObfuscator?): Builder = apply {
             this.httpLogObfuscator = httpLogObfuscator
         }
 
@@ -296,8 +301,8 @@ public interface AppConfiguration {
                     logger = object : Logger {
                         override fun log(message: String) {
                             if (logLevel <= LogLevel.DEBUG) {
-                                val obfuscatedMessage = httpLogObfuscator.obfuscate(message)
-                                appLogger.debug(obfuscatedMessage)
+                                val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
+                                appLogger.debug(obfuscatedMessage ?: message)
                             }
                         }
                     }

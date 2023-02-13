@@ -23,9 +23,13 @@ import io.realm.kotlin.mongodb.internal.HttpLogObfuscatorImpl
  */
 public interface HttpLogObfuscator {
     /**
-     * Obfuscates a log entry (or not) depending on whether the request being sent contains data
-     * deemed sensitive.
-     * @param input the original log entry
+     * Obfuscates a log entry depending on whether the data being sent contains information deemed
+     * sensitive. The following information is considered sensitive data:
+     * - passwords
+     * - tokens of any kind - see [Credentials] for more information
+     * - custom function arguments - see [Functions] for more information
+     *
+     * @param input the original log entry to be obfuscated.
      * @return the log entry to be shown
      */
     public fun obfuscate(input: String): String
