@@ -142,6 +142,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                     assertEquals(dataSet[0].first, insertions[0])
                 }
                 assertEquals(0, dictionaryChange.deletions.size)
+                assertEquals(0, dictionaryChange.changes.size)
             }
 
             // Assert a change to a key is reported
@@ -161,6 +162,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                     assertEquals(dataSet[0].first, changes[0])
                 }
                 assertEquals(0, dictionaryChange.deletions.size)
+                assertEquals(0, dictionaryChange.insertions.size)
             }
 
             // Assert multiple insertions at once are reported
@@ -183,6 +185,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                         }
                 }
                 assertEquals(0, dictionaryChange.deletions.size)
+                assertEquals(0, dictionaryChange.changes.size)
             }
 
             // Assert notification on removal of elements
@@ -199,6 +202,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 assertEquals(dataSet.size - 1, dictionaryChange.map.size)
                 assertEquals(1, dictionaryChange.deletions.size)
                 assertEquals(0, dictionaryChange.insertions.size)
+                assertEquals(0, dictionaryChange.changes.size)
             }
 
             // Assert notification on removal of elements via values iterator
@@ -217,6 +221,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 assertEquals(dataSet.size - 2, dictionaryChange.map.size)
                 assertEquals(1, dictionaryChange.deletions.size)
                 assertEquals(0, dictionaryChange.insertions.size)
+                assertEquals(0, dictionaryChange.changes.size)
             }
 
             // Assert notification on removal of elements via entry set iterator
@@ -235,6 +240,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 assertTrue(dictionaryChange.map.isEmpty())
                 assertEquals(1, dictionaryChange.deletions.size)
                 assertEquals(0, dictionaryChange.insertions.size)
+                assertEquals(0, dictionaryChange.changes.size)
             }
 
             observer.cancel()
@@ -245,11 +251,9 @@ class RealmDictionaryNotificationsTests : NotificationTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            // Freeze values since native complains if we reference a package-level defined variable
-            // inside a write block
             val values = NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
                 Pair(keys[i], value)
-            }.freeze()
+            }
             val container = realm.write {
                 copyToRealm(RealmDictionaryContainer())
             }
