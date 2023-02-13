@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
+    kotlin("plugin.serialization") version Versions.kotlin
     // Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
     // gradle run, so we just apply the compiler plugin directly as a dependency below instead
     // id("io.realm.kotlin")
@@ -67,6 +68,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
             }
         }
 
