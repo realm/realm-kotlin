@@ -23,8 +23,11 @@ import io.realm.kotlin.demo.javacompatibility.TAG
 import io.realm.kotlin.demo.javacompatibility.data.Repository
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 class KotlinEntity : RealmObject {
+    @PrimaryKey
+    var id: String = ""
     var name: String = "KOTLIN"
 }
 

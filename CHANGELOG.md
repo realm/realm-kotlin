@@ -26,7 +26,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.4.0, commit 4262a05ed96079a72639d1f470e0143e633dee56.
 
 
 ## 1.6.2 (YYYY-MM-DD)
@@ -38,7 +38,8 @@
 * None.
 
 ### Fixed
-* None.
+* Compatibility with Realm Java when using the `io.realm.RealmObject` abstract class. (Issue [#1278](https://github.com/realm/realm-kotlin/issues/1278))
+* Compiler error when multiple fields have `@PersistedName`-annotations that match they Kotlin name. (Issue [#1240](https://github.com/realm/realm-kotlin/issues/1240))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
