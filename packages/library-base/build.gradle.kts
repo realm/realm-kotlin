@@ -19,6 +19,7 @@ plugins {
     id("com.android.library")
     id("realm-publisher")
     id("org.jetbrains.dokka")
+    kotlin("plugin.serialization") version Versions.kotlin
 }
 buildscript {
     dependencies {
