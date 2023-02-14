@@ -98,7 +98,7 @@ class HttpLogObfuscatorTests {
             appName = "obfuscator",
             logLevel = LogLevel.DEBUG,
             builder = {
-                it.logObfuscator(HttpLogObfuscator.create())
+                it.httpLogObfuscator(HttpLogObfuscator.create())
             },
             customLogger = ObfuscatorLoggerInspector(channel),
             initialSetup = { app, service ->
