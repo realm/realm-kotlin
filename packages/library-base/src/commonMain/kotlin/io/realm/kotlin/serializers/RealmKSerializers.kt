@@ -73,7 +73,8 @@ public class RealmSetSerializer<E>(elementSerializer: KSerializer<E>) : KSeriali
 }
 
 // TODO document
-public class RealmDictionarySerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmDictionary<E>> {
+public class RealmDictionarySerializer<E>(elementSerializer: KSerializer<E>) :
+    KSerializer<RealmDictionary<E>> {
     private val serializer = MapSerializer(String.serializer(), elementSerializer)
 
     override val descriptor: SerialDescriptor =
@@ -99,8 +100,11 @@ public class RealmInstantSerializer : KSerializer<RealmInstant> {
     )
 
     override fun deserialize(decoder: Decoder): RealmInstant =
-        decoder.decodeSerializableValue(serializer).let { it: SerializableRealmInstant ->
-            RealmInstant.from(it.epochSeconds, it.nanosecondsOfSecond)
+        decoder.decodeSerializableValue(serializer).let { instant: SerializableRealmInstant ->
+            RealmInstant.from(
+                instant.epochSeconds,
+                instant.nanosecondsOfSecond
+            )
         }
 
     override fun serialize(encoder: Encoder, value: RealmInstant) {
@@ -156,7 +160,6 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
                 Type.UUID -> RealmAny.create(it.uuidValue!!)
                 Type.OBJECT -> RealmAny.create(it.objectValue!!)
             }
-
         }
     }
 
@@ -180,7 +183,6 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
                     Type.UUID -> uuidValue = value.asRealmUUID()
                     Type.OBJECT -> objectValue = value.asRealmObject()
                 }
-
             }
         )
     }

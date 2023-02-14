@@ -138,6 +138,7 @@ class SerializableSample : RealmObject {
     var booleanSetField: RealmSet<Boolean> = realmSetOf()
     var floatSetField: RealmSet<Float> = realmSetOf()
     var doubleSetField: RealmSet<Double> = realmSetOf()
+    var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
     var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
     var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
@@ -154,6 +155,7 @@ class SerializableSample : RealmObject {
     var nullableBooleanSetField: RealmSet<Boolean?> = realmSetOf()
     var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
+    var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
     var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
@@ -176,6 +178,7 @@ class SerializableSample : RealmObject {
     var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
     var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
+//    var objectDictionaryField: RealmDictionary<SerializableSample> = realmDictionaryOf()
 
     var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
     var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
@@ -193,66 +196,132 @@ class SerializableSample : RealmObject {
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
     var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
     var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf()
-    var nullableObjectDictionaryFieldNotNull: RealmDictionary<SerializableSample?> =
-        realmDictionaryOf()
-    var nullableObjectDictionaryFieldNull: RealmDictionary<SerializableSample?> =
-        realmDictionaryOf()
+    var nullableObjectDictionaryField: RealmDictionary<SerializableSample?> = realmDictionaryOf()
 
     val objectBacklinks by backlinks(SerializableSample::nullableObject)
     val listBacklinks by backlinks(SerializableSample::objectListField)
     val setBacklinks by backlinks(SerializableSample::objectSetField)
 
-    // For verification that references inside class is also using our modified accessors and are
-    // not optimized to use the backing field directly.
-    fun stringFieldGetter(): String {
-        return stringField
-    }
-
-    fun stringFieldSetter(s: String) {
-        stringField = s
-    }
-
-
     companion object {
 
         @Suppress("UNCHECKED_CAST")
-        val nonNullableProperties = listOf(
-            String::class to SerializableSample::stringListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Byte::class to SerializableSample::byteListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Char::class to SerializableSample::charListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Short::class to SerializableSample::shortListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Int::class to SerializableSample::intListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Long::class to SerializableSample::longListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Boolean::class to SerializableSample::booleanListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Float::class to SerializableSample::floatListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Double::class to SerializableSample::doubleListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            Decimal128::class to SerializableSample::decimal128ListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            RealmInstant::class to SerializableSample::timestampListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            ObjectId::class to SerializableSample::objectIdListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            BsonObjectId::class to SerializableSample::bsonObjectIdListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            RealmUUID::class to SerializableSample::uuidListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            ByteArray::class to SerializableSample::binaryListField as KMutableProperty1<SerializableSample, RealmList<Any>>,
-            RealmObject::class to SerializableSample::objectListField as KMutableProperty1<SerializableSample, RealmList<Any>>
+        val listNonNullableProperties = listOf(
+            String::class to SerializableSample::stringListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Byte::class to SerializableSample::byteListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Char::class to SerializableSample::charListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Short::class to SerializableSample::shortListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Int::class to SerializableSample::intListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Long::class to SerializableSample::longListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Boolean::class to SerializableSample::booleanListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Float::class to SerializableSample::floatListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Double::class to SerializableSample::doubleListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Decimal128::class to SerializableSample::decimal128ListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            RealmInstant::class to SerializableSample::timestampListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            ObjectId::class to SerializableSample::objectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            BsonObjectId::class to SerializableSample::bsonObjectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            RealmUUID::class to SerializableSample::uuidListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            ByteArray::class to SerializableSample::binaryListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            RealmObject::class to SerializableSample::objectListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>
         ).toMap()
 
         @Suppress("UNCHECKED_CAST")
-        val nullableProperties = listOf(
-            String::class to SerializableSample::nullableStringListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Byte::class to SerializableSample::nullableByteListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Char::class to SerializableSample::nullableCharListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Short::class to SerializableSample::nullableShortListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Int::class to SerializableSample::nullableIntListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Long::class to SerializableSample::nullableLongListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Boolean::class to SerializableSample::nullableBooleanListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Float::class to SerializableSample::nullableFloatListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Double::class to SerializableSample::nullableDoubleListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            Decimal128::class to SerializableSample::nullableDecimal128ListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            RealmInstant::class to SerializableSample::nullableTimestampListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            ObjectId::class to SerializableSample::nullableObjectIdListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            BsonObjectId::class to SerializableSample::nullableBsonObjectIdListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            RealmUUID::class to SerializableSample::nullableUUIDListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            ByteArray::class to SerializableSample::nullableBinaryListField as KMutableProperty1<SerializableSample, RealmList<Any?>>,
-            RealmAny::class to SerializableSample::nullableRealmAnyListField as KMutableProperty1<SerializableSample, RealmList<Any?>>
+        val listNullableProperties = listOf(
+            String::class to SerializableSample::nullableStringListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Byte::class to SerializableSample::nullableByteListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Char::class to SerializableSample::nullableCharListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Short::class to SerializableSample::nullableShortListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Int::class to SerializableSample::nullableIntListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Long::class to SerializableSample::nullableLongListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Boolean::class to SerializableSample::nullableBooleanListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Float::class to SerializableSample::nullableFloatListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Double::class to SerializableSample::nullableDoubleListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Decimal128::class to SerializableSample::nullableDecimal128ListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            RealmInstant::class to SerializableSample::nullableTimestampListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            ObjectId::class to SerializableSample::nullableObjectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            BsonObjectId::class to SerializableSample::nullableBsonObjectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            RealmUUID::class to SerializableSample::nullableUUIDListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            ByteArray::class to SerializableSample::nullableBinaryListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            RealmAny::class to SerializableSample::nullableRealmAnyListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>
+        ).toMap()
+
+        @Suppress("UNCHECKED_CAST")
+        val setNonNullableProperties = listOf(
+            String::class to SerializableSample::stringSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Byte::class to SerializableSample::byteSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Char::class to SerializableSample::charSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Short::class to SerializableSample::shortSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Int::class to SerializableSample::intSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Long::class to SerializableSample::longSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Boolean::class to SerializableSample::booleanSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Float::class to SerializableSample::floatSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Double::class to SerializableSample::doubleSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            Decimal128::class to SerializableSample::decimal128SetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            RealmInstant::class to SerializableSample::timestampSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            ObjectId::class to SerializableSample::objectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            BsonObjectId::class to SerializableSample::bsonObjectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            RealmUUID::class to SerializableSample::uuidSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            ByteArray::class to SerializableSample::binarySetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
+            RealmObject::class to SerializableSample::objectSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>
+        ).toMap()
+
+        @Suppress("UNCHECKED_CAST")
+        val setNullableProperties = listOf(
+            String::class to SerializableSample::nullableStringSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Byte::class to SerializableSample::nullableByteSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Char::class to SerializableSample::nullableCharSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Short::class to SerializableSample::nullableShortSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Int::class to SerializableSample::nullableIntSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Long::class to SerializableSample::nullableLongSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Boolean::class to SerializableSample::nullableBooleanSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Float::class to SerializableSample::nullableFloatSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Double::class to SerializableSample::nullableDoubleSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            Decimal128::class to SerializableSample::nullableDecimal128SetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            RealmInstant::class to SerializableSample::nullableTimestampSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            ObjectId::class to SerializableSample::nullableObjectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            BsonObjectId::class to SerializableSample::nullableBsonObjectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            RealmUUID::class to SerializableSample::nullableUUIDSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            ByteArray::class to SerializableSample::nullableBinarySetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            RealmAny::class to SerializableSample::nullableRealmAnySetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>
+        ).toMap()
+
+        @Suppress("UNCHECKED_CAST")
+        val dictNonNullableProperties = listOf(
+            String::class to SerializableSample::stringDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Byte::class to SerializableSample::byteDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Char::class to SerializableSample::charDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Short::class to SerializableSample::shortDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Int::class to SerializableSample::intDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Long::class to SerializableSample::longDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Boolean::class to SerializableSample::booleanDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Float::class to SerializableSample::floatDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Double::class to SerializableSample::doubleDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            RealmInstant::class to SerializableSample::timestampDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            ObjectId::class to SerializableSample::objectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            BsonObjectId::class to SerializableSample::bsonObjectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            RealmUUID::class to SerializableSample::uuidDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            ByteArray::class to SerializableSample::binaryDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+            Decimal128::class to SerializableSample::decimal128DictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
+        ).toMap()
+
+        @Suppress("UNCHECKED_CAST")
+        val dictNullableProperties = listOf(
+            String::class to SerializableSample::nullableStringDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Byte::class to SerializableSample::nullableByteDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Char::class to SerializableSample::nullableCharDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Short::class to SerializableSample::nullableShortDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Int::class to SerializableSample::nullableIntDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Long::class to SerializableSample::nullableLongDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Boolean::class to SerializableSample::nullableBooleanDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Float::class to SerializableSample::nullableFloatDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Double::class to SerializableSample::nullableDoubleDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            RealmInstant::class to SerializableSample::nullableTimestampDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            ObjectId::class to SerializableSample::nullableObjectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            BsonObjectId::class to SerializableSample::nullableBsonObjectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            RealmUUID::class to SerializableSample::nullableUUIDDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            ByteArray::class to SerializableSample::nullableBinaryDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            Decimal128::class to SerializableSample::nullableDecimal128DictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            RealmObject::class to SerializableSample::nullableObjectDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+            RealmAny::class to SerializableSample::nullableRealmAnyDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>
         ).toMap()
     }
 }
