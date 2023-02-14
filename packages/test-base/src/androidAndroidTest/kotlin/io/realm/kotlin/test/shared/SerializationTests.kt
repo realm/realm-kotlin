@@ -27,6 +27,8 @@ package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.SerializableEmbeddedObject
+import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.realmListOf
@@ -62,24 +64,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 
-@Serializable
-class SerializableAllDatatypes : RealmObject {
-    var realmList: RealmList<String> = realmListOf()
-    var realmSet: RealmSet<String> = realmSetOf()
-    var mutableRealmInt: MutableRealmInt? = null
-    var realmAny: RealmAny? = null
-    var realmInstant: RealmInstant? = null
-    var realmUUID: RealmUUID? = null
-    var realmObjectId: ObjectId? = null
-    var realmObject: SerializableAllDatatypes? = null
-    var realmEmbeddedObject: SerializableEmbeddedObject? = null
-}
-
-@Serializable
-class SerializableEmbeddedObject : EmbeddedRealmObject {
-    var name: String = ""
-}
-
 class SerializationTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
@@ -90,7 +74,11 @@ class SerializationTests {
     private val json = Json {
         serializersModule = SerializersModule {
             polymorphic(RealmObject::class) {
-                subclass(SerializableAllDatatypes::class)
+                subclass(SerializableSample::class)
+            }
+
+            polymorphic(EmbeddedRealmObject::class) {
+                subclass(SerializableEmbeddedObject::class)
             }
         }
     }
@@ -98,7 +86,12 @@ class SerializationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+        configuration = RealmConfiguration.Builder(
+            setOf(
+                SerializableSample::class,
+                SerializableEmbeddedObject::class
+            )
+        )
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -114,19 +107,13 @@ class SerializationTests {
 
     @Test
     fun serializeUnmanagedObject() {
-        for (type in TypeDescriptor.anyClassifiers.keys) {
-            when (type) {
-
-            }
-        }
         val encoded = json.encodeToString(
-            SerializableAllDatatypes().apply {
-                realmAny = RealmAny.create(RealmUUID.random())
-                realmObject = SerializableAllDatatypes()
+            SerializableSample().apply {
+                nullableRealmAnyField = RealmAny.create(RealmUUID.random())
+                nullableObject = SerializableSample()
                 realmEmbeddedObject = SerializableEmbeddedObject()
             }
         )
-        println(encoded)
-        json.decodeFromString<SerializableAllDatatypes>(encoded)
+        json.decodeFromString<SerializableSample>(encoded)
     }
 }
