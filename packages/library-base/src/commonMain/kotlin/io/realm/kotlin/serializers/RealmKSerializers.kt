@@ -17,12 +17,14 @@ package io.realm.kotlin.serializers
 
 import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmAny.Type
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -32,6 +34,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.builtins.ListSerializer
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.SetSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -65,6 +68,21 @@ public class RealmSetSerializer<E>(elementSerializer: KSerializer<E>) : KSeriali
         serializer.deserialize(decoder).toRealmSet()
 
     override fun serialize(encoder: Encoder, value: RealmSet<E>) {
+        serializer.serialize(encoder, value)
+    }
+}
+
+// TODO document
+public class RealmDictionarySerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmDictionary<E>> {
+    private val serializer = MapSerializer(String.serializer(), elementSerializer)
+
+    override val descriptor: SerialDescriptor =
+        serializer.descriptor
+
+    override fun deserialize(decoder: Decoder): RealmDictionary<E> =
+        serializer.deserialize(decoder).toRealmDictionary()
+
+    override fun serialize(encoder: Encoder, value: RealmDictionary<E>) {
         serializer.serialize(encoder, value)
     }
 }
@@ -107,7 +125,7 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
         var binaryValue: ByteArray? = null
 
         @Serializable(with = RealmInstantSerializer::class)
-        var realmInstant: RealmInstant? = null
+        var realmInstantValue: RealmInstant? = null
         var floatValue: Float? = null
         var doubleValue: Double? = null
         var decimal128Value: Decimal128? = null
@@ -130,7 +148,7 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
                 Type.BOOL -> RealmAny.create(it.boolValue!!)
                 Type.STRING -> RealmAny.create(it.stringValue!!)
                 Type.BINARY -> RealmAny.create(it.binaryValue!!)
-                Type.TIMESTAMP -> RealmAny.create(it.realmInstant!!)
+                Type.TIMESTAMP -> RealmAny.create(it.realmInstantValue!!)
                 Type.FLOAT -> RealmAny.create(it.floatValue!!)
                 Type.DOUBLE -> RealmAny.create(it.doubleValue!!)
                 Type.DECIMAL128 -> RealmAny.create(it.decimal128Value!!)
@@ -152,7 +170,7 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
                     Type.BOOL -> boolValue = value.asBoolean()
                     Type.STRING -> stringValue = value.asString()
                     Type.BINARY -> binaryValue = value.asByteArray()
-                    Type.TIMESTAMP -> realmInstant = value.asRealmInstant()
+                    Type.TIMESTAMP -> realmInstantValue = value.asRealmInstant()
                     Type.FLOAT -> floatValue = value.asFloat()
                     Type.DOUBLE -> doubleValue = value.asDouble()
                     Type.DECIMAL128 -> decimal128Value = value.asDecimal128()
