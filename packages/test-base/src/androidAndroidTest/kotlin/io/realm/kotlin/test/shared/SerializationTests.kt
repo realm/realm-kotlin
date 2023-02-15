@@ -42,6 +42,7 @@ import io.realm.kotlin.test.GenericTypeSafetyManager
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
@@ -446,6 +447,58 @@ class SerializationTests {
                 }
             }
             else -> assertEquals(expected, actual)
+        }
+    }
+
+    @Test
+    fun exhaustiveRealmTypesTester() {
+        val expected = SerializableSample().apply {
+            nullableObject = SerializableSample()
+            realmEmbeddedObject = SerializableEmbeddedObject()
+        }
+        val encoded: String = json.encodeToString(expected)
+        val decoded: SerializableSample = json.decodeFromString(encoded)
+
+        TypeDescriptor.elementClassifiers.filterNot {
+            arrayOf(
+                Byte::class,
+                Char::class,
+                Short::class,
+                Int::class,
+                Long::class,
+                Float::class,
+                Double::class,
+                ByteArray::class,
+                Boolean::class,
+                String::class,
+                BsonObjectId::class,
+            ).contains(it)
+        }.forEach { classifier ->
+            when (classifier) {
+                Decimal128::class -> assertEquals(expected.decimal128Field, decoded.decimal128Field)
+                RealmAny::class -> assertEquals(
+                    expected.nullableRealmAnyField,
+                    decoded.nullableRealmAnyField
+                )
+                RealmInstant::class -> assertEquals(expected.timestampField, decoded.timestampField)
+                ObjectId::class -> assertEquals(expected.objectIdField, decoded.objectIdField)
+                RealmUUID::class -> assertEquals(expected.uuidField, decoded.uuidField)
+                MutableRealmInt::class -> assertEquals(
+                    expected.mutableRealmIntField,
+                    decoded.mutableRealmIntField
+                )
+                RealmObject::class -> {
+                    assertEquals(
+                        expected.nullableObject!!.stringField,
+                        expected.nullableObject!!.stringField
+                    )
+                    assertEquals(
+                        expected.realmEmbeddedObject!!.name,
+                        expected.realmEmbeddedObject!!.name
+                    )
+                }
+                else -> throw IllegalStateException("Untested type $classifier")
+            }
         }
     }
 

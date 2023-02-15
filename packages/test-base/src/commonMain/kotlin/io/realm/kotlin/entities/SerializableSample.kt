@@ -332,5 +332,5 @@ class SerializableSample : RealmObject {
 
 @Serializable
 class SerializableEmbeddedObject : EmbeddedRealmObject {
-    var name: String = ""
+    var name: String = "hello world"
 }
