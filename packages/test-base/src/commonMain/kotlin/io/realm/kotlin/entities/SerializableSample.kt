@@ -205,7 +205,7 @@ class SerializableSample : RealmObject {
     companion object {
 
         @Suppress("UNCHECKED_CAST")
-        val listNonNullableProperties = listOf(
+        private val listNonNullableProperties = listOf(
             String::class to SerializableSample::stringListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Byte::class to SerializableSample::byteListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Char::class to SerializableSample::charListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
@@ -225,7 +225,7 @@ class SerializableSample : RealmObject {
         ).toMap()
 
         @Suppress("UNCHECKED_CAST")
-        val listNullableProperties = listOf(
+        private val listNullableProperties = listOf(
             String::class to SerializableSample::nullableStringListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Byte::class to SerializableSample::nullableByteListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Char::class to SerializableSample::nullableCharListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
@@ -245,7 +245,7 @@ class SerializableSample : RealmObject {
         ).toMap()
 
         @Suppress("UNCHECKED_CAST")
-        val setNonNullableProperties = listOf(
+        private val setNonNullableProperties = listOf(
             String::class to SerializableSample::stringSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Byte::class to SerializableSample::byteSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Char::class to SerializableSample::charSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
@@ -265,7 +265,7 @@ class SerializableSample : RealmObject {
         ).toMap()
 
         @Suppress("UNCHECKED_CAST")
-        val setNullableProperties = listOf(
+        private val setNullableProperties = listOf(
             String::class to SerializableSample::nullableStringSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Byte::class to SerializableSample::nullableByteSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Char::class to SerializableSample::nullableCharSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
@@ -285,7 +285,7 @@ class SerializableSample : RealmObject {
         ).toMap()
 
         @Suppress("UNCHECKED_CAST")
-        val dictNonNullableProperties = listOf(
+        private val dictNonNullableProperties = listOf(
             String::class to SerializableSample::stringDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             Byte::class to SerializableSample::byteDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             Char::class to SerializableSample::charDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
@@ -304,7 +304,7 @@ class SerializableSample : RealmObject {
         ).toMap()
 
         @Suppress("UNCHECKED_CAST")
-        val dictNullableProperties = listOf(
+        private val dictNullableProperties = listOf(
             String::class to SerializableSample::nullableStringDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             Byte::class to SerializableSample::nullableByteDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             Char::class to SerializableSample::nullableCharDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
@@ -323,6 +323,10 @@ class SerializableSample : RealmObject {
             RealmObject::class to SerializableSample::nullableObjectDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             RealmAny::class to SerializableSample::nullableRealmAnyDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>
         ).toMap()
+
+        val listProperties = listNonNullableProperties to listNullableProperties
+        val setProperties = setNonNullableProperties to setNullableProperties
+        val dictionaryProperties = dictNonNullableProperties to dictNullableProperties
     }
 }
 

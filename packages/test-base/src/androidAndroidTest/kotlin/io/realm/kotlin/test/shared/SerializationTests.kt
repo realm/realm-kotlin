@@ -30,6 +30,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.serializers.MutableRealmIntSerializer
 import io.realm.kotlin.serializers.RealmAnySerializer
 import io.realm.kotlin.serializers.RealmInstantSerializer
@@ -66,6 +67,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 class SerializationTests {
     private lateinit var tmpDir: String
@@ -107,267 +109,71 @@ class SerializationTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-    private val listTesters = TypeDescriptor
-        .allListFieldTypes
-        .map {
-            val elementType = it.elementType
-            when (val classifier = elementType.classifier) {
-                RealmObject::class -> SerializableCollectionTypeSafetyManager(
-                    classifier = classifier,
-                    property = SerializableSample::objectListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
-                    dataSetToLoad = OBJECT_VALUES.map {
-                        SerializableSample().apply {
-                            stringField = it.stringField
-                        }
-                    }
-                )
-                RealmAny::class -> SerializableCollectionTypeSafetyManager(
-                    classifier = classifier,
-                    property = SerializableSample.listNullableProperties[classifier]!!,
-                    dataSetToLoad = getDataSetForCollectionClassifier(classifier, true)
-                )
-                else -> getTypeSafety(
-                    properties = SerializableSample.listNonNullableProperties,
-                    nullableProperties = SerializableSample.listNullableProperties,
-                    classifier,
-                    elementType.nullable
-                )
-            }
-        }
-
-    private val setTesters = TypeDescriptor
-        .allSetFieldTypes
-        .map {
-            val elementType = it.elementType
-            when (val classifier = elementType.classifier) {
-                RealmObject::class -> SerializableCollectionTypeSafetyManager(
-                    classifier = classifier,
-                    property = SerializableSample::objectSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
-                    dataSetToLoad = OBJECT_VALUES.map {
-                        SerializableSample().apply {
-                            stringField = it.stringField
-                        }
-                    }
-                )
-                RealmAny::class -> SerializableCollectionTypeSafetyManager(
-                    classifier = classifier,
-                    property = SerializableSample.setNullableProperties[classifier]!!,
-                    dataSetToLoad = getDataSetForCollectionClassifier(classifier, true)
-                )
-                else -> getTypeSafety(
-                    properties = SerializableSample.setNonNullableProperties,
-                    nullableProperties = SerializableSample.setNullableProperties,
-                    classifier,
-                    elementType.nullable
-                )
-            }
-        }
-
-    private val dictionaryTesters = TypeDescriptor
-        .allDictionaryFieldTypes
-        .map {
-            val elementType = it.elementType
-            when (val classifier = elementType.classifier) {
-                RealmObject::class -> getTypeSafetyDic(
-                    properties = SerializableSample.dictNonNullableProperties,
-                    nullableProperties = SerializableSample.dictNullableProperties,
-                    classifier,
-                    elementType.nullable
-                )
-                ByteArray::class -> getTypeSafetyDic(
-                    properties = SerializableSample.dictNonNullableProperties,
-                    nullableProperties = SerializableSample.dictNullableProperties,
-                    classifier,
-                    elementType.nullable
-                )
-                RealmAny::class -> getTypeSafetyDic(
-                    properties = SerializableSample.dictNonNullableProperties,
-                    nullableProperties = SerializableSample.dictNullableProperties,
-                    classifier,
-                    elementType.nullable
-                )
-                else -> getTypeSafetyDic(
-                    properties = SerializableSample.dictNonNullableProperties,
-                    nullableProperties = SerializableSample.dictNullableProperties,
-                    classifier,
-                    elementType.nullable
-                )
-            }
-        }
-
-    private fun getTypeSafety(
-        properties: Map<KClass<out Any>, KMutableProperty1<SerializableSample, MutableCollection<Any>>>,
-        nullableProperties: Map<KClass<out Any>, KMutableProperty1<SerializableSample, MutableCollection<Any?>>>,
-        classifier: KClassifier,
-        nullable: Boolean
-    ): SerializableCollectionTypeSafetyManager<*> = when (nullable) {
-        true -> SerializableCollectionTypeSafetyManager(
-            classifier = classifier,
-            property = nullableProperties[classifier]!!,
-            dataSetToLoad = getDataSetForCollectionClassifier(classifier, true)
-        )
-        false -> SerializableCollectionTypeSafetyManager(
-            classifier = classifier,
-            property = properties[classifier]!!,
-            dataSetToLoad = getDataSetForCollectionClassifier(classifier, false)
+    private fun Collection<TypeDescriptor.RealmFieldType>.mapCollectionDataSets(
+        properties: Pair<
+            Map<KClass<out Any>, KMutableProperty1<SerializableSample, MutableCollection<Any>>>,
+            Map<KClass<out Any>, KMutableProperty1<SerializableSample, MutableCollection<Any?>>>
+            >
+    ) = map { fieldType: TypeDescriptor.RealmFieldType ->
+        CollectionTypeSafetyManager<Any?>(
+            elementType = fieldType.elementType,
+            properties = properties
         )
     }
 
-    private fun getTypeSafetyDic(
-        properties: Map<KClass<out Any>, KMutableProperty1<SerializableSample, RealmDictionary<Any>>>,
-        nullableProperties: Map<KClass<out Any>, KMutableProperty1<SerializableSample, RealmDictionary<Any?>>>,
-        classifier: KClassifier,
-        nullable: Boolean
-    ): SerializableDictionaryTypeSafetyManager<*> = when (nullable) {
-        true -> SerializableDictionaryTypeSafetyManager(
-            classifier = classifier,
-            property = nullableProperties[classifier]!!,
-            dataSetToLoad = getDataSetForClassifier(classifier, true)
-        )
-        false -> SerializableDictionaryTypeSafetyManager(
-            classifier = classifier,
-            property = properties[classifier]!!,
-            dataSetToLoad = getDataSetForClassifier(classifier, false)
-        )
-    }
-
-    private fun <T> getDataSetForClassifier(
-        classifier: KClassifier,
-        nullable: Boolean
-    ): List<T> = when (classifier) {
-        Byte::class -> if (nullable) {
-            NULLABLE_BYTE_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            BYTE_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        }
-        Char::class -> if (nullable) {
-            NULLABLE_CHAR_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            CHAR_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        }
-        Short::class -> if (nullable) {
-            NULLABLE_SHORT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            SHORT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        }
-        Int::class -> if (nullable) {
-            NULLABLE_INT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            INT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        }
-        Long::class -> if (nullable) {
-            NULLABLE_LONG_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            LONG_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        Boolean::class -> if (nullable) {
-            NULLABLE_BOOLEAN_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            BOOLEAN_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        Float::class -> if (nullable) {
-            NULLABLE_FLOAT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            FLOAT_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        Double::class -> if (nullable) {
-            NULLABLE_DOUBLE_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            DOUBLE_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        String::class -> if (nullable) {
-            NULLABLE_STRING_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            STRING_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        RealmInstant::class -> if (nullable) {
-            NULLABLE_TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        ObjectId::class -> if (nullable) {
-            NULLABLE_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        BsonObjectId::class -> if (nullable) {
-            NULLABLE_BSON_OBJECT_ID_VALUES.mapIndexed { i, value ->
-                Pair(KEYS_FOR_NULLABLE[i], value)
-            }
-        } else {
-            BSON_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        RealmUUID::class -> if (nullable) {
-            NULLABLE_UUID_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            UUID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        ByteArray::class -> if (nullable) {
-            NULLABLE_BINARY_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            BINARY_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        RealmObject::class -> {
-            listOf(
-                SerializableSample().apply { stringField = "A" },
-                SerializableSample().apply { stringField = "B" }
-            ).mapIndexed { i, value ->
-                Pair(KEYS_FOR_NULLABLE[i], value)
-            }
-        }
-        Decimal128::class -> if (nullable) {
-            NULLABLE_DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
-        }
-        RealmAny::class -> {
-            val anyValues = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
-
-            // Generate as many keys as RealmAny values
-            var key = 'A'
-            val keys = anyValues.map { key.also { key += 1 } }
-
-            // Now create pairs of key-RealmAny for the dataset
-            anyValues.mapIndexed { i, value -> Pair(keys[i].toString(), value) }
-        }
-        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
-    } as List<T>
-
-    @Suppress("UNCHECKED_CAST", "ComplexMethod")
-    private fun <T> getDataSetForCollectionClassifier(
-        classifier: KClassifier,
-        nullable: Boolean
-    ): List<T> = when (classifier) {
-        Byte::class -> if (nullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
-        Char::class -> if (nullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
-        Short::class -> if (nullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
-        Int::class -> if (nullable) NULLABLE_INT_VALUES else INT_VALUES
-        Long::class -> if (nullable) NULLABLE_LONG_VALUES else LONG_VALUES
-        Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
-        Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
-        Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
-        Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
-        String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
-        RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
-        ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
-        BsonObjectId::class -> if (nullable) NULLABLE_BSON_OBJECT_ID_VALUES else BSON_OBJECT_ID_VALUES
-        RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
-        ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
-        RealmObject::class -> OBJECT_VALUES
-        RealmAny::class -> REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
-        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
-    } as List<T>
-
-    private val REALM_ANY_REALM_OBJECT = RealmAny.create(
-        SerializableSample().apply { stringField = "hello" },
-        SerializableSample::class
-    )
-
-    internal class SerializableCollectionTypeSafetyManager<T>(
-        val classifier: KClassifier,
-        override val property: KMutableProperty1<SerializableSample, MutableCollection<T>>,
-        override val dataSetToLoad: List<T>
+    private class CollectionTypeSafetyManager<T>(
+        elementType: TypeDescriptor.ElementType,
+        properties: Pair<
+            Map<KClass<out Any>, KMutableProperty1<SerializableSample, MutableCollection<Any>>>,
+            Map<KClass<out Any>, KMutableProperty1<SerializableSample, MutableCollection<Any?>>>
+            >,
     ) : GenericTypeSafetyManager<T, SerializableSample, MutableCollection<T>> {
+
+        val classifier: KClassifier = elementType.classifier
+
+        override val dataSetToLoad: List<T> =
+            getDataSetForCollectionClassifier(classifier, elementType.nullable)
+
+        override val property = when (elementType.nullable) {
+            false -> properties.first[classifier]!!
+            true -> properties.second[classifier]!!
+        } as KMutableProperty1<SerializableSample, MutableCollection<T>>
+
+        companion object {
+            @Suppress("UNCHECKED_CAST", "ComplexMethod")
+            fun <T> getDataSetForCollectionClassifier(
+                classifier: KClassifier,
+                nullable: Boolean
+            ): List<T> = when (classifier) {
+                Byte::class -> if (nullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
+                Char::class -> if (nullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
+                Short::class -> if (nullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
+                Int::class -> if (nullable) NULLABLE_INT_VALUES else INT_VALUES
+                Long::class -> if (nullable) NULLABLE_LONG_VALUES else LONG_VALUES
+                Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
+                Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
+                Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+                Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
+                String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
+                RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
+                ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
+                BsonObjectId::class -> if (nullable) NULLABLE_BSON_OBJECT_ID_VALUES else BSON_OBJECT_ID_VALUES
+                RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
+                ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
+                RealmObject::class -> OBJECT_VALUES.map {
+                    SerializableSample().apply {
+                        stringField = it.stringField
+                    }
+                }
+                RealmAny::class -> REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
+                else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
+            } as List<T>
+
+            val REALM_ANY_REALM_OBJECT = RealmAny.create(
+                SerializableSample().apply { stringField = "hello" },
+                SerializableSample::class
+            )
+        }
 
         override fun toString(): String = property.name
 
@@ -393,11 +199,196 @@ class SerializationTests {
             }
     }
 
-    internal class SerializableDictionaryTypeSafetyManager<T> constructor(
-        val classifier: KClassifier,
-        override val property: KMutableProperty1<SerializableSample, RealmDictionary<T>>,
-        override val dataSetToLoad: List<Pair<String, T>>
+    private class DictionaryTypeSafetyManager<T> constructor(
+        elementType: TypeDescriptor.ElementType,
+        properties: Pair<
+            Map<KClass<out Any>, KMutableProperty1<SerializableSample, RealmDictionary<Any>>>,
+            Map<KClass<out Any>, KMutableProperty1<SerializableSample, RealmDictionary<Any?>>>
+            >,
     ) : GenericTypeSafetyManager<Pair<String, T>, SerializableSample, RealmDictionary<T>> {
+
+        val classifier: KClassifier = elementType.classifier
+
+        override val dataSetToLoad: List<Pair<String, T>> = getDataSetForDictionaryClassifier<T>(
+            classifier,
+            elementType.nullable
+        )
+
+        override val property = when (elementType.nullable) {
+            false -> properties.first[classifier]!!
+            true -> properties.second[classifier]!!
+        } as KMutableProperty1<SerializableSample, RealmDictionary<T>>
+
+        companion object {
+
+            fun <T> getDataSetForDictionaryClassifier(
+                classifier: KClassifier,
+                nullable: Boolean
+            ): List<Pair<String, T>> = when (classifier) {
+                Byte::class -> if (nullable) {
+                    NULLABLE_BYTE_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    BYTE_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+                }
+                Char::class -> if (nullable) {
+                    NULLABLE_CHAR_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    CHAR_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+                }
+                Short::class -> if (nullable) {
+                    NULLABLE_SHORT_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    SHORT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+                }
+                Int::class -> if (nullable) {
+                    NULLABLE_INT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+                } else {
+                    INT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+                }
+                Long::class -> if (nullable) {
+                    NULLABLE_LONG_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    LONG_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                Boolean::class -> if (nullable) {
+                    NULLABLE_BOOLEAN_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    BOOLEAN_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                Float::class -> if (nullable) {
+                    NULLABLE_FLOAT_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    FLOAT_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                Double::class -> if (nullable) {
+                    NULLABLE_DOUBLE_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    DOUBLE_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                String::class -> if (nullable) {
+                    NULLABLE_STRING_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    STRING_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                RealmInstant::class -> if (nullable) {
+                    NULLABLE_TIMESTAMP_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                ObjectId::class -> if (nullable) {
+                    NULLABLE_OBJECT_ID_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                BsonObjectId::class -> if (nullable) {
+                    NULLABLE_BSON_OBJECT_ID_VALUES.mapIndexed { i, value ->
+                        Pair(KEYS_FOR_NULLABLE[i], value)
+                    }
+                } else {
+                    BSON_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                RealmUUID::class -> if (nullable) {
+                    NULLABLE_UUID_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    UUID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                ByteArray::class -> if (nullable) {
+                    NULLABLE_BINARY_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    BINARY_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                RealmObject::class -> {
+                    listOf(
+                        SerializableSample().apply { stringField = "A" },
+                        SerializableSample().apply { stringField = "B" }
+                    ).mapIndexed { i, value ->
+                        Pair(KEYS_FOR_NULLABLE[i], value)
+                    }
+                }
+                Decimal128::class -> if (nullable) {
+                    NULLABLE_DECIMAL128_VALUES.mapIndexed { i, value ->
+                        Pair(
+                            KEYS_FOR_NULLABLE[i],
+                            value
+                        )
+                    }
+                } else {
+                    DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+                }
+                RealmAny::class -> {
+                    val anyValues =
+                        REALM_ANY_PRIMITIVE_VALUES + CollectionTypeSafetyManager.REALM_ANY_REALM_OBJECT
+
+                    // Generate as many keys as RealmAny values
+                    var key = 'A'
+                    val keys = anyValues.map { key.also { key += 1 } }
+
+                    // Now create pairs of key-RealmAny for the dataset
+                    anyValues.mapIndexed { i, value -> Pair(keys[i].toString(), value) }
+                }
+                else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
+            } as List<Pair<String, T>>
+        }
 
         override fun toString(): String = property.name
 
@@ -435,61 +426,100 @@ class SerializationTests {
                 (expected as SerializableSample).stringField,
                 (actual as SerializableSample).stringField
             )
+            RealmAny::class -> {
+                expected as RealmAny?
+                actual as RealmAny?
+
+                if (expected != null && actual != null) {
+                    when (expected.type) {
+                        RealmAny.Type.OBJECT -> {
+                            assertEquals(expected.type, actual.type)
+                            assertEquals(
+                                expected.asRealmObject<SerializableSample>().stringField,
+                                actual.asRealmObject<SerializableSample>().stringField
+                            )
+                        }
+                        else -> assertEquals(expected, actual)
+                    }
+                } else if (expected != null || actual != null) {
+                    fail("One of the RealmAny values is null, expected = $expected, actual = $actual")
+                }
+            }
             else -> assertEquals(expected, actual)
         }
     }
 
     @Test
     fun exhaustiveRealmListTester() {
-        for (tester in listTesters) {
-            val data = tester.createPrePopulatedContainer()
+        TypeDescriptor
+            .allListFieldTypes
+            .mapCollectionDataSets(SerializableSample.listProperties)
+            .forEach { dataset ->
+                val data = dataset.createPrePopulatedContainer()
 
-            val encoded: String = json.encodeToString(data)
-            val decoded: SerializableSample = json.decodeFromString(encoded)
+                val encoded: String = json.encodeToString(data)
+                val decoded: SerializableSample = json.decodeFromString(encoded)
 
-            val originalCollection = tester.getCollection(data)
-            val decodedCollection = tester.getCollection(decoded)
+                val originalCollection = dataset.getCollection(data)
+                val decodedCollection = dataset.getCollection(decoded)
 
-            originalCollection
-                .zip(decodedCollection)
-                .forEach { (expected, decoded) ->
-                    tester.classifier.assertValue(expected, decoded)
-                }
-        }
+                originalCollection
+                    .zip(decodedCollection)
+                    .forEach { (expected, decoded) ->
+                        dataset.classifier.assertValue(expected, decoded)
+                    }
+            }
     }
 
     @Test
     fun exhaustiveRealmSetTester() {
-        for (tester in setTesters) {
-            val data = tester.createPrePopulatedContainer()
+        TypeDescriptor
+            .allSetFieldTypes
+            .mapCollectionDataSets(SerializableSample.setProperties)
+            .forEach { dataset ->
+                val data = dataset.createPrePopulatedContainer()
 
-            val encoded: String = json.encodeToString(data)
-            val decoded: SerializableSample = json.decodeFromString(encoded)
+                val encoded: String = json.encodeToString(data)
+                val decoded: SerializableSample = json.decodeFromString(encoded)
 
-            val originalCollection = tester.getCollection(data)
-            val decodedCollection = tester.getCollection(decoded)
+                val originalCollection = dataset.getCollection(data)
+                val decodedCollection = dataset.getCollection(decoded)
 
-            originalCollection.zip(decodedCollection).forEach { (expected, decoded) ->
-                tester.classifier.assertValue(expected, decoded)
+                originalCollection
+                    .zip(decodedCollection)
+                    .forEach { (expected, decoded) ->
+                        dataset.classifier.assertValue(expected, decoded)
+                    }
             }
-        }
     }
 
     @Test
     fun exhaustiveRealmDictTester() {
-        for (tester in dictionaryTesters) {
-            val data = tester.createPrePopulatedContainer()
-
-            val encoded: String = json.encodeToString(data)
-            val decoded: SerializableSample = json.decodeFromString(encoded)
-
-            val originalCollection = tester.getCollection(data)
-            val decodedCollection = tester.getCollection(decoded)
-
-            assertEquals(originalCollection.keys, decodedCollection.keys)
-            originalCollection.keys.forEach { key: String ->
-                tester.classifier.assertValue(originalCollection[key], decodedCollection[key])
+        TypeDescriptor
+            .allDictionaryFieldTypes
+            .map { fieldType: TypeDescriptor.RealmFieldType ->
+                DictionaryTypeSafetyManager<Any?>(
+                    elementType = fieldType.elementType,
+                    properties = SerializableSample.dictionaryProperties
+                )
             }
-        }
+            .forEach { dataset ->
+                val data = dataset.createPrePopulatedContainer()
+
+                val encoded: String = json.encodeToString(data)
+                val decoded: SerializableSample = json.decodeFromString(encoded)
+
+                val originalCollection = dataset.getCollection(data)
+                val decodedCollection = dataset.getCollection(decoded)
+
+                assertEquals(originalCollection.keys, decodedCollection.keys)
+                originalCollection.keys
+                    .forEach { key: String ->
+                        dataset.classifier.assertValue(
+                            originalCollection[key],
+                            decodedCollection[key]
+                        )
+                    }
+            }
     }
 }
