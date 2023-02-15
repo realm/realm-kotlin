@@ -574,52 +574,46 @@ class SerializationTests {
             }
     }
 
+    private fun List<CollectionTypeSafetyManager<Any?>>.exhaustiveCollectionTesting() =
+        forEach { dataset ->
+            listOf(
+                dataset.createPrePopulatedContainer(),
+                realm.writeBlocking {
+                    dataset.createPrePopulatedContainer()
+                }
+            ).forEach { data ->
+                val encoded: String = json.encodeToString(data)
+                val decoded: SerializableSample = json.decodeFromString(encoded)
+
+                val originalCollection = dataset.getCollection(data)
+                val decodedCollection = dataset.getCollection(decoded)
+
+                originalCollection
+                    .zip(decodedCollection)
+                    .forEach { (expected, decoded) ->
+                        dataset.classifier.assertValue(expected, decoded)
+                    }
+            }
+        }
+
     @Test
-    fun exhaustiveRealmListTester() {
+    fun exhaustiveRealmListTest() {
         TypeDescriptor
             .allListFieldTypes
             .mapCollectionDataSets(SerializableSample.listProperties)
-            .forEach { dataset ->
-                val data = dataset.createPrePopulatedContainer()
-
-                val encoded: String = json.encodeToString(data)
-                val decoded: SerializableSample = json.decodeFromString(encoded)
-
-                val originalCollection = dataset.getCollection(data)
-                val decodedCollection = dataset.getCollection(decoded)
-
-                originalCollection
-                    .zip(decodedCollection)
-                    .forEach { (expected, decoded) ->
-                        dataset.classifier.assertValue(expected, decoded)
-                    }
-            }
+            .exhaustiveCollectionTesting()
     }
 
     @Test
-    fun exhaustiveRealmSetTester() {
+    fun exhaustiveRealmSetTest() {
         TypeDescriptor
             .allSetFieldTypes
             .mapCollectionDataSets(SerializableSample.setProperties)
-            .forEach { dataset ->
-                val data = dataset.createPrePopulatedContainer()
-
-                val encoded: String = json.encodeToString(data)
-                val decoded: SerializableSample = json.decodeFromString(encoded)
-
-                val originalCollection = dataset.getCollection(data)
-                val decodedCollection = dataset.getCollection(decoded)
-
-                originalCollection
-                    .zip(decodedCollection)
-                    .forEach { (expected, decoded) ->
-                        dataset.classifier.assertValue(expected, decoded)
-                    }
-            }
+            .exhaustiveCollectionTesting()
     }
 
     @Test
-    fun exhaustiveRealmDictTester() {
+    fun exhaustiveRealmDictTest() {
         TypeDescriptor
             .allDictionaryFieldTypes
             .map { fieldType: TypeDescriptor.RealmFieldType ->
@@ -629,22 +623,27 @@ class SerializationTests {
                 )
             }
             .forEach { dataset ->
-                val data = dataset.createPrePopulatedContainer()
-
-                val encoded: String = json.encodeToString(data)
-                val decoded: SerializableSample = json.decodeFromString(encoded)
-
-                val originalCollection = dataset.getCollection(data)
-                val decodedCollection = dataset.getCollection(decoded)
-
-                assertEquals(originalCollection.keys, decodedCollection.keys)
-                originalCollection.keys
-                    .forEach { key: String ->
-                        dataset.classifier.assertValue(
-                            originalCollection[key],
-                            decodedCollection[key]
-                        )
+                listOf(
+                    dataset.createPrePopulatedContainer(),
+                    realm.writeBlocking {
+                        dataset.createPrePopulatedContainer()
                     }
+                ).forEach { data ->
+                    val encoded: String = json.encodeToString(data)
+                    val decoded: SerializableSample = json.decodeFromString(encoded)
+
+                    val originalCollection = dataset.getCollection(data)
+                    val decodedCollection = dataset.getCollection(decoded)
+
+                    assertEquals(originalCollection.keys, decodedCollection.keys)
+                    originalCollection.keys
+                        .forEach { key: String ->
+                            dataset.classifier.assertValue(
+                                originalCollection[key],
+                                decodedCollection[key]
+                            )
+                        }
+                }
             }
     }
 }
