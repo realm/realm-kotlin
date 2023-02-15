@@ -30,6 +30,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
+import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.serializers.MutableRealmIntSerializer
 import io.realm.kotlin.serializers.RealmAnySerializer
@@ -471,6 +472,7 @@ class SerializationTests {
                 ByteArray::class,
                 Boolean::class,
                 String::class,
+                RealmAny::class, // tested in exhaustiveRealmAnyTester
                 BsonObjectId::class,
             ).contains(it)
         }.forEach { classifier ->
@@ -500,6 +502,76 @@ class SerializationTests {
                 else -> throw IllegalStateException("Untested type $classifier")
             }
         }
+    }
+
+    @Test
+    fun exhaustiveRealmAnyTester() {
+        TypeDescriptor
+            .elementClassifiers
+            .filterNot { classifier ->
+                arrayOf(
+                    MutableRealmInt::class,
+                    RealmAny::class,
+                    BsonObjectId::class,
+                ).contains(classifier)
+            }
+            .map { classifier ->
+                when (classifier) {
+                    Byte::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(byteField)
+                    }
+                    Char::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(charField)
+                    }
+                    Short::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(shortField)
+                    }
+                    Int::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(intField)
+                    }
+                    Long::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(longField)
+                    }
+                    Float::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(floatField)
+                    }
+                    Double::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(doubleField)
+                    }
+                    ByteArray::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(binaryField)
+                    }
+                    Boolean::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(booleanField)
+                    }
+                    String::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(stringField)
+                    }
+                    Decimal128::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(decimal128Field)
+                    }
+                    RealmInstant::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(timestampField)
+                    }
+                    ObjectId::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(objectIdField.asBsonObjectId())
+                    }
+                    RealmUUID::class -> SerializableSample().apply {
+                        nullableRealmAnyField = RealmAny.create(uuidField)
+                    }
+                    RealmObject::class -> SerializableSample().apply {
+                        nullableObject = SerializableSample()
+                        nullableRealmAnyField = RealmAny.create(nullableObject!!)
+                    }
+                    else -> throw IllegalStateException("Untested type $classifier")
+                }
+            }
+            .forEach { expected ->
+                val encoded: String = json.encodeToString(expected)
+                val decoded: SerializableSample = json.decodeFromString(encoded)
+
+                RealmAny::class.assertValue(expected.nullableRealmAnyField, decoded.nullableRealmAnyField)
+            }
     }
 
     @Test
