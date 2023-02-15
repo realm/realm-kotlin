@@ -28,10 +28,10 @@ import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import kotlinx.serialization.Serializable
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
@@ -234,23 +234,20 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
     @Serializable
     private class SerializableRealmAny {
         lateinit var type: String
-        var intValue: Long? = null
-        var boolValue: Boolean? = null
-        var stringValue: String? = null
-        var binaryValue: ByteArray? = null
-
-        @Serializable(with = RealmInstantSerializer::class)
-        var realmInstantValue: RealmInstant? = null
-        var floatValue: Float? = null
-        var doubleValue: Double? = null
-        var decimal128Value: Decimal128? = null
-
-        @Serializable(with = RealmObjectIdSerializer::class)
-        var objectIdValue: ObjectId? = null
-
-        @Serializable(with = RealmUUIDSerializer::class)
-        var uuidValue: RealmUUID? = null
-        var objectValue: RealmObject? = null
+        var int: Long? = null
+        var bool: Boolean? = null
+        var string: String? = null
+        var binary: ByteArray? = null
+        @Serializable(RealmInstantSerializer::class)
+        var instant: RealmInstant? = null
+        var float: Float? = null
+        var double: Double? = null
+        var decimal128: Decimal128? = null
+        @Serializable(RealmObjectIdSerializer::class)
+        var objectId: ObjectId? = null
+        @Serializable(RealmUUIDSerializer::class)
+        var uuid: RealmUUID? = null
+        var realmObject: RealmObject? = null
     }
 
     private val serializer = SerializableRealmAny.serializer()
@@ -259,17 +256,17 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
     override fun deserialize(decoder: Decoder): RealmAny {
         return decoder.decodeSerializableValue(serializer).let {
             when (Type.valueOf(it.type)) {
-                Type.INT -> RealmAny.create(it.intValue!!.toLong())
-                Type.BOOL -> RealmAny.create(it.boolValue!!)
-                Type.STRING -> RealmAny.create(it.stringValue!!)
-                Type.BINARY -> RealmAny.create(it.binaryValue!!)
-                Type.TIMESTAMP -> RealmAny.create(it.realmInstantValue!!)
-                Type.FLOAT -> RealmAny.create(it.floatValue!!)
-                Type.DOUBLE -> RealmAny.create(it.doubleValue!!)
-                Type.DECIMAL128 -> RealmAny.create(it.decimal128Value!!)
-                Type.OBJECT_ID -> RealmAny.create(it.objectIdValue!!.asBsonObjectId())
-                Type.UUID -> RealmAny.create(it.uuidValue!!)
-                Type.OBJECT -> RealmAny.create(it.objectValue!!)
+                Type.INT -> RealmAny.create(it.int!!.toLong())
+                Type.BOOL -> RealmAny.create(it.bool!!)
+                Type.STRING -> RealmAny.create(it.string!!)
+                Type.BINARY -> RealmAny.create(it.binary!!)
+                Type.TIMESTAMP -> RealmAny.create(it.instant!!)
+                Type.FLOAT -> RealmAny.create(it.float!!)
+                Type.DOUBLE -> RealmAny.create(it.double!!)
+                Type.DECIMAL128 -> RealmAny.create(it.decimal128!!)
+                Type.OBJECT_ID -> RealmAny.create(it.objectId!!.asBsonObjectId())
+                Type.UUID -> RealmAny.create(it.uuid!!)
+                Type.OBJECT -> RealmAny.create(it.realmObject!!)
             }
         }
     }
@@ -280,19 +277,19 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
             SerializableRealmAny().apply {
                 type = value.type.name
                 when (value.type) {
-                    Type.INT -> intValue = value.asLong()
-                    Type.BOOL -> boolValue = value.asBoolean()
-                    Type.STRING -> stringValue = value.asString()
-                    Type.BINARY -> binaryValue = value.asByteArray()
-                    Type.TIMESTAMP -> realmInstantValue = value.asRealmInstant()
-                    Type.FLOAT -> floatValue = value.asFloat()
-                    Type.DOUBLE -> doubleValue = value.asDouble()
-                    Type.DECIMAL128 -> decimal128Value = value.asDecimal128()
-                    Type.OBJECT_ID -> objectIdValue = ObjectId.from(
+                    Type.INT -> int = value.asLong()
+                    Type.BOOL -> bool = value.asBoolean()
+                    Type.STRING -> string = value.asString()
+                    Type.BINARY -> binary = value.asByteArray()
+                    Type.TIMESTAMP -> instant = value.asRealmInstant()
+                    Type.FLOAT -> float = value.asFloat()
+                    Type.DOUBLE -> double = value.asDouble()
+                    Type.DECIMAL128 -> decimal128 = value.asDecimal128()
+                    Type.OBJECT_ID -> objectId = ObjectId.from(
                         value.asObjectId().toByteArray()
                     )
-                    Type.UUID -> uuidValue = value.asRealmUUID()
-                    Type.OBJECT -> objectValue = value.asRealmObject()
+                    Type.UUID -> uuid = value.asRealmUUID()
+                    Type.OBJECT -> realmObject = value.asRealmObject()
                 }
             }
         )
