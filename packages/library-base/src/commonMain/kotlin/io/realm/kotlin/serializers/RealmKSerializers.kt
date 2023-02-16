@@ -43,7 +43,7 @@ import kotlinx.serialization.encoding.Encoder
 import org.mongodb.kbson.Decimal128
 
 /**
- * KSerializer implementation for [RealmList]. Serialization is done as a regular list structure,
+ * KSerializer implementation for [RealmList]. Serialization is done as a generic list structure,
  * whilst deserialization is always done with an unmanaged [RealmList].
  *
  * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
@@ -66,7 +66,7 @@ import org.mongodb.kbson.Decimal128
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public class RealmListSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmList<E>> {
+public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmList<E>> {
     private val serializer = ListSerializer(elementSerializer)
 
     override val descriptor: SerialDescriptor =
@@ -81,7 +81,7 @@ public class RealmListSerializer<E>(elementSerializer: KSerializer<E>) : KSerial
 }
 
 /**
- * KSerializer implementation for [RealmSet]. Serialization is done as a regular list structure,
+ * KSerializer implementation for [RealmSet]. Serialization is done as a generic list structure,
  * whilst deserialization is always done with an unmanaged [RealmSet].
  *
  * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
@@ -104,7 +104,7 @@ public class RealmListSerializer<E>(elementSerializer: KSerializer<E>) : KSerial
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public class RealmSetSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmSet<E>> {
+public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmSet<E>> {
     private val serializer = SetSerializer(elementSerializer)
 
     override val descriptor: SerialDescriptor =
@@ -119,7 +119,7 @@ public class RealmSetSerializer<E>(elementSerializer: KSerializer<E>) : KSeriali
 }
 
 /**
- * KSerializer implementation for [RealmDictionary]. Serialization is done as a regular map structure,
+ * KSerializer implementation for [RealmDictionary]. Serialization is done as a generic map structure,
  * whilst deserialization is always done with an unmanaged [RealmDictionary].
  *
  * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
@@ -142,7 +142,7 @@ public class RealmSetSerializer<E>(elementSerializer: KSerializer<E>) : KSeriali
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public class RealmDictionarySerializer<E>(elementSerializer: KSerializer<E>) :
+public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
     KSerializer<RealmDictionary<E>> {
     private val serializer = MapSerializer(String.serializer(), elementSerializer)
 
@@ -179,7 +179,7 @@ public class RealmDictionarySerializer<E>(elementSerializer: KSerializer<E>) :
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public class RealmInstantSerializer : KSerializer<RealmInstant> {
+public class RealmInstantKSerializer : KSerializer<RealmInstant> {
     private val serializer = SerializableRealmInstant.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
@@ -230,7 +230,7 @@ public class RealmInstantSerializer : KSerializer<RealmInstant> {
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public object RealmAnySerializer : KSerializer<RealmAny> {
+public object RealmAnyKSerializer : KSerializer<RealmAny> {
     @Serializable
     private class SerializableRealmAny {
         lateinit var type: String
@@ -238,14 +238,14 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
         var bool: Boolean? = null
         var string: String? = null
         var binary: ByteArray? = null
-        @Serializable(RealmInstantSerializer::class)
+        @Serializable(RealmInstantKSerializer::class)
         var instant: RealmInstant? = null
         var float: Float? = null
         var double: Double? = null
         var decimal128: Decimal128? = null
-        @Serializable(RealmObjectIdSerializer::class)
+        @Serializable(RealmObjectIdKSerializer::class)
         var objectId: ObjectId? = null
-        @Serializable(RealmUUIDSerializer::class)
+        @Serializable(RealmUUIDKSerializer::class)
         var uuid: RealmUUID? = null
         var realmObject: RealmObject? = null
     }
@@ -317,7 +317,7 @@ public object RealmAnySerializer : KSerializer<RealmAny> {
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public class RealmUUIDSerializer : KSerializer<RealmUUID> {
+public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
     private val serializer = ByteArraySerializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
@@ -350,7 +350,7 @@ public class RealmUUIDSerializer : KSerializer<RealmUUID> {
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public class RealmObjectIdSerializer : KSerializer<ObjectId> {
+public class RealmObjectIdKSerializer : KSerializer<ObjectId> {
     private val serializer = ByteArraySerializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
@@ -383,7 +383,7 @@ public class RealmObjectIdSerializer : KSerializer<ObjectId> {
  * ```
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
-public class MutableRealmIntSerializer : KSerializer<MutableRealmInt> {
+public class MutableRealmIntKSerializer : KSerializer<MutableRealmInt> {
     override val descriptor: SerialDescriptor = Long.serializer().descriptor
 
     override fun deserialize(decoder: Decoder): MutableRealmInt =

@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 @file:UseSerializers(
-    RealmListSerializer::class,
-    RealmSetSerializer::class,
-    RealmDictionarySerializer::class,
-    RealmAnySerializer::class,
-    RealmInstantSerializer::class,
-    MutableRealmIntSerializer::class,
-    RealmUUIDSerializer::class,
-    RealmObjectIdSerializer::class
+    RealmListKSerializer::class,
+    RealmSetKSerializer::class,
+    RealmDictionaryKSerializer::class,
+    RealmAnyKSerializer::class,
+    RealmInstantKSerializer::class,
+    MutableRealmIntKSerializer::class,
+    RealmUUIDKSerializer::class,
+    RealmObjectIdKSerializer::class
 )
 
 package io.realm.kotlin.entities
@@ -31,14 +31,14 @@ import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.serializers.MutableRealmIntSerializer
-import io.realm.kotlin.serializers.RealmAnySerializer
-import io.realm.kotlin.serializers.RealmDictionarySerializer
-import io.realm.kotlin.serializers.RealmInstantSerializer
-import io.realm.kotlin.serializers.RealmListSerializer
-import io.realm.kotlin.serializers.RealmObjectIdSerializer
-import io.realm.kotlin.serializers.RealmSetSerializer
-import io.realm.kotlin.serializers.RealmUUIDSerializer
+import io.realm.kotlin.serializers.MutableRealmIntKSerializer
+import io.realm.kotlin.serializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.RealmDictionaryKSerializer
+import io.realm.kotlin.serializers.RealmInstantKSerializer
+import io.realm.kotlin.serializers.RealmListKSerializer
+import io.realm.kotlin.serializers.RealmObjectIdKSerializer
+import io.realm.kotlin.serializers.RealmSetKSerializer
+import io.realm.kotlin.serializers.RealmUUIDKSerializer
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
