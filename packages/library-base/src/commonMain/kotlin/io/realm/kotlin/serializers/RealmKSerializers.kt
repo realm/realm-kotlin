@@ -52,13 +52,13 @@ import org.mongodb.kbson.Decimal128
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(RealmListSerializer::class)
+ *     @Serializable(RealmListKSerializer::class)
  *     var myList: RealmList<String> = realmListOf()
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(RealmListSerializer::class)
+ * @file:UseSerializers(RealmListKSerializer::class)
  *
  * class Example : RealmObject {
  *     var myList: RealmList<String> = realmListOf()
@@ -90,13 +90,13 @@ public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSeria
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(RealmSetSerializer::class)
+ *     @Serializable(RealmSetKSerializer::class)
  *     var mySet: RealmSet<String> = realmSetOf()
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(RealmSetSerializer::class)
+ * @file:UseSerializers(RealmSetKSerializer::class)
  *
  * class Example : RealmObject {
  *     var mySet: RealmSet<String> = realmSetOf()
@@ -128,13 +128,13 @@ public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerial
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(RealmDictionarySerializer::class)
+ *     @Serializable(RealmDictionaryKSerializer::class)
  *     var myDictionary: RealmDictionary<String> = realmDictionaryOf()
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(RealmDictionarySerializer::class)
+ * @file:UseSerializers(RealmDictionaryKSerializer::class)
  *
  * class Example : RealmObject {
  *     var myDictionary: RealmDictionary<String> = realmDictionaryOf()
@@ -165,13 +165,13 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(RealmInstantSerializer::class)
+ *     @Serializable(RealmInstantKSerializer::class)
  *     var myInstant: RealmInstant = RealmInstant.now()
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(RealmInstantSerializer::class)
+ * @file:UseSerializers(RealmInstantKSerializer::class)
  *
  * class Example : RealmObject {
  *     var myInstant: RealmInstant = RealmInstant.now()
@@ -216,13 +216,13 @@ public class RealmInstantKSerializer : KSerializer<RealmInstant> {
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(RealmAnySerializer::class)
+ *     @Serializable(RealmAnyKSerializer::class)
  *     var myInstant: RealmAny = RealmAny.create("hello world")
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(RealmAnySerializer::class)
+ * @file:UseSerializers(RealmAnyKSerializer::class)
  *
  * class Example : RealmObject {
  *     var myInstant: RealmAny = RealmAny.create("hello world")
@@ -303,13 +303,13 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(RealmUUIDSerializer::class)
+ *     @Serializable(RealmUUIDKSerializer::class)
  *     var myUUID: RealmUUID = RealmUUID.create()
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(RealmUUIDSerializer::class)
+ * @file:UseSerializers(RealmUUIDKSerializer::class)
  *
  * class Example : RealmObject {
  *     var myUUID: RealmUUID = RealmUUID.create()
@@ -336,13 +336,13 @@ public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(RealmObjectIdSerializer::class)
+ *     @Serializable(RealmObjectIdKSerializer::class)
  *     var myObjectId: ObjectId = ObjectId.create()
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(RealmObjectIdSerializer::class)
+ * @file:UseSerializers(RealmObjectIdKSerializer::class)
  *
  * class Example : RealmObject {
  *     var myObjectId: ObjectId = ObjectId.create()
@@ -369,13 +369,13 @@ public class RealmObjectIdKSerializer : KSerializer<ObjectId> {
  * Subscription can be done defining the serializer per property
  * ```
  * class Example : RealmObject {
- *     @Serializable(MutableRealmIntSerializer::class)
+ *     @Serializable(MutableRealmIntKSerializer::class)
  *     var myMutableRealmInt: MutableRealmInt = MutableRealmInt.create(0)
  * }
  * ```
  * or per file
  * ```
- * @file:UseSerializers(MutableRealmIntSerializer::class)
+ * @file:UseSerializers(MutableRealmIntKSerializer::class)
  *
  * class Example : RealmObject {
  *     var myMutableRealmInt: MutableRealmInt = MutableRealmInt.create(0)
