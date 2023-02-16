@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.mongodb
 
-import io.realm.kotlin.mongodb.internal.HttpLogObfuscatorImpl
-
 /**
  * The `HttpLogObfuscator` keeps sensitive information from being displayed in output traces.
  */
@@ -33,12 +31,4 @@ public interface HttpLogObfuscator {
      * @return the log entry to be shown
      */
     public fun obfuscate(input: String): String
-
-    public companion object {
-        /**
-         * Creates an obfuscator which removes sensitive data related to login operations. This
-         * is the obfuscator used by default by [AppConfiguration].
-         */
-        public fun create(): HttpLogObfuscator = HttpLogObfuscatorImpl()
-    }
 }
