@@ -636,12 +636,12 @@ internal object RealmObjectHelper {
                 EmbeddedRealmObjectMapOperator(
                     mediator,
                     realm,
-                    converter(clazz, mediator, realm),
+                    converter(clazz, mediator, realm) as RealmValueConverter<EmbeddedRealmObject>,
                     converter(String::class, mediator, realm),
                     dictionaryPtr,
-                    clazz,
+                    clazz as KClass<EmbeddedRealmObject>,
                     classKey
-                )
+                ) as MapOperator<String, R>
             }
         }
     }
