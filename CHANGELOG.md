@@ -9,7 +9,7 @@
 . (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
  
 ### Fixed
-* None.
+* Fixed implementation of `RealmSet.iterator()` to throw `ConcurrentModificationException`s when the underlying set has been modified while iterating over it. (Issue [#1220](https://github.com/realm/realm-kotlin/issues/1220))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
