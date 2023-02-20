@@ -37,7 +37,7 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
-import io.realm.kotlin.mongodb.internal.getObfuscator
+import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -117,7 +117,7 @@ public interface AppConfiguration {
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
-        private var httpLogObfuscator: HttpLogObfuscator? = getObfuscator()
+        private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual

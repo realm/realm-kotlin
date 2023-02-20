@@ -19,12 +19,6 @@ package io.realm.kotlin.mongodb.internal
 import io.realm.kotlin.mongodb.HttpLogObfuscator
 import io.realm.kotlin.mongodb.internal.LogReplacer.Companion.defaultFeatureToReplacerMap
 
-// FIXME We need to define this as a multiplatform implementation since operating with a regex
-//  bigger than an arbitrary size inside Ktor's logging callback crashes on native with a bus error.
-//  This points to accessing an invalid memory address within the callback - perhaps the regex needs
-//  more stack memory than - see https://github.com/realm/realm-kotlin/issues/1284
-internal expect fun getObfuscator(): HttpLogObfuscator
-
 // Replaces any given regex pattern present in a given logger message matching a number of
 // operations/features: register user, login with email and password, login with tokens and run
 // custom functions with parameters
@@ -55,8 +49,7 @@ internal interface LogReplacer {
         internal const val EMAIL_PASSWORD_LOGIN = "$PROVIDER_EMAIL_PASSWORD/login"
 
         // API key operations
-        internal const val API_KEY_REGISTER =
-            "$AUTH/api_keys" // Key creation done using a different path!
+        internal const val API_KEY_REGISTER = "$AUTH/api_keys" // Key creation uses a different path
         internal const val API_KEY_LOGIN = "$PROVIDER_API_KEY/login"
 
         // Apple token operations
@@ -74,8 +67,6 @@ internal interface LogReplacer {
         // Keys to be replaced by the replacer
         private const val API_KEY_KEY = "key"
         private const val PASSWORD_KEY = "password"
-        private const val ACCESS_TOKEN_KEY = "access_token"
-        private const val REFRESH_TOKEN_KEY = "refresh_token"
         private const val AUTHCODE_KEY = "authCode"
         private const val ID_TOKEN_KEY = "id_token"
         private const val TOKEN_KEY = "token"
@@ -104,13 +95,8 @@ internal interface LogReplacer {
 
         // Patterns used when sending a login with mail request:
         // `"password":"<PASSWORD>"` becomes `"password":"***"`
-        // Patterns used when receiving a login with mail request:
-        // `"access_token":"<TOKEN>"` becomes `"access_token":"***"`
-        // `"request_token":"<TOKEN>"` becomes `"request_token":"***"`
         private fun loginEmailPassword(): LogReplacer = mapOf(
-            """(("$PASSWORD_KEY"):(".+?"))""".toRegex() to """"$PASSWORD_KEY":"***"""",
-            """(("$ACCESS_TOKEN_KEY"):(".+?"))""".toRegex() to """"$ACCESS_TOKEN_KEY":"***"""",
-            """(("$REFRESH_TOKEN_KEY"):(".+?"))""".toRegex() to """"$REFRESH_TOKEN_KEY":"***""""
+            """(("$PASSWORD_KEY"):(".+?"))""".toRegex() to """"$PASSWORD_KEY":"***""""
         ).let {
             GenericRegexPatternReplacer(it)
         }
@@ -125,39 +111,24 @@ internal interface LogReplacer {
 
         // Patterns used when sending a login with API key request:
         // `"key":"<KEY>"` becomes `"key":"***"`
-        // Patterns used when receiving a login with API key request:
-        // `"access_token":"<TOKEN>"` becomes `"access_token":"***"`
-        // `"refresh_token":"<TOKEN>"` becomes `"refresh_token":"***"`
         private fun loginApiKey(): LogReplacer = mapOf(
-            """(("$API_KEY_KEY"):(\s?".+?"))""".toRegex() to """"$API_KEY_KEY":"***"""",
-            """(("$ACCESS_TOKEN_KEY"):(".+?"))""".toRegex() to """"$ACCESS_TOKEN_KEY":"***"""",
-            """(("$REFRESH_TOKEN_KEY"):(".+?"))""".toRegex() to """"$REFRESH_TOKEN_KEY":"***""""
+            """(("$API_KEY_KEY"):(\s?".+?"))""".toRegex() to """"$API_KEY_KEY":"***""""
         ).let {
             GenericRegexPatternReplacer(it)
         }
 
         // Patterns used when sending a login with an Apple token request:
         // `"id_token":"<TOKEN>"` becomes `"id_token":"***"`
-        // Patterns used when receiving a login with an Apple token request:
-        // `"access_token":"<TOKEN>"` becomes `"access_token":"***"`
-        // `"refresh_token":"<TOKEN>"` becomes `"refresh_token":"***"`
         private fun loginApple(): LogReplacer = mapOf(
-            """(("$ID_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$ID_TOKEN_KEY":"***"""",
-            """(("$ACCESS_TOKEN_KEY"):(".+?"))""".toRegex() to """"$ACCESS_TOKEN_KEY":"***"""",
-            """(("$REFRESH_TOKEN_KEY"):(".+?"))""".toRegex() to """"$REFRESH_TOKEN_KEY":"***""""
+            """(("$ID_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$ID_TOKEN_KEY":"***""""
         ).let {
             GenericRegexPatternReplacer(it)
         }
 
         // Patterns used when sending a login with a Facebook token request:
         // `"accessToken":"<TOKEN>"` becomes `"accessToken":"***"`
-        // Patterns used when receiving a login with a Facebook token request:
-        // `"access_token":"<TOKEN>"` becomes `"access_token":"***"`
-        // `"refresh_token":"<TOKEN>"` becomes `"refresh_token":"***"`
         private fun loginFacebook(): LogReplacer = mapOf(
-            """(("$FB_ACCESS_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$FB_ACCESS_TOKEN_KEY":"***"""",
-            """(("$ACCESS_TOKEN_KEY"):(".+?"))""".toRegex() to """"$ACCESS_TOKEN_KEY":"***"""",
-            """(("$REFRESH_TOKEN_KEY"):(".+?"))""".toRegex() to """"$REFRESH_TOKEN_KEY":"***""""
+            """(("$FB_ACCESS_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$FB_ACCESS_TOKEN_KEY":"***""""
         ).let {
             GenericRegexPatternReplacer(it)
         }
@@ -165,27 +136,17 @@ internal interface LogReplacer {
         // Patterns used when sending a login with a Google token request:
         // `"authCode":"<TOKEN>"` becomes `"authCode":"***"`
         // `"id_token":"<TOKEN>"` becomes `"id_token":"***"`
-        // Patterns used when receiving a login with a Google token request:
-        // `"access_token":"<TOKEN>"` becomes `"access_token":"***"`
-        // `"refresh_token":"<TOKEN>"` becomes `"refresh_token":"***"`
         private fun loginGoogle(): LogReplacer = mapOf(
             """(("$AUTHCODE_KEY"):(\s?".+?"))""".toRegex() to """"$AUTHCODE_KEY":"***"""",
-            """(("$ID_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$ID_TOKEN_KEY":"***"""",
-            """(("$ACCESS_TOKEN_KEY"):(".+?"))""".toRegex() to """"$ACCESS_TOKEN_KEY":"***"""",
-            """(("$REFRESH_TOKEN_KEY"):(".+?"))""".toRegex() to """"$REFRESH_TOKEN_KEY":"***""""
+            """(("$ID_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$ID_TOKEN_KEY":"***""""
         ).let {
             GenericRegexPatternReplacer(it)
         }
 
         // Patterns used when sending a login with a JWT request:
         // `"token":"<TOKEN>"` becomes `"token":"***"`
-        // Patterns used when receiving a login with a JWT request:
-        // `"access_token":"<TOKEN>"` becomes `"access_token":"***"`
-        // `"refresh_token":"<TOKEN>"` becomes `"refresh_token":"***"`
         private fun loginJwt(): LogReplacer = mapOf(
-            """(("$TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$TOKEN_KEY":"***"""",
-            """(("$ACCESS_TOKEN_KEY"):(".+?"))""".toRegex() to """"$ACCESS_TOKEN_KEY":"***"""",
-            """(("$REFRESH_TOKEN_KEY"):(".+?"))""".toRegex() to """"$REFRESH_TOKEN_KEY":"***""""
+            """(("$TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$TOKEN_KEY":"***""""
         ).let {
             GenericRegexPatternReplacer(it)
         }
@@ -196,17 +157,31 @@ internal interface LogReplacer {
 }
 
 // Replacer for any given feature but custom functions
+// FIXME Access and refresh tokens cannot be replaced by regex due to
+//  https://github.com/realm/realm-kotlin/issues/1284
+//  so until we figure out what is wrong, do manual string replacement and hopefully nothing will
+//  change - if the message string changes our tests will hopefully catch it
 internal class GenericRegexPatternReplacer(
     private val patternReplacementMap: Map<Regex, String>
 ) : LogReplacer {
     override fun findAndReplace(input: String): String {
-        var obfuscatedString = input
-        val entries: Set<Map.Entry<Regex, String>> = patternReplacementMap.entries
-        for (entry in entries) {
-            val pattern = entry.key
-            obfuscatedString = pattern.replace(obfuscatedString, entry.value)
+        return if (
+            input.contains("RESPONSE: 200 OK") &&
+            input.contains("access_token") &&
+            input.contains("refresh_token")
+        ) {
+            val beforeAccessToken = input.substringBefore(""""access_token"""")
+            val afterRefreshToken = input.substringAfter(""""user_id":""")
+            """$beforeAccessToken"access_token":"***","refresh_token":"***","user_id":$afterRefreshToken"""
+        } else {
+            var obfuscatedString = input
+            val entries: Set<Map.Entry<Regex, String>> = patternReplacementMap.entries
+            for (entry in entries) {
+                val pattern = entry.key
+                obfuscatedString = pattern.replace(obfuscatedString, entry.value)
+            }
+            obfuscatedString
         }
-        return obfuscatedString
     }
 }
 
@@ -225,7 +200,11 @@ internal object CustomFunctionPatternReplacer : LogReplacer {
     }
 }
 
-internal class LogObfuscatorImpl(
+internal object LogObfuscatorImpl : HttpLogObfuscator {
+
+    private val urlRegex =
+        Regex("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()!@:%_\\+.~#?&\\/\\/=]*)")
+
     private val features: Collection<ObfuscatorFeature> = setOf(
         ObfuscatorFeature.FEATURE_EMAIL_REGISTER,
         ObfuscatorFeature.FEATURE_EMAIL_LOGIN,
@@ -236,9 +215,9 @@ internal class LogObfuscatorImpl(
         ObfuscatorFeature.FEATURE_GOOGLE_LOGIN,
         ObfuscatorFeature.FEATURE_JWT_LOGIN,
         ObfuscatorFeature.FEATURE_CUSTOM_FUNCTION_REQUEST
-    ),
+    )
+
     private val regexReplacerMap: Map<String, LogReplacer> = defaultFeatureToReplacerMap
-) : HttpLogObfuscator {
 
     override fun obfuscate(input: String): String {
         features.forEach { feature ->
@@ -251,11 +230,6 @@ internal class LogObfuscatorImpl(
             }
         }
         return input
-    }
-
-    private companion object {
-        private val urlRegex =
-            Regex("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()!@:%_\\+.~#?&\\/\\/=]*)")
     }
 }
 
