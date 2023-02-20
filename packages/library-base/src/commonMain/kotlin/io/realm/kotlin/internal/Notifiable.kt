@@ -20,6 +20,8 @@ import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.util.Validation.sdkError
+import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -27,7 +29,7 @@ import kotlinx.coroutines.flow.Flow
  * mechanism. This does not necessarily mean that you can listen for changes of the object itself,
  * but could be updates of derived entities, i.e. observing a query will actually emit results.
  */
-// TODO Public due to being a transitive dependency to Observable
+// TODO Public due to being a transitive dependency to CoreNotifiable
 public interface Observable<T : CoreNotifiable<T, C>, C> {
 
     /**
@@ -51,16 +53,18 @@ public interface Notifiable<T : CoreNotifiable<T, C>, C> {
     public fun coreObservable(liveRealm: LiveRealm): CoreNotifiable<T, C>?
 
     /**
-     * The [ChangeBuilder] responsible for converting core changes to appropriate [C]-change events.
+     * The [ChangeFlow] responsible for emitting [SuspendableNotifier] events as appropriate
+     * [C]-change events.
      */
-    public fun changeBuilder(): ChangeBuilder<T, C>
+    public fun changeFlow(scope: ProducerScope<C>): ChangeFlow<T, C>
 }
 
 /**
- * A _change builder_ is responsible for converting the core notification change object into an
- * appropriate [C]-change event. If
+ * A _change flow_ is responsible for converting the [SuspendableNotifier] events into
+ * corresponding [C]-change events and emit them in the [producerScope] and close the scope when
+ * the monitored entity is deleted.
  */
-public abstract class ChangeBuilder<T, C> {
+public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<C>) {
 
     private var previousElement: T? = null
 
@@ -77,7 +81,7 @@ public abstract class ChangeBuilder<T, C> {
      *   calling [initial].
      * - Otherwise this method will return the result of calling [update].
      */
-    internal fun change(frozenRef: T?, change: RealmChangesPointer? = null): C? {
+    internal fun emit(frozenRef: T?, change: RealmChangesPointer? = null) {
         val event = if (frozenRef != null) {
             if (previousElement == null) {
                 initial(frozenRef)
@@ -89,7 +93,10 @@ public abstract class ChangeBuilder<T, C> {
             delete()
         }
         previousElement = frozenRef
-        return event
+        event?.let { producerScope.trySendWithBufferOverflowCheck(it) }
+        if (frozenRef == null) {
+            producerScope.close()
+        }
     }
 
     internal abstract fun initial(frozenRef: T): C

@@ -32,6 +32,7 @@ import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -120,8 +121,8 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         return RealmInterop.realm_results_add_notification_callback(nativePointer, callback)
     }
 
-    override fun changeBuilder(): ChangeBuilder<RealmResultsImpl<E>, ResultsChange<E>> =
-        ResultChangeBuilder()
+    override fun changeFlow(scope: ProducerScope<ResultsChange<E>>): ChangeFlow<RealmResultsImpl<E>, ResultsChange<E>> =
+        ResultChangeFlow(scope)
 
     override fun realmState(): RealmState = realm
 
@@ -130,8 +131,8 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     }
 }
 
-internal class ResultChangeBuilder<E : BaseRealmObject> :
-    ChangeBuilder<RealmResultsImpl<E>, ResultsChange<E>>() {
+internal class ResultChangeFlow<E : BaseRealmObject>(scope: ProducerScope<ResultsChange<E>>) :
+    ChangeFlow<RealmResultsImpl<E>, ResultsChange<E>>(scope) {
 
     override fun initial(frozenRef: RealmResultsImpl<E>): ResultsChange<E> =
         InitialResultsImpl(frozenRef)

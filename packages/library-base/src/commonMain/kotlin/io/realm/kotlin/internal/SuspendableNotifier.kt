@@ -7,7 +7,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.Validation.sdkError
-import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import io.realm.kotlin.schema.RealmSchema
@@ -95,14 +94,7 @@ internal class SuspendableNotifier(
                 realm.refresh()
                 val observable = flowable.notifiable()
                 val lifeRef = observable.coreObservable(realm)
-                val changeBuilder = observable.changeBuilder()
-                fun emitAndCloseOnNull(frozenRef: T?, change: RealmChangesPointer? = null) {
-                    changeBuilder.change(frozenRef, change)
-                        ?.let { trySendWithBufferOverflowCheck(it) }
-                    if (frozenRef == null) {
-                        close()
-                    }
-                }
+                val changeFlow = observable.changeFlow(this@callbackFlow)
                 // Only emit events during registration if the observed entity is already deleted
                 // (lifeRef == null) as there is no guarantee when the first callback is delivered
                 // by core (either on the version where the callback is registered or on a future
@@ -117,12 +109,12 @@ internal class SuspendableNotifier(
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
                                 val frozenObservable = lifeRef.freeze(realm.snapshot)
-                                emitAndCloseOnNull(frozenObservable, change)
+                                changeFlow.emit(frozenObservable, change)
                             }
                         }
                     token.value = NotificationToken(lifeRef.registerForNotification(interopCallback))
                 } else {
-                    emitAndCloseOnNull(null)
+                    changeFlow.emit(null)
                 }
             }
             awaitClose {

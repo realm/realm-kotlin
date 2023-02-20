@@ -30,6 +30,7 @@ import io.realm.kotlin.notifications.internal.DeletedObjectImpl
 import io.realm.kotlin.notifications.internal.InitialObjectImpl
 import io.realm.kotlin.notifications.internal.UpdatedObjectImpl
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -109,8 +110,8 @@ public class RealmObjectReference<T : BaseRealmObject>(
         )
     }
 
-    override fun changeBuilder(): ChangeBuilder<RealmObjectReference<T>, ObjectChange<T>> =
-        ObjectChangeBuilder()
+    override fun changeFlow(scope: ProducerScope<ObjectChange<T>>): ChangeFlow<RealmObjectReference<T>, ObjectChange<T>> =
+        ObjectChangeFlow(scope)
 
     internal fun getChangedFieldNames(
         change: RealmChangesPointer
@@ -168,7 +169,8 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.checkNotificationsAva
     }
 }
 
-internal class ObjectChangeBuilder<E : BaseRealmObject> : ChangeBuilder<RealmObjectReference<E>, ObjectChange<E>>() {
+internal class ObjectChangeFlow<E : BaseRealmObject>(scope: ProducerScope<ObjectChange<E>>) :
+    ChangeFlow<RealmObjectReference<E>, ObjectChange<E>>(scope) {
 
     override fun initial(frozenRef: RealmObjectReference<E>): ObjectChange<E> {
         val obj: E = frozenRef.toRealmObject()

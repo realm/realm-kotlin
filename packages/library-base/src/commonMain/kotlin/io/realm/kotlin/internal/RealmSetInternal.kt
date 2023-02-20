@@ -39,6 +39,7 @@ import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmSet
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -149,8 +150,8 @@ internal class ManagedRealmSet<E> constructor(
         return RealmInterop.realm_set_add_notification_callback(nativePointer, callback)
     }
 
-    override fun changeBuilder(): ChangeBuilder<ManagedRealmSet<E>, SetChange<E>> =
-        RealmSetChangeBuilder()
+    override fun changeFlow(scope: ProducerScope<SetChange<E>>): ChangeFlow<ManagedRealmSet<E>, SetChange<E>> =
+        RealmSetChangeFlow(scope)
 
     override fun delete() {
         RealmInterop.realm_set_remove_all(nativePointer)
@@ -334,8 +335,8 @@ internal class RealmObjectSetOperator<E> constructor(
     }
 }
 
-internal class RealmSetChangeBuilder<E> :
-    ChangeBuilder<ManagedRealmSet<E>, SetChange<E>>() {
+internal class RealmSetChangeFlow<E>(scope: ProducerScope<SetChange<E>>) :
+    ChangeFlow<ManagedRealmSet<E>, SetChange<E>>(scope) {
     override fun initial(frozenRef: ManagedRealmSet<E>): SetChange<E> = InitialSetImpl(frozenRef)
 
     override fun update(frozenRef: ManagedRealmSet<E>, change: RealmChangesPointer): SetChange<E>? {

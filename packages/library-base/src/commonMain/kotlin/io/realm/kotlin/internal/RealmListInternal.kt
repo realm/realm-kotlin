@@ -39,6 +39,7 @@ import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -155,8 +156,8 @@ internal class ManagedRealmList<E>(
         return RealmInterop.realm_list_add_notification_callback(nativePointer, callback)
     }
 
-    override fun changeBuilder(): ChangeBuilder<ManagedRealmList<E>, ListChange<E>> =
-        RealmListChangeBuilder()
+    override fun changeFlow(scope: ProducerScope<ListChange<E>>): ChangeFlow<ManagedRealmList<E>, ListChange<E>> =
+        RealmListChangeFlow(scope)
 
     // TODO from LifeCycle interface
     internal fun isValid(): Boolean =
@@ -165,7 +166,8 @@ internal class ManagedRealmList<E>(
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
 }
 
-internal class RealmListChangeBuilder<E> : ChangeBuilder<ManagedRealmList<E>, ListChange<E>>() {
+internal class RealmListChangeFlow<E>(producerScope: ProducerScope<ListChange<E>>) :
+    ChangeFlow<ManagedRealmList<E>, ListChange<E>>(producerScope) {
     override fun initial(frozenRef: ManagedRealmList<E>): ListChange<E> =
         InitialListImpl(frozenRef)
 
