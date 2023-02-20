@@ -73,7 +73,7 @@ data class LoginResponse(val access_token: String)
 data class Profile(val roles: List<Role>)
 
 @Serializable
-data class Role(val group_id: String)
+data class Role(val group_id: String? = null)
 
 @Serializable
 data class AuthProvider constructor(
