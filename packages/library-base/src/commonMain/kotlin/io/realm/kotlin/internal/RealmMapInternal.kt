@@ -735,7 +735,7 @@ internal abstract class RealmMapGenericIterator<K, T>(
         checkConcurrentModification()
 
         if (operator.size == 0) {
-            throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
+            throw NoSuchElementException("Could not remove last element returned by the iterator: dictionary is empty.")
         }
         if (lastReturned < 0) {
             throw IllegalStateException("Could not remove last element returned by the iterator: iterator never returned an element.")
