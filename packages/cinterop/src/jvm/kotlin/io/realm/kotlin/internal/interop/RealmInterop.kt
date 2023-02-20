@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -719,12 +718,22 @@ actual object RealmInterop {
         return index[0] != -1L
     }
 
-    actual fun realm_dictionary_insert_embedded(
+    actual fun MemAllocator.realm_dictionary_insert_embedded(
         dictionary: RealmMapPointer,
         mapKey: RealmValue
-    ): RealmObjectPointer {
-        val objectPtr = realmc.realm_dictionary_insert_embedded(dictionary.cptr(), mapKey.value)
-        return LongPointerWrapper(objectPtr)
+    ): RealmValue {
+        val struct = allocRealmValueT()
+
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
+        val embedded = realmc.realm_dictionary_insert_embedded(dictionary.cptr(), mapKey.value)
+        val link: realm_link_t = realmc.realm_object_as_link(embedded)
+        return RealmValue(
+            struct.apply {
+                this.type = realm_value_type_e.RLM_TYPE_LINK
+                this.link = link
+            }
+        )
     }
 
     actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {

@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert_embedded
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
 import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -511,13 +512,13 @@ internal class RealmObjectMapOperator<K, V> constructor(
 }
 
 @Suppress("LongParameterList")
-internal class EmbeddedRealmObjectMapOperator<K, V> constructor(
+internal class EmbeddedRealmObjectMapOperator<K, V : BaseRealmObject> constructor(
     mediator: Mediator,
     realmReference: RealmReference,
     valueConverter: RealmValueConverter<V>,
     keyConverter: RealmValueConverter<K>,
     nativePointer: RealmMapPointer,
-    clazz: KClass<V & Any>,
+    clazz: KClass<V>,
     classKey: ClassKey
 ) : BaseRealmObjectMapOperator<K, V>(
     mediator,
@@ -551,16 +552,14 @@ internal class EmbeddedRealmObjectMapOperator<K, V> constructor(
                 )
                 Pair(previousObject, modified)
             } else {
-                val embedded =
-                    RealmInterop.realm_dictionary_insert_embedded(nativePointer, keyTransport)
-                val valueAsBaseObject = value as BaseRealmObject
-                val newObj = embedded.toRealmObject(
-                    valueAsBaseObject::class as KClass<BaseRealmObject>,
-                    mediator,
-                    realmReference
-                )
-                RealmObjectHelper.assign(newObj, valueAsBaseObject, updatePolicy, cache)
-                Pair(newObj, true)
+                // We cannot return the old object as it is deleted when losing its parent so just
+                // return the newly created object even though it goes against the API
+                val embedded = realm_dictionary_insert_embedded(nativePointer, keyTransport)
+                with(valueConverter) {
+                    val newEmbeddedRealmObject = realmValueToPublic(embedded) as BaseRealmObject
+                    RealmObjectHelper.assign(newEmbeddedRealmObject, value, updatePolicy, cache)
+                    Pair(newEmbeddedRealmObject, true)
+                }
             } as Pair<V?, Boolean>
         }
     }
