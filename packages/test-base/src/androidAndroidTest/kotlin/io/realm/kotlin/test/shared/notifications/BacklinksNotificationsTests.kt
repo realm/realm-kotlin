@@ -28,6 +28,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -164,6 +165,38 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 observer.cancel()
                 c.close()
             }
+        }
+    }
+
+    @Test
+    fun verifyChangeEvents() {
+        runBlocking {
+            val target = realm.write {
+                copyToRealm(Sample())
+            }
+            val c = Channel<ResultsChange<Sample>>(capacity = 5)
+            val collection = async {
+                target.objectBacklinks.asFlow().collect {
+                    c.trySend(it)
+                }
+            }
+
+            c.receive().let {
+                assertIs<InitialResults<*>>(it)
+                assertEquals(0, it.list.size)
+            }
+
+            realm.write {
+                copyToRealm(Sample().apply { nullableObject = findLatest(target) })
+            }
+
+            c.receive().let {
+                assertIs<UpdatedResults<*>>(it)
+                assertEquals(1, it.list.size)
+                assertEquals(0, it.deletions.size)
+                assertEquals(1, it.insertions.size)
+            }
+            collection.cancel()
         }
     }
 
@@ -343,12 +376,13 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 copyToRealm(Sample())
             }
 
-            val c = Channel<Unit>(capacity = 1)
+            val c = Channel<Int>(capacity = 1)
             val observer = async {
                 target.objectBacklinks
                     .asFlow()
+                    .filterNot { it.list.isEmpty() }
                     .collect {
-                        c.trySend(Unit)
+                        c.trySend(it.list.size)
                     }
                 fail("Flow should not be canceled.")
             }
@@ -363,7 +397,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
 
             // Await that collect is actually collecting
             withTimeout(10.seconds) {
-                c.receive()
+                assertEquals(1, c.receive())
             }
             realm.close()
             delay(1.seconds)

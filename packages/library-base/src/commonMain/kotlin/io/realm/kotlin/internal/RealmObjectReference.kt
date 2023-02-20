@@ -168,24 +168,21 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.checkNotificationsAva
     }
 }
 
-internal class ObjectChangeBuilder<E : BaseRealmObject> : ChangeBuilder<RealmObjectReference<E>, ObjectChange<E>> {
-    override fun change(
-        frozenRef: RealmObjectReference<E>?,
-        change: RealmChangesPointer?
-    ): Pair<ObjectChange<E>?, Boolean> {
-        return if (frozenRef != null) {
-            val obj: E = frozenRef.toRealmObject()
-            if (change == null) {
-                InitialObjectImpl(obj)
-            } else {
-                val changedFieldNames = frozenRef.getChangedFieldNames(change)
-                if (!changedFieldNames.isEmpty()) {
-                    val obj: E = frozenRef.toRealmObject()
-                    UpdatedObjectImpl(obj, changedFieldNames)
-                } else null
-            } to false // Do not close
-        } else {
-            DeletedObjectImpl<E>() to true // Close on delete
-        }
+internal class ObjectChangeBuilder<E : BaseRealmObject> : ChangeBuilder<RealmObjectReference<E>, ObjectChange<E>>() {
+
+    override fun initial(frozenRef: RealmObjectReference<E>): ObjectChange<E> {
+        val obj: E = frozenRef.toRealmObject()
+        return InitialObjectImpl(obj)
     }
+
+    override fun update(
+        frozenRef: RealmObjectReference<E>,
+        change: RealmChangesPointer
+    ): ObjectChange<E> {
+        val obj: E = frozenRef.toRealmObject()
+        val changedFieldNames = frozenRef.getChangedFieldNames(change)
+        return UpdatedObjectImpl(obj, changedFieldNames)
+    }
+
+    override fun delete(): ObjectChange<E> = DeletedObjectImpl()
 }

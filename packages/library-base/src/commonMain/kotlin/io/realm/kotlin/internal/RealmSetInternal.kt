@@ -335,26 +335,15 @@ internal class RealmObjectSetOperator<E> constructor(
 }
 
 internal class RealmSetChangeBuilder<E> :
-    ChangeBuilder<ManagedRealmSet<E>, SetChange<E>> {
-    override fun change(
-        frozenRef: ManagedRealmSet<E>?,
-        change: RealmChangesPointer?
-    ): Pair<SetChange<E>?, Boolean> {
-        return if (frozenRef != null) {
-            if (change == null) {
-                InitialSetImpl(frozenRef)
-            } else {
-                val builder = SetChangeSetBuilderImpl(change)
-                if (!builder.isEmpty()) {
-                    UpdatedSetImpl(frozenRef, builder.build())
-                } else {
-                    null
-                }
-            } to false
-        } else {
-            DeletedSetImpl<E>(UnmanagedRealmSet()) to true
-        }
+    ChangeBuilder<ManagedRealmSet<E>, SetChange<E>>() {
+    override fun initial(frozenRef: ManagedRealmSet<E>): SetChange<E> = InitialSetImpl(frozenRef)
+
+    override fun update(frozenRef: ManagedRealmSet<E>, change: RealmChangesPointer): SetChange<E>? {
+        val builder = SetChangeSetBuilderImpl(change)
+        return UpdatedSetImpl(frozenRef, builder.build())
     }
+
+    override fun delete(): SetChange<E> = DeletedSetImpl(UnmanagedRealmSet())
 }
 
 internal fun <T> Array<out T>.asRealmSet(): RealmSet<T> =

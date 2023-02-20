@@ -19,6 +19,7 @@ import io.realm.kotlin.Versioned
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
+import io.realm.kotlin.internal.util.Validation.sdkError
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -57,21 +58,43 @@ public interface Notifiable<T : CoreNotifiable<T, C>, C> {
 
 /**
  * A _change builder_ is responsible for converting the core notification change object into an
- * appropriate [C]-change event and signal if the events should close the flow.
+ * appropriate [C]-change event. If
  */
-public interface ChangeBuilder<T, C> {
+public abstract class ChangeBuilder<T, C> {
+
+    private var previousElement: T? = null
+
     /**
-     * Return a change event for the given [frozenRef] and core [change].
+     * Converts the given [SuspendableNotifier] event into a C-change event.
      *
      * @param frozenRef a frozen reference of the original entity, or `null` if the entity is no
      * longer present in the [SuspendableNotifier]'s live realm.
      * @param change the core change, or `null` if this is the initial event issued by the
      * [SuspendableNotifier] at the point of callback registration.
-     * @return a pair with a change event and a signal whether the [SuspendableNotifier] should
-     * cancel the notification registration and complete the flow. If the change event is `null`
-     * the [SuspendableNotifier] will not emit any events to the flow.
+     * @return a C-event based on the following rules:
+     * - If `frozenRef == null` this method will return the result of calling [delete].
+     * - If `frozenRef != null` and `previousElement == null` this method will return the result of
+     *   calling [initial].
+     * - Otherwise this method will return the result of calling [update].
      */
-    public fun change(frozenRef: T?, change: RealmChangesPointer? = null): Pair<C?, Boolean>
+    internal fun change(frozenRef: T?, change: RealmChangesPointer? = null): C? {
+        val event = if (frozenRef != null) {
+            if (previousElement == null) {
+                initial(frozenRef)
+            } else {
+                change?.let { update(frozenRef, it) }
+                    ?: sdkError("We should never receive change callbacks for non-null (deleted) entities without an actual change object")
+            }
+        } else {
+            delete()
+        }
+        previousElement = frozenRef
+        return event
+    }
+
+    internal abstract fun initial(frozenRef: T): C
+    internal abstract fun update(frozenRef: T, change: RealmChangesPointer): C?
+    internal abstract fun delete(): C
 }
 
 // TODO Why is this flowable here?

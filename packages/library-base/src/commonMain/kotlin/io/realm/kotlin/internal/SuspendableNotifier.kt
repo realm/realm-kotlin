@@ -14,7 +14,6 @@ import io.realm.kotlin.schema.RealmSchema
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
@@ -97,6 +96,20 @@ internal class SuspendableNotifier(
                 val observable = flowable.notifiable()
                 val lifeRef = observable.coreObservable(realm)
                 val changeBuilder = observable.changeBuilder()
+                fun emitAndCloseOnNull(frozenRef: T?, change: RealmChangesPointer? = null) {
+                    changeBuilder.change(frozenRef, change)
+                        ?.let { trySendWithBufferOverflowCheck(it) }
+                    if (frozenRef == null) {
+                        close()
+                    }
+                }
+                // Only emit events during registration if the observed entity is already deleted
+                // (lifeRef == null) as there is no guarantee when the first callback is delivered
+                // by core (either on the version where the callback is registered or on a future
+                // version if there is an ongoing transaction). If the observed entity exists upon
+                // registration then the initial event will always be reported from the callback,
+                // but can still be a deletion-event if the observed element is deleted at that
+                // moment in time.
                 if (lifeRef != null) {
                     val interopCallback: Callback<RealmChangesPointer> =
                         object : Callback<RealmChangesPointer> {
@@ -104,13 +117,13 @@ internal class SuspendableNotifier(
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
                                 val frozenObservable = lifeRef.freeze(realm.snapshot)
-                                emit(changeBuilder.change(frozenObservable, change))
+                                emitAndCloseOnNull(frozenObservable, change)
                             }
                         }
                     token.value = NotificationToken(lifeRef.registerForNotification(interopCallback))
+                } else {
+                    emitAndCloseOnNull(null)
                 }
-                // Initial event
-                emit(changeBuilder.change(lifeRef?.freeze(realm.snapshot)))
             }
             awaitClose {
                 token.value.cancel()
@@ -162,15 +175,5 @@ internal class SuspendableNotifier(
                 }
             }
         }
-    }
-}
-
-private fun <T> ProducerScope<T>.emit(p: Pair<T?, Boolean>) {
-    val (element, shouldClose) = p
-    element?.let {
-        trySendWithBufferOverflowCheck(it)
-    }
-    if (shouldClose) {
-        close()
     }
 }

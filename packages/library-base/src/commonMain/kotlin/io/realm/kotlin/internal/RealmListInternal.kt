@@ -165,26 +165,19 @@ internal class ManagedRealmList<E>(
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
 }
 
-internal class RealmListChangeBuilder<E> : ChangeBuilder<ManagedRealmList<E>, ListChange<E>> {
-    override fun change(
-        frozenRef: ManagedRealmList<E>?,
-        change: RealmChangesPointer?
-    ): Pair<ListChange<E>?, Boolean> {
-        return if (frozenRef != null) {
-            if (change == null) {
-                InitialListImpl(frozenRef)
-            } else {
-                val builder = ListChangeSetBuilderImpl(change)
-                if (!builder.isEmpty()) {
-                    UpdatedListImpl(frozenRef, builder.build())
-                } else {
-                    null
-                }
-            } to false // Do not close
-        } else {
-            DeletedListImpl<E>(UnmanagedRealmList()) to true // Close
-        }
+internal class RealmListChangeBuilder<E> : ChangeBuilder<ManagedRealmList<E>, ListChange<E>>() {
+    override fun initial(frozenRef: ManagedRealmList<E>): ListChange<E> =
+        InitialListImpl(frozenRef)
+
+    override fun update(
+        frozenRef: ManagedRealmList<E>,
+        change: RealmChangesPointer
+    ): ListChange<E> {
+        val builder = ListChangeSetBuilderImpl(change)
+        return UpdatedListImpl(frozenRef, builder.build())
     }
+
+    override fun delete(): ListChange<E> = DeletedListImpl(UnmanagedRealmList())
 }
 
 internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(

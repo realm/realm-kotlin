@@ -130,22 +130,20 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     }
 }
 
-internal class ResultChangeBuilder<E : BaseRealmObject> : ChangeBuilder<RealmResultsImpl<E>, ResultsChange<E>> {
-    override fun change(
-        frozenRef: RealmResultsImpl<E>?,
-        change: RealmChangesPointer?
-    ): Pair<ResultsChange<E>?, Boolean> {
-        return if (frozenRef != null) {
-            if (change == null) {
-                InitialResultsImpl(frozenRef)
-            } else {
-                val listChangeSetBuilderImpl = ListChangeSetBuilderImpl(change)
-                if (!listChangeSetBuilderImpl.isEmpty()) {
-                    UpdatedResultsImpl<E>(frozenRef, listChangeSetBuilderImpl.build())
-                } else null
-            } to false // Do not close
-        } else {
-            sdkError("Results should never have been deleted")
-        }
+internal class ResultChangeBuilder<E : BaseRealmObject> :
+    ChangeBuilder<RealmResultsImpl<E>, ResultsChange<E>>() {
+
+    override fun initial(frozenRef: RealmResultsImpl<E>): ResultsChange<E> =
+        InitialResultsImpl(frozenRef)
+
+    override fun update(
+        frozenRef: RealmResultsImpl<E>,
+        change: RealmChangesPointer
+    ): ResultsChange<E> {
+        val listChangeSetBuilderImpl = ListChangeSetBuilderImpl(change)
+        return UpdatedResultsImpl(frozenRef, listChangeSetBuilderImpl.build())
     }
+
+    override fun delete(): ResultsChange<E> =
+        sdkError("Results should never have been deleted")
 }
