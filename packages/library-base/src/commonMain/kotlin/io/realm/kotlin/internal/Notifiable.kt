@@ -69,17 +69,20 @@ public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<
     private var previousElement: T? = null
 
     /**
-     * Converts the given [SuspendableNotifier] event into a C-change event.
+     * Converts the given [SuspendableNotifier] event into a C-change event, emit it and potentially
+     * close the [producerScope] if the monitored event was deleted (`frozenRef == null`).
+     *
+     * The default implementation will emit a C-event based on the following rules:
+     * - If `frozenRef == null` the result of calling [delete] will be emitted and the
+     *   [producerScope] will be closed.
+     * - If `frozenRef != null` and `previousElement == null` the result of calling [initial] will
+     *   be emitted.
+     * - Otherwise the result of calling [update] will be emitted.
      *
      * @param frozenRef a frozen reference of the original entity, or `null` if the entity is no
      * longer present in the [SuspendableNotifier]'s live realm.
      * @param change the core change, or `null` if this is the initial event issued by the
      * [SuspendableNotifier] at the point of callback registration.
-     * @return a C-event based on the following rules:
-     * - If `frozenRef == null` this method will return the result of calling [delete].
-     * - If `frozenRef != null` and `previousElement == null` this method will return the result of
-     *   calling [initial].
-     * - Otherwise this method will return the result of calling [update].
      */
     internal fun emit(frozenRef: T?, change: RealmChangesPointer? = null) {
         val event = if (frozenRef != null) {
