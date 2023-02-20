@@ -46,18 +46,7 @@ object TestAppInitializer {
                     "queryable_fields_names": [
                         "name",
                         "section"
-                    ],
-                    "permissions": {
-                        "rules": {},
-                        "defaultRoles": [
-                            {
-                                "name": "read-write",
-                                "applyWhen": {},
-                                "read": true,
-                                "write": true
-                            }
-                        ]
-                    }
+                    ]
                 }
             }
             """.trimIndent()
@@ -359,15 +348,18 @@ object TestAppInitializer {
                 {
                     "database": "$dbName",
                     "collection": "UserData",
-                    "roles": [
-                        {
-                            "name": "default",
-                            "apply_when": {},
-                            "insert": true,
-                            "delete": true,
-                            "additional_fields": {}
-                        }
-                    ]
+                    "roles": [{
+                        "name": "defaultRole",
+                        "apply_when": {},
+                        "document_filters": {
+                            "read": true,
+                            "write": true
+                        },
+                        "write": true,
+                        "read": true,
+                        "insert": true,
+                        "delete": true
+                    }]
                 }
                 """.trimIndent()
             )

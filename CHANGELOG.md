@@ -4,6 +4,7 @@
 * None.
 
 ### Enhancements
+* Upgrade OpenSSL from 3.0.7 to 3.0.8.
 * Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
 * [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs.
 . (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
@@ -25,7 +26,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.4.0, commit 4262a05ed96079a72639d1f470e0143e633dee56.
+* Updated to Realm Core 13.4.2, commit e5f1a673474bd940c2906ce408fbb8c4de640a4b.
 
 
 ## 1.6.2 (YYYY-MM-DD)
