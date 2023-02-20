@@ -9,6 +9,7 @@
 ### Fixed
 * Compatibility with Realm Java when using the `io.realm.RealmObject` abstract class. (Issue [#1278](https://github.com/realm/realm-kotlin/issues/1278))
 * Compiler error when multiple fields have `@PersistedName`-annotations that match they Kotlin name. (Issue [#1240](https://github.com/realm/realm-kotlin/issues/1240))
+* RealmUUID would throw an `ClassCastException` when comparing with an object instance of a different type. (Issue [#1288](https://github.com/realm/realm-kotlin/issues/1288))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
