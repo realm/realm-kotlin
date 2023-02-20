@@ -351,15 +351,6 @@ internal class PrimitiveSetOperator<E>(
         }
     }
 
-//    override fun removeInternal(element: E): Boolean {
-//        return inputScope {
-//            with(valueConverter) {
-//                val transport = publicToRealmValue(element)
-//                RealmInterop.realm_set_erase(nativePointer, transport)
-//            }
-//        }
-//    }
-
     override fun contains(element: E): Boolean {
         return inputScope {
             with(valueConverter) {
@@ -419,15 +410,6 @@ internal class RealmObjectSetOperator<E> constructor(
             }
         }
     }
-
-//    override fun removeInternal(element: E): Boolean {
-//        return inputScope {
-//            with(valueConverter) {
-//                val transport = publicToRealmValue(element)
-//                RealmInterop.realm_set_erase(nativePointer, transport)
-//            }
-//        }
-//    }
 
     override fun contains(element: E): Boolean {
         return inputScope {
