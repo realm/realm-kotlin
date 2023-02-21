@@ -965,10 +965,12 @@ jobs:
             type: base
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Base
+            test-task: iosTest
           - os: macos-latest
             type: sync
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Sync
+            test-task: runCloudIosTests
           # - os: macos-arm
           #   package-prefix: macos-arm64
           #   test-title: Results - MacOS arm64 Base
@@ -1013,7 +1015,7 @@ jobs:
       - name: Run tests
         working-directory: packages
         run: >
-          ./gradlew :test-${{ matrix.type }}:runCloudIosTests
+          ./gradlew :test-${{ matrix.type }}:${{ matrix.test-task }}
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
           -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
