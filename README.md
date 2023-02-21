@@ -1,6 +1,3 @@
-## Developing with the Realm SDKs? We want to hear from you! [Take our short survey](https://mongodb.co1.qualtrics.com/jfe/form/SV_6fJwP5VUXddZmZg?Source=github)
-<br/>
-
 ![Realm](./images/logo.png)
 
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)

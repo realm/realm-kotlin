@@ -157,8 +157,7 @@ class SubscriptionSetTests {
         subscriptions.waitForSynchronization()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         subscriptions.update {
-            // `age` is not a queriable field but will be added automatically
-            // LIMIT should fail on the server
+            // Flexible Sync queries cannot use limit
             realm.query<FlexParentObject>("age > 42 LIMIT(1)").subscribe("test2")
         }
         assertFailsWith<BadFlexibleSyncQueryException> {
