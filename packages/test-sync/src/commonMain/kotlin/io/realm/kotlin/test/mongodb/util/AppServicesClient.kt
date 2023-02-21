@@ -401,7 +401,6 @@ class AppServicesClient(
             }
         }
 
-
     suspend fun Service.addRule(rule: String): JsonObject =
         withContext(dispatcher) {
             httpClient.typedRequest<JsonObject>(
