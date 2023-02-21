@@ -256,3 +256,43 @@ buildkonfig {
         buildConfigField(Type.STRING, "clusterName", properties["syncTestClusterName"] as String? ?: "")
     }
 }
+
+/**
+ * Due to https://youtrack.jetbrains.com/issue/KT-38317/Kotlin-Native-NSURLConnection-HTTPS-requests-fail-in-iOS-tests-due-to-standalone-simctl-flag
+ * We cannot currently use the default `iosTest` task when running against Cloud-QA.
+ *
+ * This task works around this by manually starting the simulator using `xcrun`. This has a few
+ * implications.
+ *
+ * - It is difficult to only run a subset of tests as they require addition commandline parameters.
+ *   Running an individiual class can be done by adding `--ktest_gradle_filter=io.realm.kotlin.test.mongodb.shared.AppTests`
+ *   to the shell command. These arguments where extracted by running `./gradlew iosTest --info`
+ *   which displays the commandline arguments used by the standard test setup.
+ *
+ * - This commmand is mostly intended to run on Github Actions which start from a clean slate,
+ *   so no attempt is done at tearing down the simulator. If this task is run locally, it might
+ *   be needed to call `xcrun simctl shutdown 'iPhone 12'`. Otherwise the following error might
+ *   be thrown when running this task:
+ *
+ *   ```
+ *   An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+ *   Unable to boot device in current state: Booted
+ *   ```
+ */
+tasks.register("runCloudIosTests")  {
+    val  device = project.findProperty("iosDevice") as? String ?: "iPhone 12"
+    dependsOn("linkDebugTestIos")
+    group = JavaBasePlugin.VERIFICATION_GROUP
+    description = "Runs tests targeting Cloud-QA for target 'ios' on an iOS simulator"
+
+    // This is the output from the default iosTest task as of Kotlin 1.7.20:
+    // /usr/bin/xcrun simctl spawn --standalone iPhone 12 /Users/cm/Realm/realm-kotlin-v3/packages/test-sync/build/bin/ios/debugTest/test.kexe -- --ktest_no_exit_code --ktest_logger=TEAMCITY --ktest_gradle_filter=io.realm.kotlin.test.mongodb.shared.AppTests
+    // We mirror this setup and remove the --standalone flag, which is causing the issue. This
+    // also means we manually have to boot the simulator.
+    doLast {
+        val  binary = (kotlin.targets["ios"] as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget).binaries.getTest("DEBUG").outputFile
+        exec {
+            commandLine("sh", "-c", "xcrun simctl boot '$device' && xcrun simctl spawn '$device' ${binary.absolutePath} -- --ktest_no_exit_code --ktest_logger=TEAMCITY")
+        }
+    }
+}

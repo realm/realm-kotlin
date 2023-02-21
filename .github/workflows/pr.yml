@@ -1013,7 +1013,7 @@ jobs:
       - name: Run tests
         working-directory: packages
         run: >
-          ./gradlew :test-${{ matrix.type }}:iosTest
+          ./gradlew :test-${{ matrix.type }}:runCloudIosTests
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
           -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
