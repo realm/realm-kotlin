@@ -343,11 +343,9 @@ object TestAppInitializer {
             """.trimIndent()
         ).let { service: Service ->
             val dbName = app.clientAppId
-            service.addRule(
+            service.addDefaultRule(
                 """
                 {
-                    "database": "$dbName",
-                    "collection": "UserData",
                     "roles": [{
                         "name": "defaultRole",
                         "apply_when": {},
