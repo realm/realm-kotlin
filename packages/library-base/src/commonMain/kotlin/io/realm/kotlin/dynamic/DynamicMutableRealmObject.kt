@@ -41,7 +41,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
 
     override fun getObjectDictionary(
         propertyName: String
-    ): RealmDictionary<DynamicMutableRealmObject>
+    ): RealmDictionary<DynamicMutableRealmObject?>
 
     /**
      * Sets the value for the given field.

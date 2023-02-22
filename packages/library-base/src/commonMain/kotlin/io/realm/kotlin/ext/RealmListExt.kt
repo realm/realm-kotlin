@@ -58,7 +58,7 @@ public inline fun <reified T : TypedRealmObject> RealmList<T>.copyFromRealm(
 // `RealmList` interface as `RealmQuery` has an `BaseRealmObject` upper bound which `RealmList` do
 // not.
 /**
- * Query the objects in a list by the `filter` and `arguments`.
+ * Query the objects in a list by `filter` and `arguments`.
  *
  * @param filter the Realm Query Language predicate to append.
  * @param arguments Realm values for the predicate.

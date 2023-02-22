@@ -554,45 +554,50 @@ internal object RealmObjectHelper {
     ): ManagedRealmDictionary<R?> {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        val propertyMetadata = obj.propertyInfoOrThrow(propertyName)
         val operatorType = if (realmObjectCompanion == null) {
             if (elementType == RealmAny::class) {
                 CollectionOperatorType.REALM_ANY
             } else {
                 CollectionOperatorType.PRIMITIVE
             }
-        } else {
+        } else if (!obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject) {
             CollectionOperatorType.REALM_OBJECT
+        } else {
+            CollectionOperatorType.EMBEDDED_OBJECT
         }
-        val key = obj.propertyInfoOrThrow(propertyName).key
-        return getDictionaryByKey(obj, key, elementType, operatorType)
+        return getDictionaryByKey(obj, propertyMetadata, elementType, operatorType)
     }
 
     @Suppress("LongParameterList")
     internal fun <R> getDictionaryByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
-        key: PropertyKey,
+        propertyMetadata: PropertyMetadata,
         elementType: KClass<R & Any>,
         operatorType: CollectionOperatorType,
         issueDynamicObject: Boolean = false,
         issueDynamicMutableObject: Boolean = false
     ): ManagedRealmDictionary<R> {
-        val dictionaryPtr = RealmInterop.realm_get_dictionary(obj.objectPointer, key)
+        val dictionaryPtr =
+            RealmInterop.realm_get_dictionary(obj.objectPointer, propertyMetadata.key)
         val operator = createDictionaryOperator<R>(
             dictionaryPtr,
             elementType,
+            propertyMetadata,
             obj.mediator,
             obj.owner,
             operatorType,
             issueDynamicObject,
             issueDynamicMutableObject,
         )
-        return ManagedRealmDictionary(dictionaryPtr, operator)
+        return ManagedRealmDictionary(obj, dictionaryPtr, operator)
     }
 
     @Suppress("LongParameterList", "UnusedPrivateMember")
     private fun <R> createDictionaryOperator(
         dictionaryPtr: RealmMapPointer,
         clazz: KClass<R & Any>,
+        propertyMetadata: PropertyMetadata,
         mediator: Mediator,
         realm: RealmReference,
         operatorType: CollectionOperatorType,
@@ -614,16 +619,30 @@ internal object RealmObjectHelper {
                 converter(String::class, mediator, realm),
                 dictionaryPtr
             ) as MapOperator<String, R>
-            CollectionOperatorType.REALM_OBJECT -> RealmObjectMapOperator(
-                mediator,
-                realm,
-                converter(clazz, mediator, realm),
-                converter(String::class, mediator, realm),
-                dictionaryPtr,
-                clazz
-            )
-            else ->
-                throw IllegalArgumentException("Unsupported collection type: ${operatorType.name}")
+            CollectionOperatorType.REALM_OBJECT -> {
+                val classKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
+                RealmObjectMapOperator(
+                    mediator,
+                    realm,
+                    converter(clazz, mediator, realm),
+                    converter(String::class, mediator, realm),
+                    dictionaryPtr,
+                    clazz,
+                    classKey
+                )
+            }
+            CollectionOperatorType.EMBEDDED_OBJECT -> {
+                val classKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
+                EmbeddedRealmObjectMapOperator(
+                    mediator,
+                    realm,
+                    converter(clazz, mediator, realm) as RealmValueConverter<EmbeddedRealmObject>,
+                    converter(String::class, mediator, realm),
+                    dictionaryPtr,
+                    clazz as KClass<EmbeddedRealmObject>,
+                    classKey
+                ) as MapOperator<String, R>
+            }
         }
     }
 
@@ -1012,12 +1031,12 @@ internal object RealmObjectHelper {
                 CollectionOperatorType.PRIMITIVE
             !obj.owner.schemaMetadata[propertyMetadata.linkTarget]!!.isEmbeddedRealmObject ->
                 CollectionOperatorType.REALM_OBJECT
-            else -> throw IllegalStateException("RealmSets do not support Embedded Objects.")
+            else -> CollectionOperatorType.EMBEDDED_OBJECT
         }
         @Suppress("UNCHECKED_CAST")
         return getDictionaryByKey(
             obj,
-            propertyMetadata.key,
+            propertyMetadata,
             clazz,
             operatorType,
             true,

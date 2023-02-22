@@ -17,6 +17,7 @@
 package io.realm.kotlin.entities.dictionary
 
 import io.realm.kotlin.ext.realmDictionaryOf
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
@@ -28,6 +29,8 @@ import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 
 class RealmDictionaryContainer : RealmObject {
+
+    var id: Int = -1
     var stringField: String = "Realm"
 
     var stringDictionaryField: RealmDictionary<String> = realmDictionaryOf()
@@ -62,6 +65,7 @@ class RealmDictionaryContainer : RealmObject {
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
     var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
     var nullableObjectDictionaryField: RealmDictionary<RealmDictionaryContainer?> = realmDictionaryOf()
+    var nullableEmbeddedObjectDictionaryField: RealmDictionary<DictionaryEmbeddedLevel1?> = realmDictionaryOf()
     var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf()
 
     companion object {
@@ -105,4 +109,9 @@ class RealmDictionaryContainer : RealmObject {
             RealmAny::class to RealmDictionaryContainer::nullableRealmAnyDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>
         ).toMap()
     }
+}
+
+class DictionaryEmbeddedLevel1 : EmbeddedRealmObject {
+    var id: Int = -1
+    var dictionary: RealmDictionary<RealmDictionaryContainer?> = realmDictionaryOf()
 }

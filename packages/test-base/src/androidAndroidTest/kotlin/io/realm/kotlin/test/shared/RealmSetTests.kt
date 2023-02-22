@@ -66,7 +66,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmSetTests {
+class RealmSetTests : CollectionQueryTests {
 
     private val descriptors = TypeDescriptor.allSetFieldTypes
 
@@ -438,7 +438,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun setAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun collectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val mutex = Mutex(true)
         val job = async {
@@ -454,7 +454,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_objectSet() = runBlocking {
+    override fun query_objectCollection() = runBlocking {
         val container = realm.write {
             copyToRealm(
                 RealmSetContainer().apply {
@@ -481,7 +481,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun queryOnSetAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun queryOnCollectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val mutex = Mutex(true)
         val listener = async {
@@ -501,7 +501,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun queryOnSetAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+    override fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val flow = container.objectSetField.query().asFlow()
             .buffer(1)
@@ -534,32 +534,33 @@ class RealmSetTests {
     // This test shows that our internal logic still works (by closing the flow on deletion events)
     // even though the public consumer is dropping elements
     @Test
-    fun queryOnSetAsFlow_backpressureStrategyDoesNotRuinInternalLogic() = runBlocking {
-        val container = realm.write { copyToRealm(RealmSetContainer()) }
-        val flow = container.objectSetField.query().asFlow()
-            .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    override fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic() =
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmSetContainer()) }
+            val flow = container.objectSetField.query().asFlow()
+                .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-        val listener = async {
-            withTimeout(10.seconds) {
-                flow.collect { current ->
-                    delay(30.milliseconds)
+            val listener = async {
+                withTimeout(10.seconds) {
+                    flow.collect { current ->
+                        delay(30.milliseconds)
+                    }
                 }
             }
-        }
-        (1..100).forEach { i ->
-            realm.write {
-                findLatest(container)!!.objectSetField.run {
-                    clear()
-                    add(RealmSetContainer().apply { this.id = i })
+            (1..100).forEach { i ->
+                realm.write {
+                    findLatest(container)!!.objectSetField.run {
+                        clear()
+                        add(RealmSetContainer().apply { this.id = i })
+                    }
                 }
             }
+            realm.write { delete(findLatest(container)!!) }
+            listener.await()
         }
-        realm.write { delete(findLatest(container)!!) }
-        listener.await()
-    }
 
     @Test
-    fun query_throwsOnSyntaxError() = runBlocking {
+    override fun query_throwsOnSyntaxError() = runBlocking {
         val instance = realm.write { copyToRealm(RealmSetContainer()) }
         assertFailsWithMessage<IllegalArgumentException>("syntax error") {
             instance.objectSetField.query("ASDF = $0 $0")
@@ -568,7 +569,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_throwsOnUnmanagedSet() = runBlocking {
+    override fun query_throwsOnUnmanagedCollection() = runBlocking {
         realm.write {
             val instance = RealmSetContainer()
             copyToRealm(instance)
@@ -580,7 +581,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_throwsOnDeletedSet() = runBlocking {
+    override fun query_throwsOnDeletedCollection() = runBlocking {
         realm.write {
             val instance = copyToRealm(RealmSetContainer())
             val objectSetField = instance.objectSetField
@@ -593,7 +594,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_throwsOnClosedSet() = runBlocking {
+    override fun query_throwsOnClosedCollection() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val objectSetField = container.objectSetField
         realm.close()

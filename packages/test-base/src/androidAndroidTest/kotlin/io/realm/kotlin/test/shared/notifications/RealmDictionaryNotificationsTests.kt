@@ -18,6 +18,7 @@ package io.realm.kotlin.test.shared.notifications
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.notifications.DeletedDictionary
@@ -53,8 +54,9 @@ class RealmDictionaryNotificationsTests : NotificationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(schema = setOf(RealmDictionaryContainer::class))
-            .directory(tmpDir)
+        configuration = RealmConfiguration.Builder(
+            schema = setOf(RealmDictionaryContainer::class, DictionaryEmbeddedLevel1::class)
+        ).directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
     }

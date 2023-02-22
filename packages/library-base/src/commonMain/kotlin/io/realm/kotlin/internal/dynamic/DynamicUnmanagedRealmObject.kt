@@ -75,9 +75,11 @@ internal class DynamicUnmanagedRealmObject(
         properties.getOrPut(propertyName) { realmSetOf<DynamicMutableRealmObject>() }
             as RealmSet<DynamicMutableRealmObject>
 
-    override fun getObjectDictionary(propertyName: String): RealmDictionary<DynamicMutableRealmObject> =
+    override fun getObjectDictionary(
+        propertyName: String
+    ): RealmDictionary<DynamicMutableRealmObject?> =
         properties.getOrPut(propertyName) { realmDictionaryOf<DynamicMutableRealmObject>() }
-            as RealmDictionary<DynamicMutableRealmObject>
+            as RealmDictionary<DynamicMutableRealmObject?>
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {
         properties[propertyName] = value as Any
