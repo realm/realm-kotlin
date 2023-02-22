@@ -391,6 +391,17 @@ class AppServicesClient(
             }
         }
 
+    suspend fun Service.addDefaultRule(rule: String): JsonObject =
+        withContext(dispatcher) {
+            httpClient.typedRequest<JsonObject>(
+                Post,
+                "$url/default_rule"
+            ) {
+                setBody(Json.parseToJsonElement(rule))
+                contentType(ContentType.Application.Json)
+            }
+        }
+
     suspend fun Service.addRule(rule: String): JsonObject =
         withContext(dispatcher) {
             httpClient.typedRequest<JsonObject>(
