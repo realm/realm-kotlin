@@ -109,12 +109,12 @@ public interface ManuallyRecoverUnsyncedChangesStrategy : SyncClientResetStrateg
  * bring the client fully up to date.
  *
  * The reset process for unsynced changes is as follows: when a client reset is triggered the
- * [onBeforeReset] callback is invoked, providing an instance of the realm before the reset and
- * another instance after the reset, being both read-only. Once the reset has concluded,
- * [onAfterReset] will be invoked with an instance of the final realm.
+ * [onBeforeReset] callback is invoked, providing an instance of the realm before the reset. Once
+ * the reset has concluded, [onAfterReset] will be invoked with both the instance before (read only)
+ * an instance of the final realm (mutable).
  *
  * In the event that discarding the unsynced data is not enough to resolve the reset the [onError]
- * callback will be invoked, allowing to manually resolve the reset as it would be done in
+ * callback will be invoked allowing to manually resolve the reset as it would be done in
  * [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
  */
 public interface DiscardUnsyncedChangesStrategy : AutomaticClientResetStrategy {

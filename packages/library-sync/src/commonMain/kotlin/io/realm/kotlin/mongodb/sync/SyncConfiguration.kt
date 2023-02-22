@@ -393,9 +393,8 @@ public interface SyncConfiguration : Configuration {
         /**
          * Sets the strategy that would handle the client reset by this synced Realm.
          *
-         * In case no strategy is defined a default one (which does not do any data migration and
-         * its only job is logging information on the client reset process itself) will be used in
-         * case Recovery is not enabled on Atlas.
+         * In case no strategy is defined the default one,
+         * [RecoverOrDiscardUnsyncedChangesStrategy], will be used.
          *
          * @param resetStrategy custom strategy to handle client reset.
          */
