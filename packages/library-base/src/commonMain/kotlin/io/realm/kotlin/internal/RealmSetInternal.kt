@@ -106,14 +106,12 @@ internal class ManagedRealmSet<E> constructor(
             private var lastReturned = -1 // The last known returned position
 
             override fun hasNext(): Boolean {
-                operator.realmReference.checkClosed()
                 checkConcurrentModification()
 
                 return cursor < size
             }
 
             override fun next(): E {
-                operator.realmReference.checkClosed()
                 checkConcurrentModification()
 
                 val position = cursor
@@ -127,7 +125,6 @@ internal class ManagedRealmSet<E> constructor(
             }
 
             override fun remove() {
-                operator.realmReference.checkClosed()
                 checkConcurrentModification()
 
                 if (size == 0) {
@@ -247,7 +244,8 @@ internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
  */
 internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
 
-    // Modification counter used to detect concurrent writes from the iterator
+    // Modification counter used to detect concurrent writes from the iterator, taken from Java's
+    // AbstractList implementation
     var modCount: Int
     override val nativePointer: RealmSetPointer
 

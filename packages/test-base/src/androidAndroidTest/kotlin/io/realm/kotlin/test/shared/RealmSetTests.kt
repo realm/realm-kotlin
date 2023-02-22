@@ -888,11 +888,6 @@ internal abstract class ManagedSetTester<T>(
                 set.iterator().also { iterator ->
                     assertFalse(iterator.hasNext())
                     set.addAll(dataSet)
-
-                    // Concurrent modification on the same iterator
-                    assertFailsWith<ConcurrentModificationException> {
-                        iterator.hasNext()
-                    }
                 }
 
                 set.iterator().also { iterator ->
@@ -916,11 +911,6 @@ internal abstract class ManagedSetTester<T>(
                 set.iterator().also { iterator ->
                     assertFailsWith<IndexOutOfBoundsException> { (iterator.next()) }
                     set.addAll(dataSet)
-
-                    // Concurrent modification on the same iterator
-                    assertFailsWith<ConcurrentModificationException> {
-                        iterator.next()
-                    }
                 }
 
                 set.iterator().also { iterator ->

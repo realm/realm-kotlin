@@ -116,7 +116,8 @@ internal fun <K, V : BaseRealmObject> ManagedRealmMap<K, V?>.query(
  */
 internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
 
-    // Modification counter used to detect concurrent writes from the iterator
+    // Modification counter used to detect concurrent writes from the iterator, taken from Java's
+    // AbstractList implementation
     var modCount: Int
     val keyConverter: RealmValueConverter<K>
     override val nativePointer: RealmMapPointer
@@ -723,14 +724,12 @@ internal abstract class RealmMapGenericIterator<K, T>(
     abstract fun getNext(position: Int): T
 
     override fun hasNext(): Boolean {
-        operator.realmReference.checkClosed()
         checkConcurrentModification()
 
         return cursor < operator.size
     }
 
     override fun remove() {
-        operator.realmReference.checkClosed()
         checkConcurrentModification()
 
         if (operator.size == 0) {
@@ -758,7 +757,6 @@ internal abstract class RealmMapGenericIterator<K, T>(
     }
 
     override fun next(): T {
-        operator.realmReference.checkClosed()
         checkConcurrentModification()
 
         val position = cursor
