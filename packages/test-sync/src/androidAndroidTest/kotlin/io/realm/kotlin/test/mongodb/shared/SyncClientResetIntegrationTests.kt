@@ -1240,7 +1240,6 @@ class SyncClientResetIntegrationTests {
 
                     // TODO Twice until the deprecated method is removed
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                 }
             }
         }
@@ -1441,7 +1440,6 @@ class SyncClientResetIntegrationTests {
                     )
 
                     // TODO Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
                 }
             }
