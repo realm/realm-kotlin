@@ -79,12 +79,12 @@ public class RealmImpl private constructor(
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     // inline classes cannot be lateinit, so use a placeholder instead.
-    private var _realmReference: AtomicRef<RealmReference> = atomic(object : RealmReference {
+    private var _realmReference: AtomicRef<FrozenRealmReference> = atomic(object : FrozenRealmReference {
         override val owner: BaseRealmImpl
             get() = throw IllegalStateException("Placeholder should not be access")
         override val schemaMetadata: SchemaMetadata
             get() = throw IllegalStateException("Placeholder should not be access")
-        override val dbPointer: RealmPointer
+        override val dbPointer: FrozenRealmPointer
             get() = throw IllegalStateException("Placeholder should not be access")
     })
 
@@ -94,10 +94,7 @@ public class RealmImpl private constructor(
      * NOTE: As this is updated to a new frozen version on notifications about changes in the
      * underlying realm, care should be taken not to spread operations over different references.
      */
-    // TODO Could just be FrozenRealmReference but fails to close all references if full
-    //  initialization is moved to the initialization of updatableRealm ... maybe a caveat with
-    //  atomicfu
-    override var realmReference: RealmReference by _realmReference
+    override var realmReference: FrozenRealmReference by _realmReference
 
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
@@ -116,19 +113,7 @@ public class RealmImpl private constructor(
         var realmFileCreated = false
         try {
             runBlocking {
-                // TODO Should actually be a frozen pointer, but since we cannot directly obtain one we expect
-                //  a live reference and grab the frozen version of that.
-                val (dbPointer, fileCreated) = configuration.openRealm(this@RealmImpl)
-                realmFileCreated = fileCreated
-                _realmReference = atomic(LiveRealmReference(this@RealmImpl, dbPointer))
-                realmReference = _realmReference.value
-                // TODO Find a cleaner way to get the initial frozen instance. Currently we expect the
-                //  primary constructor supplied dbPointer to be a pointer to a live realm, so get the
-                //  frozen pointer and close the live one.
-                val frozenReference =
-                    (realmReference as LiveRealmReference).snapshot(this@RealmImpl)
-                versionTracker.trackAndCloseExpiredReferences(frozenReference)
-                realmReference.close()
+                val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmReference = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, fileCreated)
             }
@@ -253,15 +238,8 @@ public class RealmImpl private constructor(
             versionTracker.trackAndCloseExpiredReferences()
             val newVersion = newRealmReference.version()
             log.debug("Updating Realm version: ${version()} -> $newVersion")
-            // If we advance to a newer version then we should keep track of the preceding one,
-            // otherwise just track the new one directly.
-            @Suppress("UnusedPrivateMember")
-            val untrackedReference = if (newVersion >= version()) {
-                val previousRealmReference = realmReference
+            if (newVersion >= version()) {
                 realmReference = newRealmReference
-                previousRealmReference
-            } else {
-                newRealmReference
             }
             // Notify public observers that the Realm changed
             realmFlow.emit(UpdatedRealmImpl(this))
@@ -320,8 +298,6 @@ public class RealmImpl private constructor(
 // Returns a DynamicRealm of the current version of the Realm. Only used to be able to test the
 // DynamicRealm API outside of a migration.
 internal fun Realm.asDynamicRealm(): DynamicRealm {
-    // The RealmImpl.realmReference should be a FrozenRealmReference, but since we cannot
-    // initialize it as such we need to cast it here
-    val dbPointer = ((this as RealmImpl).realmReference as FrozenRealmReference).dbPointer
-    return DynamicRealmImpl(this@asDynamicRealm.configuration as InternalConfiguration, dbPointer)
+    val dbPointer = (this as RealmImpl).realmReference.dbPointer
+    return DynamicRealmImpl(this@asDynamicRealm.configuration, dbPointer)
 }
