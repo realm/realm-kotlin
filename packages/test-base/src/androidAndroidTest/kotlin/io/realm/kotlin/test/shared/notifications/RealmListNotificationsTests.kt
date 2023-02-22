@@ -297,9 +297,6 @@ class RealmListNotificationsTests : NotificationTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            // Freeze values since native complains if we reference a package-level defined variable
-            // inside a write block
-            val values = OBJECT_VALUES.freeze()
             val container = realm.write {
                 copyToRealm(RealmListContainer())
             }
@@ -327,7 +324,7 @@ class RealmListNotificationsTests : NotificationTests {
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
-                queriedContainer!!.objectListField.addAll(values)
+                queriedContainer!!.objectListField.addAll(OBJECT_VALUES)
             }
             assertEquals(OBJECT_VALUES.size, channel1.receive().list.size)
             assertEquals(OBJECT_VALUES.size, channel2.receive().list.size)

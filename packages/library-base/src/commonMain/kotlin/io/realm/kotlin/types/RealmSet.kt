@@ -52,7 +52,7 @@ public interface RealmSet<E> : MutableSet<E>, Deleteable {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
-     * @return a flow representing changes to the list.
+     * @return a flow representing changes to the set.
      */
     public fun asFlow(): Flow<SetChange<E>>
 }
