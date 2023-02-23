@@ -40,6 +40,7 @@ import kotlin.reflect.KClass
  *
  * It contains a pointer to the object and it is the main entry point to the Realm object features.
  */
+// TODO Public due to being a transitive dependency of RealmObjectInternal
 public class RealmObjectReference<T : BaseRealmObject>(
     public val className: String,
     public val type: KClass<T>,

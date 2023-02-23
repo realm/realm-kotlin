@@ -69,7 +69,8 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
             .flatMapLatest { newHead ->
                 val oldHeadDeleted =
                     oldHead != null && (
-                        newHead == null || RealmInterop.realm_object_resolve_in(
+                        newHead == null ||
+                            RealmInterop.realm_object_resolve_in(
                             oldHead!!.realmObjectReference!!.objectPointer,
                             newHead.realmObjectReference!!.owner.dbPointer
                         ) == null

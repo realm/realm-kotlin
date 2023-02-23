@@ -22,15 +22,16 @@ import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import kotlinx.coroutines.channels.ProducerScope
-import kotlinx.coroutines.flow.Flow
 
 /**
  * An _observable_ is an entity that from a user perspective supports some kind of notification
  * mechanism. This does not necessarily mean that you can listen for changes of the object itself,
  * but could be updates of derived entities, i.e. observing a query will actually emit results.
+ *
+ * @param T the type of entity that is observed.
+ * @param C the type of change events emitted for the T entity.
  */
-// TODO Public due to being a transitive dependency to CoreNotifiable
-public interface Observable<T : CoreNotifiable<T, C>, C> {
+internal interface Observable<T : CoreNotifiable<T, C>, C> {
 
     /**
      * Returns the [Notifiable] describing how the [SuspendableNotifier] should register and emit
@@ -43,8 +44,11 @@ public interface Observable<T : CoreNotifiable<T, C>, C> {
  * A _notifiable_ yields the live reference and change event builder that is used by the
  * [SuspendableNotifier] to register for notifications with core and convert the core change sets
  * into [C]-change events.
+ *
+ * @param T the type of entity that is observed.
+ * @param C the type of change events emitted for the T entity.
  */
-public interface Notifiable<T : CoreNotifiable<T, C>, C> {
+internal interface Notifiable<T : CoreNotifiable<T, C>, C> {
 
     /**
      * Should return the live reference in [liveRealm] that the [SuspendableNotifier] will register
@@ -63,7 +67,11 @@ public interface Notifiable<T : CoreNotifiable<T, C>, C> {
  * A _change flow_ is responsible for converting the [SuspendableNotifier] events into
  * corresponding [C]-change events and emit them in the [producerScope] and close the scope when
  * the monitored entity is deleted.
+
+ * @param T the type of entity that is observed.
+ * @param C the type of change events emitted for the T entity.
  */
+// TODO Public due to being a transitive dependency from RealmObjectReference
 public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<C>) {
 
     private var previousElement: T? = null
@@ -107,11 +115,6 @@ public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<
     internal abstract fun delete(): C
 }
 
-// TODO Why is this flowable here?
-public interface Flowable<T> {
-    public fun asFlow(): Flow<T>
-}
-
 /**
  * A _core notifiable_ that supports the various operations on the entity [T] to support
  * registration with the [SuspendableNotifier]. This includes thawing the initial frozen version
@@ -119,8 +122,11 @@ public interface Flowable<T> {
  * before signaling it to the flow.
  *
  * All [CoreNotifiable] are themselves also [Notifiable] and [Observable].
+
+ * @param T the type of entity that is observed.
+ * @param C the type of change events emitted for the T entity.
  */
-public interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Versioned, Flowable<C>
+internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Versioned, Flowable<C>
         where T : CoreNotifiable<T, C> {
     public fun thaw(liveRealm: RealmReference): T?
     public fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
