@@ -37,8 +37,7 @@ import kotlinx.coroutines.CoroutineDispatcher
  * @param dispatcher The single thread dispatcher backing the realm scheduler of this realm. The
  * realm itself must only be access on the same thread.
  */
-// public as it is exposed through RealmObjectReference.observable
-public abstract class LiveRealm(public val owner: RealmImpl, configuration: InternalConfiguration, dispatcher: CoroutineDispatcher? = null) : BaseRealmImpl(configuration) {
+internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalConfiguration, dispatcher: CoroutineDispatcher? = null) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
     private val schemaChangeRegistration: NotificationToken
@@ -46,7 +45,7 @@ public abstract class LiveRealm(public val owner: RealmImpl, configuration: Inte
     internal val versionTracker = VersionTracker(owner.log)
 
     override val realmReference: LiveRealmReference by lazy {
-        val (dbPointer, fileCreated) = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcher)
+        val (dbPointer, _) = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcher)
         LiveRealmReference(this, dbPointer)
     }
 
