@@ -90,14 +90,15 @@ public fun <V> realmDictionaryEntryOf(entry: Map.Entry<String, V>): RealmDiction
  */
 public inline fun <T : RealmObject> RealmDictionary<T?>.copyFromRealm(
     depth: UInt = UInt.MAX_VALUE
-): RealmDictionary<T?> {
+): Map<String, T?> {
     return this.getRealm<TypedRealm>()
         ?.copyFromRealm(this, depth)
         ?: throw IllegalArgumentException("This RealmDictionary is unmanaged. Only managed dictionaries can be copied.")
 }
 
 /**
- * Query the objects in a dictionary by `filter` and `arguments`.
+ * Query the objects in a dictionary by `filter` and `arguments`. The query is launched against the
+ * output obtained from [RealmDictionary.values]. This means keys are not taken into consideration.
  *
  * @param filter the Realm Query Language predicate to append.
  * @param arguments Realm values for the predicate.

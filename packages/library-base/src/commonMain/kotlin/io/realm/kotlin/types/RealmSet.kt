@@ -53,6 +53,8 @@ public interface RealmSet<E> : MutableSet<E>, Deleteable {
      * [CancellationException].
      *
      * @return a flow representing changes to the set.
+     * @throws CancellationException if the stream produces changes faster than the consumer can
+     * consume them and results in a buffer overflow.
      */
     public fun asFlow(): Flow<SetChange<E>>
 }

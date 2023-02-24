@@ -21,10 +21,10 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
 import io.realm.kotlin.internal.platform.freeze
-import io.realm.kotlin.notifications.DeletedDictionary
-import io.realm.kotlin.notifications.DictionaryChange
-import io.realm.kotlin.notifications.InitialDictionary
-import io.realm.kotlin.notifications.UpdatedDictionary
+import io.realm.kotlin.notifications.DeletedMap
+import io.realm.kotlin.notifications.InitialMap
+import io.realm.kotlin.notifications.MapChange
+import io.realm.kotlin.notifications.UpdatedMap
 import io.realm.kotlin.test.NotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.DICTIONARY_KEYS_FOR_NULLABLE
@@ -82,21 +82,21 @@ class RealmDictionaryNotificationsTests : NotificationTests {
         }
 
         runBlocking {
-            val channel = Channel<DictionaryChange<*>>(capacity = 1)
+            val channel = Channel<MapChange<String, *>>(capacity = 1)
             val observer = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { flowDictionary ->
-                        channel.send(flowDictionary)
+                    .collect { mapChange ->
+                        channel.send(mapChange)
                     }
             }
 
             // Assertion after empty dictionary is emitted
-            channel.receive().let { dictionaryChange ->
-                assertIs<InitialDictionary<*>>(dictionaryChange)
+            channel.receive().let { mapChange ->
+                assertIs<InitialMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertEquals(dataSet.size, dictionaryChange.map.size)
+                assertNotNull(mapChange.map)
+                assertEquals(dataSet.size, mapChange.map.size)
             }
 
             observer.cancel()
@@ -116,13 +116,13 @@ class RealmDictionaryNotificationsTests : NotificationTests {
         }
 
         runBlocking {
-            val channel = Channel<DictionaryChange<*>>(capacity = 1)
+            val channel = Channel<MapChange<String, *>>(capacity = 1)
             val observer = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { flowDictionary ->
-                        if (flowDictionary !is InitialDictionary<*>) {
-                            channel.send(flowDictionary)
+                    .collect { mapChange ->
+                        if (mapChange !is InitialMap<String, *>) {
+                            channel.send(mapChange)
                         }
                     }
             }
@@ -134,17 +134,17 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 queriedDictionary[dataSet[0].first] = dataSet[0].second
             }
 
-            channel.receive().let { dictionaryChange ->
-                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+            channel.receive().let { mapChange ->
+                assertIs<UpdatedMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertEquals(1, dictionaryChange.map.size)
-                dictionaryChange.insertions.let { insertions ->
+                assertNotNull(mapChange.map)
+                assertEquals(1, mapChange.map.size)
+                mapChange.insertions.let { insertions ->
                     assertEquals(1, insertions.size)
                     assertEquals(dataSet[0].first, insertions[0])
                 }
-                assertEquals(0, dictionaryChange.deletions.size)
-                assertEquals(0, dictionaryChange.changes.size)
+                assertEquals(0, mapChange.deletions.size)
+                assertEquals(0, mapChange.changes.size)
             }
 
             // Assert a change to a key is reported
@@ -154,17 +154,17 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 queriedDictionary[dataSet[0].first] = dataSet[1].second
             }
 
-            channel.receive().let { dictionaryChange ->
-                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+            channel.receive().let { mapChange ->
+                assertIs<UpdatedMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertEquals(1, dictionaryChange.map.size)
-                dictionaryChange.changes.let { changes ->
+                assertNotNull(mapChange.map)
+                assertEquals(1, mapChange.map.size)
+                mapChange.changes.let { changes ->
                     assertEquals(1, changes.size)
                     assertEquals(dataSet[0].first, changes[0])
                 }
-                assertEquals(0, dictionaryChange.deletions.size)
-                assertEquals(0, dictionaryChange.insertions.size)
+                assertEquals(0, mapChange.deletions.size)
+                assertEquals(0, mapChange.insertions.size)
             }
 
             // Assert multiple insertions at once are reported
@@ -174,20 +174,20 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 queriedDictionary.putAll(dataSet.subList(1, dataSet.size))
             }
 
-            channel.receive().let { dictionaryChange ->
-                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+            channel.receive().let { mapChange ->
+                assertIs<UpdatedMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertEquals(dataSet.size, dictionaryChange.map.size)
-                dictionaryChange.insertions.let { insertions ->
+                assertNotNull(mapChange.map)
+                assertEquals(dataSet.size, mapChange.map.size)
+                mapChange.insertions.let { insertions ->
                     assertEquals(dataSet.size - 1, insertions.size)
                     dataSet.map { it.first }
                         .also { keys ->
                             keys.containsAll(insertions.toList())
                         }
                 }
-                assertEquals(0, dictionaryChange.deletions.size)
-                assertEquals(0, dictionaryChange.changes.size)
+                assertEquals(0, mapChange.deletions.size)
+                assertEquals(0, mapChange.changes.size)
             }
 
             // Assert notification on removal of elements
@@ -197,14 +197,14 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 queriedDictionary.remove(dataSet[0].first)
             }
 
-            channel.receive().let { dictionaryChange ->
-                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+            channel.receive().let { mapChange ->
+                assertIs<UpdatedMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertEquals(dataSet.size - 1, dictionaryChange.map.size)
-                assertEquals(1, dictionaryChange.deletions.size)
-                assertEquals(0, dictionaryChange.insertions.size)
-                assertEquals(0, dictionaryChange.changes.size)
+                assertNotNull(mapChange.map)
+                assertEquals(dataSet.size - 1, mapChange.map.size)
+                assertEquals(1, mapChange.deletions.size)
+                assertEquals(0, mapChange.insertions.size)
+                assertEquals(0, mapChange.changes.size)
             }
 
             // Assert notification on removal of elements via values iterator
@@ -216,14 +216,14 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 iterator.remove()
             }
 
-            channel.receive().let { dictionaryChange ->
-                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+            channel.receive().let { mapChange ->
+                assertIs<UpdatedMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertEquals(dataSet.size - 2, dictionaryChange.map.size)
-                assertEquals(1, dictionaryChange.deletions.size)
-                assertEquals(0, dictionaryChange.insertions.size)
-                assertEquals(0, dictionaryChange.changes.size)
+                assertNotNull(mapChange.map)
+                assertEquals(dataSet.size - 2, mapChange.map.size)
+                assertEquals(1, mapChange.deletions.size)
+                assertEquals(0, mapChange.insertions.size)
+                assertEquals(0, mapChange.changes.size)
             }
 
             // Assert notification on removal of elements via entry set iterator
@@ -235,14 +235,14 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 iterator.remove()
             }
 
-            channel.receive().let { dictionaryChange ->
-                assertIs<UpdatedDictionary<*>>(dictionaryChange)
+            channel.receive().let { mapChange ->
+                assertIs<UpdatedMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertTrue(dictionaryChange.map.isEmpty())
-                assertEquals(1, dictionaryChange.deletions.size)
-                assertEquals(0, dictionaryChange.insertions.size)
-                assertEquals(0, dictionaryChange.changes.size)
+                assertNotNull(mapChange.map)
+                assertTrue(mapChange.map.isEmpty())
+                assertEquals(1, mapChange.deletions.size)
+                assertEquals(0, mapChange.insertions.size)
+                assertEquals(0, mapChange.changes.size)
             }
 
             observer.cancel()
@@ -259,20 +259,20 @@ class RealmDictionaryNotificationsTests : NotificationTests {
             val container = realm.write {
                 copyToRealm(RealmDictionaryContainer())
             }
-            val channel1 = Channel<DictionaryChange<*>>(1)
-            val channel2 = Channel<DictionaryChange<*>>(1)
+            val channel1 = Channel<MapChange<String, *>>(1)
+            val channel2 = Channel<MapChange<String, *>>(1)
             val observer1 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { dictionaryChange ->
-                        channel1.trySend(dictionaryChange)
+                    .collect { mapChange ->
+                        channel1.trySend(mapChange)
                     }
             }
             val observer2 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { dictionaryChange ->
-                        channel2.trySend(dictionaryChange)
+                    .collect { mapChange ->
+                        channel2.trySend(mapChange)
                     }
             }
 
@@ -319,7 +319,7 @@ class RealmDictionaryNotificationsTests : NotificationTests {
             val values = NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
                 Pair(keys[i], value)
             }.freeze()
-            val channel1 = Channel<DictionaryChange<*>>(capacity = 1)
+            val channel1 = Channel<MapChange<String, *>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {
                 copyToRealm(
@@ -334,17 +334,17 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                     .onCompletion {
                         // Signal completion
                         channel2.send(true)
-                    }.collect { dictionaryChange ->
-                        channel1.send(dictionaryChange)
+                    }.collect { mapChange ->
+                        channel1.send(mapChange)
                     }
             }
 
             // Assert container got populated correctly
-            channel1.receive().let { dictionaryChange ->
-                assertIs<InitialDictionary<*>>(dictionaryChange)
+            channel1.receive().let { mapChange ->
+                assertIs<InitialMap<String, *>>(mapChange)
 
-                assertNotNull(dictionaryChange.map)
-                assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, dictionaryChange.map.size)
+                assertNotNull(mapChange.map)
+                assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, mapChange.map.size)
             }
 
             // Now delete owner
@@ -352,9 +352,9 @@ class RealmDictionaryNotificationsTests : NotificationTests {
                 delete(findLatest(container)!!)
             }
 
-            channel1.receive().let { dictionaryChange ->
-                assertIs<DeletedDictionary<*>>(dictionaryChange)
-                assertTrue(dictionaryChange.map.isEmpty())
+            channel1.receive().let { mapChange ->
+                assertIs<DeletedMap<String, *>>(mapChange)
+                assertTrue(mapChange.map.isEmpty())
             }
             // Wait for flow completion
             assertTrue(channel2.receive())
@@ -373,15 +373,15 @@ class RealmDictionaryNotificationsTests : NotificationTests {
     @Test
     override fun closingRealmDoesNotCancelFlows() {
         runBlocking {
-            val channel = Channel<DictionaryChange<*>>(capacity = 1)
+            val channel = Channel<MapChange<String, *>>(capacity = 1)
             val container = realm.write {
                 copyToRealm(RealmDictionaryContainer())
             }
             val observer = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
-                    .collect { dictionaryChange ->
-                        channel.trySend(dictionaryChange)
+                    .collect { mapChange ->
+                        channel.trySend(mapChange)
                     }
                 fail("Flow should not be canceled.")
             }

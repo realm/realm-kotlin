@@ -664,6 +664,10 @@ actual object RealmInterop {
     ): RealmValue {
         val found = BooleanArray(1)
         val struct = allocRealmValueT()
+        // Core will always return a realm_value_t, even if the value was not found, in which case
+        // the type of the struct will be RLM_TYPE_NULL. This way we signal our converters not to
+        // worry about nullability and just translate the struct types to their corresponding Kotlin
+        // types.
         realmc.realm_dictionary_find(dictionary.cptr(), mapKey.value, struct, found)
         return RealmValue(struct)
     }

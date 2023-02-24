@@ -619,26 +619,26 @@ internal class EmbeddedRealmObjectMapOperator<K, V : BaseRealmObject> constructo
 // Dictionary
 // ----------------------------------------------------------------------
 
-internal class UnmanagedRealmDictionary<E>(
-    dictionary: Map<String, E> = mutableMapOf()
-) : RealmDictionary<E>, MutableMap<String, E> by dictionary.toMutableMap() {
-    override fun asFlow(): Flow<MapChange<String, E>> =
+internal class UnmanagedRealmDictionary<V>(
+    dictionary: Map<String, V> = mutableMapOf()
+) : RealmDictionary<V>, MutableMap<String, V> by dictionary.toMutableMap() {
+    override fun asFlow(): Flow<MapChange<String, V>> =
         throw UnsupportedOperationException("Unmanaged dictionaries cannot be observed.")
 }
 
-internal class ManagedRealmDictionary<E> constructor(
+internal class ManagedRealmDictionary<V> constructor(
     parent: RealmObjectReference<*>,
     nativePointer: RealmMapPointer,
-    operator: MapOperator<String, E>
-) : ManagedRealmMap<String, E>(parent, nativePointer, operator), RealmDictionary<E> {
+    operator: MapOperator<String, V>
+) : ManagedRealmMap<String, V>(parent, nativePointer, operator), RealmDictionary<V> {
 
-    override fun freeze(frozenRealm: RealmReference): ManagedRealmDictionary<E>? {
+    override fun freeze(frozenRealm: RealmReference): ManagedRealmDictionary<V>? {
         return RealmInterop.realm_dictionary_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
             ManagedRealmDictionary(parent, it, operator.copy(frozenRealm, it))
         }
     }
 
-    override fun thaw(liveRealm: RealmReference): ManagedRealmDictionary<E>? {
+    override fun thaw(liveRealm: RealmReference): ManagedRealmDictionary<V>? {
         return RealmInterop.realm_dictionary_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
             ManagedRealmDictionary(parent, it, operator.copy(liveRealm, it))
         }
@@ -647,9 +647,9 @@ internal class ManagedRealmDictionary<E> constructor(
     override fun emitFrozenUpdate(
         frozenRealm: RealmReference,
         change: RealmChangesPointer,
-        channel: SendChannel<MapChange<String, E>>
+        channel: SendChannel<MapChange<String, V>>
     ): ChannelResult<Unit>? {
-        val frozenDictionary: ManagedRealmDictionary<E>? = freeze(frozenRealm)
+        val frozenDictionary: ManagedRealmDictionary<V>? = freeze(frozenRealm)
         return if (frozenDictionary != null) {
             val builder = DictionaryChangeSetBuilderImpl(change)
 
@@ -1034,9 +1034,6 @@ internal fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V
 
 internal fun <K, V> realmMapEntryOf(entry: Map.Entry<K, V>): RealmMapMutableEntry<K, V> =
     UnmanagedRealmMapEntry(entry.key, entry.value)
-
-internal fun <T> Map<String, T>.asRealmDictionary(): RealmDictionary<T> =
-    UnmanagedRealmDictionary<T>().apply { putAll(this@asRealmDictionary) }
 
 internal fun <T> Array<out Pair<String, T>>.asRealmDictionary(): RealmDictionary<T> =
     UnmanagedRealmDictionary<T>().apply { putAll(this@asRealmDictionary) }

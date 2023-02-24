@@ -16,29 +16,35 @@
 
 package io.realm.kotlin.types
 
+import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.internal.RealmMapEntrySet
 import io.realm.kotlin.internal.RealmMapMutableEntry
-import io.realm.kotlin.notifications.DictionaryChange
-import io.realm.kotlin.notifications.InitialDictionary
-import io.realm.kotlin.notifications.UpdatedDictionary
+import io.realm.kotlin.notifications.InitialMap
+import io.realm.kotlin.notifications.MapChange
+import io.realm.kotlin.notifications.UpdatedMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
 /**
- * TODO
+ * A `RealmMap` is used to map keys to values. `RealmMap`s cannot contain duplicate keys and each
+ * key can be mapped to at most one value. `RealmMap`s cannot have `null` keys but can have `null`
+ * values.
+ *
+ * Most importantly, **`RealmMap`s can only have `String` keys and should not be used to define
+ * properties in [RealmObject]s.** If you need to use a `Map<String, V>` or a dictionary-type data
+ * structure for your model you should use [RealmDictionary].
+ *
+ * @param K the type of the keys stored in this map
+ * @param V the type of the values stored in this map
  */
-public interface RealmMap<K, V> : MutableMap<K, V>
-
-/**
- * TODO
- */
-public interface RealmDictionary<E> : RealmMap<String, E> {
+public interface RealmMap<K, V> : MutableMap<K, V> {
     /**
-     * Observes changes to the RealmDictionary. The [Flow] will emit [InitialDictionary] once
-     * subscribed, and then [UpdatedDictionary] on every change to the dictionary. The flow will
-     * continue running indefinitely until canceled or until the parent object is deleted.
+     * Observes changes to the `RealmMap`. The [Flow] will emit [InitialMap] once subscribed,
+     * and then [UpdatedMap] on every change to the dictionary. The flow will continue
+     * running indefinitely until canceled or until the parent object is deleted.
      *
      * The change calculations will run on the thread represented by
      * [RealmConfiguration.Builder.notificationDispatcher].
@@ -48,9 +54,30 @@ public interface RealmDictionary<E> : RealmMap<String, E> {
      * [CancellationException].
      *
      * @return a flow representing changes to the dictionary.
+     * @throws CancellationException if the stream produces changes faster than the consumer can
+     * consume them and results in a buffer overflow.
      */
-    public fun asFlow(): Flow<DictionaryChange<E>>
+    public fun asFlow(): Flow<MapChange<K, V>>
 }
+
+/**
+ * A `RealmDictionary` is a specialization for [RealmMap]s whose keys are `Strings`.
+ *
+ * Similarly to [RealmList] or [RealmSet], `RealmMap` can operate in managed and unmanaged modes. In
+ * managed mode a `RealmDictionary` persists all its contents in a Realm instance whereas unmanaged
+ * dictionaries are backed by an in-memory [LinkedHashMap].
+ *
+ * A managed dictionary can only be created by Realm and will automatically update its content
+ * whenever its underlying realm is updated. Managed dictionaries can only be accessed using the
+ * getter that points to a `RealmDictionary` property of a managed [RealmObject].
+ *
+ * Unmanaged dictionaries can be created by calling [realmDictionaryOf] and may contain both managed
+ * and unmanaged [RealmObject]s. Unmanaged dictionaries can be added to a realm using the
+ * [MutableRealm.copyToRealm] function with an object containing an unmanaged dictionary.
+ *
+ * @param V the type of the values stored in this map
+ */
+public interface RealmDictionary<V> : RealmMap<String, V>
 
 /**
  * Convenience alias for `MutableSet<MutableMap.MutableEntry<String, V>>`.

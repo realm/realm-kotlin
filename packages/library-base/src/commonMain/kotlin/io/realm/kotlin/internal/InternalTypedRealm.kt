@@ -134,7 +134,7 @@ internal interface InternalTypedRealm : TypedRealm {
     override fun <T : TypedRealmObject> copyFromRealm(
         dictionary: RealmDictionary<T?>,
         depth: UInt
-    ): RealmDictionary<T?> {
+    ): Map<String, T?> {
         val valid = when (dictionary) {
             is ManagedRealmDictionary -> dictionary.isValid()
             else -> true
