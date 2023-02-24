@@ -67,8 +67,10 @@ internal abstract class ManagedRealmMap<K, V> constructor(
         RealmMapEntrySetImpl(nativePointer, operator)
     }
 
-    override val keys: MutableSet<K>
-        get() = operator.keys
+    override val keys: MutableSet<K> by lazy {
+        operator.realmReference.checkClosed()
+        KeySet(nativePointer, operator)
+    }
 
     override val size: Int
         get() = operator.size
@@ -147,8 +149,6 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
             realmReference.checkClosed()
             return RealmInterop.realm_dictionary_size(nativePointer).toInt()
         }
-
-    val keys: MutableSet<K>
 
     fun insertInternal(
         key: K,
@@ -280,11 +280,6 @@ internal open class PrimitiveMapOperator<K, V> constructor(
     override val nativePointer: RealmMapPointer
 ) : MapOperator<K, V> {
 
-    override val keys: MutableSet<K> by lazy {
-        realmReference.checkClosed()
-        KeySet(nativePointer, this)
-    }
-
     override var modCount: Int = 0
 
     override fun insertInternal(
@@ -409,12 +404,6 @@ internal abstract class BaseRealmObjectMapOperator<K, V> constructor(
     val clazz: KClass<V & Any>,
     val classKey: ClassKey
 ) : MapOperator<K, V> {
-
-    // Make it lazy since the key collection is a live collection pointing to the actual map
-    override val keys: MutableSet<K> by lazy {
-        realmReference.checkClosed()
-        KeySet(nativePointer, this)
-    }
 
     override var modCount: Int = 0
 
