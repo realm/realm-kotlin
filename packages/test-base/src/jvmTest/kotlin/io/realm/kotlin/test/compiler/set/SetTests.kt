@@ -23,7 +23,7 @@ import io.realm.kotlin.test.compiler.CollectionTests
 import io.realm.kotlin.test.compiler.EMBEDDED_CLASS
 import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
-import io.realm.kotlin.test.compiler.getCode
+import io.realm.kotlin.test.compiler.getTestCodeForCollection
 import io.realm.kotlin.test.compiler.globalNonNullableTypes
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import org.junit.Test
@@ -45,7 +45,7 @@ class SetTests : CollectionTests(
         val result = compileFromSource(
             SourceFile.kotlin(
                 "unsupportedEmbeddedRealmObjectSet.kt",
-                getCode(
+                getTestCodeForCollection(
                     collectionType = CollectionType.SET,
                     elementType = EMBEDDED_CLASS,
                     nullableElementType = false,
@@ -66,7 +66,7 @@ class SetTests : CollectionTests(
     fun `nullable RealmObject set - fails`() {
         val result = createFileAndCompile(
             "nullableRealmObjectSet.kt",
-            getCode(
+            getTestCodeForCollection(
                 collectionType = CollectionType.SET,
                 elementType = OBJECT_CLASS,
                 nullableElementType = true,
@@ -83,7 +83,7 @@ class SetTests : CollectionTests(
         val result = compileFromSource(
             SourceFile.kotlin(
                 "unsupportedEmbeddedRealmObjectSet.kt",
-                getCode(
+                getTestCodeForCollection(
                     collectionType = CollectionType.SET,
                     elementType = EMBEDDED_CLASS,
                     nullableElementType = true,
