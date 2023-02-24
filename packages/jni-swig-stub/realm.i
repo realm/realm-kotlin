@@ -284,7 +284,8 @@ return $jnicall;
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
                realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
-                realm_sync_session_connection_state_notification_token_t* };
+               realm_sync_session_connection_state_notification_token_t*,
+               realm_dictionary_changes_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.

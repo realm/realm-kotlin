@@ -664,6 +664,10 @@ actual object RealmInterop {
     ): RealmValue {
         val found = BooleanArray(1)
         val struct = allocRealmValueT()
+        // Core will always return a realm_value_t, even if the value was not found, in which case
+        // the type of the struct will be RLM_TYPE_NULL. This way we signal our converters not to
+        // worry about nullability and just translate the struct types to their corresponding Kotlin
+        // types.
         realmc.realm_dictionary_find(dictionary.cptr(), mapKey.value, struct, found)
         return RealmValue(struct)
     }
@@ -747,6 +751,19 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer? {
+        val dictionaryPointer = longArrayOf(0)
+        realmc.realm_set_resolve_in(dictionary.cptr(), realm.cptr(), dictionaryPointer)
+        return if (dictionaryPointer[0] != 0L) {
+            LongPointerWrapper(dictionaryPointer[0])
+        } else {
+            null
+        }
+    }
+
     actual fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean {
         return realmc.realm_dictionary_is_valid(dictionary.cptr())
     }
@@ -822,6 +839,24 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.register_notification_cb(
+                map.cptr(),
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY.nativeValue,
+                object : NotificationCallback {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
+                    }
+                }
+            ),
+            managed = false
+        )
+    }
+
     actual fun realm_object_changes_get_modified_properties(change: RealmChangesPointer): List<PropertyKey> {
         val propertyCount = realmc.realm_object_changes_get_num_modified_properties(change.cptr())
 
@@ -877,7 +912,10 @@ actual object RealmInterop {
         builder.movesCount = movesCount[0].toInt()
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(
+        change: RealmChangesPointer,
+        builder: CollectionChangeSetBuilder<T, R>
+    ) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)
@@ -919,6 +957,53 @@ actual object RealmInterop {
         builder.initRangesArray(builder::insertionRanges, insertionRanges, insertRangesCount[0])
         builder.initRangesArray(builder::modificationRanges, modificationRanges, modificationRangesCount[0])
         builder.initRangesArray(builder::modificationRangesAfter, modificationRangesAfter, modificationRangesCount[0])
+    }
+
+    actual fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
+    ) {
+        val deletions = longArrayOf(0)
+        val insertions = longArrayOf(0)
+        val modifications = longArrayOf(0)
+        realmc.realm_dictionary_get_changes(
+            change.cptr(),
+            deletions,
+            insertions,
+            modifications
+        )
+
+        val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
+        val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
+        val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
+        realmc.realm_dictionary_get_changed_keys(
+            change.cptr(),
+            deletionStructs,
+            deletions,
+            insertionStructs,
+            insertions,
+            modificationStructs,
+            modifications
+        )
+
+        // TODO optimize - integrate within mem allocator?
+        // Get keys and release array of structs
+        val deletedKeys = (0 until deletions[0]).map {
+            realmc.valueArray_getitem(deletionStructs, it.toInt()).string
+        }
+        val insertedKeys = (0 until insertions[0]).map {
+            realmc.valueArray_getitem(insertionStructs, it.toInt()).string
+        }
+        val modifiedKeys = (0 until modifications[0]).map {
+            realmc.valueArray_getitem(modificationStructs, it.toInt()).string
+        }
+        realmc.delete_valueArray(deletionStructs)
+        realmc.delete_valueArray(insertionStructs)
+        realmc.delete_valueArray(modificationStructs)
+
+        builder.initDeletions(deletedKeys.toTypedArray())
+        builder.initInsertions(insertedKeys.toTypedArray())
+        builder.initModifications(modifiedKeys.toTypedArray())
     }
 
     actual fun realm_app_get(

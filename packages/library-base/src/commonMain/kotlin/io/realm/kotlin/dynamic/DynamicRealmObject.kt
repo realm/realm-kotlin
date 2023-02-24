@@ -46,8 +46,18 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values for nullable, object or list properties use the [getNullableValue],
-     * [getObject] and `get<X>List` variants.
+     * The following snippet outlines the different functions available for the different value
+     * types:
+     * ```
+     * // Retrieve a nullable int from a 'nullableIntField' property
+     * dynamicRealmObject.getNullableValue("nullableIntField", Int::class)
+     *
+     * // Retrieve a non-nullable int from an 'intField' property
+     * dynamicRealmObject.getValue("intField", Int::class)
+     *
+     * // Retrieve an object from an `objectField' property
+     * dynamicRealmObject.getObject("objectField", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the property to retrieve the value for.
      * @param clazz the Kotlin class of the value. Must match the [RealmStorageType.kClass] of the
@@ -65,8 +75,18 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values for non-nullable, object or list properties use the [getValue],
-     * [getObject] and `get<X>List` variants.
+     * The following snippet outlines the different functions available for the different value
+     * types:
+     * ```
+     * // Retrieve a nullable int from a 'nullableIntField' property
+     * dynamicRealmObject.getNullableValue("nullableIntField", Int::class)
+     *
+     * // Retrieve a non-nullable int from an 'intField' property
+     * dynamicRealmObject.getValue("intField", Int::class)
+     *
+     * // Retrieve an object from an `objectField' property
+     * dynamicRealmObject.getObject("objectField", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the property to retrieve the value for.
      * @param clazz the Kotlin class of the value.
@@ -79,12 +99,22 @@ public interface DynamicRealmObject : BaseRealmObject {
     public fun <T : Any> getNullableValue(propertyName: String, clazz: KClass<T>): T?
 
     /**
-     * Returns the value of a object property.
+     * Returns the value of an object property.
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values for value or list properties use the `get<X>Value` and `get<X>List`
-     * variants.
+     * The following snippet outlines the different functions available for the different value
+     * types:
+     * ```
+     * // Retrieve a nullable int from a 'nullableIntField' property
+     * dynamicRealmObject.getNullableValue("nullableIntField", Int::class)
+     *
+     * // Retrieve a non-nullable int from an 'intField' property
+     * dynamicRealmObject.getValue("intField", Int::class)
+     *
+     * // Retrieve an object from an `objectField' property
+     * dynamicRealmObject.getObject("objectField", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the property to retrieve the value for.
      * @return the [RealmList] value.
@@ -100,8 +130,19 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or lists of nullable elements or objects use the `get<X>Value`,
-     * [getObject] and other `get<X>List` variants.
+     * The following snippet outlines the different functions available for the different list
+     * types:
+     * ```
+     * // Retrieve a list of nullable ints from a 'nullableIntList' property
+     * dynamicRealmObject.getNullableValueList("nullableIntList", Int::class)
+     *
+     * // Retrieve a list of non-nullable ints from a 'intList' property
+     * dynamicRealmObject.getValueList("intList", Int::class)
+     *
+     * // Retrieve a list of objects from an `objectList' property
+     * // Object lists are ALWAYS non-nullable
+     * dynamicRealmObject.getObjectList("objectList", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the list property to retrieve the list for.
      * @param clazz the Kotlin class of the list element type.
@@ -118,8 +159,19 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or lists of non-nullable elements or objects use the
-     * `get<X>Value`, [getObject] and other `get<X>List` variants.
+     * The following snippet outlines the different functions available for the different list
+     * types:
+     * ```
+     * // Retrieve a list of nullable ints from a 'nullableIntList' property
+     * dynamicRealmObject.getNullableValueList("nullableIntList", Int::class)
+     *
+     * // Retrieve a list of non-nullable ints from a 'intList' property
+     * dynamicRealmObject.getValueList("intList", Int::class)
+     *
+     * // Retrieve a list of objects from an `objectList' property
+     * // Object lists are ALWAYS non-nullable
+     * dynamicRealmObject.getObjectList("objectList", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the list property to retrieve the list for.
      * @param clazz the Kotlin class of the list element type.
@@ -136,8 +188,19 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or lists of value elements use the `get<X>Value`,
-     * [getObject] and other `get<X>List` variants.
+     * The following snippet outlines the different functions available for the different list
+     * types:
+     * ```
+     * // Retrieve a list of nullable ints from a 'nullableIntList' property
+     * dynamicRealmObject.getNullableValueList("nullableIntList", Int::class)
+     *
+     * // Retrieve a list of non-nullable ints from a 'intList' property
+     * dynamicRealmObject.getValueList("intList", Int::class)
+     *
+     * // Retrieve a list of objects from an `objectList' property
+     * // Object lists are ALWAYS non-nullable
+     * dynamicRealmObject.getObjectList("objectList", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the list property to retrieve the list for.
      * @return the referenced [RealmList]
@@ -153,8 +216,18 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or sets of nullable elements or objects use the `get<X>Value`,
-     * [getObject] and other `get<X>Set` variants.
+     * The following snippet outlines the different functions available for the different set types:
+     * ```
+     * // Retrieve a set of nullable ints from a 'nullableIntSet' property
+     * dynamicRealmObject.getNullableValueSet("nullableIntSet", Int::class)
+     *
+     * // Retrieve a set of non-nullable ints from a 'intSet' property
+     * dynamicRealmObject.getValueSet("intSet", Int::class)
+     *
+     * // Retrieve a set of objects from an `objectSet' property
+     * // Object sets are ALWAYS non-nullable
+     * dynamicRealmObject.getObjectSet("objectSet", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the set property to retrieve the set for.
      * @param clazz the Kotlin class of the set element type.
@@ -171,8 +244,18 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or sets of non-nullable elements or objects use the
-     * `get<X>Value`, [getObject] and other `get<X>Set` variants.
+     * The following snippet outlines the different functions available for the different set types:
+     * ```
+     * // Retrieve a set of nullable ints from a 'nullableIntSet' property
+     * dynamicRealmObject.getNullableValueSet("nullableIntSet", Int::class)
+     *
+     * // Retrieve a set of non-nullable ints from a 'intSet' property
+     * dynamicRealmObject.getValueSet("intSet", Int::class)
+     *
+     * // Retrieve a set of objects from an `objectSet' property
+     * // Object sets are ALWAYS non-nullable
+     * dynamicRealmObject.getObjectSet("objectSet", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the set property to retrieve the set for.
      * @param clazz the Kotlin class of the set element type.
@@ -189,8 +272,18 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or sets of value elements use the `get<X>Value`,
-     * [getObject] and other `get<X>Set` variants.
+     * The following snippet outlines the different functions available for the different set types:
+     * ```
+     * // Retrieve a set of nullable ints from a 'nullableIntSet' property
+     * dynamicRealmObject.getNullableValueSet("nullableIntSet", Int::class)
+     *
+     * // Retrieve a set of non-nullable ints from a 'intSet' property
+     * dynamicRealmObject.getValueSet("intSet", Int::class)
+     *
+     * // Retrieve a set of objects from an `objectSet' property
+     * // Object sets are ALWAYS non-nullable
+     * dynamicRealmObject.getObjectSet("objectSet", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the set property to retrieve the set for.
      * @return the referenced [RealmSet]
@@ -206,8 +299,19 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or dictionaries of nullable elements or objects use the
-     * `get<X>Value`, [getObject] and other `get<X>Dictionary` variants.
+     * The following snippet outlines the different functions available for the different dictionary
+     * types:
+     * ```
+     * // Retrieve a dictionary of nullable ints from a 'nullableIntDictionary' property
+     * dynamicRealmObject.getNullableValueDictionary("nullableIntDictionary", Int::class)
+     *
+     * // Retrieve a dictionary of non-nullable ints from a 'intDictionary' property
+     * dynamicRealmObject.getValueDictionary("intDictionary", Int::class)
+     *
+     * // Retrieve a dictionary of objects from an `objectDictionary' property
+     * // Object dictionaries are ALWAYS nullable
+     * dynamicRealmObject.getObjectDictionary("objectDictionary", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the dictionary property to retrieve the dictionary for.
      * @param clazz the Kotlin class of the dictionary element type.
@@ -228,8 +332,19 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or dictionaries of non-nullable elements or objects use the
-     * `get<X>Value`, [getObject] and other `get<X>Dictionary` variants.
+     * The following snippet outlines the different functions available for the different dictionary
+     * types:
+     * ```
+     * // Retrieve a dictionary of nullable ints from a 'nullableIntDictionary' property
+     * dynamicRealmObject.getNullableValueDictionary("nullableIntDictionary", Int::class)
+     *
+     * // Retrieve a dictionary of non-nullable ints from a 'intDictionary' property
+     * dynamicRealmObject.getValueDictionary("intDictionary", Int::class)
+     *
+     * // Retrieve a dictionary of objects from an `objectDictionary' property
+     * // Object dictionaries are ALWAYS nullable
+     * dynamicRealmObject.getObjectDictionary("objectDictionary", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the dictionary property to retrieve the dictionary for.
      * @param clazz the Kotlin class of the dictionary element type.
@@ -249,8 +364,19 @@ public interface DynamicRealmObject : BaseRealmObject {
      *
      * The `class` argument must be the [KClass] of the [RealmStorageType] for the property.
      *
-     * To retrieve values, objects or dictionaries of value elements use the `get<X>Value`,
-     * [getObject] and other `get<X>Dictionary` variants.
+     * The following snippet outlines the different functions available for the different dictionary
+     * types:
+     * ```
+     * // Retrieve a dictionary of nullable ints from a 'nullableIntDictionary' property
+     * dynamicRealmObject.getNullableValueDictionary("nullableIntDictionary", Int::class)
+     *
+     * // Retrieve a dictionary of non-nullable ints from a 'intDictionary' property
+     * dynamicRealmObject.getValueDictionary("intDictionary", Int::class)
+     *
+     * // Retrieve a dictionary of objects from an `objectDictionary' property
+     * // Object dictionaries are ALWAYS nullable
+     * dynamicRealmObject.getObjectDictionary("objectDictionary", DynamicRealmObject::class)
+     * ```
      *
      * @param propertyName the name of the dictionary property to retrieve the dictionary for.
      * @return the referenced [RealmDictionary]

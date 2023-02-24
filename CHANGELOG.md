@@ -4,9 +4,10 @@
 * None.
 
 ### Enhancements
+* Upgrade OpenSSL from 3.0.7 to 3.0.8.
 * Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
-* [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs.
-. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
+* Added support for `RealmDictionary` in model classes. `RealmDictionary` is a `Map` of strings to values. Contrary to `RealmSet` and `RealmList` it is possible to store nullable objects/embedded objects in this data structure. See the class documentation for more details. (Issue [#537](https://github.com/realm/realm-kotlin/issues/537))
+* [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
  
 ### Fixed
 * Fixed implementation of `RealmSet.iterator()` to throw `ConcurrentModificationException`s when the underlying set has been modified while iterating over it. (Issue [#1220](https://github.com/realm/realm-kotlin/issues/1220))
@@ -25,7 +26,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.4.0, commit 4262a05ed96079a72639d1f470e0143e633dee56.
+* Updated to Realm Core 13.4.2, commit e5f1a673474bd940c2906ce408fbb8c4de640a4b.
 
 
 ## 1.6.2 (YYYY-MM-DD)
@@ -39,6 +40,7 @@
 ### Fixed
 * Compatibility with Realm Java when using the `io.realm.RealmObject` abstract class. (Issue [#1278](https://github.com/realm/realm-kotlin/issues/1278))
 * Compiler error when multiple fields have `@PersistedName`-annotations that match they Kotlin name. (Issue [#1240](https://github.com/realm/realm-kotlin/issues/1240))
+* RealmUUID would throw an `ClassCastException` when comparing with an object instance of a different type. (Issue [#1288](https://github.com/realm/realm-kotlin/issues/1288))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -54,7 +56,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.2.0, commit b503314b43aa91db9c300d8dff83292e0d251757.
+* None.
 
 
 ## 1.6.1 (2023-02-02)
