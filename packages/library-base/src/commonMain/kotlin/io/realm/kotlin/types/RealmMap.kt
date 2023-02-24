@@ -33,6 +33,8 @@ import kotlinx.coroutines.flow.Flow
  * key can be mapped to at most one value. `RealmMap`s cannot have `null` keys but can have `null`
  * values.
  *
+ * Similarly to [RealmList] and [RealmSet], `RealmDictionary` properties cannot be nullable.
+ *
  * Most importantly, **`RealmMap`s can only have `String` keys and should not be used to define
  * properties in [RealmObject]s.** If you need to use a `Map<String, V>` or a dictionary-type data
  * structure for your model you should use [RealmDictionary].
@@ -74,6 +76,9 @@ public interface RealmMap<K, V> : MutableMap<K, V> {
  * Unmanaged dictionaries can be created by calling [realmDictionaryOf] and may contain both managed
  * and unmanaged [RealmObject]s. Unmanaged dictionaries can be added to a realm using the
  * [MutableRealm.copyToRealm] function with an object containing an unmanaged dictionary.
+ *
+ * A `RealmDictionary` may contain any type of Realm primitive nullable and non-nullable values.
+ * [RealmObject]s and [EmbeddedRealmObject]s are also supported but **must be declared nullable.**
  *
  * @param V the type of the values stored in this map
  */
