@@ -106,6 +106,9 @@ internal abstract class ManagedRealmMap<K, V> constructor(
 
     internal fun isValid(): Boolean =
         !nativePointer.isReleased() && RealmInterop.realm_dictionary_is_valid(nativePointer)
+
+    // TODO add equals and hashCode and tests for those. Observe this constrain
+    //  https://github.com/realm/realm-kotlin/pull/1188
 }
 
 internal fun <K, V : BaseRealmObject> ManagedRealmMap<K, V?>.query(
