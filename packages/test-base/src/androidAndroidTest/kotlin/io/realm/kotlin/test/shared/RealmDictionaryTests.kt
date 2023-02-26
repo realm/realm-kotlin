@@ -240,7 +240,7 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
-    fun accessors_getter_primitive() {
+    fun accessors_getter_defaultValue_primitive() {
         // No need to be exhaustive here. First test with a dictionary of any primitive type
         realmDictionaryOf(
             "A" to 1.toByte()
@@ -266,7 +266,7 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
-    fun accessors_getter_object() {
+    fun accessors_getter_defaultValue_object() {
         // Test with a dictionary of objects
         realmDictionaryOf<RealmDictionaryContainer?>(
             "A" to DICTIONARY_OBJECT_VALUES[0]
@@ -303,7 +303,7 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
-    fun accessors_getter_realmAny_primitive() {
+    fun accessors_getter_defaultValue_RealmAny_primitive() {
         // Test with a dictionary of RealmAny containing a primitive value
         realmDictionaryOf(
             "A" to REALM_ANY_PRIMITIVE_VALUES[0]
@@ -334,7 +334,7 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
-    fun accessors_getter_realmAny_object() {
+    fun accessors_getter_defaultValue_RealmAny_object() {
         // Test with a dictionary of RealmAny containing an object
         realmDictionaryOf<RealmAny?>(
             "A" to REALM_ANY_REALM_OBJECT
@@ -599,6 +599,9 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
+    // TODO these will probably fail once we integrate Core's unified error handling and remove
+    //  the calls to RealmReference.checkClosed() so keep an eye that
+    //  https://github.com/realm/realm-kotlin/pull/1188
     fun closedRealm_readFails() {
         val realm = getCloseableRealm()
 
@@ -1944,10 +1947,14 @@ internal abstract class ManagedDictionaryTester<T>(
                                 val managedBinary = managedNextRealmAny?.asByteArray()
                                 assertContentEquals(unmanagedBinary, managedBinary)
                             }
-                            else -> assertEquals(unmanagedNext, managedNext)
+                            else -> {
+                                assertEquals(unmanagedNext, managedNext)
+                                assertEquals(unmanagedNext.toString(), managedNext.toString())
+                            }
                         }
                     } else {
                         assertEquals(unmanagedNext, managedNext)
+                        assertEquals(unmanagedNext.toString(), managedNext.toString())
                     }
                 }
             }
@@ -1984,7 +1991,9 @@ internal abstract class ManagedDictionaryTester<T>(
                 val entry2 = realmDictionaryEntryOf(dataSet[0].first, dataSet[0].second)
                 val entry3 = realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second)
                 assertEquals(entry1, entry2)
+                assertEquals(entry1.toString(), entry2.toString())
                 assertNotEquals(entry1, entry3)
+                assertNotEquals(entry1.toString(), entry3.toString())
 
                 realm.writeBlocking {
                     val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
@@ -1993,7 +2002,9 @@ internal abstract class ManagedDictionaryTester<T>(
                     val managedEntry1 = iterator.next()
                     val managedEntry2 = iterator.next()
                     assertEquals(managedEntry1, managedEntry1)
+                    assertEquals(managedEntry1.toString(), managedEntry1.toString())
                     assertNotEquals(managedEntry1, managedEntry2)
+                    assertNotEquals(managedEntry1.toString(), managedEntry2.toString())
                 }
             }
 
@@ -2004,7 +2015,9 @@ internal abstract class ManagedDictionaryTester<T>(
                 val managedEntry1 = iterator.next()
                 val managedEntry2 = iterator.next()
                 assertEquals(managedEntry1, managedEntry1)
+                assertEquals(managedEntry1.toString(), managedEntry1.toString())
                 assertNotEquals(managedEntry1, managedEntry2)
+                assertNotEquals(managedEntry1.toString(), managedEntry2.toString())
             }
         }
     }
