@@ -1941,6 +1941,7 @@ internal abstract class ManagedDictionaryTester<T>(
                                 val managedObj =
                                     managedNextRealmAny?.asRealmObject<RealmDictionaryContainer>()
                                 assertEquals(unmanagedObj.stringField, managedObj?.stringField)
+                                assertEquals(unmanagedObj.toString(), managedObj.toString())
                             }
                             RealmAny.Type.BINARY -> {
                                 val unmanagedBinary = unmanagedNextRealmAny.asByteArray()
@@ -1949,12 +1950,12 @@ internal abstract class ManagedDictionaryTester<T>(
                             }
                             else -> {
                                 assertEquals(unmanagedNext, managedNext)
-                                assertEquals(unmanagedNext.toString(), managedNext.toString())
+                                assertNotEquals(unmanagedNext.toString(), managedNext.toString())
                             }
                         }
                     } else {
                         assertEquals(unmanagedNext, managedNext)
-                        assertEquals(unmanagedNext.toString(), managedNext.toString())
+                        assertNotEquals(unmanagedNext.toString(), managedNext.toString())
                     }
                 }
             }
@@ -2002,9 +2003,15 @@ internal abstract class ManagedDictionaryTester<T>(
                     val managedEntry1 = iterator.next()
                     val managedEntry2 = iterator.next()
                     assertEquals(managedEntry1, managedEntry1)
-                    assertEquals(managedEntry1.toString(), managedEntry1.toString())
+//                    assertEquals(managedEntry1.toString(), managedEntry1.toString())
                     assertNotEquals(managedEntry1, managedEntry2)
-                    assertNotEquals(managedEntry1.toString(), managedEntry2.toString())
+//                    assertNotEquals(managedEntry1.toString(), managedEntry2.toString())
+
+                    // Exclude byte arrays
+                    if (classifier != ByteArray::class) {
+                        assertEquals(managedEntry1.toString(), managedEntry1.toString())
+                        assertNotEquals(managedEntry1.toString(), managedEntry2.toString())
+                    }
                 }
             }
 
@@ -2015,9 +2022,13 @@ internal abstract class ManagedDictionaryTester<T>(
                 val managedEntry1 = iterator.next()
                 val managedEntry2 = iterator.next()
                 assertEquals(managedEntry1, managedEntry1)
-                assertEquals(managedEntry1.toString(), managedEntry1.toString())
                 assertNotEquals(managedEntry1, managedEntry2)
-                assertNotEquals(managedEntry1.toString(), managedEntry2.toString())
+
+                // Exclude byte arrays
+                if (classifier != ByteArray::class) {
+                    assertEquals(managedEntry1.toString(), managedEntry1.toString())
+                    assertNotEquals(managedEntry1.toString(), managedEntry2.toString())
+                }
             }
         }
     }

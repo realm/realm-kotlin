@@ -109,6 +109,8 @@ class RealmDictionaryContainer : RealmObject {
             RealmAny::class to RealmDictionaryContainer::nullableRealmAnyDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>
         ).toMap()
     }
+
+    override fun toString(): String = "Container{'$stringField'}"
 }
 
 class DictionaryEmbeddedLevel1 : EmbeddedRealmObject {
