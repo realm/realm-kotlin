@@ -22,7 +22,7 @@ actual enum class SyncErrorCodeCategory(override val description: String, overri
     RLM_SYNC_ERROR_CATEGORY_CLIENT("Client", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_CLIENT),
     RLM_SYNC_ERROR_CATEGORY_CONNECTION("Connection", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_CONNECTION),
     RLM_SYNC_ERROR_CATEGORY_SESSION("Session", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_SESSION),
-    RLM_SYNC_ERROR_CATEGORY_RESOLVE("Resolve", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_RESOLVE),
+//    RLM_SYNC_ERROR_CATEGORY_RESOLVE("Resolve", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_RESOLVE),
     RLM_SYNC_ERROR_CATEGORY_SYSTEM("System", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_SYSTEM),
     RLM_SYNC_ERROR_CATEGORY_UNKNOWN("Unknown", realm_sync_error_category_e.RLM_SYNC_ERROR_CATEGORY_UNKNOWN);
 

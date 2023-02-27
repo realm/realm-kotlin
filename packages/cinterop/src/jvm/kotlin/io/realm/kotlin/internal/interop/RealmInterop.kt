@@ -728,7 +728,8 @@ actual object RealmInterop {
             deletionCount,
             insertionCount,
             modificationCount,
-            movesCount
+            movesCount,
+            SWIGTYPE_p_bool()
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
