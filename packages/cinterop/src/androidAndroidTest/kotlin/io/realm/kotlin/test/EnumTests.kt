@@ -39,22 +39,22 @@ class EnumTests {
 
     /**
      * Monitors for changes in to Exception types defined in Core.
+     *
+     * It checks that all the error code values defined in realm_errno_e are mapped by ErrorCode
      */
     @Test
     fun coreExceptionTypes_watchdog() {
-        val coreErrorCodesValues: IntArray = realm_errno_e::class.java.fields
+        val coreErrorCodesValues = realm_errno_e::class.java.fields
             .map { it.getInt(null) }
-            .toIntArray()
+            .toSet()
 
-        val errorCodeValues = ErrorCode.values().map {
-            it.nativeValue
-        }.toIntArray()
+        val errorCodeValues = ErrorCode.values()
+            .map {
+                it.nativeValue
+            }
+            .toSet()
 
         // Validate we have a different exception defined for each core native value.
-        assertEquals(coreErrorCodesValues.size, errorCodeValues.size)
-        // Validate that there is an error defined for each exception.
-        coreErrorCodesValues.forEach { errorCode ->
-            errorCodeValues.contains(errorCode)
-        }
+        assertEquals(coreErrorCodesValues, errorCodeValues)
     }
 }

@@ -161,6 +161,10 @@ actual enum class ErrorCode(
     RLM_ERR_SCHEMA_VALIDATION_FAILED_WRITE("SchemaValidationFailedWrite", realm_errno.RLM_ERR_SCHEMA_VALIDATION_FAILED_WRITE),
     RLM_ERR_APP_UNKNOWN("Unknown", realm_errno.RLM_ERR_APP_UNKNOWN),
     RLM_ERR_MAINTENANCE_IN_PROGRESS("MaintenanceInProgress", realm_errno.RLM_ERR_MAINTENANCE_IN_PROGRESS),
+    RLM_ERR_USERPASS_TOKEN_INVALID("UserpassTokenInvalid", realm_errno.RLM_ERR_USERPASS_TOKEN_INVALID),
+    RLM_ERR_WEBSOCKET_RESOLVE_FAILED_ERROR("ResolveFailedError", realm_errno.RLM_ERR_WEBSOCKET_RESOLVE_FAILED_ERROR),
+    RLM_ERR_WEBSOCKET_CONNECTION_CLOSED_CLIENT_ERROR("ConnectionClosedClientError", realm_errno.RLM_ERR_WEBSOCKET_CONNECTION_CLOSED_CLIENT_ERROR),
+    RLM_ERR_WEBSOCKET_CONNECTION_CLOSED_SERVER_ERROR("ConnectionClosedServerError", realm_errno.RLM_ERR_WEBSOCKET_CONNECTION_CLOSED_SERVER_ERROR),
     RLM_ERR_CALLBACK("Callback", realm_errno.RLM_ERR_CALLBACK),
     RLM_ERR_UNKNOWN("Unknown", realm_errno.RLM_ERR_UNKNOWN);
 
@@ -168,7 +172,7 @@ actual enum class ErrorCode(
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ErrorCode =
-            values().first() { value ->
+            values().first { value ->
                 value.nativeValue == nativeValue
             }
     }

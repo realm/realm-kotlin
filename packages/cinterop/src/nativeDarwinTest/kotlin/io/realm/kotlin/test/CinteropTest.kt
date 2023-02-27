@@ -19,6 +19,7 @@ package io.realm.kotlin.test
 import io.realm.kotlin.internal.interop.ClassFlags
 import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.PropertyFlags
 import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.PropertyType
@@ -53,6 +54,7 @@ import realm_wrapper.realm_config_set_path
 import realm_wrapper.realm_config_set_schema
 import realm_wrapper.realm_config_set_schema_mode
 import realm_wrapper.realm_config_set_schema_version
+import realm_wrapper.realm_errno
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_class
 import realm_wrapper.realm_get_last_error
@@ -106,11 +108,17 @@ class CinteropTest {
                 flags = RLM_CLASS_NORMAL.toInt()
             }
 
-            val classProperties: CPointer<CPointerVarOf<CPointer<realm_property_info_t>>> = cValuesOf(prop_1_1.ptr).ptr
+            val classProperties: CPointer<CPointerVarOf<CPointer<realm_property_info_t>>> =
+                cValuesOf(prop_1_1.ptr).ptr
             val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
 
             assertNoError()
-            assertTrue(realm_schema_validate(realmSchemaNew, SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC.nativeValue.toULong()))
+            assertTrue(
+                realm_schema_validate(
+                    realmSchemaNew,
+                    SchemaValidationMode.RLM_SCHEMA_VALIDATION_BASIC.nativeValue.toULong()
+                )
+            )
 
             val config = realm_config_new()
             realm_config_set_path(config, "c_api_test.realm")
@@ -133,7 +141,13 @@ class CinteropTest {
             assertEquals(1UL, classInfo.num_properties)
 
             val propertyInfo = alloc<realm_property_info_t>()
-            val realmFindProperty = realm_wrapper.realm_find_property(realm, classInfo.key, "int", found.ptr, propertyInfo.ptr)
+            val realmFindProperty = realm_wrapper.realm_find_property(
+                realm,
+                classInfo.key,
+                "int",
+                found.ptr,
+                propertyInfo.ptr
+            )
             assertTrue(realmFindProperty)
             assertTrue(found.value)
             assertEquals("int", propertyInfo.name?.toKString())
@@ -165,7 +179,10 @@ class CinteropTest {
 
             RealmInterop.realm_config_set_path(nativeConfig, "default.realm")
             RealmInterop.realm_config_set_schema(nativeConfig, schema)
-            RealmInterop.realm_config_set_schema_mode(nativeConfig, SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC)
+            RealmInterop.realm_config_set_schema_mode(
+                nativeConfig,
+                SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
+            )
             RealmInterop.realm_config_set_schema_version(nativeConfig, 1)
 
             val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig)
@@ -221,20 +238,25 @@ class CinteropTest {
     /**
      * Monitors for changes in Core defined types.
      *
-     * Because Darwin does not support reflection we cannot check if there are exceptions
-     * with no matching core error, as we do on JVM tests.
+     * It checks that all the error code values defined in realm_errno are mapped by ErrorCode
      */
-//    @Test
-//    fun errorTypes_watchdog() {
-//        val coreErrorNativeValues = realm_wrapper.realm_errno.values()
-//
-//        val mappedKotlinClasses = coreErrorNativeValues
-//            .map { nativeValue -> coreErrorAsThrowable(nativeValue, null)::class }
-//            .toSet()
-//
-//        // Validate we have a different exception defined for each core native value.
-//        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
-//    }
+    @Test
+    fun errorTypes_watchdog() {
+        val coreErrorNativeValues = realm_wrapper.realm_errno.values()
+            .map {
+                it.value.toInt()
+            }
+            .toSet()
+
+        val errorCodeValues = ErrorCode.values()
+            .map {
+                it.nativeValue
+            }
+            .toSet()
+
+        // validate that all error codes are mapped
+        assertEquals(coreErrorNativeValues, errorCodeValues)
+    }
 }
 
 fun realm_string_t.setRealmString(memScope: MemScope, str: String) {
