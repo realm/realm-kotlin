@@ -68,13 +68,13 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     // Make it lazy since the entry set is a live set pointing to the actual map
     override val entries: MutableSet<MutableMap.MutableEntry<K, V>> by lazy {
         operator.realmReference.checkClosed()
-        RealmMapEntrySetImpl(nativePointer, operator)
+        RealmMapEntrySetImpl(nativePointer, operator, parent)
     }
 
     // Make it lazy since the key set is a live set pointing to the actual map
     override val keys: MutableSet<K> by lazy {
         operator.realmReference.checkClosed()
-        KeySet(keysPointer, operator)
+        KeySet(keysPointer, operator, parent)
     }
 
     override val size: Int
@@ -83,7 +83,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     // Make it lazy since the values collection is a live collection pointing to the actual map
     override val values: MutableCollection<V> by lazy {
         operator.realmReference.checkClosed()
-        RealmMapValues(valuesPointer, operator)
+        RealmMapValues(valuesPointer, operator, parent)
     }
 
     override fun clear() = operator.clear()
@@ -678,8 +678,12 @@ internal class ManagedRealmDictionary<V> constructor(
         }
     }
 
-    override fun toString(): String = entries.joinToString { (key, value) -> "[$key,$value]" }
-        .let { "RealmDictionary{$it}" }
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
 
     // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
@@ -693,7 +697,8 @@ internal class ManagedRealmDictionary<V> constructor(
  */
 internal class KeySet<K> constructor(
     private val keysPointer: RealmResultsPointer,
-    private val operator: MapOperator<K, *>
+    private val operator: MapOperator<K, *>,
+    private val parent: RealmObjectReference<*>
 ) : AbstractMutableSet<K>() {
 
     override val size: Int
@@ -708,7 +713,12 @@ internal class KeySet<K> constructor(
             override fun getNext(position: Int): K = operator.getKey(keysPointer, position)
         }
 
-    override fun toString(): String = "RealmDictionary.keys{${joinToString()}}"
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary.keys{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
 
     // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
@@ -733,7 +743,8 @@ internal class KeySet<K> constructor(
  */
 internal class RealmMapValues<K, V> constructor(
     internal val resultsPointer: RealmResultsPointer,
-    private val operator: MapOperator<K, V>
+    private val operator: MapOperator<K, V>,
+    private val parent: RealmObjectReference<*>
 ) : AbstractMutableCollection<V>() {
 
     override val size: Int
@@ -809,7 +820,12 @@ internal class RealmMapValues<K, V> constructor(
         return modified
     }
 
-    override fun toString(): String = "RealmDictionary.values{${joinToString()}}"
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary.values{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
 
     // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
@@ -925,7 +941,8 @@ internal abstract class RealmMapGenericIterator<K, T>(
  */
 internal class RealmMapEntrySetImpl<K, V> constructor(
     private val nativePointer: RealmMapPointer,
-    private val operator: MapOperator<K, V>
+    private val operator: MapOperator<K, V>,
+    private val parent: RealmObjectReference<*>
 ) : AbstractMutableSet<MutableMap.MutableEntry<K, V>>(), RealmMapEntrySet<K, V> {
 
     override val size: Int
@@ -963,8 +980,12 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
             remove(entry) or accumulator
         }
 
-    override fun toString(): String = joinToString { (key, value) -> "[$key,$value]" }
-        .let { "RealmDictionary.entries{$it}" }
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary.entries{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
 
     // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
