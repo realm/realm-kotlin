@@ -155,5 +155,7 @@ class RealmUUIDTests {
 
         @Suppress("EqualsNullCall")
         assertFalse(uuid1.equals(null)) // Do not assume type coercion in 'equals' implementation
+
+        assertFalse(uuid1.equals("hello world")) // Do not assume type coercion in 'equals' implementation
     }
 }
