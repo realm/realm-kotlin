@@ -811,7 +811,6 @@ internal class RealmMapValues<K, V> constructor(
 
     override fun toString(): String = "RealmDictionary.values{${joinToString()}}"
 
-
     // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
