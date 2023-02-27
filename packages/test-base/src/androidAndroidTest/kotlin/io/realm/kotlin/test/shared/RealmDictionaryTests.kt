@@ -973,6 +973,13 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
+    fun values_toString() {
+        for (tester in managedTesters) {
+            tester.values_toString()
+        }
+    }
+
+    @Test
     @Ignore
     fun values_equals() {
         // TODO https://github.com/realm/realm-kotlin/issues/1097
@@ -1476,6 +1483,7 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun values_remove()
     fun values_removeAll()
     fun values_retainAll()
+    fun values_toString()
     fun values_equals()
     fun values_hashCode()
     fun containsKey()
@@ -2429,6 +2437,44 @@ internal abstract class ManagedDictionaryTester<T>(
             val dictionary = typeSafetyManager.getCollection(container)
             val values = dictionary.values
             assertFalse(values.retainAll(values))
+        }
+    }
+
+    override fun values_toString() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject, RealmAny (since it contains an object) and ByteArray since the
+        //  printed value is tied to the memory address
+        if (
+            classifier != RealmObject::class &&
+            classifier != ByteArray::class &&
+            classifier != RealmAny::class
+        ) {
+            val dataSet = typeSafetyManager.dataSetToLoad
+
+            errorCatcher {
+                realm.writeBlocking {
+                    val dictionary0 = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary0.putAll(dataSet)
+                    val dictionary1 = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary1.putAll(dataSet)
+                    val managedValues0 = dictionary0.values
+                    val managedValues1 = dictionary1.values
+
+                    assertEquals(managedValues0.toString(), managedValues0.toString())
+                    assertEquals(managedValues1.toString(), managedValues1.toString())
+                    assertEquals(managedValues0.toString(), managedValues1.toString())
+                }
+            }
+
+            assertContainersAndCleanup { containers ->
+                val managedValues0 = typeSafetyManager.getCollection(containers[0])
+                    .values
+                val managedValues1 = typeSafetyManager.getCollection(containers[1])
+                    .values
+                assertEquals(managedValues0.toString(), managedValues0.toString())
+                assertEquals(managedValues1.toString(), managedValues1.toString())
+                assertEquals(managedValues0.toString(), managedValues1.toString())
+            }
         }
     }
 
