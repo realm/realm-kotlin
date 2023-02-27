@@ -380,9 +380,11 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
             val observer = async {
                 target.objectBacklinks
                     .asFlow()
-                    .filterNot { it.list.isEmpty() }
+                    .filterNot {
+                        it.list.isEmpty()
+                    }
                     .collect {
-                        c.trySend(it.list.size)
+                        c.send(it.list.size)
                     }
                 fail("Flow should not be canceled.")
             }

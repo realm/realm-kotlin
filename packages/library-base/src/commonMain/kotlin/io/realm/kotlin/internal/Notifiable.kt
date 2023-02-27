@@ -74,7 +74,7 @@ internal interface Notifiable<T : CoreNotifiable<T, C>, C> {
 // TODO Public due to being a transitive dependency from RealmObjectReference
 public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<C>) {
 
-    private var previousElement: T? = null
+    private var initialElement: Boolean = true
 
     /**
      * Converts the given [SuspendableNotifier] event into a C-change event, emit it and potentially
@@ -94,7 +94,8 @@ public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<
      */
     internal fun emit(frozenRef: T?, change: RealmChangesPointer? = null) {
         val event = if (frozenRef != null) {
-            if (previousElement == null) {
+            if (initialElement) {
+                initialElement = false
                 initial(frozenRef)
             } else {
                 change?.let { update(frozenRef, it) }
@@ -103,7 +104,6 @@ public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<
         } else {
             delete()
         }
-        previousElement = frozenRef
         event?.let { producerScope.trySendWithBufferOverflowCheck(it) }
         if (frozenRef == null) {
             producerScope.close()
