@@ -32,11 +32,11 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * JVM apps on Mac and Linux would use a native file built in debug mode, making it slower than needed. The correct native binary built in release mode is now used. Windows was not affected. (Issue [#1124](https://github.com/realm/realm-kotlin/pull/1124))
 * `RealmUUID.random()` would generate the same values when an app was re-launched from Android Studio during development. (Issue [#1123](https://github.com/realm/realm-kotlin/pull/1123)) 
 * Complete flows with an IllegalStateException instead of crashing when notifications cannot be delivered due to insufficient channel capacity (Issue [#1147](https://github.com/realm/realm-kotlin/issues/1147))
-* [Sync] Custom loggers now correctly see both normal and sync events. Before, sync events were just logged directly to LogCat/StdOut.
-* [Sync] When a `SyncSession` was paused using `SyncSession.pause()`, it would sometimes automatically resume the session. `SyncSession.State.PAUSED` has been added, making it explicit when a session is paused. (Core Issue [#6085](https://github.com/realm/realm-core/issues/6085))
 * Accessing an invalidated `RealmResults` now throws an `IllegalStateException` instead of a `RealmException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Opening a Realm with a wrong encryption key or corrupted now throws an `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Trying to convert to a Flexible Sync Realm with Flexible Sync disabled throws a `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
+* [Sync] Custom loggers now correctly see both normal and sync events. Before, sync events were just logged directly to LogCat/StdOut.
+* [Sync] When a `SyncSession` was paused using `SyncSession.pause()`, it would sometimes automatically resume the session. `SyncSession.State.PAUSED` has been added, making it explicit when a session is paused. (Core Issue [#6085](https://github.com/realm/realm-core/issues/6085))
 
 
 ### Compatibility
@@ -54,7 +54,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 
 
 ### Internal
-* Updated to Realm Core 13.2.0, commit 5a119d8cb2eaac60c298532af2c9ae789af0c9e6.
+* Updated to Realm Core 13.5.0, commit 5a119d8cb2eaac60c298532af2c9ae789af0c9e6.
 * Updated to require Swig 4.1.0.
 * Updated to Kbson 0.2.0.
 * `io.realm.kotlin.types.ObjectId` now delegates all responsibility to `org.mongodb.kbson.ObjectId` while maintaining the interface.
