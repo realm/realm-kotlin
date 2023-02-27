@@ -62,14 +62,19 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     val operator: MapOperator<K, V>
 ) : AbstractMutableMap<K, V>(), RealmMap<K, V>, Observable<ManagedRealmMap<K, V>, MapChange<K, V>>, Flowable<MapChange<K, V>> {
 
+    private val keysPointer by lazy { RealmInterop.realm_dictionary_get_keys(nativePointer) }
+    private val valuesPointer by lazy { RealmInterop.realm_dictionary_to_results(nativePointer) }
+
+    // Make it lazy since the entry set is a live set pointing to the actual map
     override val entries: MutableSet<MutableMap.MutableEntry<K, V>> by lazy {
         operator.realmReference.checkClosed()
         RealmMapEntrySetImpl(nativePointer, operator)
     }
 
+    // Make it lazy since the key set is a live set pointing to the actual map
     override val keys: MutableSet<K> by lazy {
         operator.realmReference.checkClosed()
-        KeySet(nativePointer, operator)
+        KeySet(keysPointer, operator)
     }
 
     override val size: Int
@@ -78,8 +83,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     // Make it lazy since the values collection is a live collection pointing to the actual map
     override val values: MutableCollection<V> by lazy {
         operator.realmReference.checkClosed()
-        val resultsPointer = RealmInterop.realm_dictionary_to_results(nativePointer)
-        RealmMapValues(resultsPointer, operator)
+        RealmMapValues(valuesPointer, operator)
     }
 
     override fun clear() = operator.clear()
@@ -617,6 +621,22 @@ internal class UnmanagedRealmDictionary<V>(
 ) : RealmDictionary<V>, MutableMap<String, V> by dictionary.toMutableMap() {
     override fun asFlow(): Flow<MapChange<String, V>> =
         throw UnsupportedOperationException("Unmanaged dictionaries cannot be observed.")
+
+    override fun toString(): String = entries.joinToString { (key, value) -> "[$key,$value]" }
+        .let { "UnmanagedRealmDictionary{$it}" }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is RealmDictionary<*>) return false
+        if (this === other) return true
+        if (this.size == other.size && this.entries.containsAll(other.entries)) return true
+        return false
+    }
+
+    override fun hashCode(): Int {
+        var result = size.hashCode()
+        result = 31 * result + entries.hashCode()
+        return result
+    }
 }
 
 internal class ManagedRealmDictionary<V> constructor(
@@ -658,6 +678,11 @@ internal class ManagedRealmDictionary<V> constructor(
                 }
         }
     }
+
+    override fun toString(): String = entries.joinToString { (key, value) -> "[$key,$value]" }
+        .let { "RealmDictionary{$it}" }
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 // ----------------------------------------------------------------------
@@ -667,12 +692,10 @@ internal class ManagedRealmDictionary<V> constructor(
 /**
  * [MutableSet] containing all the keys present in a dictionary. Core returns keys as results.
  */
-internal class KeySet<K>(
-    nativePointer: RealmMapPointer,
+internal class KeySet<K> constructor(
+    private val keysPointer: RealmResultsPointer,
     private val operator: MapOperator<K, *>
 ) : AbstractMutableSet<K>() {
-
-    private val keysPointer = RealmInterop.realm_dictionary_get_keys(nativePointer)
 
     override val size: Int
         get() = RealmInterop.realm_results_count(keysPointer).toInt()
@@ -685,6 +708,10 @@ internal class KeySet<K>(
             @Suppress("UNCHECKED_CAST")
             override fun getNext(position: Int): K = operator.getKey(keysPointer, position)
         }
+
+    override fun toString(): String = "RealmDictionary.keys{${joinToString()}}"
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 // ----------------------------------------------------------------------
@@ -782,6 +809,11 @@ internal class RealmMapValues<K, V> constructor(
         }
         return modified
     }
+
+    override fun toString(): String = "RealmDictionary.values{${joinToString()}}"
+
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 // ----------------------------------------------------------------------
@@ -929,6 +961,11 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
         elements.fold(false) { accumulator, entry ->
             remove(entry) or accumulator
         }
+
+    override fun toString(): String = joinToString { (key, value) -> "[$key,$value]" }
+        .let { "RealmDictionary.entries{$it}" }
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 /**
@@ -990,22 +1027,8 @@ internal class ManagedRealmMapEntry<K, V> constructor(
     }
 
     override fun toString(): String = "ManagedRealmMapEntry{$key,$value}"
-    override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
-    override fun equals(other: Any?): Boolean {
-        if (other !is Map.Entry<*, *>) return false
 
-        // Byte arrays are compared at a structural level
-        if (this.value is ByteArray && other.value is ByteArray) {
-            val thisByteArray = this.value as ByteArray
-            val otherByteArray = other.value as ByteArray
-            if (this.key == other.key && thisByteArray.contentEquals(otherByteArray)) {
-                return true
-            }
-            return false
-        }
-
-        return (this.key == other.key) && (this.value == other.value)
-    }
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 // ----------------------------------------------------------------------
