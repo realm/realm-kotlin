@@ -16,9 +16,9 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
-import io.realm.kotlin.internal.interop.sync.ErrorCode
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.auth.ApiKey

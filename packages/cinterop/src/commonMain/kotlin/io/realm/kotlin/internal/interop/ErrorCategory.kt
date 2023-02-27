@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.internal.interop
 
 /**
  * Wrapper for C-API `realm_app_error_category`.

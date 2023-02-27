@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.internal.interop
 
 /**
  * Maps error or category codes to their description.

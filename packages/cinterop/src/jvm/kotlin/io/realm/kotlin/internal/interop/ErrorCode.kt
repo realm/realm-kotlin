@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.internal.interop
 
-import io.realm.kotlin.internal.interop.realm_errno_e
-
-actual enum class ErrorCode(override val description: String, override val nativeValue: Int) : CodeDescription {
+actual enum class ErrorCode(override val description: String, override val nativeValue: Int) :
+    CodeDescription {
     RLM_ERR_NONE("None", realm_errno_e.RLM_ERR_NONE),
     RLM_ERR_RUNTIME("Runtime", realm_errno_e.RLM_ERR_RUNTIME),
     RLM_ERR_RANGE_ERROR("RangeError", realm_errno_e.RLM_ERR_RANGE_ERROR),

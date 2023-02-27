@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CodeDescription
+import io.realm.kotlin.internal.interop.ErrorCategory
+import io.realm.kotlin.internal.interop.ErrorCode
+import io.realm.kotlin.internal.interop.UnknownCodeDescription
 import kotlin.jvm.JvmStatic
 
 /**
@@ -39,7 +43,7 @@ data class AppError internal constructor(
             linkToServerLog: String?
         ): AppError {
             val category = ErrorCategory.of(categoryCode - ErrorCategory.RLM_ERR_CAT_RUNTIME.nativeValue - ErrorCategory.RLM_ERR_CAT_APP_ERROR.nativeValue) ?: UnknownCodeDescription(categoryCode)
-            val code = ErrorCode.of(errorCode) ?: UnknownCodeDescription(errorCode)
+            val code = ErrorCode.of(errorCode)
 
             return AppError(
                 category,

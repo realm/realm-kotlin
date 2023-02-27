@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.mongodb.exceptions
 
-import io.realm.kotlin.internal.interop.sync.CodeDescription
+import io.realm.kotlin.internal.interop.CodeDescription
 
 /**
  * This exception is considered the top-level or "catch-all" for problems related to HTTP requests

@@ -16,8 +16,6 @@
 
 package io.realm.kotlin.internal.interop
 
-import io.realm.kotlin.internal.interop.sync.ErrorCategory
-import io.realm.kotlin.internal.interop.sync.ErrorCode
 import kotlin.jvm.JvmStatic
 
 /**

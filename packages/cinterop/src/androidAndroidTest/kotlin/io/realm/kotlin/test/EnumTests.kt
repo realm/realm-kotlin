@@ -17,8 +17,8 @@
 package io.realm.kotlin.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.realm_errno_e
-import io.realm.kotlin.internal.interop.sync.ErrorCode
 import org.junit.Test
 import org.junit.runner.RunWith
 import kotlin.test.BeforeTest

@@ -18,11 +18,11 @@
 
 package io.realm.kotlin.test.mongodb.shared.internal
 
+import io.realm.kotlin.internal.interop.ErrorCategory
+import io.realm.kotlin.internal.interop.UnknownCodeDescription
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.ErrorCategory
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.kotlin.internal.interop.sync.UnknownCodeDescription
 import io.realm.kotlin.mongodb.internal.convertAppError
 import io.realm.kotlin.mongodb.internal.convertSyncErrorCode
 import kotlin.test.Test

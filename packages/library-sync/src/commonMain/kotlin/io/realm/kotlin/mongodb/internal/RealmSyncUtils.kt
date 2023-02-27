@@ -1,9 +1,9 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.interop.AppCallback
+import io.realm.kotlin.internal.interop.ErrorCategory
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.ErrorCategory
-import io.realm.kotlin.internal.interop.sync.ErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolSessionErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncError

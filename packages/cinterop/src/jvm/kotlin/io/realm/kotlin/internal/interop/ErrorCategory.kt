@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
-
-import io.realm.kotlin.internal.interop.realm_error_category_e
+package io.realm.kotlin.internal.interop
 
 actual enum class ErrorCategory(
     override val description: String,

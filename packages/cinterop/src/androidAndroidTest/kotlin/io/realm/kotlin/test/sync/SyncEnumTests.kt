@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.test.sync
 
+import io.realm.kotlin.internal.interop.ErrorCategory
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.realm_auth_provider_e
 import io.realm.kotlin.internal.interop.realm_errno_e
 import io.realm.kotlin.internal.interop.realm_error_category_e
@@ -30,8 +32,6 @@ import io.realm.kotlin.internal.interop.realm_user_state_e
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
-import io.realm.kotlin.internal.interop.sync.ErrorCategory
-import io.realm.kotlin.internal.interop.sync.ErrorCode
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode

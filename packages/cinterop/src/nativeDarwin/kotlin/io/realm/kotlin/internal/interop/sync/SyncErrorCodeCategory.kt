@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CodeDescription
 import realm_wrapper.realm_sync_error_category
 
 actual enum class SyncErrorCodeCategory(

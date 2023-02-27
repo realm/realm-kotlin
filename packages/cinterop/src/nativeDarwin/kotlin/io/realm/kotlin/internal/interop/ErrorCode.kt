@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.internal.interop
 
 import realm_wrapper.realm_errno
 
