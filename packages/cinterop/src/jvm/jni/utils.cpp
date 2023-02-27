@@ -121,7 +121,7 @@ jstring to_jstring(JNIEnv* env, realm::StringData str)
     if (str.size() <= stack_buf_size) {
         size_t retcode = Xcode::to_utf16(in_begin, in_end, out_curr, out_end);
         if (retcode != 0) {
-            throw InvalidArgument(string_to_hex("Failure when converting short string to UTF-16", str, in_begin, in_end,
+            throw RuntimeError(ErrorCodes::RuntimeError, string_to_hex("Failure when converting short string to UTF-16", str, in_begin, in_end,
                                                     out_curr, out_end, size_t(0), retcode));
         }
         if (in_begin == in_end) {
@@ -134,11 +134,11 @@ jstring to_jstring(JNIEnv* env, realm::StringData str)
         size_t error_code;
         size_t size = Xcode::find_utf16_buf_size(in_begin2, in_end, error_code);
         if (in_begin2 != in_end) {
-            throw InvalidArgument(string_to_hex("Failure when computing UTF-16 size", str, in_begin, in_end, out_curr,
+            throw RuntimeError(ErrorCodes::RuntimeError, string_to_hex("Failure when computing UTF-16 size", str, in_begin, in_end, out_curr,
                                                     out_end, size, error_code));
         }
         if (int_add_with_overflow_detect(size, stack_buf_size)) {
-            throw InvalidArgument("String size overflow");
+            throw RuntimeError(ErrorCodes::RuntimeError, "String size overflow");
         }
         dyn_buf.reset(new jchar[size]);
         out_curr = std::copy(out_begin, out_curr, dyn_buf.get());
@@ -146,7 +146,7 @@ jstring to_jstring(JNIEnv* env, realm::StringData str)
         out_end = dyn_buf.get() + size;
         size_t retcode = Xcode::to_utf16(in_begin, in_end, out_curr, out_end);
         if (retcode != 0) {
-            throw InvalidArgument(string_to_hex("Failure when converting long string to UTF-16", str, in_begin, in_end,
+            throw RuntimeError(ErrorCodes::RuntimeError, string_to_hex("Failure when converting long string to UTF-16", str, in_begin, in_end,
                                                     out_curr, out_end, size_t(0), retcode));
         }
         REALM_ASSERT(in_begin == in_end);
@@ -155,7 +155,7 @@ jstring to_jstring(JNIEnv* env, realm::StringData str)
     transcode_complete : {
     jsize out_size;
     if (int_cast_with_overflow_detect(out_curr - out_begin, out_size)) {
-        throw InvalidArgument("String size overflow");
+        throw RuntimeError(ErrorCodes::RuntimeError, "String size overflow");
     }
 
     return env->NewString(out_begin, out_size);
@@ -203,7 +203,7 @@ private:
     {
         size_t size;
         if (int_cast_with_overflow_detect(e->GetStringLength(s), size))
-            throw InvalidArgument("String size overflow");
+            throw RuntimeError(ErrorCodes::RuntimeError, "String size overflow");
         return size;
     }
 };

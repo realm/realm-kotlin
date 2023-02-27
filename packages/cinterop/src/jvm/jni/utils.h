@@ -50,7 +50,7 @@ public:
             return realm::StringData();
         }
         else if (m_size > max_string_size) {
-            throw IllegalOperation(realm::util::format(
+            throw RuntimeError(ErrorCodes::RuntimeError, realm::util::format(
                             "The length of 'String' value in UTF8 encoding is %1 which exceeds the max string length %2.",
                             m_size, max_string_size));
         }
