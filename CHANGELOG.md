@@ -11,6 +11,9 @@
 * [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
  
 ### Fixed
+* Accessing an invalidated `RealmResults` now throws an `IllegalStateException` instead of a `RealmException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
+* Opening a Realm with a wrong encryption key or corrupted now throws an `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
+* Trying to convert to a Flexible Sync Realm with Flexible Sync disabled throws a `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Fix missing initial flow events when registering for events while updating the realm. (Issue [#1151](https://github.com/realm/realm-kotlin/issues/1151))
 * Emit deletion events and terminate flow when registering for notifications on outdated entities instead of throwing. (Issue [#1233](https://github.com/realm/realm-kotlin/issues/1233))
 
@@ -28,7 +31,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.4.2, commit e5f1a673474bd940c2906ce408fbb8c4de640a4b.
+* Updated to Realm Core 13.5.0, commit 37cc58865648f343f7d6e538d45980e7f2351211.
 
 
 ## 1.6.2 (YYYY-MM-DD)

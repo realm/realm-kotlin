@@ -26,7 +26,6 @@ import io.realm.kotlin.entities.backlink.MissingSourceProperty
 import io.realm.kotlin.entities.backlink.Parent
 import io.realm.kotlin.entities.backlink.Parent2
 import io.realm.kotlin.entities.backlink.Recursive
-import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
@@ -256,7 +255,8 @@ class BacklinksTests {
                     .build()
 
             assertFailsWithMessage<IllegalStateException>(
-                "Property 'MissingSourceProperty.reference' declared as origin of linking objects property 'MissingSourceProperty.references' does not exist)"
+                "Property 'MissingSourceProperty.reference' declared as origin of linking " +
+                    "objects property 'MissingSourceProperty.references' does not exist"
             ) {
                 Realm.open(configuration)
             }
@@ -365,7 +365,7 @@ class BacklinksTests {
 
             // Closing the Realm instance should make backlinks inaccessible
             linkingObjects.forEach {
-                assertFailsWithMessage<RealmException>("Access to invalidated Results objects") {
+                assertFailsWithMessage<IllegalStateException>("Access to invalidated Results objects") {
                     it.size
                 }
             }

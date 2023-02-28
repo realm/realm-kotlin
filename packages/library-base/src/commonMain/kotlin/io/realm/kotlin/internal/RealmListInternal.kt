@@ -72,25 +72,11 @@ internal class ManagedRealmList<E>(
 
     override fun get(index: Int): E {
         operator.realmReference.checkClosed()
-        try {
-            return operator.get(index)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not get element at list index $index",
-            )
-        }
+        return operator.get(index)
     }
 
     override fun add(index: Int, element: E) {
-        try {
-            operator.insert(index, element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not add element at list index $index",
-            )
-        }
+        operator.insert(index, element)
     }
 
     // We need explicit overrides of these to ensure that we capture duplicate references to the
@@ -111,26 +97,12 @@ internal class ManagedRealmList<E>(
 
     override fun removeAt(index: Int): E = get(index).also {
         operator.realmReference.checkClosed()
-        try {
-            RealmInterop.realm_list_erase(nativePointer, index.toLong())
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not remove element at list index $index",
-            )
-        }
+        RealmInterop.realm_list_erase(nativePointer, index.toLong())
     }
 
     override fun set(index: Int, element: E): E {
         operator.realmReference.checkClosed()
-        try {
-            return operator.set(index, element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not set list element at list index $index",
-            )
-        }
+        return operator.set(index, element)
     }
 
     override fun asFlow(): Flow<ListChange<E>> {
@@ -187,26 +159,28 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
     args: Array<out Any?>
 ): RealmQuery<E> {
     val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
-    return ObjectQuery.tryCatchCoreException {
-        val queryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args)
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        try {
             RealmInterop.realm_query_parse_for_list(
                 this@query.nativePointer,
                 query,
                 queryArgs
             )
+        } catch (e: IndexOutOfBoundsException) {
+            throw IllegalArgumentException(e.message, e.cause)
         }
-        ObjectBoundQuery(
-            parent,
-            ObjectQuery(
-                operator.realmReference,
-                operator.classKey,
-                operator.clazz,
-                operator.mediator,
-                queryPointer,
-            )
-        )
     }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer,
+        )
+    )
 }
 
 // Cloned from https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/collections/AbstractList.kt

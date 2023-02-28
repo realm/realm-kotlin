@@ -18,7 +18,6 @@ package io.realm.kotlin.internal.query
 
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.dynamic.DynamicRealm
-import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.Mediator
 import io.realm.kotlin.internal.Notifiable
 import io.realm.kotlin.internal.Observable
@@ -27,8 +26,6 @@ import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.RealmValueConverter
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.PropertyType
-import io.realm.kotlin.internal.interop.RealmCoreException
-import io.realm.kotlin.internal.interop.RealmCoreLogicException
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_max
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_min
@@ -164,38 +161,22 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     private fun findFromResults(
         resultsPointer: RealmResultsPointer,
         updatedRealmReference: RealmReference? = null
-    ): T? = try {
-        getterScope {
-            val transport = when (queryType) {
-                AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyMetadata.key)
-                AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyMetadata.key)
-                AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
-            }
+    ): T? = getterScope {
+        val transport = when (queryType) {
+            AggregatorQueryType.MIN -> realm_results_min(resultsPointer, propertyMetadata.key)
+            AggregatorQueryType.MAX -> realm_results_max(resultsPointer, propertyMetadata.key)
+            AggregatorQueryType.SUM -> throw IllegalArgumentException("Use SumQuery instead.")
+        }
 
-            @Suppress("UNCHECKED_CAST")
-            when (type) {
-                // Asynchronous aggregations require a converter with an updated realm reference
-                RealmAny::class -> when (updatedRealmReference) {
-                    null -> converter
-                    else -> realmAnyConverter(mediator, updatedRealmReference)
-                }.realmValueToPublic(transport)
-                else -> coerceType(converter, propertyMetadata.name, type, transport)
-            } as T?
-        }
-    } catch (exception: Throwable) {
-        throw CoreExceptionConverter.convertToPublicException(
-            exception,
-            "Invalid query formulation: ${exception.message}",
-        ) { coreException: RealmCoreException ->
-            when (coreException) {
-                is RealmCoreLogicException ->
-                    IllegalArgumentException(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-                else -> null
-            }
-        }
+        @Suppress("UNCHECKED_CAST")
+        when (type) {
+            // Asynchronous aggregations require a converter with an updated realm reference
+            RealmAny::class -> when (updatedRealmReference) {
+                null -> converter
+                else -> realmAnyConverter(mediator, updatedRealmReference)
+            }.realmValueToPublic(transport)
+            else -> coerceType(converter, propertyMetadata.name, type, transport)
+        } as T?
     }
 }
 
@@ -240,30 +221,14 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
             .distinctUntilChanged()
     }
 
-    private fun findFromResults(resultsPointer: RealmResultsPointer): T = try {
-        getterScope {
-            val transport = realm_results_sum(resultsPointer, propertyMetadata.key)
+    private fun findFromResults(resultsPointer: RealmResultsPointer): T = getterScope {
+        val transport = realm_results_sum(resultsPointer, propertyMetadata.key)
 
-            when (type) {
-                RealmAny::class -> converter.realmValueToPublic(transport)
-                else -> coerceType(converter, propertyMetadata.name, type, transport)
-            }
-        } as T
-    } catch (exception: Throwable) {
-        throw CoreExceptionConverter.convertToPublicException(
-            exception,
-            "Invalid query formulation: ${exception.message}",
-        ) { coreException: RealmCoreException ->
-            when (coreException) {
-                is RealmCoreLogicException ->
-                    IllegalArgumentException(
-                        "Invalid query formulation: ${exception.message}",
-                        exception
-                    )
-                else -> null
-            }
+        when (type) {
+            RealmAny::class -> converter.realmValueToPublic(transport)
+            else -> coerceType(converter, propertyMetadata.name, type, transport)
         }
-    }
+    } as T
 }
 
 /**

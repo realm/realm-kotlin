@@ -888,7 +888,7 @@ class SyncedRealmTests {
                     }
                 )
             }
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<IllegalStateException> {
                 localRealm.writeCopyTo(flexSyncConfig)
             }
         }

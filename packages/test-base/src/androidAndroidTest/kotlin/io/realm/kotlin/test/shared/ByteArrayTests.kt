@@ -75,11 +75,7 @@ class ByteArrayTests {
                 .first()
                 .find { sample ->
                     assertNotNull(sample)
-                    assertFailsWithMessage<IllegalArgumentException>(
-                        exceptionMessage = "cannot be assigned",
-                        causeMessage = "binary too big",
-                        ignoreCase = true
-                    ) {
+                    assertFailsWithMessage<IllegalArgumentException>("Binary too big") {
                         sample.binaryField = tooLongBinary
                     }
                 }
