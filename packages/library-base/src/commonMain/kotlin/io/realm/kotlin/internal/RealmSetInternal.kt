@@ -180,26 +180,24 @@ internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
     args: Array<out Any?>
 ): RealmQuery<E> {
     val operator: RealmObjectSetOperator<E> = operator as RealmObjectSetOperator<E>
-    return ObjectQuery.tryCatchCoreException {
-        val queryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args)
-            RealmInterop.realm_query_parse_for_set(
-                this@query.nativePointer,
-                query,
-                queryArgs
-            )
-        }
-        ObjectBoundQuery(
-            parent,
-            ObjectQuery(
-                operator.realmReference,
-                operator.classKey,
-                operator.clazz,
-                operator.mediator,
-                queryPointer,
-            )
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        RealmInterop.realm_query_parse_for_set(
+            this@query.nativePointer,
+            query,
+            queryArgs
         )
     }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer,
+        )
+    )
 }
 
 /**
