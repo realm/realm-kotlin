@@ -28,7 +28,7 @@ import io.realm.kotlin.mongodb.internal.convertSyncErrorCode
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-const val UNMAPPED_CODE: Int = -1
+const val UNMAPPED_CODE: Int = 0
 
 class RealmSyncUtilsTest {
     @Test
@@ -74,7 +74,7 @@ class RealmSyncUtilsTest {
     fun convertAppError_unmappedErrorCode() {
         val appException = convertAppError(
             AppError(
-                category = ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR,
+                categoryFlags = ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR.nativeValue,
                 code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,
@@ -89,7 +89,7 @@ class RealmSyncUtilsTest {
     fun convertAppError_unmappedErrorCategory() {
         val appException = convertAppError(
             AppError(
-                category = UnknownCodeDescription(UNMAPPED_CODE),
+                categoryFlags = UnknownCodeDescription(UNMAPPED_CODE).nativeValue,
                 code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,
@@ -104,7 +104,7 @@ class RealmSyncUtilsTest {
     fun convertAppError_unmappedErrorCategoryAndErrorCode_noMessage() {
         val appException = convertAppError(
             AppError(
-                category = UnknownCodeDescription(UNMAPPED_CODE),
+                categoryFlags = UnknownCodeDescription(UNMAPPED_CODE).nativeValue,
                 code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = null,
                 httpStatusCode = UNMAPPED_CODE,
@@ -119,7 +119,7 @@ class RealmSyncUtilsTest {
     fun convertAppError_unmappedErrorCategoryAndErrorCode_linkServerLog() {
         val appException = convertAppError(
             AppError(
-                category = UnknownCodeDescription(UNMAPPED_CODE),
+                categoryFlags = UnknownCodeDescription(UNMAPPED_CODE).nativeValue,
                 code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = "Placeholder message",
                 httpStatusCode = UNMAPPED_CODE,
@@ -134,7 +134,7 @@ class RealmSyncUtilsTest {
     fun convertAppError_unmappedErrorCategoryAndErrorCode_noMessage_linkServerLog() {
         val appException = convertAppError(
             AppError(
-                category = UnknownCodeDescription(UNMAPPED_CODE),
+                categoryFlags = UnknownCodeDescription(UNMAPPED_CODE).nativeValue,
                 code = UnknownCodeDescription(UNMAPPED_CODE),
                 message = null,
                 httpStatusCode = UNMAPPED_CODE,

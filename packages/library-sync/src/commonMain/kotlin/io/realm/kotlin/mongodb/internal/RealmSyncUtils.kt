@@ -35,7 +35,8 @@ internal fun <T, R> channelResultCallback(
     return object : AppCallback<T> {
         override fun onSuccess(result: T) {
             try {
-                val sendResult: ChannelResult<Unit> = channel.trySend(Result.success(success.invoke(result)))
+                val sendResult: ChannelResult<Unit> =
+                    channel.trySend(Result.success(success.invoke(result)))
                 if (!sendResult.isSuccess) {
                     throw sendResult.exceptionOrNull()!!
                 }
@@ -136,13 +137,13 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
 @Suppress("ComplexMethod", "MagicNumber", "LongMethod")
 internal fun convertAppError(appError: AppError): Throwable {
     val msg = createMessageFromAppError(appError)
-    return when (appError.category) {
-        ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR -> {
+    return when {
+        ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR in appError -> {
             // Custom errors are only being thrown when executing the network request on the
             // platform side and it failed in a way that didn't produce a HTTP status code.
             ConnectionException(msg)
         }
-        ErrorCategory.RLM_ERR_CAT_HTTP_ERROR -> {
+        ErrorCategory.RLM_ERR_CAT_HTTP_ERROR in appError -> {
             // HTTP errors from network requests towards Atlas. Generally we should see
             // errors in these ranges:
             // 300-399: Redirect Codes. Indicate either a misconfiguration in a users network
@@ -161,14 +162,14 @@ internal fun convertAppError(appError: AppError): Throwable {
                 else -> ServiceException(msg)
             }
         }
-        ErrorCategory.RLM_ERR_CAT_JSON_ERROR -> {
+        ErrorCategory.RLM_ERR_CAT_JSON_ERROR in appError -> {
             // The JSON response from Atlas could not be parsed as valid JSON. Errors of this kind
             // would indicate a problem on Atlas that should be fixed with no action needed by the
             // client. So retrying the action should generally be safe. Although it might take a
             // while for the server to correct the behavior.
             ConnectionException(msg)
         }
-        ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR -> {
+        ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR in appError -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/object-store/sync/generic_network_transport.hpp#L34
             //
             // `ClientErrorCode::user_not_logged in` is used when the client decides that a login
@@ -198,7 +199,7 @@ internal fun convertAppError(appError: AppError): Throwable {
                 }
             }
         }
-        ErrorCategory.RLM_ERR_CAT_SERVICE_ERROR -> {
+        ErrorCategory.RLM_ERR_CAT_SERVICE_ERROR in appError -> {
             // This category is response codes from the server, that for some reason didn't
             // accept a request from the client. Most of the error codes in this category
             // can (most likely) be fixed by the client and should have a more granular
@@ -296,10 +297,17 @@ private fun createMessageFromAppError(error: AppError): String {
     // the Kotlin SDK always sets it to 0 in this case.
     // For all other categories, httpStatusCode is 0 (i.e not used).
     // linkToServerLog is only present if the category is "Service".
+    val categoryDesc: String? = when {
+        ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR in error -> ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR
+        ErrorCategory.RLM_ERR_CAT_JSON_ERROR in error -> ErrorCategory.RLM_ERR_CAT_JSON_ERROR
+        ErrorCategory.RLM_ERR_CAT_SERVICE_ERROR in error -> ErrorCategory.RLM_ERR_CAT_SERVICE_ERROR
+        ErrorCategory.RLM_ERR_CAT_HTTP_ERROR in error -> ErrorCategory.RLM_ERR_CAT_HTTP_ERROR
+        ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR in error -> ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR
+        else -> null
+    }?.description ?: error.categoryFlags.toString()
 
-    val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
-    val errorCodeDesc = error.code.description ?: when (error.category) {
-        ErrorCategory.RLM_ERR_CAT_HTTP_ERROR -> {
+    val errorCodeDesc = error.code.description ?: when {
+        ErrorCategory.RLM_ERR_CAT_HTTP_ERROR in error -> {
             // Source https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml
             // Only codes in the 300-599 range is mapped to errors
             when (error.code.nativeValue) {
@@ -353,7 +361,7 @@ private fun createMessageFromAppError(error: AppError): String {
                 else -> "Unknown"
             }
         }
-        ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR -> {
+        ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR in error -> {
             when (error.code.nativeValue) {
                 KtorNetworkTransport.ERROR_IO -> "IO"
                 KtorNetworkTransport.ERROR_INTERRUPTED -> "Interrupted"
