@@ -57,8 +57,9 @@ data class AppError internal constructor(
      * This method allows to check whether a error categories value contains a category or not.
      *
      * Core defines app categories as flag based values.
-     * 
+     *
      * Any App category is also a [ErrorCategory.RLM_ERR_CAT_RUNTIME] and [ErrorCategory.RLM_ERR_CAT_APP_ERROR].
      */
-    operator fun contains(flag: ErrorCategory): Boolean = this.categoryFlags and flag.nativeValue != 0
+    operator fun contains(flag: ErrorCategory): Boolean =
+        this.categoryFlags and flag.nativeValue != 0
 }
