@@ -1011,7 +1011,7 @@ internal class UnmanagedRealmMapEntry<K, V> constructor(
     }
 
     override fun toString(): String = "UnmanagedRealmMapEntry{$key,$value}"
-    override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
+    override fun hashCode(): Int = key.hashCode() xor value.hashCode()
     override fun equals(other: Any?): Boolean {
         if (other !is Map.Entry<*, *>) return false
 
@@ -1050,7 +1050,25 @@ internal class ManagedRealmMapEntry<K, V> constructor(
 
     override fun toString(): String = "ManagedRealmMapEntry{$key,$value}"
 
-    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
+    override fun hashCode(): Int = key.hashCode() xor value.hashCode()
+
+    // TODO Compare by key and value with a special case for byte arrays until equality is reworked
+    //  properly in https://github.com/realm/realm-kotlin/issues/1097.
+    override fun equals(other: Any?): Boolean {
+        if (other !is Map.Entry<*, *>) return false
+
+        // Byte arrays are compared at a structural level
+        if (this.value is ByteArray && other.value is ByteArray) {
+            val thisByteArray = this.value as ByteArray
+            val otherByteArray = other.value as ByteArray
+            if (this.key == other.key && thisByteArray.contentEquals(otherByteArray)) {
+                return true
+            }
+            return false
+        }
+
+        return (this.key == other.key) && (this.value == other.value)
+    }
 }
 
 // ----------------------------------------------------------------------
