@@ -132,7 +132,6 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * [Sync] Custom loggers now correctly see both normal and sync events. Before, sync events were just logged directly to LogCat/StdOut.
 * [Sync] When a `SyncSession` was paused using `SyncSession.pause()`, it would sometimes automatically resume the session. `SyncSession.State.PAUSED` has been added, making it explicit when a session is paused. (Core Issue [#6085](https://github.com/realm/realm-core/issues/6085))
 
-
 ### Compatibility
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.

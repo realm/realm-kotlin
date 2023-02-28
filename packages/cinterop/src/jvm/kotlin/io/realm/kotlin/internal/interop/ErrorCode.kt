@@ -166,7 +166,7 @@ actual enum class ErrorCode(override val description: String, override val nativ
 
     actual companion object {
         actual fun of(nativeValue: Int): ErrorCode =
-            values().first() { value ->
+            values().first { value ->
                 value.nativeValue == nativeValue
             }
     }
