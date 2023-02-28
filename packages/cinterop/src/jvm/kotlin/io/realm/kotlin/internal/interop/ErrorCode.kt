@@ -165,8 +165,8 @@ actual enum class ErrorCode(override val description: String, override val nativ
     RLM_ERR_UNKNOWN("Unknown", realm_errno_e.RLM_ERR_UNKNOWN);
 
     actual companion object {
-        actual fun of(nativeValue: Int): ErrorCode =
-            values().first { value ->
+        actual fun of(nativeValue: Int): ErrorCode? =
+            values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }

@@ -19,6 +19,7 @@ package io.realm.kotlin.internal.interop.sync
 import io.realm.kotlin.internal.interop.CodeDescription
 import io.realm.kotlin.internal.interop.ErrorCategory
 import io.realm.kotlin.internal.interop.ErrorCode
+import io.realm.kotlin.internal.interop.UnknownCodeDescription
 import kotlin.jvm.JvmStatic
 
 /**
@@ -41,7 +42,7 @@ data class AppError internal constructor(
             message: String?,
             linkToServerLog: String?
         ): AppError {
-            val code = ErrorCode.of(errorCode)
+            val code = ErrorCode.of(errorCode) ?: UnknownCodeDescription(errorCode)
 
             return AppError(
                 categoryFlags,

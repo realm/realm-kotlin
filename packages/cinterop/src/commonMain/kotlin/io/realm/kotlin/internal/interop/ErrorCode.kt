@@ -168,6 +168,6 @@ expect enum class ErrorCode : CodeDescription {
     RLM_ERR_UNKNOWN;
 
     companion object {
-        fun of(nativeValue: Int): ErrorCode
+        fun of(nativeValue: Int): ErrorCode?
     }
 }

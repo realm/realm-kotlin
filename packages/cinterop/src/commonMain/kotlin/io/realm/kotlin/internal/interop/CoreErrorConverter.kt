@@ -32,7 +32,7 @@ object CoreErrorConverter {
         userError: Throwable?
     ): Throwable {
         val categories: CategoryFlag = CategoryFlag(categoriesNativeValue)
-        val errorCode: ErrorCode = ErrorCode.of(errorCodeNativeValue)
+        val errorCode: ErrorCode? = ErrorCode.of(errorCodeNativeValue)
         val message: String = "[$errorCode]: $messageNativeValue"
 
         return when {
