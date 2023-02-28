@@ -29,7 +29,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.4.2, commit e5f1a673474bd940c2906ce408fbb8c4de640a4b.
+* Updated to Realm Core 13.5.0, commit 37cc58865648f343f7d6e538d45980e7f2351211.
 
 
 ## 1.6.2 (YYYY-MM-DD)
@@ -147,7 +147,7 @@ This release will bump the Realm file format from version 22 to 23. Opening a fi
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.5.0, commit 5a119d8cb2eaac60c298532af2c9ae789af0c9e6.
+* Updated to Realm Core 13.2.0, commit 5a119d8cb2eaac60c298532af2c9ae789af0c9e6.
 * Updated to require Swig 4.1.0.
 * Updated AndroidxStartup to 1.1.1.
 * Updated to Kbson 0.2.0.
