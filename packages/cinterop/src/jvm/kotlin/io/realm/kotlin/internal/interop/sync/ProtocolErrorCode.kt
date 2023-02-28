@@ -127,7 +127,8 @@ actual enum class ProtocolSessionErrorCode(
     RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED("ServerPermissionsChanged", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED),
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED("InitialSyncNotCompleted", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED),
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED),
-    RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE("CompensatingWrite", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE);
+    RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE("CompensatingWrite", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE),
+    RLM_SYNC_ERR_SESSION_BAD_PROGRESS("BadProgress", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_BAD_PROGRESS);
 
     actual companion object {
         internal actual fun of(nativeValue: Int): ProtocolSessionErrorCode? =

@@ -43,18 +43,18 @@ class EnumTests {
      * It checks that all the error code values defined in realm_errno_e are mapped by ErrorCode
      */
     @Test
-    fun coreExceptionTypes_watchdog() {
-        val coreErrorCodesValues = realm_errno_e::class.java.fields
+    fun errorCodes() {
+        val coreErrorCodesValues: IntArray = realm_errno_e::class.java.fields
             .map { it.getInt(null) }
-            .toSet()
+            .toIntArray()
 
-        val errorCodeValues = ErrorCode.values()
-            .map {
-                it.nativeValue
+        val errorCodeValues: Set<ErrorCode> = coreErrorCodesValues
+            .map { nativeValue ->
+                ErrorCode.of(nativeValue)
             }
             .toSet()
 
         // Validate we have a different exception defined for each core native value.
-        assertEquals(coreErrorCodesValues, errorCodeValues)
+        assertEquals(coreErrorCodesValues.size, errorCodeValues.size)
     }
 }

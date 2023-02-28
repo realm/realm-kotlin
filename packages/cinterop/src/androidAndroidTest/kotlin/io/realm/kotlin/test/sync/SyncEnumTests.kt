@@ -142,16 +142,20 @@ class SyncEnumTests {
         }
     }
 
-    private inline fun <T : Any> checkEnum(enumClass: KClass<out Any>, mapNativeValue: (Int) -> T?) {
+    private inline fun <T : Any> checkEnum(
+        enumClass: KClass<out Any>,
+        mapNativeValue: (Int) -> T?
+    ) {
         // Fetch all native values
-        val coreNativeValues: Set<Int> = enumClass.java.fields
+        val coreNativeValues: IntArray = enumClass.java.fields
             .map { it.getInt(null) }
-            .toSet()
-        // .toIntArray() // TODO Use Set instead of List until https://github.com/realm/realm-core/issues/5421 is fixed
+            .toIntArray()
 
         // Find all enums mapping to those values
-        val mappedKotlinEnums = coreNativeValues
-            .map { mapNativeValue(it) ?: fail("${enumClass.simpleName}: unmapped native value $it") }
+        val mappedKotlinEnums: Set<T> = coreNativeValues
+            .map {
+                mapNativeValue(it) ?: fail("${enumClass.simpleName}: unmapped native value $it")
+            }
             .toSet()
 
         // Validate we have a different enum defined for each core native value.

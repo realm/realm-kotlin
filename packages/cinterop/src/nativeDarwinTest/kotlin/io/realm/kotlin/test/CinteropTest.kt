@@ -241,21 +241,21 @@ class CinteropTest {
      * It checks that all the error code values defined in realm_errno are mapped by ErrorCode
      */
     @Test
-    fun errorTypes_watchdog() {
+    fun errorCodes_enumTest() {
         val coreErrorNativeValues = realm_wrapper.realm_errno.values()
             .map {
                 it.value.toInt()
             }
-            .toSet()
+            .toIntArray()
 
-        val errorCodeValues = ErrorCode.values()
+        val errorCodeValues = coreErrorNativeValues
             .map {
-                it.nativeValue
+                ErrorCode.of(it)
             }
             .toSet()
 
         // validate that all error codes are mapped
-        assertEquals(coreErrorNativeValues, errorCodeValues)
+        assertEquals(coreErrorNativeValues.size, errorCodeValues.size)
     }
 }
 
