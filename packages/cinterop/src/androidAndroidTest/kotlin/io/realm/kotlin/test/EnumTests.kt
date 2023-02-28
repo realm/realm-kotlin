@@ -52,6 +52,7 @@ class EnumTests {
             .map { nativeValue ->
                 ErrorCode.of(nativeValue)
             }
+            .filterNotNull()
             .toSet()
 
         // Validate we have a different exception defined for each core native value.

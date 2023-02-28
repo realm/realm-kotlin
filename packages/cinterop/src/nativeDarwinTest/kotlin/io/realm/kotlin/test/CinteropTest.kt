@@ -252,6 +252,7 @@ class CinteropTest {
             .map {
                 ErrorCode.of(it)
             }
+            .filterNotNull()
             .toSet()
 
         // validate that all error codes are mapped
