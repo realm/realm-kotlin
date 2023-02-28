@@ -2052,6 +2052,8 @@ internal abstract class ManagedDictionaryTester<T>(
             classifier != RealmAny::class
         ) {
             val dataSet = typeSafetyManager.dataSetToLoad
+            val size = dataSet.size
+            val regex = """RealmDictionary\.entries\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
 
             errorCatcher {
                 realm.writeBlocking {
@@ -2062,9 +2064,10 @@ internal abstract class ManagedDictionaryTester<T>(
                     val managedEntries0 = dictionary0.entries
                     val managedEntries1 = dictionary1.entries
 
+                    assertTrue(regex.matches(managedEntries0.toString()))
                     assertEquals(managedEntries0.toString(), managedEntries0.toString())
                     assertEquals(managedEntries1.toString(), managedEntries1.toString())
-                    assertEquals(managedEntries0.toString(), managedEntries1.toString())
+                    assertNotEquals(managedEntries0.toString(), managedEntries1.toString())
                 }
             }
 
@@ -2073,9 +2076,11 @@ internal abstract class ManagedDictionaryTester<T>(
                     .entries
                 val managedEntries1 = typeSafetyManager.getCollection(containers[1])
                     .entries
+
+                assertTrue(regex.matches(managedEntries0.toString()))
                 assertEquals(managedEntries0.toString(), managedEntries0.toString())
                 assertEquals(managedEntries1.toString(), managedEntries1.toString())
-                assertEquals(managedEntries0.toString(), managedEntries1.toString())
+                assertNotEquals(managedEntries0.toString(), managedEntries1.toString())
             }
         }
     }
@@ -2450,6 +2455,8 @@ internal abstract class ManagedDictionaryTester<T>(
             classifier != RealmAny::class
         ) {
             val dataSet = typeSafetyManager.dataSetToLoad
+            val size = dataSet.size
+            val regex = """RealmDictionary\.values\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
 
             errorCatcher {
                 realm.writeBlocking {
@@ -2460,9 +2467,10 @@ internal abstract class ManagedDictionaryTester<T>(
                     val managedValues0 = dictionary0.values
                     val managedValues1 = dictionary1.values
 
+                    assertTrue(regex.matches(managedValues0.toString()))
                     assertEquals(managedValues0.toString(), managedValues0.toString())
                     assertEquals(managedValues1.toString(), managedValues1.toString())
-                    assertEquals(managedValues0.toString(), managedValues1.toString())
+                    assertNotEquals(managedValues0.toString(), managedValues1.toString())
                 }
             }
 
@@ -2473,7 +2481,7 @@ internal abstract class ManagedDictionaryTester<T>(
                     .values
                 assertEquals(managedValues0.toString(), managedValues0.toString())
                 assertEquals(managedValues1.toString(), managedValues1.toString())
-                assertEquals(managedValues0.toString(), managedValues1.toString())
+                assertNotEquals(managedValues0.toString(), managedValues1.toString())
             }
         }
     }
@@ -2790,22 +2798,22 @@ internal abstract class ManagedDictionaryTester<T>(
 
     override fun keys_toString() {
         val dataSet = typeSafetyManager.dataSetToLoad
-        val expectedKeys = dataSet.joinToString { it.first }
-        val expected = "RealmDictionary.keys{$expectedKeys}"
+        val size = dataSet.size
+        val regex = """RealmDictionary\.keys\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
 
         errorCatcher {
             realm.writeBlocking {
                 val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
                 dictionary.putAll(dataSet)
                 val keys = dictionary.keys
-                assertEquals(expected, keys.toString())
+                assertTrue(regex.matches(keys.toString()))
             }
         }
 
         assertContainerAndCleanup { container ->
             val dictionary = typeSafetyManager.getCollection(container)
             val keys = dictionary.keys
-            assertEquals(expected, keys.toString())
+            assertTrue(regex.matches(keys.toString()))
         }
     }
 
@@ -2858,20 +2866,20 @@ internal abstract class ManagedDictionaryTester<T>(
         // generated for byte arrays being different for two arrays that are structurally equal.
         if (classifier != ByteArray::class && classifier != RealmAny::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
-            val expectedEntries = dataSet.joinToString { (key, value) -> "[$key,$value]" }
-            val expected = "RealmDictionary{$expectedEntries}"
+            val size = dataSet.size
+            val regex = """RealmDictionary\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
 
             errorCatcher {
                 realm.writeBlocking {
                     val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
                     dictionary.putAll(dataSet)
-                    assertEquals(expected, dictionary.toString())
+                    assertTrue(regex.matches(dictionary.toString()))
                 }
             }
 
             assertContainerAndCleanup { container ->
                 val dictionary = typeSafetyManager.getCollection(container)
-                assertEquals(expected, dictionary.toString())
+                assertTrue(regex.matches(dictionary.toString()))
             }
         }
     }
