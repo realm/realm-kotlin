@@ -1520,10 +1520,10 @@ class DynamicRealmObjectTests {
         val dynamicRealm = realm.asDynamicRealm()
         val dynamicSample = dynamicRealm.query("Sample").find().first()
 
-        assertFailsWithMessage<IllegalStateException>("Cannot modify managed objects outside of a write transaction") {
+        assertFailsWithMessage<IllegalStateException>("Cannot modify managed List outside of a write transaction.") {
             dynamicSample.getValueList<String>("stringListField").add("IMMUTABLE_LIST_ELEMENT")
         }
-        assertFailsWithMessage<IllegalStateException>("Cannot modify managed objects outside of a write transaction") {
+        assertFailsWithMessage<IllegalStateException>("Cannot modify managed List outside of a write transaction.") {
             dynamicSample.getNullableValueList<String>("nullableStringListField")
                 .add("IMMUTABLE_LIST_ELEMENT")
         }

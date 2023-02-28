@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.internal.interop
 
 /**
- * Wrapper for C-API `realm_app_errno_client`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2553
+ * Maps error or category codes to their description.
  */
-expect enum class ClientErrorCode : CodeDescription {
-    RLM_APP_ERR_CLIENT_USER_NOT_FOUND,
-    RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN,
-    RLM_APP_ERR_CLIENT_APP_DEALLOCATED;
+interface CodeDescription {
+    val nativeValue: Int
+    val description: String?
+}
 
-    companion object {
-        internal fun of(nativeValue: Int): ClientErrorCode?
-    }
+/**
+ * Represents c-api unmapped category or error codes.
+ */
+data class UnknownCodeDescription(override val nativeValue: Int) : CodeDescription {
+    override val description: String? = null
 }

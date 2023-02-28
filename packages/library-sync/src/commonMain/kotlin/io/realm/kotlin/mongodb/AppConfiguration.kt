@@ -20,7 +20,6 @@ import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -101,10 +100,6 @@ public interface AppConfiguration {
     public class Builder(
         private val appId: String
     ) {
-
-        init {
-            CoreExceptionConverter.initialize()
-        }
 
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null

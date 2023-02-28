@@ -73,14 +73,7 @@ internal class ManagedRealmSet<E> constructor(
 
     override fun add(element: E): Boolean {
         operator.realmReference.checkClosed()
-        try {
-            return operator.add(element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not add element to set"
-            )
-        }
+        return operator.add(element)
     }
 
     override fun clear() {
@@ -187,26 +180,24 @@ internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
     args: Array<out Any?>
 ): RealmQuery<E> {
     val operator: RealmObjectSetOperator<E> = operator as RealmObjectSetOperator<E>
-    return ObjectQuery.tryCatchCoreException {
-        val queryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args)
-            RealmInterop.realm_query_parse_for_set(
-                this@query.nativePointer,
-                query,
-                queryArgs
-            )
-        }
-        ObjectBoundQuery(
-            parent,
-            ObjectQuery(
-                operator.realmReference,
-                operator.classKey,
-                operator.clazz,
-                operator.mediator,
-                queryPointer,
-            )
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        RealmInterop.realm_query_parse_for_set(
+            this@query.nativePointer,
+            query,
+            queryArgs
         )
     }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer,
+        )
+    )
 }
 
 /**

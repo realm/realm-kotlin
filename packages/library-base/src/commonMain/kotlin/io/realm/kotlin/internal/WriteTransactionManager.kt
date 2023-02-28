@@ -25,14 +25,7 @@ internal interface WriteTransactionManager {
     val realmReference: LiveRealmReference
 
     fun beginTransaction() {
-        try {
-            RealmInterop.realm_begin_write(realmReference.dbPointer)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Cannot begin the write transaction"
-            )
-        }
+        RealmInterop.realm_begin_write(realmReference.dbPointer)
     }
 
     fun isInTransaction(): Boolean {
@@ -44,13 +37,6 @@ internal interface WriteTransactionManager {
     }
 
     fun cancelWrite() {
-        try {
-            RealmInterop.realm_rollback(realmReference.dbPointer)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Cannot cancel the write transaction"
-            )
-        }
+        RealmInterop.realm_rollback(realmReference.dbPointer)
     }
 }

@@ -521,7 +521,7 @@ class RealmTests {
         val anotherRealm = Realm.open(configA)
 
         // Deleting it without having closed it should fail.
-        assertFailsWithMessage(IllegalStateException::class, "Cannot delete Realm located at '$tempDirA/anotherRealm.realm', did you close it before calling 'deleteRealm'?: ") {
+        assertFailsWithMessage<IllegalStateException>("Cannot delete files of an open Realm: '$tempDirA/anotherRealm.realm' is still in use") {
             Realm.deleteRealm(configA)
         }
 
@@ -589,7 +589,7 @@ class RealmTests {
             .name("fileB.realm")
             .build()
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<IllegalStateException> {
             Realm.open(configBUnencrypted)
         }
 
@@ -608,7 +608,7 @@ class RealmTests {
 
         // Ensure that new Realm is not encrypted
         val configBEncrypted: RealmConfiguration = createWriteCopyLocalConfig("fileB.realm", key)
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWith<IllegalStateException> {
             Realm.open(configBEncrypted)
         }
 

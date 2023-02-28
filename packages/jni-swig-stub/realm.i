@@ -419,5 +419,6 @@ bool realm_object_is_valid(const realm_object_t*);
 #define __attribute__(x)
 
 %include "realm.h"
+%include "realm/error_codes.h"
 %include "src/main/jni/realm_api_helpers.h"
 
