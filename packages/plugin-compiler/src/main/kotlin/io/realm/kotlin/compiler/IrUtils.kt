@@ -154,14 +154,20 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     return hasRealmObjectAsSuperType
 }
 
+// Do to the way PSI works, it can be a bit tricky to uniquely identify when the Realm Kotlin
+// RealmObject interface is used. For that reason, once we have determined a match for RealmObject,
+// We also need to ensure we didn't accidentally matched on the Realm Java RealmObject abstract
+// type. Fortunately that is visible in the PSI as `RealmObject()` (Java, abstract class) vs.
+// `RealmObject` (Kotlin, interface).
 val realmObjectPsiNames = setOf("RealmObject", "io.realm.kotlin.types.RealmObject")
 val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.kotlin.types.EmbeddedRealmObject")
+val realmJavaObjectPsiNames = setOf("io.realm.RealmObject()", "RealmObject()")
 val ClassDescriptor.isRealmObject: Boolean
-    get() = this.hasInterfacePsi(realmObjectPsiNames)
+    get() = this.hasInterfacePsi(realmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
 val ClassDescriptor.isBaseRealmObject: Boolean
-    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames)
+    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
@@ -271,6 +277,7 @@ data class CoreType(
     val nullable: Boolean
 )
 
+private const val NO_ALIAS = ""
 // FIXME use PropertyType instead of "type: String", consider using a common/shared type when implementing public schema
 //  see (https://github.com/realm/realm-kotlin/issues/238)
 data class SchemaProperty(
@@ -285,14 +292,26 @@ data class SchemaProperty(
     val publicName: String
 
     init {
-        if (hasPersistedNameAnnotation) {
+        val declarationName = declaration.name.identifier
+        val persistedAnnotationName: String? = if (hasPersistedNameAnnotation) getPersistedName(declaration) else null
+
+        // We only set the public name if the persisted and public names are different
+        // because core would otherwise detect it as a duplicated name and fail.
+        if (hasPersistedNameAnnotation && persistedAnnotationName!! != declarationName) {
+            persistedAnnotationName.ifEmpty {
+                logError(
+                    "Names must contain at least 1 character.",
+                    declaration.locationOf()
+                )
+            }
+
             // Set the persisted name to the name passed to `@PersistedName`
-            persistedName = getPersistedName(declaration)
+            persistedName = persistedAnnotationName
             // Set the public name to the original Kotlin name
-            publicName = declaration.name.identifier
+            publicName = declarationName
         } else {
-            persistedName = declaration.name.identifier
-            publicName = ""
+            persistedName = declarationName
+            publicName = NO_ALIAS
         }
     }
 

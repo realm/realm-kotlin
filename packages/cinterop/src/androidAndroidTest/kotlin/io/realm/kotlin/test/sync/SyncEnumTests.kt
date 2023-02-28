@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.realm_auth_provider_e
 import io.realm.kotlin.internal.interop.realm_errno_e
 import io.realm.kotlin.internal.interop.realm_error_category_e
 import io.realm.kotlin.internal.interop.realm_sync_client_metadata_mode_e
+import io.realm.kotlin.internal.interop.realm_sync_connection_state_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_client_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_connection_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_session_e
@@ -30,6 +31,7 @@ import io.realm.kotlin.internal.interop.realm_sync_session_resync_mode_e
 import io.realm.kotlin.internal.interop.realm_sync_session_state_e
 import io.realm.kotlin.internal.interop.realm_user_state_e
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
@@ -130,6 +132,13 @@ class SyncEnumTests {
     fun syncSessionState() {
         checkEnum(realm_sync_session_state_e::class) { nativeValue ->
             CoreSyncSessionState.of(nativeValue)
+        }
+    }
+
+    @Test
+    fun syncSessionConnectionState() {
+        checkEnum(realm_sync_connection_state_e::class) { nativeValue ->
+            CoreConnectionState.of(nativeValue)
         }
     }
 

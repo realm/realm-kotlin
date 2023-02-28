@@ -10,7 +10,7 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
  */
 public class DownloadingRealmTimeOutException : RealmException {
     internal constructor(syncConfig: SyncConfiguration) : super(
-        "Realm did not managed to download all initial data in time: ${syncConfig.path}, " +
+        "Realm did not manage to download all initial data in time: ${syncConfig.path}, " +
             "timeout: ${syncConfig.initialRemoteData!!.timeout}."
     )
 }

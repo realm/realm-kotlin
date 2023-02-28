@@ -35,6 +35,7 @@ import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -73,7 +74,7 @@ data class LoginResponse(val access_token: String)
 data class Profile(val roles: List<Role>)
 
 @Serializable
-data class Role(val group_id: String)
+data class Role(val group_id: String? = null)
 
 @Serializable
 data class AuthProvider constructor(
@@ -390,6 +391,17 @@ class AppServicesClient(
             }
         }
 
+    suspend fun Service.addDefaultRule(rule: String): JsonObject =
+        withContext(dispatcher) {
+            httpClient.typedRequest<JsonObject>(
+                Post,
+                "$url/default_rule"
+            ) {
+                setBody(Json.parseToJsonElement(rule))
+                contentType(ContentType.Application.Json)
+            }
+        }
+
     suspend fun Service.addRule(rule: String): JsonObject =
         withContext(dispatcher) {
             httpClient.typedRequest<JsonObject>(
@@ -494,6 +506,17 @@ class AppServicesClient(
     suspend fun BaasApp.triggerClientReset(userId: String) =
         withContext(dispatcher) {
             deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+            deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
+        }
+
+    suspend fun BaasApp.triggerClientReset(syncMode: SyncMode, userId: String) =
+        withContext(dispatcher) {
+            when (syncMode) {
+                SyncMode.PARTITION_BASED ->
+                    deleteDocument("__realm_sync", "clientfiles", """{"ownerId": "$userId"}""")
+                SyncMode.FLEXIBLE ->
+                    deleteDocument("__realm_sync_$_id", "clientfiles", """{"ownerId": "$userId"}""")
+            }
         }
 
     suspend fun BaasApp.changeSyncPermissions(permissions: SyncPermissions, block: () -> Unit) =

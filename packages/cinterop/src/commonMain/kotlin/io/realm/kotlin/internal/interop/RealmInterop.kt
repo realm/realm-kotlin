@@ -20,6 +20,7 @@ package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
@@ -126,6 +127,8 @@ typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscri
 @Suppress("LongParameterList")
 class SyncConnectionParams(
     sdkVersion: String,
+    localAppName: String?,
+    localAppVersion: String?,
     platform: String,
     platformVersion: String,
     cpuArch: String,
@@ -135,6 +138,8 @@ class SyncConnectionParams(
     frameworkVersion: String
 ) {
     val sdkName = "Kotlin"
+    val localAppName: String?
+    val localAppVersion: String?
     val sdkVersion: String
     val platform: String
     val platformVersion: String
@@ -152,6 +157,8 @@ class SyncConnectionParams(
 
     init {
         this.sdkVersion = sdkVersion
+        this.localAppName = localAppName
+        this.localAppVersion = localAppVersion
         this.platform = normalizePlatformValue(platform)
         this.platformVersion = platformVersion
         this.cpuArch = normalizeCpuArch(cpuArch)
@@ -375,7 +382,16 @@ expect object RealmInterop {
         query: String,
         args: Pair<Int, RealmQueryArgsTransport>
     ): RealmQueryPointer
-    fun realm_query_parse_for_list(list: RealmListPointer, query: String, args: Pair<Int, RealmQueryArgsTransport>): RealmQueryPointer
+    fun realm_query_parse_for_list(
+        list: RealmListPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer
+    fun realm_query_parse_for_set(
+        set: RealmSetPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long
@@ -544,6 +560,14 @@ expect object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         encryptionKey: ByteArray
     )
+    fun realm_sync_client_config_set_user_agent_binding_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        bindingInfo: String
+    )
+    fun realm_sync_client_config_set_user_agent_application_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        applicationInfo: String
+    )
 
     fun realm_sync_config_new(
         user: RealmUserPointer,
@@ -578,6 +602,7 @@ expect object RealmInterop {
         callback: SyncSessionTransferCompletionCallback
     )
     fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState
+    fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState
     fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_handle_error_for_testing(
@@ -593,6 +618,11 @@ expect object RealmInterop {
         direction: ProgressDirection,
         isStreaming: Boolean,
         callback: ProgressCallback,
+    ): RealmNotificationTokenPointer
+
+    fun realm_sync_session_register_connection_state_change_callback(
+        syncSession: RealmSyncSessionPointer,
+        callback: ConnectionStateChangeCallback,
     ): RealmNotificationTokenPointer
 
     // AppConfig
@@ -651,6 +681,13 @@ expect object RealmInterop {
         token: String,
         tokenId: String,
         newPassword: String,
+        callback: AppCallback<Unit>
+    )
+    fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
         callback: AppCallback<Unit>
     )
 

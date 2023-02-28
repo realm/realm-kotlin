@@ -69,6 +69,8 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -215,7 +217,6 @@ class SyncedRealmTests {
     }
 
     // Test for https://github.com/realm/realm-kotlin/issues/1070
-    @Ignore // Enable once #1070 is fixed
     @Test
     fun realmAsFlow_acrossSyncedChanges() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
@@ -249,8 +250,7 @@ class SyncedRealmTests {
             Realm.open(config).use { realm ->
                 realm.write {
                     val id = "id-${Random.nextLong()}"
-                    val masterObject = SyncObjectWithAllTypes.createWithSampleData(id)
-                    copyToRealm(masterObject)
+                    copyToRealm(SyncObjectWithAllTypes().apply { _id = id })
                 }
                 realm.syncSession.uploadAllLocalChanges()
             }
@@ -258,11 +258,13 @@ class SyncedRealmTests {
 
         // Wait for Realm.asFlow() to be updated based on remote change.
         try {
-            withTimeout(timeout = 30.seconds) {
-                val updateEvent: RealmChange<Realm> = c.receive()
-                assertTrue(updateEvent is UpdatedRealm)
-                assertEquals(1, updateEvent.realm.query<SyncObjectWithAllTypes>().find().size)
-                assertEquals(1, realm.query<SyncObjectWithAllTypes>().find().size)
+            withTimeout(timeout = 10.seconds) {
+                while (true) {
+                    val updateEvent: RealmChange<Realm> = c.receive()
+                    assertTrue(updateEvent is UpdatedRealm)
+                    if (updateEvent.realm.query<SyncObjectWithAllTypes>().find().size == 1)
+                        break
+                }
             }
         } finally {
             realm1.close()
@@ -1262,25 +1264,39 @@ class SyncedRealmTests {
         override val level: LogLevel
     ) : RealmLogger {
 
+        private val mutex = Mutex()
         private val _logs = mutableListOf<String>()
-        public val logs: List<String>
-            get() = _logs
+        /**
+         * Returns a snapshot of the current state of the logs.
+         */
+        val logs: List<String>
+            get() = runBlocking {
+                mutex.withLock {
+                    _logs.toList()
+                }
+            }
 
         override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
             val logMessage: String = message!!
-            _logs.add(logMessage)
+            runBlocking {
+                mutex.withLock {
+                    _logs.add(logMessage)
+                }
+            }
         }
     }
 
     @Test
     fun customLoggersReceiveSyncLogs() = runBlocking {
-        val customLogger = CustomLogCollector("CUSTOM", LogLevel.DEBUG)
+        val customLogger = CustomLogCollector("CUSTOM", LogLevel.ALL)
         val section = Random.nextInt()
         val flexApp = TestApp(
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
-                it.log(level = LogLevel.DEBUG, listOf(customLogger))
+                it.log(level = LogLevel.ALL, listOf(customLogger))
+                it.appName("MyCustomApp")
+                it.appVersion("1.0.0")
             }
         )
         val (email, password) = randomEmail() to "password1234"
@@ -1303,11 +1319,8 @@ class SyncedRealmTests {
             flexSyncRealm.syncSession.uploadAllLocalChanges()
         }
         assertTrue(customLogger.logs.isNotEmpty())
-        assertTrue(
-            customLogger.logs
-                .filter { it.contains("Connection[1]: Negotiated protocol version:") }
-                .isNotEmpty()
-        )
+        assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
+        assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") }, "Missing MyCustomApp/1.0.0")
         flexApp.close()
     }
 

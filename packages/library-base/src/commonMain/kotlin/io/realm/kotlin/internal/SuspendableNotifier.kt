@@ -74,16 +74,15 @@ internal class SuspendableNotifier(
     private val realm: NotifierRealm by realmInitializer
 
     /**
-     * FIXME Currently this is a hacked implementation that only does the correct thing if
-     *  other RealmResults or RealmObjects are being observed. But all writes should also flow
-     *  from [SuspendableWriter], so no Realm updates will be lost to end users.
-     *
      * Listen to changes to a Realm.
      *
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    internal fun realmChanged(): Flow<FrozenRealmReference> {
+    internal suspend fun realmChanged(): Flow<FrozenRealmReference> {
+        // Touching realm will open the underlying realm and register change listeners, but must
+        // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
+        withContext(dispatcher) { realm }
         return _realmChanged.asSharedFlow()
     }
 
@@ -100,6 +99,9 @@ internal class SuspendableNotifier(
                     kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
                 withContext(dispatcher) {
                     ensureActive()
+                    // Ensure that the live realm is always up to date to avoid registering
+                    // notifications on newer objects.
+                    realm.refresh()
                     val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
                         ?: error("Cannot listen for changes on a deleted Realm reference")
                     val interopCallback: io.realm.kotlin.internal.interop.Callback<RealmChangesPointer> =

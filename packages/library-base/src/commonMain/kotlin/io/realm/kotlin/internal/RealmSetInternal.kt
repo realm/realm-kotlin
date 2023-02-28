@@ -17,7 +17,9 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
@@ -27,10 +29,13 @@ import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.query.ObjectBoundQuery
+import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
 import io.realm.kotlin.notifications.internal.UpdatedSetImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmSet
 import kotlinx.coroutines.channels.ChannelResult
@@ -54,7 +59,8 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
 /**
  * Implementation for managed sets, backed by Realm.
  */
-internal class ManagedRealmSet<E>(
+internal class ManagedRealmSet<E> constructor(
+    internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
 ) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
@@ -122,13 +128,13 @@ internal class ManagedRealmSet<E>(
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmSet<E>? {
         return RealmInterop.realm_set_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
-            ManagedRealmSet(it, operator.copy(frozenRealm, it))
+            ManagedRealmSet(parent, it, operator.copy(frozenRealm, it))
         }
     }
 
     override fun thaw(liveRealm: RealmReference): ManagedRealmSet<E>? {
         return RealmInterop.realm_set_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
-            ManagedRealmSet(it, operator.copy(liveRealm, it))
+            ManagedRealmSet(parent, it, operator.copy(liveRealm, it))
         }
     }
 
@@ -166,6 +172,33 @@ internal class ManagedRealmSet<E>(
 
     internal fun isValid(): Boolean {
         return !nativePointer.isReleased() && RealmInterop.realm_set_is_valid(nativePointer)
+    }
+}
+
+internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
+    query: String,
+    args: Array<out Any?>
+): RealmQuery<E> {
+    val operator: RealmObjectSetOperator<E> = operator as RealmObjectSetOperator<E>
+    return ObjectQuery.tryCatchCoreException {
+        val queryPointer = inputScope {
+            val queryArgs = convertToQueryArgs(args)
+            RealmInterop.realm_query_parse_for_set(
+                this@query.nativePointer,
+                query,
+                queryArgs
+            )
+        }
+        ObjectBoundQuery(
+            parent,
+            ObjectQuery(
+                operator.realmReference,
+                operator.classKey,
+                operator.clazz,
+                operator.mediator,
+                queryPointer,
+            )
+        )
     }
 }
 
@@ -249,12 +282,13 @@ internal class PrimitiveSetOperator<E>(
         PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
 }
 
-internal class RealmObjectSetOperator<E>(
+internal class RealmObjectSetOperator<E> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val converter: RealmValueConverter<E>,
-    private val clazz: KClass<E & Any>,
-    private val nativePointer: RealmSetPointer
+    private val nativePointer: RealmSetPointer,
+    val clazz: KClass<E & Any>,
+    val classKey: ClassKey
 ) : SetOperator<E> {
 
     override fun add(
@@ -310,7 +344,7 @@ internal class RealmObjectSetOperator<E>(
     ): SetOperator<E> {
         val converter =
             converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectSetOperator(mediator, realmReference, converter, clazz, nativePointer)
+        return RealmObjectSetOperator(mediator, realmReference, converter, nativePointer, clazz, classKey)
     }
 }
 

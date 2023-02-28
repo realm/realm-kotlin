@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
@@ -722,6 +723,7 @@ actual object RealmInterop {
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
+        val collectionWasCleared = BooleanArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
@@ -729,7 +731,7 @@ actual object RealmInterop {
             insertionCount,
             modificationCount,
             movesCount,
-            SWIGTYPE_p_bool()
+            collectionWasCleared
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
@@ -997,6 +999,26 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_client_config_set_user_agent_binding_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        bindingInfo: String
+    ) {
+        realmc.realm_sync_client_config_set_user_agent_binding_info(
+            syncClientConfig.cptr(),
+            bindingInfo
+        )
+    }
+
+    actual fun realm_sync_client_config_set_user_agent_application_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        applicationInfo: String
+    ) {
+        realmc.realm_sync_client_config_set_user_agent_application_info(
+            syncClientConfig.cptr(),
+            applicationInfo
+        )
+    }
+
     actual fun realm_network_transport_new(networkTransport: NetworkTransport): RealmNetworkTransportPointer {
         return LongPointerWrapper(realmc.realm_network_transport_new(networkTransport))
     }
@@ -1062,6 +1084,9 @@ actual object RealmInterop {
     actual fun realm_sync_session_state(syncSession: RealmSyncSessionPointer): CoreSyncSessionState {
         return CoreSyncSessionState.of(realmc.realm_sync_session_get_state(syncSession.cptr()))
     }
+    actual fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState {
+        return CoreConnectionState.of(realmc.realm_sync_session_get_connection_state(syncSession.cptr()))
+    }
 
     actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
         realmc.realm_sync_session_pause(syncSession.cptr())
@@ -1104,6 +1129,19 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_session_register_connection_state_change_callback(
+        syncSession: RealmSyncSessionPointer,
+        callback: ConnectionStateChangeCallback,
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.realm_sync_session_register_connection_state_change_callback(
+                syncSession.cptr(),
+                callback
+            ),
+            managed = false
+        )
+    }
+
     @Suppress("LongParameterList")
     actual fun realm_app_config_new(
         appId: String,
@@ -1115,11 +1153,13 @@ actual object RealmInterop {
 
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
-        // From https://github.com/realm/realm-kotlin/issues/407
-        realmc.realm_app_config_set_local_app_name(config, "")
-        realmc.realm_app_config_set_local_app_version(config, "")
-
         // Sync Connection Parameters
+        connectionParams.localAppName?.let { appName ->
+            realmc.realm_app_config_set_local_app_name(config, appName)
+        }
+        connectionParams.localAppVersion?.let { appVersion ->
+            realmc.realm_app_config_set_local_app_name(config, appVersion)
+        }
         realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
         realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
         realmc.realm_app_config_set_platform(config, connectionParams.platform)
@@ -1271,6 +1311,22 @@ actual object RealmInterop {
         realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
     }
 
+    actual fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    ) {
+        realmc.realm_app_email_password_provider_client_call_reset_password_function(
+            app.cptr(),
+            email,
+            newPassword,
+            serializedEjsonPayload,
+            callback
+        )
+    }
+
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
             // Stop the session immediately when the Realm is closed, so the lifecycle of the
@@ -1346,6 +1402,22 @@ actual object RealmInterop {
         return LongPointerWrapper(
             realmc.realm_query_parse_for_list(
                 list.cptr(),
+                query,
+                count.toLong(),
+                args.second.value
+            )
+        )
+    }
+
+    actual fun realm_query_parse_for_set(
+        set: RealmSetPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return LongPointerWrapper(
+            realmc.realm_query_parse_for_set(
+                set.cptr(),
                 query,
                 count.toLong(),
                 args.second.value

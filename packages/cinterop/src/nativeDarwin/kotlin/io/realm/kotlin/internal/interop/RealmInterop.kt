@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
@@ -1131,6 +1132,22 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_query_parse_for_set(
+        set: RealmSetPointer,
+        query: String,
+        args: Pair<Int, RealmQueryArgsTransport>
+    ): RealmQueryPointer {
+        val count = args.first
+        return CPointerWrapper(
+            realm_wrapper.realm_query_parse_for_set(
+                set.cptr(),
+                query,
+                count.toULong(),
+                args.second.value.ptr
+            )
+        )
+    }
+
     actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
         memScoped {
             val found = alloc<BooleanVar>()
@@ -1472,7 +1489,7 @@ actual object RealmInterop {
             val deletionCount = allocArray<ULongVar>(1)
             val modificationCount = allocArray<ULongVar>(1)
             val movesCount = allocArray<ULongVar>(1)
-            val collectionCleared = alloc<BooleanVar>()
+            val collectionWasErased = alloc<BooleanVar>()
 
             realm_wrapper.realm_collection_changes_get_num_changes(
                 change.cptr(),
@@ -1480,7 +1497,7 @@ actual object RealmInterop {
                 insertionCount,
                 modificationCount,
                 movesCount,
-                collectionCleared.ptr
+                collectionWasErased.ptr
             )
 
             val deletionIndices = initArray<ULongVar>(deletionCount)
@@ -1995,6 +2012,26 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_sync_client_config_set_user_agent_binding_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        bindingInfo: String
+    ) {
+        realm_wrapper.realm_sync_client_config_set_user_agent_binding_info(
+            syncClientConfig.cptr(),
+            bindingInfo
+        )
+    }
+
+    actual fun realm_sync_client_config_set_user_agent_application_info(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        applicationInfo: String
+    ) {
+        realm_wrapper.realm_sync_client_config_set_user_agent_application_info(
+            syncClientConfig.cptr(),
+            applicationInfo
+        )
+    }
+
     actual fun realm_sync_config_set_error_handler(
         syncConfig: RealmSyncConfigurationPointer,
         errorHandler: SyncErrorCallback
@@ -2159,6 +2196,11 @@ actual object RealmInterop {
         return CoreSyncSessionState.of(value)
     }
 
+    actual fun realm_sync_connection_state(syncSession: RealmSyncSessionPointer): CoreConnectionState =
+        CoreConnectionState.of(
+            realm_wrapper.realm_sync_session_get_connection_state(syncSession.cptr()).value.toInt()
+        )
+
     actual fun realm_sync_session_pause(syncSession: RealmSyncSessionPointer) {
         realm_wrapper.realm_sync_session_pause(syncSession.cptr())
     }
@@ -2208,6 +2250,27 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_sync_session_register_connection_state_change_callback(
+        syncSession: RealmSyncSessionPointer,
+        callback: ConnectionStateChangeCallback,
+    ): RealmNotificationTokenPointer {
+        return CPointerWrapper(
+            realm_wrapper.realm_sync_session_register_connection_state_change_callback(
+                syncSession.cptr(),
+                staticCFunction<COpaquePointer?, realm_wrapper.realm_sync_connection_state, realm_wrapper.realm_sync_connection_state, Unit> { userData, oldState, newState ->
+                    safeUserData<ConnectionStateChangeCallback>(userData).run {
+                        onChange(oldState.value.toInt(), newState.value.toInt())
+                    }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<ConnectionStateChangeCallback>(userdata)
+                }
+            ),
+            managed = false
+        )
+    }
+
     private fun handleCompletionCallback(
         userData: CPointer<out CPointed>?,
         error: CPointer<realm_sync_error_code_t>?
@@ -2245,11 +2308,13 @@ actual object RealmInterop {
         val appConfig = realm_wrapper.realm_app_config_new(appId, networkTransport.cptr())
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
-        // From https://github.com/realm/realm-kotlin/issues/407
-        realm_wrapper.realm_app_config_set_local_app_name(appConfig, "")
-        realm_wrapper.realm_app_config_set_local_app_version(appConfig, "")
-
         // Sync Connection Parameters
+        connectionParams.localAppName?.let { appName ->
+            realm_wrapper.realm_app_config_set_local_app_name(appConfig, appName)
+        }
+        connectionParams.localAppVersion?.let { appVersion ->
+            realm_wrapper.realm_app_config_set_local_app_name(appConfig, appVersion)
+        }
         realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
         realm_wrapper.realm_app_config_set_sdk_version(appConfig, connectionParams.sdkVersion)
         realm_wrapper.realm_app_config_set_platform(appConfig, connectionParams.platform)
@@ -2497,6 +2562,30 @@ actual object RealmInterop {
             StableRef.create(callback).asCPointer(),
             staticCFunction { userData -> disposeUserData<AppCallback<String>>(userData) }
         )
+    }
+
+    actual fun realm_app_call_reset_password_function(
+        app: RealmAppPointer,
+        email: String,
+        newPassword: String,
+        serializedEjsonPayload: String,
+        callback: AppCallback<Unit>
+    ) {
+        memScoped {
+            checkedBooleanResult(
+                realm_wrapper.realm_app_email_password_provider_client_call_reset_password_function(
+                    app.cptr(),
+                    email,
+                    newPassword.toRString(this),
+                    serializedEjsonPayload,
+                    staticCFunction { userData, error ->
+                        handleAppCallback(userData, error) { /* No-op, returns Unit */ }
+                    },
+                    StableRef.create(callback).asCPointer(),
+                    staticCFunction { userData -> disposeUserData<AppCallback<Unit>>(userData) }
+                )
+            )
+        }
     }
 
     actual fun realm_sync_config_new(

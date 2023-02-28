@@ -16,10 +16,8 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.ktor.client.plugins.ClientRequestException
-import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
@@ -29,9 +27,8 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.SyncException
-import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
+import io.realm.kotlin.mongodb.sync.ConnectionState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
@@ -42,9 +39,12 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -311,70 +311,44 @@ class SyncSessionTests {
         }
     }
 
-    // SyncSessions available inside a syncClientResetStrategy are disconnected from the underlying
+    // SyncSessions available inside the error handler are disconnected from the underlying
     // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
     // just disallow calling these APIs from these instances.
     @Test
-    @Ignore // TODO remove ignore when the this is fixed https://github.com/realm/realm-kotlin/issues/867
     fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
-        val channel = Channel<SyncSession>(1)
-        var wrongSchemaRealm: Realm? = null
-        val job = async {
-
-            // Create server side Realm with one schema
-            var config = SyncConfiguration.Builder(
-                user,
-                partitionValue,
-                schema = setOf(ParentPk::class, ChildPk::class)
-            ).build()
-            val realm = Realm.open(config)
-            realm.syncSession.uploadAllLocalChanges()
-            realm.close()
-
-            // Create same Realm with another schema, which will cause a Client Reset.
-            config = SyncConfiguration.Builder(
-                user,
-                partitionValue,
-                schema = setOf(ParentPk::class, io.realm.kotlin.entities.sync.bogus.ChildPk::class)
-            ).name("new_realm.realm")
-                .syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
-                    @Suppress("TooGenericExceptionThrown")
-                    override fun onBeforeReset(realm: TypedRealm) {
-                        // TODO This approach doesn't work on native until these callbacks return a
-                        //  boolean - the exceptions make the thread crash on Kotlin Native
-                        throw Exception("Land on onError")
-                    }
-
-                    override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
-                        // Writing "fail("whatever") makes no sense here because Core will redirect
-                        // the execution to onError below
-                    }
-
-                    override fun onError(
-                        session: SyncSession,
-                        exception: ClientResetRequiredException
-                    ) {
-                        channel.trySend(session)
-                    }
-                }).build()
-            wrongSchemaRealm = Realm.open(config)
+        // Open Realm with a user that has no read nor write permissions
+        // See 'canWritePartition' in TestAppInitializer.kt.
+        val (email, password) = "test_nowrite_noread_${TestHelper.randomEmail()}" to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
         }
-        val session = channel.receive()
-        try {
-            assertFailsWith<IllegalStateException> {
-                session.uploadAllLocalChanges()
-            }.also {
-                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
+        val channel = Channel<SyncSession>(1).freeze()
+        val config = SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).errorHandler { session, _ ->
+            channel.trySend(session)
+        }.build()
+
+        runBlocking {
+            val deferred = async { Realm.open(config) }
+            val session = channel.receive()
+            try {
+                assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
+                    runBlocking {
+                        session.uploadAllLocalChanges()
+                    }
+                }
+                assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
+                    runBlocking {
+                        session.downloadAllServerChanges()
+                    }
+                }
+            } finally {
+                channel.close()
+                deferred.cancel()
             }
-            assertFailsWith<IllegalStateException> {
-                session.downloadAllServerChanges()
-            }.also {
-                assertTrue(it.message!!.contains("Uploading and downloading changes is not allowed"))
-            }
-        } finally {
-            wrongSchemaRealm?.close()
-            job.cancel()
-            channel.close()
         }
         Unit
     }
@@ -527,6 +501,9 @@ class SyncSessionTests {
             .build()
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
+        runBlocking {
+            realm1.syncSession.uploadAllLocalChanges()
+        }
 
         // Make sure to sync the realm with the server before opening the second instance
         runBlocking {
@@ -552,7 +529,7 @@ class SyncSessionTests {
 
             // Validate that the session was captured and that the configuration cannot be accessed.
             assertIs<SyncSession>(session)
-            assertFailsWithMessage<IllegalStateException>("The configuration is not available") {
+            assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a") {
                 session.configuration
             }
 
@@ -567,6 +544,54 @@ class SyncSessionTests {
         val config = createSyncConfig(user)
         Realm.open(config).use { realm: Realm ->
             assertSame(user, realm.syncSession.user)
+        }
+    }
+
+    @Test
+    fun connectionState() = runBlocking {
+        Realm.open(createSyncConfig(user)).use { realm: Realm ->
+            // We don't know what the state will be, but just verify that we can retrieve it
+            // without issues
+            assertNotNull(realm.syncSession.connectionState)
+        }
+    }
+
+    @Test
+    fun connectionState_asFlow() = runBlocking {
+        Realm.open(createSyncConfig(user)).use { realm: Realm ->
+            val flow = realm.syncSession.connectionStateAsFlow()
+            // Adopted from realm-java tests ...
+            // Sometimes the connection is already established and then we cannot expect any
+            // updates, but as this is highly likely just safely ignore this to avoid flaky tests
+            // on CI
+            try {
+                val (oldState, newState) = withTimeout(5.seconds) { flow.first() }
+                assertNotEquals(oldState, newState)
+                assertEquals(realm.syncSession.connectionState, newState)
+            } catch (e: TimeoutCancellationException) {
+                assertTrue { realm.syncSession.connectionState == ConnectionState.CONNECTED }
+                // Make some visible sign that we have skipped waiting for events
+                println("Skipping flow tests as connection is already established")
+            }
+        }
+    }
+
+    @Test
+    fun connectionState_completeOnClose() = runBlocking {
+        val realm = Realm.open(createSyncConfig(user))
+        try {
+            val flow1 = realm.syncSession.connectionStateAsFlow()
+            val job = async {
+                withTimeout(10.seconds) {
+                    flow1.collect { }
+                }
+            }
+            realm.close()
+            job.await()
+        } finally {
+            if (!realm.isClosed()) {
+                realm.close()
+            }
         }
     }
 
@@ -599,7 +624,6 @@ class SyncSessionTests {
         openSyncRealmWithPreconditions(null, block)
     }
 
-    @Suppress("LongParameterList")
     private fun createSyncConfig(
         user: User,
         name: String = DEFAULT_NAME,
