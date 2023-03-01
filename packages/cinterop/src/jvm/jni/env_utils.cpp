@@ -39,12 +39,12 @@ namespace realm {
                         void **jenv = (void **) &env;
                     #endif
                     JavaVMAttachArgs args;
+                    args.version = JNI_VERSION_1_2;
+                    args.group = nullptr;
                     if (thread_name.has_value()) {
-                        args = JavaVMAttachArgs {
-                            .version = JNI_VERSION_1_2,
-                            .name = thread_name->c_str(),
-                            .group = nullptr
-                        };
+                        args.name = thread_name->c_str();
+                    } else {
+                        args.name = nullptr;
                     }
                     jint ret;
                     if (is_daemon_thread) {
