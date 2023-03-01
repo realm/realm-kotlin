@@ -1,13 +1,30 @@
+/*
+ * Copyright 2023 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.kotlin.test
 
 import kotlin.test.Ignore
 import kotlin.test.Test
 
 /**
- * All classes (Realm, RealmObject, RealmResults, RealmList) that expose notifications should
- * implement this interface to be sure that we test common behaviour across those classes.
+ * All tests classes that tests classes exposing notifications (Realm, RealmObject, RealmResults,
+ * RealmList) should implement this interface to be sure that we test common behaviour across those
+ * classes.
  */
-interface NotificationTests {
+interface FlowableTests {
 
     // Verify that the initial element in a Flow is the element itself
     // TODO Is this the semantics we want?
@@ -21,11 +38,6 @@ interface NotificationTests {
     // Verify that a flow can be cancelled
     @Test
     fun cancelAsFlow()
-
-    // Verify that `null` is emitted and the Flow is closed whenever the object
-    // being observed is deleted.
-    @Test
-    fun deleteObservable()
 
     // Verify that closing the Realm while inside a flow throws an exception (I think)
     @Test

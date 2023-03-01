@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.Versioned
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
@@ -38,8 +39,7 @@ import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -62,7 +62,7 @@ internal class ManagedRealmList<E>(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmListPointer,
     val operator: ListOperator<E>,
-) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, CoreNotifiable<ManagedRealmList<E>, ListChange<E>>, Versioned by operator.realmReference {
 
     override val size: Int
         get() {
@@ -128,33 +128,30 @@ internal class ManagedRealmList<E>(
         return RealmInterop.realm_list_add_notification_callback(nativePointer, callback)
     }
 
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<ListChange<E>>
-    ): ChannelResult<Unit>? {
-        val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
-        return if (frozenList != null) {
-            val builder = ListChangeSetBuilderImpl(change)
-
-            if (builder.isEmpty()) {
-                channel.trySend(InitialListImpl(frozenList))
-            } else {
-                channel.trySend(UpdatedListImpl(frozenList, builder.build()))
-            }
-        } else {
-            channel.trySend(DeletedListImpl(UnmanagedRealmList()))
-                .also {
-                    channel.close()
-                }
-        }
-    }
+    override fun changeFlow(scope: ProducerScope<ListChange<E>>): ChangeFlow<ManagedRealmList<E>, ListChange<E>> =
+        RealmListChangeFlow(scope)
 
     // TODO from LifeCycle interface
     internal fun isValid(): Boolean =
         !nativePointer.isReleased() && RealmInterop.realm_list_is_valid(nativePointer)
 
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
+}
+
+internal class RealmListChangeFlow<E>(producerScope: ProducerScope<ListChange<E>>) :
+    ChangeFlow<ManagedRealmList<E>, ListChange<E>>(producerScope) {
+    override fun initial(frozenRef: ManagedRealmList<E>): ListChange<E> =
+        InitialListImpl(frozenRef)
+
+    override fun update(
+        frozenRef: ManagedRealmList<E>,
+        change: RealmChangesPointer
+    ): ListChange<E> {
+        val builder = ListChangeSetBuilderImpl(change)
+        return UpdatedListImpl(frozenRef, builder.build())
+    }
+
+    override fun delete(): ListChange<E> = DeletedListImpl(UnmanagedRealmList())
 }
 
 internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(

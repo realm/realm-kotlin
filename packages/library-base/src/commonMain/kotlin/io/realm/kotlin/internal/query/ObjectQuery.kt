@@ -16,14 +16,13 @@
 
 package io.realm.kotlin.internal.query
 
-import io.realm.kotlin.internal.Flowable
 import io.realm.kotlin.internal.InternalDeleteable
 import io.realm.kotlin.internal.Mediator
+import io.realm.kotlin.internal.Notifiable
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
-import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.asInternalDeleteable
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -49,7 +48,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     internal val queryPointer: RealmQueryPointer,
-) : RealmQuery<E>, InternalDeleteable, Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>>, Flowable<ResultsChange<E>> {
+) : RealmQuery<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>> {
 
     private val resultsPointer: RealmResultsPointer by lazy {
         RealmInterop.realm_query_find_all(queryPointer)
@@ -168,11 +167,10 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     override fun count(): RealmScalarQuery<Long> =
         CountQuery(realmReference, queryPointer, mediator, classKey, clazz)
 
-    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> =
-        thawResults(liveRealm, resultsPointer, classKey, clazz, mediator)
+    override fun notifiable(): Notifiable<RealmResultsImpl<E>, ResultsChange<E>> =
+        QueryResultNotifiable(resultsPointer, classKey, clazz, mediator)
 
     override fun asFlow(): Flow<ResultsChange<E>> {
-        realmReference.checkClosed()
         return realmReference.owner
             .registerObserver(this)
     }

@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.Versioned
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
@@ -38,8 +39,7 @@ import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmSet
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -63,7 +63,7 @@ internal class ManagedRealmSet<E> constructor(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, CoreNotifiable<ManagedRealmSet<E>, SetChange<E>>, Versioned by operator.realmReference {
 
     override val size: Int
         get() {
@@ -122,7 +122,6 @@ internal class ManagedRealmSet<E> constructor(
     }
 
     override fun asFlow(): Flow<SetChange<E>> {
-        operator.realmReference.checkClosed()
         return operator.realmReference.owner.registerObserver(this)
     }
 
@@ -144,27 +143,8 @@ internal class ManagedRealmSet<E> constructor(
         return RealmInterop.realm_set_add_notification_callback(nativePointer, callback)
     }
 
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<SetChange<E>>
-    ): ChannelResult<Unit>? {
-        val frozenSet: ManagedRealmSet<E>? = freeze(frozenRealm)
-        return if (frozenSet != null) {
-            val builder = SetChangeSetBuilderImpl(change)
-
-            if (builder.isEmpty()) {
-                channel.trySend(InitialSetImpl(frozenSet))
-            } else {
-                channel.trySend(UpdatedSetImpl(frozenSet, builder.build()))
-            }
-        } else {
-            channel.trySend(DeletedSetImpl(UnmanagedRealmSet()))
-                .also {
-                    channel.close()
-                }
-        }
-    }
+    override fun changeFlow(scope: ProducerScope<SetChange<E>>): ChangeFlow<ManagedRealmSet<E>, SetChange<E>> =
+        RealmSetChangeFlow(scope)
 
     override fun delete() {
         RealmInterop.realm_set_remove_all(nativePointer)
@@ -344,6 +324,18 @@ internal class RealmObjectSetOperator<E> constructor(
             converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
         return RealmObjectSetOperator(mediator, realmReference, converter, nativePointer, clazz, classKey)
     }
+}
+
+internal class RealmSetChangeFlow<E>(scope: ProducerScope<SetChange<E>>) :
+    ChangeFlow<ManagedRealmSet<E>, SetChange<E>>(scope) {
+    override fun initial(frozenRef: ManagedRealmSet<E>): SetChange<E> = InitialSetImpl(frozenRef)
+
+    override fun update(frozenRef: ManagedRealmSet<E>, change: RealmChangesPointer): SetChange<E>? {
+        val builder = SetChangeSetBuilderImpl(change)
+        return UpdatedSetImpl(frozenRef, builder.build())
+    }
+
+    override fun delete(): SetChange<E> = DeletedSetImpl(UnmanagedRealmSet())
 }
 
 internal fun <T> Array<out T>.asRealmSet(): RealmSet<T> =

@@ -19,11 +19,11 @@ package io.realm.kotlin.internal.query
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.Mediator
+import io.realm.kotlin.internal.Notifiable
 import io.realm.kotlin.internal.Observable
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.RealmResultsImpl
 import io.realm.kotlin.internal.RealmValueConverter
-import io.realm.kotlin.internal.Thawable
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -68,14 +68,15 @@ internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
     protected val mediator: Mediator,
     protected val classKey: ClassKey,
     protected val clazz: KClass<E>
-) : Thawable<Observable<RealmResultsImpl<E>, ResultsChange<E>>> {
+) : Observable<RealmResultsImpl<E>, ResultsChange<E>> {
 
-    override fun thaw(liveRealm: RealmReference): RealmResultsImpl<E> {
-        val liveDbPointer = liveRealm.dbPointer
-        val queryResults = RealmInterop.realm_query_find_all(queryPointer)
-        val liveResultPtr = RealmInterop.realm_results_resolve_in(queryResults, liveDbPointer)
-        return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
-    }
+    override fun notifiable(): Notifiable<RealmResultsImpl<E>, ResultsChange<E>> =
+        QueryResultNotifiable(
+            RealmInterop.realm_query_find_all(queryPointer),
+            classKey,
+            clazz,
+            mediator
+        )
 }
 
 /**

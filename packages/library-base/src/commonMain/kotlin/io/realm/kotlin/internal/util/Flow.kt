@@ -50,9 +50,7 @@ internal fun <T, S> Flow<T>.terminateWhen(
                         ?.let { this@channelFlow.cancel("Couldn't retrieve element", it) }
                     false
                 } else {
-                    this@channelFlow.trySendWithBufferOverflowCheck(it.getOrThrow())?.let {
-                        cancel(it)
-                    }
+                    this@channelFlow.trySendWithBufferOverflowCheck(it.getOrThrow())
                     true
                 }
             }
