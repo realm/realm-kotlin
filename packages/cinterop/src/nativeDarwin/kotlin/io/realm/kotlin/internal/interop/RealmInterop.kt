@@ -1953,7 +1953,7 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
+    actual fun realm_sync_client_config_new(appId: String): RealmSyncClientConfigurationPointer {
         return CPointerWrapper(realm_wrapper.realm_sync_client_config_new())
     }
 

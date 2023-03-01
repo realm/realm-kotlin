@@ -14,6 +14,7 @@
 * Accessing an invalidated `RealmResults` now throws an `IllegalStateException` instead of a `RealmException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Opening a Realm with a wrong encryption key or corrupted now throws an `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Trying to convert to a Flexible Sync Realm with Flexible Sync disabled throws a `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
+* [Sync] The underlying C++ thread controlling the Device Sync connection would leak when closing the Realm. (Issue (https://github.com/realm/realm-kotlin/issues/1290)[#1290])
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

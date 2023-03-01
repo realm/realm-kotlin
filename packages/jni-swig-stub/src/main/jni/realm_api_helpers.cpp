@@ -945,3 +945,40 @@ realm_value_t_cleanup(realm_value_t* value) {
             break;
     }
 }
+
+void
+realm_sync_thread_created(realm_userdata_t userdata) {
+    // Attach the sync client thread to the JVM so errors can be returned properly
+    // Note, we need to hardcode the name as there is no good way to inject it from JVM as that itself
+    // would require access to the JNiEnv.
+    auto env = get_env(true, false, util::Optional<std::string>("SyncThread"));
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::sync_thread_observer(), "onCreated", "()V");
+    jni_check_exception(env);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method);
+    jni_check_exception(env);
+}
+
+void
+realm_sync_thread_destroyed(realm_userdata_t userdata) {
+    auto env = get_env(true);
+    // Avoid touching any JNI methods if we have a pending exception
+    // otherwise we will crash with  "JNI called with pending exception" instead of the real
+    // error.
+    if (env->ExceptionCheck() == JNI_FALSE) {
+        static JavaMethod java_callback_method(env, JavaClassGlobalDef::sync_thread_observer(), "onDestroyed", "()V");
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method);
+        jni_check_exception(env);
+    }
+    // Cleanup Java thread associated with the Sync Client Thread, otherwise
+    // the JVM cannot cleanup shut down.
+    detach_current_thread();
+}
+
+void
+realm_sync_thread_error(realm_userdata_t userdata, const char* error) {
+    JNIEnv* env = get_env(true);
+    std::string msg = util::format("An exception has been thrown on the sync client thread:\n%1", error);
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::sync_thread_observer(), "onError", "(Ljava/lang/String;)V");
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, to_jstring(env, msg));
+    jni_check_exception(env);
+}

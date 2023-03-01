@@ -954,8 +954,33 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer {
-        return LongPointerWrapper(realmc.realm_sync_client_config_new())
+    actual fun realm_sync_client_config_new(appId: String): RealmSyncClientConfigurationPointer {
+        val ptr: RealmSyncClientConfigurationPointer = LongPointerWrapper(realmc.realm_sync_client_config_new())
+        realmc.realm_sync_client_config_set_default_binding_thread_observer(ptr.cptr(), object: SyncThreadObserver {
+            override fun threadName(): String {
+                return "SyncThread-$appId"
+            }
+
+            override fun onCreated() {
+                // We cannot set the name on JNI side as it would require access to JNIEnv before
+                // we attach it, so we set the thread name after it is created.
+                Thread.currentThread().name = threadName()
+            }
+
+            override fun onDestroyed() {
+                // Do nothing
+                // Thread is destroyed in the JNI side
+            }
+
+            override fun onError(error: String) {
+                // TODO Wait for https://github.com/realm/realm-core/issues/4194 to correctly
+                //  log errors. For now just print it. Throwing an exception is also a possibility
+                //  but it will tear down the app completely as it will be thrown out of context
+                //  so there is no way to catch it.
+                println("Error on sync thread: $error")
+            }
+        })
+        return ptr
     }
 
     actual fun realm_sync_client_config_set_base_file_path(

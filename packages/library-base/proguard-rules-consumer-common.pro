@@ -113,6 +113,10 @@
 -keep class io.realm.kotlin.internal.interop.ConnectionStateChangeCallback {
     *;
 }
+-keep class io.realm.kotlin.internal.interop.SyncThreadObserver {
+    *;
+}
+
 # Preserve Function<X> methods as they back various functional interfaces called from JNI
 -keep class kotlin.jvm.functions.Function* {
     *;
