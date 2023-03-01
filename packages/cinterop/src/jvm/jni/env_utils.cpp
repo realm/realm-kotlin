@@ -42,8 +42,7 @@ namespace realm {
                     args.version = JNI_VERSION_1_2;
                     args.group = nullptr;
                     if (thread_name.has_value()) {
-                        const char* name = thread_name->c_str();
-                        args.name = name;
+                        args.name = (char*) thread_name.value().c_str();
                     } else {
                         args.name = nullptr;
                     }
