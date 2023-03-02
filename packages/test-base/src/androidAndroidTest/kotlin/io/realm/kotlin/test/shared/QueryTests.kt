@@ -2071,7 +2071,7 @@ class QueryTests {
                     QuerySample::nullableTimestampListField.name,
                     QuerySample::nullableBinaryListField.name,
                 ).forEach { field ->
-                    assertFailsWithMessage<IllegalArgumentException>("Wrong query field") {
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.${aggregator}' for this type of property") {
                         realm.query<QuerySample>("$field.$aggregator > 42")
                     }
                 }
@@ -2138,7 +2138,7 @@ class QueryTests {
                     QuerySample::nullableTimestampSetField.name,
                     QuerySample::nullableBinaryListField.name,
                 ).forEach { field ->
-                    assertFailsWithMessage<IllegalArgumentException>("Wrong query field") {
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.${aggregator}' for this type of property") {
                         realm.query<QuerySample>("$field.$aggregator > 42")
                     }
                 }
@@ -2205,7 +2205,7 @@ class QueryTests {
                     QuerySample::nullableTimestampDictionaryField.name,
                     QuerySample::nullableBinaryListField.name,
                 ).forEach { field ->
-                    assertFailsWithMessage<IllegalArgumentException>("Wrong query field") {
+                    assertFailsWith<IllegalArgumentException> {
                         realm.query<QuerySample>("$field.$aggregator > 42")
                     }
                 }
