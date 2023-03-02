@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+package io.realm.kotlin.internal
+
+import kotlinx.coroutines.flow.Flow
 
 /**
- * Wrapper for C-API `realm_app_errno_client`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2553
+ * A __flowable__ is an internal entity that supports listening to changes on the type [T] as a
+ * [Flow].
  */
-expect enum class ClientErrorCode : CodeDescription {
-    RLM_APP_ERR_CLIENT_USER_NOT_FOUND,
-    RLM_APP_ERR_CLIENT_USER_NOT_LOGGED_IN,
-    RLM_APP_ERR_CLIENT_APP_DEALLOCATED;
-
-    companion object {
-        internal fun of(nativeValue: Int): ClientErrorCode?
-    }
+internal interface Flowable<T> {
+    fun asFlow(): Flow<T>
 }

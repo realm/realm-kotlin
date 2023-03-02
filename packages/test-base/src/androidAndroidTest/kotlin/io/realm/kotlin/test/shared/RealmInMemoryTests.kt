@@ -8,6 +8,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.async
@@ -143,7 +144,7 @@ class RealmInMemoryTests {
             .encryptionKey(randomKey)
             .build()
             .let { conf ->
-                assertFailsWith(IllegalArgumentException::class, "Encrypted Realm should not be openable with a wrong encryption key") {
+                assertFailsWithMessage<IllegalStateException>("Failed to open Realm file at path") {
                     Realm.open(conf)
                 }
             }

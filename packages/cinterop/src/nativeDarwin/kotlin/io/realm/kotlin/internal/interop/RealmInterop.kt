@@ -147,11 +147,16 @@ private fun throwOnError() {
     memScoped {
         val error = alloc<realm_error_t>()
         if (realm_get_last_error(error.ptr)) {
-            val message = "[${error.error}]: ${error.message?.toKString()}"
-            val exception = coreErrorAsThrowable(error.error, message)
 
-            realm_clear_last_error()
-            throw exception
+            throw CoreErrorConverter.asThrowable(
+                categoriesNativeValue = error.categories.toInt(),
+                errorCodeNativeValue = error.error.value.toInt(),
+                messageNativeValue = error.message?.toKString(),
+                path = error.path?.toKString(),
+                userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
+            ).also {
+                realm_clear_last_error()
+            }
         }
     }
 }
@@ -522,8 +527,13 @@ actual object RealmInterop {
                     if (error != null) {
                         val err = alloc<realm_error_t>()
                         realm_wrapper.realm_get_async_error(error, err.ptr)
-                        val message = "[${err.error}]: ${err.message?.toKString()}"
-                        exception = coreErrorAsThrowable(err.error, message)
+                        exception = CoreErrorConverter.asThrowable(
+                            categoriesNativeValue = err.categories.toInt(),
+                            errorCodeNativeValue = err.error.value.toInt(),
+                            messageNativeValue = err.message?.toKString(),
+                            path = err.path?.toKString(),
+                            userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
+                        )
                     } else {
                         realm_wrapper.realm_release(realm)
                     }
@@ -2499,7 +2509,7 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode.nativeValue,
+            errorCode.nativeValue.toInt(),
             category.nativeValue,
             errorMessage,
             isFatal
@@ -3234,8 +3244,8 @@ actual object RealmInterop {
         } else {
             val err: realm_app_error_t = error.pointed
             val ex = AppError.newInstance(
-                err.error_category.value.toInt(),
-                err.error_code,
+                err.categories.toInt(),
+                err.error.value.toInt(),
                 err.http_status_code,
                 err.message?.toKString(),
                 err.link_to_server_logs?.toKString()

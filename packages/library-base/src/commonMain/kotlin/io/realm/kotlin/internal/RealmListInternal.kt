@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.Versioned
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
@@ -38,8 +39,7 @@ import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -62,7 +62,7 @@ internal class ManagedRealmList<E>(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmListPointer,
     val operator: ListOperator<E>,
-) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, Observable<ManagedRealmList<E>, ListChange<E>>, Flowable<ListChange<E>> {
+) : AbstractMutableList<E>(), RealmList<E>, InternalDeleteable, CoreNotifiable<ManagedRealmList<E>, ListChange<E>>, Versioned by operator.realmReference {
 
     override val size: Int
         get() {
@@ -72,25 +72,11 @@ internal class ManagedRealmList<E>(
 
     override fun get(index: Int): E {
         operator.realmReference.checkClosed()
-        try {
-            return operator.get(index)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not get element at list index $index",
-            )
-        }
+        return operator.get(index)
     }
 
     override fun add(index: Int, element: E) {
-        try {
-            operator.insert(index, element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not add element at list index $index",
-            )
-        }
+        operator.insert(index, element)
     }
 
     // We need explicit overrides of these to ensure that we capture duplicate references to the
@@ -111,26 +97,12 @@ internal class ManagedRealmList<E>(
 
     override fun removeAt(index: Int): E = get(index).also {
         operator.realmReference.checkClosed()
-        try {
-            RealmInterop.realm_list_erase(nativePointer, index.toLong())
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not remove element at list index $index",
-            )
-        }
+        RealmInterop.realm_list_erase(nativePointer, index.toLong())
     }
 
     override fun set(index: Int, element: E): E {
         operator.realmReference.checkClosed()
-        try {
-            return operator.set(index, element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not set list element at list index $index",
-            )
-        }
+        return operator.set(index, element)
     }
 
     override fun asFlow(): Flow<ListChange<E>> {
@@ -156,27 +128,8 @@ internal class ManagedRealmList<E>(
         return RealmInterop.realm_list_add_notification_callback(nativePointer, callback)
     }
 
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<ListChange<E>>
-    ): ChannelResult<Unit>? {
-        val frozenList: ManagedRealmList<E>? = freeze(frozenRealm)
-        return if (frozenList != null) {
-            val builder = ListChangeSetBuilderImpl(change)
-
-            if (builder.isEmpty()) {
-                channel.trySend(InitialListImpl(frozenList))
-            } else {
-                channel.trySend(UpdatedListImpl(frozenList, builder.build()))
-            }
-        } else {
-            channel.trySend(DeletedListImpl(UnmanagedRealmList()))
-                .also {
-                    channel.close()
-                }
-        }
-    }
+    override fun changeFlow(scope: ProducerScope<ListChange<E>>): ChangeFlow<ManagedRealmList<E>, ListChange<E>> =
+        RealmListChangeFlow(scope)
 
     // TODO from LifeCycle interface
     internal fun isValid(): Boolean =
@@ -185,31 +138,49 @@ internal class ManagedRealmList<E>(
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
 }
 
+internal class RealmListChangeFlow<E>(producerScope: ProducerScope<ListChange<E>>) :
+    ChangeFlow<ManagedRealmList<E>, ListChange<E>>(producerScope) {
+    override fun initial(frozenRef: ManagedRealmList<E>): ListChange<E> =
+        InitialListImpl(frozenRef)
+
+    override fun update(
+        frozenRef: ManagedRealmList<E>,
+        change: RealmChangesPointer
+    ): ListChange<E> {
+        val builder = ListChangeSetBuilderImpl(change)
+        return UpdatedListImpl(frozenRef, builder.build())
+    }
+
+    override fun delete(): ListChange<E> = DeletedListImpl(UnmanagedRealmList())
+}
+
 internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
     query: String,
     args: Array<out Any?>
 ): RealmQuery<E> {
     val operator: BaseRealmObjectListOperator<E> = operator as BaseRealmObjectListOperator<E>
-    return ObjectQuery.tryCatchCoreException {
-        val queryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args)
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        try {
             RealmInterop.realm_query_parse_for_list(
                 this@query.nativePointer,
                 query,
                 queryArgs
             )
+        } catch (e: IndexOutOfBoundsException) {
+            throw IllegalArgumentException(e.message, e.cause)
         }
-        ObjectBoundQuery(
-            parent,
-            ObjectQuery(
-                operator.realmReference,
-                operator.classKey,
-                operator.clazz,
-                operator.mediator,
-                queryPointer,
-            )
-        )
     }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer,
+        )
+    )
 }
 
 // Cloned from https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/collections/AbstractList.kt

@@ -30,8 +30,7 @@ import io.realm.kotlin.notifications.internal.DeletedObjectImpl
 import io.realm.kotlin.notifications.internal.InitialObjectImpl
 import io.realm.kotlin.notifications.internal.UpdatedObjectImpl
 import io.realm.kotlin.types.BaseRealmObject
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -41,6 +40,7 @@ import kotlin.reflect.KClass
  *
  * It contains a pointer to the object and it is the main entry point to the Realm object features.
  */
+// TODO Public due to being a transitive dependency of RealmObjectInternal
 public class RealmObjectReference<T : BaseRealmObject>(
     public val className: String,
     public val type: KClass<T>,
@@ -51,8 +51,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
     RealmStateHolder,
     RealmObjectInterop,
     InternalDeleteable,
-    Observable<RealmObjectReference<out BaseRealmObject>, ObjectChange<out BaseRealmObject>>,
-    Flowable<ObjectChange<out BaseRealmObject>> {
+    CoreNotifiable<RealmObjectReference<T>, ObjectChange<T>> {
 
     public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
 
@@ -80,28 +79,28 @@ public class RealmObjectReference<T : BaseRealmObject>(
 
     override fun freeze(
         frozenRealm: RealmReference
-    ): RealmObjectReference<out BaseRealmObject>? {
+    ): RealmObjectReference<T>? {
         return RealmInterop.realm_object_resolve_in(
             objectPointer,
             frozenRealm.dbPointer
         )?.let { pointer: RealmObjectPointer ->
             newObjectReference(frozenRealm, pointer)
-        }
+        } as RealmObjectReference<T>?
     }
 
-    override fun thaw(liveRealm: RealmReference): RealmObjectReference<out BaseRealmObject>? {
+    override fun thaw(liveRealm: RealmReference): RealmObjectReference<T>? {
         return thaw(liveRealm, type)
     }
 
     public fun thaw(
         liveRealm: RealmReference,
         clazz: KClass<out BaseRealmObject>
-    ): RealmObjectReference<out BaseRealmObject>? {
+    ): RealmObjectReference<T>? {
         val dbPointer = liveRealm.dbPointer
         return RealmInterop.realm_object_resolve_in(objectPointer, dbPointer)
             ?.let { pointer: RealmObjectPointer ->
                 newObjectReference(liveRealm, pointer, clazz)
-            }
+            } as RealmObjectReference<T>?
     }
 
     override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
@@ -112,33 +111,10 @@ public class RealmObjectReference<T : BaseRealmObject>(
         )
     }
 
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<ObjectChange<out BaseRealmObject>>
-    ): ChannelResult<Unit>? {
-        val frozenObject: RealmObjectReference<out BaseRealmObject>? = this.freeze(frozenRealm)
+    override fun changeFlow(scope: ProducerScope<ObjectChange<T>>): ChangeFlow<RealmObjectReference<T>, ObjectChange<T>> =
+        ObjectChangeFlow(scope)
 
-        return if (frozenObject == null) {
-            channel
-                .trySend(DeletedObjectImpl())
-                .also {
-                    channel.close()
-                }
-        } else {
-            val changedFieldNames = frozenObject.getChangedFieldNames(change)
-            val obj: BaseRealmObject = frozenObject.toRealmObject()
-
-            // We can identify the initial ObjectChange event emitted by core because it has no changed fields.
-            if (changedFieldNames.isEmpty()) {
-                channel.trySend(InitialObjectImpl(obj))
-            } else {
-                channel.trySend(UpdatedObjectImpl(obj, changedFieldNames))
-            }
-        }
-    }
-
-    private fun getChangedFieldNames(
+    internal fun getChangedFieldNames(
         change: RealmChangesPointer
     ): Array<String> {
         return RealmInterop.realm_object_changes_get_modified_properties(
@@ -148,7 +124,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
         }.toTypedArray()
     }
 
-    override fun asFlow(): Flow<ObjectChange<out BaseRealmObject>> {
+    override fun asFlow(): Flow<ObjectChange<T>> {
         return this.owner.owner.registerObserver(this)
     }
 
@@ -192,4 +168,24 @@ internal fun <T : BaseRealmObject> RealmObjectReference<T>.checkNotificationsAva
     if (!isValid()) {
         throw IllegalStateException("Changes cannot be observed on objects that have been deleted from the Realm.")
     }
+}
+
+internal class ObjectChangeFlow<E : BaseRealmObject>(scope: ProducerScope<ObjectChange<E>>) :
+    ChangeFlow<RealmObjectReference<E>, ObjectChange<E>>(scope) {
+
+    override fun initial(frozenRef: RealmObjectReference<E>): ObjectChange<E> {
+        val obj: E = frozenRef.toRealmObject()
+        return InitialObjectImpl(obj)
+    }
+
+    override fun update(
+        frozenRef: RealmObjectReference<E>,
+        change: RealmChangesPointer
+    ): ObjectChange<E> {
+        val obj: E = frozenRef.toRealmObject()
+        val changedFieldNames = frozenRef.getChangedFieldNames(change)
+        return UpdatedObjectImpl(obj, changedFieldNames)
+    }
+
+    override fun delete(): ObjectChange<E> = DeletedObjectImpl()
 }
