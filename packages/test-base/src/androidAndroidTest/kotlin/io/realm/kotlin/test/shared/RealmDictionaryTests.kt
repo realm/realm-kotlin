@@ -2380,7 +2380,7 @@ internal abstract class ManagedDictionaryTester<T>(
             // TODO https://github.com/realm/realm-kotlin/issues/1097
             //  Ignore RealmObject: this type cannot be removed using the removeAll API
             if (classifier != RealmObject::class) {
-                assertFailsWith<java.lang.IllegalStateException> {
+                assertFailsWith<IllegalStateException> {
                     values.removeAll(values)
                 }
             }
