@@ -323,8 +323,8 @@ See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L20txt) for the latest versio
 # Version Compatibility Matrix
 
 With Kotlin Multiplatform [still in Beta](https://kotlinlang.org/docs/components-stability.html#current-stability-of-kotlin-components) 
-and the Compiler Plugin APIs experimental there might be restrictions on what versions of Kotlin that the Realm Kotlin
-SDK can support. In the below matrix, you can find the list of dependencies that Realm depends on.
+and the Compiler Plugin APIs being experimental, there might be restrictions on what versions of Kotlin the Realm Kotlin
+SDK supports. In the matrix below, you will find the minimum supported version for the dependencies of each Realm release.
 
 | Realm Version | Requirements                                                                                                                                                                                             |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
