@@ -21,7 +21,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
-import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryEntryOf
@@ -600,9 +599,6 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
-    // TODO these will probably fail once we integrate Core's unified error handling and remove
-    //  the calls to RealmReference.checkClosed() so keep an eye that
-    //  https://github.com/realm/realm-kotlin/pull/1188
     fun closedRealm_readFails() {
         val realm = getCloseableRealm()
 
@@ -1308,7 +1304,7 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
             val instance = copyToRealm(RealmDictionaryContainer())
             val objectDictionaryField = instance.nullableObjectDictionaryField
             delete(instance)
-            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            assertFailsWithMessage<IllegalStateException>("Dictionary is no longer valid") {
                 objectDictionaryField.query()
             }
         }
@@ -1853,9 +1849,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 .also { iterator ->
                     iterator.next()
 
-                    // TODO revisit exception assertion once unified error handling is merged
-                    //  https://github.com/realm/realm-kotlin/pull/1188
-                    assertFailsWith<RealmException> {
+                    assertFailsWith<IllegalStateException> {
                         iterator.remove()
                     }
                 }
@@ -1973,9 +1967,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertFalse(entries.remove(alreadyDeleted))
 
                 // Removing something that is the dictionary throws outside a transaction
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<IllegalStateException> {
                     entries.remove(realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second))
                 }
             }
@@ -2033,9 +2025,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 val shouldThrow = listOf(
                     realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second),
                 )
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<IllegalStateException> {
                     entries.removeAll(shouldThrow)
                 }
             }
@@ -2157,9 +2147,7 @@ internal abstract class ManagedDictionaryTester<T>(
         assertContainerAndCleanup { container ->
             val dictionary = typeSafetyManager.getCollection(container)
             val values = dictionary.values
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 values.clear()
             }
             assertTrue(values.isEmpty())
@@ -2241,17 +2229,13 @@ internal abstract class ManagedDictionaryTester<T>(
         assertContainerAndCleanup { container ->
             val dictionary = typeSafetyManager.getCollection(container)
             val values = dictionary.values
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 values.clear()
             }
 
             val iterator = values.iterator()
             iterator.next()
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 iterator.remove()
             }
         }
@@ -2357,9 +2341,7 @@ internal abstract class ManagedDictionaryTester<T>(
             // TODO https://github.com/realm/realm-kotlin/issues/1097
             //  Ignore RealmObject: this type cannot be removed using the remove API
             if (classifier != RealmObject::class) {
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<IllegalStateException> {
                     values.remove(dataSet[1].second)
                 }
             }
@@ -2398,9 +2380,7 @@ internal abstract class ManagedDictionaryTester<T>(
             // TODO https://github.com/realm/realm-kotlin/issues/1097
             //  Ignore RealmObject: this type cannot be removed using the removeAll API
             if (classifier != RealmObject::class) {
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<java.lang.IllegalStateException> {
                     values.removeAll(values)
                 }
             }
@@ -2720,17 +2700,13 @@ internal abstract class ManagedDictionaryTester<T>(
         assertContainerAndCleanup { container ->
             val dictionary = typeSafetyManager.getCollection(container)
             val keys = dictionary.keys
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 keys.clear()
             }
 
             val iterator = keys.iterator()
             iterator.next()
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 iterator.remove()
             }
         }
