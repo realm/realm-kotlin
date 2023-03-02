@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.Versioned
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
@@ -39,16 +40,16 @@ import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.MapChange
+import io.realm.kotlin.notifications.MapChangeSet
 import io.realm.kotlin.notifications.internal.DeletedDictionaryImpl
 import io.realm.kotlin.notifications.internal.InitialDictionaryImpl
-import io.realm.kotlin.notifications.internal.UpdatedDictionaryImpl
+import io.realm.kotlin.notifications.internal.UpdatedMapImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -60,7 +61,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmMapPointer,
     val operator: MapOperator<K, V>
-) : AbstractMutableMap<K, V>(), RealmMap<K, V>, Observable<ManagedRealmMap<K, V>, MapChange<K, V>>, Flowable<MapChange<K, V>> {
+) : AbstractMutableMap<K, V>(), RealmMap<K, V>, CoreNotifiable<ManagedRealmMap<K, V>, MapChange<K, V>>, Flowable<MapChange<K, V>> {
 
     private val keysPointer by lazy { RealmInterop.realm_dictionary_get_keys(nativePointer) }
     private val valuesPointer by lazy { RealmInterop.realm_dictionary_to_results(nativePointer) }
@@ -121,23 +122,21 @@ internal fun <K, V : BaseRealmObject> ManagedRealmMap<K, V?>.query(
 ): RealmQuery<V> {
     @Suppress("UNCHECKED_CAST")
     val operator: BaseRealmObjectMapOperator<K, V> = operator as BaseRealmObjectMapOperator<K, V>
-    return ObjectQuery.tryCatchCoreException {
-        val queryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args)
-            val mapValues = values as RealmMapValues<*, *>
-            RealmInterop.realm_query_parse_for_results(mapValues.resultsPointer, query, queryArgs)
-        }
-        ObjectBoundQuery(
-            parent,
-            ObjectQuery(
-                operator.realmReference,
-                operator.classKey,
-                operator.clazz,
-                operator.mediator,
-                queryPointer
-            )
-        )
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        val mapValues = values as RealmMapValues<*, *>
+        RealmInterop.realm_query_parse_for_results(mapValues.resultsPointer, query, queryArgs)
     }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer
+        )
+    )
 }
 
 /**
@@ -643,7 +642,7 @@ internal class ManagedRealmDictionary<V> constructor(
     parent: RealmObjectReference<*>,
     nativePointer: RealmMapPointer,
     operator: MapOperator<String, V>
-) : ManagedRealmMap<String, V>(parent, nativePointer, operator), RealmDictionary<V> {
+) : ManagedRealmMap<String, V>(parent, nativePointer, operator), RealmDictionary<V>, Versioned by operator.realmReference {
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmDictionary<V>? {
         return RealmInterop.realm_dictionary_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
@@ -651,31 +650,12 @@ internal class ManagedRealmDictionary<V> constructor(
         }
     }
 
+    override fun changeFlow(scope: ProducerScope<MapChange<String, V>>): ChangeFlow<ManagedRealmMap<String, V>, MapChange<String, V>> =
+        RealmDictonaryChangeFlow<V>(scope)
+
     override fun thaw(liveRealm: RealmReference): ManagedRealmDictionary<V>? {
         return RealmInterop.realm_dictionary_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
             ManagedRealmDictionary(parent, it, operator.copy(liveRealm, it))
-        }
-    }
-
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<MapChange<String, V>>
-    ): ChannelResult<Unit>? {
-        val frozenDictionary: ManagedRealmDictionary<V>? = freeze(frozenRealm)
-        return if (frozenDictionary != null) {
-            val builder = DictionaryChangeSetBuilderImpl(change)
-
-            if (builder.isEmpty()) {
-                channel.trySend(InitialDictionaryImpl(frozenDictionary))
-            } else {
-                channel.trySend(UpdatedDictionaryImpl(frozenDictionary, builder.build()))
-            }
-        } else {
-            channel.trySend(DeletedDictionaryImpl(UnmanagedRealmDictionary()))
-                .also {
-                    channel.close()
-                }
         }
     }
 
@@ -687,6 +667,21 @@ internal class ManagedRealmDictionary<V> constructor(
     }
 
     // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
+}
+
+internal class RealmDictonaryChangeFlow<V>(scope: ProducerScope<MapChange<String, V>>) :
+    ChangeFlow<ManagedRealmMap<String, V>, MapChange<String, V>>(scope) {
+    override fun initial(frozenRef: ManagedRealmMap<String, V>): MapChange<String, V> = InitialDictionaryImpl(frozenRef)
+
+    override fun update(
+        frozenRef: ManagedRealmMap<String, V>,
+        change: RealmChangesPointer
+    ): MapChange<String, V>? {
+        val builder: MapChangeSet<String> = DictionaryChangeSetBuilderImpl(change).build()
+        return UpdatedMapImpl(frozenRef, builder)
+    }
+
+    override fun delete(): MapChange<String, V> = DeletedDictionaryImpl<V>(UnmanagedRealmDictionary<V>())
 }
 
 // ----------------------------------------------------------------------

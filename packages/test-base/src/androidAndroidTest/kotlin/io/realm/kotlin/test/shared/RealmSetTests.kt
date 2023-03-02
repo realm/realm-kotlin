@@ -607,7 +607,7 @@ class RealmSetTests : CollectionQueryTests {
             val instance = copyToRealm(RealmSetContainer())
             val objectSetField = instance.objectSetField
             delete(instance)
-            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            assertFailsWithMessage<IllegalStateException>("Set is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed.") {
                 objectSetField.query()
             }
         }
@@ -620,7 +620,7 @@ class RealmSetTests : CollectionQueryTests {
         val objectSetField = container.objectSetField
         realm.close()
 
-        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+        assertFailsWithMessage<IllegalStateException>("Set is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed.") {
             objectSetField.query()
         }
         Unit

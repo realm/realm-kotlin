@@ -308,44 +308,32 @@ class QueryTests {
 
     @Test
     fun find_realm_malformedQueryThrows() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Request for argument at index 0 but no arguments are provided") {
             realm.query<QuerySample>("stringField = $0")
-        }.let {
-            assertTrue(it.message!!.contains("Have you specified all parameters"))
         }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Unsupported comparison between type 'string' and type 'int'") {
             realm.query<QuerySample>("stringField = 42")
-        }.let {
-            assertTrue(it.message!!.contains("Wrong query field"))
         }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("'QuerySample' has no property 'nonExistingField'") {
             realm.query<QuerySample>("nonExistingField = 13")
-        }.let {
-            assertTrue(it.message!!.contains("Wrong query field"))
         }
     }
 
     @Test
     fun find_mutableRealm_malformedQueryThrows() {
         realm.writeBlocking {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("Request for argument at index 0 but no arguments are provided") {
                 query<QuerySample>("stringField = $0")
-            }.let {
-                assertTrue(it.message!!.contains("Have you specified all parameters"))
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("Unsupported comparison between type 'string' and type 'int'") {
                 query<QuerySample>("stringField = 42")
-            }.let {
-                assertTrue(it.message!!.contains("Wrong query field"))
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("'QuerySample' has no property 'nonExistingField'") {
                 query<QuerySample>("nonExistingField = 13")
-            }.let {
-                assertTrue(it.message!!.contains("Wrong query field"))
             }
         }
     }
@@ -2083,7 +2071,7 @@ class QueryTests {
                     QuerySample::nullableTimestampListField.name,
                     QuerySample::nullableBinaryListField.name,
                 ).forEach { field ->
-                    assertFailsWithMessage<IllegalArgumentException>("Wrong query field") {
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.$aggregator' for this type of property") {
                         realm.query<QuerySample>("$field.$aggregator > 42")
                     }
                 }
@@ -2150,7 +2138,7 @@ class QueryTests {
                     QuerySample::nullableTimestampSetField.name,
                     QuerySample::nullableBinaryListField.name,
                 ).forEach { field ->
-                    assertFailsWithMessage<IllegalArgumentException>("Wrong query field") {
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.$aggregator' for this type of property") {
                         realm.query<QuerySample>("$field.$aggregator > 42")
                     }
                 }
@@ -2217,7 +2205,7 @@ class QueryTests {
                     QuerySample::nullableTimestampDictionaryField.name,
                     QuerySample::nullableBinaryListField.name,
                 ).forEach { field ->
-                    assertFailsWithMessage<IllegalArgumentException>("Wrong query field") {
+                    assertFailsWith<IllegalArgumentException> {
                         realm.query<QuerySample>("$field.$aggregator > 42")
                     }
                 }

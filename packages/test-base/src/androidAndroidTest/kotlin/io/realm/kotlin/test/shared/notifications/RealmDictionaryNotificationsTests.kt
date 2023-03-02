@@ -25,14 +25,17 @@ import io.realm.kotlin.notifications.DeletedMap
 import io.realm.kotlin.notifications.InitialMap
 import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.notifications.UpdatedMap
-import io.realm.kotlin.test.NotificationTests
+import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.DICTIONARY_KEYS_FOR_NULLABLE
 import io.realm.kotlin.test.shared.NULLABLE_DICTIONARY_OBJECT_VALUES
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -42,8 +45,9 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.seconds
 
-class RealmDictionaryNotificationsTests : NotificationTests {
+class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -67,6 +71,89 @@ class RealmDictionaryNotificationsTests : NotificationTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    override fun deleteEntity() {
+        runBlocking {
+            // Freeze values since native complains if we reference a package-level defined variable
+            // inside a write block
+            val values = NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
+                Pair(keys[i], value)
+            }.freeze()
+            val channel1 = Channel<MapChange<String, *>>(capacity = 1)
+            val channel2 = Channel<Boolean>(capacity = 1)
+            val container = realm.write {
+                copyToRealm(
+                    RealmDictionaryContainer().apply {
+                        nullableObjectDictionaryField.putAll(values)
+                    }
+                )
+            }
+            val observer = async {
+                container.nullableObjectDictionaryField
+                    .asFlow()
+                    .onCompletion {
+                        // Signal completion
+                        channel2.send(true)
+                    }.collect { mapChange ->
+                        channel1.send(mapChange)
+                    }
+            }
+
+            // Assert container got populated correctly
+            channel1.receive().let { mapChange ->
+                assertIs<InitialMap<String, *>>(mapChange)
+
+                assertNotNull(mapChange.map)
+                assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, mapChange.map.size)
+            }
+
+            // Now delete owner
+            realm.write {
+                delete(findLatest(container)!!)
+            }
+
+            channel1.receive().let { mapChange ->
+                assertIs<DeletedMap<String, *>>(mapChange)
+                assertTrue(mapChange.map.isEmpty())
+            }
+            // Wait for flow completion
+            assertTrue(channel2.receive())
+
+            observer.cancel()
+            channel1.close()
+        }
+    }
+
+    override fun asFlowOnDeleteEntity() {
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+            val mutex = Mutex(true)
+            val flow = async {
+                container.stringDictionaryField.asFlow().first {
+                    mutex.unlock()
+                    it is DeletedMap<*, *>
+                }
+            }
+
+            // Await that flow is actually running
+            mutex.lock()
+            // And delete containing entity
+            realm.write { delete(findLatest(container)!!) }
+
+            // Await that notifier has signalled the deletion so we are certain that the entity
+            // has been deleted
+            withTimeout(10.seconds) {
+                flow.await()
+            }
+
+            // Verify that a flow on the deleted entity will signal a deletion and complete gracefully
+            withTimeout(10.seconds) {
+                container.stringDictionaryField.asFlow().collect {
+                    assertIs<DeletedMap<*, *>>(it)
+                }
+            }
+        }
     }
 
     @Test
@@ -308,59 +395,6 @@ class RealmDictionaryNotificationsTests : NotificationTests {
             observer2.cancel()
             channel1.close()
             channel2.close()
-        }
-    }
-
-    @Test
-    override fun deleteObservable() {
-        runBlocking {
-            // Freeze values since native complains if we reference a package-level defined variable
-            // inside a write block
-            val values = NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
-                Pair(keys[i], value)
-            }.freeze()
-            val channel1 = Channel<MapChange<String, *>>(capacity = 1)
-            val channel2 = Channel<Boolean>(capacity = 1)
-            val container = realm.write {
-                copyToRealm(
-                    RealmDictionaryContainer().apply {
-                        nullableObjectDictionaryField.putAll(values)
-                    }
-                )
-            }
-            val observer = async {
-                container.nullableObjectDictionaryField
-                    .asFlow()
-                    .onCompletion {
-                        // Signal completion
-                        channel2.send(true)
-                    }.collect { mapChange ->
-                        channel1.send(mapChange)
-                    }
-            }
-
-            // Assert container got populated correctly
-            channel1.receive().let { mapChange ->
-                assertIs<InitialMap<String, *>>(mapChange)
-
-                assertNotNull(mapChange.map)
-                assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, mapChange.map.size)
-            }
-
-            // Now delete owner
-            realm.write {
-                delete(findLatest(container)!!)
-            }
-
-            channel1.receive().let { mapChange ->
-                assertIs<DeletedMap<String, *>>(mapChange)
-                assertTrue(mapChange.map.isEmpty())
-            }
-            // Wait for flow completion
-            assertTrue(channel2.receive())
-
-            observer.cancel()
-            channel1.close()
         }
     }
 

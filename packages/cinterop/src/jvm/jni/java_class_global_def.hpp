@@ -59,7 +59,7 @@ private:
         , m_io_realm_kotlin_internal_interop_subscription_set_callback(env, "io/realm/kotlin/internal/interop/SubscriptionSetCallback", false)
         , m_io_realm_kotlin_internal_interop_sync_before_client_reset_handler(env, "io/realm/kotlin/internal/interop/SyncBeforeClientResetHandler", false)
         , m_io_realm_kotlin_internal_interop_sync_after_client_reset_handler(env, "io/realm/kotlin/internal/interop/SyncAfterClientResetHandler", false)
-        , m_io_realm_kotlin_internal_interop_core_error_utils(env, "io/realm/kotlin/internal/interop/CoreErrorUtils", false)
+        , m_io_realm_kotlin_internal_interop_core_error_converter(env, "io/realm/kotlin/internal/interop/CoreErrorConverter", false)
         , m_io_realm_kotlin_internal_interop_sync_async_open_callback(env, "io/realm/kotlin/internal/interop/AsyncOpenCallback", false)
         , m_io_realm_kotlin_internal_interop_progress_callback(env, "io/realm/kotlin/internal/interop/ProgressCallback", false)
         , m_io_realm_kotlin_internal_interop_app_callback(env, "io/realm/kotlin/internal/interop/AppCallback", false)
@@ -83,7 +83,7 @@ private:
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_subscription_set_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_before_client_reset_handler;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_after_client_reset_handler;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_core_error_utils;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_core_error_converter;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_async_open_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_progress_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_app_callback;
@@ -180,9 +180,9 @@ public:
         return instance()->m_io_realm_kotlin_internal_interop_sync_after_client_reset_handler;
     }
 
-    inline static const jni_util::JavaClass& core_error_utils()
+    inline static const jni_util::JavaClass& core_error_converter()
     {
-        return instance()->m_io_realm_kotlin_internal_interop_core_error_utils;
+        return instance()->m_io_realm_kotlin_internal_interop_core_error_converter;
     }
 
     inline static const jni_util::JavaClass& async_open_callback()
