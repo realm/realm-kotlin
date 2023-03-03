@@ -969,8 +969,8 @@ realm_sync_thread_destroyed(realm_userdata_t userdata) {
         env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method);
         jni_check_exception(env);
     }
-    // Cleanup Java thread associated with the Sync Client Thread, otherwise
-    // the JVM cannot cleanup shut down.
+    // Detach from the Java thread associated with the Sync Client Thread, otherwise
+    // the JVM will not be able to shutdown.
     detach_current_thread();
 }
 

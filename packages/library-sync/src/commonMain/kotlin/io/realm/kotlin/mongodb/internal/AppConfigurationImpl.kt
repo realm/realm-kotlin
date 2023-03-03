@@ -139,9 +139,10 @@ public class AppConfigurationImpl constructor(
     }
 
     private fun initializeSyncClientConfig(sdkInfo: String?, applicationInfo: String?): RealmSyncClientConfigurationPointer =
-        RealmInterop.realm_sync_client_config_new(appId)
+        RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
                 // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)
                 RealmInterop.realm_sync_client_config_set_log_level(
                     syncClientConfig,
                     CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
