@@ -1818,7 +1818,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertTrue(entries.isEmpty())
                 assertTrue(dictionary.isEmpty())
 
-                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: dictionary is empty.") {
                     iterator.remove()
                 }
             }
@@ -2217,7 +2217,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertTrue(values.isEmpty())
                 assertTrue(dictionary.isEmpty())
 
-                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: dictionary is empty.") {
                     iterator.remove()
                 }
 
@@ -2688,7 +2688,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertTrue(keys.isEmpty())
                 assertTrue(dictionary.isEmpty())
 
-                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: dictionary is empty.") {
                     iterator.remove()
                 }
 

@@ -72,50 +72,80 @@ internal class ManagedRealmSet<E> constructor(
         }
 
     override fun add(element: E): Boolean {
-        operator.realmReference.checkClosed()
         return operator.add(element)
     }
 
     override fun clear() {
-        operator.realmReference.checkClosed()
-        RealmInterop.realm_set_clear(nativePointer)
+        operator.clear()
     }
 
     override fun contains(element: E): Boolean {
-        operator.realmReference.checkClosed()
         return operator.contains(element)
     }
 
+    override fun remove(element: E): Boolean {
+        return operator.remove(element)
+    }
+
+    override fun removeAll(elements: Collection<E>): Boolean {
+        return operator.removeAll(elements)
+    }
+
     override fun iterator(): MutableIterator<E> {
-        operator.realmReference.checkClosed()
         return object : MutableIterator<E> {
 
-            private var pos = -1
+            private var expectedModCount = operator.modCount // Current modifications in the map
+            private var cursor = 0 // The position returned by next()
+            private var lastReturned = -1 // The last known returned position
 
-            override fun hasNext(): Boolean = pos + 1 < size
+            override fun hasNext(): Boolean {
+                checkConcurrentModification()
+
+                return cursor < size
+            }
 
             override fun next(): E {
-                pos = pos.inc()
-                if (pos >= size) {
-                    throw NoSuchElementException("Cannot access index $pos when size is $size. Remember to check hasNext() before using next().")
+                checkConcurrentModification()
+
+                val position = cursor
+                if (position >= size) {
+                    throw IndexOutOfBoundsException("Cannot access index $position when size is $size. Remember to check hasNext() before using next().")
                 }
-                return operator.get(pos)
+                val next = operator.get(position)
+                lastReturned = position
+                cursor = position + 1
+                return next
             }
 
             override fun remove() {
-                if (pos < 0) {
-                    throw NoSuchElementException("Could not remove last element returned by the iterator: iterator never returned an element.")
-                }
-                if (isEmpty()) {
+                checkConcurrentModification()
+
+                if (size == 0) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
+                }
+                if (lastReturned < 0) {
+                    throw IllegalStateException("Could not remove last element returned by the iterator: iterator never returned an element.")
                 }
 
                 val erased = getterScope {
-                    val transport = realm_set_get(nativePointer, pos.toLong())
-                    RealmInterop.realm_set_erase(nativePointer, transport)
+                    val element = operator.get(lastReturned)
+                    operator.remove(element)
+                        .also {
+                            if (lastReturned < cursor) {
+                                cursor -= 1
+                            }
+                            lastReturned = -1
+                        }
                 }
+                expectedModCount = operator.modCount
                 if (!erased) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
+                }
+            }
+
+            private fun checkConcurrentModification() {
+                if (operator.modCount != expectedModCount) {
+                    throw ConcurrentModificationException("The underlying RealmSet was modified while iterating it.")
                 }
             }
         }
@@ -185,9 +215,22 @@ internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
  */
 internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
 
+    // Modification counter used to detect concurrent writes from the iterator, taken from Java's
+    // AbstractList implementation
+    var modCount: Int
     override val nativePointer: RealmSetPointer
 
     fun add(
+        element: E,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    ): Boolean {
+        realmReference.checkClosed()
+        return addInternal(element, updatePolicy, cache)
+            .also { modCount++ }
+    }
+
+    fun addInternal(
         element: E,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
@@ -198,15 +241,46 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean {
+        realmReference.checkClosed()
+        return addAllInternal(elements, updatePolicy, cache)
+            .also { modCount++ }
+    }
+
+    fun addAllInternal(
+        elements: Collection<E>,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    ): Boolean {
         @Suppress("VariableNaming")
         var changed = false
         for (e in elements) {
-            val hasChanged = add(e, updatePolicy, cache)
+            val hasChanged = addInternal(e, updatePolicy, cache)
             if (hasChanged) {
                 changed = true
             }
         }
         return changed
+    }
+
+    fun clear() {
+        realmReference.checkClosed()
+        RealmInterop.realm_set_clear(nativePointer)
+        modCount++
+    }
+
+    fun remove(element: E): Boolean {
+        return inputScope {
+            with(valueConverter) {
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_set_erase(nativePointer, transport)
+            }
+        }.also { modCount++ }
+    }
+
+    fun removeAll(elements: Collection<E>): Boolean {
+        return elements.fold(false) { accumulator, value ->
+            remove(value) or accumulator
+        }
     }
 
     fun get(index: Int): E
@@ -221,6 +295,8 @@ internal class PrimitiveSetOperator<E>(
     override val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
+    override var modCount: Int = 0
+
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
@@ -231,7 +307,7 @@ internal class PrimitiveSetOperator<E>(
         }
     }
 
-    override fun add(
+    override fun addInternal(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
@@ -269,7 +345,9 @@ internal class RealmObjectSetOperator<E> constructor(
     val classKey: ClassKey
 ) : SetOperator<E> {
 
-    override fun add(
+    override var modCount: Int = 0
+
+    override fun addInternal(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache

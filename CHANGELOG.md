@@ -12,6 +12,7 @@
 * [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
  
 ### Fixed
+* Fixed implementation of `RealmSet.iterator()` to throw `ConcurrentModificationException`s when the underlying set has been modified while iterating over it. (Issue [#1220](https://github.com/realm/realm-kotlin/issues/1220))
 * Accessing an invalidated `RealmResults` now throws an `IllegalStateException` instead of a `RealmException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Opening a Realm with a wrong encryption key or corrupted now throws an `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Trying to convert to a Flexible Sync Realm with Flexible Sync disabled throws a `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
