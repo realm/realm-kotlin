@@ -1962,7 +1962,7 @@ actual object RealmInterop {
         appId: String
     ) {
         realm_wrapper.realm_sync_client_config_set_default_binding_thread_observer(
-            syncClientConfig.cptr(),
+            config = syncClientConfig.cptr(),
             on_thread_create = staticCFunction { _ ->
                 // Do nothing
             },
@@ -1970,17 +1970,18 @@ actual object RealmInterop {
                 // Do nothing. Threads in Kotlin Native are cleaned up correctly without us
                 // having to do anything.
             },
-            on_error = staticCFunction { _, error ->
+            on_error = staticCFunction { userdata, error ->
                 // TODO Wait for https://github.com/realm/realm-core/issues/4194 to correctly
                 //  log errors. For now, just throw an Error as exceptions from the Sync Client
                 //  indicate that something is fundamentally wrong on the Sync Thread.
                 //  In Realm Java this has only been reported during development of new
                 //  features, so throwing an Error seems appropriate to increase visibility.
-                throw Error("[SyncThread-$appId] Error on sync thread : ${error?.toKString()}")
+                val threadId = safeUserData<String>(userdata)
+                throw Error("[SyncThread-$threadId] Error on sync thread: ${error?.toKString()}")
             },
-            null,
-            staticCFunction { _ ->
-                // No userdata to clean up.
+            user_data = StableRef.create(appId.freeze()).asCPointer(),
+            free_userdata = staticCFunction { userdata ->
+                disposeUserData<String>(userdata)
             }
         )
     }
