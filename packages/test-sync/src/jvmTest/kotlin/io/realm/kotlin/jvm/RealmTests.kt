@@ -53,11 +53,6 @@ class RealmTests {
         val activeThreads = Thread.getAllStackTraces().keys
             .filter { !it.isDaemon }
             .filterNot {
-                // Ignore the Sync thread for now, until https://github.com/realm/realm-core/issues/5966
-                // is fixed.
-                it.name.startsWith("Thread-")
-            }
-            .filterNot {
                 // Android Studio or Gradle worker threads
                 it.name.startsWith("/127.0.0.1")
             }

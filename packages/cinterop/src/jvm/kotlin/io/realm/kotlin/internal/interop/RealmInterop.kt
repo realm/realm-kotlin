@@ -958,6 +958,38 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_sync_client_config_new())
     }
 
+    actual fun realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig: RealmSyncClientConfigurationPointer, appId: String) {
+        realmc.realm_sync_client_config_set_default_binding_thread_observer(
+            syncClientConfig.cptr(),
+            object : SyncThreadObserver {
+                override fun threadName(): String {
+                    return "SyncThread-$appId"
+                }
+
+                override fun onCreated() {
+                    // We cannot set the name on JNI side as it would require access to JNIEnv before
+                    // we attach it, so we set the thread name after it is created.
+                    Thread.currentThread().name = threadName()
+                }
+
+                override fun onDestroyed() {
+                    // Do nothing
+                    // Thread is destroyed in the JNI side
+                }
+
+                @Suppress("TooGenericExceptionThrown")
+                override fun onError(error: String) {
+                    // TODO Wait for https://github.com/realm/realm-core/issues/4194 to correctly
+                    //  log errors. For now, just throw an Error as exceptions from the Sync Client
+                    //  indicate that something is fundamentally wrong on the Sync Thread.
+                    //  In Realm Java this has only been reported during development of new
+                    //  features, so throwing an Error seems appropriate to increase visibility.
+                    throw Error("[${threadName()}] Error on sync thread : $error")
+                }
+            }
+        )
+    }
+
     actual fun realm_sync_client_config_set_base_file_path(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
