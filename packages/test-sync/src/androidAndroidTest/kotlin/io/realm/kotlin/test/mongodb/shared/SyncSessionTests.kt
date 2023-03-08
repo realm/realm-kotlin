@@ -24,7 +24,6 @@ import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.SyncException
@@ -322,7 +321,7 @@ class SyncSessionTests {
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-        val channel = Channel<SyncSession>(1).freeze()
+        val channel = Channel<SyncSession>(1)
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
             user = user,
@@ -487,7 +486,7 @@ class SyncSessionTests {
     @Test
     fun getConfiguration_inErrorHandlerThrows() {
         // Open and close a realm with a schema.
-        val channel = Channel<SyncSession>(1).freeze()
+        val channel = Channel<SyncSession>(1)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

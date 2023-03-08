@@ -20,7 +20,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreUserState
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
@@ -101,7 +100,7 @@ public class UserImpl(
                 nativePointer,
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return@use channel.receive()
                 .getOrThrow()
@@ -115,7 +114,7 @@ public class UserImpl(
                 nativePointer,
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return@use channel.receive()
                 .getOrThrow()
@@ -133,7 +132,7 @@ public class UserImpl(
                 nativePointer,
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return@use channel.receive()
                 .getOrThrow()
@@ -152,7 +151,7 @@ public class UserImpl(
                     (credentials as CredentialsImpl).nativePointer,
                     channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
                         UserImpl(userPointer, app)
-                    }.freeze()
+                    }
                 )
                 channel.receive().getOrThrow()
                 return this

@@ -28,7 +28,6 @@ import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.Validation
@@ -284,7 +283,7 @@ public interface AppConfiguration {
                             appLogger.debug(message)
                         }
                     }
-                ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+                )
             }
 
             return AppConfigurationImpl(

@@ -22,7 +22,6 @@ import io.realm.kotlin.internal.interop.RealmAppT
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.App
@@ -71,7 +70,7 @@ public class AppImpl(
                 Validation.checkType<CredentialsImpl>(credentials, "credentials").nativePointer,
                 channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
                     UserImpl(userPointer, this)
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()

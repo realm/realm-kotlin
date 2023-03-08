@@ -130,11 +130,6 @@ import realm_wrapper.realm_version_id_t
 import kotlin.collections.set
 import kotlin.native.internal.createCleaner
 
-private inline fun <T> T.freeze(): T {
-    // Disable freeze in 1.7.20
-    return this
-}
-
 @SharedImmutable
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realm_wrapper.RLM_INVALID_CLASS_KEY.toLong()) }
 @SharedImmutable
@@ -182,7 +177,7 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
-        createCleaner(_ptr.freeze()) {
+        createCleaner(_ptr) {
             if (released.compareAndSet(expect = false, update = true)) {
                 realm_release(ptr)
             }
@@ -479,7 +474,7 @@ actual object RealmInterop {
         val callback = DataInitializationCallback {
             fileCreated.value = true
             true
-        }.freeze()
+        }
         realm_wrapper.realm_config_set_data_initialization_function(
             config.cptr(),
             staticCFunction { userdata, _ ->
@@ -1979,7 +1974,7 @@ actual object RealmInterop {
                 val threadId = safeUserData<String>(userdata)
                 throw Error("[SyncThread-$threadId] Error on sync thread: ${error?.toKString()}")
             },
-            user_data = StableRef.create(appId.freeze()).asCPointer(),
+            user_data = StableRef.create(appId).asCPointer(),
             free_userdata = staticCFunction { userdata ->
                 disposeUserData<String>(userdata)
             }
@@ -2003,7 +1998,7 @@ actual object RealmInterop {
                 val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
                 userDataLogCallback.log(logLevel.toShort(), message?.toKString())
             },
-            StableRef.create(callback.freeze()).asCPointer(),
+            StableRef.create(callback).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
         )
     }
@@ -2136,7 +2131,7 @@ actual object RealmInterop {
                     false
                 }
             },
-            StableRef.create(beforeHandler.freeze()).asCPointer(),
+            StableRef.create(beforeHandler).asCPointer(),
             staticCFunction { userdata ->
                 disposeUserData<SyncBeforeClientResetHandler>(userdata)
             }
@@ -2166,7 +2161,7 @@ actual object RealmInterop {
                     false
                 }
             },
-            StableRef.create(afterHandler.freeze()).asCPointer(),
+            StableRef.create(afterHandler).asCPointer(),
             staticCFunction { userdata ->
                 disposeUserData<SyncAfterClientResetHandler>(userdata)
             }
@@ -2967,7 +2962,7 @@ actual object RealmInterop {
             )
         ) ?: error("Couldn't create scheduler")
         scheduler.set_scheduler(capi_scheduler)
-        scheduler.freeze()
+        scheduler
         return capi_scheduler
     }
 
@@ -3089,7 +3084,7 @@ actual object RealmInterop {
             scope.launch(
                 scope.coroutineContext,
                 CoroutineStart.DEFAULT,
-                function.freeze()
+                function
             )
         }
     }
