@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member", "invisible_reference")
 package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.Configuration

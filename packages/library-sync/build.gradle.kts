@@ -35,7 +35,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 // Common Kotlin configuration
 kotlin {
     jvm()
-    android("android") {
+    android("androidSync") {
         publishLibraryVariants("release")
     }
     iosX64()
@@ -44,9 +44,24 @@ kotlin {
     macosX64()
     macosArm64()
     sourceSets {
-        val commonMain by getting {
+        val commonBaseMain by creating {
             dependencies {
-                api(project(":library-base"))
+                implementation(kotlin("stdlib-common"))
+                implementation(kotlin("reflect"))
+                // If runtimeapi is merged with cinterop then we will be exposing both to the users
+                // Runtime holds annotations, etc. that has to be exposed to users
+                // Cinterop does not hold anything required by users
+
+                // NOTE: scope needs to be API since 'implementation' will produce a POM with 'runtime' scope
+                //       causing the compiler plugin to fail to lookup classes from the 'cinterop' package
+                api(project(":cinterop"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
+                implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+            }
+        }
+        val commonSyncMain by creating {
+            dependsOn(commonBaseMain)
+            dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
                 // If runtimeapi is merged with cinterop then we will be exposing both to the users
@@ -68,6 +83,9 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
+        val commonMain by getting {
+            dependsOn(commonSyncMain)
+        }
 
         commonTest {
             dependencies {
@@ -75,24 +93,33 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val jvm by creating {
+        val jvmCommonBase by creating {
             dependsOn(commonMain)
+        }
+        val jvmCommonSync by creating {
+            dependsOn(jvmCommonBase)
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
         }
         val jvmMain by getting {
-            dependsOn(jvm)
+            dependsOn(jvmCommonSync)
         }
-        val androidMain by getting {
-            dependsOn(jvm)
+        val androidBaseMain by creating {
+            dependsOn(jvmCommonSync)
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
+            }
+        }
+        val androidSyncMain by getting {
+            dependsOn(androidBaseMain)
             dependencies {
                 api(project(":cinterop"))
                 implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        val androidTest by getting {
+        val androidSyncTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -103,17 +130,38 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        val nativeDarwin by creating {
+
+        val nativeDarwinBase by creating {
             dependsOn(commonMain)
+        }
+        val nativeDarwinSync by creating {
+            dependsOn(nativeDarwinBase)
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
-        val macosX64Main by getting { dependsOn(nativeDarwin) }
-        val macosArm64Main by getting { dependsOn(nativeDarwin) }
-        val iosSimulatorArm64Main by getting { dependsOn(nativeDarwin) }
-        val iosArm64Main by getting { dependsOn(nativeDarwin) }
-        val iosX64Main by getting { dependsOn(nativeDarwin) }
+
+        val nativeMacos by creating {
+            dependsOn(nativeDarwinSync)
+        }
+        val nativeIos by creating {
+            dependsOn(nativeDarwinSync)
+        }
+        val macosX64Main by getting {
+            dependsOn(nativeMacos)
+        }
+        val macosArm64Main by getting {
+            dependsOn(nativeMacos)
+        }
+        val iosArm64Main by getting {
+            dependsOn(nativeIos)
+        }
+        val iosSimulatorArm64Main by getting {
+            dependsOn(nativeIos)
+        }
+        val iosX64Main by getting {
+            dependsOn(nativeIos)
+        }
     }
 
     // Require that all methods in the API have visibility modifiers and return types.

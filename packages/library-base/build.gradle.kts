@@ -35,7 +35,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 // Common Kotlin configuration
 kotlin {
     jvm()
-    android("android") {
+    android("androidBase") {
         publishLibraryVariants("release")
     }
     ios()
@@ -44,7 +44,7 @@ kotlin {
     macosArm64()
 
     sourceSets {
-        val commonMain by getting {
+        val commonBaseMain by creating {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
@@ -60,25 +60,29 @@ kotlin {
             }
         }
 
+        val commonMain by getting {
+            dependsOn(commonBaseMain)
+        }
+
         commonTest {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val jvm by creating {
+        val jvmCommonBase by creating {
             dependsOn(commonMain)
         }
         val jvmMain by getting {
-            dependsOn(jvm)
+            dependsOn(jvmCommonBase)
         }
-        val androidMain by getting {
-            dependsOn(jvm)
+        val androidBaseMain by getting {
+            dependsOn(jvmCommonBase)
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        val androidTest by getting {
+        val androidBaseTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -89,14 +93,14 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        val nativeDarwin by creating {
+        val nativeDarwinBase by creating {
             dependsOn(commonMain)
         }
         val nativeMacos by creating {
-            dependsOn(nativeDarwin)
+            dependsOn(nativeDarwinBase)
         }
         val nativeIos by creating {
-            dependsOn(nativeDarwin)
+            dependsOn(nativeDarwinBase)
         }
         val macosX64Main by getting {
             dependsOn(nativeMacos)
@@ -216,10 +220,10 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
                 //  with:
                 //    # package io.realm.kotlin
                 //  Maybe worth a consideration
-                "src/commonMain/kotlin/io/realm/kotlin/info.md",
-                "src/commonMain/kotlin/io/realm/kotlin/log/info.md"
+                "src/commonBaseMain/kotlin/io/realm/kotlin/info.md",
+                "src/commonBaseMain/kotlin/io/realm/kotlin/log/info.md"
             )
-            sourceRoot("../runtime-api/src/commonMain/kotlin")
+            sourceRoot("../runtime-api/src/commonBaseMain/kotlin")
         }
     }
 }

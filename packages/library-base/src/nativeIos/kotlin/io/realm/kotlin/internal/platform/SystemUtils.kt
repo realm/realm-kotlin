@@ -13,10 +13,10 @@ import platform.UIKit.UIDevice
 import platform.posix.uname
 import platform.posix.utsname
 
-public actual val OS_NAME: String = "iOS"
-public actual val OS_VERSION: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemVersionString }
-public actual val DEVICE_MANUFACTURER: String by lazy { UIDevice.currentDevice.model }
-public actual val DEVICE_MODEL: String by lazy {
+internal actual val OS_NAME: String = "iOS"
+internal actual val OS_VERSION: String by lazy { NSProcessInfo.Companion.processInfo().operatingSystemVersionString }
+internal actual val DEVICE_MANUFACTURER: String by lazy { UIDevice.currentDevice.model }
+internal actual val DEVICE_MODEL: String by lazy {
     try {
         // On iOS devices this will report the underlying phone model:
         // https://stackoverflow.com/a/11197770/1389357
@@ -32,7 +32,7 @@ public actual val DEVICE_MODEL: String by lazy {
 }
 // CPU architecture can by looking at DEVICE_MODEL, but encoding the mapping in code will be
 // difficult to maintain, so is left out.
-public actual val CPU_ARCH: String = ""
+internal actual val CPU_ARCH: String = ""
 
 public actual fun appFilesDirectory(): String {
     return (
