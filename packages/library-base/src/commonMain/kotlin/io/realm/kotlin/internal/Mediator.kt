@@ -20,7 +20,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
 // TODO Public due to being a transitive dependency of ConfigurationImpl
-public interface Mediator {
+internal interface Mediator {
     // TODO OPTIMIZE Most usage of this could be done from cached RealmObjectCompanion instance.
     //  Maybe just eliminate this method to ensure that we don't misuse it in favor of
     //  companionOf(clazz).`io_realm_kotlin_newInstance`()

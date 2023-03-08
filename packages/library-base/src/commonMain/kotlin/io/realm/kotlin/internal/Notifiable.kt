@@ -72,7 +72,7 @@ internal interface Notifiable<T : CoreNotifiable<T, C>, C> {
  * @param C the type of change events emitted for the T entity.
  */
 // TODO Public due to being a transitive dependency from RealmObjectReference
-public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<C>) {
+internal abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<C>) {
 
     private var initialElement: Boolean = true
 

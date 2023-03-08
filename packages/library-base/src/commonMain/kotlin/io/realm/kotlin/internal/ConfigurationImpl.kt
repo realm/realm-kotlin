@@ -47,7 +47,7 @@ import kotlin.reflect.KClass
 
 // TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
-public open class ConfigurationImpl constructor(
+internal open class ConfigurationImpl constructor(
     directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,

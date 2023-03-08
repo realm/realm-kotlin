@@ -23,7 +23,7 @@ import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.ValuePropertyType
 
 // TODO Public due to being a transitive dependency to RealmObjectCompanion
-public data class RealmClassImpl(
+internal data class RealmClassImpl(
     // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
     // avoid unnecessary repeated initializations for realm_schema_new
     val cinteropClass: ClassInfo,

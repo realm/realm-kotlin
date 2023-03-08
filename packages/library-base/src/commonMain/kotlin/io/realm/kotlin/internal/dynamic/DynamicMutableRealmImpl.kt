@@ -38,7 +38,7 @@ import io.realm.kotlin.schema.RealmSchema
 
 // Public due to tests needing to access `close` and trying to make the class visible through
 // annotations didn't work for some reason.
-public open class DynamicMutableRealmImpl(
+internal open class DynamicMutableRealmImpl(
     configuration: InternalConfiguration,
     dbPointer: LiveRealmPointer
 ) :

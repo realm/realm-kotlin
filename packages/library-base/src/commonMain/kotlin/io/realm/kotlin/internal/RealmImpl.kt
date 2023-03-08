@@ -50,7 +50,7 @@ import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 // TODO Public due to being accessed from `SyncedRealmContext`
-public class RealmImpl private constructor(
+internal class RealmImpl private constructor(
     configuration: InternalConfiguration
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 

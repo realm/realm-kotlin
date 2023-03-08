@@ -21,7 +21,7 @@ import io.realm.kotlin.internal.interop.FrozenRealmPointer
 /**
  * Minimal frozen Realm implementation that only allows launching queries against it.
  */
-public class TypedFrozenRealmImpl(
+internal class TypedFrozenRealmImpl(
     dbPointer: FrozenRealmPointer,
     configuration: InternalConfiguration,
 ) : InternalTypedRealm, BaseRealmImpl(configuration) {

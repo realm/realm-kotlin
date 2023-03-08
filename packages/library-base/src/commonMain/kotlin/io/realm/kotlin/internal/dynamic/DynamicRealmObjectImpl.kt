@@ -26,7 +26,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 
-public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
+internal open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectInternal {
     override val type: String
         get() = this.`io_realm_kotlin_objectReference`!!.className
 

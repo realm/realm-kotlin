@@ -23,7 +23,7 @@ import io.realm.kotlin.Versioned
  * A RealmState exposes common methods to query the state of any Realm object.
  */
 // TODO Public due to being a transitive dependency to RealmStateHolder
-public interface RealmState : Versioned {
+internal interface RealmState : Versioned {
     public fun isFrozen(): Boolean
     public fun isClosed(): Boolean
 }
@@ -45,7 +45,7 @@ internal object UnmanagedState : RealmState {
 
 // Default implementation for all objects that can provide a RealmState instance
 // TODO Public due to being a transitive dependency to RealmObjectReference
-public interface RealmStateHolder : RealmState {
+internal interface RealmStateHolder : RealmState {
     public fun realmState(): RealmState
 
     override fun version(): VersionId {

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_reference", "invisible_member")
+
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.BaseRealm

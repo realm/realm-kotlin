@@ -28,6 +28,6 @@ import io.realm.kotlin.types.RealmObject
  */
 // TODO Public due to being a transitive dependency of Mediator
 @Suppress("VariableNaming")
-public interface RealmObjectInternal : BaseRealmObject {
+internal interface RealmObjectInternal : BaseRealmObject {
     public var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>?
 }

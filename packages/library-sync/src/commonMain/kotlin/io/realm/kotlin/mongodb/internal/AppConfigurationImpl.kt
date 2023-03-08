@@ -41,7 +41,8 @@ import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
-public class AppConfigurationImpl constructor(
+@PublishedApi
+internal class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,

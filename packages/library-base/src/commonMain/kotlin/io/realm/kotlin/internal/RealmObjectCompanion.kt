@@ -26,7 +26,7 @@ import kotlin.reflect.KProperty1
 // TODO MEDIATOR/API-INTERNAL Consider adding type parameter for the class
 // TODO Public due to being a transitive dependency to Mediator.
 @Suppress("VariableNaming")
-public interface RealmObjectCompanion {
+internal interface RealmObjectCompanion {
     public val `io_realm_kotlin_class`: KClass<out TypedRealmObject>
     public val `io_realm_kotlin_className`: String
     public val `io_realm_kotlin_fields`: Map<String, KProperty1<BaseRealmObject, Any?>>

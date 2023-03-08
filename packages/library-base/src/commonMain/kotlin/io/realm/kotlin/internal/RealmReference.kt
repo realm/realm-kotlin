@@ -30,7 +30,7 @@ import kotlinx.atomicfu.atomic
  * C++ SharedRealm is closed when the RealmReference is no longer referenced by the [Realm].
  */
 // TODO Public due to being a transitive dependency to Notifiable
-public interface RealmReference : RealmState {
+internal interface RealmReference : RealmState {
     public val owner: BaseRealmImpl
     public val schemaMetadata: SchemaMetadata
     public val dbPointer: RealmPointer
@@ -69,7 +69,7 @@ public interface RealmReference : RealmState {
     }
 }
 
-public data class FrozenRealmReference(
+internal data class FrozenRealmReference(
     override val owner: BaseRealmImpl,
     override val dbPointer: FrozenRealmPointer,
     override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(
@@ -90,7 +90,7 @@ public data class FrozenRealmReference(
  * A **live realm reference** linking to the underlying live SharedRealm with the option to update
  * schema metadata when the schema has changed.
  */
-public data class LiveRealmReference(
+internal data class LiveRealmReference(
     override val owner: BaseRealmImpl,
     override val dbPointer: LiveRealmPointer
 ) : RealmReference {

@@ -35,7 +35,8 @@ import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.serialization.Bson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
-public class UserImpl(
+@PublishedApi
+internal class UserImpl(
     public val nativePointer: RealmUserPointer,
     override val app: AppImpl
 ) : User {

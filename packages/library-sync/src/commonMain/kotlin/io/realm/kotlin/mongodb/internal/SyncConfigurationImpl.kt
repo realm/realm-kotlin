@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_reference", "invisible_member")
 
 package io.realm.kotlin.mongodb.internal
 
@@ -67,7 +68,7 @@ internal class SyncConfigurationImpl(
     override val initialRemoteData: InitialRemoteDataConfiguration?
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
-    override suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean> {
+    suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean> {
         // Partition-based Realms with `waitForInitialRemoteData` enabled will use
         // async open first do download the server side Realm. This is much much faster than
         // creating the Realm locally first and then downloading (and integrating) changes into
@@ -114,7 +115,7 @@ internal class SyncConfigurationImpl(
         return configuration.openRealm(realm)
     }
 
-    override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
+    suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
         // Create or update subscriptions for Flexible Sync realms as needed.
         initialSubscriptions?.let { initialSubscriptionsConfig ->
             if (initialSubscriptionsConfig.rerunOnOpen || realmFileCreated) {
@@ -144,7 +145,7 @@ internal class SyncConfigurationImpl(
         configuration.initializeRealmData(realm, realmFileCreated)
     }
 
-    override fun createNativeConfiguration(): RealmConfigurationPointer {
+    fun createNativeConfiguration(): RealmConfigurationPointer {
         val ptr: RealmConfigurationPointer = configuration.createNativeConfiguration()
         return syncInitializer(ptr)
     }

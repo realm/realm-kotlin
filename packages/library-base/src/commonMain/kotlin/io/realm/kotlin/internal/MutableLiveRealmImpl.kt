@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
  * Minimal live Realm implementation that only allows queries and write transactions without being
  * able to observe for changes.
  */
-public class MutableLiveRealmImpl(
+internal class MutableLiveRealmImpl(
     dbPointer: LiveRealmPointer,
     configuration: InternalConfiguration,
 ) : InternalTypedRealm, InternalMutableRealm, WriteTransactionManager, BaseRealmImpl(configuration) {

@@ -32,7 +32,7 @@ import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import kotlinx.coroutines.channels.Channel
 
 // TODO Public due to being a transitive dependency to UserImpl
-public class AppImpl(
+internal class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 

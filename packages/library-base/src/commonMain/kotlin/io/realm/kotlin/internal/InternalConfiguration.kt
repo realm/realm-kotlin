@@ -30,7 +30,8 @@ import kotlin.reflect.KClass
  * point of view.
  */
 // TODO Public due to being transitive dependency to `ConfigurationImpl` and `SyncConfigurationImpl`.
-public interface InternalConfiguration : Configuration {
+@PublishedApi
+internal interface InternalConfiguration : Configuration {
     public val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
     public val mediator: Mediator
     public val notificationDispatcherFactory: CoroutineDispatcherFactory

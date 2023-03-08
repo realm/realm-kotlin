@@ -33,7 +33,7 @@ import kotlin.reflect.KProperty1
 /**
  * Schema metadata providing access to class metadata for the schema.
  */
-public interface SchemaMetadata {
+internal interface SchemaMetadata {
     public operator fun get(className: String): ClassMetadata?
     public operator fun get(classKey: ClassKey): ClassMetadata?
     public fun getOrThrow(className: String): ClassMetadata = this[className]
@@ -43,7 +43,7 @@ public interface SchemaMetadata {
 /**
  * Class metadata providing access class and property keys.
  */
-public interface ClassMetadata {
+internal interface ClassMetadata {
     public val clazz: KClass<out TypedRealmObject>?
     public val className: String
     public val classKey: ClassKey
@@ -62,7 +62,7 @@ public interface ClassMetadata {
     public fun isUserDefined(): Boolean = (clazz != null)
 }
 
-public interface PropertyMetadata {
+internal interface PropertyMetadata {
     public val name: String
     public val key: PropertyKey
     public val collectionType: CollectionType
@@ -86,7 +86,7 @@ public interface PropertyMetadata {
  * The provided class metadata entries are `CachedClassMetadata` for which property keys are also
  * only looked up on first access.
  */
-public class CachedSchemaMetadata(
+internal class CachedSchemaMetadata(
     private val dbPointer: RealmPointer,
     companions: Collection<RealmObjectCompanion>
 ) : SchemaMetadata {
@@ -117,7 +117,7 @@ public class CachedSchemaMetadata(
 /**
  * Class metadata implementation that provides a lazy loaded cache to property keys.
  */
-public class CachedClassMetadata(
+internal class CachedClassMetadata(
     dbPointer: RealmPointer,
     override val className: String,
     override val classKey: ClassKey,
@@ -164,7 +164,7 @@ public class CachedClassMetadata(
     override fun get(property: KProperty<*>): PropertyMetadata? = propertyMap[property]
 }
 
-public class CachedPropertyMetadata(
+internal class CachedPropertyMetadata(
     propertyInfo: PropertyInfo,
     override val accessor: KProperty1<BaseRealmObject, Any?>? = null
 ) : PropertyMetadata {
