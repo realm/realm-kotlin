@@ -222,6 +222,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
                 // Don't redefine accessors for internal synthetic properties or process declarations of subclasses
                 if (declaration.backingField == null ||
+                    declaration.getter?.dispatchReceiverParameter == null ||
                     name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX) ||
                     declaration.parentAsClass != irClass
                 ) {
