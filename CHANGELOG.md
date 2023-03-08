@@ -9,6 +9,7 @@
 ### Fixed
 * Compatibility with Realm Java when using the `io.realm.RealmObject` abstract class. (Issue [#1278](https://github.com/realm/realm-kotlin/issues/1278))
 * Compiler error when multiple fields have `@PersistedName`-annotations that match they Kotlin name. (Issue [#1240](https://github.com/realm/realm-kotlin/issues/1240))
+* Compiler error when using Kotlin 1.8.0 and Compose for desktop 1.3.0. (Issue [#1296](https://github.com/realm/realm-kotlin/issues/1296))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
