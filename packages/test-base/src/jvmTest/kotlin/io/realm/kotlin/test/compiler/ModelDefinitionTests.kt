@@ -129,4 +129,22 @@ class ModelDefinitionTests {
         assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using anonymous objects")
         assertTrue(result.messages.contains("Anonymous objects are not supported."))
     }
+
+    @Test
+    fun `model_class_with_unsupported_type`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "object_declaration.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        class Foo : RealmObject {
+                            var unknownType = mutableListOf<String>()
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Compilation should fail when using unsupported types")
+        assertTrue(result.messages.contains("Realm does not support persisting properties of this type."), "Error was: ${result.messages}")
+    }
 }

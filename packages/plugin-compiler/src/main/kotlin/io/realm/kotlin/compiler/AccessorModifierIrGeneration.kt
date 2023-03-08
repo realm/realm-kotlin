@@ -97,7 +97,6 @@ import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -643,7 +642,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     else -> {
-                        logDebug("Type not processed: ${declaration.dump()}")
+                        logError("Realm does not support persisting properties of this type. Mark the field with `@Ignore` to suppress this error.", declaration.locationOf())
                     }
                 }
 
