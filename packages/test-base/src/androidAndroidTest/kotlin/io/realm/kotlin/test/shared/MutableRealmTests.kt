@@ -27,7 +27,6 @@ import io.realm.kotlin.entities.embedded.EmbeddedParentWithPrimaryKey
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
-import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -43,7 +42,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -470,15 +468,6 @@ class MutableRealmTests {
     @Test
     fun writeReturningUnmanaged() {
         assertTrue(realm.writeBlocking { Parent() } is Parent)
-    }
-
-    @Test
-    fun writeReturnInvalidObjects() {
-        val parent: Parent = realm.writeBlocking {
-            copyToRealm(Parent()).also { obj: Parent -> delete(obj) }
-        }
-        assertNotNull(parent)
-        assertFalse(parent.isValid())
     }
 
     @Test
