@@ -469,18 +469,16 @@ class MutableRealmTests {
 
     @Test
     fun writeReturningUnmanaged() {
+        assertTrue(realm.writeBlocking { Parent() } is Parent)
+    }
+
+    @Test
+    fun writeReturnInvalidObjects() {
         val parent: Parent = realm.writeBlocking {
             copyToRealm(Parent()).also { obj: Parent -> delete(obj) }
         }
         assertNotNull(parent)
         assertFalse(parent.isValid())
-    }
-
-    @Test
-    fun writeReturnInvalidObjects() {
-        realm.writeBlocking {
-            copyToRealm(Parent()).also { obj: Parent -> delete(obj) }
-        }
     }
 
     @Test
