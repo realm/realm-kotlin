@@ -145,7 +145,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                     // Invalid objects are returned as-is. We assume the caller know what they
                     // are doing and will either throw the result away or treat it accordingly.
                     // See https://github.com/realm/realm-kotlin/issues/1300 for context.
-                    when(result.isValid()) {
+                    when (result.isValid()) {
                         true -> freeze(reference)!!.toRealmObject()
                         false -> result
                     }
