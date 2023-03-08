@@ -221,7 +221,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val name = declaration.name.asString()
 
                 // Don't redefine accessors for internal synthetic properties or process declarations of subclasses
+                @Suppress("ComplexCondition")
                 if (declaration.backingField == null ||
+                    // If the getter's dispatch receiver is null we cannot generate our accessors
+                    // so skip processing those (See https://github.com/realm/realm-kotlin/issues/1296)
                     declaration.getter?.dispatchReceiverParameter == null ||
                     name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX) ||
                     declaration.parentAsClass != irClass
