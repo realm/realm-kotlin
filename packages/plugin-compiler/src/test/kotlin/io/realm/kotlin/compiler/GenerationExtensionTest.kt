@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.compiler
 
@@ -25,12 +26,14 @@ import io.realm.kotlin.internal.RealmObjectInternal
 import io.realm.kotlin.internal.RealmObjectReference
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.interop.ClassKey
+import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
+import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
@@ -158,7 +161,10 @@ class GenerationExtensionTest {
 
         assertTrue(companionObject is RealmObjectCompanion)
 
-        val (table, properties) = companionObject.`io_realm_kotlin_schema`()
+        val schema: RealmClassImpl = companionObject.`io_realm_kotlin_schema`()
+        val table = schema.cinteropClass
+        val properties = schema.cinteropProperties
+
         val realmFields = companionObject.`io_realm_kotlin_fields`
 
         assertEquals("Sample", table.name)
@@ -272,7 +278,7 @@ class GenerationExtensionTest {
             "persistedNameLinkingObjectsField" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
         )
         assertEquals(expectedProperties.size, properties.size)
-        properties.map { property ->
+        properties.map { property: PropertyInfo ->
             val expectedType =
                 expectedProperties[property.name] ?: error("Property not found: ${property.name}")
             assertEquals(expectedType, property.type, property.name)
@@ -370,47 +376,47 @@ class GenerationExtensionTest {
 
         override fun isReleased(): Boolean = false
     }
-    class MockRealmReference : RealmReference {
-        override val dbPointer: RealmPointer
+    internal class MockRealmReference : RealmReference {
+         val dbPointer: RealmPointer
             get() = TODO("Not yet implemented")
-        override val owner: BaseRealmImpl
+         val owner: BaseRealmImpl
             get() = TODO("Not yet implemented")
-        override val schemaMetadata: SchemaMetadata
+         val schemaMetadata: SchemaMetadata
             get() = object : SchemaMetadata {
-                override fun get(className: String): ClassMetadata = object : ClassMetadata {
-                    override val classKey: ClassKey
+                 fun get(className: String): ClassMetadata = object : ClassMetadata {
+                     val classKey: ClassKey
                         get() = TODO("Not yet implemented")
-                    override val properties: List<PropertyMetadata>
+                     val properties: List<PropertyMetadata>
                         get() = TODO("Not yet implemented")
-                    override val clazz: KClass<out TypedRealmObject>?
+                     val clazz: KClass<out TypedRealmObject>?
                         get() = TODO("Not yet implemented")
-                    override val className: String
+                     val className: String
                         get() = TODO("Not yet implemented")
-                    override val primaryKeyProperty: PropertyMetadata?
+                     val primaryKeyProperty: PropertyMetadata?
                         get() = TODO("Not yet implemented")
-                    override val isEmbeddedRealmObject: Boolean
+                     val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
-                    override fun get(propertyKey: PropertyKey): PropertyMetadata? {
+                     fun get(propertyKey: PropertyKey): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
-                    override fun get(property: KProperty<*>): PropertyMetadata? {
+                     fun get(property: KProperty<*>): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
-                    override fun get(propertyName: String): PropertyMetadata? {
+                     fun get(propertyName: String): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                 }
 
-                override fun get(classKey: ClassKey): ClassMetadata? {
+                 fun get(classKey: ClassKey): ClassMetadata? {
                     TODO("Not yet implemented")
                 }
             }
     }
-    class MockMediator : Mediator {
-        override fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
+    internal class MockMediator : Mediator {
+         fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-        override fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
+         fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
             TODO("Not yet implemented")
         }
     }
