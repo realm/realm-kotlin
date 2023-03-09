@@ -22,7 +22,6 @@ import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.ValuePropertyType
 
-
 internal data class RealmClassImpl(
     // Optimization: Store the schema in the C-API alike structure directly from compiler plugin to
     // avoid unnecessary repeated initializations for realm_schema_new
