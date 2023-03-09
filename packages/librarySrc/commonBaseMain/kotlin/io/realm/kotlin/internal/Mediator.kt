@@ -19,11 +19,10 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
-// TODO Public due to being a transitive dependency of ConfigurationImpl
 internal interface Mediator {
     // TODO OPTIMIZE Most usage of this could be done from cached RealmObjectCompanion instance.
     //  Maybe just eliminate this method to ensure that we don't misuse it in favor of
     //  companionOf(clazz).`io_realm_kotlin_newInstance`()
-    public fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal
-    public fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion
+    fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal
+    fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion
 }

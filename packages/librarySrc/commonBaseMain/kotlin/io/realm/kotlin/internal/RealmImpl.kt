@@ -48,20 +48,18 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
-// TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
-// TODO Public due to being accessed from `SyncedRealmContext`
 internal class RealmImpl private constructor(
     configuration: InternalConfiguration
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
 
-    public val notificationDispatcherHolder: DispatcherHolder =
+    val notificationDispatcherHolder: DispatcherHolder =
         configuration.notificationDispatcherFactory.create()
-    public val writeDispatcherHolder: DispatcherHolder =
+    private val writeDispatcherHolder: DispatcherHolder =
         configuration.writeDispatcherFactory.create()
 
-    internal val realmScope =
+    private val realmScope =
         CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
     private val realmFlow = MutableSharedFlow<RealmChange<Realm>>(
         extraBufferCapacity = 1,
@@ -69,7 +67,7 @@ internal class RealmImpl private constructor(
     )
     private val notifier =
         SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
-    internal val writer =
+    private val writer =
         SuspendableWriter(this, writeDispatcherHolder.dispatcher)
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is

@@ -29,11 +29,11 @@ import kotlinx.atomicfu.atomic
  * NOTE: There should never be multiple RealmReferences with the same `dbPointer` as the underlying
  * C++ SharedRealm is closed when the RealmReference is no longer referenced by the [Realm].
  */
-// TODO Public due to being a transitive dependency to Notifiable
+
 internal interface RealmReference : RealmState {
-    public val owner: BaseRealmImpl
-    public val schemaMetadata: SchemaMetadata
-    public val dbPointer: RealmPointer
+    val owner: BaseRealmImpl
+    val schemaMetadata: SchemaMetadata
+    val dbPointer: RealmPointer
 
     override fun version(): VersionId {
         checkClosed()
@@ -49,12 +49,12 @@ internal interface RealmReference : RealmState {
         return RealmInterop.realm_is_closed(dbPointer)
     }
 
-    public fun close() {
+    fun close() {
         checkClosed()
         RealmInterop.realm_close(dbPointer)
     }
 
-    public fun asValidLiveRealmReference(): LiveRealmReference {
+    fun asValidLiveRealmReference(): LiveRealmReference {
         if (this !is LiveRealmReference) {
             throw IllegalStateException("Cannot modify managed objects outside of a write transaction")
         }
@@ -62,7 +62,7 @@ internal interface RealmReference : RealmState {
         return this
     }
 
-    public fun checkClosed() {
+    fun checkClosed() {
         if (isClosed()) {
             throw IllegalStateException("Realm has been closed and is no longer accessible: ${owner.configuration.path}")
         }
@@ -104,7 +104,7 @@ internal data class LiveRealmReference(
     /**
      * Returns a frozen realm reference of the current live realm reference.
      */
-    public fun snapshot(owner: BaseRealmImpl): FrozenRealmReference {
+    fun snapshot(owner: BaseRealmImpl): FrozenRealmReference {
         return FrozenRealmReference(owner, RealmInterop.realm_freeze(dbPointer), schemaMetadata)
     }
 
@@ -114,7 +114,7 @@ internal data class LiveRealmReference(
      * This means that any existing live realm objects will get an updated schema. This should be
      * safe as we don't expect live objects to leave the scope of the write block of [Realm.write].
      */
-    public fun refreshSchemaMetadata() {
+    fun refreshSchemaMetadata() {
         _schemaMetadata.value = CachedSchemaMetadata(dbPointer, owner.configuration.mapOfKClassWithCompanion.values)
     }
 }

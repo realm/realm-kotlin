@@ -39,7 +39,6 @@ import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
-// TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
 internal class AppConfigurationImpl constructor(
     override val appId: String,
@@ -48,7 +47,7 @@ internal class AppConfigurationImpl constructor(
     internal val networkTransportFactory: () -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
-    public val log: RealmLog,
+    val log: RealmLog,
     override val appName: String?,
     override val appVersion: String?
 ) : AppConfiguration {
@@ -60,7 +59,7 @@ internal class AppConfigurationImpl constructor(
      * Thus this method should only be called from [AppImpl] and will create both a native
      * AppConfiguration and App at the same time.
      */
-    public fun createNativeApp(): Pair<NetworkTransport, RealmAppPointer> {
+    fun createNativeApp(): Pair<NetworkTransport, RealmAppPointer> {
         // Create a new network transport for each App instance. This which allow the App to control
         // the lifecycle of any threadpools created by the network transport. Also, there should
         // be no reason for people to have multiple app instances for the same app, so the net

@@ -40,24 +40,24 @@ import kotlin.reflect.KClass
  *
  * It contains a pointer to the object and it is the main entry point to the Realm object features.
  */
-// TODO Public due to being a transitive dependency of RealmObjectInternal
+
 internal class RealmObjectReference<T : BaseRealmObject>(
-    public val className: String,
-    public val type: KClass<T>,
-    public val owner: RealmReference,
-    public val mediator: Mediator,
-    public override val objectPointer: RealmObjectPointer,
+    val className: String,
+    val type: KClass<T>,
+    val owner: RealmReference,
+    val mediator: Mediator,
+    override val objectPointer: RealmObjectPointer,
 ) :
     RealmStateHolder,
     RealmObjectInterop,
     InternalDeleteable,
     CoreNotifiable<RealmObjectReference<T>, ObjectChange<T>> {
 
-    public val metadata: ClassMetadata = owner.schemaMetadata[className]!!
+    val metadata: ClassMetadata = owner.schemaMetadata[className]!!
 
     // Any methods added to this interface, needs to be fake overridden on the user classes by
     // the compiler plugin, see "RealmObjectInternal overrides" in RealmModelLowering.lower
-    public fun propertyInfoOrThrow(
+    fun propertyInfoOrThrow(
         propertyName: String
     ): PropertyMetadata = this.metadata.getOrThrow(propertyName)
 
@@ -92,7 +92,7 @@ internal class RealmObjectReference<T : BaseRealmObject>(
         return thaw(liveRealm, type)
     }
 
-    public fun thaw(
+    fun thaw(
         liveRealm: RealmReference,
         clazz: KClass<out BaseRealmObject>
     ): RealmObjectReference<T>? {
@@ -156,8 +156,8 @@ internal class RealmObjectReference<T : BaseRealmObject>(
         }
     }
 
-    public companion object {
-        public const val INVALID_OBJECT_MSG: String = "Cannot perform this operation on an invalid/deleted object"
+    companion object {
+        const val INVALID_OBJECT_MSG: String = "Cannot perform this operation on an invalid/deleted object"
     }
 }
 

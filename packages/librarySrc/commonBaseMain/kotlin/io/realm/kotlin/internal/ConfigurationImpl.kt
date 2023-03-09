@@ -45,7 +45,6 @@ import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
-// TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
 internal open class ConfigurationImpl constructor(
     directory: String,

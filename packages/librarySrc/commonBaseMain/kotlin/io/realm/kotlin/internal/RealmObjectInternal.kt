@@ -26,8 +26,7 @@ import io.realm.kotlin.types.RealmObject
  * exposing our internal API and compiler plugin additions without leaking it to the public
  * [RealmObject].
  */
-// TODO Public due to being a transitive dependency of Mediator
 @Suppress("VariableNaming")
 internal interface RealmObjectInternal : BaseRealmObject {
-    public var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>?
+    var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>?
 }

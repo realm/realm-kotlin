@@ -18,9 +18,8 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.Deleteable
 
-// TODO Public due to being a transitive dependency of RealmInternalObject
 internal interface InternalDeleteable : Deleteable {
-    public fun delete()
+    fun delete()
 }
 
 internal fun Deleteable.asInternalDeleteable(): InternalDeleteable {

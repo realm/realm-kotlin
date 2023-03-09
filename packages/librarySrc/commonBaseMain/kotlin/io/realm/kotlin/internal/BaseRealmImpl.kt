@@ -23,7 +23,6 @@ import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.flow.Flow
 
 @Suppress("UnnecessaryAbstractClass")
-// TODO Public due to being a transitive dependency to RealmReference
 internal abstract class BaseRealmImpl internal constructor(
     final override val configuration: InternalConfiguration,
 ) : BaseRealm, RealmStateHolder {

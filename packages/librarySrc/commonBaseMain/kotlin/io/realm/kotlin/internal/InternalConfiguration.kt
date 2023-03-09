@@ -29,24 +29,23 @@ import kotlin.reflect.KClass
  * [io.realm.Configuration]. This is needed to make "agnostic" configurations from a base-sync
  * point of view.
  */
-// TODO Public due to being transitive dependency to `ConfigurationImpl` and `SyncConfigurationImpl`.
-@PublishedApi
+
 internal interface InternalConfiguration : Configuration {
-    public val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
-    public val mediator: Mediator
-    public val notificationDispatcherFactory: CoroutineDispatcherFactory
-    public val writeDispatcherFactory: CoroutineDispatcherFactory
-    public val schemaMode: SchemaMode
+    val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
+    val mediator: Mediator
+    val notificationDispatcherFactory: CoroutineDispatcherFactory
+    val writeDispatcherFactory: CoroutineDispatcherFactory
+    val schemaMode: SchemaMode
 
     // Temporary work-around for https://github.com/realm/realm-kotlin/issues/724
-    public val isFlexibleSyncConfiguration: Boolean
+    val isFlexibleSyncConfiguration: Boolean
 
     /**
      * Creates a new native Config object based on all the settings in this configuration.
      * Each pointer should only be used to open _one_ realm. If you want to open multiple realms
      * with the same [Configuration], this method should be called for each one of them.
      */
-    public fun createNativeConfiguration(): RealmConfigurationPointer
+    fun createNativeConfiguration(): RealmConfigurationPointer
 
     /**
      * This function is a way `RealmImpl` can defer how the Realm is opened to either a local
@@ -60,7 +59,7 @@ internal interface InternalConfiguration : Configuration {
      * @param realm instance of the Realm that is being created.
      * @returns a pair of (LiveRealmPointer, FileCreated)
      */
-    public suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean>
+    suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean>
 
     /**
      * This function is a way `RealmImpl` can defer how the Realm is initialized once opened.
@@ -70,9 +69,9 @@ internal interface InternalConfiguration : Configuration {
      * @param realm instance of the Realm that is being created.
      * @param realmFileCreated `true` if the Realm file was just created, `false` if it already existed.
      */
-    public suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean)
+    suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean)
 
-    public fun debug(): String {
+    fun debug(): String {
         return "path=$path\n" +
             " name=$name\n" +
             " maxNumberOfActiveVersions=$maxNumberOfActiveVersions\n" +

@@ -37,7 +37,7 @@ internal interface Observable<T : CoreNotifiable<T, C>, C> {
      * Returns the [Notifiable] describing how the [SuspendableNotifier] should register and emit
      * change events for the given [Observable].
      */
-    public fun notifiable(): Notifiable<T, C>
+    fun notifiable(): Notifiable<T, C>
 }
 
 /**
@@ -54,13 +54,13 @@ internal interface Notifiable<T : CoreNotifiable<T, C>, C> {
      * Should return the live reference in [liveRealm] that the [SuspendableNotifier] will register
      * notifications for with Core, or `null` if the entity has been deleted.
      */
-    public fun coreObservable(liveRealm: LiveRealm): CoreNotifiable<T, C>?
+    fun coreObservable(liveRealm: LiveRealm): CoreNotifiable<T, C>?
 
     /**
      * The [ChangeFlow] responsible for emitting [SuspendableNotifier] events as appropriate
      * [C]-change events.
      */
-    public fun changeFlow(scope: ProducerScope<C>): ChangeFlow<T, C>
+    fun changeFlow(scope: ProducerScope<C>): ChangeFlow<T, C>
 }
 
 /**
@@ -71,7 +71,6 @@ internal interface Notifiable<T : CoreNotifiable<T, C>, C> {
  * @param T the type of entity that is observed.
  * @param C the type of change events emitted for the T entity.
  */
-// TODO Public due to being a transitive dependency from RealmObjectReference
 internal abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<C>) {
 
     private var initialElement: Boolean = true
@@ -128,9 +127,9 @@ internal abstract class ChangeFlow<T, C>(private val producerScope: ProducerScop
  */
 internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Versioned, Flowable<C>
         where T : CoreNotifiable<T, C> {
-    public fun thaw(liveRealm: RealmReference): T?
-    public fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
-    public fun freeze(frozenRealm: RealmReference): T?
+    fun thaw(liveRealm: RealmReference): T?
+    fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
+    fun freeze(frozenRealm: RealmReference): T?
 
     // Default implementation as all Observables are just thawing themselves.
     override fun notifiable(): Notifiable<T, C> = this

@@ -34,10 +34,8 @@ import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.serialization.Bson
 
-// TODO Public due to being a transitive dependency to SyncConfigurationImpl
-@PublishedApi
 internal class UserImpl(
-    public val nativePointer: RealmUserPointer,
+    val nativePointer: RealmUserPointer,
     override val app: AppImpl
 ) : User {
     override val apiKeyAuth: ApiKeyAuth by lazy {
@@ -203,13 +201,13 @@ internal class UserImpl(
         }
     }
 
-    public companion object {
+    companion object {
         /**
          * Converts a Core state value to a library state value.
          *
          * For internal use only.
          */
-        public fun fromCoreState(coreState: CoreUserState): User.State = when (coreState) {
+        fun fromCoreState(coreState: CoreUserState): User.State = when (coreState) {
             CoreUserState.RLM_USER_STATE_LOGGED_OUT -> User.State.LOGGED_OUT
             CoreUserState.RLM_USER_STATE_LOGGED_IN -> User.State.LOGGED_IN
             CoreUserState.RLM_USER_STATE_REMOVED -> User.State.REMOVED
