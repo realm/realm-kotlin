@@ -369,54 +369,54 @@ class GenerationExtensionTest {
         }
     }
 
-    class DummyLongPointer(val ptr: Long) : RealmObjectPointer {
+    private class DummyLongPointer(val ptr: Long) : RealmObjectPointer {
         override fun release() {
             // Do nothing
         }
 
         override fun isReleased(): Boolean = false
     }
-    internal class MockRealmReference : RealmReference {
-         val dbPointer: RealmPointer
+    private class MockRealmReference : RealmReference {
+        val dbPointer: RealmPointer
             get() = TODO("Not yet implemented")
-         val owner: BaseRealmImpl
+        val owner: BaseRealmImpl
             get() = TODO("Not yet implemented")
-         val schemaMetadata: SchemaMetadata
+        val schemaMetadata: SchemaMetadata
             get() = object : SchemaMetadata {
-                 fun get(className: String): ClassMetadata = object : ClassMetadata {
-                     val classKey: ClassKey
+                fun get(className: String): ClassMetadata = object : ClassMetadata {
+                    val classKey: ClassKey
                         get() = TODO("Not yet implemented")
-                     val properties: List<PropertyMetadata>
+                    val properties: List<PropertyMetadata>
                         get() = TODO("Not yet implemented")
-                     val clazz: KClass<out TypedRealmObject>?
+                    val clazz: KClass<out TypedRealmObject>?
                         get() = TODO("Not yet implemented")
-                     val className: String
+                    val className: String
                         get() = TODO("Not yet implemented")
-                     val primaryKeyProperty: PropertyMetadata?
+                    val primaryKeyProperty: PropertyMetadata?
                         get() = TODO("Not yet implemented")
-                     val isEmbeddedRealmObject: Boolean
+                    val isEmbeddedRealmObject: Boolean
                         get() = TODO("Not yet implemented")
-                     fun get(propertyKey: PropertyKey): PropertyMetadata? {
+                    fun get(propertyKey: PropertyKey): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
-                     fun get(property: KProperty<*>): PropertyMetadata? {
+                    fun get(property: KProperty<*>): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
-                     fun get(propertyName: String): PropertyMetadata? {
+                    fun get(propertyName: String): PropertyMetadata? {
                         TODO("Not yet implemented")
                     }
                 }
 
-                 fun get(classKey: ClassKey): ClassMetadata? {
+                fun get(classKey: ClassKey): ClassMetadata? {
                     TODO("Not yet implemented")
                 }
             }
     }
-    internal class MockMediator : Mediator {
-         fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
+    private class MockMediator : Mediator {
+        fun companionOf(clazz: KClass<out BaseRealmObject>): RealmObjectCompanion {
             TODO("Not yet implemented")
         }
-         fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
+        fun createInstanceOf(clazz: KClass<out BaseRealmObject>): RealmObjectInternal {
             TODO("Not yet implemented")
         }
     }
