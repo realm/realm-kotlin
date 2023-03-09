@@ -217,10 +217,10 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
                 //  with:
                 //    # package io.realm.kotlin
                 //  Maybe worth a consideration
-                "src/commonBaseMain/kotlin/io/realm/kotlin/info.md",
-                "src/commonBaseMain/kotlin/io/realm/kotlin/log/info.md"
+                "src/commonMain/kotlin/io/realm/kotlin/info.md",
+                "src/commonMain/kotlin/io/realm/kotlin/log/info.md"
             )
-            sourceRoot("../runtime-api/src/commonBaseMain/kotlin")
+            sourceRoot("../runtime-api/src/commonMain/kotlin")
         }
     }
 }
