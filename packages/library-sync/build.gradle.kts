@@ -90,20 +90,20 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val jvmCommonBase by creating {
+        val jvmBase by creating {
             dependsOn(commonMain)
         }
-        val jvmCommonSync by creating {
-            dependsOn(jvmCommonBase)
+        val jvm by creating {
+            dependsOn(jvmBase)
             dependencies {
                 implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
         }
         val jvmMain by getting {
-            dependsOn(jvmCommonSync)
+            dependsOn(jvm)
         }
         val androidBaseMain by creating {
-            dependsOn(jvmCommonSync)
+            dependsOn(jvm)
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
@@ -131,7 +131,7 @@ kotlin {
         val nativeDarwinBase by creating {
             dependsOn(commonMain)
         }
-        val nativeDarwinSync by creating {
+        val nativeDarwin by creating {
             dependsOn(nativeDarwinBase)
             dependencies {
                 implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
@@ -139,10 +139,10 @@ kotlin {
         }
 
         val nativeMacos by creating {
-            dependsOn(nativeDarwinSync)
+            dependsOn(nativeDarwin)
         }
         val nativeIos by creating {
-            dependsOn(nativeDarwinSync)
+            dependsOn(nativeDarwin)
         }
         val macosX64Main by getting {
             dependsOn(nativeMacos)

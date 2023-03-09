@@ -34,6 +34,7 @@ import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.serialization.Bson
 
+@PublishedApi
 internal class UserImpl(
     val nativePointer: RealmUserPointer,
     override val app: AppImpl

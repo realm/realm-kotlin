@@ -35,7 +35,7 @@ internal class StandaloneDynamicMutableRealm(configuration: InternalConfiguratio
         RealmInterop.realm_open(configuration.createNativeConfiguration(), null)
     ) {
 
-    fun close() {
+    fun closes() {
         realmReference.close()
     }
 }

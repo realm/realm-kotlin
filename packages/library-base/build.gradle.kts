@@ -67,14 +67,14 @@ kotlin {
             }
         }
 
-        val jvmCommonBase by creating {
+        val jvm by creating {
             dependsOn(commonMain)
         }
         val jvmMain by getting {
-            dependsOn(jvmCommonBase)
+            dependsOn(jvm)
         }
         val androidMain by getting {
-            dependsOn(jvmCommonBase)
+            dependsOn(jvm)
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
