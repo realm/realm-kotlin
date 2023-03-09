@@ -35,7 +35,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 // Common Kotlin configuration
 kotlin {
     jvm()
-    android("androidBase") {
+    android("android") {
         publishLibraryVariants("release")
     }
     ios()
@@ -44,7 +44,7 @@ kotlin {
     macosArm64()
 
     sourceSets {
-        val commonBaseMain by creating {
+        val commonMain by getting {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation(kotlin("reflect"))
@@ -60,29 +60,26 @@ kotlin {
             }
         }
 
-        val commonMain by getting {
-            dependsOn(commonBaseMain)
-        }
-
         commonTest {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
+
         val jvmCommonBase by creating {
             dependsOn(commonMain)
         }
         val jvmMain by getting {
             dependsOn(jvmCommonBase)
         }
-        val androidBaseMain by getting {
+        val androidMain by getting {
             dependsOn(jvmCommonBase)
             dependencies {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        val androidBaseTest by getting {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
@@ -93,14 +90,14 @@ kotlin {
                 implementation(kotlin("reflect:${Versions.kotlin}"))
             }
         }
-        val nativeDarwinBase by creating {
+        val nativeDarwin by creating {
             dependsOn(commonMain)
         }
         val nativeMacos by creating {
-            dependsOn(nativeDarwinBase)
+            dependsOn(nativeDarwin)
         }
         val nativeIos by creating {
-            dependsOn(nativeDarwinBase)
+            dependsOn(nativeDarwin)
         }
         val macosX64Main by getting {
             dependsOn(nativeMacos)

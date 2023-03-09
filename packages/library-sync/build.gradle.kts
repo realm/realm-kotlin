@@ -35,7 +35,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 // Common Kotlin configuration
 kotlin {
     jvm()
-    android("androidSync") {
+    android("android") {
         publishLibraryVariants("release")
     }
     iosX64()
@@ -59,7 +59,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
         }
-        val commonSyncMain by creating {
+        val commonMain by getting {
             dependsOn(commonBaseMain)
             dependencies {
                 implementation(kotlin("stdlib-common"))
@@ -82,9 +82,6 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
             }
-        }
-        val commonMain by getting {
-            dependsOn(commonSyncMain)
         }
 
         commonTest {
@@ -111,7 +108,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        val androidSyncMain by getting {
+        val androidMain by getting {
             dependsOn(androidBaseMain)
             dependencies {
                 api(project(":cinterop"))
@@ -119,7 +116,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        val androidSyncTest by getting {
+        val androidTest by getting {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
