@@ -78,6 +78,7 @@ public fun DataFrame.Companion.readRealm(realmFile: File, encryptionKey: ByteArr
  * TODO This currently doesn't work as we don't expose a `DynamicMutableRealm` (or similar).
  *  Just show the API surface for now.
  */
+@Suppress("unused")
 public fun DataFrame<*>.copyToRealm(realm: DynamicRealm, className: String, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR) {
     // Do nothing
 }

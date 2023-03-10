@@ -94,6 +94,7 @@ internal class RealmDataFrameBuilder(classSchema: RealmClass) {
                 null
             }
         }.filterNotNull()
+        @Suppress("SpreadOperator")
         return dataFrameOf(columns).explode(*headersToMerge.toTypedArray())
     }
 
@@ -203,7 +204,7 @@ private fun addSetPropertyToFrame(
     RealmStorageType.OBJECT -> {
         val set: RealmSet<out DynamicRealmObject> = obj.getObjectSet(prop.name)
         if (set.isEmpty()) {
-            // TODO: RealmSchema cannot tell the type of set items :/
+            // TODO RealmSchema cannot tell the type of set items :/
             builder.addValue(prop.name, DataFrame.Empty)
         } else {
             val className: String = set.first().type

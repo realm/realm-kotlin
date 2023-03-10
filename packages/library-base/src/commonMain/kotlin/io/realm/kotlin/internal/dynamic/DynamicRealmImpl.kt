@@ -59,6 +59,6 @@ internal open class DynamicRealmImpl(
 
     override fun close() {
         super.close()
-        // FIXME: Figure out how to close it
+        // FIXME Figure out how to close it
     }
 }
