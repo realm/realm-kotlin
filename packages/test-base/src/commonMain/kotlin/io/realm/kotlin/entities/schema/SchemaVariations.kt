@@ -17,10 +17,12 @@
 package io.realm.kotlin.entities.schema
 
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
@@ -104,4 +106,26 @@ class SchemaVariations : RealmObject {
 
     var nullableStringSet: RealmSet<String?> = realmSetOf()
     var nullableRealmAnySet: RealmSet<RealmAny?> = realmSetOf()
+    
+    // Dictionary properties
+    var boolMap: RealmDictionary<Boolean> = realmDictionaryOf()
+    var byteMap: RealmDictionary<Byte> = realmDictionaryOf()
+    var charMap: RealmDictionary<Char> = realmDictionaryOf()
+    var shortMap: RealmDictionary<Short> = realmDictionaryOf()
+    var intMap: RealmDictionary<Int> = realmDictionaryOf()
+    var longMap: RealmDictionary<Long> = realmDictionaryOf()
+    var floatMap: RealmDictionary<Float> = realmDictionaryOf()
+    var doubleMap: RealmDictionary<Double> = realmDictionaryOf()
+    var decimal128Map: RealmDictionary<Decimal128> = realmDictionaryOf()
+    var stringMap: RealmDictionary<String> = realmDictionaryOf()
+    var dateMap: RealmDictionary<RealmInstant> = realmDictionaryOf()
+    var objectIdMap: RealmDictionary<ObjectId> = realmDictionaryOf()
+    var bsonObjectIdMap: RealmDictionary<BsonObjectId> = realmDictionaryOf()
+    var uuidMap: RealmDictionary<RealmUUID> = realmDictionaryOf()
+    var binaryMap: RealmDictionary<ByteArray> = realmDictionaryOf()
+
+    var objectMap: RealmDictionary<Sample?> = realmDictionaryOf()
+
+    var nullableStringMap: RealmDictionary<String?> = realmDictionaryOf()
+    var nullableRealmAnyMap: RealmDictionary<RealmAny?> = realmDictionaryOf()
 }
