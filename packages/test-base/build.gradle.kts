@@ -58,12 +58,6 @@ kotlin {
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
                 implementation("io.realm.kotlin:library-base:${Realm.version}")
-                // FIXME API-SCHEMA We currently have some tests that verified injection of
-                //  interfaces, uses internal representation for property meta data, etc. Can
-                //  probably be replaced when schema information is exposed in the public API
-                // Our current compiler plugin tests only runs on JVM, so makes sense to keep them
-                // for now, but ideally they should go to the compiler plugin tests.
-                implementation("io.realm.kotlin:cinterop:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")

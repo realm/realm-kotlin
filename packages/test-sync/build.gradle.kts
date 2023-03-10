@@ -53,17 +53,17 @@ configurations.all {
 // Common Kotlin configuration
 kotlin {
     sourceSets {
+        val commonBaseMain by creating {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
+            }
+        }
         val commonMain by getting {
+            dependsOn(commonBaseMain)
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-                // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
-                //  requirements for now
-                implementation(project(":test-base"))
-                // IDE Doesn't resolve library-base symbols if not adding it as an explicit
-                // dependency. Probably due to our own custom dependency substitution above, but
-                // shouldn't be an issue as it is already a transitive dependency of library-sync.
-                implementation("io.realm.kotlin:library-base:${Realm.version}")
+
                 implementation("io.realm.kotlin:library-sync:${Realm.version}")
                 // FIXME API-SCHEMA We currently have some tests that verified injection of
                 //  interfaces, uses internal representation for property meta data, etc. Can
@@ -150,7 +150,10 @@ android {
 kotlin {
     android("android")
     sourceSets {
+        val androidBaseMain by creating {}
+
         val androidMain by getting {
+            dependsOn(androidBaseMain)
             dependencies {
                 implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
@@ -173,7 +176,9 @@ kotlin {
 kotlin {
     jvm()
     sourceSets {
+        val jvmBaseMain by creating { }
         val jvmMain by getting {
+            dependsOn(jvmBaseMain)
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
@@ -205,8 +210,11 @@ kotlin {
     sourceSets {
         val commonMain by getting
         val commonTest by getting
-        val nativeDarwin by creating {
+        val nativeDarwinBase by creating {
             dependsOn(commonMain)
+        }
+        val nativeDarwin by creating {
+            dependsOn(nativeDarwinBase)
         }
         val nativeDarwinTest by creating {
             dependsOn(commonTest)
