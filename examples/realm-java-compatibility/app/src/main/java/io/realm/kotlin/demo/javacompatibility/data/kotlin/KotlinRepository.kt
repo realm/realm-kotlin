@@ -33,9 +33,14 @@ class KotlinEntity : RealmObject {
 
 class KotlinRepository: Repository {
 
-    val realm = Realm.open(RealmConfiguration.Builder(setOf(KotlinEntity::class)).name("kotlin.realm").build())
+    val realm: Realm
 
     init {
+        val config = RealmConfiguration.Builder(setOf(KotlinEntity::class))
+            .name("kotlin.realm")
+            .build()
+        Realm.deleteRealm(config)
+        realm = Realm.open(config)
         realm.writeBlocking { copyToRealm(KotlinEntity()) }
         val entities = realm.query<KotlinEntity>().find()
         Log.w(TAG, "KOTLIN: ${entities.size}")
