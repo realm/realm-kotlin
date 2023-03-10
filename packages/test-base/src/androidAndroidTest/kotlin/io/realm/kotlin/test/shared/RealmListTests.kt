@@ -34,6 +34,8 @@ import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.ErrorCatcher
+import io.realm.kotlin.test.GenericTypeSafetyManager
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
@@ -71,7 +73,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmListTests {
+class RealmListTests : EmbeddedObjectCollectionQueryTests {
 
     private val descriptors = TypeDescriptor.allListFieldTypes
 
@@ -427,7 +429,7 @@ class RealmListTests {
     }
 
     @Test
-    fun listAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun collectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val mutex = Mutex(true)
         val job = async {
@@ -443,7 +445,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_objectList() = runBlocking {
+    override fun query_objectCollection() = runBlocking {
         val container = realm.write {
             copyToRealm(
                 RealmListContainer().apply {
@@ -466,7 +468,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_embeddedObjectList() = runBlocking {
+    override fun query_embeddedObjectCollection() = runBlocking {
         val container = realm.write {
             copyToRealm(
                 RealmListContainer().apply {
@@ -489,7 +491,7 @@ class RealmListTests {
     }
 
     @Test
-    fun queryOnListAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun queryOnCollectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val mutex = Mutex(true)
         val listener = async {
@@ -507,7 +509,7 @@ class RealmListTests {
     }
 
     @Test
-    fun queryOnListAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+    override fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val flow = container.objectListField.query().asFlow()
             .buffer(1)
@@ -541,32 +543,33 @@ class RealmListTests {
     // This test shows that our internal logic still works (by closing the flow on deletion events)
     // even though the public consumer is dropping elements
     @Test
-    fun queryOnListAsFlow_backpressureStrategyDoesNotRuinInternalLogic() = runBlocking {
-        val container = realm.write { copyToRealm(RealmListContainer()) }
-        val flow = container.objectListField.query().asFlow()
-            .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    override fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic() =
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmListContainer()) }
+            val flow = container.objectListField.query().asFlow()
+                .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-        val listener = async {
-            withTimeout(10.seconds) {
-                flow.collect { current ->
-                    delay(30.milliseconds)
+            val listener = async {
+                withTimeout(10.seconds) {
+                    flow.collect { current ->
+                        delay(30.milliseconds)
+                    }
                 }
             }
-        }
-        (1..100).forEach { i ->
-            realm.write {
-                findLatest(container)!!.objectListField.run {
-                    clear()
-                    add(RealmListContainer().apply { this.id = i })
+            (1..100).forEach { i ->
+                realm.write {
+                    findLatest(container)!!.objectListField.run {
+                        clear()
+                        add(RealmListContainer().apply { this.id = i })
+                    }
                 }
             }
+            realm.write { delete(findLatest(container)!!) }
+            listener.await()
         }
-        realm.write { delete(findLatest(container)!!) }
-        listener.await()
-    }
 
     @Test
-    fun query_throwsOnSyntaxError() = runBlocking {
+    override fun query_throwsOnSyntaxError() = runBlocking {
         val instance = realm.write { copyToRealm(RealmListContainer()) }
         assertFailsWithMessage<IllegalArgumentException>("syntax error") {
             instance.objectListField.query("ASDF = $0 $0")
@@ -575,7 +578,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_throwsOnUnmanagedList() = runBlocking {
+    override fun query_throwsOnUnmanagedCollection() = runBlocking {
         realm.write {
             val instance = RealmListContainer()
             copyToRealm(instance)
@@ -587,7 +590,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_throwsOnDeletedList() = runBlocking {
+    override fun query_throwsOnDeletedCollection() = runBlocking {
         realm.write {
             val instance = copyToRealm(RealmListContainer())
             val objectListField = instance.objectListField
@@ -600,7 +603,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_throwsOnClosedList() = runBlocking {
+    override fun query_throwsOnClosedCollection() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val objectListField = container.objectListField
         realm.close()
@@ -645,50 +648,51 @@ class RealmListTests {
         else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
     } as List<T>
 
-    private fun getTypeSafety(classifier: KClassifier, nullable: Boolean): TypeSafetyManager<*> =
+    private fun getTypeSafety(
+        classifier: KClassifier,
+        nullable: Boolean
+    ): ListTypeSafetyManager<*> =
         when {
-            nullable -> NullableList(
-                classifier = classifier,
+            nullable -> ListTypeSafetyManager(
                 property = RealmListContainer.nullableProperties[classifier]!!,
-                dataSet = getDataSetForClassifier(classifier, true)
+                dataSetToLoad = getDataSetForClassifier(classifier, true)
             )
-            else -> NonNullableList(
-                classifier = classifier,
+            else -> ListTypeSafetyManager(
                 property = RealmListContainer.nonNullableProperties[classifier]!!,
-                dataSet = getDataSetForClassifier(classifier, false)
+                dataSetToLoad = getDataSetForClassifier(classifier, false)
             )
         }
 
-    private val managedTesters: List<ListApiTester> by lazy {
+    private val managedTesters: List<ListApiTester<*, RealmListContainer>> by lazy {
         descriptors.map {
             val elementType = it.elementType
             when (val classifier = elementType.classifier) {
-                RealmObject::class -> ManagedRealmObjectListTester(
+                RealmObject::class -> RealmObjectListTester(
                     realm = realm,
-                    typeSafetyManager = NonNullableList(
-                        classifier = classifier,
+                    typeSafetyManager = ListTypeSafetyManager(
                         property = RealmListContainer::objectListField,
-                        dataSet = OBJECT_VALUES
-                    )
+                        dataSetToLoad = OBJECT_VALUES
+                    ),
+                    classifier
                 )
-                ByteArray::class -> ManagedByteArrayListTester(
+                ByteArray::class -> ByteArrayListTester(
                     realm = realm,
                     typeSafetyManager = getTypeSafety(
                         classifier,
                         elementType.nullable
-                    ) as TypeSafetyManager<ByteArray?>
+                    ) as ListTypeSafetyManager<ByteArray?>
                 )
-                RealmAny::class -> ManagedRealmAnyListTester(
+                RealmAny::class -> RealmAnyListTester(
                     realm = realm,
-                    typeSafetyManager = NullableList(
-                        classifier = classifier,
+                    typeSafetyManager = ListTypeSafetyManager(
                         property = RealmListContainer.nullableProperties[classifier]!!,
-                        dataSet = getDataSetForClassifier(classifier, true)
-                    ) as TypeSafetyManager<RealmAny?>
+                        dataSetToLoad = getDataSetForClassifier(classifier, true)
+                    ) as ListTypeSafetyManager<RealmAny?>
                 )
-                else -> ManagedGenericListTester(
+                else -> GenericListTester(
                     realm = realm,
-                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable)
+                    typeSafetyManager = getTypeSafety(classifier, elementType.nullable),
+                    classifier
                 )
             }
         }
@@ -699,7 +703,9 @@ class RealmListTests {
 // API dimension
 // ----------------------------------------------
 
-internal interface ListApiTester {
+internal interface ListApiTester<T, Container> : ErrorCatcher {
+
+    val realm: Realm
 
     override fun toString(): String
     fun copyToRealm()
@@ -719,84 +725,25 @@ internal interface ListApiTester {
     fun assignField()
 
     // All the other functions are not tested since we rely on implementations from parent classes.
-
-    /**
-     * This method acts as an assertion error catcher in case one of the classifiers we use for
-     * testing fails, ensuring the error message can easily be identified in the log.
-     *
-     * Assertions should be wrapped around this function, e.g.:
-     * ```
-     * override fun specificTest() {
-     *     errorCatcher {
-     *         // Write your test logic here
-     *     }
-     * }
-     * ```
-     *
-     * @param block lambda with the actual test logic to be run
-     */
-    fun errorCatcher(block: () -> Unit) {
-        try {
-            block()
-        } catch (e: AssertionError) {
-            throw AssertionError("'${toString()}' failed - ${e.message}", e)
-        }
-    }
 }
 
 // ----------------------------------------------------------
 // Type safety (nullability and dataset matching) dimension
 // ----------------------------------------------------------
 
-internal interface TypeSafetyManager<T> {
-    val classifier: KClassifier
-    val property: KMutableProperty1<RealmListContainer, RealmList<T>>
-    val dataSet: List<T>
-
-    override fun toString(): String // Default implementation not allowed as it comes from "Any"
-    fun createContainerAndGetList(realm: MutableRealm? = null): RealmList<T>
-    fun getInitialDataSet(): List<T>
-
-    fun createPrePopulatedContainer(dataSet: List<T>): RealmListContainer =
-        RealmListContainer().also {
-            property.get(it).apply { addAll(dataSet) }
-        }
-
-    fun getList(container: RealmListContainer): RealmList<T> = property.get(container)
-}
-
-internal class NullableList<T>(
-    override val classifier: KClassifier,
-    override val property: KMutableProperty1<RealmListContainer, RealmList<T?>>,
-    override val dataSet: List<T?>
-) : TypeSafetyManager<T?> {
-
-    override fun toString(): String = property.name
-
-    override fun createContainerAndGetList(realm: MutableRealm?): RealmList<T?> {
-        val container = RealmListContainer().let {
-            realm?.copyToRealm(it) ?: it
-        }
-        return property.get(container).also { list ->
-            assertNotNull(list)
-            assertTrue(list.isEmpty())
-        }
-    }
-
-    override fun getInitialDataSet(): List<T?> = dataSet
-}
-
-internal class NonNullableList<T>(
-    override val classifier: KClassifier,
+internal class ListTypeSafetyManager<T>(
     override val property: KMutableProperty1<RealmListContainer, RealmList<T>>,
-    override val dataSet: List<T>
-) : TypeSafetyManager<T> {
+    override val dataSetToLoad: List<T>
+) : GenericTypeSafetyManager<T, RealmListContainer, RealmList<T>> {
 
     override fun toString(): String = property.name
 
-    override fun createContainerAndGetList(realm: MutableRealm?): RealmList<T> {
+    override fun getCollection(container: RealmListContainer): RealmList<T> =
+        property.get(container)
+
+    override fun createContainerAndGetCollection(realm: MutableRealm): RealmList<T> {
         val container = RealmListContainer().let {
-            realm?.copyToRealm(it) ?: it
+            realm.copyToRealm(it)
         }
         return property.get(container).also { list ->
             assertNotNull(list)
@@ -804,15 +751,13 @@ internal class NonNullableList<T>(
         }
     }
 
-    override fun getInitialDataSet(): List<T> = dataSet
-}
-
-// ----------------------------------------------
-// Mode dimension
-// ----------------------------------------------
-
-internal interface ManagedList {
-    val realm: Realm
+    override fun createPrePopulatedContainer(): RealmListContainer =
+        RealmListContainer().also {
+            property.get(it)
+                .apply {
+                    addAll(dataSetToLoad)
+                }
+        }
 }
 
 // ----------------------------------------------
@@ -853,8 +798,9 @@ internal interface ManagedList {
  */
 internal abstract class ManagedListTester<T>(
     override val realm: Realm,
-    private val typeSafetyManager: TypeSafetyManager<T>
-) : ManagedList, ListApiTester {
+    private val typeSafetyManager: ListTypeSafetyManager<T>,
+    override val classifier: KClassifier
+) : ListApiTester<T, RealmListContainer> {
 
     /**
      * Asserts content equality for two given objects. This is needed to evaluate the contents of
@@ -865,18 +811,18 @@ internal abstract class ManagedListTester<T>(
     override fun toString(): String = "Managed-$typeSafetyManager"
 
     override fun copyToRealm() {
-        val dataSet = typeSafetyManager.getInitialDataSet()
+        val dataSet = typeSafetyManager.dataSetToLoad
 
         val assertions = { container: RealmListContainer ->
             dataSet.forEachIndexed { index, expected ->
-                val list = typeSafetyManager.getList(container)
+                val list = typeSafetyManager.getCollection(container)
                 val actual = list[index]
                 assertElementsAreEqual(expected, actual)
             }
         }
 
         errorCatcher {
-            val container = typeSafetyManager.createPrePopulatedContainer(dataSet)
+            val container = typeSafetyManager.createPrePopulatedContainer()
 
             realm.writeBlocking {
                 val managedContainer = copyToRealm(container)
@@ -888,10 +834,10 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun add() {
-        val dataSet: List<T> = typeSafetyManager.getInitialDataSet()
+        val dataSet: List<T> = typeSafetyManager.dataSetToLoad
 
         val assertions = { container: RealmListContainer ->
-            val list = typeSafetyManager.getList(container)
+            val list = typeSafetyManager.getCollection(container)
             dataSet.forEachIndexed { index, t ->
                 assertElementsAreEqual(t, list[index])
             }
@@ -899,7 +845,7 @@ internal abstract class ManagedListTester<T>(
 
         errorCatcher {
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
                 dataSet.forEachIndexed { index, e ->
                     assertEquals(index, list.size)
                     list.add(e)
@@ -911,7 +857,7 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun get() {
-        val dataSet = typeSafetyManager.getInitialDataSet()
+        val dataSet = typeSafetyManager.dataSetToLoad
         val assertions = { list: RealmList<T> ->
             // Fails when using invalid indices
             assertFailsWith<IndexOutOfBoundsException> {
@@ -928,7 +874,7 @@ internal abstract class ManagedListTester<T>(
 
         errorCatcher {
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
                 list.addAll(dataSet)
                 assertions(list)
             }
@@ -939,9 +885,9 @@ internal abstract class ManagedListTester<T>(
 
     override fun getFailsIfClosed(realm: Realm) {
         errorCatcher {
-            val dataSet = typeSafetyManager.getInitialDataSet()
+            val dataSet = typeSafetyManager.dataSetToLoad
             realm.writeBlocking {
-                typeSafetyManager.createContainerAndGetList(this)
+                typeSafetyManager.createContainerAndGetCollection(this)
                     .addAll(dataSet)
             }
 
@@ -949,7 +895,7 @@ internal abstract class ManagedListTester<T>(
                 .first()
                 .find { listContainer ->
                     assertNotNull(listContainer)
-                    typeSafetyManager.getList(listContainer)
+                    typeSafetyManager.getCollection(listContainer)
                 }
 
             realm.close()
@@ -961,7 +907,7 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun addWithIndex() {
-        val dataSet: List<T> = typeSafetyManager.getInitialDataSet()
+        val dataSet: List<T> = typeSafetyManager.dataSetToLoad
         val assertions = { list: RealmList<T> ->
             // Iterate the reversed dataset since we added each element at the beginning
             dataSet.reversed().forEachIndexed { index, e ->
@@ -969,16 +915,16 @@ internal abstract class ManagedListTester<T>(
             }
             // Fails when using invalid indices
             assertFailsWith<IndexOutOfBoundsException> {
-                list.add(-1, typeSafetyManager.getInitialDataSet()[0])
+                list.add(-1, typeSafetyManager.dataSetToLoad[0])
             }
             assertFailsWith<IndexOutOfBoundsException> {
-                list.add(123, typeSafetyManager.getInitialDataSet()[0])
+                list.add(123, typeSafetyManager.dataSetToLoad[0])
             }
         }
 
         errorCatcher {
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
                 dataSet.forEachIndexed { index, e ->
                     assertEquals(index, list.size)
                     list.add(0, e)
@@ -995,9 +941,9 @@ internal abstract class ManagedListTester<T>(
 
     override fun addWithIndexFailsIfClosed(realm: Realm) {
         errorCatcher {
-            val dataSet = typeSafetyManager.getInitialDataSet()
+            val dataSet = typeSafetyManager.dataSetToLoad
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
 
                 realm.close()
 
@@ -1009,7 +955,7 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun addAllWithIndex() {
-        val dataSet = typeSafetyManager.getInitialDataSet()
+        val dataSet = typeSafetyManager.dataSetToLoad
         val assertions = { list: RealmList<T> ->
             assertEquals(dataSet.size * 2, list.size)
 
@@ -1034,7 +980,7 @@ internal abstract class ManagedListTester<T>(
         errorCatcher {
             realm.writeBlocking {
                 mutableListOf<String>()
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
 
                 // Fails when using wrong indices
                 assertFailsWith<IndexOutOfBoundsException> {
@@ -1061,9 +1007,9 @@ internal abstract class ManagedListTester<T>(
 
     override fun addAllWithIndexFailsIfClosed(realm: Realm) {
         errorCatcher {
-            val dataSet = typeSafetyManager.getInitialDataSet()
+            val dataSet = typeSafetyManager.dataSetToLoad
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
 
                 realm.close()
 
@@ -1075,14 +1021,14 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun clear() {
-        val dataSet = typeSafetyManager.getInitialDataSet()
+        val dataSet = typeSafetyManager.dataSetToLoad
         val assertions = { list: RealmList<T> ->
             assertTrue(list.isEmpty())
         }
 
         errorCatcher {
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
                 assertTrue(list.addAll(dataSet))
 
                 assertEquals(dataSet.size, list.size)
@@ -1097,9 +1043,9 @@ internal abstract class ManagedListTester<T>(
 
     override fun clearFailsIfClosed(realm: Realm) {
         errorCatcher {
-            val dataSet = typeSafetyManager.getInitialDataSet()
+            val dataSet = typeSafetyManager.dataSetToLoad
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
                 list.addAll(dataSet)
 
                 realm.close()
@@ -1112,14 +1058,14 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun removeAt() {
-        val dataSet = typeSafetyManager.getInitialDataSet()
+        val dataSet = typeSafetyManager.dataSetToLoad
         val assertions = { list: RealmList<T> ->
             assertTrue(list.isEmpty())
         }
 
         errorCatcher {
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
 
                 // Fails when using invalid indices
                 assertFailsWith<IndexOutOfBoundsException> {
@@ -1146,9 +1092,9 @@ internal abstract class ManagedListTester<T>(
 
     override fun removeAtFailsIfClosed(realm: Realm) {
         errorCatcher {
-            val dataSet = typeSafetyManager.getInitialDataSet()
+            val dataSet = typeSafetyManager.dataSetToLoad
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
                 list.addAll(dataSet)
 
                 realm.close()
@@ -1161,14 +1107,14 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun set() {
-        val dataSet = typeSafetyManager.getInitialDataSet()
+        val dataSet = typeSafetyManager.dataSetToLoad
         val assertions = { list: RealmList<T> ->
             assertEquals(1, list.size)
         }
 
         errorCatcher {
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
 
                 // Add something so that we can call set on an index
                 list.add(dataSet[0])
@@ -1194,9 +1140,9 @@ internal abstract class ManagedListTester<T>(
 
     override fun setFailsIfClosed(realm: Realm) {
         errorCatcher {
-            val dataSet = typeSafetyManager.getInitialDataSet()
+            val dataSet = typeSafetyManager.dataSetToLoad
             realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetList(this)
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
                 list.addAll(dataSet)
 
                 realm.close()
@@ -1209,7 +1155,7 @@ internal abstract class ManagedListTester<T>(
     }
 
     override fun assignField() {
-        val dataSet = typeSafetyManager.getInitialDataSet()
+        val dataSet = typeSafetyManager.dataSetToLoad
         val reassignedDataSet = listOf(dataSet[1])
 
         val assertions = { list: RealmList<T> ->
@@ -1253,7 +1199,7 @@ internal abstract class ManagedListTester<T>(
                 .first()
                 .find()
             assertNotNull(container)
-            val list = typeSafetyManager.getList(container)
+            val list = typeSafetyManager.getCollection(container)
 
             // Assert
             errorCatcher {
@@ -1287,10 +1233,11 @@ internal abstract class ManagedListTester<T>(
  * No special needs for managed, generic testers. Elements can be compared painlessly and need not
  * be copied to Realm when calling RealmList API methods.
  */
-internal class ManagedGenericListTester<T> constructor(
+internal class GenericListTester<T> constructor(
     realm: Realm,
-    typeSafetyManager: TypeSafetyManager<T>
-) : ManagedListTester<T>(realm, typeSafetyManager) {
+    typeSafetyManager: ListTypeSafetyManager<T>,
+    classifier: KClassifier
+) : ManagedListTester<T>(realm, typeSafetyManager, classifier) {
     override fun assertElementsAreEqual(expected: T, actual: T) {
         if (expected is ByteArray) {
             assertContentEquals(expected, actual as ByteArray)
@@ -1304,10 +1251,10 @@ internal class ManagedGenericListTester<T> constructor(
  * Checks equality for RealmAny values. When working with RealmObjects we need to do it at a
  * structural level.
  */
-internal class ManagedRealmAnyListTester constructor(
+internal class RealmAnyListTester constructor(
     realm: Realm,
-    typeSafetyManager: TypeSafetyManager<RealmAny?>
-) : ManagedListTester<RealmAny?>(realm, typeSafetyManager) {
+    typeSafetyManager: ListTypeSafetyManager<RealmAny?>
+) : ManagedListTester<RealmAny?>(realm, typeSafetyManager, RealmAny::class) {
     override fun assertElementsAreEqual(expected: RealmAny?, actual: RealmAny?) {
         if (expected != null && actual != null) {
             assertEquals(expected.type, actual.type)
@@ -1342,10 +1289,11 @@ internal class ManagedRealmAnyListTester constructor(
  * Managed and unmanaged RealmObjects cannot be compared directly. They also need to become managed
  * before we use them as input for RealmList API methods.
  */
-internal class ManagedRealmObjectListTester(
+internal class RealmObjectListTester(
     realm: Realm,
-    typeSafetyManager: TypeSafetyManager<RealmListContainer>
-) : ManagedListTester<RealmListContainer>(realm, typeSafetyManager) {
+    typeSafetyManager: ListTypeSafetyManager<RealmListContainer>,
+    classifier: KClassifier
+) : ManagedListTester<RealmListContainer>(realm, typeSafetyManager, classifier) {
     override fun assertElementsAreEqual(expected: RealmListContainer, actual: RealmListContainer) =
         assertEquals(expected.stringField, actual.stringField)
 }
@@ -1353,10 +1301,10 @@ internal class ManagedRealmObjectListTester(
 /**
  * Check equality for ByteArrays at a structural level with `assertContentEquals`.
  */
-internal class ManagedByteArrayListTester(
+internal class ByteArrayListTester(
     realm: Realm,
-    typeSafetyManager: TypeSafetyManager<ByteArray?>
-) : ManagedListTester<ByteArray?>(realm, typeSafetyManager) {
+    typeSafetyManager: ListTypeSafetyManager<ByteArray?>
+) : ManagedListTester<ByteArray?>(realm, typeSafetyManager, ByteArray::class) {
     override fun assertElementsAreEqual(expected: ByteArray?, actual: ByteArray?) =
         assertContentEquals(expected, actual)
 }
@@ -1409,7 +1357,7 @@ internal val BINARY_VALUES = listOf(Random.Default.nextBytes(2), Random.Default.
 internal val REALM_ANY_PRIMITIVE_VALUES =
     TypeDescriptor.anyClassifiers.filterValues { it.isPrimitive }
         .map { RealmAnyTests.create(RealmAnyTests.defaultValues[it.key]) } + null
-internal val REALM_ANY_REALM_OBJECT = RealmAny.create(
+private val REALM_ANY_REALM_OBJECT = RealmAny.create(
     RealmListContainer().apply { stringField = "hello" },
     RealmListContainer::class
 )

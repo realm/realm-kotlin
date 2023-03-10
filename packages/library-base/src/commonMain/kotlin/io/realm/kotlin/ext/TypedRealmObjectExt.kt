@@ -17,6 +17,9 @@ package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
 
 /**
@@ -24,12 +27,13 @@ import io.realm.kotlin.types.TypedRealmObject
  * This is a deep copy that will copy all referenced objects.
  *
  * @param depth limit of the deep copy. All object references after this depth will be `null`.
- * [RealmList]s and [RealmSet]s containing objects will be empty. Starting depth is 0.
+ * [RealmList], [RealmSet] and [RealmDictionary] variables containing objects will be empty.
+ * Starting depth is 0.
  * @returns an in-memory copy of the input object.
  * @throws IllegalArgumentException if the object is not a valid object to copy.
  */
 public inline fun <reified T : TypedRealmObject> T.copyFromRealm(depth: UInt = UInt.MAX_VALUE): T {
-    return this.getRealm<TypedRealm>()?.let { realm ->
-        realm.copyFromRealm(this, depth)
-    } ?: throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied.")
+    return this.getRealm<TypedRealm>()
+        ?.copyFromRealm(this, depth)
+        ?: throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied.")
 }

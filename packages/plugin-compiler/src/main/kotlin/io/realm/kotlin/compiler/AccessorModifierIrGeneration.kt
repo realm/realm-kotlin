@@ -22,6 +22,7 @@ import io.realm.kotlin.compiler.FqNames.KBSON_DECIMAL128
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_ANY
 import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
+import io.realm.kotlin.compiler.FqNames.REALM_DICTIONARY
 import io.realm.kotlin.compiler.FqNames.REALM_EMBEDDED_BACKLINKS
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
 import io.realm.kotlin.compiler.FqNames.REALM_LIST
@@ -45,10 +46,12 @@ import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_REALM_ANY
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_STRING
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_UUID
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_DICTIONARY
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_MUTABLE_INT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_DICTIONARY
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
@@ -122,6 +125,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
     private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
     private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
+    private val realmDictionaryClass: IrClass = pluginContext.lookupClassOrThrow(REALM_DICTIONARY)
     private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
     private val realmBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_BACKLINKS)
     private val realmEmbeddedBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_EMBEDDED_BACKLINKS)
@@ -179,6 +183,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_SET)
     private val setSet: IrSimpleFunction =
         realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_SET)
+    private val getDictionary: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_DICTIONARY)
+    private val setDictionary: IrSimpleFunction =
+        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_DICTIONARY)
 
     // Top level SDK->Core converters
     private val byteToLong: IrSimpleFunction =
@@ -520,9 +528,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 }
 
                             val isValidTargetType = targetPropertyType.hasSameClassId(sourceType)
-                            val isValidGenericType = (
-                                targetPropertyType.isRealmList() || targetPropertyType.isRealmSet()
-                                ) && generic!!.type.hasSameClassId(sourceType)
+                            val isValidCollectionType = targetPropertyType.isRealmList() ||
+                                targetPropertyType.isRealmSet() ||
+                                targetPropertyType.isRealmDictionary()
+                            val isValidGenericType = isValidCollectionType &&
+                                generic!!.type.hasSameClassId(sourceType)
 
                             if (!(isValidTargetType || isValidGenericType)) {
                                 val targetPropertyName = getLinkingObjectPropertyName(declaration.backingField!!)
@@ -625,6 +635,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         logDebug("RealmSet property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         processCollectionField(CollectionType.SET, fields, name, declaration)
                     }
+                    propertyType.isRealmDictionary() -> {
+                        logDebug("RealmDictionary property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
+                        processCollectionField(CollectionType.DICTIONARY, fields, name, declaration)
+                    }
                     propertyType.isSubtypeOfClass(embeddedRealmObjectInterface) -> {
                         logDebug("Object property named ${declaration.name} is embedded and ${if (nullable) "" else "not "}nullable")
                         val schemaProperty = SchemaProperty(
@@ -682,7 +696,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val type = declaration.symbol.descriptor.type
         if (type.arguments[0] is StarProjectionImpl) {
             logError(
-                "Error in field ${declaration.name} - ${collectionType.description}s cannot use a '*' projection.",
+                "Error in field ${declaration.name} - ${collectionType.description} cannot use a '*' projection.",
                 declaration.locationOf()
             )
             return
@@ -721,7 +735,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     getFunction = when (collectionType) {
                         CollectionType.LIST -> getList
                         CollectionType.SET -> getSet
-                        CollectionType.DICTIONARY -> TODO("Dictionaries are not supported yet")
+                        CollectionType.DICTIONARY -> getDictionary
                         else -> throw UnsupportedOperationException("Only collections or dictionaries are supposed to modify the getter for '$name'")
                     },
                     fromRealmValue = null,
@@ -729,7 +743,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     setFunction = when (collectionType) {
                         CollectionType.LIST -> setList
                         CollectionType.SET -> setSet
-                        CollectionType.DICTIONARY -> TODO("Dictionaries are not supported yet")
+                        CollectionType.DICTIONARY -> setDictionary
                         else -> throw UnsupportedOperationException("Only collections or dictionaries are supposed to modify the setter for '$name'")
                     },
                     fromPublic = null,
@@ -755,8 +769,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val type: IrType? = when (collectionType) {
             CollectionType.NONE -> backingField.type
             CollectionType.LIST,
-            CollectionType.SET -> getCollectionElementType(backingField.type)
-            else -> error("Collection type '$collectionType' not supported.")
+            CollectionType.SET,
+            CollectionType.DICTIONARY -> getCollectionElementType(backingField.type)
         }
         val getter = property.declaration.getter
         val setter = property.declaration.setter
@@ -935,6 +949,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == realmSetClassId
     }
 
+    private fun IrType.isRealmDictionary(): Boolean {
+        val propertyClassId = this.classifierOrFail.descriptor.classId
+        val realmDictionaryClassId = realmDictionaryClass.descriptor.classId
+        return propertyClassId == realmDictionaryClassId
+    }
+
     private fun IrType.isRealmInstant(): Boolean {
         val propertyClassId = this.classifierOrFail.descriptor.classId
         val realmInstantClassId = realmInstantClass.descriptor.classId
@@ -995,7 +1015,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         return propertyClassId == mutableRealmIntegerClassId
     }
 
-    @Suppress("ReturnCount")
+    @Suppress("ReturnCount", "LongMethod")
     private fun getCollectionGenericCoreType(
         collectionType: CollectionType,
         declaration: IrProperty
@@ -1004,29 +1024,48 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val descriptorType = declaration.symbol.descriptor.type
         val collectionGenericType = descriptorType.arguments[0].type
 
-        // No embedded objects for sets
         val supertypes = collectionGenericType.constructor.supertypes
         val isEmbedded = inheritsFromRealmObject(supertypes, RealmObjectType.EMBEDDED)
-        if (collectionType == CollectionType.SET && isEmbedded) {
-            logError(
-                "Error in field ${declaration.name} - ${collectionType.description}s do not support embedded realm objects element types.",
-                declaration.locationOf()
-            )
-            return null
-        }
 
         if (inheritsFromRealmObject(supertypes)) {
-            // Nullable objects are not supported
-            if (collectionGenericType.isNullable()) {
+            // No embedded objects for sets
+            if (collectionType == CollectionType.SET && isEmbedded) {
                 logError(
-                    "Error in field ${declaration.name} - ${collectionType.description}s do not support nullable realm objects element types.",
+                    "Error in field ${declaration.name} - ${collectionType.description} does not support embedded realm objects element types.",
                     declaration.locationOf()
                 )
                 return null
             }
+
+            val isNullable = collectionGenericType.isNullable()
+
+            // Lists of objects/embedded objects and sets of object may NOT contain null values, but dictionaries may
+            when (collectionType) {
+                CollectionType.SET,
+                CollectionType.LIST -> {
+                    if (isNullable) {
+                        logError(
+                            "Error in field ${declaration.name} - ${collectionType.description} does not support nullable realm objects element types.",
+                            declaration.locationOf()
+                        )
+                        return null
+                    }
+                }
+                CollectionType.DICTIONARY -> {
+                    if (!isNullable) {
+                        logError(
+                            "Error in field ${declaration.name} - RealmDictionary does not support non-nullable realm objects element types.",
+                            declaration.locationOf()
+                        )
+                        return null
+                    }
+                }
+                else -> throw IllegalArgumentException("Only collections can be processed here.")
+            }
+
             return CoreType(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-                nullable = false
+                nullable = isNullable
             )
         }
 
@@ -1043,13 +1082,13 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val genericPropertyType = getPropertyTypeFromKotlinType(collectionGenericType)
         return if (genericPropertyType == null) {
             logError(
-                "Unsupported type for ${collectionType.description}s: '$collectionGenericType'",
+                "Unsupported type for ${collectionType.description}: '$collectionGenericType'",
                 declaration.locationOf()
             )
             null
         } else if (genericPropertyType == PropertyType.RLM_PROPERTY_TYPE_MIXED && !collectionGenericType.isNullable()) {
             logError(
-                "Unsupported type for ${collectionType.description}s: Only '${collectionType.description}<RealmAny?>' is supported.",
+                "Unsupported type for ${collectionType.description}: Only '${collectionType.description}<RealmAny?>' is supported.",
                 declaration.locationOf()
             )
             return null
