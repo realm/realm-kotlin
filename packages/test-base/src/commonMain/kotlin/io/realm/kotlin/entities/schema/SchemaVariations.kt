@@ -106,7 +106,7 @@ class SchemaVariations : RealmObject {
 
     var nullableStringSet: RealmSet<String?> = realmSetOf()
     var nullableRealmAnySet: RealmSet<RealmAny?> = realmSetOf()
-    
+
     // Dictionary properties
     var boolMap: RealmDictionary<Boolean> = realmDictionaryOf()
     var byteMap: RealmDictionary<Byte> = realmDictionaryOf()
