@@ -1,6 +1,5 @@
 package io.realm.kotlinx.dataframe
 
-import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicRealm
@@ -58,7 +57,7 @@ public fun DataFrame.Companion.readRealm(realmFile: File, encryptionKey: ByteArr
     val config: RealmConfiguration = builder.build()
     val realm: DynamicRealm = DynamicRealm.open(config)
     val schema = realm.schema()
-    val df: AnyFrame = if (className !=  null) {
+    val df: AnyFrame = if (className != null) {
         // Only read objects of the given class into dataframes
         val classSchema = schema[className] ?: throw IllegalArgumentException("$className does not exist in the given Realm file: ${realmFile.absolutePath}")
         val results: RealmResults<out DynamicRealmObject> = realm.query(className).find()

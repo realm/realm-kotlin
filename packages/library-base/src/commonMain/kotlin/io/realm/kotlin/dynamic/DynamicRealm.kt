@@ -39,7 +39,7 @@ public interface DynamicRealm : BaseRealm {
         /**
          * TODO
          */
-       public fun open(configuration: Configuration): DynamicRealm {
+        public fun open(configuration: Configuration): DynamicRealm {
             return RealmImpl.create(configuration as InternalConfiguration).asDynamicRealm()
         }
     }

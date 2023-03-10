@@ -15,7 +15,7 @@ import org.jetbrains.kotlinx.dataframe.DataFrame
  * @return a dataframe representing all query results. If the results is empty, an empty dataframe
  * is returned.
  */
-public fun <T: DynamicRealmObject> RealmResults<out T>.toDataFrame(realm: DynamicRealm): AnyFrame {
+public fun <T : DynamicRealmObject> RealmResults<out T>.toDataFrame(realm: DynamicRealm): AnyFrame {
     return if (this.isEmpty()) {
         DataFrame.Empty
     } else {

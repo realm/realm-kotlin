@@ -115,7 +115,6 @@ class DataFrameTests {
         app.close()
     }
 
-
 //    @Test
 //    fun accessClassData() {
 //        val df = DataFrame.readRealm(File("../ext-dataframe/jupyter/random_games.realm"))
@@ -134,5 +133,4 @@ class DataFrameTests {
 //        }
 //        val map = data.toMap()
 //    }
-
 }

@@ -40,7 +40,7 @@ internal class RealmDataFrameBuilder(classSchema: RealmClass) {
 
     init {
         classSchema.properties.forEach {
-            when(it.type) {
+            when (it.type) {
                 is ListPropertyType -> addColumn(it.name, ColumnType.DATAFRAME, it.type.storageType.kClass.createType())
                 is SetPropertyType -> addColumn(it.name, ColumnType.DATAFRAME, it.type.storageType.kClass.createType())
                 is ValuePropertyType -> {
@@ -70,7 +70,7 @@ internal class RealmDataFrameBuilder(classSchema: RealmClass) {
 
     fun build(): AnyFrame {
         val columns: List<DataColumn<Any?>> = header.mapIndexed { i, header ->
-            when(columnType[i]) {
+            when (columnType[i]) {
                 ColumnType.VALUE -> {
                     DataColumn.createValueColumn(header, values[i], kotlinType[i])
                 }
@@ -91,7 +91,7 @@ internal class RealmDataFrameBuilder(classSchema: RealmClass) {
             if (columnType[i] == ColumnType.COLUMN_GROUP) {
                 header
             } else {
-                 null
+                null
             }
         }.filterNotNull()
         return dataFrameOf(columns).explode(*headersToMerge.toTypedArray())
@@ -136,7 +136,6 @@ internal fun createDataFrameForObject(schema: RealmSchema, obj: DynamicRealmObje
         return builder.build()
     }
 }
-
 
 private fun addObjectToFrame(schema: RealmSchema, classSchema: RealmClass, builder: RealmDataFrameBuilder, obj: DynamicRealmObject) {
     classSchema.properties.map { prop: RealmProperty ->
@@ -227,4 +226,3 @@ private fun addSetPropertyToFrame(
         builder.addValue(prop.name, dataFrameOf(data))
     }
 }
-
