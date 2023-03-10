@@ -22,6 +22,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
 import io.realm.kotlin.query.find
@@ -166,15 +167,12 @@ class RealmTests {
     }
 
     @Test
-    fun write_throwsIfReturningDeletedObject() = runBlocking {
-        assertFailsWithMessage(IllegalStateException::class, "A deleted Realm object cannot be returned from a write transaction.") {
-            // must store result of `write` as the return value is otherwise ignored.
-            val returnValue: Child = realm.write {
-                val child = copyToRealm(Child()).apply { this.name = "Realm" }
-                child.apply { delete(this) }
-            }
+    fun write_returnDeletedObject() = runBlocking {
+        val returnValue: Child = realm.write {
+            val child = copyToRealm(Child()).apply { this.name = "Realm" }
+            child.apply { delete(this) }
         }
-        Unit
+        assertFalse(returnValue.isValid())
     }
 
     @Suppress("invisible_member")
@@ -276,15 +274,12 @@ class RealmTests {
     }
 
     @Test
-    fun writeBlocking_throwsIfReturningDeletedObject() {
-        assertFailsWithMessage(IllegalStateException::class, "A deleted Realm object cannot be returned from a write transaction.") {
-            // must store result of `write` as the return value is otherwise ignored.
-            val returnValue: Child = realm.writeBlocking {
-                val child = copyToRealm(Child()).apply { this.name = "Realm" }
-                child.apply { delete(this) }
-            }
+    fun writeBlocking_returnDeletedObject() {
+        val returnValue: Child = realm.writeBlocking {
+            val child = copyToRealm(Child()).apply { this.name = "Realm" }
+            child.apply { delete(this) }
         }
-        Unit
+        assertFalse(returnValue.isValid())
     }
 
     @Test
