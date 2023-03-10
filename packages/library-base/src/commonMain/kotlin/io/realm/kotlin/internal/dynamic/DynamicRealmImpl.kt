@@ -56,4 +56,9 @@ internal open class DynamicRealmImpl(
     override fun schema(): RealmSchema {
         return RealmSchemaImpl.fromDynamicRealm(realmReference.dbPointer)
     }
+
+    override fun close() {
+        super.close()
+        // FIXME: Figure out how to close it
+    }
 }

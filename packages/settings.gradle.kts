@@ -43,6 +43,7 @@ fun getPropertyValue(propertyName: String): String? {
         include(":library-sync")
         include(":cinterop")
         include(":jni-swig-stub")
+        include(":ext-dataframe")
     }
 }
 (getPropertyValue("includeTestModules")?.let { it.toBoolean() } ?: true).let {

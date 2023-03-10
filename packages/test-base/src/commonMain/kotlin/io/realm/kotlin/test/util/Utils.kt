@@ -18,6 +18,7 @@
 package io.realm.kotlin.test.util
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -60,6 +61,15 @@ inline fun Realm.use(action: (Realm) -> Unit) {
         this.close()
     }
 }
+
+inline fun DynamicRealm.use(action: (DynamicRealm) -> Unit) {
+    try {
+        action(this)
+    } finally {
+        this.close()
+    }
+}
+
 // Expose a try-with-resource pattern for Realms, but with support for Coroutines
 suspend fun Realm.useInContext(action: suspend (Realm) -> Unit) {
     try {

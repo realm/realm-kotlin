@@ -17,8 +17,9 @@
 
 object Realm {
     val ciBuild = (System.getenv("JENKINS_HOME") != null)
-    const val version = "1.7.0-SNAPSHOT"
+    const val version = "1.7.0-dynamic-SNAPSHOT"
     const val group = "io.realm.kotlin"
+    const val groupExtPrefix = "io.realm.kotlinx"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
     // Modules has to match ${project.group}:${project.name} to make composite build work
@@ -70,6 +71,7 @@ object Versions {
     // Build also tested successfully with 3.21.4 (latest release).
     const val cmake = "3.22.1"
     const val coroutines = "1.6.4" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
+    const val dataframe = "0.9.1" // https://github.com/Kotlin/dataframe
     const val datetime = "0.4.0" // https://github.com/Kotlin/kotlinx-datetime
     const val detektPlugin = "1.22.0-RC2" // https://github.com/detekt/detekt
     const val dokka = "1.6.0" // https://github.com/Kotlin/dokka

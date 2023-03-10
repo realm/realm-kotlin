@@ -17,6 +17,10 @@
 package io.realm.kotlin.dynamic
 
 import io.realm.kotlin.BaseRealm
+import io.realm.kotlin.Configuration
+import io.realm.kotlin.internal.InternalConfiguration
+import io.realm.kotlin.internal.RealmImpl
+import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
 
@@ -30,6 +34,15 @@ import io.realm.kotlin.query.TRUE_PREDICATE
  * [DynamicRealm] instance, etc.
  */
 public interface DynamicRealm : BaseRealm {
+
+    public companion object {
+        /**
+         * TODO
+         */
+       public fun open(configuration: Configuration): DynamicRealm {
+            return RealmImpl.create(configuration as InternalConfiguration).asDynamicRealm()
+        }
+    }
 
     /**
      * Returns a query for dynamic realm objects of the specified class.
@@ -47,4 +60,9 @@ public interface DynamicRealm : BaseRealm {
         query: String = TRUE_PREDICATE,
         vararg args: Any?
     ): RealmQuery<out DynamicRealmObject>
+
+    /**
+     * TODO
+     */
+    public fun close()
 }

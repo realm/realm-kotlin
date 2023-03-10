@@ -1,0 +1,33 @@
+{
+  "description": "Realm is a light-weight object-oriented database for the edge and mobile. Build better apps faster.",
+  "properties": {
+    "v": "1.7.0-dynamic-SNAPSHOT",
+    "realm": "1.7.0-dynamic-SNAPSHOT"
+  },
+  "repositories": [
+    "file:///Users/cm/.m2/repository"
+  ],
+  "link": "https://github.com/realm/realm-kotlin",
+  "dependencies": [
+    "io.realm.kotlin:library-sync-jvm:$realm",
+    "io.realm.kotlin:ext-dataframe-jvm:$v"
+  ],
+  "imports": [
+    "io.realm.kotlin.*",
+    "io.realm.kotlin.dynamic.*",
+    "io.realm.kotlin.ext.*",
+    "io.realm.kotlin.log.*",
+    "io.realm.kotlin.migration.*",
+    "io.realm.kotlin.notifications.*",
+    "io.realm.kotlin.query.*",
+    "io.realm.kotlin.types.*",
+    "io.realm.kotlin.types.annotations.*",
+
+    "io.realm.kotlin.mongodb.*",
+    "io.realm.kotlin.mongodb.auth.*",
+    "io.realm.kotlin.mongodb.ext.*",
+    "io.realm.kotlin.mongodb.sync.*",
+
+    "io.realm.kotlinx.dataframe.*"
+  ]
+}

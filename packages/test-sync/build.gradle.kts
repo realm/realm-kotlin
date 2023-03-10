@@ -178,6 +178,7 @@ kotlin {
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
                 implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+                implementation(project(":ext-dataframe"))
             }
         }
         val jvmTest by getting {
