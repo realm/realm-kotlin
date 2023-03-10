@@ -239,6 +239,23 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     declaration.backingField!!.hasAnnotation(IGNORE_ANNOTATION) ||
                         declaration.backingField!!.hasAnnotation(TRANSIENT_ANNOTATION)
 
+                // Check for property modifiers:
+                // - Persisted properties must be marked `var`.
+                // - `lateinit` is not allowed.
+                // - Backlinks must be marked `val`. The compiler will enforce wrong use of `var`.
+                // - `const` is not allowed. The compiler will enforce wrong use of `const` inside classes.
+                if (!excludeProperty &&
+                    !propertyType.isLinkingObject() &&
+                    !propertyType.isEmbeddedLinkingObject()
+                ) {
+                    if (declaration.isLateinit) {
+                        logError("Persisted properties must not be marked with `lateinit`.", declaration.locationOf())
+                    }
+                    if (!declaration.isVar) {
+                        logError("Persisted properties must be marked with `var`. `val` is not supported.", declaration.locationOf())
+                    }
+                }
+
                 when {
                     excludeProperty -> {
                         logDebug("Property named ${declaration.name} ignored")
