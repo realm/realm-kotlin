@@ -36,7 +36,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.interop.CompactOnLaunchCallback as InteropCompactOnLaunchCallback
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
@@ -44,6 +43,7 @@ import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
+import io.realm.kotlin.internal.interop.CompactOnLaunchCallback as InteropCompactOnLaunchCallback
 
 @Suppress("LongParameterList")
 internal open class ConfigurationImpl constructor(
