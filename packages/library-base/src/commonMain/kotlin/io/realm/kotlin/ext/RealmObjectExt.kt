@@ -19,7 +19,10 @@ package io.realm.kotlin.ext
 import io.realm.kotlin.internal.BacklinksDelegateImpl
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BacklinksDelegate
+import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -31,7 +34,7 @@ import kotlin.reflect.KProperty1
  * You cannot directly add or remove items from a backlinks collection. The collection automatically
  * updates itself when relationships are changed.
  *
- * backlinks on a one-to-one relationship:
+ * Backlinks for one-to-one relationships can be created on [RealmObject] properties:
  *
  * ```
  * class Town {
@@ -43,15 +46,20 @@ import kotlin.reflect.KProperty1
  * }
  * ```
  *
- * backlinks on a one-to-many relationship:
+ * Backlinks for one-to-many relationships can be created on [RealmList], [RealmSet] or
+ * [RealmDictionary] properties:
  *
  * ```
  * class Parent : RealmObject {
- *  var children: List<Child>? = null
+ *  var childrenList: RealmList<Child> = realmListOf()
+ *  var childrenSet: RealmSet<Child> = realmSetOf()
+ *  var childrenDictionary: RealmSet<Child?> = realmDictionaryOf() // Nullability of Child? is required by RealmDictionary
  * }
  *
  * class Child : RealmObject {
- *  val parents: RealmResults<Parent> by backlinks(Parent::children)
+ *  val parentsFromList: RealmResults<Parent> by backlinks(Parent::childrenList)
+ *  val parentsFromSet: RealmResults<Parent> by backlinks(Parent::childrenSet)
+ *  val parentsFromDictionary: RealmResults<Parent> by backlinks(Parent::childrenDictionary)
  * }
  * ```
  *
@@ -78,5 +86,6 @@ public fun <T : TypedRealmObject> RealmObject.backlinks(
  *
  * Reified convenience wrapper for [RealmObject.backlinks].
  */
-public inline fun <reified T : TypedRealmObject> RealmObject.backlinks(sourceProperty: KProperty1<T, *>): BacklinksDelegate<T> =
-    backlinks(sourceProperty, T::class)
+public inline fun <reified T : TypedRealmObject> RealmObject.backlinks(
+    sourceProperty: KProperty1<T, *>
+): BacklinksDelegate<T> = backlinks(sourceProperty, T::class)

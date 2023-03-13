@@ -334,7 +334,7 @@ class MutableRealmTests {
                 primaryKey = 2
                 objectListField.add(child)
             }
-            assertFailsWithMessage<IllegalArgumentException>("Object with this primary key already exists") {
+            assertFailsWithMessage<IllegalArgumentException>("Attempting to create an object of type 'SampleWithPrimaryKey' with an existing primary key value '1'") {
                 copyToRealm(container, updatePolicy = UpdatePolicy.ERROR)
             }
         }
