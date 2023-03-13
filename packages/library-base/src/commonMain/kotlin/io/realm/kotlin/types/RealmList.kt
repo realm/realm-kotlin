@@ -23,6 +23,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.UpdatedList
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
@@ -72,6 +73,8 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      * [CancellationException].
      *
      * @return a flow representing changes to the list.
+     * @throws CancellationException if the stream produces changes faster than the consumer can
+     * consume them and results in a buffer overflow.
      */
     public fun asFlow(): Flow<ListChange<E>>
 }

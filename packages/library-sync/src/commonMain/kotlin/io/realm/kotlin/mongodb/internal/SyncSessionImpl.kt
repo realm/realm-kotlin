@@ -210,13 +210,13 @@ internal open class SyncSessionImpl(
                     }
                     when (direction) {
                         TransferDirection.UPLOAD -> {
-                            RealmInterop.realm_sync_session_wait_for_download_completion(
+                            RealmInterop.realm_sync_session_wait_for_upload_completion(
                                 nativePointer,
                                 callback
                             )
                         }
                         TransferDirection.DOWNLOAD -> {
-                            RealmInterop.realm_sync_session_wait_for_upload_completion(
+                            RealmInterop.realm_sync_session_wait_for_download_completion(
                                 nativePointer,
                                 callback
                             )

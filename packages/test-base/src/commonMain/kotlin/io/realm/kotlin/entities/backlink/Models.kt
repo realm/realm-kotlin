@@ -17,9 +17,11 @@
 package io.realm.kotlin.entities.backlink
 
 import io.realm.kotlin.ext.backlinks
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
@@ -31,6 +33,7 @@ class Child : RealmObject {
     val parents by backlinks(Parent::child)
     val parentsByList by backlinks(Parent::childList)
     val parentsBySet by backlinks(Parent::childSet)
+    val parentsByDictionary by backlinks(Parent::childDictionary)
 }
 
 class EmbeddedChild : EmbeddedRealmObject {
@@ -46,6 +49,7 @@ class Parent(var id: Int) : RealmObject {
     var child: Child? = null
     var childList: RealmList<Child> = realmListOf()
     var childSet: RealmSet<Child> = realmSetOf()
+    var childDictionary: RealmDictionary<Child?> = realmDictionaryOf()
 
     var embeddedChild: EmbeddedChild? = EmbeddedChild()
     val embeddedChildren by backlinks(EmbeddedChild::parent)
@@ -60,6 +64,7 @@ class Recursive : RealmObject {
     var name: RealmUUID = RealmUUID.random()
     var uuidSet: RealmSet<RealmUUID> = realmSetOf()
     var uuidList: RealmList<RealmUUID> = realmListOf()
+    var uuidDictionary: RealmDictionary<RealmUUID> = realmDictionaryOf()
 
     var recursiveField: Recursive? = null
     val references by backlinks(Recursive::recursiveField)
