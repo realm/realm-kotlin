@@ -44,7 +44,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlin.collections.set
 
-public class KtorNetworkTransport(
+internal class KtorNetworkTransport(
     override val authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME,
     override val customHeaders: Map<String, String> = mapOf(),
     // FIXME Rework timeout to take a Duration instead
@@ -161,11 +161,11 @@ public class KtorNetworkTransport(
         return parsedHeaders
     }
 
-    public companion object {
+    companion object {
         // Custom error codes. These must not match any HTTP response error codes
-        public const val ERROR_IO: Int = 1000
-        public const val ERROR_INTERRUPTED: Int = 1001
-        public const val ERROR_UNKNOWN: Int = 1002
+        const val ERROR_IO: Int = 1000
+        const val ERROR_INTERRUPTED: Int = 1001
+        const val ERROR_UNKNOWN: Int = 1002
 
         private fun createHttpResponse(
             responseStatusCode: Int,

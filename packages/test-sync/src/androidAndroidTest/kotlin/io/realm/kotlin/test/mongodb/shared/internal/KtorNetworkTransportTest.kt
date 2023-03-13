@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+@file:Suppress("invisible_member", "invisible_reference")
 package io.realm.kotlin.test.mongodb.shared.internal
 
 import io.ktor.http.HttpMethod

@@ -22,8 +22,8 @@ internal actual val DEVICE_MANUFACTURER: String = android.os.Build.MANUFACTURER
 internal actual val DEVICE_MODEL: String = android.os.Build.MODEL
 
 // Returns the root directory of the platform's App data
-public actual fun appFilesDirectory(): String = RealmInitializer.filesDir.absolutePath
+internal actual fun appFilesDirectory(): String = RealmInitializer.filesDir.absolutePath
 
 // Returns the default logger for the platform
-public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
+internal actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
     LogCatLogger(tag, logLevel)

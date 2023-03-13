@@ -28,14 +28,14 @@ import kotlin.jvm.JvmInline
  * possible to configure dispatchers in Configuration objects, but allow Realm instances to control
  * their lifecycle.
  */
-public fun interface CoroutineDispatcherFactory {
-    public companion object {
+internal fun interface CoroutineDispatcherFactory {
+    companion object {
 
         /**
          * Let Realm create and control the dispatcher. Managed dispatchers will be closed
          * when their owner Realm/App is closed as well.
          */
-        public fun managed(name: String, threads: Int = 1): CoroutineDispatcherFactory {
+        fun managed(name: String, threads: Int = 1): CoroutineDispatcherFactory {
             return CoroutineDispatcherFactory {
                 ManagedDispatcherHolder(
                     when (threads) {
@@ -50,7 +50,7 @@ public fun interface CoroutineDispatcherFactory {
          * Unmanaged dispatchers are dispatchers that are passed into Realm from the outside.
          * Realm should not determine when they are closed and leave that to the owner of them.
          */
-        public fun unmanaged(dispatcher: CoroutineDispatcher): CoroutineDispatcherFactory {
+        fun unmanaged(dispatcher: CoroutineDispatcher): CoroutineDispatcherFactory {
             return CoroutineDispatcherFactory {
                 UnmanagedDispatcherHolder(dispatcher)
             }
@@ -62,7 +62,7 @@ public fun interface CoroutineDispatcherFactory {
      * If a dispatcher is created, calling this method multiple times wille create a
      * new dispatcher for each call.
      */
-    public fun create(): DispatcherHolder
+    fun create(): DispatcherHolder
 }
 
 /**
@@ -74,18 +74,18 @@ public fun interface CoroutineDispatcherFactory {
  *
  * Instead we just expose a reference to the underlying dispatcher.
  */
-public sealed interface DispatcherHolder {
+internal sealed interface DispatcherHolder {
 
     /**
      * Reference to dispatcher that should be used.
      */
-    public val dispatcher: CoroutineDispatcher
+    val dispatcher: CoroutineDispatcher
 
     /**
      * Mark the dispatcher as no longer being used. For internal dispatchers, this will also
      * close them.
      */
-    public fun close()
+    fun close()
 }
 
 @JvmInline

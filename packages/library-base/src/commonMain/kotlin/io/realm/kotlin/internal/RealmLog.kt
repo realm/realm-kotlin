@@ -8,7 +8,7 @@ import io.realm.kotlin.log.RealmLogger
  * Logger class used by Realm components. One logger is created for each Realm instance.
  */
 // TODO Public as it is used by `library-sync`
-public class RealmLog(public val tag: String = "REALM", public val configuration: LogConfiguration) {
+internal class RealmLog(public val tag: String = "REALM", public val configuration: LogConfiguration) {
 
     public val logLevel: LogLevel = configuration.level
 

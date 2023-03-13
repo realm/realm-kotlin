@@ -30,10 +30,10 @@ internal actual val RUNTIME_VERSION: String = ""
 @Suppress("MayBeConst") // Cannot make expect/actual const
 internal actual val PATH_SEPARATOR: String = "/"
 
-public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
+internal actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
     NSLogLogger(tag, logLevel)
 
-public actual fun threadId(): ULong {
+internal actual fun threadId(): ULong {
     memScoped {
         val tidVar = alloc<ULongVar>()
         pthread_threadid_np(null, tidVar.ptr)
@@ -41,7 +41,7 @@ public actual fun threadId(): ULong {
     }
 }
 
-public actual fun epochInSeconds(): Long =
+internal actual fun epochInSeconds(): Long =
     NSDate().timeIntervalSince1970().toLong()
 
 /**
@@ -72,16 +72,16 @@ internal actual fun currentTime(): RealmInstant {
     }
 }
 
-public actual fun <T> T.freeze(): T = this
+internal actual fun <T> T.freeze(): T = this
 
-public actual val <T> T.isFrozen: Boolean
+internal actual val <T> T.isFrozen: Boolean
     get() = false
 
-public actual fun Any.ensureNeverFrozen() {
+internal actual fun Any.ensureNeverFrozen() {
     /* Do nothing */
 }
 
-public actual fun fileExists(path: String): Boolean {
+internal actual fun fileExists(path: String): Boolean {
     val fm = platform.Foundation.NSFileManager.defaultManager
     memScoped {
         val isDir = alloc<BooleanVar>()
@@ -90,7 +90,7 @@ public actual fun fileExists(path: String): Boolean {
     }
 }
 
-public actual fun directoryExists(path: String): Boolean {
+internal actual fun directoryExists(path: String): Boolean {
     val fm = platform.Foundation.NSFileManager.defaultManager
     memScoped {
         val isDir = alloc<BooleanVar>()
@@ -99,12 +99,12 @@ public actual fun directoryExists(path: String): Boolean {
     }
 }
 
-public actual fun canWrite(path: String): Boolean {
+internal actual fun canWrite(path: String): Boolean {
     val fm = platform.Foundation.NSFileManager.defaultManager
     return fm.isWritableFileAtPath(path)
 }
 
-public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
+internal actual fun prepareRealmDirectoryPath(directoryPath: String): String {
     val dir = NSURL.fileURLWithPath(directoryPath, isDirectory = true)
     preparePath(directoryPath, dir)
     return NSURL.fileURLWithPath(directoryPath).absoluteString?.removePrefix("file://")
@@ -112,14 +112,14 @@ public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
 }
 
 // Depend on filesystem API's to handle edge cases around creating paths.
-public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
+internal actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
     val dir = NSURL.fileURLWithPath(directoryPath, isDirectory = true)
     preparePath(directoryPath, dir)
     return NSURL.fileURLWithPath(filename, dir).path
         ?: throw IllegalArgumentException("Could not resolve path components: '$directoryPath' and '$filename'.")
 }
 
-public actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType {
+internal actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType {
     return field.returnType
 }
 

@@ -19,34 +19,33 @@ package io.realm.kotlin.internal.util
 /**
  * Collection of validation methods to ensure uniform input validation.
  */
-// TODO Public due to being used in the test package
-public object Validation {
-    public fun illegalArgument(message: String): Nothing = throw IllegalArgumentException(message)
+internal object Validation {
+    fun illegalArgument(message: String): Nothing = throw IllegalArgumentException(message)
 
-    public inline fun <reified T> checkType(value: Any?, name: String): T {
+    inline fun <reified T> checkType(value: Any?, name: String): T {
         if (value !is T) {
             illegalArgument("Argument '$name' must be of type ${T::class.simpleName}")
         }
         return value
     }
 
-    public fun isEmptyString(str: String?): Boolean {
+    fun isEmptyString(str: String?): Boolean {
         return str == null || str.length == 0
     }
 
-    public fun checkEmpty(value: String?, name: String): String {
+    fun checkEmpty(value: String?, name: String): String {
         if (isEmptyString(value)) {
             illegalArgument("Argument '$name' must be non-empty.")
         }
         return value!!
     }
 
-    public fun sdkError(message: String): Nothing {
+    fun sdkError(message: String): Nothing {
         @Suppress("TooGenericExceptionThrown")
         throw RuntimeException(message)
     }
 
-    public fun require(value: Boolean, lazyMessage: () -> String) {
+    fun require(value: Boolean, lazyMessage: () -> String) {
         if (!value) {
             throw IllegalArgumentException(lazyMessage())
         }

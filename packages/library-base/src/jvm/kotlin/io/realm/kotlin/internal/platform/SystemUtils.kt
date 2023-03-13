@@ -9,13 +9,13 @@ import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
-public actual val PATH_SEPARATOR: String = File.separator
+internal actual val PATH_SEPARATOR: String = File.separator
 
-public actual fun threadId(): ULong {
+internal actual fun threadId(): ULong {
     return Thread.currentThread().id.toULong()
 }
 
-public actual fun epochInSeconds(): Long =
+internal actual fun epochInSeconds(): Long =
     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
 
 /**
@@ -27,33 +27,33 @@ internal actual fun currentTime(): RealmInstant {
     return RealmInstantImpl(jtInstant.epochSecond, jtInstant.nano)
 }
 
-public actual fun <T> T.freeze(): T = this
+internal actual fun <T> T.freeze(): T = this
 
-public actual val <T> T.isFrozen: Boolean
+internal actual val <T> T.isFrozen: Boolean
     get() = false
 
-public actual fun Any.ensureNeverFrozen() { /* Do nothing */ }
+internal actual fun Any.ensureNeverFrozen() { /* Do nothing */ }
 
-public actual fun fileExists(path: String): Boolean =
+internal actual fun fileExists(path: String): Boolean =
     File(path).let { it.exists() && it.isFile }
 
-public actual fun directoryExists(path: String): Boolean =
+internal actual fun directoryExists(path: String): Boolean =
     File(path).let { it.exists() && it.isDirectory }
 
-public actual fun canWrite(path: String): Boolean = File(path).canWrite()
+internal actual fun canWrite(path: String): Boolean = File(path).canWrite()
 
-public actual fun prepareRealmDirectoryPath(directoryPath: String): String {
+internal actual fun prepareRealmDirectoryPath(directoryPath: String): String {
     preparePath(directoryPath)
     return File(directoryPath).absolutePath
 }
 
 // Depend on filesystem API's to handle edge cases around creating paths.
-public actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
+internal actual fun prepareRealmFilePath(directoryPath: String, filename: String): String {
     preparePath(directoryPath)
     return File(directoryPath, filename).absolutePath
 }
 
-public actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType {
+internal actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType {
     return field.returnType
 }
 

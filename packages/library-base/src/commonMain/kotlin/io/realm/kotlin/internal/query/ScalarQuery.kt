@@ -344,7 +344,6 @@ private fun KClass<*>.isNumeric(): Boolean {
         this == Double::class
 }
 
-// Public due to being used in QueryTests
-public enum class AggregatorQueryType {
+internal enum class AggregatorQueryType {
     MIN, MAX, SUM
 }

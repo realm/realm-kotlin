@@ -34,7 +34,7 @@ internal actual val DEVICE_MODEL: String by lazy {
 // difficult to maintain, so is left out.
 internal actual val CPU_ARCH: String = ""
 
-public actual fun appFilesDirectory(): String {
+internal actual fun appFilesDirectory(): String {
     return (
         NSFileManager.defaultManager.URLForDirectory(
             NSDocumentDirectory,

@@ -58,6 +58,7 @@ kotlin {
                 // FIXME AUTO-SETUP Removed automatic dependency injection to ensure observability of
                 //  requirements for now
                 implementation("io.realm.kotlin:library-base:${Realm.version}")
+                api("io.realm.kotlin:cinterop:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")

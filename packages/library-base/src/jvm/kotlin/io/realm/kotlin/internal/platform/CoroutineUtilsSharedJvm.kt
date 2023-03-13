@@ -6,7 +6,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
-public actual fun singleThreadDispatcher(id: String): CloseableCoroutineDispatcher {
+internal actual fun singleThreadDispatcher(id: String): CloseableCoroutineDispatcher {
     return Executors.newSingleThreadExecutor { action: Runnable ->
         Thread(action).apply {
             name = id
@@ -15,7 +15,7 @@ public actual fun singleThreadDispatcher(id: String): CloseableCoroutineDispatch
     }.asCoroutineDispatcher()
 }
 
-public actual fun multiThreadDispatcher(size: Int): CloseableCoroutineDispatcher =
+internal actual fun multiThreadDispatcher(size: Int): CloseableCoroutineDispatcher =
     Executors.newFixedThreadPool(size).asCoroutineDispatcher()
 
 public actual fun <T> runBlocking(context: CoroutineContext, block: suspend CoroutineScope.() -> T): T {

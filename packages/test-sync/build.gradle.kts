@@ -55,6 +55,7 @@ kotlin {
     sourceSets {
         val commonBaseMain by creating {
             dependencies {
+                implementation("io.realm.kotlin:library-base:${Realm.version}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }

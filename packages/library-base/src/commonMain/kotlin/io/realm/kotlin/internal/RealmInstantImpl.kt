@@ -6,8 +6,8 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
-// Public as constructor is inlined in accessor converter method (Converters.kt)
-public data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) :
+@PublishedApi
+internal data class RealmInstantImpl(override val seconds: Long, override val nanoSeconds: Int) :
     Timestamp, RealmInstant {
     public constructor(ts: Timestamp) : this(ts.seconds, ts.nanoSeconds)
 

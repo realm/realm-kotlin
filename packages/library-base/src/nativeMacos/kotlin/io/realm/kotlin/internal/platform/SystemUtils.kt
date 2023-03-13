@@ -26,6 +26,6 @@ internal actual val CPU_ARCH: String by lazy {
 }
 
 @Suppress("FunctionOnlyReturningConstant")
-public actual fun appFilesDirectory(): String {
+internal actual fun appFilesDirectory(): String {
     return platform.Foundation.NSFileManager.defaultManager.currentDirectoryPath
 }

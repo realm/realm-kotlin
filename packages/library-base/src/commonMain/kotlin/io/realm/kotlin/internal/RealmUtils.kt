@@ -55,7 +55,7 @@ internal typealias ManagedToUnmanagedObjectCache = MutableMap<RealmObjectIdentif
  * to be present, because they should have been added by the compiler plugin. But they where not.
  * If this message does not need to be altered or concatenated, throw [MISSING_PLUGIN] instead.
  */
-public const val MISSING_PLUGIN_MESSAGE: String = "This class has not been modified " +
+internal const val MISSING_PLUGIN_MESSAGE: String = "This class has not been modified " +
     "by the Realm Compiler Plugin. Has the Realm Gradle Plugin been applied to the project " +
     "with this model class?"
 
@@ -63,7 +63,7 @@ public const val MISSING_PLUGIN_MESSAGE: String = "This class has not been modif
  * Exception that can be thrown if there is a situation where we except certain interfaces to be
  * present, because they should have been added by the compiler plugin. But they where not.
  */
-public val MISSING_PLUGIN: Throwable = IllegalStateException(MISSING_PLUGIN_MESSAGE)
+internal val MISSING_PLUGIN: Throwable = IllegalStateException(MISSING_PLUGIN_MESSAGE)
 
 /**
  * Add a check and error message for code that never be reached because it should have been

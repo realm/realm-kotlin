@@ -11,15 +11,15 @@ import kotlin.time.Duration.Companion.seconds
 
 private fun RealmInstant.toEpochMillis(): Long = (epochSeconds.seconds + nanosecondsOfSecond.nanoseconds).inWholeMilliseconds
 
-// Public as constructor is inlined in accessor converter method (Converters.kt)
-public class ObjectIdImpl : ObjectId {
+@PublishedApi
+internal class ObjectIdImpl : ObjectId {
 
     private val inner: org.mongodb.kbson.ObjectId
 
     /**
      * Represents an ObjectID from an array of 12 bytes.
      */
-    public val bytes: ByteArray
+    val bytes: ByteArray
         get() = inner.toByteArray()
 
     /**
@@ -27,7 +27,7 @@ public class ObjectIdImpl : ObjectId {
      *
      * @param timestamp the timestamp.
      */
-    public constructor(
+    constructor(
         timestamp: RealmInstant = RealmInstant.from(epochInSeconds(), 0)
     ) : this(org.mongodb.kbson.ObjectId(timestamp.toEpochMillis()))
 
@@ -36,7 +36,7 @@ public class ObjectIdImpl : ObjectId {
      *
      * @param epochSeconds the number of seconds since the Unix epoch
      */
-    public constructor(epochSeconds: Int) : this(org.mongodb.kbson.ObjectId(epochSeconds.seconds.inWholeMilliseconds))
+    constructor(epochSeconds: Int) : this(org.mongodb.kbson.ObjectId(epochSeconds.seconds.inWholeMilliseconds))
 
     /**
      * Constructs a new instance from a 24-byte hexadecimal string representation.
@@ -44,7 +44,7 @@ public class ObjectIdImpl : ObjectId {
      * @param hexString the string to convert
      * @throws IllegalArgumentException if the string is not a valid hex string representation of an ObjectId
      */
-    public constructor(hexString: String) : this(parseObjectIdString(hexString))
+    constructor(hexString: String) : this(parseObjectIdString(hexString))
 
     /**
      * Constructs a new instance from the given unsigned byte array
@@ -52,7 +52,7 @@ public class ObjectIdImpl : ObjectId {
      * @param bytes the ByteBuffer
      * @throws IllegalArgumentException if the buffer is null or does not have at least 12 bytes remaining
      */
-    public constructor(bytes: ByteArray) {
+    constructor(bytes: ByteArray) {
         if (bytes.size != OBJECT_ID_BYTES_SIZE) {
             throw IllegalArgumentException("byte array size must be $OBJECT_ID_BYTES_SIZE")
         }

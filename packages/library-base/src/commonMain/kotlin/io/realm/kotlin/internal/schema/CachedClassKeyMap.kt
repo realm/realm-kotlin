@@ -34,9 +34,9 @@ import kotlin.reflect.KProperty1
  * Schema metadata providing access to class metadata for the schema.
  */
 internal interface SchemaMetadata {
-    public operator fun get(className: String): ClassMetadata?
-    public operator fun get(classKey: ClassKey): ClassMetadata?
-    public fun getOrThrow(className: String): ClassMetadata = this[className]
+    operator fun get(className: String): ClassMetadata?
+    operator fun get(classKey: ClassKey): ClassMetadata?
+    fun getOrThrow(className: String): ClassMetadata = this[className]
         ?: throw IllegalArgumentException("Schema does not contain a class named '$className'")
 }
 
@@ -44,40 +44,40 @@ internal interface SchemaMetadata {
  * Class metadata providing access class and property keys.
  */
 internal interface ClassMetadata {
-    public val clazz: KClass<out TypedRealmObject>?
-    public val className: String
-    public val classKey: ClassKey
-    public val properties: List<PropertyMetadata>
-    public val primaryKeyProperty: PropertyMetadata?
-    public val isEmbeddedRealmObject: Boolean
-    public operator fun get(propertyName: String): PropertyMetadata?
-    public operator fun get(propertyKey: PropertyKey): PropertyMetadata?
-    public operator fun get(property: KProperty<*>): PropertyMetadata?
-    public fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
+    val clazz: KClass<out TypedRealmObject>?
+    val className: String
+    val classKey: ClassKey
+    val properties: List<PropertyMetadata>
+    val primaryKeyProperty: PropertyMetadata?
+    val isEmbeddedRealmObject: Boolean
+    operator fun get(propertyName: String): PropertyMetadata?
+    operator fun get(propertyKey: PropertyKey): PropertyMetadata?
+    operator fun get(property: KProperty<*>): PropertyMetadata?
+    fun getOrThrow(propertyName: String): PropertyMetadata = this[propertyName]
         ?: throw IllegalArgumentException("Schema for type '$className' doesn't contain a property named '$propertyName'")
     /**
      * Returns `true` if this class has been defined by the user, `false` is returned
      * if this class is only found in the on-disk schema.
      */
-    public fun isUserDefined(): Boolean = (clazz != null)
+    fun isUserDefined(): Boolean = (clazz != null)
 }
 
 internal interface PropertyMetadata {
-    public val name: String
-    public val key: PropertyKey
-    public val collectionType: CollectionType
-    public val type: PropertyType
-    public val isNullable: Boolean
-    public val isPrimaryKey: Boolean
-    public val accessor: KProperty1<BaseRealmObject, Any?>?
-    public val linkTarget: String
-    public val linkOriginPropertyName: String
-    public val isComputed: Boolean
+    val name: String
+    val key: PropertyKey
+    val collectionType: CollectionType
+    val type: PropertyType
+    val isNullable: Boolean
+    val isPrimaryKey: Boolean
+    val accessor: KProperty1<BaseRealmObject, Any?>?
+    val linkTarget: String
+    val linkOriginPropertyName: String
+    val isComputed: Boolean
     /**
      * Returns `true` if this property has been defined by the user, `false` is returned
      * if this property is only found in the on-disk schema.
      */
-    public fun isUserDefined(): Boolean = (accessor != null)
+    fun isUserDefined(): Boolean = (accessor != null)
 }
 
 /**

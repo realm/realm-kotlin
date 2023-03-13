@@ -13,7 +13,7 @@ internal actual val DEVICE_MANUFACTURER: String = ""
 internal actual val DEVICE_MODEL: String = ""
 
 @Suppress("FunctionOnlyReturningConstant")
-public actual fun appFilesDirectory(): String = System.getProperty("user.dir") ?: "."
+internal actual fun appFilesDirectory(): String = System.getProperty("user.dir") ?: "."
 
-public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
+internal actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
     StdOutLogger(tag, logLevel)

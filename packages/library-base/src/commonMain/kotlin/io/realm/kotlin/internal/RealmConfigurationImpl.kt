@@ -26,7 +26,7 @@ import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
-public const val REALM_FILE_EXTENSION: String = ".realm"
+internal const val REALM_FILE_EXTENSION: String = ".realm"
 
 @Suppress("LongParameterList")
 internal class RealmConfigurationImpl constructor(

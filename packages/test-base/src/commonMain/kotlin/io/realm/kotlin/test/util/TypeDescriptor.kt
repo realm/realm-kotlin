@@ -12,7 +12,7 @@
  * limitations under the License.
  *
  */
-
+@file:Suppress("invisible_member", "invisible_reference")
 package io.realm.kotlin.test.util
 
 import io.realm.kotlin.internal.interop.CollectionType

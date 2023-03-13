@@ -20,7 +20,7 @@ internal actual class HttpClientCache actual constructor(timeoutMs: Long, custom
     }
 }
 
-public actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
+internal actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
     return HttpClient(OkHttp) {
         engine {
             config {
