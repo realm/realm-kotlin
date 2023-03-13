@@ -168,4 +168,38 @@ class ModelDefinitionTests {
         )
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
     }
+
+	@Test
+    fun `persisted_properties_with_val_should_fail`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "persisted_properties_val.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        class Person(val name: String) : RealmObject
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Persisted properties does not allow val")
+        assertTrue(result.messages.contains("Persisted properties must be marked with `var`"))
+    }
+
+    @Test
+    fun `persisted_properties_with_lateinit_should_fail`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "persisted_properties_lateinit.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        class Person : RealmObject {
+                            lateinit var name: String
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Persisted properties does not allow lateinit")
+        assertTrue(result.messages.contains("Persisted properties must not be marked with `lateinit`."))
+    }
 }

@@ -16,7 +16,9 @@
 
 package io.realm.kotlin.entities.embedded
 
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 
@@ -26,5 +28,6 @@ val embeddedSchema = setOf(EmbeddedParent::class, EmbeddedChild::class, Embedded
 class EmbeddedParent : RealmObject {
     var id: String? = null
     var child: EmbeddedChild? = null
-    var children: RealmList<EmbeddedChild> = realmListOf()
+    var childrenList: RealmList<EmbeddedChild> = realmListOf()
+    var childrenDictionary: RealmDictionary<EmbeddedChild?> = realmDictionaryOf()
 }

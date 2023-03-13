@@ -6,12 +6,15 @@
 ### Enhancements
 * Upgrade OpenSSL from 3.0.7 to 3.0.8.
 * Model classes with types not supported by Realm will now fail at compile time instead of logging a debug message. This error can be suppressed by using the `@Ignore` annotation. (Issue [#1226](https://github.com/realm/realm-kotlin/issues/1226))
+* Wrong use of `val` for persisted properties will now throw a compiler time error, instead of crashing at runtime. (Issue [#1306](https://github.com/realm/realm-kotlin/issues/1306))
 * Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
+* Added support for `RealmDictionary` in model classes. `RealmDictionary` is a `Map` of strings to values. Contrary to `RealmSet` and `RealmList` it is possible to store nullable objects/embedded objects in this data structure. See the class documentation for more details. (Issue [#537](https://github.com/realm/realm-kotlin/issues/537))
 * [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
 * [Sync] Added `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
 * [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
  
 ### Fixed
+* Fixed implementation of `RealmSet.iterator()` to throw `ConcurrentModificationException`s when the underlying set has been modified while iterating over it. (Issue [#1220](https://github.com/realm/realm-kotlin/issues/1220))
 * Accessing an invalidated `RealmResults` now throws an `IllegalStateException` instead of a `RealmException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Opening a Realm with a wrong encryption key or corrupted now throws an `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
 * Trying to convert to a Flexible Sync Realm with Flexible Sync disabled throws a `IllegalStateException` instead of a `IllegalArgumentException`. (Issue [#1188](https://github.com/realm/realm-kotlin/pull/1188))
@@ -45,9 +48,12 @@
 * None.
 
 ### Fixed
+* Returning invalid objects from `Realm.write` would throw an `IllegalStateException`. (Issue [#1300](https://github.com/realm/realm-kotlin/issues/1300))
 * Compatibility with Realm Java when using the `io.realm.RealmObject` abstract class. (Issue [#1278](https://github.com/realm/realm-kotlin/issues/1278))
 * Compiler error when multiple fields have `@PersistedName`-annotations that match they Kotlin name. (Issue [#1240](https://github.com/realm/realm-kotlin/issues/1240))
 * RealmUUID would throw an `ClassCastException` when comparing with an object instance of a different type. (Issue [#1288](https://github.com/realm/realm-kotlin/issues/1288))
+* Compiler error when using Kotlin 1.8.0 and Compose for desktop 1.3.0. (Issue [#1296](https://github.com/realm/realm-kotlin/issues/1296))
+* [Sync] `SyncSession.downloadAllServerChange()` and `SyncSession.uploadAllLocalChanges()` was reversed.
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

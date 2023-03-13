@@ -21,7 +21,9 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.query.AggregatorQueryType
@@ -46,9 +48,11 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.coroutines.TimeoutCancellationException
@@ -1143,7 +1147,7 @@ class QueryTests {
 
     // ------------------
     // Aggregators - sum
-    // --------timestampField----------
+    // ------------------
     @Test
     fun verifySupportedSumAggregators() {
         assertEquals(
@@ -2007,9 +2011,206 @@ class QueryTests {
         }
     }
 
-    // -------------------------------------------------------
-    // TODO - add tests for queries on collections when ready
-    // -------------------------------------------------------
+    @Test
+    fun list_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                QuerySample().apply {
+                    intListField = realmListOf(1, 2, 3)
+                    floatListField = realmListOf(1f, 2f, 3f)
+                    doubleListField = realmListOf(1.0, 2.0, 3.0)
+                    decimal128ListField = realmListOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                    nullableIntListField = realmListOf(1, 2, 3)
+                    nullableFloatListField = realmListOf(1f, 2f, 3f)
+                    nullableDoubleListField = realmListOf(1.0, 2.0, 3.0)
+                    nullableDecimal128ListField = realmListOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                }
+            )
+        }
+
+        // Supported fields for aggregations
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::intListField.name, // Just test one Long value
+                    QuerySample::floatListField.name,
+                    QuerySample::doubleListField.name,
+                    QuerySample::decimal128ListField.name,
+                    QuerySample::nullableIntListField.name,
+                    QuerySample::nullableFloatListField.name,
+                    QuerySample::nullableDoubleListField.name,
+                    QuerySample::nullableDecimal128ListField.name,
+                ).forEach { field ->
+                    realm.query<QuerySample>("$field.$aggregator < 7")
+                        .find { assertEquals(1, it.size) }
+                    realm.query<QuerySample>("$field.$aggregator > 42")
+                        .find { assertTrue(it.isEmpty()) }
+                }
+            }
+
+        // Unsupported fields
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::booleanListField.name,
+                    QuerySample::objectIdListField.name,
+                    QuerySample::bsonObjectIdListField.name,
+                    QuerySample::timestampListField.name,
+                    QuerySample::binaryListField.name,
+                    QuerySample::nullableBooleanListField.name,
+                    QuerySample::nullableObjectIdListField.name,
+                    QuerySample::nullableBsonObjectIdListField.name,
+                    QuerySample::nullableTimestampListField.name,
+                    QuerySample::nullableBinaryListField.name,
+                ).forEach { field ->
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.$aggregator' for this type of property") {
+                        realm.query<QuerySample>("$field.$aggregator > 42")
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun set_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                QuerySample().apply {
+                    intSetField = realmSetOf(1, 2, 3)
+                    floatSetField = realmSetOf(1f, 2f, 3f)
+                    doubleSetField = realmSetOf(1.0, 2.0, 3.0)
+                    decimal128SetField = realmSetOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                    nullableIntSetField = realmSetOf(1, 2, 3)
+                    nullableFloatSetField = realmSetOf(1f, 2f, 3f)
+                    nullableDoubleSetField = realmSetOf(1.0, 2.0, 3.0)
+                    nullableDecimal128SetField = realmSetOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                }
+            )
+        }
+
+        // Supported fields for aggregations
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::intSetField.name, // Just test one Long value
+                    QuerySample::floatSetField.name,
+                    QuerySample::doubleSetField.name,
+                    QuerySample::decimal128SetField.name,
+                    QuerySample::nullableIntSetField.name,
+                    QuerySample::nullableFloatSetField.name,
+                    QuerySample::nullableDoubleSetField.name,
+                    QuerySample::nullableDecimal128SetField.name,
+                ).forEach { field ->
+                    realm.query<QuerySample>("$field.$aggregator < 7")
+                        .find { assertEquals(1, it.size) }
+                    realm.query<QuerySample>("$field.$aggregator > 42")
+                        .find { assertTrue(it.isEmpty()) }
+                }
+            }
+
+        // Unsupported fields
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::booleanSetField.name,
+                    QuerySample::objectIdSetField.name,
+                    QuerySample::bsonObjectIdSetField.name,
+                    QuerySample::timestampSetField.name,
+                    QuerySample::binaryListField.name,
+                    QuerySample::nullableBooleanSetField.name,
+                    QuerySample::nullableObjectIdSetField.name,
+                    QuerySample::nullableBsonObjectIdSetField.name,
+                    QuerySample::nullableTimestampSetField.name,
+                    QuerySample::nullableBinaryListField.name,
+                ).forEach { field ->
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.$aggregator' for this type of property") {
+                        realm.query<QuerySample>("$field.$aggregator > 42")
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun dictionary_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                QuerySample().apply {
+                    intDictionaryField = realmDictionaryOf("A" to 1, "B" to 2, "C" to 3)
+                    floatDictionaryField = realmDictionaryOf("A" to 1f, "B" to 2f, "C" to 3f)
+                    doubleDictionaryField = realmDictionaryOf("A" to 1.0, "B" to 2.0, "C" to 3.0)
+                    decimal128DictionaryField = realmDictionaryOf(
+                        "A" to Decimal128("1"),
+                        "B" to Decimal128("2"),
+                        "C" to Decimal128("3")
+                    )
+                    nullableIntDictionaryField = realmDictionaryOf("A" to 1, "B" to 2, "C" to 3)
+                    nullableFloatDictionaryField = realmDictionaryOf("A" to 1f, "B" to 2f, "C" to 3f)
+                    nullableDoubleDictionaryField = realmDictionaryOf("A" to 1.0, "B" to 2.0, "C" to 3.0)
+                    nullableDecimal128DictionaryField = realmDictionaryOf(
+                        "A" to Decimal128("1"),
+                        "B" to Decimal128("2"),
+                        "C" to Decimal128("3")
+                    )
+                }
+            )
+        }
+
+        // Supported fields for aggregations
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::intDictionaryField.name, // Just test one Long value
+                    QuerySample::floatDictionaryField.name,
+                    QuerySample::doubleDictionaryField.name,
+                    QuerySample::decimal128DictionaryField.name,
+                    QuerySample::nullableIntDictionaryField.name,
+                    QuerySample::nullableFloatDictionaryField.name,
+                    QuerySample::nullableDoubleDictionaryField.name,
+                    QuerySample::nullableDecimal128DictionaryField.name,
+                ).forEach { field ->
+                    realm.query<QuerySample>("$field.$aggregator < 7")
+                        .find { assertEquals(1, it.size) }
+                    realm.query<QuerySample>("$field.$aggregator > 42")
+                        .find { assertTrue(it.isEmpty()) }
+                }
+            }
+
+        // Unsupported fields
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::booleanDictionaryField.name,
+                    QuerySample::objectIdDictionaryField.name,
+                    QuerySample::bsonObjectIdDictionaryField.name,
+                    QuerySample::timestampDictionaryField.name,
+                    QuerySample::binaryListField.name,
+                    QuerySample::nullableBooleanDictionaryField.name,
+                    QuerySample::nullableObjectIdDictionaryField.name,
+                    QuerySample::nullableBsonObjectIdDictionaryField.name,
+                    QuerySample::nullableTimestampDictionaryField.name,
+                    QuerySample::nullableBinaryListField.name,
+                ).forEach { field ->
+                    assertFailsWith<IllegalArgumentException> {
+                        realm.query<QuerySample>("$field.$aggregator > 42")
+                    }
+                }
+            }
+    }
 
     // ----------------------------------
     // Multithreading with query objects
@@ -2873,7 +3074,6 @@ class QuerySample() : RealmObject {
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
-//    var realmAnyField: RealmAny? = RealmAny.create(42)
     var realmAnyField: RealmAny? = RealmAny.create("Hello")
 
     var nullableStringField: String? = null
@@ -2905,6 +3105,7 @@ class QuerySample() : RealmObject {
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<QuerySample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -2920,6 +3121,69 @@ class QuerySample() : RealmObject {
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+
+    var stringSetField: RealmSet<String> = realmSetOf()
+    var byteSetField: RealmSet<Byte> = realmSetOf()
+    var charSetField: RealmSet<Char> = realmSetOf()
+    var shortSetField: RealmSet<Short> = realmSetOf()
+    var intSetField: RealmSet<Int> = realmSetOf()
+    var longSetField: RealmSet<Long> = realmSetOf()
+    var booleanSetField: RealmSet<Boolean> = realmSetOf()
+    var floatSetField: RealmSet<Float> = realmSetOf()
+    var doubleSetField: RealmSet<Double> = realmSetOf()
+    var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
+    var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
+    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
+    var binarySetField: RealmSet<ByteArray> = realmSetOf()
+    var objectSetField: RealmSet<QuerySample> = realmSetOf()
+
+    var nullableStringSetField: RealmSet<String?> = realmSetOf()
+    var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
+    var nullableCharSetField: RealmSet<Char?> = realmSetOf()
+    var nullableShortSetField: RealmSet<Short?> = realmSetOf()
+    var nullableIntSetField: RealmSet<Int?> = realmSetOf()
+    var nullableLongSetField: RealmSet<Long?> = realmSetOf()
+    var nullableBooleanSetField: RealmSet<Boolean?> = realmSetOf()
+    var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
+    var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
+    var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
+    var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
+    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
+    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+
+    var stringDictionaryField: RealmDictionary<String> = realmDictionaryOf()
+    var byteDictionaryField: RealmDictionary<Byte> = realmDictionaryOf()
+    var charDictionaryField: RealmDictionary<Char> = realmDictionaryOf()
+    var shortDictionaryField: RealmDictionary<Short> = realmDictionaryOf()
+    var intDictionaryField: RealmDictionary<Int> = realmDictionaryOf()
+    var longDictionaryField: RealmDictionary<Long> = realmDictionaryOf()
+    var booleanDictionaryField: RealmDictionary<Boolean> = realmDictionaryOf()
+    var floatDictionaryField: RealmDictionary<Float> = realmDictionaryOf()
+    var doubleDictionaryField: RealmDictionary<Double> = realmDictionaryOf()
+    var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
+    var timestampDictionaryField: RealmDictionary<RealmInstant> = realmDictionaryOf()
+    var objectIdDictionaryField: RealmDictionary<ObjectId> = realmDictionaryOf()
+    var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
+    var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
+
+    var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
+    var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
+    var nullableCharDictionaryField: RealmDictionary<Char?> = realmDictionaryOf()
+    var nullableShortDictionaryField: RealmDictionary<Short?> = realmDictionaryOf()
+    var nullableIntDictionaryField: RealmDictionary<Int?> = realmDictionaryOf()
+    var nullableLongDictionaryField: RealmDictionary<Long?> = realmDictionaryOf()
+    var nullableBooleanDictionaryField: RealmDictionary<Boolean?> = realmDictionaryOf()
+    var nullableFloatDictionaryField: RealmDictionary<Float?> = realmDictionaryOf()
+    var nullableDoubleDictionaryField: RealmDictionary<Double?> = realmDictionaryOf()
+    var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
+    var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
+    var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
+    var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
+    var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
+    var nullableObjectDictionaryField: RealmDictionary<QuerySample?> = realmDictionaryOf()
 
     var child: QuerySample? = null
 }

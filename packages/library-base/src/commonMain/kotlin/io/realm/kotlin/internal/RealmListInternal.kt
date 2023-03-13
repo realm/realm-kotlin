@@ -193,7 +193,9 @@ private fun checkPositionIndex(index: Int, size: Int) {
 /**
  * Operator interface abstracting the connection between the API and and the interop layer.
  */
-internal interface ListOperator<E> : CollectionOperator<E> {
+internal interface ListOperator<E> : CollectionOperator<E, RealmListPointer> {
+
+    override val nativePointer: RealmListPointer
 
     fun get(index: Int): E
 
@@ -235,15 +237,15 @@ internal interface ListOperator<E> : CollectionOperator<E> {
 internal class PrimitiveListOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<E>,
-    private val nativePointer: RealmListPointer
+    override val valueConverter: RealmValueConverter<E>,
+    override val nativePointer: RealmListPointer
 ) : ListOperator<E> {
 
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
             val transport = realm_list_get(nativePointer, index.toLong())
-            with(converter) {
+            with(valueConverter) {
                 realmValueToPublic(transport) as E
             }
         }
@@ -256,7 +258,7 @@ internal class PrimitiveListOperator<E>(
         cache: UnmanagedToManagedObjectCache
     ) {
         inputScope {
-            with(converter) {
+            with(valueConverter) {
                 val transport = publicToRealmValue(element)
                 RealmInterop.realm_list_add(nativePointer, index.toLong(), transport)
             }
@@ -272,7 +274,7 @@ internal class PrimitiveListOperator<E>(
     ): E {
         return get(index).also {
             inputScope {
-                with(converter) {
+                with(valueConverter) {
                     val transport = publicToRealmValue(element)
                     RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
                 }
@@ -284,14 +286,14 @@ internal class PrimitiveListOperator<E>(
         realmReference: RealmReference,
         nativePointer: RealmListPointer
     ): ListOperator<E> =
-        PrimitiveListOperator(mediator, realmReference, converter, nativePointer)
+        PrimitiveListOperator(mediator, realmReference, valueConverter, nativePointer)
 }
 
 internal abstract class BaseRealmObjectListOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<E>,
-    protected val nativePointer: RealmListPointer,
+    override val valueConverter: RealmValueConverter<E>,
+    override val nativePointer: RealmListPointer,
     val clazz: KClass<E & Any>,
     val classKey: ClassKey,
 ) : ListOperator<E> {
@@ -300,7 +302,7 @@ internal abstract class BaseRealmObjectListOperator<E>(
     override fun get(index: Int): E {
         return getterScope {
             val transport = realm_list_get(nativePointer, index.toLong())
-            with(converter) {
+            with(valueConverter) {
                 realmValueToPublic(transport) as E
             }
         }
@@ -351,7 +353,7 @@ internal class RealmObjectListOperator<E>(
                 cache
             )
             val transport = realmObjectTransport(objRef as RealmObjectInterop)
-            with(converter) {
+            with(valueConverter) {
                 val originalValue = get(index)
                 RealmInterop.realm_list_set(nativePointer, index.toLong(), transport)
                 originalValue
@@ -413,7 +415,7 @@ internal class EmbeddedRealmObjectListOperator<E : BaseRealmObject>(
             // return null as this is not allowed for lists with non-nullable elements, so just return
             // the newly created object even though it goes against the list API.
             val embedded = realm_list_set_embedded(nativePointer, index.toLong())
-            with(converter) {
+            with(valueConverter) {
                 val newEmbeddedRealmObject = realmValueToPublic(embedded) as BaseRealmObject
                 RealmObjectHelper.assign(newEmbeddedRealmObject, element, updatePolicy, cache)
                 newEmbeddedRealmObject as E

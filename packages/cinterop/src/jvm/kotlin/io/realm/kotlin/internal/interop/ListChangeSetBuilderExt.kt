@@ -31,8 +31,10 @@ private fun realm_index_range_t.asToAccessor(): ArrayAccessor = { index: Int ->
 private fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(indices: LongArray) =
     initIndicesArray(indices.size, indices.asAccessor())
 
-private fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(ranges: realm_index_range_t, size: Long) =
-    initRangesArray(size.toInt(), ranges.asFromAccessor(), ranges.asToAccessor())
+private fun <T, R> CollectionChangeSetBuilder<T, R>.initRangesArray(
+    ranges: realm_index_range_t,
+    size: Long
+) = initRangesArray(size.toInt(), ranges.asFromAccessor(), ranges.asToAccessor())
 
 fun <T, R> CollectionChangeSetBuilder<T, R>.initIndicesArray(
     array: KMutableProperty0<IntArray>,
