@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Upgrade OpenSSL from 3.0.7 to 3.0.8.
+* Model classes with types not supported by Realm will now fail at compile time instead of logging a debug message. This error can be suppressed by using the `@Ignore` annotation. (Issue [#1226](https://github.com/realm/realm-kotlin/issues/1226))
 * Wrong use of `val` for persisted properties will now throw a compiler time error, instead of crashing at runtime. (Issue [#1306](https://github.com/realm/realm-kotlin/issues/1306))
 * Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
 * Added support for `RealmDictionary` in model classes. `RealmDictionary` is a `Map` of strings to values. Contrary to `RealmSet` and `RealmList` it is possible to store nullable objects/embedded objects in this data structure. See the class documentation for more details. (Issue [#537](https://github.com/realm/realm-kotlin/issues/537))
