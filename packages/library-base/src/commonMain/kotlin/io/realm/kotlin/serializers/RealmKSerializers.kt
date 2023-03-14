@@ -65,7 +65,7 @@ import org.mongodb.kbson.Decimal128
  *     var myList: RealmList<String> = realmListOf()
  * }
  * ```
- * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
+ * You can find the serializers for all Realm data types in [io.realm.kotlin.serializers].
  */
 public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmList<E>> {
     private val serializer = ListSerializer(elementSerializer)
