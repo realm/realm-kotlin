@@ -20,7 +20,6 @@ import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -29,7 +28,6 @@ import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.Validation
@@ -102,10 +100,6 @@ public interface AppConfiguration {
     public class Builder(
         private val appId: String
     ) {
-
-        init {
-            CoreExceptionConverter.initialize()
-        }
 
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
@@ -307,7 +301,7 @@ public interface AppConfiguration {
                             }
                         }
                     }
-                ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
+                )
             }
 
             return AppConfigurationImpl(

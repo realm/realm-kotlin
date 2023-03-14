@@ -6,7 +6,6 @@ import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
-import io.realm.kotlin.internal.platform.freeze
 
 /**
  * Work-around for https://github.com/realm/realm-kotlin/issues/480
@@ -18,7 +17,7 @@ internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
     // Need to freeze value as it is used inside the client's init lambda block, which also
     // freezes captured objects too, see:
     // https://youtrack.jetbrains.com/issue/KTOR-1223#focus=Comments-27-4618681.0-0
-    val frozenTimeout = timeoutMs.freeze()
+    val frozenTimeout = timeoutMs
     return createPlatformClient {
         // Charset defaults to UTF-8 (https://ktor.io/docs/http-plain-text.html#configuration)
 

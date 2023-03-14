@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CodeDescription
+
 /**
  * Wrapper for C-API `realm_sync_error_category`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3198
@@ -24,6 +26,7 @@ expect enum class SyncErrorCodeCategory : CodeDescription {
     RLM_SYNC_ERROR_CATEGORY_CLIENT,
     RLM_SYNC_ERROR_CATEGORY_CONNECTION,
     RLM_SYNC_ERROR_CATEGORY_SESSION,
+    RLM_SYNC_ERROR_CATEGORY_WEBSOCKET,
     RLM_SYNC_ERROR_CATEGORY_SYSTEM,
     RLM_SYNC_ERROR_CATEGORY_UNKNOWN;
 

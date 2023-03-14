@@ -108,32 +108,21 @@ class FlexibleSyncIntegrationTests {
         }
     }
 
-    // FIXME Waiting for https://github.com/realm/realm-kotlin/issues/417
-    // @Test
-    // fun clientResetIfNoSubscriptionWhenWriting() = runBlocking {
-    //     val channel = Channel<Boolean>(1)
-    //     lateinit var realm: Realm
-    //     val task: Deferred<FlexParentObject> = async {
-    //         val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-    //         val config = SyncConfiguration.Builder(user, defaultSchema)
-    //             // .syncClientResetStrategy { session, error ->
-    //             //     assertTrue(error.toString(), error.message!!.contains("Client attempted a write that is outside of permissions or query filters"))
-    //             //     // looperThread.testComplete()
-    //             // }
-    //             .build()
-    //         realm = Realm.open(config)
-    //         realm.write {
-    //             copyToRealm(FlexParentObject().apply { name = "red" })
-    //         }
-    //     }
-    //     try {
-    //         assertTrue(channel.receive())
-    //     } finally {
-    //         channel.close()
-    //         task.cancel()
-    //         realm.close()
-    //     }
-    // }
+    @Test
+    fun writeFailsIfNoSubscription() = runBlocking {
+        val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
+        val config = SyncConfiguration.Builder(user, defaultSchema)
+            .build()
+
+        Realm.open(config).use { realm ->
+            realm.writeBlocking {
+                assertFailsWith<IllegalArgumentException> {
+                    // This doesn't trigger a client reset event, it is caught by Core instead
+                    copyToRealm(FlexParentObject().apply { name = "red" })
+                }
+            }
+        }
+    }
 
     @Test
     fun dataIsDeletedWhenSubscriptionIsRemoved() = runBlocking {
@@ -233,7 +222,7 @@ class FlexibleSyncIntegrationTests {
 
     @Suppress("LongMethod")
     @Test
-    fun roundtripLinkedAndEmbeddedObjects() = runBlocking {
+    fun roundTripLinkedAndEmbeddedObjects() = runBlocking {
         val randomSection = Random.nextInt() // Generate random name to allow replays of unit tests
 
         // Upload data from user 1

@@ -24,13 +24,17 @@ import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.UpdatedObject
-import io.realm.kotlin.test.NotificationTests
+import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -42,8 +46,9 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.seconds
 
-class RealmObjectNotificationsTests : NotificationTests {
+class RealmObjectNotificationsTests : RealmEntityNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -198,7 +203,7 @@ class RealmObjectNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun deleteObservable() {
+    override fun deleteEntity() {
         runBlocking {
             val c1 = Channel<ObjectChange<Sample>>(1)
             val c2 = Channel<Unit>(1)
@@ -231,6 +236,39 @@ class RealmObjectNotificationsTests : NotificationTests {
             observer.cancel()
             c1.close()
             c2.close()
+        }
+    }
+
+    @Test
+    override fun asFlowOnDeleteEntity() {
+        runBlocking {
+            val sample = realm.write { copyToRealm(Sample()) }
+            val mutex = Mutex(true)
+            val flow = async {
+                sample.asFlow().first {
+                    mutex.unlock()
+                    it is DeletedObject<*>
+                }
+            }
+
+            // Await that flow is actually running
+            mutex.lock()
+            // And delete containing entity
+            realm.write { delete(findLatest(sample)!!) }
+
+            // Await that notifier has signalled the deletion so we are certain that the entity
+            // has been deleted
+            withTimeout(10.seconds) {
+                flow.await()
+            }
+
+            // Verify that a flow on the deleted entity will signal a deletion and complete gracefully
+            withTimeout(10.seconds) {
+                // First and only change should be a deletion event
+                sample.asFlow().single().also {
+                    assertIs<DeletedObject<*>>(it)
+                }
+            }
         }
     }
 

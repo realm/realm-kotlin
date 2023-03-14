@@ -81,7 +81,7 @@ class EncryptionTests {
             .directory(tmpDir)
             .build()
             .let { conf ->
-                assertFailsWith(IllegalArgumentException::class, "Encrypted Realm should not be openable with no encryption key") {
+                assertFailsWith(IllegalStateException::class, "Failed to open Realm file at path") {
                     Realm.open(conf)
                 }
             }
@@ -93,7 +93,7 @@ class EncryptionTests {
             .encryptionKey(randomKey)
             .build()
             .let { conf ->
-                assertFailsWith(IllegalArgumentException::class, "Encrypted Realm should not be openable with a wrong encryption key") {
+                assertFailsWith(IllegalStateException::class, "Failed to open Realm file at path") {
                     Realm.open(conf)
                 }
             }
@@ -117,7 +117,7 @@ class EncryptionTests {
             .encryptionKey(randomKey)
             .build()
             .let { conf ->
-                assertFailsWith(IllegalArgumentException::class, "Unencrypted Realm should not be openable with an encryption key") {
+                assertFailsWith(IllegalStateException::class, "Failed to open Realm file at path") {
                     Realm.open(conf)
                 }
             }

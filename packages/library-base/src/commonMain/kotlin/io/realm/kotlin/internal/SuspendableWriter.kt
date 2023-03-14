@@ -28,7 +28,6 @@ import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -52,10 +51,6 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
 
         override val realmReference: LiveRealmReference
             get() = super.realmReference
-
-        override fun <T> registerObserver(t: Thawable<T>): Flow<T> {
-            return super<InternalMutableRealm>.registerObserver(t)
-        }
 
         override fun <T : BaseRealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
             return super.query(clazz, query, *args)
@@ -142,10 +137,13 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                 // FIXME If we could transfer ownership (the owning Realm) in Realm instead then we
                 //  could completely eliminate the need for the external owner in here!?
                 result.runIfManaged {
-                    if (!result.isValid()) {
-                        throw IllegalStateException("A deleted Realm object cannot be returned from a write transaction.")
+                    // Invalid objects are returned as-is. We assume the caller know what they
+                    // are doing and will either throw the result away or treat it accordingly.
+                    // See https://github.com/realm/realm-kotlin/issues/1300 for context.
+                    when (result.isValid()) {
+                        true -> freeze(reference)!!.toRealmObject()
+                        false -> result
                     }
-                    freeze(reference)!!.toRealmObject()
                 }
             }
             else -> throw IllegalArgumentException("Did not recognize type to be frozen: $result")
