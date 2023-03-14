@@ -50,7 +50,7 @@ import org.mongodb.kbson.Decimal128
  * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
  * require to be manually subscribed.
  *
- * Subscription can be set up defining the serializer per property
+ * Subscriptions can be set up defining the serializer per property
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmListKSerializer::class)
