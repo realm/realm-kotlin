@@ -29,7 +29,6 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
@@ -315,7 +314,7 @@ class SyncedRealmTests {
 
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
-        val channel = Channel<Throwable>(1).freeze()
+        val channel = Channel<Throwable>(1)
         // Remove permissions to generate a sync error containing ONLY the original path
         // This way we assert we don't read wrong data from the user_info field
         val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
@@ -355,7 +354,7 @@ class SyncedRealmTests {
     @Test
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
-        val channel = Channel<SyncException>(1).freeze()
+        val channel = Channel<SyncException>(1)
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

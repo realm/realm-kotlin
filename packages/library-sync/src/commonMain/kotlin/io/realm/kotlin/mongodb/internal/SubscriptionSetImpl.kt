@@ -24,7 +24,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSubscriptionSetPointer
 import io.realm.kotlin.internal.interop.SubscriptionSetCallback
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.sync.MutableSubscriptionSet
@@ -100,7 +99,7 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                                 }
                             }
                         }
-                    }.freeze()
+                    }
                     RealmInterop.realm_sync_on_subscriptionset_state_change_async(
                         nativePointer,
                         CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE,

@@ -28,7 +28,6 @@ import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
@@ -208,7 +207,7 @@ internal open class SyncSessionImpl(
                                 channel.trySend(true)
                             }
                         }
-                    }.freeze()
+                    }
                     when (direction) {
                         TransferDirection.UPLOAD -> {
                             RealmInterop.realm_sync_session_wait_for_upload_completion(

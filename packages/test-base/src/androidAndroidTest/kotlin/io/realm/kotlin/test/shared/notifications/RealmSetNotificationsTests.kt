@@ -19,7 +19,6 @@ package io.realm.kotlin.test.shared.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.set.RealmSetContainer
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.SetChange
@@ -175,6 +174,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
+            val values = SET_OBJECT_VALUES
             val container = realm.write {
                 copyToRealm(RealmSetContainer())
             }
@@ -232,7 +232,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         runBlocking {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
-            val values = SET_OBJECT_VALUES.freeze()
+            val values = SET_OBJECT_VALUES
             val channel1 = Channel<SetChange<*>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {

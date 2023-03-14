@@ -35,7 +35,6 @@ import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 
@@ -135,7 +134,7 @@ public class AppConfigurationImpl constructor(
                 framework = RUNTIME,
                 frameworkVersion = RUNTIME_VERSION
             )
-        ).freeze()
+        )
     }
 
     private fun initializeSyncClientConfig(sdkInfo: String?, applicationInfo: String?): RealmSyncClientConfigurationPointer =

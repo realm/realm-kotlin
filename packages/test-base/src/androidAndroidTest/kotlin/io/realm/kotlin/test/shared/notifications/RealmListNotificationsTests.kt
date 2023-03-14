@@ -20,7 +20,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
@@ -301,6 +300,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
+            val values = OBJECT_VALUES
             val container = realm.write {
                 copyToRealm(RealmListContainer())
             }
@@ -358,7 +358,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         runBlocking {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
-            val values = OBJECT_VALUES.freeze()
+            val values = OBJECT_VALUES
             val channel1 = Channel<ListChange<*>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {
