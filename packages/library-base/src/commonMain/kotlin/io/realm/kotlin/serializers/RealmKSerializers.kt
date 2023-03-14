@@ -159,7 +159,7 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
 }
 
 /**
- * KSerializer implementation for [RealmInstant]. Serialization is done with a map with the following
+ * KSerializer implementation for [RealmInstant]. Serialization is done with a map containing the following
  * structure:
  *
  * ```
