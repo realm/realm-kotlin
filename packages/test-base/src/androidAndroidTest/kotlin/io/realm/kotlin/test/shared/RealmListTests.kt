@@ -73,7 +73,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmListTests {
+class RealmListTests : EmbeddedObjectCollectionQueryTests {
 
     private val descriptors = TypeDescriptor.allListFieldTypes
 
@@ -429,7 +429,7 @@ class RealmListTests {
     }
 
     @Test
-    fun listAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun collectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val mutex = Mutex(true)
         val job = async {
@@ -445,7 +445,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_objectList() = runBlocking {
+    override fun query_objectCollection() = runBlocking {
         val container = realm.write {
             copyToRealm(
                 RealmListContainer().apply {
@@ -468,7 +468,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_embeddedObjectList() = runBlocking {
+    override fun query_embeddedObjectCollection() = runBlocking {
         val container = realm.write {
             copyToRealm(
                 RealmListContainer().apply {
@@ -491,7 +491,7 @@ class RealmListTests {
     }
 
     @Test
-    fun queryOnListAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun queryOnCollectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val mutex = Mutex(true)
         val listener = async {
@@ -509,7 +509,7 @@ class RealmListTests {
     }
 
     @Test
-    fun queryOnListAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+    override fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val flow = container.objectListField.query().asFlow()
             .buffer(1)
@@ -543,32 +543,33 @@ class RealmListTests {
     // This test shows that our internal logic still works (by closing the flow on deletion events)
     // even though the public consumer is dropping elements
     @Test
-    fun queryOnListAsFlow_backpressureStrategyDoesNotRuinInternalLogic() = runBlocking {
-        val container = realm.write { copyToRealm(RealmListContainer()) }
-        val flow = container.objectListField.query().asFlow()
-            .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    override fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic() =
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmListContainer()) }
+            val flow = container.objectListField.query().asFlow()
+                .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-        val listener = async {
-            withTimeout(10.seconds) {
-                flow.collect { current ->
-                    delay(30.milliseconds)
+            val listener = async {
+                withTimeout(10.seconds) {
+                    flow.collect { current ->
+                        delay(30.milliseconds)
+                    }
                 }
             }
-        }
-        (1..100).forEach { i ->
-            realm.write {
-                findLatest(container)!!.objectListField.run {
-                    clear()
-                    add(RealmListContainer().apply { this.id = i })
+            (1..100).forEach { i ->
+                realm.write {
+                    findLatest(container)!!.objectListField.run {
+                        clear()
+                        add(RealmListContainer().apply { this.id = i })
+                    }
                 }
             }
+            realm.write { delete(findLatest(container)!!) }
+            listener.await()
         }
-        realm.write { delete(findLatest(container)!!) }
-        listener.await()
-    }
 
     @Test
-    fun query_throwsOnSyntaxError() = runBlocking {
+    override fun query_throwsOnSyntaxError() = runBlocking {
         val instance = realm.write { copyToRealm(RealmListContainer()) }
         assertFailsWithMessage<IllegalArgumentException>("syntax error") {
             instance.objectListField.query("ASDF = $0 $0")
@@ -577,7 +578,7 @@ class RealmListTests {
     }
 
     @Test
-    fun query_throwsOnUnmanagedList() = runBlocking {
+    override fun query_throwsOnUnmanagedCollection() = runBlocking {
         realm.write {
             val instance = RealmListContainer()
             copyToRealm(instance)
@@ -589,12 +590,12 @@ class RealmListTests {
     }
 
     @Test
-    fun query_throwsOnDeletedList() = runBlocking {
+    override fun query_throwsOnDeletedCollection() = runBlocking {
         realm.write {
             val instance = copyToRealm(RealmListContainer())
             val objectListField = instance.objectListField
             delete(instance)
-            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed") {
                 objectListField.query()
             }
         }
@@ -602,12 +603,12 @@ class RealmListTests {
     }
 
     @Test
-    fun query_throwsOnClosedList() = runBlocking {
+    override fun query_throwsOnClosedCollection() = runBlocking {
         val container = realm.write { copyToRealm(RealmListContainer()) }
         val objectListField = container.objectListField
         realm.close()
 
-        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+        assertFailsWithMessage<IllegalStateException>("List is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed") {
             objectListField.query()
         }
         Unit

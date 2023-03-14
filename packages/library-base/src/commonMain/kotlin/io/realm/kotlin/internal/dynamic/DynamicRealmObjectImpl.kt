@@ -90,7 +90,7 @@ public open class DynamicRealmObjectImpl : DynamicRealmObject, RealmObjectIntern
         return RealmObjectHelper.dynamicGetDictionary(`io_realm_kotlin_objectReference`!!, propertyName, clazz, true)
     }
 
-    override fun getObjectDictionary(propertyName: String): RealmDictionary<out DynamicRealmObject> {
+    override fun getObjectDictionary(propertyName: String): RealmDictionary<out DynamicRealmObject?> {
         return getValueDictionary(propertyName, DynamicRealmObject::class)
     }
 

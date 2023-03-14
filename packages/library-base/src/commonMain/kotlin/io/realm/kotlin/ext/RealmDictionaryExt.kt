@@ -17,11 +17,16 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.internal.ManagedRealmDictionary
 import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.asRealmDictionary
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.query
 import io.realm.kotlin.internal.realmMapEntryOf
+import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.query.TRUE_PREDICATE
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmDictionaryMutableEntry
 import io.realm.kotlin.types.RealmList
@@ -85,8 +90,25 @@ public fun <V> realmDictionaryEntryOf(entry: Map.Entry<String, V>): RealmDiction
  */
 public inline fun <T : RealmObject> RealmDictionary<T?>.copyFromRealm(
     depth: UInt = UInt.MAX_VALUE
-): RealmDictionary<T?> {
+): Map<String, T?> {
     return this.getRealm<TypedRealm>()
         ?.copyFromRealm(this, depth)
         ?: throw IllegalArgumentException("This RealmDictionary is unmanaged. Only managed dictionaries can be copied.")
 }
+
+/**
+ * Query the objects in a dictionary by `filter` and `arguments`. The query is launched against the
+ * output obtained from [RealmDictionary.values]. This means keys are not taken into consideration.
+ *
+ * @param filter the Realm Query Language predicate to append.
+ * @param arguments Realm values for the predicate.
+ */
+public fun <T : BaseRealmObject> RealmDictionary<T?>.query(
+    filter: String = TRUE_PREDICATE,
+    vararg arguments: Any?
+): RealmQuery<T> =
+    if (this is ManagedRealmDictionary) {
+        query(filter, arguments)
+    } else {
+        throw IllegalArgumentException("Unmanaged dictionary values cannot be queried.")
+    }

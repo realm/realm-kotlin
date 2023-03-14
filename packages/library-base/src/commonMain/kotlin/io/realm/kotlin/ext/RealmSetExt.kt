@@ -56,7 +56,7 @@ public inline fun <T : RealmObject> RealmSet<T>.copyFromRealm(
 }
 
 /**
- * Query the objects in a set by the `filter` and `arguments`.
+ * Query the objects in a set by `filter` and `arguments`.
  *
  * @param filter the Realm Query Language predicate to append.
  * @param arguments Realm values for the predicate.

@@ -70,8 +70,6 @@ interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
-interface RealmObjectChangesT : RealmChangesT
-interface RealmCollectionChangesT : RealmChangesT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -402,7 +400,16 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         value: RealmValue
     ): Boolean
+    fun MemAllocator.realm_dictionary_insert_embedded(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
+    fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer?
+
     fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean
 
     // query
@@ -487,6 +494,10 @@ expect object RealmInterop {
         set: RealmSetPointer,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
+    fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
     fun realm_object_changes_get_modified_properties(
         change: RealmChangesPointer
     ): List<PropertyKey>
@@ -497,6 +508,10 @@ expect object RealmInterop {
     fun <T, R> realm_collection_changes_get_ranges(
         change: RealmChangesPointer,
         builder: CollectionChangeSetBuilder<T, R>
+    )
+    fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
     )
 
     // App
@@ -575,6 +590,12 @@ expect object RealmInterop {
 
     // Sync client config
     fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer
+
+    fun realm_sync_client_config_set_default_binding_thread_observer(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        appId: String
+    )
+
     fun realm_sync_client_config_set_base_file_path(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String

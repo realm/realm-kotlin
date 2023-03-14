@@ -2,7 +2,6 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
@@ -20,7 +19,7 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
                 Validation.checkEmpty(password, "password"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()
@@ -35,7 +34,7 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
                 Validation.checkEmpty(tokenId, "tokenId"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()
@@ -49,7 +48,7 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
                 Validation.checkEmpty(email, "email"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()
@@ -63,7 +62,7 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
                 Validation.checkEmpty(email, "email"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()
@@ -77,7 +76,7 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
                 Validation.checkEmpty(email, "email"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()
@@ -94,7 +93,7 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
                     Bson.toJson(bsonValue),
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
-                    }.freeze()
+                    }
                 )
             }
             return channel.receive()
@@ -111,7 +110,7 @@ internal class EmailPasswordAuthImpl(private val app: RealmAppPointer) : EmailPa
                 Validation.checkEmpty(tokenId, "tokenId"),
                 channelResultCallback<Unit, Unit>(channel) {
                     // No-op
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()

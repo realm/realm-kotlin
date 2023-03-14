@@ -68,7 +68,7 @@ abstract class CollectionTests(
         nonNullableTypes.forEach { nonNullableType ->
             val result = createFileAndCompile(
                 "nonNullableCollection.kt",
-                getCode(
+                getTestCodeForCollection(
                     collectionType = collectionType,
                     elementType = nonNullableType,
                     nullableElementType = false,
@@ -87,7 +87,7 @@ abstract class CollectionTests(
             .forEach { nonNullableType ->
                 val result = createFileAndCompile(
                     "unsupportedNonNullableCollection.kt",
-                    getCode(
+                    getTestCodeForCollection(
                         collectionType = collectionType,
                         elementType = nonNullableType,
                         nullableElementType = false,
@@ -105,7 +105,7 @@ abstract class CollectionTests(
         val result = Compiler.compileFromSource(
             SourceFile.kotlin(
                 "unsupportedTypeCollection.kt",
-                getCode(
+                getTestCodeForCollection(
                     collectionType = collectionType,
                     elementType = "A",
                     nullableElementType = false,
@@ -127,7 +127,7 @@ abstract class CollectionTests(
         globalNullablePrimitiveTypes.forEach { nullableType ->
             val result = createFileAndCompile(
                 "nullableTypeCollection.kt",
-                getCode(
+                getTestCodeForCollection(
                     collectionType = collectionType,
                     elementType = nullableType,
                     nullableElementType = true,
@@ -148,7 +148,7 @@ abstract class CollectionTests(
         globalNullablePrimitiveTypes.forEach { primitiveType ->
             val result = createFileAndCompile(
                 "nullableCollection.kt",
-                getCode(
+                getTestCodeForCollection(
                     collectionType = collectionType,
                     elementType = primitiveType,
                     nullableElementType = false,
@@ -168,7 +168,7 @@ abstract class CollectionTests(
         val result = Compiler.compileFromSource(
             SourceFile.kotlin(
                 "starProjectionCollection.kt",
-                getCode(collectionType)
+                getTestCodeForCollection(collectionType)
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)

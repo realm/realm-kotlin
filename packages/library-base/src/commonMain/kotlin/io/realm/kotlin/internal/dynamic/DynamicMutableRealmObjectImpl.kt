@@ -124,8 +124,8 @@ internal class DynamicMutableRealmObjectImpl : DynamicMutableRealmObject, Dynami
         )
     }
 
-    override fun getObjectDictionary(propertyName: String): RealmDictionary<DynamicMutableRealmObject> {
-        return getValueDictionary(propertyName, DynamicMutableRealmObject::class)
+    override fun getObjectDictionary(propertyName: String): RealmDictionary<DynamicMutableRealmObject?> {
+        return getNullableValueDictionary(propertyName, DynamicMutableRealmObject::class)
     }
 
     override fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject {

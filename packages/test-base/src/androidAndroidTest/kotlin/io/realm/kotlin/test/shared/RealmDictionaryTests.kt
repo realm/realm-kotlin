@@ -19,13 +19,14 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
-import io.realm.kotlin.exceptions.RealmException
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryEntryOf
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.toRealmDictionary
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.ErrorCatcher
@@ -40,12 +41,21 @@ import io.realm.kotlin.types.RealmDictionaryEntrySet
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClassifier
 import kotlin.reflect.KMutableProperty1
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
@@ -56,14 +66,17 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
-class RealmDictionaryTests {
+class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
 
     private val dictionarySchema = setOf(
         RealmDictionaryContainer::class,
         DictionaryLevel1::class,
         DictionaryLevel2::class,
-        DictionaryLevel3::class
+        DictionaryLevel3::class,
+        DictionaryEmbeddedLevel1::class
     )
     private val descriptors = TypeDescriptor.allDictionaryFieldTypes
 
@@ -227,7 +240,7 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun accessors_getter_primitive() {
+    fun accessors_getter_defaultValue_primitive() {
         // No need to be exhaustive here. First test with a dictionary of any primitive type
         realmDictionaryOf(
             "A" to 1.toByte()
@@ -253,7 +266,7 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun accessors_getter_object() {
+    fun accessors_getter_defaultValue_object() {
         // Test with a dictionary of objects
         realmDictionaryOf<RealmDictionaryContainer?>(
             "A" to DICTIONARY_OBJECT_VALUES[0]
@@ -290,7 +303,7 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun accessors_getter_realmAny_primitive() {
+    fun accessors_getter_defaultValue_RealmAny_primitive() {
         // Test with a dictionary of RealmAny containing a primitive value
         realmDictionaryOf(
             "A" to REALM_ANY_PRIMITIVE_VALUES[0]
@@ -321,7 +334,7 @@ class RealmDictionaryTests {
     }
 
     @Test
-    fun accessors_getter_realmAny_object() {
+    fun accessors_getter_defaultValue_RealmAny_object() {
         // Test with a dictionary of RealmAny containing an object
         realmDictionaryOf<RealmAny?>(
             "A" to REALM_ANY_REALM_OBJECT
@@ -866,16 +879,37 @@ class RealmDictionaryTests {
     }
 
     @Test
+    fun entries_toString() {
+        for (tester in managedTesters) {
+            tester.entries_toString()
+        }
+    }
+
+    @Test
+    @Ignore
     fun entries_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  When we fix this issue we will be able to compare two dictionaries' parent objects based
+        //  on the Realm version, object key and class key making equality logic superfluous
         for (tester in managedTesters) {
             tester.entries_equals()
         }
     }
 
     @Test
-    fun entry_equals() {
+    @Ignore
+    fun entries_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Similarly we can compute the hash of the Realm version, object key and class key
         for (tester in managedTesters) {
-            tester.entry_equals()
+            tester.entries_hashCode()
+        }
+    }
+
+    @Test
+    fun unmanaged_realmDictionaryMutableEntry_equals() {
+        for (tester in managedTesters) {
+            tester.unmanaged_realmDictionaryMutableEntry_equals()
         }
     }
 
@@ -935,9 +969,30 @@ class RealmDictionaryTests {
     }
 
     @Test
+    fun values_toString() {
+        for (tester in managedTesters) {
+            tester.values_toString()
+        }
+    }
+
+    @Test
+    @Ignore
     fun values_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  When we fix this issue we will be able to compare two dictionaries' parent objects based
+        //  on the Realm version, object key and class key making equality logic superfluous
         for (tester in managedTesters) {
             tester.values_equals()
+        }
+    }
+
+    @Test
+    @Ignore
+    fun values_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Similarly we can compute the hash of the Realm version, object key and class key
+        for (tester in managedTesters) {
+            tester.values_hashCode()
         }
     }
 
@@ -996,6 +1051,278 @@ class RealmDictionaryTests {
         }
     }
 
+    @Test
+    fun keys_toString() {
+        for (tester in managedTesters) {
+            tester.keys_toString()
+        }
+    }
+
+    @Test
+    @Ignore
+    fun keys_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  When we fix this issue we will be able to compare two dictionaries' parent objects based
+        //  on the Realm version, object key and class key making equality logic superfluous
+        for (tester in managedTesters) {
+            tester.keys_equals()
+        }
+    }
+
+    @Test
+    @Ignore
+    fun keys_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Similarly we can compute the hash of the Realm version, object key and class key
+        for (tester in managedTesters) {
+            tester.keys_hashCode()
+        }
+    }
+
+    @Test
+    fun unmanagedDictionary_toString() {
+        for (tester in managedTesters) {
+            tester.unmanagedDictionary_toString()
+        }
+    }
+
+    @Test
+    fun unmanagedDictionary_equals() {
+        for (tester in managedTesters) {
+            tester.unmanagedDictionary_equals()
+        }
+    }
+
+    @Test
+    fun unmanagedDictionary_hashCode() {
+        for (tester in managedTesters) {
+            tester.unmanagedDictionary_hashCode()
+        }
+    }
+
+    @Test
+    fun managedDictionary_toString() {
+        for (tester in managedTesters) {
+            tester.managedDictionary_toString()
+        }
+    }
+
+    @Test
+    @Ignore
+    fun managedDictionary_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  When we fix this issue we will be able to compare two dictionaries' parent objects based
+        //  on the Realm version, object key and class key making equality logic superfluous
+    }
+
+    @Test
+    @Ignore
+    fun managedDictionary_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Similarly we can compute the hash of the Realm version, object key and class key
+    }
+
+    @Test
+    override fun collectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        val mutex = Mutex(true)
+        val job = async {
+            container.nullableObjectDictionaryField
+                .asFlow()
+                .collect {
+                    mutex.unlock()
+                }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        withTimeout(10.seconds) {
+            job.await()
+        }
+    }
+
+    @Test
+    override fun query_objectCollection() = runBlocking {
+        val container = realm.write {
+            copyToRealm(
+                RealmDictionaryContainer().apply {
+                    (1..5).map {
+                        nullableObjectDictionaryField[it.toString()] =
+                            RealmDictionaryContainer().apply { stringField = "$it" }
+                    }
+                }
+            )
+        }
+        val objectDictionaryField = container.nullableObjectDictionaryField
+        assertEquals(5, objectDictionaryField.size)
+
+        val all: RealmQuery<RealmDictionaryContainer> =
+            container.nullableObjectDictionaryField.query()
+        val ids = (1..5).map { it.toString() }.toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.stringField)) }
+        assertTrue { ids.isEmpty() }
+
+        container.nullableObjectDictionaryField
+            .query("stringField = $0", 3.toString())
+            .find()
+            .single()
+            .run { assertEquals("3", stringField) }
+    }
+
+    @Test
+    override fun query_embeddedObjectCollection() = runBlocking {
+        val container = realm.write {
+            val container = RealmDictionaryContainer().apply {
+                (1..5).map {
+                    nullableEmbeddedObjectDictionaryField[it.toString()] =
+                        DictionaryEmbeddedLevel1().apply { id = it }
+                }
+            }
+            copyToRealm(container)
+        }
+        val embeddedLevel1RealmList = container.nullableEmbeddedObjectDictionaryField
+        assertEquals(5, embeddedLevel1RealmList.size)
+
+        val all: RealmQuery<DictionaryEmbeddedLevel1> =
+            container.nullableEmbeddedObjectDictionaryField.query()
+        val ids = (1..5).toMutableSet()
+        all.find().forEach { assertTrue(ids.remove(it.id)) }
+        assertTrue { ids.isEmpty() }
+
+        container.nullableEmbeddedObjectDictionaryField
+            .query("id = $0", 3)
+            .find()
+            .single()
+            .run { assertEquals(3, id) }
+    }
+
+    @Test
+    override fun queryOnCollectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
+        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        val mutex = Mutex(true)
+        val listener = async {
+            container.nullableObjectDictionaryField
+                .query()
+                .asFlow()
+                .let {
+                    withTimeout(10.seconds) {
+                        it.collect {
+                            mutex.unlock()
+                        }
+                    }
+                }
+        }
+        mutex.lock()
+        realm.write { delete(findLatest(container)!!) }
+        listener.await()
+    }
+
+    @Test
+    override fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        val flow = container.nullableObjectDictionaryField
+            .query()
+            .asFlow()
+            .buffer(1)
+
+        val listener = async {
+            withTimeout(10.seconds) {
+                assertFailsWith<CancellationException> {
+                    flow.collect { current ->
+                        delay(1000.milliseconds)
+                    }
+                }.message!!.let { message ->
+                    assertEquals(
+                        "Cannot deliver object notifications. Increase dispatcher processing resources or buffer the flow with buffer(...)",
+                        message
+                    )
+                }
+            }
+        }
+        (1..100).forEach { i ->
+            realm.write {
+                findLatest(container)!!.nullableObjectDictionaryField.run {
+                    clear()
+                    put("A", RealmDictionaryContainer().apply { this.id = i })
+                }
+            }
+        }
+        listener.await()
+    }
+
+    // This test shows that our internal logic still works (by closing the flow on deletion events)
+    // even though the public consumer is dropping elements
+    @Test
+    override fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic() =
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+            val flow = container.nullableObjectDictionaryField.query().asFlow()
+                .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+            val listener = async {
+                withTimeout(10.seconds) {
+                    flow.collect { current ->
+                        delay(30.milliseconds)
+                    }
+                }
+            }
+            (1..100).forEach { i ->
+                realm.write {
+                    findLatest(container)!!.nullableObjectDictionaryField.run {
+                        clear()
+                        put("A", RealmDictionaryContainer().apply { this.id = i })
+                    }
+                }
+            }
+            realm.write { delete(findLatest(container)!!) }
+            listener.await()
+        }
+
+    @Test
+    override fun query_throwsOnSyntaxError() = runBlocking {
+        val instance = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        assertFailsWithMessage<IllegalArgumentException>("syntax error") {
+            instance.nullableObjectDictionaryField.query("ASDF = $0 $0")
+        }
+        Unit
+    }
+
+    @Test
+    override fun query_throwsOnUnmanagedCollection() = runBlocking {
+        realm.write {
+            val instance = RealmDictionaryContainer()
+            copyToRealm(instance)
+            assertFailsWithMessage<IllegalArgumentException>("Unmanaged dictionary values cannot be queried") {
+                instance.nullableObjectDictionaryField.query()
+            }
+            Unit
+        }
+    }
+
+    @Test
+    override fun query_throwsOnDeletedCollection() = runBlocking {
+        realm.write {
+            val instance = copyToRealm(RealmDictionaryContainer())
+            val objectDictionaryField = instance.nullableObjectDictionaryField
+            delete(instance)
+            assertFailsWithMessage<IllegalStateException>("Dictionary is no longer valid") {
+                objectDictionaryField.query()
+            }
+        }
+        Unit
+    }
+
+    @Test
+    override fun query_throwsOnClosedCollection() = runBlocking {
+        val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
+        val objectDictionaryField = container.nullableObjectDictionaryField
+        realm.close()
+
+        assertFailsWithMessage<IllegalStateException>("Realm has been closed") {
+            objectDictionaryField.query()
+        }
+        Unit
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = dictionarySchema)
             .directory(tmpDir)
@@ -1020,90 +1347,89 @@ class RealmDictionaryTests {
     }
 
     @Suppress("UNCHECKED_CAST", "ComplexMethod")
-    // TODO add support for Decimal128
     private fun <T> getDataSetForClassifier(
         classifier: KClassifier,
         nullable: Boolean
     ): List<T> = when (classifier) {
         Byte::class -> if (nullable) {
-            NULLABLE_BYTE_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_BYTE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            BYTE_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            BYTE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         }
         Char::class -> if (nullable) {
-            NULLABLE_CHAR_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_CHAR_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            CHAR_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            CHAR_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         }
         Short::class -> if (nullable) {
-            NULLABLE_SHORT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_SHORT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            SHORT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            SHORT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         }
         Int::class -> if (nullable) {
-            NULLABLE_INT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_INT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            INT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            INT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         }
         Long::class -> if (nullable) {
-            NULLABLE_LONG_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_LONG_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            LONG_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            LONG_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         Boolean::class -> if (nullable) {
-            NULLABLE_BOOLEAN_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_BOOLEAN_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            BOOLEAN_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            BOOLEAN_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         Float::class -> if (nullable) {
-            NULLABLE_FLOAT_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_FLOAT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            FLOAT_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            FLOAT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         Double::class -> if (nullable) {
-            NULLABLE_DOUBLE_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_DOUBLE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            DOUBLE_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            DOUBLE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         String::class -> if (nullable) {
-            NULLABLE_STRING_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_STRING_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            STRING_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            STRING_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         RealmInstant::class -> if (nullable) {
-            NULLABLE_TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         ObjectId::class -> if (nullable) {
-            NULLABLE_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         BsonObjectId::class -> if (nullable) {
             NULLABLE_BSON_OBJECT_ID_VALUES.mapIndexed { i, value ->
-                Pair(KEYS_FOR_NULLABLE[i], value)
+                Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value)
             }
         } else {
-            BSON_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            BSON_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         RealmUUID::class -> if (nullable) {
-            NULLABLE_UUID_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_UUID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            UUID_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            UUID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         ByteArray::class -> if (nullable) {
-            NULLABLE_BINARY_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_BINARY_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            BINARY_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            BINARY_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         RealmObject::class -> NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
-            Pair(KEYS_FOR_NULLABLE[i], value)
+            Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value)
         }
         Decimal128::class -> if (nullable) {
-            NULLABLE_DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS_FOR_NULLABLE[i], value) }
+            NULLABLE_DECIMAL128_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
         } else {
-            DECIMAL128_VALUES.mapIndexed { i, value -> Pair(KEYS[i], value) }
+            DECIMAL128_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
         }
         RealmAny::class -> {
             val anyValues = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
@@ -1141,8 +1467,10 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun entries_iteratorConcurrentModification()
     fun entries_remove()
     fun entries_removeAll()
+    fun entries_toString()
     fun entries_equals()
-    fun entry_equals()
+    fun entries_hashCode()
+    fun unmanaged_realmDictionaryMutableEntry_equals()
     fun values_addTrows()
     fun values_clear()
     fun values_iteratorNext() // This tests also hasNext
@@ -1151,7 +1479,9 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun values_remove()
     fun values_removeAll()
     fun values_retainAll()
+    fun values_toString()
     fun values_equals()
+    fun values_hashCode()
     fun containsKey()
     fun containsValue()
     fun keys()
@@ -1160,6 +1490,15 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
     fun keys_iteratorNext() // This tests also hasNext
     fun keys_iteratorRemove() // This tests also hasNext
     fun keys_iteratorConcurrentModification()
+    fun keys_toString()
+    fun keys_equals()
+    fun keys_hashCode()
+    fun unmanagedDictionary_toString()
+    fun unmanagedDictionary_equals()
+    fun unmanagedDictionary_hashCode()
+    fun managedDictionary_toString()
+    fun managedDictionary_equals()
+    fun managedDictionary_hashCode()
 
     /**
      * Asserts structural equality for a given collection and a map. This is needed to evaluate
@@ -1188,6 +1527,11 @@ internal interface DictionaryApiTester<T, Container> : ErrorCatcher {
      * Assertions on the container outside the write transaction plus cleanup.
      */
     fun assertContainerAndCleanup(assertion: ((Container) -> Unit)? = null)
+
+    /**
+     * Similar to 'assertContainerAndCleanup' but allows more than one container.
+     */
+    fun assertContainersAndCleanup(assertion: ((List<Container>) -> Unit)? = null)
 }
 
 internal abstract class ManagedDictionaryTester<T>(
@@ -1474,7 +1818,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertTrue(entries.isEmpty())
                 assertTrue(dictionary.isEmpty())
 
-                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: dictionary is empty.") {
                     iterator.remove()
                 }
             }
@@ -1505,9 +1849,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 .also { iterator ->
                     iterator.next()
 
-                    // TODO revisit exception assertion once unified error handling is merged
-                    //  https://github.com/realm/realm-kotlin/pull/1188
-                    assertFailsWith<RealmException> {
+                    assertFailsWith<IllegalStateException> {
                         iterator.remove()
                     }
                 }
@@ -1625,9 +1967,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertFalse(entries.remove(alreadyDeleted))
 
                 // Removing something that is the dictionary throws outside a transaction
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<IllegalStateException> {
                     entries.remove(realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second))
                 }
             }
@@ -1685,81 +2025,67 @@ internal abstract class ManagedDictionaryTester<T>(
                 val shouldThrow = listOf(
                     realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second),
                 )
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<IllegalStateException> {
                     entries.removeAll(shouldThrow)
                 }
             }
         }
     }
 
-    override fun entries_equals() {
+    override fun entries_toString() {
         // TODO https://github.com/realm/realm-kotlin/issues/1097
-        //  Ignore RealmObject: structural equality cannot be assessed for this type
-        if (classifier != RealmObject::class) {
+        //  Ignore RealmObject, RealmAny (since it contains an object) and ByteArray since the
+        //  printed value is tied to the memory address
+        if (
+            classifier != RealmObject::class &&
+            classifier != ByteArray::class &&
+            classifier != RealmAny::class
+        ) {
             val dataSet = typeSafetyManager.dataSetToLoad
-            val unmanagedEntries = dataSet.toRealmDictionary().entries
-
-            fun assertions(
-                unmanagedEntries: MutableSet<MutableMap.MutableEntry<String, T>>,
-                managedEntries: MutableSet<MutableMap.MutableEntry<String, T>>
-            ) {
-                val unmanagedIterator = unmanagedEntries.iterator()
-                val managedIterator = managedEntries.iterator()
-                while (unmanagedIterator.hasNext() && managedIterator.hasNext()) {
-                    // Instantiate a RealmDictionaryMutableEntry so that equals goes through our
-                    // own implementation
-                    val unmanagedNext = realmDictionaryEntryOf(unmanagedIterator.next())
-                    val managedNext = managedIterator.next()
-
-                    // Special case: RealmAny containing an object
-                    if (classifier == RealmAny::class) {
-                        val unmanagedNextRealmAny = unmanagedNext.value as RealmAny?
-                        val managedNextRealmAny = managedNext.value as RealmAny?
-                        assertEquals(unmanagedNextRealmAny?.type, managedNextRealmAny?.type)
-                        when (unmanagedNextRealmAny?.type) {
-                            RealmAny.Type.OBJECT -> {
-                                val unmanagedObj =
-                                    unmanagedNextRealmAny.asRealmObject<RealmDictionaryContainer>()
-                                val managedObj =
-                                    managedNextRealmAny?.asRealmObject<RealmDictionaryContainer>()
-                                assertEquals(unmanagedObj.stringField, managedObj?.stringField)
-                            }
-                            RealmAny.Type.BINARY -> {
-                                val unmanagedBinary = unmanagedNextRealmAny.asByteArray()
-                                val managedBinary = managedNextRealmAny?.asByteArray()
-                                assertContentEquals(unmanagedBinary, managedBinary)
-                            }
-                            else -> assertEquals(unmanagedNext, managedNext)
-                        }
-                    } else {
-                        assertEquals(unmanagedNext, managedNext)
-                    }
-                }
-            }
+            val size = dataSet.size
+            val regex = """RealmDictionary\.entries\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
 
             errorCatcher {
                 realm.writeBlocking {
-                    val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
-                    dictionary.putAll(dataSet)
-                    val managedEntries = dictionary.entries
+                    val dictionary0 = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary0.putAll(dataSet)
+                    val dictionary1 = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary1.putAll(dataSet)
+                    val managedEntries0 = dictionary0.entries
+                    val managedEntries1 = dictionary1.entries
 
-                    assertEquals(managedEntries, managedEntries)
-                    assertions(unmanagedEntries, managedEntries)
+                    assertTrue(regex.matches(managedEntries0.toString()))
+                    assertEquals(managedEntries0.toString(), managedEntries0.toString())
+                    assertEquals(managedEntries1.toString(), managedEntries1.toString())
+                    assertNotEquals(managedEntries0.toString(), managedEntries1.toString())
                 }
             }
 
-            assertContainerAndCleanup { container ->
-                val managedEntries = typeSafetyManager.getCollection(container)
+            assertContainersAndCleanup { containers ->
+                val managedEntries0 = typeSafetyManager.getCollection(containers[0])
                     .entries
-                assertEquals(managedEntries, managedEntries)
-                assertions(unmanagedEntries, managedEntries)
+                val managedEntries1 = typeSafetyManager.getCollection(containers[1])
+                    .entries
+
+                assertTrue(regex.matches(managedEntries0.toString()))
+                assertEquals(managedEntries0.toString(), managedEntries0.toString())
+                assertEquals(managedEntries1.toString(), managedEntries1.toString())
+                assertNotEquals(managedEntries0.toString(), managedEntries1.toString())
             }
         }
     }
 
-    override fun entry_equals() {
+    override fun entries_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+    }
+
+    override fun entries_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  There is no easy way to guarantee hashCode will match the equals contract unless we fix
+        //  this issue
+    }
+
+    override fun unmanaged_realmDictionaryMutableEntry_equals() {
         // TODO https://github.com/realm/realm-kotlin/issues/1097
         //  Ignore RealmObject: structural equality cannot be assessed for this type
         if (classifier != RealmObject::class) {
@@ -1771,27 +2097,9 @@ internal abstract class ManagedDictionaryTester<T>(
                 val entry2 = realmDictionaryEntryOf(dataSet[0].first, dataSet[0].second)
                 val entry3 = realmDictionaryEntryOf(dataSet[1].first, dataSet[1].second)
                 assertEquals(entry1, entry2)
+                assertEquals(entry1.toString(), entry2.toString())
                 assertNotEquals(entry1, entry3)
-
-                realm.writeBlocking {
-                    val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
-                    dictionary.putAll(dataSet)
-                    val iterator = dictionary.entries.iterator()
-                    val managedEntry1 = iterator.next()
-                    val managedEntry2 = iterator.next()
-                    assertEquals(managedEntry1, managedEntry1)
-                    assertNotEquals(managedEntry1, managedEntry2)
-                }
-            }
-
-            assertContainerAndCleanup { container ->
-                val iterator = typeSafetyManager.getCollection(container)
-                    .entries
-                    .iterator()
-                val managedEntry1 = iterator.next()
-                val managedEntry2 = iterator.next()
-                assertEquals(managedEntry1, managedEntry1)
-                assertNotEquals(managedEntry1, managedEntry2)
+                assertNotEquals(entry1.toString(), entry3.toString())
             }
         }
     }
@@ -1839,9 +2147,7 @@ internal abstract class ManagedDictionaryTester<T>(
         assertContainerAndCleanup { container ->
             val dictionary = typeSafetyManager.getCollection(container)
             val values = dictionary.values
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 values.clear()
             }
             assertTrue(values.isEmpty())
@@ -1911,7 +2217,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertTrue(values.isEmpty())
                 assertTrue(dictionary.isEmpty())
 
-                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: dictionary is empty.") {
                     iterator.remove()
                 }
 
@@ -1923,17 +2229,13 @@ internal abstract class ManagedDictionaryTester<T>(
         assertContainerAndCleanup { container ->
             val dictionary = typeSafetyManager.getCollection(container)
             val values = dictionary.values
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 values.clear()
             }
 
             val iterator = values.iterator()
             iterator.next()
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 iterator.remove()
             }
         }
@@ -2039,9 +2341,7 @@ internal abstract class ManagedDictionaryTester<T>(
             // TODO https://github.com/realm/realm-kotlin/issues/1097
             //  Ignore RealmObject: this type cannot be removed using the remove API
             if (classifier != RealmObject::class) {
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<IllegalStateException> {
                     values.remove(dataSet[1].second)
                 }
             }
@@ -2080,9 +2380,7 @@ internal abstract class ManagedDictionaryTester<T>(
             // TODO https://github.com/realm/realm-kotlin/issues/1097
             //  Ignore RealmObject: this type cannot be removed using the removeAll API
             if (classifier != RealmObject::class) {
-                // TODO revisit exception assertion once unified error handling is merged
-                //  https://github.com/realm/realm-kotlin/pull/1188
-                assertFailsWith<RealmException> {
+                assertFailsWith<IllegalStateException> {
                     values.removeAll(values)
                 }
             }
@@ -2127,27 +2425,55 @@ internal abstract class ManagedDictionaryTester<T>(
         }
     }
 
-    override fun values_equals() {
-        val dataSet = typeSafetyManager.dataSetToLoad
-        val unmanagedValues = realmDictionaryOf(dataSet).values
+    override fun values_toString() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject, RealmAny (since it contains an object) and ByteArray since the
+        //  printed value is tied to the memory address
+        if (
+            classifier != RealmObject::class &&
+            classifier != ByteArray::class &&
+            classifier != RealmAny::class
+        ) {
+            val dataSet = typeSafetyManager.dataSetToLoad
+            val size = dataSet.size
+            val regex = """RealmDictionary\.values\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
 
-        errorCatcher {
-            realm.writeBlocking {
-                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
-                dictionary.putAll(dataSet)
+            errorCatcher {
+                realm.writeBlocking {
+                    val dictionary0 = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary0.putAll(dataSet)
+                    val dictionary1 = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary1.putAll(dataSet)
+                    val managedValues0 = dictionary0.values
+                    val managedValues1 = dictionary1.values
 
-                val managedValues = dictionary.values
-                assertEquals(managedValues, managedValues)
-                assertStructuralEquality(unmanagedValues, managedValues)
+                    assertTrue(regex.matches(managedValues0.toString()))
+                    assertEquals(managedValues0.toString(), managedValues0.toString())
+                    assertEquals(managedValues1.toString(), managedValues1.toString())
+                    assertNotEquals(managedValues0.toString(), managedValues1.toString())
+                }
+            }
+
+            assertContainersAndCleanup { containers ->
+                val managedValues0 = typeSafetyManager.getCollection(containers[0])
+                    .values
+                val managedValues1 = typeSafetyManager.getCollection(containers[1])
+                    .values
+                assertEquals(managedValues0.toString(), managedValues0.toString())
+                assertEquals(managedValues1.toString(), managedValues1.toString())
+                assertNotEquals(managedValues0.toString(), managedValues1.toString())
             }
         }
+    }
 
-        assertContainerAndCleanup { container ->
-            val managedValues = typeSafetyManager.getCollection(container)
-                .values
-            assertEquals(managedValues, managedValues)
-            assertStructuralEquality(unmanagedValues, managedValues)
-        }
+    override fun values_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+    }
+
+    override fun values_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  There is no easy way to guarantee hashCode will match the equals contract unless we fix
+        //  this issue
     }
 
     override fun containsKey() {
@@ -2362,7 +2688,7 @@ internal abstract class ManagedDictionaryTester<T>(
                 assertTrue(keys.isEmpty())
                 assertTrue(dictionary.isEmpty())
 
-                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: set is empty.") {
+                assertFailsWithMessage<NoSuchElementException>("Could not remove last element returned by the iterator: dictionary is empty.") {
                     iterator.remove()
                 }
 
@@ -2374,17 +2700,13 @@ internal abstract class ManagedDictionaryTester<T>(
         assertContainerAndCleanup { container ->
             val dictionary = typeSafetyManager.getCollection(container)
             val keys = dictionary.keys
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 keys.clear()
             }
 
             val iterator = keys.iterator()
             iterator.next()
-            // TODO revisit exception assertion once unified error handling is merged
-            //  https://github.com/realm/realm-kotlin/pull/1188
-            assertFailsWith<RealmException> {
+            assertFailsWith<IllegalStateException> {
                 iterator.remove()
             }
         }
@@ -2450,11 +2772,127 @@ internal abstract class ManagedDictionaryTester<T>(
         assertContainerAndCleanup()
     }
 
+    override fun keys_toString() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+        val size = dataSet.size
+        val regex = """RealmDictionary\.keys\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
+
+        errorCatcher {
+            realm.writeBlocking {
+                val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                dictionary.putAll(dataSet)
+                val keys = dictionary.keys
+                assertTrue(regex.matches(keys.toString()))
+            }
+        }
+
+        assertContainerAndCleanup { container ->
+            val dictionary = typeSafetyManager.getCollection(container)
+            val keys = dictionary.keys
+            assertTrue(regex.matches(keys.toString()))
+        }
+    }
+
+    override fun keys_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+    }
+
+    override fun keys_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  There is no easy way to guarantee hashCode will match the equals contract unless we fix
+        //  this issue
+    }
+
+    override fun unmanagedDictionary_toString() {
+        errorCatcher {
+            val dataSet = typeSafetyManager.dataSetToLoad
+            val unmanaged = realmDictionaryOf(dataSet)
+            val expectedEntries = dataSet.joinToString { (key, value) -> "[$key,$value]" }
+            val expected = "UnmanagedRealmDictionary{$expectedEntries}"
+            assertEquals(expected, unmanaged.toString())
+        }
+    }
+
+    override fun unmanagedDictionary_equals() {
+        errorCatcher {
+            val dataSet = typeSafetyManager.dataSetToLoad
+            val unmanaged1 = realmDictionaryOf(dataSet)
+            val unmanaged2 = realmDictionaryOf(dataSet)
+            val unmanaged3 = realmDictionaryOf(dataSet).apply { remove(dataSet[0].first) }
+            assertEquals(unmanaged1, unmanaged1)
+            assertEquals(unmanaged1, unmanaged2)
+            assertNotEquals(unmanaged1, unmanaged3)
+        }
+    }
+
+    override fun unmanagedDictionary_hashCode() {
+        errorCatcher {
+            val dataSet = typeSafetyManager.dataSetToLoad
+            val unmanaged1 = realmDictionaryOf(dataSet)
+            val unmanaged2 = realmDictionaryOf(dataSet)
+            val unmanaged3 = realmDictionaryOf(dataSet).apply { remove(dataSet[0].first) }
+            assertEquals(unmanaged1.hashCode(), unmanaged1.hashCode())
+            assertEquals(unmanaged1.hashCode(), unmanaged2.hashCode())
+            assertNotEquals(unmanaged1.hashCode(), unmanaged3.hashCode())
+        }
+    }
+
+    override fun managedDictionary_toString() {
+        // Exclude byte arrays and RealmAny (because it contains a byte array) due to the string
+        // generated for byte arrays being different for two arrays that are structurally equal.
+        if (classifier != ByteArray::class && classifier != RealmAny::class) {
+            val dataSet = typeSafetyManager.dataSetToLoad
+            val size = dataSet.size
+            val regex = """RealmDictionary\{size=$size,owner=RealmDictionaryContainer,objKey=\d+,version=\d+\}""".toRegex()
+
+            errorCatcher {
+                realm.writeBlocking {
+                    val dictionary = typeSafetyManager.createContainerAndGetCollection(this)
+                    dictionary.putAll(dataSet)
+                    assertTrue(regex.matches(dictionary.toString()))
+                }
+            }
+
+            assertContainerAndCleanup { container ->
+                val dictionary = typeSafetyManager.getCollection(container)
+                assertTrue(regex.matches(dictionary.toString()))
+            }
+        }
+    }
+
+    override fun managedDictionary_equals() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+    }
+
+    override fun managedDictionary_hashCode() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  There is no easy way to guarantee hashCode will match the equals contract unless we fix
+        //  this issue
+    }
+
     override fun assertContainerAndCleanup(assertion: ((RealmDictionaryContainer) -> Unit)?) {
         val container = realm.query<RealmDictionaryContainer>()
             .first()
             .find()
         assertNotNull(container)
+
+        // Assert
+        errorCatcher {
+            assertion?.invoke(container)
+        }
+
+        // Clean up
+        realm.writeBlocking {
+            delete(query<RealmDictionaryContainer>())
+        }
+    }
+
+    override fun assertContainersAndCleanup(
+        assertion: ((List<RealmDictionaryContainer>) -> Unit)?
+    ) {
+        val container = realm.query<RealmDictionaryContainer>()
+            .find()
+        assertTrue(container.isNotEmpty())
 
         // Assert
         errorCatcher {
@@ -2700,8 +3138,8 @@ internal class DictionaryTypeSafetyManager<T> constructor(
     }
 }
 
-val KEYS = listOf("A", "B")
-val KEYS_FOR_NULLABLE = KEYS + "C"
+val DICTIONARY_KEYS = listOf("A", "B")
+val DICTIONARY_KEYS_FOR_NULLABLE = DICTIONARY_KEYS + "C"
 
 internal val DICTIONARY_OBJECT_VALUES = listOf(
     RealmDictionaryContainer().apply { stringField = "A" },

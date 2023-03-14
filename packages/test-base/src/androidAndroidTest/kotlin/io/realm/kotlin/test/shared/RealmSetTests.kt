@@ -66,7 +66,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmSetTests {
+class RealmSetTests : CollectionQueryTests {
 
     private val descriptors = TypeDescriptor.allSetFieldTypes
 
@@ -267,6 +267,20 @@ class RealmSetTests {
     }
 
     @Test
+    fun remove() {
+        for (tester in managedTesters) {
+            tester.remove()
+        }
+    }
+
+    @Test
+    fun removeAll() {
+        for (tester in managedTesters) {
+            tester.removeAll()
+        }
+    }
+
+    @Test
     fun clear() {
         for (tester in managedTesters) {
             tester.clear()
@@ -305,6 +319,13 @@ class RealmSetTests {
     fun iterator_remove() {
         for (tester in managedTesters) {
             tester.iterator_remove()
+        }
+    }
+
+    @Test
+    fun iterator_concurrentModification() {
+        for (tester in managedTesters) {
+            tester.iterator_concurrentModification()
         }
     }
 
@@ -438,7 +459,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun setAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun collectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val mutex = Mutex(true)
         val job = async {
@@ -454,7 +475,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_objectSet() = runBlocking {
+    override fun query_objectCollection() = runBlocking {
         val container = realm.write {
             copyToRealm(
                 RealmSetContainer().apply {
@@ -481,7 +502,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun queryOnSetAsFlow_completesWhenParentIsDeleted() = runBlocking {
+    override fun queryOnCollectionAsFlow_completesWhenParentIsDeleted() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val mutex = Mutex(true)
         val listener = async {
@@ -501,7 +522,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun queryOnSetAsFlow_throwsOnInsufficientBuffers() = runBlocking {
+    override fun queryOnCollectionAsFlow_throwsOnInsufficientBuffers() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val flow = container.objectSetField.query().asFlow()
             .buffer(1)
@@ -534,32 +555,33 @@ class RealmSetTests {
     // This test shows that our internal logic still works (by closing the flow on deletion events)
     // even though the public consumer is dropping elements
     @Test
-    fun queryOnSetAsFlow_backpressureStrategyDoesNotRuinInternalLogic() = runBlocking {
-        val container = realm.write { copyToRealm(RealmSetContainer()) }
-        val flow = container.objectSetField.query().asFlow()
-            .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    override fun queryOnCollectionAsFlow_backpressureStrategyDoesNotRuinInternalLogic() =
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmSetContainer()) }
+            val flow = container.objectSetField.query().asFlow()
+                .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-        val listener = async {
-            withTimeout(10.seconds) {
-                flow.collect { current ->
-                    delay(30.milliseconds)
+            val listener = async {
+                withTimeout(10.seconds) {
+                    flow.collect { current ->
+                        delay(30.milliseconds)
+                    }
                 }
             }
-        }
-        (1..100).forEach { i ->
-            realm.write {
-                findLatest(container)!!.objectSetField.run {
-                    clear()
-                    add(RealmSetContainer().apply { this.id = i })
+            (1..100).forEach { i ->
+                realm.write {
+                    findLatest(container)!!.objectSetField.run {
+                        clear()
+                        add(RealmSetContainer().apply { this.id = i })
+                    }
                 }
             }
+            realm.write { delete(findLatest(container)!!) }
+            listener.await()
         }
-        realm.write { delete(findLatest(container)!!) }
-        listener.await()
-    }
 
     @Test
-    fun query_throwsOnSyntaxError() = runBlocking {
+    override fun query_throwsOnSyntaxError() = runBlocking {
         val instance = realm.write { copyToRealm(RealmSetContainer()) }
         assertFailsWithMessage<IllegalArgumentException>("syntax error") {
             instance.objectSetField.query("ASDF = $0 $0")
@@ -568,7 +590,7 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_throwsOnUnmanagedSet() = runBlocking {
+    override fun query_throwsOnUnmanagedCollection() = runBlocking {
         realm.write {
             val instance = RealmSetContainer()
             copyToRealm(instance)
@@ -580,12 +602,12 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_throwsOnDeletedSet() = runBlocking {
+    override fun query_throwsOnDeletedCollection() = runBlocking {
         realm.write {
             val instance = copyToRealm(RealmSetContainer())
             val objectSetField = instance.objectSetField
             delete(instance)
-            assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+            assertFailsWithMessage<IllegalStateException>("Set is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed.") {
                 objectSetField.query()
             }
         }
@@ -593,12 +615,12 @@ class RealmSetTests {
     }
 
     @Test
-    fun query_throwsOnClosedSet() = runBlocking {
+    override fun query_throwsOnClosedCollection() = runBlocking {
         val container = realm.write { copyToRealm(RealmSetContainer()) }
         val objectSetField = container.objectSetField
         realm.close()
 
-        assertFailsWithMessage<IllegalStateException>("Access to invalidated Collection") {
+        assertFailsWithMessage<IllegalStateException>("Set is no longer valid. Either the parent object was deleted or the containing Realm has been invalidated or closed.") {
             objectSetField.query()
         }
         Unit
@@ -661,12 +683,15 @@ internal interface SetApiTester<T, Container> : ErrorCatcher {
     override fun toString(): String
     fun copyToRealm()
     fun add()
+    fun remove()
+    fun removeAll()
     fun clear()
     fun contains()
     fun iterator()
     fun iterator_hasNext()
     fun iterator_next()
     fun iterator_remove()
+    fun iterator_concurrentModification()
     fun iteratorFailsIfRealmClosed(realm: Realm)
 
     /**
@@ -685,7 +710,7 @@ internal interface SetApiTester<T, Container> : ErrorCatcher {
     /**
      * Assertions on the container outside the write transaction plus cleanup.
      */
-    fun assertContainerAndCleanup(assertion: (Container) -> Unit)
+    fun assertContainerAndCleanup(assertion: ((Container) -> Unit)? = null)
 }
 
 /**
@@ -736,6 +761,68 @@ internal abstract class ManagedSetTester<T>(
         assertContainerAndCleanup { container ->
             val set = typeSafetyManager.getCollection(container)
             assertStructuralEquality(dataSet, set)
+        }
+    }
+
+    override fun remove() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject: structural equality cannot be assessed for this type when removing
+        //  elements from the set
+        if (classifier != RealmObject::class) {
+            val dataSet = typeSafetyManager.dataSetToLoad
+
+            errorCatcher {
+                realm.writeBlocking {
+                    val set = typeSafetyManager.createContainerAndGetCollection(this)
+                    set.add(dataSet[0])
+                    assertTrue(set.remove(dataSet[0]))
+                    assertTrue(set.isEmpty())
+                }
+            }
+
+            assertContainerAndCleanup { container ->
+                val set = typeSafetyManager.getCollection(container)
+                assertTrue(set.isEmpty())
+            }
+        }
+    }
+
+    override fun removeAll() {
+        // TODO https://github.com/realm/realm-kotlin/issues/1097
+        //  Ignore RealmObject: structural equality cannot be assessed for this type when removing
+        //  elements from the set
+        if (classifier != RealmObject::class) {
+            val dataSet = typeSafetyManager.dataSetToLoad
+
+            errorCatcher {
+                realm.writeBlocking {
+                    val set = typeSafetyManager.createContainerAndGetCollection(this)
+                    set.addAll(dataSet)
+                    assertTrue(set.removeAll(dataSet))
+
+                    // TODO https://github.com/realm/realm-kotlin/issues/1097
+                    //  If the RealmAny instance contains an object it will NOT be removed until
+                    //  the issue above is fixed
+                    if (classifier == RealmAny::class) {
+                        assertEquals(1, set.size)
+                    } else {
+                        assertTrue(set.isEmpty())
+                    }
+                }
+            }
+
+            assertContainerAndCleanup { container ->
+                val set = typeSafetyManager.getCollection(container)
+
+                // TODO https://github.com/realm/realm-kotlin/issues/1097
+                //  If the RealmAny instance contains an object it will NOT be removed until
+                //  the issue above is fixed
+                if (classifier == RealmAny::class) {
+                    assertEquals(1, set.size)
+                } else {
+                    assertTrue(set.isEmpty())
+                }
+            }
         }
     }
 
@@ -797,11 +884,15 @@ internal abstract class ManagedSetTester<T>(
         errorCatcher {
             realm.writeBlocking {
                 val set = typeSafetyManager.createContainerAndGetCollection(this)
-                val iterator = set.iterator()
 
-                assertFalse(iterator.hasNext())
-                set.addAll(dataSet)
-                assertTrue(iterator.hasNext())
+                set.iterator().also { iterator ->
+                    assertFalse(iterator.hasNext())
+                    set.addAll(dataSet)
+                }
+
+                set.iterator().also { iterator ->
+                    assertTrue(iterator.hasNext())
+                }
             }
         }
 
@@ -817,13 +908,16 @@ internal abstract class ManagedSetTester<T>(
         errorCatcher {
             realm.writeBlocking {
                 val set = typeSafetyManager.createContainerAndGetCollection(this)
-                val iterator = set.iterator()
+                set.iterator().also { iterator ->
+                    assertFailsWith<IndexOutOfBoundsException> { (iterator.next()) }
+                    set.addAll(dataSet)
+                }
 
-                assertFailsWith<NoSuchElementException> { (iterator.next()) }
-                set.addAll(dataSet)
-                while (iterator.hasNext()) {
-                    val element = iterator.next()
-                    assertTrue(structuralContains(dataSet, element))
+                set.iterator().also { iterator ->
+                    while (iterator.hasNext()) {
+                        val element = iterator.next()
+                        assertTrue(structuralContains(dataSet, element))
+                    }
                 }
             }
         }
@@ -850,7 +944,7 @@ internal abstract class ManagedSetTester<T>(
                 val iterator = set.iterator()
 
                 // Still fails when calling remove before calling next
-                assertFailsWith<NoSuchElementException> { iterator.remove() }
+                assertFailsWith<IllegalStateException> { iterator.remove() }
                 assertTrue(iterator.hasNext())
                 val next = iterator.next()
 
@@ -867,6 +961,56 @@ internal abstract class ManagedSetTester<T>(
             // The set has one fewer element as we removed one in the previous assertions
             assertEquals(dataSet.size - 1, set.size)
         }
+    }
+
+    override fun iterator_concurrentModification() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+                set.add(dataSet[0])
+
+                // Add something to the set to trigger a ConcurrentModificationException
+                val addIterator = set.iterator()
+                addIterator.next()
+                set.add(dataSet[1])
+                assertFailsWith<ConcurrentModificationException> {
+                    addIterator.remove()
+                }
+
+                // Clear set to avoid issues with datasets of different lengths
+                set.clear()
+                set.add(dataSet[0])
+
+                // Remove something from the set to trigger a ConcurrentModificationException
+                // TODO https://github.com/realm/realm-kotlin/issues/1097
+                //  Ignore RealmObject because we can assess structural equality
+                if (classifier != RealmObject::class) {
+                    val removeIterator = set.iterator()
+                    removeIterator.next()
+                    set.remove(dataSet[0])
+                    assertFailsWith<ConcurrentModificationException> {
+                        removeIterator.remove()
+                    }
+                }
+
+                // Clear set to avoid issues with datasets of different lengths
+                set.clear()
+                set.add(dataSet[0])
+
+                // Clear the set to trigger a ConcurrentModificationException
+                val clearIterator = set.iterator()
+                clearIterator.next()
+                set.clear()
+                assertFailsWith<ConcurrentModificationException> {
+                    clearIterator.remove()
+                }
+            }
+        }
+
+        // Makes no sense to test concurrent modifications outside the transaction, so clean up only
+        assertContainerAndCleanup()
     }
 
     override fun iteratorFailsIfRealmClosed(realm: Realm) {
@@ -887,9 +1031,6 @@ internal abstract class ManagedSetTester<T>(
             realm.close()
 
             assertFailsWith<IllegalStateException> {
-                set.iterator()
-            }
-            assertFailsWith<IllegalStateException> {
                 set.iterator().hasNext()
             }
             assertFailsWith<IllegalStateException> {
@@ -901,7 +1042,7 @@ internal abstract class ManagedSetTester<T>(
         }
     }
 
-    override fun assertContainerAndCleanup(assertion: (RealmSetContainer) -> Unit) {
+    override fun assertContainerAndCleanup(assertion: ((RealmSetContainer) -> Unit)?) {
         val container = realm.query<RealmSetContainer>()
             .first()
             .find()
@@ -909,7 +1050,7 @@ internal abstract class ManagedSetTester<T>(
 
         // Assert
         errorCatcher {
-            assertion(container)
+            assertion?.invoke(container)
         }
 
         // Clean up

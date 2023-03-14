@@ -44,10 +44,15 @@ internal interface GenericTypeSafetyManager<Type, Container, RealmCollection> {
 }
 
 /**
- * Provides an execution block collection exhaustive tests. In case the test fails
+ * Provides an execution block collection exhaustive tests. In case the test fails due to an
+ * assertion error, it will show enough information to infer the type being tested to easily
+ * identify the problem.
  */
 internal interface ErrorCatcher {
 
+    /**
+     * The actual type to be tested by the error catcher.
+     */
     val classifier: KClassifier
 
     /**

@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CodeDescription
+
 /**
  * Wrapper for C-API `realm_sync_errno_client`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3214
@@ -119,7 +121,8 @@ expect enum class ProtocolSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_SERVER_PERMISSIONS_CHANGED,
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED,
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED,
-    RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE;
+    RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE,
+    RLM_SYNC_ERR_SESSION_BAD_PROGRESS;
 
     companion object {
         internal fun of(nativeValue: Int): ProtocolSessionErrorCode?

@@ -17,23 +17,40 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.Versioned
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
+import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.ClassKey
+import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_find
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
+import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert_embedded
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
 import io.realm.kotlin.internal.interop.RealmMapPointer
+import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.query.ObjectBoundQuery
+import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.notifications.MapChange
+import io.realm.kotlin.notifications.MapChangeSet
+import io.realm.kotlin.notifications.internal.DeletedDictionaryImpl
+import io.realm.kotlin.notifications.internal.InitialDictionaryImpl
+import io.realm.kotlin.notifications.internal.UpdatedMapImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
 // ----------------------------------------------------------------------
@@ -41,25 +58,33 @@ import kotlin.reflect.KClass
 // ----------------------------------------------------------------------
 
 internal abstract class ManagedRealmMap<K, V> constructor(
+    internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmMapPointer,
     val operator: MapOperator<K, V>
-) : AbstractMutableMap<K, V>(), RealmMap<K, V> {
+) : AbstractMutableMap<K, V>(), RealmMap<K, V>, CoreNotifiable<ManagedRealmMap<K, V>, MapChange<K, V>>, Flowable<MapChange<K, V>> {
 
+    private val keysPointer by lazy { RealmInterop.realm_dictionary_get_keys(nativePointer) }
+    private val valuesPointer by lazy { RealmInterop.realm_dictionary_to_results(nativePointer) }
+
+    // Make it lazy since the entry set is a live set pointing to the actual map
     override val entries: MutableSet<MutableMap.MutableEntry<K, V>> by lazy {
         operator.realmReference.checkClosed()
-        RealmMapEntrySetImpl(nativePointer, operator)
+        RealmMapEntrySetImpl(nativePointer, operator, parent)
     }
 
-    override val keys: MutableSet<K>
-        get() = operator.keys
+    // Make it lazy since the key set is a live set pointing to the actual map
+    override val keys: MutableSet<K> by lazy {
+        operator.realmReference.checkClosed()
+        KeySet(keysPointer, operator, parent)
+    }
 
     override val size: Int
         get() = operator.size
 
+    // Make it lazy since the values collection is a live collection pointing to the actual map
     override val values: MutableCollection<V> by lazy {
         operator.realmReference.checkClosed()
-        val resultsPointer = RealmInterop.realm_dictionary_to_results(nativePointer)
-        RealmMapValues(resultsPointer, operator)
+        RealmMapValues(valuesPointer, operator, parent)
     }
 
     override fun clear() = operator.clear()
@@ -74,8 +99,44 @@ internal abstract class ManagedRealmMap<K, V> constructor(
 
     override fun remove(key: K): V? = operator.remove(key)
 
+    override fun asFlow(): Flow<MapChange<K, V>> {
+        operator.realmReference.checkClosed()
+        return operator.realmReference.owner.registerObserver(this)
+    }
+
+    override fun registerForNotification(
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer =
+        RealmInterop.realm_dictionary_add_notification_callback(nativePointer, callback)
+
     internal fun isValid(): Boolean =
         !nativePointer.isReleased() && RealmInterop.realm_dictionary_is_valid(nativePointer)
+
+    // TODO add equals and hashCode and tests for those. Observe this constrain
+    //  https://github.com/realm/realm-kotlin/pull/1188
+}
+
+internal fun <K, V : BaseRealmObject> ManagedRealmMap<K, V?>.query(
+    query: String,
+    args: Array<out Any?>
+): RealmQuery<V> {
+    @Suppress("UNCHECKED_CAST")
+    val operator: BaseRealmObjectMapOperator<K, V> = operator as BaseRealmObjectMapOperator<K, V>
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        val mapValues = values as RealmMapValues<*, *>
+        RealmInterop.realm_query_parse_for_results(mapValues.resultsPointer, query, queryArgs)
+    }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer
+        )
+    )
 }
 
 /**
@@ -84,7 +145,8 @@ internal abstract class ManagedRealmMap<K, V> constructor(
  */
 internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
 
-    // Modification counter used to detect concurrent writes from the iterator
+    // Modification counter used to detect concurrent writes from the iterator, taken from Java's
+    // AbstractList implementation
     var modCount: Int
     val keyConverter: RealmValueConverter<K>
     override val nativePointer: RealmMapPointer
@@ -95,18 +157,13 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
             return RealmInterop.realm_dictionary_size(nativePointer).toInt()
         }
 
-    val keys: MutableSet<K>
-        get() {
-            realmReference.checkClosed()
-            return KeySet(nativePointer, this)
-        }
-
     fun insertInternal(
         key: K,
         value: V?,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Pair<V?, Boolean>
+
     fun eraseInternal(key: K): Pair<V?, Boolean>
     fun getEntryInternal(position: Int): Pair<K, V>
     fun getInternal(key: K): V?
@@ -127,6 +184,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     ): Pair<V?, Boolean> {
         realmReference.checkClosed()
         return insertInternal(key, value, updatePolicy, cache)
+            .also { modCount++ }
     }
 
     // Similarly to insert, Map returns the erased value whereas the entry Set returns whether the
@@ -134,6 +192,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun erase(key: K): Pair<V?, Boolean> {
         realmReference.checkClosed()
         return eraseInternal(key)
+            .also { modCount++ }
     }
 
     fun getEntry(position: Int): Pair<K, V> {
@@ -179,6 +238,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     ): V? {
         realmReference.checkClosed()
         return insertInternal(key, value, updatePolicy, cache).first
+            .also { modCount++ }
     }
 
     fun putAll(
@@ -195,13 +255,13 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     fun remove(key: K): V? {
         realmReference.checkClosed()
         return eraseInternal(key).first
-            .also { modCount += 1 }
+            .also { modCount++ }
     }
 
     fun clear() {
         realmReference.checkClosed()
         RealmInterop.realm_dictionary_clear(nativePointer)
-        modCount += 1
+        modCount++
     }
 
     fun containsKey(key: K): Boolean {
@@ -215,6 +275,8 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
             }
         }
     }
+
+    fun copy(realmReference: RealmReference, nativePointer: RealmMapPointer): MapOperator<K, V>
 }
 
 internal open class PrimitiveMapOperator<K, V> constructor(
@@ -245,7 +307,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
                     Pair(realmValueToPublic(it.first), it.second)
                 }
             }
-        }.also { modCount += 1 }
+        }
     }
 
     override fun eraseInternal(key: K): Pair<V?, Boolean> {
@@ -256,7 +318,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
                     Pair(realmValueToPublic(it.first), it.second)
                 }
             }
-        }.also { modCount += 1 }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -299,6 +361,12 @@ internal open class PrimitiveMapOperator<K, V> constructor(
             is ByteArray -> expected.contentEquals(actual?.let { it as ByteArray })
             else -> expected == actual
         }
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmMapPointer
+    ): MapOperator<K, V> =
+        PrimitiveMapOperator(mediator, realmReference, valueConverter, keyConverter, nativePointer)
 }
 
 internal class RealmAnyMapOperator<K> constructor(
@@ -333,50 +401,18 @@ internal class RealmAnyMapOperator<K> constructor(
     }
 }
 
-internal class RealmObjectMapOperator<K, V> constructor(
+@Suppress("LongParameterList")
+internal abstract class BaseRealmObjectMapOperator<K, V> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val valueConverter: RealmValueConverter<V>,
     override val keyConverter: RealmValueConverter<K>,
     override val nativePointer: RealmMapPointer,
-    private val clazz: KClass<V & Any>
+    val clazz: KClass<V & Any>,
+    val classKey: ClassKey
 ) : MapOperator<K, V> {
 
     override var modCount: Int = 0
-
-    @Suppress("UNCHECKED_CAST")
-    override fun insertInternal(
-        key: K,
-        value: V?,
-        updatePolicy: UpdatePolicy,
-        cache: UnmanagedToManagedObjectCache
-    ): Pair<V?, Boolean> {
-        return inputScope {
-            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
-            val objTransport = realmObjectToRealmReferenceWithImport(
-                value as BaseRealmObject?,
-                mediator,
-                realmReference,
-                updatePolicy,
-                cache
-            ).let {
-                realmObjectTransport(it as RealmObjectInterop?)
-            }
-            realm_dictionary_insert(
-                nativePointer,
-                keyTransport,
-                objTransport
-            ).let {
-                val previousObject = realmValueToRealmObject(
-                    it.first,
-                    clazz as KClass<out BaseRealmObject>,
-                    mediator,
-                    realmReference
-                )
-                Pair(previousObject, it.second)
-            } as Pair<V?, Boolean>
-        }.also { modCount += 1 }
-    }
 
     @Suppress("UNCHECKED_CAST")
     override fun eraseInternal(key: K): Pair<V?, Boolean> {
@@ -391,7 +427,7 @@ internal class RealmObjectMapOperator<K, V> constructor(
                 )
                 Pair(previousObject, it.second)
             } as Pair<V?, Boolean>
-        }.also { modCount += 1 }
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -452,20 +488,201 @@ internal class RealmObjectMapOperator<K, V> constructor(
         //  https://github.com/realm/realm-kotlin/issues/1097
         return false
     }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmMapPointer
+    ): MapOperator<K, V> = RealmObjectMapOperator(
+        mediator,
+        realmReference,
+        converter(clazz, mediator, realmReference),
+        converter(String::class, mediator, realmReference) as RealmValueConverter<K>,
+        nativePointer,
+        clazz,
+        classKey
+    )
+}
+
+@Suppress("LongParameterList")
+internal class RealmObjectMapOperator<K, V> constructor(
+    mediator: Mediator,
+    realmReference: RealmReference,
+    valueConverter: RealmValueConverter<V>,
+    keyConverter: RealmValueConverter<K>,
+    nativePointer: RealmMapPointer,
+    clazz: KClass<V & Any>,
+    classKey: ClassKey
+) : BaseRealmObjectMapOperator<K, V>(
+    mediator,
+    realmReference,
+    valueConverter,
+    keyConverter,
+    nativePointer,
+    clazz,
+    classKey
+) {
+    @Suppress("UNCHECKED_CAST")
+    override fun insertInternal(
+        key: K,
+        value: V?,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ): Pair<V?, Boolean> {
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            val objTransport = realmObjectToRealmReferenceWithImport(
+                value as BaseRealmObject?,
+                mediator,
+                realmReference,
+                updatePolicy,
+                cache
+            ).let {
+                realmObjectTransport(it as RealmObjectInterop?)
+            }
+            realm_dictionary_insert(
+                nativePointer,
+                keyTransport,
+                objTransport
+            ).let {
+                val previousObject = realmValueToRealmObject(
+                    it.first,
+                    clazz as KClass<out BaseRealmObject>,
+                    mediator,
+                    realmReference
+                )
+                Pair(previousObject, it.second)
+            } as Pair<V?, Boolean>
+        }
+    }
+}
+
+@Suppress("LongParameterList")
+internal class EmbeddedRealmObjectMapOperator<K, V : BaseRealmObject> constructor(
+    mediator: Mediator,
+    realmReference: RealmReference,
+    valueConverter: RealmValueConverter<V>,
+    keyConverter: RealmValueConverter<K>,
+    nativePointer: RealmMapPointer,
+    clazz: KClass<V>,
+    classKey: ClassKey
+) : BaseRealmObjectMapOperator<K, V>(
+    mediator,
+    realmReference,
+    valueConverter,
+    keyConverter,
+    nativePointer,
+    clazz,
+    classKey
+) {
+    @Suppress("UNCHECKED_CAST")
+    override fun insertInternal(
+        key: K,
+        value: V?,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ): Pair<V?, Boolean> {
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+            if (value == null) {
+                val (previousValue, modified) = realm_dictionary_insert(
+                    nativePointer,
+                    keyTransport,
+                    realmObjectTransport(null)
+                )
+                val previousObject = realmValueToRealmObject(
+                    previousValue,
+                    clazz as KClass<out BaseRealmObject>,
+                    mediator,
+                    realmReference
+                )
+                Pair(previousObject, modified)
+            } else {
+                // We cannot return the old object as it is deleted when losing its parent so just
+                // return the newly created object even though it goes against the API
+                val embedded = realm_dictionary_insert_embedded(nativePointer, keyTransport)
+                with(valueConverter) {
+                    val newEmbeddedRealmObject = realmValueToPublic(embedded) as BaseRealmObject
+                    RealmObjectHelper.assign(newEmbeddedRealmObject, value, updatePolicy, cache)
+                    Pair(newEmbeddedRealmObject, true)
+                }
+            } as Pair<V?, Boolean>
+        }
+    }
 }
 
 // ----------------------------------------------------------------------
 // Dictionary
 // ----------------------------------------------------------------------
 
-internal class UnmanagedRealmDictionary<E>(
-    dictionary: Map<String, E> = mutableMapOf()
-) : RealmDictionary<E>, MutableMap<String, E> by dictionary.toMutableMap()
+internal class UnmanagedRealmDictionary<V>(
+    dictionary: Map<String, V> = mutableMapOf()
+) : RealmDictionary<V>, MutableMap<String, V> by dictionary.toMutableMap() {
+    override fun asFlow(): Flow<MapChange<String, V>> =
+        throw UnsupportedOperationException("Unmanaged dictionaries cannot be observed.")
 
-internal class ManagedRealmDictionary<E> constructor(
+    override fun toString(): String = entries.joinToString { (key, value) -> "[$key,$value]" }
+        .let { "UnmanagedRealmDictionary{$it}" }
+
+    override fun equals(other: Any?): Boolean {
+        if (other !is RealmDictionary<*>) return false
+        if (this === other) return true
+        if (this.size == other.size && this.entries.containsAll(other.entries)) return true
+        return false
+    }
+
+    override fun hashCode(): Int {
+        var result = size.hashCode()
+        result = 31 * result + entries.hashCode()
+        return result
+    }
+}
+
+internal class ManagedRealmDictionary<V> constructor(
+    parent: RealmObjectReference<*>,
     nativePointer: RealmMapPointer,
-    operator: MapOperator<String, E>
-) : ManagedRealmMap<String, E>(nativePointer, operator), RealmDictionary<E>
+    operator: MapOperator<String, V>
+) : ManagedRealmMap<String, V>(parent, nativePointer, operator), RealmDictionary<V>, Versioned by operator.realmReference {
+
+    override fun freeze(frozenRealm: RealmReference): ManagedRealmDictionary<V>? {
+        return RealmInterop.realm_dictionary_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
+            ManagedRealmDictionary(parent, it, operator.copy(frozenRealm, it))
+        }
+    }
+
+    override fun changeFlow(scope: ProducerScope<MapChange<String, V>>): ChangeFlow<ManagedRealmMap<String, V>, MapChange<String, V>> =
+        RealmDictonaryChangeFlow<V>(scope)
+
+    override fun thaw(liveRealm: RealmReference): ManagedRealmDictionary<V>? {
+        return RealmInterop.realm_dictionary_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
+            ManagedRealmDictionary(parent, it, operator.copy(liveRealm, it))
+        }
+    }
+
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
+}
+
+internal class RealmDictonaryChangeFlow<V>(scope: ProducerScope<MapChange<String, V>>) :
+    ChangeFlow<ManagedRealmMap<String, V>, MapChange<String, V>>(scope) {
+    override fun initial(frozenRef: ManagedRealmMap<String, V>): MapChange<String, V> = InitialDictionaryImpl(frozenRef)
+
+    override fun update(
+        frozenRef: ManagedRealmMap<String, V>,
+        change: RealmChangesPointer
+    ): MapChange<String, V>? {
+        val builder: MapChangeSet<String> = DictionaryChangeSetBuilderImpl(change).build()
+        return UpdatedMapImpl(frozenRef, builder)
+    }
+
+    override fun delete(): MapChange<String, V> = DeletedDictionaryImpl<V>(UnmanagedRealmDictionary<V>())
+}
 
 // ----------------------------------------------------------------------
 // Keys
@@ -474,12 +691,11 @@ internal class ManagedRealmDictionary<E> constructor(
 /**
  * [MutableSet] containing all the keys present in a dictionary. Core returns keys as results.
  */
-internal class KeySet<K>(
-    nativePointer: RealmMapPointer,
-    private val operator: MapOperator<K, *>
+internal class KeySet<K> constructor(
+    private val keysPointer: RealmResultsPointer,
+    private val operator: MapOperator<K, *>,
+    private val parent: RealmObjectReference<*>
 ) : AbstractMutableSet<K>() {
-
-    private val keysPointer = RealmInterop.realm_dictionary_get_keys(nativePointer)
 
     override val size: Int
         get() = RealmInterop.realm_results_count(keysPointer).toInt()
@@ -492,6 +708,15 @@ internal class KeySet<K>(
             @Suppress("UNCHECKED_CAST")
             override fun getNext(position: Int): K = operator.getKey(keysPointer, position)
         }
+
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary.keys{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 // ----------------------------------------------------------------------
@@ -513,8 +738,9 @@ internal class KeySet<K>(
  * implementation is not.
  */
 internal class RealmMapValues<K, V> constructor(
-    private val resultsPointer: RealmResultsPointer,
-    private val operator: MapOperator<K, V>
+    internal val resultsPointer: RealmResultsPointer,
+    private val operator: MapOperator<K, V>,
+    private val parent: RealmObjectReference<*>
 ) : AbstractMutableCollection<V>() {
 
     override val size: Int
@@ -589,6 +815,15 @@ internal class RealmMapValues<K, V> constructor(
         }
         return modified
     }
+
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary.values{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 // ----------------------------------------------------------------------
@@ -611,18 +846,16 @@ internal abstract class RealmMapGenericIterator<K, T>(
     abstract fun getNext(position: Int): T
 
     override fun hasNext(): Boolean {
-        operator.realmReference.checkClosed()
         checkConcurrentModification()
 
         return cursor < operator.size
     }
 
     override fun remove() {
-        operator.realmReference.checkClosed()
         checkConcurrentModification()
 
         if (operator.size == 0) {
-            throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
+            throw NoSuchElementException("Could not remove last element returned by the iterator: dictionary is empty.")
         }
         if (lastReturned < 0) {
             throw IllegalStateException("Could not remove last element returned by the iterator: iterator never returned an element.")
@@ -646,7 +879,6 @@ internal abstract class RealmMapGenericIterator<K, T>(
     }
 
     override fun next(): T {
-        operator.realmReference.checkClosed()
         checkConcurrentModification()
 
         val position = cursor
@@ -702,7 +934,8 @@ internal abstract class RealmMapGenericIterator<K, T>(
  */
 internal class RealmMapEntrySetImpl<K, V> constructor(
     private val nativePointer: RealmMapPointer,
-    private val operator: MapOperator<K, V>
+    private val operator: MapOperator<K, V>,
+    private val parent: RealmObjectReference<*>
 ) : AbstractMutableSet<MutableMap.MutableEntry<K, V>>(), RealmMapEntrySet<K, V> {
 
     override val size: Int
@@ -739,6 +972,15 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
         elements.fold(false) { accumulator, entry ->
             remove(entry) or accumulator
         }
+
+    override fun toString(): String {
+        val owner = parent.className
+        val version = parent.owner.version().version
+        val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
+        return "RealmDictionary.entries{size=$size,owner=$owner,objKey=$objKey,version=$version}"
+    }
+
+    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
 /**
@@ -762,7 +1004,7 @@ internal class UnmanagedRealmMapEntry<K, V> constructor(
     }
 
     override fun toString(): String = "UnmanagedRealmMapEntry{$key,$value}"
-    override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
+    override fun hashCode(): Int = key.hashCode() xor value.hashCode()
     override fun equals(other: Any?): Boolean {
         if (other !is Map.Entry<*, *>) return false
 
@@ -800,7 +1042,11 @@ internal class ManagedRealmMapEntry<K, V> constructor(
     }
 
     override fun toString(): String = "ManagedRealmMapEntry{$key,$value}"
-    override fun hashCode(): Int = (key?.hashCode() ?: 0) xor (value?.hashCode() ?: 0)
+
+    override fun hashCode(): Int = key.hashCode() xor value.hashCode()
+
+    // TODO Compare by key and value with a special case for byte arrays until equality is reworked
+    //  properly in https://github.com/realm/realm-kotlin/issues/1097.
     override fun equals(other: Any?): Boolean {
         if (other !is Map.Entry<*, *>) return false
 
@@ -834,9 +1080,6 @@ internal fun <K, V> realmMapEntryOf(key: K, value: V): RealmMapMutableEntry<K, V
 
 internal fun <K, V> realmMapEntryOf(entry: Map.Entry<K, V>): RealmMapMutableEntry<K, V> =
     UnmanagedRealmMapEntry(entry.key, entry.value)
-
-internal fun <T> Map<String, T>.asRealmDictionary(): RealmDictionary<T> =
-    UnmanagedRealmDictionary<T>().apply { putAll(this@asRealmDictionary) }
 
 internal fun <T> Array<out Pair<String, T>>.asRealmDictionary(): RealmDictionary<T> =
     UnmanagedRealmDictionary<T>().apply { putAll(this@asRealmDictionary) }

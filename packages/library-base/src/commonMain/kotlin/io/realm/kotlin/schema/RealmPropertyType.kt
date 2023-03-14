@@ -43,8 +43,12 @@ public sealed interface RealmPropertyType {
         //  allows to define the options centrally and use it to verify exhaustiveness in tests.
         //  JUST DON'T FORGET TO UPDATE ON WHEN ADDING NEW SUBCLASSES :see_no_evil:
         //  We could do a JVM test that verifies that it is exhaustive :thinking:
-        internal val subTypes: Set<KClass<out RealmPropertyType>> =
-            setOf(ValuePropertyType::class, ListPropertyType::class, SetPropertyType::class)
+        internal val subTypes: Set<KClass<out RealmPropertyType>> = setOf(
+            ValuePropertyType::class,
+            ListPropertyType::class,
+            SetPropertyType::class,
+            MapPropertyType::class
+        )
     }
 }
 

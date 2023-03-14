@@ -22,7 +22,7 @@ import io.realm.kotlin.test.compiler.CollectionTests
 import io.realm.kotlin.test.compiler.EMBEDDED_CLASS
 import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
-import io.realm.kotlin.test.compiler.getCode
+import io.realm.kotlin.test.compiler.getTestCodeForCollection
 import io.realm.kotlin.test.compiler.globalNonNullableTypes
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -41,7 +41,7 @@ class DictionaryTests : CollectionTests(
     fun `non-nullable RealmObject dictionary`() {
         val result = createFileAndCompile(
             "nonNullableRealmObjectDictionary.kt",
-            getCode(
+            getTestCodeForCollection(
                 collectionType = CollectionType.DICTIONARY,
                 elementType = OBJECT_CLASS,
                 nullableElementType = false,
@@ -56,7 +56,7 @@ class DictionaryTests : CollectionTests(
     fun `non-nullable EmbeddedRealmObject dictionary`() {
         val result = createFileAndCompile(
             "nonNullableRealmObjectDictionary.kt",
-            getCode(
+            getTestCodeForCollection(
                 collectionType = CollectionType.DICTIONARY,
                 elementType = EMBEDDED_CLASS,
                 nullableElementType = false,
@@ -76,7 +76,7 @@ class DictionaryTests : CollectionTests(
     fun `nullable RealmObject dictionary`() {
         val result = createFileAndCompile(
             "nullableRealmObjectDictionary.kt",
-            getCode(
+            getTestCodeForCollection(
                 collectionType = CollectionType.DICTIONARY,
                 elementType = OBJECT_CLASS,
                 nullableElementType = true,
@@ -92,7 +92,7 @@ class DictionaryTests : CollectionTests(
     fun `nullable EmbeddedRealmObject dictionary`() {
         val result = createFileAndCompile(
             "nullableEmbeddedRealmObjectDictionary.kt",
-            getCode(
+            getTestCodeForCollection(
                 collectionType = CollectionType.DICTIONARY,
                 elementType = EMBEDDED_CLASS,
                 nullableElementType = true,

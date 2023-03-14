@@ -125,4 +125,13 @@ realm_sync_session_register_progress_notifier_wrapper(
         jobject callback
 );
 
+void
+realm_sync_thread_created(realm_userdata_t userdata);
+
+void
+realm_sync_thread_destroyed(realm_userdata_t userdata);
+
+void
+realm_sync_thread_error(realm_userdata_t userdata, const char* error);
+
 #endif //TEST_REALM_API_HELPERS_H

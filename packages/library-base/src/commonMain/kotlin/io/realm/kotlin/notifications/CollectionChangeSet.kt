@@ -16,6 +16,7 @@
 package io.realm.kotlin.notifications
 
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.types.RealmDictionary
 
 /**
  * This interface models the changes that can occur to a list.
@@ -89,3 +90,28 @@ public interface SetChangeSet {
      */
     public val deletions: Int
 }
+
+/**
+ * This interface models the changes that can occur to a map.
+ */
+public interface MapChangeSet<K> {
+    /**
+     * The keys that have been deleted in this version of the map.
+     */
+    public val deletions: Array<K>
+
+    /**
+     * The keys that have been inserted in this version of the map.
+     */
+    public val insertions: Array<K>
+
+    /**
+     * The keys whose values have changed in this version of the map.
+     */
+    public val changes: Array<K>
+}
+
+/**
+ * Convenience alias for [RealmDictionary] changesets. It represents a [MapChange] of `<String, V>`.
+ */
+public typealias DictionaryChangeSet = MapChangeSet<String>

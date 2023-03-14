@@ -22,7 +22,7 @@ import io.realm.kotlin.test.compiler.CollectionTests
 import io.realm.kotlin.test.compiler.EMBEDDED_CLASS
 import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
-import io.realm.kotlin.test.compiler.getCode
+import io.realm.kotlin.test.compiler.getTestCodeForCollection
 import io.realm.kotlin.test.compiler.globalNonNullableTypes
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -43,7 +43,7 @@ class ListTests : CollectionTests(
     fun `nullable RealmObject list - fails`() {
         val result = createFileAndCompile(
             "nullableRealmObjectList.kt",
-            getCode(
+            getTestCodeForCollection(
                 collectionType = CollectionType.LIST,
                 elementType = OBJECT_CLASS,
                 nullableElementType = true,
@@ -60,7 +60,7 @@ class ListTests : CollectionTests(
     fun `nullable EmbeddedRealmObject list - fails`() {
         val result = createFileAndCompile(
             "nullableRealmObjectList.kt",
-            getCode(
+            getTestCodeForCollection(
                 collectionType = CollectionType.LIST,
                 elementType = EMBEDDED_CLASS,
                 nullableElementType = true,

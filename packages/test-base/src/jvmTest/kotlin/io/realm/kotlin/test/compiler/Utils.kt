@@ -13,7 +13,7 @@ fun createFileAndCompile(fileName: String, code: String): KotlinCompilation.Resu
  * built by the compiler. Use it to generate different types of scenarios for nullability of
  * the element type and the collection field itself.
  */
-fun getCode(
+fun getTestCodeForCollection(
     collectionType: CollectionType,
     elementType: String = "*",
     nullableElementType: Boolean = false,

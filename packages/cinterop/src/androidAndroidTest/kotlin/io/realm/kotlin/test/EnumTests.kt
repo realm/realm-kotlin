@@ -17,8 +17,7 @@
 package io.realm.kotlin.test
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.realm.kotlin.internal.interop.CoreErrorUtils
-import io.realm.kotlin.internal.interop.RealmCoreException
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.realm_errno_e
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,20 +39,23 @@ class EnumTests {
 
     /**
      * Monitors for changes in to Exception types defined in Core.
+     *
+     * It checks that all the error code values defined in realm_errno_e are mapped by ErrorCode
      */
     @Test
-    fun coreExceptionTypes_watchdog() {
-        val coreErrorNativeValues = realm_errno_e::class.java.fields
+    fun errorCodes() {
+        val coreErrorCodesValues: IntArray = realm_errno_e::class.java.fields
             .map { it.getInt(null) }
             .toIntArray()
 
-        val mappedKotlinClasses = coreErrorNativeValues
-            .map { nativeValue -> CoreErrorUtils.coreErrorAsThrowable(nativeValue, null)::class }
+        val errorCodeValues: Set<ErrorCode> = coreErrorCodesValues
+            .map { nativeValue ->
+                ErrorCode.of(nativeValue)
+            }
+            .filterNotNull()
             .toSet()
 
         // Validate we have a different exception defined for each core native value.
-        assertEquals(coreErrorNativeValues.size, mappedKotlinClasses.size)
-        // Validate that there is an error defined for each exception.
-        assertEquals(RealmCoreException::class.sealedSubclasses.size, coreErrorNativeValues.size)
+        assertEquals(coreErrorCodesValues.size, errorCodeValues.size)
     }
 }

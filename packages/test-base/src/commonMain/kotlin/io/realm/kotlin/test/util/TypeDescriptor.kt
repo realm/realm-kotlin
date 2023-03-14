@@ -347,7 +347,8 @@ object TypeDescriptor {
         .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_SET, it) }
     val allDictionaryFieldTypes = elementTypesForDictionary.filter { it.realmFieldType.dictionarySupport }
         .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY, it) }
-    val allFieldTypes: List<RealmFieldType> = allSingularFieldTypes + allListFieldTypes
+    val allFieldTypes: List<RealmFieldType> =
+        allSingularFieldTypes + allListFieldTypes + allSetFieldTypes + allDictionaryFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
     // Realm field type represents the type of a given user specified field in the RealmObject

@@ -16,13 +16,12 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.ext.asBsonObjectId
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
-import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.channels.Channel
@@ -48,15 +47,15 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     name,
                     channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData ->
                         unwrap(apiKeyData)
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
             // TODO in the future, change to comparing error codes rather than messages
-            if (ex.message?.contains("[Service][InvalidParameter(6)] can only contain ASCII letters, numbers, underscores, and hyphens.") == true ||
-                ex.message?.contains("[Service][Unknown(-1)] 'name' is a required string.") == true
+            if (ex.errorCode == ErrorCode.RLM_ERR_INVALID_PARAMETER ||
+                ex.message?.contains("[Service][Unknown(4351)] 'name' is a required string.") == true // FIXME Unknown because the server does not provide with a error code
             ) {
                 throw IllegalArgumentException(ex.message!!)
             } else {
@@ -76,13 +75,12 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
-                    }.freeze()
+                    }
                 )
                 return channel.receive().getOrThrow()
             }
-        } catch (ex: AppException) {
-            // TODO in the future, change to comparing error codes rather than messages
-            if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
+        } catch (ex: ServiceException) {
+            if (ex.errorCode == ErrorCode.RLM_ERR_API_KEY_NOT_FOUND) {
                 // No-op
             } else {
                 throw ex
@@ -101,14 +99,13 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
-            // TODO in the future, change to comparing error codes rather than messages
-            if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
+            if (ex.errorCode == ErrorCode.RLM_ERR_API_KEY_NOT_FOUND) {
                 throw IllegalArgumentException(ex.message!!)
             } else {
                 throw ex
@@ -127,14 +124,13 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
-            // TODO in the future, change to comparing error codes rather than messages
-            if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
+            if (ex.errorCode == ErrorCode.RLM_ERR_API_KEY_NOT_FOUND) {
                 throw IllegalArgumentException(ex.message!!)
             } else {
                 throw ex
@@ -153,14 +149,13 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<ApiKeyWrapper, ApiKey?>(channel) { apiKeyData: ApiKeyWrapper ->
                         unwrap(apiKeyData)
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
             }
         } catch (ex: ServiceException) {
-            // TODO in the future, change to comparing error codes rather than messages
-            if (ex.message?.contains("[Service][ApiKeyNotFound(35)] API key not found.") == true) {
+            if (ex.errorCode == ErrorCode.RLM_ERR_API_KEY_NOT_FOUND) {
                 return null
             } else {
                 throw ex
@@ -181,7 +176,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                         )
                     }
                     result
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()

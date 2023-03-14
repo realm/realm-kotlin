@@ -245,6 +245,22 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+// Thread Observer callback
+%typemap(jstype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
+%typemap(jtype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
+%typemap(javain) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "$javainput";
+%typemap(jni) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "jobject";
+%typemap(in) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_created);
+    $2 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_destroyed);
+    $3 = reinterpret_cast<realm_on_object_store_error_callback_t>(realm_sync_thread_error);
+    $4 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $5 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // String handling
 typedef jstring realm_string_t;
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
@@ -284,7 +300,8 @@ return $jnicall;
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
                realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
-                realm_sync_session_connection_state_notification_token_t* };
+               realm_sync_session_connection_state_notification_token_t*,
+               realm_dictionary_changes_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -412,5 +429,6 @@ bool realm_object_is_valid(const realm_object_t*);
 #define __attribute__(x)
 
 %include "realm.h"
+%include "realm/error_codes.h"
 %include "src/main/jni/realm_api_helpers.h"
 

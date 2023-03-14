@@ -100,7 +100,6 @@ import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
@@ -229,7 +228,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val name = declaration.name.asString()
 
                 // Don't redefine accessors for internal synthetic properties or process declarations of subclasses
+                @Suppress("ComplexCondition")
                 if (declaration.backingField == null ||
+                    // If the getter's dispatch receiver is null we cannot generate our accessors
+                    // so skip processing those (See https://github.com/realm/realm-kotlin/issues/1296)
+                    declaration.getter?.dispatchReceiverParameter == null ||
                     name.startsWith(REALM_SYNTHETIC_PROPERTY_PREFIX) ||
                     declaration.parentAsClass != irClass
                 ) {
@@ -242,6 +245,23 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val excludeProperty =
                     declaration.backingField!!.hasAnnotation(IGNORE_ANNOTATION) ||
                         declaration.backingField!!.hasAnnotation(TRANSIENT_ANNOTATION)
+
+                // Check for property modifiers:
+                // - Persisted properties must be marked `var`.
+                // - `lateinit` is not allowed.
+                // - Backlinks must be marked `val`. The compiler will enforce wrong use of `var`.
+                // - `const` is not allowed. The compiler will enforce wrong use of `const` inside classes.
+                if (!excludeProperty &&
+                    !propertyType.isLinkingObject() &&
+                    !propertyType.isEmbeddedLinkingObject()
+                ) {
+                    if (declaration.isLateinit) {
+                        logError("Persisted properties must not be marked with `lateinit`.", declaration.locationOf())
+                    }
+                    if (!declaration.isVar) {
+                        logError("Persisted properties must be marked with `var`. `val` is not supported.", declaration.locationOf())
+                    }
+                }
 
                 when {
                     excludeProperty -> {
@@ -657,7 +677,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         )
                     }
                     else -> {
-                        logDebug("Type not processed: ${declaration.dump()}")
+                        logError("Realm does not support persisting properties of this type. Mark the field with `@Ignore` to suppress this error.", declaration.locationOf())
                     }
                 }
 

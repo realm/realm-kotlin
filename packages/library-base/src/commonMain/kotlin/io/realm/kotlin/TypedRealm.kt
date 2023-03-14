@@ -83,5 +83,5 @@ public interface TypedRealm : BaseRealm {
     public fun <T : TypedRealmObject> copyFromRealm(
         dictionary: RealmDictionary<T?>,
         depth: UInt = UInt.MAX_VALUE
-    ): RealmDictionary<T?>
+    ): Map<String, T?>
 }
