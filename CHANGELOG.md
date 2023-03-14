@@ -1,4 +1,4 @@
-## 1.6.2 (YYYY-MM-DD)
+## 1.6.2 (2023-03-14)
 
 ### Breaking Changes
 * None.
