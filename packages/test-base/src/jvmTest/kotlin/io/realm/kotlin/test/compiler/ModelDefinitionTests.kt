@@ -169,7 +169,7 @@ class ModelDefinitionTests {
         assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
     }
 
-	@Test
+    @Test
     fun `persisted_properties_with_val_should_fail`() {
         val result = Compiler.compileFromSource(
             plugins = listOf(Registrar()),
