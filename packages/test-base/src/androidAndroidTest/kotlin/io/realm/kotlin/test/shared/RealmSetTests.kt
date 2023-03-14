@@ -96,7 +96,7 @@ class RealmSetTests : CollectionQueryTests {
                     realm,
                     SetTypeSafetyManager(
                         RealmSetContainer.nullableProperties[classifier]!!,
-                        getDataSetForClassifier(classifier, true)
+                        getDataSetForCollectionClassifier(classifier, true, SET_OBJECT_VALUES)
                     ) as SetTypeSafetyManager<RealmAny?>
                 )
                 else -> GenericSetTester(
@@ -639,39 +639,40 @@ class RealmSetTests : CollectionQueryTests {
         when {
             nullable -> SetTypeSafetyManager(
                 property = RealmSetContainer.nullableProperties[classifier]!!,
-                dataSetToLoad = getDataSetForClassifier(classifier, true)
+                dataSetToLoad = getDataSetForCollectionClassifier(classifier, true, SET_OBJECT_VALUES)
             )
             else -> SetTypeSafetyManager(
                 property = RealmSetContainer.nonNullableProperties[classifier]!!,
-                dataSetToLoad = getDataSetForClassifier(classifier, false)
+                dataSetToLoad = getDataSetForCollectionClassifier(classifier, false, SET_OBJECT_VALUES)
             )
         }
-
-    @Suppress("UNCHECKED_CAST", "ComplexMethod")
-    private fun <T> getDataSetForClassifier(
-        classifier: KClassifier,
-        nullable: Boolean
-    ): List<T> = when (classifier) {
-        Byte::class -> if (nullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
-        Char::class -> if (nullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
-        Short::class -> if (nullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
-        Int::class -> if (nullable) NULLABLE_INT_VALUES else INT_VALUES
-        Long::class -> if (nullable) NULLABLE_LONG_VALUES else LONG_VALUES
-        Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
-        Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
-        Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
-        Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
-        String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
-        RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
-        ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
-        BsonObjectId::class -> if (nullable) NULLABLE_BSON_OBJECT_ID_VALUES else BSON_OBJECT_ID_VALUES
-        RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
-        ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
-        RealmObject::class -> SET_OBJECT_VALUES // Don't use the one from RealmListTests!!!
-        RealmAny::class -> SET_REALM_ANY_VALUES // RealmAny cannot be non-nullable
-        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
-    } as List<T>
 }
+
+@Suppress("UNCHECKED_CAST", "ComplexMethod")
+fun <T> getDataSetForCollectionClassifier(
+    classifier: KClassifier,
+    nullable: Boolean,
+    realmObjects: List<RealmObject?>
+): List<T> = when (classifier) {
+    Byte::class -> if (nullable) NULLABLE_BYTE_VALUES else BYTE_VALUES
+    Char::class -> if (nullable) NULLABLE_CHAR_VALUES else CHAR_VALUES
+    Short::class -> if (nullable) NULLABLE_SHORT_VALUES else SHORT_VALUES
+    Int::class -> if (nullable) NULLABLE_INT_VALUES else INT_VALUES
+    Long::class -> if (nullable) NULLABLE_LONG_VALUES else LONG_VALUES
+    Boolean::class -> if (nullable) NULLABLE_BOOLEAN_VALUES else BOOLEAN_VALUES
+    Float::class -> if (nullable) NULLABLE_FLOAT_VALUES else FLOAT_VALUES
+    Double::class -> if (nullable) NULLABLE_DOUBLE_VALUES else DOUBLE_VALUES
+    Decimal128::class -> if (nullable) NULLABLE_DECIMAL128_VALUES else DECIMAL128_VALUES
+    String::class -> if (nullable) NULLABLE_STRING_VALUES else STRING_VALUES
+    RealmInstant::class -> if (nullable) NULLABLE_TIMESTAMP_VALUES else TIMESTAMP_VALUES
+    ObjectId::class -> if (nullable) NULLABLE_OBJECT_ID_VALUES else OBJECT_ID_VALUES
+    BsonObjectId::class -> if (nullable) NULLABLE_BSON_OBJECT_ID_VALUES else BSON_OBJECT_ID_VALUES
+    RealmUUID::class -> if (nullable) NULLABLE_UUID_VALUES else UUID_VALUES
+    ByteArray::class -> if (nullable) NULLABLE_BINARY_VALUES else BINARY_VALUES
+    RealmObject::class -> realmObjects // Don't use the one from RealmListTests!!!
+    RealmAny::class -> SET_REALM_ANY_VALUES + RealmAny.create(realmObjects.first()!!) // RealmAny cannot be non-nullable
+    else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
+} as List<T>
 
 /**
  * Tester interface defining the operations that have to be tested exhaustively.
@@ -1316,7 +1317,4 @@ internal val SET_OBJECT_VALUES3 = listOf(
 // Use this for SET tests as this file does exhaustive testing on all RealmAny types. Ensuring that
 // we eliminate duplicates in REALM_ANY_PRIMITIVE_VALUES as the test infrastructure relies on
 // SET_REALM_ANY_VALUES to hold unique values.
-internal val SET_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES.toSet().toList() + RealmAny.create(
-    RealmSetContainer().apply { stringField = "hello" },
-    RealmSetContainer::class
-)
+internal val SET_REALM_ANY_VALUES = REALM_ANY_PRIMITIVE_VALUES.toSet().toList()

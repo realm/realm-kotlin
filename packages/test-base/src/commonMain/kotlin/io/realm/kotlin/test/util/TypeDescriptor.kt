@@ -56,6 +56,7 @@ object TypeDescriptor {
         val canBeNotNull: Set<CollectionType>, // favor using this over "nonNullable"
         val aggregatorSupport: Set<AggregatorSupport>,
         val anySupport: Boolean,
+        val realmDataType: Boolean,
     ) {
         INT(
             type = PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -70,6 +71,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
+            realmDataType = false,
         ),
         MUTABLE_REALM_INT(
             type = PropertyType.RLM_PROPERTY_TYPE_INT,
@@ -92,6 +94,7 @@ object TypeDescriptor {
             },
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = false,
+            realmDataType = true,
         ),
         BOOL(
             type = PropertyType.RLM_PROPERTY_TYPE_BOOL,
@@ -106,6 +109,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
+            realmDataType = false,
         ),
         STRING(
             type = PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -120,6 +124,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
+            realmDataType = false,
         ),
         OBJECT(
             type = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
@@ -139,6 +144,7 @@ object TypeDescriptor {
             },
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
+            realmDataType = true,
         ),
         FLOAT(
             type = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
@@ -153,6 +159,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
+            realmDataType = false,
         ),
         DOUBLE(
             type = PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
@@ -167,6 +174,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
+            realmDataType = false,
         ),
         DECIMAL128(
             type = PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
@@ -181,6 +189,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
             anySupport = true,
+            realmDataType = true,
         ),
         TIMESTAMP(
             type = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
@@ -195,6 +204,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = setOf(AggregatorSupport.MIN, AggregatorSupport.MAX),
             anySupport = true,
+            realmDataType = true,
         ),
         OBJECT_ID(
             type = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
@@ -209,6 +219,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
+            realmDataType = false,
         ),
         UUID(
             type = PropertyType.RLM_PROPERTY_TYPE_UUID,
@@ -223,6 +234,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
+            realmDataType = false,
         ),
         BINARY(
             type = PropertyType.RLM_PROPERTY_TYPE_BINARY,
@@ -237,6 +249,7 @@ object TypeDescriptor {
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
+            realmDataType = false,
         ),
         MIXED(
             type = PropertyType.RLM_PROPERTY_TYPE_MIXED,
@@ -251,6 +264,7 @@ object TypeDescriptor {
             canBeNotNull = emptySet(),
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = false,
+            realmDataType = true,
         );
 
         val isPrimitive = type != PropertyType.RLM_PROPERTY_TYPE_OBJECT
@@ -327,6 +341,19 @@ object TypeDescriptor {
         acc
     }
 
+    private fun elementTypesForSerializers(
+        classifiers: Collection<KClassifier>
+    ): MutableSet<ElementType> = classifiers.fold(mutableSetOf()) { acc, classifier ->
+        val realmFieldType = TypeDescriptor.classifiers[classifier]
+            ?: error("Unmapped classifier $classifier")
+
+        acc.apply {
+            if (realmFieldType.realmDataType) {
+                add(ElementType(classifier, realmFieldType.nullable))
+            }
+        }
+    }
+
     // Convenience variables holding collections of the various supported types
     val elementClassifiers: Set<KClassifier> = classifiers.keys
     val elementTypes = elementTypes(elementClassifiers)
@@ -336,6 +363,11 @@ object TypeDescriptor {
         elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_SET)
     val elementTypesForDictionary =
         elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
+    val elementTypesForSerializers = elementClassifiers.mapNotNull { classifier: KClassifier ->
+        val fieldType = classifiers[classifier] ?: error("Unmapped classifier $classifier")
+
+        if (fieldType.realmDataType) ElementType(classifier, fieldType.nullable) else null
+    }
 
     // Convenience variables holding collection of various groups of Realm field types
     val allSingularFieldTypes = elementTypes.map {
