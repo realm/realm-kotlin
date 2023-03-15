@@ -12,7 +12,7 @@
 * [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
 * [Sync] Added `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
 * [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
-* Add Realm datatypes serialization support for `Kserializer`. Serializers can be found in `io.realm.kotlin.serializers`. (Issue [#1283](https://github.com/realm/realm-kotlin/pull/1283))
+* Add Realm datatypes serialization support with `Kserializer`. Serializers can be found in `io.realm.kotlin.serializers`. (Issue [#1283](https://github.com/realm/realm-kotlin/pull/1283))
  
 ### Fixed
 * Fixed implementation of `RealmSet.iterator()` to throw `ConcurrentModificationException`s when the underlying set has been modified while iterating over it. (Issue [#1220](https://github.com/realm/realm-kotlin/issues/1220))
