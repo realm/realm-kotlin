@@ -18,7 +18,9 @@ package io.realm.kotlin.mongodb.ext
 
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.UserImpl
+import kotlinx.serialization.decodeFromString
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.serialization.Bson
 
 /**
  * Returns the profile for this user as [BsonDocument].
@@ -26,7 +28,9 @@ import org.mongodb.kbson.BsonDocument
  * @return The profile for this user.
  */
 public inline fun User.profileAsBsonDocument(): BsonDocument =
-    (this as UserImpl).profileAsBsonDocumentInternal()
+    (this as UserImpl).profileInternal { ejson ->
+        Bson(ejson) as BsonDocument
+    }
 
 /**
  * Return the custom user data associated with the user in the Realm App as [BsonDocument].
@@ -37,4 +41,22 @@ public inline fun User.profileAsBsonDocument(): BsonDocument =
  * @return The custom user data associated with the user.
  */
 public inline fun User.customDataAsBsonDocument(): BsonDocument? =
-    (this as UserImpl).customDataAsBsonDocumentInternal()
+    (this as UserImpl).customDataInternal { ejson ->
+        Bson(ejson) as BsonDocument
+    }
+
+/**
+ * TODO
+ */
+public inline fun <reified T> User.profile(): T =
+    (this as UserImpl).profileInternal { ejson ->
+        Bson.decodeFromString(ejson)
+    }
+
+/**
+ * TODO
+ */
+public inline fun <reified T> User.customData(): T? =
+    (this as UserImpl).customDataInternal { ejson ->
+        Bson.decodeFromString(ejson)
+    }

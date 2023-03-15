@@ -62,17 +62,12 @@ public class UserImpl(
     override val functions: Functions by lazy { FunctionsImpl(app, this) }
 
     @PublishedApi
-    internal fun profileAsBsonDocumentInternal(): BsonDocument {
-        return Bson(RealmInterop.realm_user_get_profile(nativePointer)) as BsonDocument
-    }
+    internal fun <T> profileInternal(block: (ejson: String) -> T): T =
+        block(RealmInterop.realm_user_get_profile(nativePointer))
 
     @PublishedApi
-    internal fun customDataAsBsonDocumentInternal(): BsonDocument? {
-        return RealmInterop.realm_user_get_custom_data(nativePointer)
-            ?.let { ejsonCustomData: String ->
-                Bson(ejsonCustomData) as BsonDocument
-            }
-    }
+    internal fun <T> customDataInternal(block: (ejson: String) -> T?): T? =
+        RealmInterop.realm_user_get_custom_data(nativePointer)?.let(block)
 
     override suspend fun refreshCustomData() {
         Channel<Result<Unit>>(1).use { channel ->

@@ -24,13 +24,17 @@ import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.serialization.Bson
 import kotlin.test.AfterTest
@@ -619,6 +623,13 @@ class UserTests {
         assertEquals(user.hashCode(), sameUserNewLogin.hashCode())
     }
 
+    @Serializable
+    data class SerializableCustomData(
+        @SerialName("_id") val id: String,
+        @SerialName("user_id") val userId: String,
+        @SerialName("custom_field") val customField: String
+    )
+
     @Test
     fun customDataAsBsonDocument_initiallyNull() {
         val user = runBlocking {
@@ -627,6 +638,7 @@ class UserTests {
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
+        assertNull(user.customData())
     }
 
     @Test
@@ -637,6 +649,7 @@ class UserTests {
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
+        assertNull(user.customData())
 
         updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
 
@@ -646,6 +659,10 @@ class UserTests {
         val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
+
+        val serializableCustomData = user.customData<SerializableCustomData>()
+        assertNotNull(serializableCustomData)
+        assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
     }
 
     @Test
@@ -656,6 +673,7 @@ class UserTests {
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
+        assertNull(user.customData())
 
         updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
 
@@ -664,9 +682,15 @@ class UserTests {
             user.logOut()
             app.login(Credentials.emailPassword(email, password))
         }
+
         val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
+
+
+        val serializableCustomData = user.customData<SerializableCustomData>()
+        assertNotNull(serializableCustomData)
+        assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
     }
 
     private fun updatecustomDataAsBsonDocument(user: User, data: BsonDocument) {
