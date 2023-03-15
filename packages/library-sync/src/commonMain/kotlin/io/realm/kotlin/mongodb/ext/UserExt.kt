@@ -46,7 +46,7 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
     }
 
 /**
- * TODO
+ * TODO Document, annotate as experimental optin
  */
 public inline fun <reified T> User.profile(): T =
     (this as UserImpl).profileInternal { ejson ->
@@ -54,7 +54,7 @@ public inline fun <reified T> User.profile(): T =
     }
 
 /**
- * TODO
+ * TODO Document, annotate as experimental optin
  */
 public inline fun <reified T> User.customData(): T? =
     (this as UserImpl).customDataInternal { ejson ->

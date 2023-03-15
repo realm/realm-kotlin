@@ -22,10 +22,12 @@ import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
+import kotlinx.serialization.encodeToString
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
 
+@PublishedApi
 internal class CredentialsImpl constructor(
     internal val nativePointer: RealmCredentialsPointer
 ) : Credentials {
@@ -76,5 +78,9 @@ internal class CredentialsImpl constructor(
                 }
                 RealmInterop.realm_app_credentials_new_custom_function(Bson.toJson(bsonValue))
             }
+
+        @PublishedApi
+        internal fun customFunctionString(ejson: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_custom_function(ejson)
     }
 }

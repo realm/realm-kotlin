@@ -17,7 +17,9 @@
 package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
+import kotlinx.serialization.encodeToString
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.serialization.Bson
 
 /**
  * This enum contains the list of Google authentication types supported by App Services.
@@ -160,3 +162,9 @@ public interface Credentials {
         }
     }
 }
+
+/**
+ * TODO can we overload it like this?
+ */
+public inline fun <reified T> Credentials.Companion.customFunctionAny(payload: T): Credentials =
+    CredentialsImpl(CredentialsImpl.customFunctionString(Bson.encodeToString(payload)))

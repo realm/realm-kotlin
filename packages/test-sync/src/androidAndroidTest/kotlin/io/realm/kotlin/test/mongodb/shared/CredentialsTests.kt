@@ -39,6 +39,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
+@Serializable
+data class SerializableCustomCredential(
+    val name: String
+)
+
 @Suppress("ForbiddenComment")
 class CredentialsTests {
 
