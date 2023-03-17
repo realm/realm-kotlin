@@ -20,7 +20,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.notifications.DeletedMap
 import io.realm.kotlin.notifications.InitialMap
 import io.realm.kotlin.notifications.MapChange
@@ -79,7 +78,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             // inside a write block
             val values = NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
                 Pair(keys[i], value)
-            }.freeze()
+            }
             val channel1 = Channel<MapChange<String, *>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {

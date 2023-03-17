@@ -35,7 +35,6 @@ import io.realm.kotlin.internal.interop.SyncBeforeClientResetHandler
 import io.realm.kotlin.internal.interop.SyncErrorCallback
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
@@ -87,7 +86,7 @@ internal class SyncConfigurationImpl(
                             } else {
                                 channel.trySend(true)
                             }
-                        }.freeze()
+                        }
 
                         val configPtr = createNativeConfiguration()
                         taskPointer.value = RealmInterop.realm_open_synchronized(configPtr)
@@ -155,8 +154,8 @@ internal class SyncConfigurationImpl(
     init {
         // We need to freeze `errorHandler` reference on initial thread
         val userErrorHandler = errorHandler
-        val resetStrategy = syncClientResetStrategy.freeze()
-        val frozenAppPointer = user.app.nativePointer.freeze()
+        val resetStrategy = syncClientResetStrategy
+        val frozenAppPointer = user.app.nativePointer
 
         val initializerHelper = when (resetStrategy) {
             is DiscardUnsyncedChangesStrategy ->
@@ -181,7 +180,7 @@ internal class SyncConfigurationImpl(
                 } else {
                     userErrorHandler.onError(session, syncError)
                 }
-            }.freeze()
+            }
 
         syncInitializer = { nativeConfig: RealmConfigurationPointer ->
             val nativeSyncConfig: RealmSyncConfigurationPointer = when (partitionValue) {

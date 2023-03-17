@@ -19,7 +19,6 @@ import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
@@ -48,7 +47,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     name,
                     channelResultCallback<ApiKeyWrapper, ApiKey>(channel) { apiKeyData ->
                         unwrap(apiKeyData)
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
@@ -76,7 +75,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
-                    }.freeze()
+                    }
                 )
                 return channel.receive().getOrThrow()
             }
@@ -100,7 +99,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
@@ -125,7 +124,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<Unit, Unit>(channel) {
                         // No-op
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
@@ -150,7 +149,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                     id,
                     channelResultCallback<ApiKeyWrapper, ApiKey?>(channel) { apiKeyData: ApiKeyWrapper ->
                         unwrap(apiKeyData)
-                    }.freeze()
+                    }
                 )
                 return channel.receive()
                     .getOrThrow()
@@ -177,7 +176,7 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
                         )
                     }
                     result
-                }.freeze()
+                }
             )
             return channel.receive()
                 .getOrThrow()
