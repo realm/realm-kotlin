@@ -36,10 +36,11 @@ import kotlinx.coroutines.withContext
 internal class SuspendableNotifier(
     private val owner: RealmImpl,
     private val dispatcher: CoroutineDispatcher
-) {
+) : LiveRealmHolder<LiveRealm>() {
+    // Flow used to emit events when the version of the live realm is updated
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
-    private val _realmChanged = MutableSharedFlow<FrozenRealmReference>(
+    private val _realmChanged = MutableSharedFlow<VersionId>(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
         extraBufferCapacity = 1
     )
@@ -51,7 +52,7 @@ internal class SuspendableNotifier(
         // update as we get all callbacks on the same single thread dispatcher
         override fun onRealmChanged() {
             super.onRealmChanged()
-            if (!_realmChanged.tryEmit(this.snapshot)) {
+            if (!_realmChanged.tryEmit(version())) {
                 // Should never fail to emit snapshot version as we just drop oldest
                 sdkError("Failed to emit snapshot version")
             }
@@ -66,9 +67,9 @@ internal class SuspendableNotifier(
         }
     }
 
-    private val realmInitializer = lazy { NotifierRealm() }
+    override val realmInitializer = lazy<LiveRealm> { NotifierRealm() }
     // Must only be accessed from the dispatchers thread
-    private val realm: NotifierRealm by realmInitializer
+    override val realm: LiveRealm by realmInitializer
 
     /**
      * Listen to changes to a Realm.
@@ -76,10 +77,12 @@ internal class SuspendableNotifier(
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    internal suspend fun realmChanged(): Flow<FrozenRealmReference> {
+    internal suspend fun realmChanged(): Flow<VersionId> {
         // Touching realm will open the underlying realm and register change listeners, but must
         // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
-        withContext(dispatcher) { realm }
+        if (!realmInitializer.isInitialized()) {
+            withContext(dispatcher) { realm }
+        }
         return _realmChanged.asSharedFlow()
     }
 
@@ -108,7 +111,7 @@ internal class SuspendableNotifier(
                             override fun onChange(change: RealmChangesPointer) {
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
-                                val frozenObservable = lifeRef.freeze(realm.snapshot)
+                                val frozenObservable = lifeRef.freeze(realm.gcTrackedSnapshot)
                                 changeFlow.emit(frozenObservable, change)
                             }
                         }
@@ -139,10 +142,8 @@ internal class SuspendableNotifier(
      * Manually force a refresh of the Realm, moving it to the latest version.
      * This will also trigger the evaluation of all change listeners, which will
      * be triggered as normal if anything changed.
-     *
-     * @return a frozen reference to the version of the Realm after the refresh.
      */
-    suspend fun refresh(): FrozenRealmReference {
+    suspend fun refresh() {
         return withContext(dispatcher) {
             // This logic should be safe due to the following reasons:
             // - Notifications and `refresh()` run on the same single-threaded dispatcher.
@@ -154,9 +155,8 @@ internal class SuspendableNotifier(
             val dbPointer = realm.realmReference.dbPointer
             RealmInterop.realm_refresh(dbPointer)
             val refreshedVersion = VersionId(RealmInterop.realm_get_version_id(dbPointer))
-            realm.snapshot.also { snapshot ->
+            realm.snapshotVersion.also { snapshotVersion ->
                 // Assert that the above invariants never break
-                val snapshotVersion = snapshot.version()
                 if (snapshotVersion != refreshedVersion) {
                     throw IllegalStateException(
                         """

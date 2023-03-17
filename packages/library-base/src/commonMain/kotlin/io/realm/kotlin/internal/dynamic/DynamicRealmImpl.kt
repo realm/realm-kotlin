@@ -19,7 +19,6 @@ package io.realm.kotlin.internal.dynamic
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.BaseRealmImpl
-import io.realm.kotlin.internal.FrozenRealmReference
 import io.realm.kotlin.internal.FrozenRealmReferenceImpl
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmReference

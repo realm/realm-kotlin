@@ -22,12 +22,12 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.Lock
+import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
@@ -36,14 +36,18 @@ import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
+import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
@@ -63,10 +67,13 @@ public class RealmImpl private constructor(
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
-    private val realmFlow = MutableSharedFlow<RealmChange<Realm>>(
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
+    private val notifierFlow: SharedFlow<RealmChange<Realm>> by lazy {
+        runBlocking {
+            @Suppress("UNCHECKED_CAST")
+            notifier.realmChanged()
+                .map { UpdatedRealmImpl(this@RealmImpl) } as Flow<RealmChange<Realm>>
+        }.shareIn(realmScope, SharingStarted.WhileSubscribed())
+    }
     private val notifier =
         SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
     internal val writer =
@@ -77,15 +84,8 @@ public class RealmImpl private constructor(
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    // inline classes cannot be lateinit, so use a placeholder instead.
-    private var _realmReference: AtomicRef<FrozenRealmReference> = atomic(object : FrozenRealmReference {
-        override val owner: BaseRealmImpl
-            get() = throw IllegalStateException("Placeholder should not be access")
-        override val schemaMetadata: SchemaMetadata
-            get() = throw IllegalStateException("Placeholder should not be access")
-        override val dbPointer: FrozenRealmPointer
-            get() = throw IllegalStateException("Placeholder should not be access")
-    })
+    private var _realmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
+    private val realmReferenceLock = Lock()
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -93,13 +93,14 @@ public class RealmImpl private constructor(
      * NOTE: As this is updated to a new frozen version on notifications about changes in the
      * underlying realm, care should be taken not to spread operations over different references.
      */
-    override var realmReference: FrozenRealmReference by _realmReference
+    override val realmReference: FrozenRealmReference
+        get() = realmReference()
 
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
     //  would require us to sync that up. Didn't address this as we already have a todo on fixing
     //  constructing the initial frozen version in the initialization of updatableRealm.
-    private val versionTracker = VersionTracker(log)
+    private val versionTracker = VersionTracker(this, log)
 
     // Injection point for synchronized Realms. This property should only be used to hold state
     // required by synchronized realms. See `SyncedRealmContext` for more details.
@@ -113,15 +114,10 @@ public class RealmImpl private constructor(
         try {
             runBlocking {
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
-                realmReference = frozenReference
+                realmFileCreated = fileCreated
+                versionTracker.trackAndCloseExpiredReferences(frozenReference)
+                _realmReference.value = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, fileCreated)
-            }
-
-            // Update the Realm if another process or the Sync Client updates the Realm
-            realmScope.launch {
-                notifier.realmChanged().collect { realmReference ->
-                    updateRealmPointer(realmReference)
-                }
             }
             if (!realmStateFlow.tryEmit(State.OPEN)) {
                 log.warn("Cannot signal internal open")
@@ -159,8 +155,7 @@ public class RealmImpl private constructor(
         // facing Realm with the updated version. Note, as the notifier asynchronously also update
         // the user Realm, we cannot guarantee that the Realm has this exact version when
         // this method completes. But we can guarantee that it has _at least_ this version.
-        val realmRef: FrozenRealmReference = notifier.refresh()
-        updateRealmPointer(realmRef)
+        notifier.refresh()
     }
 
     // Required as Kotlin otherwise gets confused about the visibility and reports
@@ -175,18 +170,10 @@ public class RealmImpl private constructor(
 
     // Currently just for internal-only usage in test, thus API is not polished
     internal suspend fun updateSchema(schema: RealmSchemaImpl) {
-        updateRealmPointer(this.writer.updateSchema(schema))
+        this.writer.updateSchema(schema)
     }
 
-    override suspend fun <R> write(block: MutableRealm.() -> R): R {
-        val (reference, result) = this.writer.write(block)
-        // Update the user facing Realm before returning the result.
-        // That way, querying the Realm right after the `write` completes will return
-        // the written data. Otherwise, we would have to wait for the Notifier thread
-        // to detect it and update the user Realm.
-        updateRealmPointer(reference)
-        return result
-    }
+    override suspend fun <R> write(block: MutableRealm.() -> R): R = writer.write(block)
 
     override fun <R> writeBlocking(block: MutableRealm.() -> R): R {
         writer.checkInTransaction("Cannot initiate transaction when already in a write transaction")
@@ -195,8 +182,9 @@ public class RealmImpl private constructor(
         }
     }
 
-    override fun asFlow(): Flow<RealmChange<Realm>> =
-        scopedFlow { realmFlow.onStart { emit(InitialRealmImpl(this@RealmImpl)) } }
+    override fun asFlow(): Flow<RealmChange<Realm>> = scopedFlow {
+        notifierFlow.onStart { emit(InitialRealmImpl(this@RealmImpl)) }
+    }
 
     override fun writeCopyTo(configuration: Configuration) {
         if (fileExists(configuration.path)) {
@@ -216,17 +204,39 @@ public class RealmImpl private constructor(
         return notifier.registerObserver(t)
     }
 
-    private suspend fun updateRealmPointer(newRealmReference: FrozenRealmReference) {
-        realmPointerMutex.withLock {
-            versionTracker.trackAndCloseExpiredReferences()
-            val newVersion = newRealmReference.version()
-            log.debug("Updating Realm version: ${version()} -> $newVersion")
-            if (newVersion >= version()) {
-                realmReference = newRealmReference
+    public fun realmReference(): FrozenRealmReference {
+        synchronized(realmReferenceLock) {
+            val value1 = _realmReference.value
+            // We don't consider advancing the version if is is already closed.
+            value1?.let {
+                if (it.isClosed()) return it
             }
-            // Notify public observers that the Realm changed
-            realmFlow.emit(UpdatedRealmImpl(this))
+
+            // Consider versions of current realm, notifier and writer to identify if we should
+            // advance the user facing realms version to a newer frozen snapshot.
+            val version = value1?.version()
+            val notifierSnapshot = notifier.version
+            val writerSnapshot = writer.version
+
+            var newest: LiveRealmHolder<LiveRealm>? = null
+            if (notifierSnapshot != null && version != null && notifierSnapshot > version) {
+                newest = notifier
+            }
+            @Suppress("ComplexCondition")
+            if (writerSnapshot != null && version != null && ((writerSnapshot > version) || (notifierSnapshot != null && writerSnapshot > notifierSnapshot))) {
+                newest = writer
+            }
+            if (newest != null) {
+                _realmReference.value = newest.snapshot
+                log.debug("$this ADVANCING $version -> ${_realmReference.value?.version()}")
+            }
         }
+        return _realmReference.value ?: sdkError("Accessing realmReference before realm has been opened")
+    }
+
+    public fun activeVersions(): VersionInfo {
+        val mainVersions: VersionData? = _realmReference.value?.let { VersionData(it.uncheckedVersion(), versionTracker.versions()) }
+        return VersionInfo(mainVersions, notifier.versions(), writer.versions())
     }
 
     override fun close() {

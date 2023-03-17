@@ -39,6 +39,8 @@ public interface RealmReference : RealmState {
         checkClosed()
         return VersionId(RealmInterop.realm_get_version_id(dbPointer))
     }
+    public fun uncheckedVersion(): VersionId =
+        VersionId(RealmInterop.realm_get_version_id(dbPointer))
 
     override fun isFrozen(): Boolean {
         checkClosed()

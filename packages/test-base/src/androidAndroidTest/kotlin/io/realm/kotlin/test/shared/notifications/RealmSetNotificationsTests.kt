@@ -121,10 +121,12 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                 container.objectSetField
                     .asFlow()
                     .collect { flowSet ->
-                        if (flowSet !is InitialSet) {
-                            channel.send(flowSet)
-                        }
+                        channel.send(flowSet)
                     }
+            }
+
+            channel.receive().let {
+                assertIs<InitialSet<*>>(it)
             }
 
             // Assert a single insertion is reported
