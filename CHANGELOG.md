@@ -1,4 +1,4 @@
-## 1.7.0 (YYYY-MM-DD)
+## 1.7.0 (2023-03-15)
 
 ### Breaking Changes
 * None.
@@ -40,7 +40,7 @@
 * Updated to Realm Core 13.5.0, commit 37cc58865648f343f7d6e538d45980e7f2351211.
 
 
-## 1.6.2 (YYYY-MM-DD)
+## 1.6.2 (2023-03-14)
 
 ### Breaking Changes
 * None.
