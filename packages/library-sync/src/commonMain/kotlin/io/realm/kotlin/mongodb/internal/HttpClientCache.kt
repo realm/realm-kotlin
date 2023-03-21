@@ -27,8 +27,6 @@ internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
             socketTimeoutMillis = frozenTimeout
         }
 
-        // TODO figure out logging and obfuscating sensitive info
-        //  https://github.com/realm/realm-kotlin/issues/410
         customLogger?.let {
             install(Logging) {
                 logger = customLogger
@@ -37,8 +35,6 @@ internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
         }
 
         followRedirects = true
-
-        // TODO connectionPool?
     }
 }
 
