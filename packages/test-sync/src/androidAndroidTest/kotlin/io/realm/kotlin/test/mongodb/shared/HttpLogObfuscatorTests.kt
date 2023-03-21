@@ -23,6 +23,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.ext.call
+import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
@@ -95,42 +96,6 @@ class HttpLogObfuscatorTests {
         }
     }
 
-    private object NullObfuscatorLoggerInspector : RealmLogger {
-
-        override val level: LogLevel = LogLevel.DEBUG
-        override val tag: String = "NullObfuscatorLoggerInspector"
-
-        override fun log(
-            level: LogLevel,
-            throwable: Throwable?,
-            message: String?,
-            vararg args: Any?
-        ) {
-            message?.also {
-                if (it.contains(""""password":"***"""")) {
-                    fail("Password was obfuscated: $it")
-                } else if (it.contains(""""access_token":"***","refresh_token":"***"""")) {
-                    fail("Access/refresh tokens were obfuscated: $it")
-                } else if (it.contains(""""key":"***"""")) {
-                    fail("API key was obfuscated: $it")
-                } else if (it.contains(""""id_token":"***"""")) {
-                    fail("Apple/Google ID tokens were obfuscated: $it")
-                } else if (it.contains(""""accessToken":"***"""")) {
-                    fail("Facebook token was obfuscated: $it")
-                } else if (it.contains(""""authCode":"***"""")) {
-                    fail("Google Auth Code was obfuscated: $it")
-                } else if (it.contains(""""token":"***"""")) {
-                    fail("JWT key was obfuscated: $it")
-                } else if (
-                    it.contains(""""arguments":[***]""") ||
-                    it.contains("BODY START\n***\nBODY END")
-                ) {
-                    fail("Custom function arguments were obfuscated: $it")
-                }
-            }
-        }
-    }
-
     private enum class Operation {
         OBFUSCATED_PASSWORD,
         OBFUSCATED_ACCESS_AND_REFRESH_TOKENS,
@@ -172,11 +137,12 @@ class HttpLogObfuscatorTests {
 
     @Test
     fun nullObfuscator() = runBlocking {
+        val logger = CustomLogCollector("NULL-OBFUSCATOR", LogLevel.DEBUG)
         app = TestApp(
             appName = "null-obfuscator",
             logLevel = LogLevel.DEBUG,
             builder = { it.httpLogObfuscator(null) },
-            customLogger = NullObfuscatorLoggerInspector,
+            customLogger = logger,
             initialSetup = { app, service ->
                 initializeDefault(app, service)
                 app.addFunction(TestAppInitializer.FIRST_ARG_FUNCTION)
@@ -222,7 +188,31 @@ class HttpLogObfuscatorTests {
             call<BsonNull>(TestAppInitializer.NULL_FUNCTION.name)
         }
 
-        Unit
+        // Verify that none of the logs are obfuscated
+        logger.logs.forEach { message ->
+            message.also {
+                if (it.contains(""""password":"***"""")) {
+                    fail("Password was obfuscated: $it")
+                } else if (it.contains(""""access_token":"***","refresh_token":"***"""")) {
+                    fail("Access/refresh tokens were obfuscated: $it")
+                } else if (it.contains(""""key":"***"""")) {
+                    fail("API key was obfuscated: $it")
+                } else if (it.contains(""""id_token":"***"""")) {
+                    fail("Apple/Google ID tokens were obfuscated: $it")
+                } else if (it.contains(""""accessToken":"***"""")) {
+                    fail("Facebook token was obfuscated: $it")
+                } else if (it.contains(""""authCode":"***"""")) {
+                    fail("Google Auth Code was obfuscated: $it")
+                } else if (it.contains(""""token":"***"""")) {
+                    fail("JWT key was obfuscated: $it")
+                } else if (
+                    it.contains(""""arguments":[***]""") ||
+                    it.contains("BODY START\n***\nBODY END")
+                ) {
+                    fail("Custom function arguments were obfuscated: $it")
+                }
+            }
+        }
     }
 
     @Test

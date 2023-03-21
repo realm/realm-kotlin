@@ -31,7 +31,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -52,6 +51,7 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
+import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -68,8 +68,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -1252,36 +1250,6 @@ class SyncedRealmTests {
         } finally {
             realm1.close()
             flexApp.close()
-        }
-    }
-
-    /**
-     * Logged collecting all logs it has seen.
-     */
-    private class CustomLogCollector(
-        override val tag: String,
-        override val level: LogLevel
-    ) : RealmLogger {
-
-        private val mutex = Mutex()
-        private val _logs = mutableListOf<String>()
-        /**
-         * Returns a snapshot of the current state of the logs.
-         */
-        val logs: List<String>
-            get() = runBlocking {
-                mutex.withLock {
-                    _logs.toList()
-                }
-            }
-
-        override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-            val logMessage: String = message!!
-            runBlocking {
-                mutex.withLock {
-                    _logs.add(logMessage)
-                }
-            }
         }
     }
 

@@ -69,6 +69,12 @@ public interface AppConfiguration {
      */
     public val appVersion: String?
 
+    /**
+     * The configured [HttpLogObfuscator] for this app. If this property returns `null` no
+     * obfuscator is being used.
+     */
+    public val httpLogObfuscator: HttpLogObfuscator?
+
     public companion object {
         /**
          * The default url for App Services applications.
@@ -237,7 +243,8 @@ public interface AppConfiguration {
          * arguments and the result of computing these will be obfuscated by default. Logs will not
          * be obfuscated if the value is set to `null`.
          *
-         * @param httpLogObfuscator the HTTP log obfuscator to be used. It can be null.
+         * @param httpLogObfuscator the HTTP log obfuscator to be used or `null` if obfuscation
+         * should be disabled.
          * @return the Builder instance used.
          */
         public fun httpLogObfuscator(httpLogObfuscator: HttpLogObfuscator?): Builder = apply {
@@ -287,20 +294,23 @@ public interface AppConfiguration {
             }
 
             val networkTransport: () -> NetworkTransport = {
+                val logger: Logger? = if (logLevel <= LogLevel.DEBUG) {
+                    object : Logger {
+                        override fun log(message: String) {
+                            val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
+                            appLogger.debug(obfuscatedMessage ?: message)
+                        }
+                    }
+                } else {
+                    null
+                }
                 networkTransport ?: KtorNetworkTransport(
                     // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                     //  constant in AppConfiguration.Companion
                     //  https://github.com/realm/realm-kotlin/issues/408
                     timeoutMs = 15000,
                     dispatcherFactory = appNetworkDispatcherFactory,
-                    logger = object : Logger {
-                        override fun log(message: String) {
-                            if (logLevel <= LogLevel.DEBUG) {
-                                val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
-                                appLogger.debug(obfuscatedMessage ?: message)
-                            }
-                        }
-                    }
+                    logger = logger
                 )
             }
 
@@ -315,7 +325,8 @@ public interface AppConfiguration {
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger,
                 appName = appName,
-                appVersion = appVersion
+                appVersion = appVersion,
+                httpLogObfuscator = httpLogObfuscator
             )
         }
     }

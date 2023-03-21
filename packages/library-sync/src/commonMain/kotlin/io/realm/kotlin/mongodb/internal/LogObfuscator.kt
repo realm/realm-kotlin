@@ -87,69 +87,53 @@ internal interface LogReplacer {
 
         // Patterns used when sending a register mail request:
         // `"password":"<PASSWORD>"` becomes `"password":"***"`
-        private fun registerEmailPassword(): LogReplacer = mapOf(
+        private fun registerEmailPassword(): LogReplacer = GenericRegexPatternReplacer(
             """(("$PASSWORD_KEY"):(".+?"))""".toRegex() to """"$PASSWORD_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Patterns used when sending a login with mail request:
         // `"password":"<PASSWORD>"` becomes `"password":"***"`
-        private fun loginEmailPassword(): LogReplacer = mapOf(
+        private fun loginEmailPassword(): LogReplacer = GenericRegexPatternReplacer(
             """(("$PASSWORD_KEY"):(".+?"))""".toRegex() to """"$PASSWORD_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Patterns used when sending a create API key request:
         // `"key":"<KEY>"` becomes `"key":"***"`
-        private fun createApiKey(): LogReplacer = mapOf(
+        private fun createApiKey(): LogReplacer = GenericRegexPatternReplacer(
             """(("$API_KEY_KEY"):(\s?".+?"))""".toRegex() to """"$API_KEY_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Patterns used when sending a login with API key request:
         // `"key":"<KEY>"` becomes `"key":"***"`
-        private fun loginApiKey(): LogReplacer = mapOf(
+        private fun loginApiKey(): LogReplacer = GenericRegexPatternReplacer(
             """(("$API_KEY_KEY"):(\s?".+?"))""".toRegex() to """"$API_KEY_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Patterns used when sending a login with an Apple token request:
         // `"id_token":"<TOKEN>"` becomes `"id_token":"***"`
-        private fun loginApple(): LogReplacer = mapOf(
+        private fun loginApple(): LogReplacer = GenericRegexPatternReplacer(
             """(("$ID_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$ID_TOKEN_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Patterns used when sending a login with a Facebook token request:
         // `"accessToken":"<TOKEN>"` becomes `"accessToken":"***"`
-        private fun loginFacebook(): LogReplacer = mapOf(
+        private fun loginFacebook(): LogReplacer = GenericRegexPatternReplacer(
             """(("$FB_ACCESS_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$FB_ACCESS_TOKEN_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Patterns used when sending a login with a Google token request:
         // `"authCode":"<TOKEN>"` becomes `"authCode":"***"`
         // `"id_token":"<TOKEN>"` becomes `"id_token":"***"`
-        private fun loginGoogle(): LogReplacer = mapOf(
+        private fun loginGoogle(): LogReplacer = GenericRegexPatternReplacer(
             """(("$AUTHCODE_KEY"):(\s?".+?"))""".toRegex() to """"$AUTHCODE_KEY":"***"""",
             """(("$ID_TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$ID_TOKEN_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Patterns used when sending a login with a JWT request:
         // `"token":"<TOKEN>"` becomes `"token":"***"`
-        private fun loginJwt(): LogReplacer = mapOf(
+        private fun loginJwt(): LogReplacer = GenericRegexPatternReplacer(
             """(("$TOKEN_KEY"):(\s?".+?"))""".toRegex() to """"$TOKEN_KEY":"***""""
-        ).let {
-            GenericRegexPatternReplacer(it)
-        }
+        )
 
         // Creates a replacer that hides parameters for custom functions
         private fun customFunction(): LogReplacer = CustomFunctionPatternReplacer
@@ -162,8 +146,18 @@ internal interface LogReplacer {
 //  so until we figure out what is wrong, do manual string replacement and hopefully nothing will
 //  change - if the message string changes our tests will hopefully catch it
 internal class GenericRegexPatternReplacer(
-    private val patternReplacementMap: Map<Regex, String>
+    vararg patternReplacements: Pair<Regex, String>
 ) : LogReplacer {
+
+    private val patternReplacementMap: Map<Regex, String>
+
+    init {
+        patternReplacementMap = patternReplacements.fold(mutableMapOf()) { acc, el ->
+            acc[el.first] = el.second
+            acc
+        }
+    }
+
     override fun findAndReplace(input: String): String {
         return if (
             input.contains("RESPONSE: 200 OK") &&
@@ -205,44 +199,18 @@ internal object LogObfuscatorImpl : HttpLogObfuscator {
     private val urlRegex =
         Regex("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()!@:%_\\+.~#?&\\/\\/=]*)")
 
-    private val features: Collection<ObfuscatorFeature> = setOf(
-        ObfuscatorFeature.FEATURE_EMAIL_REGISTER,
-        ObfuscatorFeature.FEATURE_EMAIL_LOGIN,
-        ObfuscatorFeature.FEATURE_API_KEY_CREATE,
-        ObfuscatorFeature.FEATURE_API_KEY_LOGIN,
-        ObfuscatorFeature.FEATURE_APPLE_LOGIN,
-        ObfuscatorFeature.FEATURE_FACEBOOK_LOGIN,
-        ObfuscatorFeature.FEATURE_GOOGLE_LOGIN,
-        ObfuscatorFeature.FEATURE_JWT_LOGIN,
-        ObfuscatorFeature.FEATURE_CUSTOM_FUNCTION_REQUEST
-    )
-
     private val regexReplacerMap: Map<String, LogReplacer> = defaultFeatureToReplacerMap
 
     override fun obfuscate(input: String): String {
-        features.forEach { feature ->
-            urlRegex.find(input)?.let { matchResult ->
-                val url = matchResult.value
-                if (url.contains(feature.urlPath)) {
-                    val patternReplacer = regexReplacerMap[feature.urlPath]
-                    return patternReplacer?.findAndReplace(input) ?: input
+        return urlRegex.find(input)?.let { matchResult ->
+            val url = matchResult.value
+            regexReplacerMap
+                .filterKeys { url.contains(it) }
+                .values
+                .map {
+                    it.findAndReplace(input)
                 }
-            }
-        }
-        return input
+                .firstOrNull()
+        } ?: input
     }
-}
-
-// Features that will be obfuscated by default. It uses the `urlPath` to tell the replacer when to
-// find the patterns in the logger
-internal enum class ObfuscatorFeature(internal val urlPath: String) {
-    FEATURE_EMAIL_REGISTER(LogReplacer.EMAIL_PASSWORD_REGISTER),
-    FEATURE_EMAIL_LOGIN(LogReplacer.EMAIL_PASSWORD_LOGIN),
-    FEATURE_API_KEY_CREATE(LogReplacer.API_KEY_REGISTER),
-    FEATURE_API_KEY_LOGIN(LogReplacer.API_KEY_LOGIN),
-    FEATURE_APPLE_LOGIN(LogReplacer.APPLE_LOGIN),
-    FEATURE_FACEBOOK_LOGIN(LogReplacer.FACEBOOK_LOGIN),
-    FEATURE_GOOGLE_LOGIN(LogReplacer.GOOGLE_LOGIN),
-    FEATURE_JWT_LOGIN(LogReplacer.JWT_LOGIN),
-    FEATURE_CUSTOM_FUNCTION_REQUEST(LogReplacer.FUNCTIONS)
 }

@@ -32,7 +32,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
@@ -307,6 +309,22 @@ class AppConfigurationTests {
         assertFailsWithMessage<IllegalArgumentException>("The provided key must be") {
             builder.encryptionKey(tooLongKey)
         }
+    }
+
+    @Test
+    fun httpLogObfuscator_null() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .httpLogObfuscator(null)
+            .build()
+        assertNull(config.httpLogObfuscator)
+    }
+
+    @Suppress("invisible_reference", "invisible_member")
+    @Test
+    fun defaultLoginInfoObfuscator() {
+        val config = AppConfiguration.Builder(APP_ID).build()
+        assertNotNull(config.httpLogObfuscator)
+        assertTrue(config.httpLogObfuscator is io.realm.kotlin.mongodb.internal.LogObfuscatorImpl)
     }
 
 //
