@@ -36,9 +36,9 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
-import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
