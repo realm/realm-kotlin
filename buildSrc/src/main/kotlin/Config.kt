@@ -17,7 +17,7 @@
 
 object Realm {
     val ciBuild = (System.getenv("CI") != null)
-    const val version = "1.7.0-gha-SNAPSHOT"
+    const val version = "1.8.0-gha-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -80,7 +80,7 @@ object Versions {
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
     const val kotlin = "1.7.20" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
-    const val latestKotlin = "1.8.0" // https://kotlinlang.org/docs/eap.html#build-details
+    const val latestKotlin = "1.8.20-Beta" // https://kotlinlang.org/docs/eap.html#build-details
     const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "2.2.3" // https://github.com/ktorio/ktor

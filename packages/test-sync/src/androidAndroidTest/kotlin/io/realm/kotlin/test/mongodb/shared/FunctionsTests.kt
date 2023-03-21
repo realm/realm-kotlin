@@ -556,7 +556,7 @@ class FunctionsTests {
         runBlocking {
             anonUser.logOut()
         }
-        assertFailsWithMessage<ServiceException>("[Service][Unknown(-1)] expected Authorization header with JWT") {
+        assertFailsWithMessage<ServiceException>("[Service][Unknown(4351)] expected Authorization header with JWT") {
             runBlocking {
                 functions.call(FIRST_ARG_FUNCTION.name, 1, 2, 3)
             }
@@ -567,7 +567,7 @@ class FunctionsTests {
     @Test
     fun callFunction_authorizedOnly() {
         // Not allow for anonymous user
-        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionExecutionError(14)] rule not matched for function \"authorizedOnly\"") {
+        assertFailsWithMessage<FunctionExecutionException>("[Service][FunctionExecutionError(4313)] rule not matched for function \"authorizedOnly\"") {
             runBlocking {
                 functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3)
             }

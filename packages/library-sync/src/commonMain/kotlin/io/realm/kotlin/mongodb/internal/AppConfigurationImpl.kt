@@ -35,9 +35,9 @@ import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
+import io.realm.kotlin.mongodb.HttpLogObfuscator
 
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
@@ -50,7 +50,8 @@ public class AppConfigurationImpl constructor(
     override val syncRootDirectory: String,
     public val log: RealmLog,
     override val appName: String?,
-    override val appVersion: String?
+    override val appVersion: String?,
+    override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
 
     /**
@@ -135,13 +136,14 @@ public class AppConfigurationImpl constructor(
                 framework = RUNTIME,
                 frameworkVersion = RUNTIME_VERSION
             )
-        ).freeze()
+        )
     }
 
     private fun initializeSyncClientConfig(sdkInfo: String?, applicationInfo: String?): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
                 // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)
                 RealmInterop.realm_sync_client_config_set_log_level(
                     syncClientConfig,
                     CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())

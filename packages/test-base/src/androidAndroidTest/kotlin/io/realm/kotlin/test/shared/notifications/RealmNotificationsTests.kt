@@ -25,7 +25,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.InitialRealm
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
-import io.realm.kotlin.test.NotificationTests
+import io.realm.kotlin.test.FlowableTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -46,7 +46,7 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmNotificationsTests : NotificationTests {
+class RealmNotificationsTests : FlowableTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -183,12 +183,6 @@ class RealmNotificationsTests : NotificationTests {
             c1.close()
             c2.close()
         }
-    }
-
-    @Test
-    @Ignore
-    override fun deleteObservable() {
-        // Realms cannot be deleted, so Realm Flows do not need to handle this case
     }
 
     @Test

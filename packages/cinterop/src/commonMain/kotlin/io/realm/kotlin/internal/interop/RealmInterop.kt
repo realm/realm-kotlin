@@ -64,13 +64,12 @@ interface FrozenRealmT : RealmT
 interface RealmObjectT : CapiT
 interface RealmListT : CapiT
 interface RealmSetT : CapiT
+interface RealmMapT : CapiT
 interface RealmResultsT : CapiT
 interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
-interface RealmObjectChangesT : RealmChangesT
-interface RealmCollectionChangesT : RealmChangesT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -83,6 +82,7 @@ typealias FrozenRealmPointer = NativePointer<FrozenRealmT>
 typealias RealmObjectPointer = NativePointer<RealmObjectT>
 typealias RealmListPointer = NativePointer<RealmListT>
 typealias RealmSetPointer = NativePointer<RealmSetT>
+typealias RealmMapPointer = NativePointer<RealmMapT>
 typealias RealmResultsPointer = NativePointer<RealmResultsT>
 typealias RealmQueryPointer = NativePointer<RealmQueryT>
 typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
@@ -370,6 +370,48 @@ expect object RealmInterop {
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
     fun realm_set_is_valid(set: RealmSetPointer): Boolean
 
+    // dictionary
+    fun realm_get_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer
+    fun realm_dictionary_clear(dictionary: RealmMapPointer)
+    fun realm_dictionary_size(dictionary: RealmMapPointer): Long
+    fun realm_dictionary_to_results(dictionary: RealmMapPointer): RealmResultsPointer
+    fun MemAllocator.realm_dictionary_find(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue
+    fun MemAllocator.realm_dictionary_get(
+        dictionary: RealmMapPointer,
+        pos: Int
+    ): Pair<RealmValue, RealmValue>
+    fun MemAllocator.realm_dictionary_insert(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue,
+        value: RealmValue
+    ): Pair<RealmValue, Boolean>
+    fun MemAllocator.realm_dictionary_erase(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Pair<RealmValue, Boolean>
+    fun realm_dictionary_contains_key(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Boolean
+    fun realm_dictionary_contains_value(
+        dictionary: RealmMapPointer,
+        value: RealmValue
+    ): Boolean
+    fun MemAllocator.realm_dictionary_insert_embedded(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue
+    fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
+    fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer?
+
+    fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean
+
     // query
     fun realm_query_parse(
         realm: RealmPointer,
@@ -424,7 +466,7 @@ expect object RealmInterop {
     ): RealmValue
 
     // FIXME OPTIMIZE Get many
-    fun realm_results_get(results: RealmResultsPointer, index: Long): Link
+    fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer
@@ -452,6 +494,10 @@ expect object RealmInterop {
         set: RealmSetPointer,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
+    fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
     fun realm_object_changes_get_modified_properties(
         change: RealmChangesPointer
     ): List<PropertyKey>
@@ -462,6 +508,10 @@ expect object RealmInterop {
     fun <T, R> realm_collection_changes_get_ranges(
         change: RealmChangesPointer,
         builder: CollectionChangeSetBuilder<T, R>
+    )
+    fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
     )
 
     // App
@@ -540,6 +590,12 @@ expect object RealmInterop {
 
     // Sync client config
     fun realm_sync_client_config_new(): RealmSyncClientConfigurationPointer
+
+    fun realm_sync_client_config_set_default_binding_thread_observer(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        appId: String
+    )
+
     fun realm_sync_client_config_set_base_file_path(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String

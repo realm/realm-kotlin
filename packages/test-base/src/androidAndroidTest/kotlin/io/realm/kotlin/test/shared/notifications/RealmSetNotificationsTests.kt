@@ -19,20 +19,22 @@ package io.realm.kotlin.test.shared.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.set.RealmSetContainer
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedSet
-import io.realm.kotlin.test.NotificationTests
+import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES2
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES3
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -42,8 +44,9 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.seconds
 
-class RealmSetNotificationsTests : NotificationTests {
+class RealmSetNotificationsTests : RealmEntityNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -169,9 +172,7 @@ class RealmSetNotificationsTests : NotificationTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            // Freeze values since native complains if we reference a package-level defined variable
-            // inside a write block
-            val values = SET_OBJECT_VALUES.freeze()
+            val values = SET_OBJECT_VALUES
             val container = realm.write {
                 copyToRealm(RealmSetContainer())
             }
@@ -199,7 +200,7 @@ class RealmSetNotificationsTests : NotificationTests {
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
-                queriedContainer!!.objectSetField.addAll(values)
+                queriedContainer!!.objectSetField.addAll(SET_OBJECT_VALUES)
             }
             assertEquals(SET_OBJECT_VALUES.size, channel1.receive().set.size)
             assertEquals(SET_OBJECT_VALUES.size, channel2.receive().set.size)
@@ -225,11 +226,11 @@ class RealmSetNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun deleteObservable() {
+    override fun deleteEntity() {
         runBlocking {
             // Freeze values since native complains if we reference a package-level defined variable
             // inside a write block
-            val values = SET_OBJECT_VALUES.freeze()
+            val values = SET_OBJECT_VALUES
             val channel1 = Channel<SetChange<*>>(capacity = 1)
             val channel2 = Channel<Boolean>(capacity = 1)
             val container = realm.write {
@@ -272,6 +273,38 @@ class RealmSetNotificationsTests : NotificationTests {
 
             observer.cancel()
             channel1.close()
+        }
+    }
+
+    @Test
+    override fun asFlowOnDeleteEntity() {
+        runBlocking {
+            val container = realm.write { copyToRealm(RealmSetContainer()) }
+            val mutex = Mutex(true)
+            val flow = async {
+                container.stringSetField.asFlow().first {
+                    mutex.unlock()
+                    it is DeletedSet<*>
+                }
+            }
+
+            // Await that flow is actually running
+            mutex.lock()
+            // And delete containing entity
+            realm.write { delete(findLatest(container)!!) }
+
+            // Await that notifier has signalled the deletion so we are certain that the entity
+            // has been deleted
+            withTimeout(10.seconds) {
+                flow.await()
+            }
+
+            // Verify that a flow on the deleted entity will signal a deletion and complete gracefully
+            withTimeout(10.seconds) {
+                container.stringSetField.asFlow().collect {
+                    assertIs<DeletedSet<*>>(it)
+                }
+            }
         }
     }
 

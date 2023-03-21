@@ -245,6 +245,22 @@ std::string rlm_stdstr(realm_string_t val)
     };
 }
 
+// Thread Observer callback
+%typemap(jstype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
+%typemap(jtype) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "Object" ;
+%typemap(javain) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "$javainput";
+%typemap(jni) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) "jobject";
+%typemap(in) (realm_on_object_store_thread_callback_t on_thread_create, realm_on_object_store_thread_callback_t on_thread_destroy, realm_on_object_store_error_callback_t on_error, void* user_data, realm_free_userdata_func_t free_userdata) {
+    auto jenv = get_env(true);
+    $1 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_created);
+    $2 = reinterpret_cast<realm_on_object_store_thread_callback_t>(realm_sync_thread_destroyed);
+    $3 = reinterpret_cast<realm_on_object_store_error_callback_t>(realm_sync_thread_error);
+    $4 = static_cast<jobject>(jenv->NewGlobalRef($input));
+    $5 = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
+}
+
 // String handling
 typedef jstring realm_string_t;
 // Typemap used for passing realm_string_t into the C-API in situations where the string buffer
@@ -283,8 +299,9 @@ return $jnicall;
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
-               realm_set_t*, realm_async_open_task_t*,
-               realm_sync_session_connection_state_notification_token_t* };
+               realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
+               realm_sync_session_connection_state_notification_token_t*,
+               realm_dictionary_changes_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -339,7 +356,7 @@ bool realm_object_is_valid(const realm_object_t*);
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
                       bool* erased, bool* out_erased, bool* did_refresh, bool* did_run,
-                      bool* out_collection_was_cleared};
+                      bool* found, bool* out_collection_was_cleared };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -367,7 +384,7 @@ bool realm_object_is_valid(const realm_object_t*);
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};
 %apply void** {realm_object_t**, realm_list_t**, size_t*, realm_class_key_t*,
-               realm_property_key_t*, realm_user_t**, realm_set_t**};
+               realm_property_key_t*, realm_user_t**, realm_set_t**, realm_results_t**};
 
 %apply uint32_t[] {realm_class_key_t*};
 
@@ -392,16 +409,9 @@ bool realm_object_is_valid(const realm_object_t*);
 %ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
 %ignore "_realm_set_from_native_move"; // Not implemented in the C-API
 %ignore "realm_set_assign"; // Not implemented in the C-API
+%ignore "realm_dictionary_assign"; // Not implemented in the C-API
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
-%ignore "realm_get_dictionary";
-%ignore "realm_dictionary_size";
-%ignore "realm_dictionary_get";
-%ignore "realm_dictionary_insert";
-%ignore "realm_dictionary_erase";
-%ignore "realm_dictionary_clear";
-%ignore "realm_dictionary_assign";
-%ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge
@@ -419,5 +429,6 @@ bool realm_object_is_valid(const realm_object_t*);
 #define __attribute__(x)
 
 %include "realm.h"
+%include "realm/error_codes.h"
 %include "src/main/jni/realm_api_helpers.h"
 

@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.mongodb.exceptions
 
+import io.realm.kotlin.internal.interop.CodeDescription
+
 /**
  * This exception is considered the top-level or "catch-all" for problems related to HTTP requests
  * made towards App Services. This covers both HTTP transport problems, problems passing JSON
@@ -29,7 +31,10 @@ package io.realm.kotlin.mongodb.exceptions
  * @see BadRequestException
  * @see AuthException
  */
-public open class ServiceException internal constructor(message: String) : AppException(message)
+public open class ServiceException internal constructor(
+    message: String,
+    internal val errorCode: CodeDescription? = null
+) : AppException(message)
 
 /**
  * Exception indicating that something went wrong with the underlying HTTP request to
@@ -115,7 +120,6 @@ public class UserAlreadyExistsException internal constructor(message: String) :
  */
 public class InvalidCredentialsException internal constructor(message: String) :
     AuthException(message)
-
 /**
  * Thrown when attempting to link credentials that are not supported.
  *

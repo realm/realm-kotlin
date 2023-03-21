@@ -42,3 +42,21 @@ abstract class CollectionChangeSetBuilder<T, R> {
 
     abstract fun build(): T
 }
+
+abstract class MapChangeSetBuilder<T, K> {
+
+    lateinit var deletedKeys: Array<K>
+    lateinit var insertedKeys: Array<K>
+    lateinit var modifiedKeys: Array<K>
+
+    abstract fun initDeletions(keys: Array<String>)
+    abstract fun initInsertions(keys: Array<String>)
+    abstract fun initModifications(keys: Array<String>)
+    abstract fun build(): T
+
+    fun isEmpty(): Boolean = insertedKeys.isEmpty() &&
+        modifiedKeys.isEmpty() &&
+        deletedKeys.isEmpty()
+}
+
+typealias DictionaryChangeSetBuilder<T> = MapChangeSetBuilder<T, String>
