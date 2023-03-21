@@ -93,4 +93,6 @@ import io.realm.kotlin.exceptions.RealmException
  * @see ServiceException
  * @see SyncException
  */
-public open class AppException internal constructor(message: String) : RealmException(message)
+public open class AppException internal constructor(
+    message: String,
+) : RealmException(message)

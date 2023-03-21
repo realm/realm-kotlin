@@ -16,14 +16,25 @@
 
 package io.realm.kotlin.internal.interop
 
-actual object CoreErrorConverter {
-    @Volatile
-    var converter: ((RealmCoreException) -> Throwable)? = null
-    actual fun initialize(coreErrorConverter: (RealmCoreException) -> Throwable) {
-        converter = coreErrorConverter
-    }
+/**
+ * Wrapper for C-API `realm_app_error_category`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2522
+ */
+expect enum class ErrorCategory : CodeDescription {
+    RLM_ERR_CAT_LOGIC,
+    RLM_ERR_CAT_RUNTIME,
+    RLM_ERR_CAT_INVALID_ARG,
+    RLM_ERR_CAT_FILE_ACCESS,
+    RLM_ERR_CAT_SYSTEM_ERROR,
+    RLM_ERR_CAT_APP_ERROR,
+    RLM_ERR_CAT_CLIENT_ERROR,
+    RLM_ERR_CAT_JSON_ERROR,
+    RLM_ERR_CAT_SERVICE_ERROR,
+    RLM_ERR_CAT_HTTP_ERROR,
+    RLM_ERR_CAT_CUSTOM_ERROR,
+    RLM_ERR_CAT_WEBSOCKET_ERROR;
 
-    actual fun convertCoreError(coreError: RealmCoreException): Throwable {
-        return converter!!.invoke(coreError)
+    companion object {
+        internal fun of(nativeValue: Int): ErrorCategory?
     }
 }

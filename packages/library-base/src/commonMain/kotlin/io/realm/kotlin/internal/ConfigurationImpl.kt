@@ -37,7 +37,6 @@ import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
@@ -140,7 +139,7 @@ public open class ConfigurationImpl constructor(
                 override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
                     return callback.shouldCompact(totalBytes, usedBytes)
                 }
-            }.freeze()
+            }
         }
 
         // We need to prepare the the migration callback so it can be frozen for Kotlin Native, but
@@ -209,7 +208,7 @@ public open class ConfigurationImpl constructor(
             )
 
             migrationCallback?.let {
-                RealmInterop.realm_config_set_migration_function(nativeConfig, it.freeze())
+                RealmInterop.realm_config_set_migration_function(nativeConfig, it)
             }
 
             userEncryptionKey?.let { key: ByteArray ->

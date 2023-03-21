@@ -15,7 +15,6 @@
  */
 package io.realm.kotlin
 
-import io.realm.kotlin.internal.CoreExceptionConverter
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.Constants
@@ -99,14 +98,7 @@ public interface Realm : TypedRealm {
          */
         public fun deleteRealm(configuration: Configuration) {
             if (!fileExists(configuration.path)) return
-            try {
-                RealmInterop.realm_delete_files(configuration.path)
-            } catch (exception: Throwable) {
-                throw CoreExceptionConverter.convertToPublicException(
-                    exception,
-                    "Cannot delete Realm located at '${configuration.path}', did you close it before calling 'deleteRealm'?"
-                )
-            }
+            RealmInterop.realm_delete_files(configuration.path)
         }
     }
 

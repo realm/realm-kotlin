@@ -37,9 +37,8 @@ class InstrumentedTest {
 
     @Test
     fun test() {
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-
-        val repositories = setOf(JavaRepository(appContext), KotlinRepository())
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as MainApplication
+        val repositories = setOf(appContext.java, appContext.kotlin)
         for (repository in repositories) {
             assertTrue(repository.count > 0)
         }

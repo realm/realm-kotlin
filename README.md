@@ -39,6 +39,9 @@ Installation differs slightly depending on the type of project and whether or no
 * [Android](https://www.mongodb.com/docs/realm/sdk/kotlin/install/android/#installation)
 * [Kotlin Multiplatform](https://www.mongodb.com/docs/realm/sdk/kotlin/install/kotlin-multiplatform/#installation)
 
+Also pay attention to restrictions on which versions of Kotlin and other dependencies that are supported. You can read 
+more in the [version compatibility matrix](#version-compatibility-matrix).
+
 ## Define model
 
 Start writing your database logic by first defining your model.
@@ -313,6 +316,38 @@ configurations.all {
 ```
 
 See [Config.kt](buildSrc/src/main/kotlin/Config.kt#L20txt) for the latest version number.
+
+# Version Compatibility Matrix
+
+With Kotlin Multiplatform [still in Beta](https://kotlinlang.org/docs/components-stability.html#current-stability-of-kotlin-components) 
+and the Compiler Plugin APIs being experimental, there might be restrictions on what versions of Kotlin the Realm Kotlin
+SDK supports. In the matrix below, you will find the minimum supported version for the dependencies of each Realm release.
+
+| Realm Version | Requirements                                                                                                                                                                                             |
+|---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.6.1         | <ul><li>Kotlin 1.7.20+.</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
+| 1.6.0         | <ul><li>Kotlin 1.7.20 - 1.7.21.</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul> |
+| 1.5.2         | <ul><li>Kotlin 1.7.20 - 1.7.21.</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul> |
+| 1.5.1         | <ul><li>Kotlin 1.7.20 - 1.7.21.</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul> |
+| 1.5.0         | <ul><li>Kotlin 1.7.20 - 1.7.21.</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul> |
+| 1.4.0         | <ul><li>Kotlin 1.7.20 - 1.7.21.</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul> |
+| 1.3.0         | <ul><li>Kotlin 1.6.10 - 1.7.10.</li><li>AtomicFu 0.17.0+.</li><li>Ktor 1.6.8.</li><li>Coroutines 1.6.0-native-mt.</li><li>Gradle 6.1.1 - 7.6.1.</li></ul>                                |
+| 1.2.0         | <ul><li>Kotlin 1.6.10 - 1.7.10.</li><li>AtomicFu 0.17.0+.</li><li>Ktor 1.6.8.</li><li>Coroutines 1.6.0-native-mt.</li><li>Gradle 6.1.1 - 7.6.1.</li></ul>                                |
+| 1.1.0         | <ul><li>Kotlin 1.6.10 - 1.7.10.</li><li>AtomicFu 0.17.0+.</li><li>Ktor 1.6.8.</li><li>Coroutines 1.6.0-native-mt.</li><li>Gradle 6.1.1 - 7.6.1.</li></ul>                                |
+| 1.0.2         | <ul><li>Kotlin 1.6.10 - 1.7.10.</li><li>AtomicFu 0.17.0+.</li><li>Ktor 1.6.8.</li><li>Coroutines 1.6.0-native-mt.</li><li>Gradle 6.1.1 - 7.6.1.</li></ul>                                |
+| 1.0.1         | <ul><li>Kotlin 1.6.10 - 1.7.10.</li><li>AtomicFu 0.17.0+.</li><li>Ktor 1.6.8.</li><li>Coroutines 1.6.0-native-mt.</li><li>Gradle 6.1.1 - 7.6.1.</li></ul>                                |
+| 1.0.0         | <ul><li>Kotlin 1.6.10 - 1.7.10.</li><li>AtomicFu 0.17.0+.</li><li>Ktor 1.6.8.</li><li>Coroutines 1.6.0-native-mt.</li><li>Gradle 6.1.1 - 7.6.1.</li></ul>                                |
+
+While we strive to be compatible with other plugins and libraries like Android Gradle Plugin, Jetpack Compose
+and Compose Multiplatform, these plugins (and others) have their own version restrictions, so if you are running into 
+build errors this would be the first thing to check:
+
+You can find Kotlin version requirements for these libraries and plugins here:
+
+* [Android Gradle Plugin](https://developer.android.com/studio/releases/gradle-plugin)
+* [Jetpack Compose](https://developer.android.com/jetpack/androidx/releases/compose-kotlin)
+* [Compose Multiplatform](https://github.com/JetBrains/compose-jb/blob/master/VERSIONING.md)
+
 
 # Kotlin Memory Model and Coroutine compatibility
 

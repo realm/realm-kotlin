@@ -147,7 +147,7 @@ class DynamicMutableRealmTests {
                 "EmbeddedParent",
                 "id" to "PARENT",
                 "child" to child,
-                "children" to realmListOf(child, child)
+                "childrenList" to realmListOf(child, child)
             )
         )
 
@@ -161,7 +161,7 @@ class DynamicMutableRealmTests {
                     assertEquals("SUBTREE_PARENT", getNullableValue("id"))
                 }
             }
-            parent.getObjectList("children").forEach { child ->
+            parent.getObjectList("childrenList").forEach { child ->
                 assertEquals("CHILD", child.getNullableValue("id"))
                 child.getObject("innerChild").let { innerChild ->
                     assertEquals("INNER", innerChild!!.getNullableValue("id"))
@@ -266,7 +266,7 @@ class DynamicMutableRealmTests {
             "stringField" to "INITIAL_VALUE",
             "nullableObject" to child
         )
-        assertFailsWithMessage<IllegalArgumentException>("Object with this primary key already exists") {
+        assertFailsWithMessage<IllegalArgumentException>("Attempting to create an object of type 'SampleWithPrimaryKey' with an existing primary key value '1'") {
             dynamicMutableRealm.copyToRealm(parent)
         }
         dynamicMutableRealm.query("SampleWithPrimaryKey").find().none()
@@ -307,7 +307,7 @@ class DynamicMutableRealmTests {
     @Test
     fun copyToRealm_throwsOnNullPrimaryKey() {
         val obj = DynamicMutableRealmObject.create("PrimaryKeyString", "primaryKey" to null)
-        assertFailsWithMessage<IllegalArgumentException>("Property 'primaryKey' of class 'PrimaryKeyString' cannot be NULL") {
+        assertFailsWithMessage<IllegalArgumentException>("Primary key for class PrimaryKeyString cannot be NULL") {
             dynamicMutableRealm.copyToRealm(obj)
         }
     }
@@ -315,7 +315,7 @@ class DynamicMutableRealmTests {
     @Test
     fun copyToRealm_throwsWithWrongPrimaryKeyType() {
         val obj = DynamicMutableRealmObject.create("PrimaryKeyString", mapOf("primaryKey" to 42))
-        assertFailsWithMessage<IllegalArgumentException>("Wrong primary key type for 'PrimaryKeyString'") {
+        assertFailsWithMessage<IllegalArgumentException>("Wrong primary key type for class PrimaryKeyString") {
             dynamicMutableRealm.copyToRealm(obj)
         }
     }
@@ -344,7 +344,7 @@ class DynamicMutableRealmTests {
     fun copyToRealm_embeddedRealmObjectList() {
         val obj = DynamicMutableRealmObject.create(
             "EmbeddedParent",
-            "children" to realmListOf(
+            "childrenList" to realmListOf(
                 DynamicMutableRealmObject.create(
                     "EmbeddedChild",
                     "id" to "child1"
@@ -354,7 +354,7 @@ class DynamicMutableRealmTests {
         )
         dynamicMutableRealm.copyToRealm(obj)
         dynamicMutableRealm.query("EmbeddedParent").find().single().run {
-            getObjectList("children").run {
+            getObjectList("childrenList").run {
                 assertEquals(2, size)
                 assertEquals("child1", get(0).getNullableValue("id"))
                 assertEquals("child2", get(1).getNullableValue("id"))
@@ -378,7 +378,7 @@ class DynamicMutableRealmTests {
             "EmbeddedParentWithPrimaryKey",
             "id" to 1L,
             "child" to child,
-            "children" to realmListOf(child, child)
+            "childrenList" to realmListOf(child, child)
         )
         dynamicMutableRealm.copyToRealm(parent)
 
@@ -389,7 +389,7 @@ class DynamicMutableRealmTests {
                     assertEquals("INNER", innerChild!!.getNullableValue("id"))
                 }
             }
-            parent.getObjectList("children").forEach { child ->
+            parent.getObjectList("childrenList").forEach { child ->
                 assertEquals("CHILD", child.getNullableValue("id"))
                 child.getObject("innerChild").let { innerChild ->
                     assertEquals("INNER", innerChild!!.getNullableValue("id"))
@@ -415,7 +415,7 @@ class DynamicMutableRealmTests {
                     assertEquals("UPDATED", innerChild!!.getNullableValue("id"))
                 }
             }
-            parent.getObjectList("children").forEach { child ->
+            parent.getObjectList("childrenList").forEach { child ->
                 assertEquals("UPDATED", child.getNullableValue("id"))
                 child.getObject("innerChild").let { innerChild ->
                     assertEquals("UPDATED", innerChild!!.getNullableValue("id"))
@@ -653,7 +653,7 @@ class DynamicMutableRealmTests {
                 copyToRealm(
                     DynamicMutableRealmObject.create(
                         "EmbeddedParent",
-                        "children" to realmListOf(
+                        "childrenList" to realmListOf(
                             DynamicMutableRealmObject.create(
                                 "EmbeddedChild",
                                 "id" to "child$i"
@@ -686,7 +686,7 @@ class DynamicMutableRealmTests {
                 copyToRealm(
                     DynamicMutableRealmObject.create(
                         "EmbeddedParent",
-                        "children" to realmListOf(
+                        "childrenList" to realmListOf(
                             DynamicMutableRealmObject.create(
                                 "EmbeddedChild",
                                 "id" to "child$i"

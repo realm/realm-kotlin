@@ -32,7 +32,6 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 class ApiKeyAuthTests {
     private lateinit var app: TestApp
@@ -73,7 +72,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun create_throwsWithInvalidName() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][InvalidParameter(6)] can only contain ASCII letters, numbers, underscores, and hyphens.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][InvalidParameter(4305)] can only contain ASCII letters, numbers, underscores, and hyphens.") {
             runBlocking {
                 provider.create("%s")
             }
@@ -82,7 +81,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun create_throwsWithNoName() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][Unknown(-1)] 'name' is a required string.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][Unknown(4351)] 'name' is a required string.") {
             runBlocking {
                 provider.create("")
             }
@@ -160,7 +159,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun enable_nonExistingKeyThrows() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(4334)] API key not found.") {
             runBlocking {
                 provider.enable(ObjectId.create())
             }
@@ -185,7 +184,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun disable_nonExistingKeyThrows() {
-        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(35)] API key not found.") {
+        assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(4334)] API key not found.") {
             runBlocking {
                 provider.disable(ObjectId.create())
             }
@@ -196,8 +195,10 @@ class ApiKeyAuthTests {
     fun callMethodWithLoggedOutUser() {
         runBlocking {
             user.logOut()
-            for (method in Method.values()) {
-                try {
+        }
+        for (method in Method.values()) {
+            assertFailsWithMessage<ServiceException>("[Service][Unknown(4351)] expected Authorization header with JWT (Bearer schema).") {
+                runBlocking {
                     when (method) {
                         Method.CREATE -> provider.create("name")
                         Method.FETCH_SINGLE -> provider.fetch(ObjectId.create())
@@ -206,9 +207,6 @@ class ApiKeyAuthTests {
                         Method.ENABLE -> provider.enable(ObjectId.create())
                         Method.DISABLE -> provider.disable(ObjectId.create())
                     }
-                    fail("$method should have thrown an exception")
-                } catch (error: ServiceException) {
-                    assertEquals("[Service][Unknown(-1)] expected Authorization header with JWT (Bearer schema).", error.message)
                 }
             }
         }

@@ -17,9 +17,10 @@
 package io.realm.kotlin.internal.util
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 
 // Conventional try-with-resource wrapper for channels
 public inline fun <T : Channel<*>, R> T.use(block: (channel: T) -> R): R {
@@ -31,9 +32,9 @@ public inline fun <T : Channel<*>, R> T.use(block: (channel: T) -> R): R {
 }
 
 // Public to be accessible from sync progress listeners
-public inline fun <T> SendChannel<T>.trySendWithBufferOverflowCheck(value: T): CancellationException? =
-    // We should cancel scope
-    trySend(value).checkForBufferOverFlow()
+public inline fun <T> ProducerScope<T>.trySendWithBufferOverflowCheck(value: T) {
+    trySend(value).checkForBufferOverFlow()?.let { cancel(it) }
+}
 
 public inline fun <T> ChannelResult<T>.checkForBufferOverFlow(): CancellationException? =
     if (!isClosed && isFailure) {

@@ -16,18 +16,23 @@
 
 package io.realm.kotlin.entities.embedded
 
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
 
 // Convenience set of classes to ease inclusion of classes referenced by this top level model node
-val embeddedSchemaWithPrimaryKey = setOf(EmbeddedParentWithPrimaryKey::class, EmbeddedChildWithPrimaryKeyParent::class)
+val embeddedSchemaWithPrimaryKey =
+    setOf(EmbeddedParentWithPrimaryKey::class, EmbeddedChildWithPrimaryKeyParent::class)
 
 class EmbeddedParentWithPrimaryKey : RealmObject {
     @PrimaryKey
     var id: Int? = null
     var name: String? = "Realm"
     var child: EmbeddedChildWithPrimaryKeyParent? = null
-    var children: RealmList<EmbeddedChildWithPrimaryKeyParent> = realmListOf()
+    var childrenList: RealmList<EmbeddedChildWithPrimaryKeyParent> = realmListOf()
+    var childrenDictionary: RealmDictionary<EmbeddedChildWithPrimaryKeyParent?> =
+        realmDictionaryOf()
 }

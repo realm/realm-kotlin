@@ -17,8 +17,13 @@
 package io.realm.kotlin.query
 
 import io.realm.kotlin.Deleteable
+import io.realm.kotlin.MutableRealm
+import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 

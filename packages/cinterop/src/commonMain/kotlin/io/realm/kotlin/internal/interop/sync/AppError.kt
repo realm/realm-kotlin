@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CodeDescription
+import io.realm.kotlin.internal.interop.ErrorCategory
+import io.realm.kotlin.internal.interop.ErrorCode
+import io.realm.kotlin.internal.interop.UnknownCodeDescription
 import kotlin.jvm.JvmStatic
 
 /**
@@ -23,7 +27,7 @@ import kotlin.jvm.JvmStatic
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2638
  */
 data class AppError internal constructor(
-    val category: CodeDescription,
+    val categoryFlags: Int,
     val code: CodeDescription,
     val httpStatusCode: Int, // If the category is HTTP, this is equal to errorCode
     val message: String?,
@@ -32,25 +36,16 @@ data class AppError internal constructor(
     companion object {
         @JvmStatic
         fun newInstance(
-            categoryCode: Int,
+            categoryFlags: Int,
             errorCode: Int,
             httpStatusCode: Int,
             message: String?,
             linkToServerLog: String?
         ): AppError {
-            val category = AppErrorCategory.of(categoryCode) ?: UnknownCodeDescription(categoryCode)
-
-            val code: CodeDescription = when (category) {
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_CLIENT -> ClientErrorCode.of(errorCode)
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_JSON -> JsonErrorCode.of(errorCode)
-                AppErrorCategory.RLM_APP_ERROR_CATEGORY_SERVICE -> ServiceErrorCode.of(errorCode)
-                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_CUSTOM, // no mapping available
-                // AppErrorCategory.RLM_APP_ERROR_CATEGORY_HTTP, // no mapping available
-                else -> null
-            } ?: UnknownCodeDescription(errorCode)
+            val code = ErrorCode.of(errorCode) ?: UnknownCodeDescription(errorCode)
 
             return AppError(
-                category,
+                categoryFlags,
                 code,
                 httpStatusCode,
                 message,
@@ -58,4 +53,14 @@ data class AppError internal constructor(
             )
         }
     }
+
+    /**
+     * This method allows to check whether a error categories value contains a category or not.
+     *
+     * Core defines app categories as flag based values.
+     *
+     * Any App category is also a [ErrorCategory.RLM_ERR_CAT_RUNTIME] and [ErrorCategory.RLM_ERR_CAT_APP_ERROR].
+     */
+    operator fun contains(flag: ErrorCategory): Boolean =
+        this.categoryFlags and flag.nativeValue != 0
 }
