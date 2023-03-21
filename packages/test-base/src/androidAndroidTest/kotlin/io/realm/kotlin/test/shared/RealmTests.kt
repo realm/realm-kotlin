@@ -25,7 +25,6 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
-import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
