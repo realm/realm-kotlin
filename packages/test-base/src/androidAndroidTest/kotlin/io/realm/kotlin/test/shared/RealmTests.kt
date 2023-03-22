@@ -25,6 +25,7 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
+import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -518,7 +519,7 @@ class RealmTests {
         val anotherRealm = Realm.open(configA)
 
         // Deleting it without having closed it should fail.
-        assertFailsWithMessage<IllegalStateException>("Cannot delete files of an open Realm: '$tempDirA/anotherRealm.realm' is still in use") {
+        assertFailsWithMessage<IllegalStateException>("Cannot delete files of an open Realm: '$tempDirA${PATH_SEPARATOR}anotherRealm.realm' is still in use") {
             Realm.deleteRealm(configA)
         }
 
