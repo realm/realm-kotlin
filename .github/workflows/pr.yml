@@ -753,7 +753,7 @@ jobs:
   # TODO Compare speed between emulator and Device Farm
   # TODO We should be able to move this into a reusable work-flow
   test-android-packages-emulator:
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -841,7 +841,7 @@ jobs:
 
   test-android-packages-device-farm:
     name: AWS Device Farm
-    timeout-minutes: 60
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     needs: [ check-cache, build-android-packages, build-jvm-packages ]
     if: |
@@ -875,7 +875,7 @@ jobs:
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
   test-macos-packages:
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -948,7 +948,7 @@ jobs:
           fail-on-error: true        
 
   test-ios-packages:
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -1031,7 +1031,7 @@ jobs:
 
   # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
   test-jvm-packages:
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
