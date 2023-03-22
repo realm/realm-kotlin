@@ -22,10 +22,10 @@ import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.interop.synchronized
 import io.realm.kotlin.internal.platform.WeakReference
+import io.realm.kotlin.internal.platform.runBlocking
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 /**
