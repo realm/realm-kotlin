@@ -32,7 +32,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
@@ -309,6 +311,22 @@ class AppConfigurationTests {
         }
     }
 
+    @Test
+    fun httpLogObfuscator_null() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .httpLogObfuscator(null)
+            .build()
+        assertNull(config.httpLogObfuscator)
+    }
+
+    @Suppress("invisible_reference", "invisible_member")
+    @Test
+    fun defaultLoginInfoObfuscator() {
+        val config = AppConfiguration.Builder(APP_ID).build()
+        assertNotNull(config.httpLogObfuscator)
+        assertTrue(config.httpLogObfuscator is io.realm.kotlin.mongodb.internal.LogObfuscatorImpl)
+    }
+
 //
 //    @Test
 //    fun requestTimeout() {
@@ -349,21 +367,6 @@ class AppConfigurationTests {
 //        assertEquals(configCodecRegistry, config.defaultCodecRegistry)
 //    }
 //
-//    @Test
-//    fun httpLogObfuscator_null() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .httpLogObfuscator(TestHelper.getNull())
-//            .build()
-//        assertNull(config.httpLogObfuscator)
-//    }
-//
-//    @Test
-//    fun defaultLoginInfoObfuscator() {
-//        val config = AppConfiguration.Builder(APP_ID).build()
-//
-//        val defaultHttpLogObfuscator = HttpLogObfuscator(LOGIN_FEATURE, AppConfiguration.loginObfuscators)
-//        assertEquals(defaultHttpLogObfuscator, config.httpLogObfuscator)
-//    }
 //    // Check that custom headers and auth header renames are correctly used for HTTP requests
 //    // performed from Java.
 //    @Test

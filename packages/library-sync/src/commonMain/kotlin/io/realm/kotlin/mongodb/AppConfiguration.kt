@@ -35,6 +35,7 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
+import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
 
@@ -67,6 +68,12 @@ public interface AppConfiguration {
      * @see [AppConfiguration.Builder.appVersion]
      */
     public val appVersion: String?
+
+    /**
+     * The configured [HttpLogObfuscator] for this app. If this property returns `null` no
+     * obfuscator is being used.
+     */
+    public val httpLogObfuscator: HttpLogObfuscator?
 
     public companion object {
         /**
@@ -110,6 +117,7 @@ public interface AppConfiguration {
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
+        private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -230,6 +238,20 @@ public interface AppConfiguration {
         }
 
         /**
+         * Sets the a [HttpLogObfuscator] used to keep sensitive information in HTTP requests from
+         * being displayed in the log. Logs containing tokens, passwords or custom function
+         * arguments and the result of computing these will be obfuscated by default. Logs will not
+         * be obfuscated if the value is set to `null`.
+         *
+         * @param httpLogObfuscator the HTTP log obfuscator to be used or `null` if obfuscation
+         * should be disabled.
+         * @return the Builder instance used.
+         */
+        public fun httpLogObfuscator(httpLogObfuscator: HttpLogObfuscator?): Builder = apply {
+            this.httpLogObfuscator = httpLogObfuscator
+        }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -272,17 +294,23 @@ public interface AppConfiguration {
             }
 
             val networkTransport: () -> NetworkTransport = {
+                val logger: Logger? = if (logLevel <= LogLevel.DEBUG) {
+                    object : Logger {
+                        override fun log(message: String) {
+                            val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
+                            appLogger.debug(obfuscatedMessage ?: message)
+                        }
+                    }
+                } else {
+                    null
+                }
                 networkTransport ?: KtorNetworkTransport(
                     // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                     //  constant in AppConfiguration.Companion
                     //  https://github.com/realm/realm-kotlin/issues/408
                     timeoutMs = 15000,
                     dispatcherFactory = appNetworkDispatcherFactory,
-                    logger = object : Logger {
-                        override fun log(message: String) {
-                            appLogger.debug(message)
-                        }
-                    }
+                    logger = logger
                 )
             }
 
@@ -297,7 +325,8 @@ public interface AppConfiguration {
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger,
                 appName = appName,
-                appVersion = appVersion
+                appVersion = appVersion,
+                httpLogObfuscator = httpLogObfuscator
             )
         }
     }
