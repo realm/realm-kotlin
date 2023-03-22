@@ -273,7 +273,7 @@ public:
     }
 
     void notify() {
-        auto jenv = get_env(true);
+        auto jenv = get_env(true, true, "core-notifier");
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
                              reinterpret_cast<jlong>(m_scheduler));

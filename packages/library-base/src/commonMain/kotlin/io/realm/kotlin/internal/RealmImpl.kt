@@ -76,7 +76,7 @@ public class RealmImpl private constructor(
     }
     private val notifier =
         SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
-    internal val writer =
+    private val writer =
         SuspendableWriter(this, writeDispatcherHolder.dispatcher)
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
