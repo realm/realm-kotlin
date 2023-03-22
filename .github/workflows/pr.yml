@@ -802,6 +802,7 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       # TODO Can we read api level from Config.kt
+      # TODO This action does not support using `\` to split multiline scripts.
       - name: Run Integration Tests
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -817,14 +818,7 @@ jobs:
           script: |
             adb logcat -c
             adb logcat > logcat.txt &
-            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck \
-              -PincludeSdkModules=false \
-              -PsyncTestUrl=https://realm-qa.mongodb.com \
-              -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }} \
-              -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
-              -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
-              -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }} \
-              -info --stacktrace --no-daemon
+            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck -PincludeSdkModules=false -PsyncTestUrl=https://realm-qa.mongodb.com -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }} -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }} -info --stacktrace --no-daemon
 
       - name: Archive LogCat data
         uses: actions/upload-artifact@v3
