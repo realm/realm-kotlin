@@ -5,10 +5,8 @@ on:
     - '**.md'
 env:
   REALM_DISABLE_ANALYTICS: true
-  # CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
-  # CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
-  CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
-  CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
+  CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
+  CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
   RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
   REALM_QA_URL: https://realm-qa.mongodb.com
   ATLAS_QA_URL: https://cloud-qa.mongodb.com
