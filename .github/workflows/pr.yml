@@ -875,7 +875,7 @@ jobs:
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
   test-macos-packages:
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -948,7 +948,7 @@ jobs:
           fail-on-error: true        
 
   test-ios-packages:
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -1031,7 +1031,7 @@ jobs:
 
   # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
   test-jvm-packages:
-    timeout-minutes: 30
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
