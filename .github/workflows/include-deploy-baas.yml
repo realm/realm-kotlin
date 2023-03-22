@@ -42,4 +42,4 @@ jobs:
         atlasUrl: ${{ inputs.AtlasBaseUrl}}
         apiKey: ${{ secrets.AtlasPublicKey}}
         privateApiKey: ${{ secrets.AtlasPrivateKey }}
-        clusterSize: M5
+        clusterSize: M20
