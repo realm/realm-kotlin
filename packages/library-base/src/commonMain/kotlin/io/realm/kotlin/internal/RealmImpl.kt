@@ -22,11 +22,12 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.SynchronizableObject
+import io.realm.kotlin.internal.interop.synchronized
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.DispatcherHolder
-import io.realm.kotlin.internal.util.Lock
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.RealmChange
@@ -36,7 +37,6 @@ import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -85,7 +85,7 @@ public class RealmImpl private constructor(
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private var _realmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
-    private val realmReferenceLock = Lock()
+    private val realmReferenceLock = SynchronizableObject()
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.

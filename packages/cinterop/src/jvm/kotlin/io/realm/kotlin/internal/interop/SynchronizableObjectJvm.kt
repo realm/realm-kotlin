@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.util
+package io.realm.kotlin.internal.interop
 
-import kotlinx.atomicfu.locks.SynchronizedObject
+actual typealias SynchronizableObject = Any
 
-/**
- * A __synchronizable__ object. See [SynchronizedObject] for details.
- */
-public class Lock : SynchronizedObject()
+actual inline fun <R> synchronized(lock: SynchronizableObject, block: () -> R): R =
+    kotlin.synchronized(lock) { block() }

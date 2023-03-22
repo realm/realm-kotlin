@@ -19,11 +19,11 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
+import io.realm.kotlin.internal.interop.SynchronizableObject
+import io.realm.kotlin.internal.interop.synchronized
 import io.realm.kotlin.internal.platform.WeakReference
-import io.realm.kotlin.internal.util.Lock
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
-import kotlinx.atomicfu.locks.synchronized
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -74,7 +74,7 @@ internal abstract class LiveRealm(
      * of the [_snapshot] when obtained by other threads with the purpose of issuing other
      * object, query, etc. references.
      */
-    private val snapshotLock = Lock()
+    private val snapshotLock = SynchronizableObject()
 
     /**
      * Version of the internal frozen snapshot reference that points to the most reason frozen
