@@ -27,11 +27,11 @@ import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import org.mongodb.kbson.BsonNull
-import java.util.concurrent.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
