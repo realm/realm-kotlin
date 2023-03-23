@@ -160,7 +160,7 @@ internal class GenericRegexPatternReplacer(
 
     override fun findAndReplace(input: String): String {
         return if (
-            input.contains("RESPONSE: 200 OK") &&
+            input.contains("RESPONSE: 200") &&
             input.contains("access_token") &&
             input.contains("refresh_token")
         ) {
@@ -186,7 +186,7 @@ internal object CustomFunctionPatternReplacer : LogReplacer {
         val (pattern, replacement) = when {
             input.contains("REQUEST: ") ->
                 """("arguments"):\[.*]""".toRegex() to """"arguments":[***]"""
-            input.contains("RESPONSE: 200 OK") ->
+            input.contains("RESPONSE: 200") ->
                 """BODY START\n.*\nBODY END""".toRegex() to "BODY START\n***\nBODY END"
             else -> return input
         }
