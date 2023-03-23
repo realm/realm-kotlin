@@ -26,8 +26,5 @@ expect class SynchronizableObject()
 /**
  * Execute the given `block` ensuring that no other [synchronized]-call is executing its block for
  * the same [SynchronizableObject] at the same time.
- *
- * This call should not be used recursively as the current implementation of [SynchronizableObject]
- * for Kotlin native is not backed by a reentrant lock.
  */
 expect inline fun <R> synchronized(lock: SynchronizableObject, block: () -> R): R
