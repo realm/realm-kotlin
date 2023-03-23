@@ -14,7 +14,7 @@
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.7.20 and above.
-  * Ktor 2.1.2 and above.
+  * Ktor 2.2.4 and above.
   * Coroutines 1.6.4 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility

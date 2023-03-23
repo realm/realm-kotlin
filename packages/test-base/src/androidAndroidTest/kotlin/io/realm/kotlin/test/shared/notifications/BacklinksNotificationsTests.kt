@@ -25,6 +25,7 @@ import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -90,7 +91,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                         }
                 }
 
-                c.receive().let { resultsChange ->
+                c.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
                     assertTrue(resultsChange.list.isEmpty())
                 }
@@ -143,7 +144,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 }
 
                 // Assertion after empty list is emitted
-                c.receive().let { resultsChange ->
+                c.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -155,7 +156,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     delete(findLatest(results.first())!!)
                 }
 
-                c.receive().let { resultsChange ->
+                c.receiveOrFail().let { resultsChange ->
                     assertIs<UpdatedResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -181,7 +182,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 }
             }
 
-            c.receive().let {
+            c.receiveOrFail().let {
                 assertIs<InitialResults<*>>(it)
                 assertEquals(0, it.list.size)
             }
@@ -190,7 +191,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 copyToRealm(Sample().apply { nullableObject = findLatest(target) })
             }
 
-            c.receive().let {
+            c.receiveOrFail().let {
                 assertIs<UpdatedResults<*>>(it)
                 assertEquals(1, it.list.size)
                 assertEquals(0, it.deletions.size)
@@ -246,11 +247,11 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     }
                 }
 
-                c1.receive().let { resultsChange ->
+                c1.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
                     assertEquals(1, resultsChange.list.size)
                 }
-                c2.receive().let { resultsChange ->
+                c2.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
                     assertEquals(1, resultsChange.list.size)
                 }
@@ -261,7 +262,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     delete(findLatest(results.first())!!)
                 }
 
-                c2.receive().let { resultsChange ->
+                c2.receiveOrFail().let { resultsChange ->
                     assertIs<UpdatedResults<*>>(resultsChange)
                     assertEquals(0, resultsChange.list.size)
                 }
@@ -307,7 +308,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 }
 
                 // Assertion after empty list is emitted
-                c.receive()!!.let { resultsChange ->
+                c.receiveOrFail()!!.let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -315,7 +316,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                 }
 
                 // Assertion after subquery is emitted
-                sc.receive()!!.let { resultsChange ->
+                sc.receiveOrFail()!!.let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -327,8 +328,8 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     delete(findLatest(target)!!)
                 }
 
-                assertNull(c.receive())
-                assertNull(sc.receive())
+                assertNull(c.receiveOrFail())
+                assertNull(sc.receiveOrFail())
 
                 observer.cancel()
                 c.close()
@@ -399,7 +400,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
 
             // Await that collect is actually collecting
             withTimeout(10.seconds) {
-                assertEquals(1, c.receive())
+                assertEquals(1, c.receiveOrFail())
             }
             realm.close()
             delay(1.seconds)

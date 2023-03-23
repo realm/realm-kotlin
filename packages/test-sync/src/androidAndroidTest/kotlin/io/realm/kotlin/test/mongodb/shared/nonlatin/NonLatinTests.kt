@@ -10,6 +10,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.JsonObject
@@ -80,7 +81,7 @@ class NonLatinTests {
                     }
             }
 
-            val insertedObject = channel.receive()
+            val insertedObject = channel.receiveOrFail()
             assertEquals(oid, insertedObject._id.toHexString())
             val char1 = "foo\u0000bar".toCharArray()
             val char2 = insertedObject.name.toCharArray()
