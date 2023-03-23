@@ -31,6 +31,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import org.mongodb.kbson.BsonNull
+import java.util.concurrent.CancellationException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -80,16 +81,18 @@ class HttpLogObfuscatorTests {
                 ) {
                     channel.trySend(Operation.OBFUSCATED_CUSTOM_FUNCTION)
                 } else if (it.contains(""""password":"$password"""")) {
-                    fail(
-                        """Password was not obfuscated: $message""".trimMargin()
-                    )
+                    channel.cancel(CancellationException("Password was not obfuscated: $message"))
                 } else if (it.contains(""""(("access_token"):(".+?")),(("refresh_token"):(".+?"))""".toRegex())) {
-                    fail(
-                        """Access and refresh tokens were not obfuscated: $message""".trimMargin()
+                    channel.cancel(
+                        CancellationException(
+                            """Access and refresh tokens were not obfuscated: $message""".trimMargin()
+                        )
                     )
                 } else if (it.contains(""""(("key"):(".+?"))""".toRegex())) {
-                    fail(
-                        """API key was not obfuscated: $message""".trimMargin()
+                    channel.cancel(
+                        CancellationException(
+                            """API key was not obfuscated: $message""".trimMargin()
+                        )
                     )
                 }
             }
@@ -114,7 +117,7 @@ class HttpLogObfuscatorTests {
 
     private fun initApp(): TestApp {
         return TestApp(
-            appName = "obfuscator",
+            appName = "${io.realm.kotlin.test.mongodb.SyncServerConfig.appPrefix}-obfuscator",
             logLevel = LogLevel.DEBUG,
             customLogger = ObfuscatorLoggerInspector(channel),
             initialSetup = { app, service ->
@@ -242,7 +245,6 @@ class HttpLogObfuscatorTests {
     @Test
     fun apple_login() = runBlocking {
         app = initApp()
-        createUserAndLoginAssertions()
 
         async {
             // Testing this requires a valid token so let's just test we obfuscate the request
@@ -257,7 +259,6 @@ class HttpLogObfuscatorTests {
     @Test
     fun facebook_login() = runBlocking {
         app = initApp()
-        createUserAndLoginAssertions()
 
         async {
             // Testing this requires a valid token so let's just test we obfuscate the request
@@ -272,7 +273,6 @@ class HttpLogObfuscatorTests {
     @Test
     fun googleAuthToken_login() = runBlocking {
         app = initApp()
-        createUserAndLoginAssertions()
 
         async {
             // Testing these two requires a valid token so let's just test we obfuscate the request

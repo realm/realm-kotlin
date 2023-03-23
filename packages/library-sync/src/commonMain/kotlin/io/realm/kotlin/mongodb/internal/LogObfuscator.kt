@@ -196,21 +196,15 @@ internal object CustomFunctionPatternReplacer : LogReplacer {
 
 internal object LogObfuscatorImpl : HttpLogObfuscator {
 
-    private val urlRegex =
-        Regex("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()!@:%_\\+.~#?&\\/\\/=]*)")
-
     private val regexReplacerMap: Map<String, LogReplacer> = defaultFeatureToReplacerMap
 
     override fun obfuscate(input: String): String {
-        return urlRegex.find(input)?.let { matchResult ->
-            val url = matchResult.value
-            regexReplacerMap
-                .filterKeys { url.contains(it) }
-                .values
-                .map {
-                    it.findAndReplace(input)
-                }
-                .firstOrNull()
-        } ?: input
+        return regexReplacerMap
+            .filterKeys { input.contains(it) }
+            .values
+            .map {
+                it.findAndReplace(input)
+            }
+            .firstOrNull() ?: input
     }
 }
