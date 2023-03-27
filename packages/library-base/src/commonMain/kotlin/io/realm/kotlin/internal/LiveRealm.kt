@@ -77,7 +77,7 @@ internal abstract class LiveRealm(
     private val snapshotLock = SynchronizableObject()
 
     /**
-     * Version of the internal frozen snapshot reference that points to the most reason frozen
+     * Version of the internal frozen snapshot reference that points to the most recent frozen
      * head of the realm. This is allowed to be accessed from other threads, but is not guaranteed
      * to always be pointing to the same version as the live realm (which can be newer, but never
      * older).
