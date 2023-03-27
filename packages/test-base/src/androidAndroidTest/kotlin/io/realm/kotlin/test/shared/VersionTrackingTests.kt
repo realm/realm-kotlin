@@ -84,6 +84,13 @@ class VersionTrackingTests {
 
     @Test
     fun write_voidBlockIsNotTracked() = runBlocking {
+        realm.activeVersions().run {
+            assertEquals(1, all.size)
+            assertEquals(1, allTracked.size)
+            assertNull(notifier)
+            assertNull(writer)
+        }
+
         // Write that doesn't return objects does not trigger tracking additional versions
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
@@ -105,6 +112,13 @@ class VersionTrackingTests {
 
     @Test
     fun write_returnedObjectIsTracked() = runBlocking {
+        realm.activeVersions().run {
+            assertEquals(1, all.size)
+            assertEquals(1, allTracked.size)
+            assertNull(notifier)
+            assertNull(writer)
+        }
+
         // Or if we immediately return the frozen object instance (with <Unit>)
         realm.write { copyToRealm(Sample()) }
         realm.activeVersions().run {
@@ -117,6 +131,13 @@ class VersionTrackingTests {
 
     @Test
     fun realmAsFlow_doesNotTrackVersions() = runBlocking {
+        realm.activeVersions().run {
+            assertEquals(1, all.size)
+            assertEquals(1, allTracked.size)
+            assertNull(notifier)
+            assertNull(writer)
+        }
+
         // Listening to overall global changes doesn't increase tracked version but will initialize
         // the notifier
         val realmEvents = mutableListOf<RealmChange<*>>()
@@ -136,6 +157,13 @@ class VersionTrackingTests {
 
     @Test
     fun objectNotificationsCausesTracking() = runBlocking {
+        realm.activeVersions().run {
+            assertEquals(1, all.size)
+            assertEquals(1, allTracked.size)
+            assertNull(notifier)
+            assertNull(writer)
+        }
+
         // Listening to object causes tracking of all versions even if not returned by the write
         val samples = mutableListOf<ResultsChange<Sample>>()
         val channel = Channel<ResultsChange<Sample>>(1)
