@@ -121,7 +121,7 @@ public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerial
 
 /**
  * KSerializer implementation for [RealmDictionary]. Serialization is done as a generic map structure,
- * whilst deserialization is done with an unmanaged [RealmDictionary].
+ * whilst deserialization is done into an unmanaged [RealmDictionary].
  *
  * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
  * require to be manually subscribed.
