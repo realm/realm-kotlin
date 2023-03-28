@@ -83,7 +83,7 @@ public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSeria
 
 /**
  * KSerializer implementation for [RealmSet]. Serialization is done as a generic list structure,
- * whilst deserialization is done with an unmanaged [RealmSet].
+ * whilst deserialization is done into an unmanaged [RealmSet].
  *
  * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
  * require to be manually subscribed.
