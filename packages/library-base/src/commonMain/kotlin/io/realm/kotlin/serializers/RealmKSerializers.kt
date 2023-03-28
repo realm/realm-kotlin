@@ -184,7 +184,7 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
  *     var myInstant: RealmInstant = RealmInstant.now()
  * }
  * ```
- * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
+ * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class RealmInstantKSerializer : KSerializer<RealmInstant> {
     private val serializer = SerializableRealmInstant.serializer()
