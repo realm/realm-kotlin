@@ -39,7 +39,6 @@ import io.realm.kotlin.serializers.kotlinxserializers.RealmSetKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmUUIDKSerializer
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant

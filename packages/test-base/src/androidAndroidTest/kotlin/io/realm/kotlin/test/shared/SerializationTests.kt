@@ -30,7 +30,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
-import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
