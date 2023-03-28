@@ -94,12 +94,8 @@ class SerializationTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(
-            setOf(
-                SerializableSample::class,
-                SerializableEmbeddedObject::class
-            )
-        )
+        configuration = RealmConfiguration
+            .Builder(setOf(SerializableSample::class, SerializableEmbeddedObject::class))
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -242,10 +238,8 @@ class SerializationTests {
                     when (expected.type) {
                         RealmAny.Type.OBJECT -> {
                             assertEquals(expected.type, actual.type)
-                            assertEquals(
-                                expected.asRealmObject<SerializableSample>().stringField,
-                                actual.asRealmObject<SerializableSample>().stringField
-                            )
+                            // Recursively assert the contained object
+                            RealmObject::class.assertValue<RealmObject>(expected.asRealmObject(), expected.asRealmObject())
                         }
                         else -> assertEquals(expected, actual)
                     }

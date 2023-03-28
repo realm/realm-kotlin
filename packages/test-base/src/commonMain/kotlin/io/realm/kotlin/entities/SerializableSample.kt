@@ -178,7 +178,6 @@ class SerializableSample : RealmObject {
     var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
     var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
-//    var objectDictionaryField: RealmDictionary<SerializableSample> = realmDictionaryOf()
 
     var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
     var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
