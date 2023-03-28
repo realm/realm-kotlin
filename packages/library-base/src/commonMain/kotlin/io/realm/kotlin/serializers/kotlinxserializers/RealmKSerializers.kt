@@ -41,6 +41,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 
 /**
@@ -288,8 +289,7 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
         var float: Float? = null
         var double: Double? = null
         var decimal128: Decimal128? = null
-        @Serializable(RealmObjectIdKSerializer::class)
-        var objectId: ObjectId? = null
+        var objectId: BsonObjectId? = null
         @Serializable(RealmUUIDKSerializer::class)
         var uuid: RealmUUID? = null
         var realmObject: RealmObject? = null
@@ -309,7 +309,7 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                 Type.FLOAT -> RealmAny.create(it.float!!)
                 Type.DOUBLE -> RealmAny.create(it.double!!)
                 Type.DECIMAL128 -> RealmAny.create(it.decimal128!!)
-                Type.OBJECT_ID -> RealmAny.create(it.objectId!!.asBsonObjectId())
+                Type.OBJECT_ID -> RealmAny.create(it.objectId!!)
                 Type.UUID -> RealmAny.create(it.uuid!!)
                 Type.OBJECT -> RealmAny.create(it.realmObject!!)
             }
@@ -330,7 +330,7 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                     Type.FLOAT -> float = value.asFloat()
                     Type.DOUBLE -> double = value.asDouble()
                     Type.DECIMAL128 -> decimal128 = value.asDecimal128()
-                    Type.OBJECT_ID -> objectId = ObjectId.from(
+                    Type.OBJECT_ID -> objectId = BsonObjectId(
                         value.asObjectId().toByteArray()
                     )
                     Type.UUID -> uuid = value.asRealmUUID()
@@ -371,39 +371,6 @@ public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
 
     override fun serialize(encoder: Encoder, value: RealmUUID) {
         encoder.encodeSerializableValue(serializer, value.bytes)
-    }
-}
-
-/**
- * KSerializer implementation for [ObjectId]. Serialization is done as a [ByteArray], whilst
- * deserialization is done with an unmanaged [ObjectId].
- *
- * The serializer must be specified per property:
- * ```
- * class Example : RealmObject {
- *     @Serializable(RealmObjectIdKSerializer::class)
- *     var myObjectId: ObjectId = ObjectId.create()
- * }
- * ```
- * or per file:
- * ```
- * @file:UseSerializers(RealmObjectIdKSerializer::class)
- *
- * class Example : RealmObject {
- *     var myObjectId: ObjectId = ObjectId.create()
- * }
- * ```
- * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
- */
-public class RealmObjectIdKSerializer : KSerializer<ObjectId> {
-    private val serializer = ByteArraySerializer()
-    override val descriptor: SerialDescriptor = serializer.descriptor
-
-    override fun deserialize(decoder: Decoder): ObjectId =
-        ObjectId.from(decoder.decodeSerializableValue(serializer))
-
-    override fun serialize(encoder: Encoder, value: ObjectId) {
-        encoder.encodeSerializableValue(serializer, value.asBsonObjectId().toByteArray())
     }
 }
 

@@ -21,8 +21,7 @@
     RealmAnyKSerializer::class,
     RealmInstantKSerializer::class,
     MutableRealmIntKSerializer::class,
-    RealmUUIDKSerializer::class,
-    RealmObjectIdKSerializer::class
+    RealmUUIDKSerializer::class
 )
 
 package io.realm.kotlin.entities
@@ -36,7 +35,6 @@ import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmDictionaryKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmObjectIdKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmSetKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmUUIDKSerializer
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -69,7 +67,6 @@ class SerializableSample : RealmObject {
     var doubleField: Double = 1.19840122
     var decimal128Field: Decimal128 = Decimal128("1.8446744073709551618E-6157")
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
-    var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f1f77bcf86cd799439011")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
@@ -86,8 +83,7 @@ class SerializableSample : RealmObject {
     var nullableDoubleField: Double? = null
     var nullableDecimal128Field: Decimal128? = null
     var nullableTimestampField: RealmInstant? = null
-    var nullableObjectIdField: ObjectId? = null
-    var nullableBsonObjectIdField: ObjectId? = null
+    var nullableBsonObjectIdField: BsonObjectId? = null
     var nullableUUIDField: RealmUUID? = null
     var nullableBinaryField: ByteArray? = null
     var nullableMutableRealmIntField: MutableRealmInt? = null
@@ -106,7 +102,6 @@ class SerializableSample : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var decimal128ListField: RealmList<Decimal128> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
-    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var uuidListField: RealmList<RealmUUID> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
@@ -123,7 +118,6 @@ class SerializableSample : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
-    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
@@ -140,7 +134,6 @@ class SerializableSample : RealmObject {
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
-    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
     var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
@@ -157,7 +150,6 @@ class SerializableSample : RealmObject {
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
-    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
@@ -173,7 +165,6 @@ class SerializableSample : RealmObject {
     var floatDictionaryField: RealmDictionary<Float> = realmDictionaryOf()
     var doubleDictionaryField: RealmDictionary<Double> = realmDictionaryOf()
     var timestampDictionaryField: RealmDictionary<RealmInstant> = realmDictionaryOf()
-    var objectIdDictionaryField: RealmDictionary<ObjectId> = realmDictionaryOf()
     var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
     var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
@@ -189,7 +180,6 @@ class SerializableSample : RealmObject {
     var nullableFloatDictionaryField: RealmDictionary<Float?> = realmDictionaryOf()
     var nullableDoubleDictionaryField: RealmDictionary<Double?> = realmDictionaryOf()
     var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
-    var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
     var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
     var nullableUUIDDictionaryField: RealmDictionary<RealmUUID?> = realmDictionaryOf()
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
@@ -216,7 +206,6 @@ class SerializableSample : RealmObject {
             Double::class to SerializableSample::doubleListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Decimal128::class to SerializableSample::decimal128ListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             RealmInstant::class to SerializableSample::timestampListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
-            ObjectId::class to SerializableSample::objectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             BsonObjectId::class to SerializableSample::bsonObjectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             RealmUUID::class to SerializableSample::uuidListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             ByteArray::class to SerializableSample::binaryListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
@@ -236,7 +225,6 @@ class SerializableSample : RealmObject {
             Double::class to SerializableSample::nullableDoubleListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Decimal128::class to SerializableSample::nullableDecimal128ListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             RealmInstant::class to SerializableSample::nullableTimestampListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
-            ObjectId::class to SerializableSample::nullableObjectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             BsonObjectId::class to SerializableSample::nullableBsonObjectIdListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             RealmUUID::class to SerializableSample::nullableUUIDListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             ByteArray::class to SerializableSample::nullableBinaryListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
@@ -256,7 +244,6 @@ class SerializableSample : RealmObject {
             Double::class to SerializableSample::doubleSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Decimal128::class to SerializableSample::decimal128SetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             RealmInstant::class to SerializableSample::timestampSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
-            ObjectId::class to SerializableSample::objectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             BsonObjectId::class to SerializableSample::bsonObjectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             RealmUUID::class to SerializableSample::uuidSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             ByteArray::class to SerializableSample::binarySetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
@@ -276,7 +263,6 @@ class SerializableSample : RealmObject {
             Double::class to SerializableSample::nullableDoubleSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Decimal128::class to SerializableSample::nullableDecimal128SetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             RealmInstant::class to SerializableSample::nullableTimestampSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
-            ObjectId::class to SerializableSample::nullableObjectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             BsonObjectId::class to SerializableSample::nullableBsonObjectIdSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             RealmUUID::class to SerializableSample::nullableUUIDSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             ByteArray::class to SerializableSample::nullableBinarySetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
@@ -295,7 +281,6 @@ class SerializableSample : RealmObject {
             Float::class to SerializableSample::floatDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             Double::class to SerializableSample::doubleDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             RealmInstant::class to SerializableSample::timestampDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
-            ObjectId::class to SerializableSample::objectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             BsonObjectId::class to SerializableSample::bsonObjectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             RealmUUID::class to SerializableSample::uuidDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             ByteArray::class to SerializableSample::binaryDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
@@ -314,7 +299,6 @@ class SerializableSample : RealmObject {
             Float::class to SerializableSample::nullableFloatDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             Double::class to SerializableSample::nullableDoubleDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             RealmInstant::class to SerializableSample::nullableTimestampDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
-            ObjectId::class to SerializableSample::nullableObjectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             BsonObjectId::class to SerializableSample::nullableBsonObjectIdDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             RealmUUID::class to SerializableSample::nullableUUIDDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             ByteArray::class to SerializableSample::nullableBinaryDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
@@ -334,7 +318,6 @@ class SerializableSample : RealmObject {
             Float::class to SerializableSample::floatField,
             Double::class to SerializableSample::doubleField,
             RealmInstant::class to SerializableSample::timestampField,
-            ObjectId::class to SerializableSample::objectIdField,
             MutableRealmInt::class to SerializableSample::mutableRealmIntField,
             BsonObjectId::class to SerializableSample::bsonObjectIdField,
             RealmUUID::class to SerializableSample::uuidField,
@@ -354,7 +337,6 @@ class SerializableSample : RealmObject {
             Double::class to SerializableSample::nullableDoubleField,
             RealmInstant::class to SerializableSample::nullableTimestampField,
             MutableRealmInt::class to SerializableSample::nullableMutableRealmIntField,
-            ObjectId::class to SerializableSample::nullableObjectIdField,
             BsonObjectId::class to SerializableSample::nullableBsonObjectIdField,
             RealmUUID::class to SerializableSample::nullableUUIDField,
             ByteArray::class to SerializableSample::nullableBinaryField,
