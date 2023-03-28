@@ -103,7 +103,7 @@ public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSeria
  *     var mySet: RealmSet<String> = realmSetOf()
  * }
  * ```
- * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
+ * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmSet<E>> {
     private val serializer = SetSerializer(elementSerializer)
