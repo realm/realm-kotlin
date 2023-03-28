@@ -31,14 +31,14 @@ import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.serializers.MutableRealmIntKSerializer
-import io.realm.kotlin.serializers.RealmAnyKSerializer
-import io.realm.kotlin.serializers.RealmDictionaryKSerializer
-import io.realm.kotlin.serializers.RealmInstantKSerializer
-import io.realm.kotlin.serializers.RealmListKSerializer
-import io.realm.kotlin.serializers.RealmObjectIdKSerializer
-import io.realm.kotlin.serializers.RealmSetKSerializer
-import io.realm.kotlin.serializers.RealmUUIDKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmDictionaryKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmObjectIdKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmSetKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmUUIDKSerializer
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
@@ -204,7 +204,7 @@ class SerializableSample : RealmObject {
     companion object {
 
         @Suppress("UNCHECKED_CAST")
-        private val listNonNullableProperties = listOf(
+        val listNonNullableProperties = mapOf(
             String::class to SerializableSample::stringListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Byte::class to SerializableSample::byteListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Char::class to SerializableSample::charListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
@@ -221,10 +221,10 @@ class SerializableSample : RealmObject {
             RealmUUID::class to SerializableSample::uuidListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             ByteArray::class to SerializableSample::binaryListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             RealmObject::class to SerializableSample::objectListField as KMutableProperty1<SerializableSample, MutableCollection<Any>>
-        ).toMap()
+        )
 
         @Suppress("UNCHECKED_CAST")
-        private val listNullableProperties = listOf(
+        val listNullableProperties = mapOf(
             String::class to SerializableSample::nullableStringListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Byte::class to SerializableSample::nullableByteListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Char::class to SerializableSample::nullableCharListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
@@ -241,10 +241,10 @@ class SerializableSample : RealmObject {
             RealmUUID::class to SerializableSample::nullableUUIDListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             ByteArray::class to SerializableSample::nullableBinaryListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             RealmAny::class to SerializableSample::nullableRealmAnyListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>
-        ).toMap()
+        )
 
         @Suppress("UNCHECKED_CAST")
-        private val setNonNullableProperties = listOf(
+        val setNonNullableProperties = mapOf(
             String::class to SerializableSample::stringSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Byte::class to SerializableSample::byteSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             Char::class to SerializableSample::charSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
@@ -261,10 +261,10 @@ class SerializableSample : RealmObject {
             RealmUUID::class to SerializableSample::uuidSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             ByteArray::class to SerializableSample::binarySetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>,
             RealmObject::class to SerializableSample::objectSetField as KMutableProperty1<SerializableSample, MutableCollection<Any>>
-        ).toMap()
+        )
 
         @Suppress("UNCHECKED_CAST")
-        private val setNullableProperties = listOf(
+        val setNullableProperties = mapOf(
             String::class to SerializableSample::nullableStringSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Byte::class to SerializableSample::nullableByteSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Char::class to SerializableSample::nullableCharSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
@@ -281,10 +281,10 @@ class SerializableSample : RealmObject {
             RealmUUID::class to SerializableSample::nullableUUIDSetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             ByteArray::class to SerializableSample::nullableBinarySetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             RealmAny::class to SerializableSample::nullableRealmAnySetField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>
-        ).toMap()
+        )
 
         @Suppress("UNCHECKED_CAST")
-        private val dictNonNullableProperties = listOf(
+        val dictNonNullableProperties = mapOf(
             String::class to SerializableSample::stringDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             Byte::class to SerializableSample::byteDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             Char::class to SerializableSample::charDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
@@ -300,10 +300,10 @@ class SerializableSample : RealmObject {
             RealmUUID::class to SerializableSample::uuidDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             ByteArray::class to SerializableSample::binaryDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
             Decimal128::class to SerializableSample::decimal128DictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any>>,
-        ).toMap()
+        )
 
         @Suppress("UNCHECKED_CAST")
-        private val dictNullableProperties = listOf(
+        val dictNullableProperties = mapOf(
             String::class to SerializableSample::nullableStringDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             Byte::class to SerializableSample::nullableByteDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             Char::class to SerializableSample::nullableCharDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
@@ -321,11 +321,46 @@ class SerializableSample : RealmObject {
             Decimal128::class to SerializableSample::nullableDecimal128DictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             RealmObject::class to SerializableSample::nullableObjectDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
             RealmAny::class to SerializableSample::nullableRealmAnyDictionaryField as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>
-        ).toMap()
+        )
 
-        val listProperties = listNonNullableProperties to listNullableProperties
-        val setProperties = setNonNullableProperties to setNullableProperties
-        val dictionaryProperties = dictNonNullableProperties to dictNullableProperties
+        val properties = mapOf(
+            String::class to SerializableSample::stringField,
+            Byte::class to SerializableSample::byteField,
+            Char::class to SerializableSample::charField,
+            Short::class to SerializableSample::shortField,
+            Int::class to SerializableSample::intField,
+            Long::class to SerializableSample::longField,
+            Boolean::class to SerializableSample::booleanField,
+            Float::class to SerializableSample::floatField,
+            Double::class to SerializableSample::doubleField,
+            RealmInstant::class to SerializableSample::timestampField,
+            ObjectId::class to SerializableSample::objectIdField,
+            MutableRealmInt::class to SerializableSample::mutableRealmIntField,
+            BsonObjectId::class to SerializableSample::bsonObjectIdField,
+            RealmUUID::class to SerializableSample::uuidField,
+            ByteArray::class to SerializableSample::binaryField,
+            Decimal128::class to SerializableSample::decimal128Field,
+        )
+
+        val nullableProperties = mapOf(
+            String::class to SerializableSample::nullableStringField,
+            Byte::class to SerializableSample::nullableByteField,
+            Char::class to SerializableSample::nullableCharField,
+            Short::class to SerializableSample::nullableShortField,
+            Int::class to SerializableSample::nullableIntField,
+            Long::class to SerializableSample::nullableLongField,
+            Boolean::class to SerializableSample::nullableBooleanField,
+            Float::class to SerializableSample::nullableFloatField,
+            Double::class to SerializableSample::nullableDoubleField,
+            RealmInstant::class to SerializableSample::nullableTimestampField,
+            MutableRealmInt::class to SerializableSample::nullableMutableRealmIntField,
+            ObjectId::class to SerializableSample::nullableObjectIdField,
+            BsonObjectId::class to SerializableSample::nullableBsonObjectIdField,
+            RealmUUID::class to SerializableSample::nullableUUIDField,
+            ByteArray::class to SerializableSample::nullableBinaryField,
+            Decimal128::class to SerializableSample::nullableDecimal128Field,
+            RealmObject::class to SerializableSample::nullableObject,
+        )
     }
 }
 

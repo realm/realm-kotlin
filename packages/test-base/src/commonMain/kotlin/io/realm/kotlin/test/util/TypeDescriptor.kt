@@ -341,19 +341,6 @@ object TypeDescriptor {
         acc
     }
 
-    private fun elementTypesForSerializers(
-        classifiers: Collection<KClassifier>
-    ): MutableSet<ElementType> = classifiers.fold(mutableSetOf()) { acc, classifier ->
-        val realmFieldType = TypeDescriptor.classifiers[classifier]
-            ?: error("Unmapped classifier $classifier")
-
-        acc.apply {
-            if (realmFieldType.realmDataType) {
-                add(ElementType(classifier, realmFieldType.nullable))
-            }
-        }
-    }
-
     // Convenience variables holding collections of the various supported types
     val elementClassifiers: Set<KClassifier> = classifiers.keys
     val elementTypes = elementTypes(elementClassifiers)
@@ -363,11 +350,6 @@ object TypeDescriptor {
         elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_SET)
     val elementTypesForDictionary =
         elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
-    val elementTypesForSerializers = elementClassifiers.mapNotNull { classifier: KClassifier ->
-        val fieldType = classifiers[classifier] ?: error("Unmapped classifier $classifier")
-
-        if (fieldType.realmDataType) ElementType(classifier, fieldType.nullable) else null
-    }
 
     // Convenience variables holding collection of various groups of Realm field types
     val allSingularFieldTypes = elementTypes.map {

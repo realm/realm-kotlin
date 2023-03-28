@@ -22,6 +22,7 @@
     RealmUUIDKSerializer::class,
     RealmObjectIdKSerializer::class
 )
+@file:Suppress("UNCHECKED_CAST")
 
 package io.realm.kotlin.test.shared
 
@@ -32,19 +33,17 @@ import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.ext.asRealmObject
-import io.realm.kotlin.serializers.MutableRealmIntKSerializer
-import io.realm.kotlin.serializers.RealmAnyKSerializer
-import io.realm.kotlin.serializers.RealmInstantKSerializer
-import io.realm.kotlin.serializers.RealmListKSerializer
-import io.realm.kotlin.serializers.RealmObjectIdKSerializer
-import io.realm.kotlin.serializers.RealmSetKSerializer
-import io.realm.kotlin.serializers.RealmUUIDKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmObjectIdKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmSetKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmUUIDKSerializer
 import io.realm.kotlin.test.GenericTypeSafetyManager
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -70,8 +69,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
-
-private typealias SerializableSamplePropertyMap<T> = Map<KClass<out Any>, KMutableProperty1<SerializableSample, T>>
 
 class SerializationTests {
     private lateinit var tmpDir: String
@@ -109,42 +106,34 @@ class SerializationTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
+    private val OBJECT_VALUES = listOf(
+        SerializableSample().apply { stringField = "A" },
+        SerializableSample().apply { stringField = "B" }
+    )
+
     private fun Collection<TypeDescriptor.RealmFieldType>.mapCollectionDataSets(
-        properties: Pair<
-            SerializableSamplePropertyMap<MutableCollection<Any>>,
-            SerializableSamplePropertyMap<MutableCollection<Any?>>
-            >
+        properties: Map<KClass<out Any>, KMutableProperty1<*, *>>,
+        nullableProperties: Map<KClass<out Any>, KMutableProperty1<*, *>>,
     ): List<CollectionTypeSafetyManager<Any?>> = map { fieldType: TypeDescriptor.RealmFieldType ->
         CollectionTypeSafetyManager<Any?>(
-            elementType = fieldType.elementType,
-            properties = properties
+            dataSetToLoad = getDataSetForCollectionClassifier(
+                classifier = fieldType.elementType.classifier,
+                nullable = fieldType.elementType.nullable,
+                realmObjects = OBJECT_VALUES
+            ),
+            property = when (fieldType.elementType.nullable) {
+                false -> properties[fieldType.elementType.classifier]
+                true -> nullableProperties[fieldType.elementType.classifier]
+            }!! as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
+            classifier = fieldType.elementType.classifier
         )
     }
 
     private class CollectionTypeSafetyManager<T>(
-        elementType: TypeDescriptor.ElementType,
-        properties: Pair<
-            SerializableSamplePropertyMap<MutableCollection<Any>>,
-            SerializableSamplePropertyMap<MutableCollection<Any?>>
-            >,
+        override val property: KMutableProperty1<SerializableSample, MutableCollection<T>>,
+        override val dataSetToLoad: List<T>,
+        val classifier: KClassifier
     ) : GenericTypeSafetyManager<T, SerializableSample, MutableCollection<T>> {
-
-        val classifier: KClassifier = elementType.classifier
-
-        override val dataSetToLoad: List<T> =
-            getDataSetForCollectionClassifier(
-                classifier = classifier,
-                nullable = elementType.nullable,
-                realmObjects = listOf(
-                    SerializableSample().apply { stringField = "A" },
-                    SerializableSample().apply { stringField = "B" }
-                )
-            )
-
-        override val property = when (elementType.nullable) {
-            false -> properties.first[classifier]!!
-            true -> properties.second[classifier]!!
-        } as KMutableProperty1<SerializableSample, MutableCollection<T>>
 
         override fun toString(): String = property.name
 
@@ -171,28 +160,10 @@ class SerializationTests {
     }
 
     private class DictionaryTypeSafetyManager<T> constructor(
-        elementType: TypeDescriptor.ElementType,
-        properties: Pair<
-            SerializableSamplePropertyMap<RealmDictionary<Any>>,
-            SerializableSamplePropertyMap<RealmDictionary<Any?>>
-            >,
+        override val dataSetToLoad: List<Pair<String, T>>,
+        override val property: KMutableProperty1<SerializableSample, RealmDictionary<T>>,
+        val classifier: KClassifier
     ) : GenericTypeSafetyManager<Pair<String, T>, SerializableSample, RealmDictionary<T>> {
-
-        val classifier: KClassifier = elementType.classifier
-
-        override val dataSetToLoad: List<Pair<String, T>> = getDataSetForDictionaryClassifier(
-            classifier,
-            elementType.nullable,
-            listOf(
-                SerializableSample().apply { stringField = "A" },
-                SerializableSample().apply { stringField = "B" }
-            )
-        )
-
-        override val property = when (elementType.nullable) {
-            false -> properties.first[classifier]!!
-            true -> properties.second[classifier]!!
-        } as KMutableProperty1<SerializableSample, RealmDictionary<T>>
 
         override fun toString(): String = property.name
 
@@ -239,7 +210,10 @@ class SerializationTests {
                         RealmAny.Type.OBJECT -> {
                             assertEquals(expected.type, actual.type)
                             // Recursively assert the contained object
-                            RealmObject::class.assertValue<RealmObject>(expected.asRealmObject(), expected.asRealmObject())
+                            RealmObject::class.assertValue<RealmObject>(
+                                expected.asRealmObject(),
+                                expected.asRealmObject()
+                            )
                         }
                         else -> assertEquals(expected, actual)
                     }
@@ -252,7 +226,7 @@ class SerializationTests {
     }
 
     @Test
-    fun exhaustiveRealmTypesTester() {
+    fun exhaustiveElementTypesTester() {
         val expected = SerializableSample().apply {
             nullableObject = SerializableSample()
             realmEmbeddedObject = SerializableEmbeddedObject()
@@ -260,53 +234,26 @@ class SerializationTests {
         val encoded: String = json.encodeToString(expected)
         val decoded: SerializableSample = json.decodeFromString(encoded)
 
-        TypeDescriptor.elementTypesForSerializers
-            .map { it.classifier }
-            .filterNot { it == RealmAny::class } // tested in exhaustiveRealmAnyTester
-            .forEach { classifier ->
-                when (classifier) {
-                    Decimal128::class -> assertEquals(
-                        expected.decimal128Field,
-                        decoded.decimal128Field
-                    )
-                    RealmInstant::class -> assertEquals(
-                        expected.timestampField,
-                        decoded.timestampField
-                    )
-                    ObjectId::class -> assertEquals(expected.objectIdField, decoded.objectIdField)
-                    RealmUUID::class -> assertEquals(expected.uuidField, decoded.uuidField)
-                    MutableRealmInt::class -> assertEquals(
-                        expected.mutableRealmIntField,
-                        decoded.mutableRealmIntField
-                    )
-                    RealmObject::class -> {
-                        assertEquals(
-                            expected.nullableObject!!.stringField,
-                            expected.nullableObject!!.stringField
-                        )
-                        assertEquals(
-                            expected.realmEmbeddedObject!!.name,
-                            expected.realmEmbeddedObject!!.name
-                        )
-                    }
-                    else -> throw IllegalStateException("Untested type $classifier")
-                }
+        TypeDescriptor.elementTypes
+            .filterNot { it.classifier == RealmAny::class } // tested in exhaustiveRealmAnyTester
+            .forEach { elementType ->
+                println(elementType.classifier)
+                val property: KMutableProperty1<SerializableSample, out Any?> =
+                    when (elementType.nullable) {
+                        true -> SerializableSample.nullableProperties[elementType.classifier]
+                        false -> SerializableSample.properties[elementType.classifier]
+                    }!!
+
+                elementType.classifier.assertValue(property.get(expected), property.get(decoded))
             }
     }
 
     @Test
     fun exhaustiveRealmAnyTester() {
-        val ignoredClassifiers = arrayOf(
-            MutableRealmInt::class,
-            RealmAny::class,
-            BsonObjectId::class,
-        )
-
         TypeDescriptor
-            .elementClassifiers
-            .filterNot { ignoredClassifiers.contains(it) }
+            .anyClassifiers
             .map { classifier ->
-                when (classifier) {
+                when (classifier.key) {
                     Byte::class -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(byteField)
                     }
@@ -343,15 +290,17 @@ class SerializationTests {
                     RealmInstant::class -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(timestampField)
                     }
-                    ObjectId::class -> SerializableSample().apply {
+                    BsonObjectId::class -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(objectIdField.asBsonObjectId())
                     }
                     RealmUUID::class -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(uuidField)
                     }
                     RealmObject::class -> SerializableSample().apply {
-                        nullableObject = SerializableSample()
-                        nullableRealmAnyField = RealmAny.create(nullableObject!!)
+                        SerializableSample().let {
+                            nullableObject = it
+                            nullableRealmAnyField = RealmAny.create(it)
+                        }
                     }
                     else -> throw IllegalStateException("Untested type $classifier")
                 }
@@ -368,7 +317,7 @@ class SerializationTests {
     }
 
     private fun List<CollectionTypeSafetyManager<Any?>>.exhaustiveCollectionTesting() =
-        forEach { dataset ->
+        forEach { dataset: CollectionTypeSafetyManager<Any?> ->
             listOf(
                 dataset.createPrePopulatedContainer(), // Unmanaged value
                 realm.writeBlocking { dataset.createPrePopulatedContainer() } // Managed value
@@ -391,7 +340,10 @@ class SerializationTests {
     fun exhaustiveRealmListTest() {
         TypeDescriptor
             .allListFieldTypes
-            .mapCollectionDataSets(SerializableSample.listProperties)
+            .mapCollectionDataSets(
+                properties = SerializableSample.listNonNullableProperties,
+                nullableProperties = SerializableSample.listNullableProperties
+            )
             .exhaustiveCollectionTesting()
     }
 
@@ -399,7 +351,10 @@ class SerializationTests {
     fun exhaustiveRealmSetTest() {
         TypeDescriptor
             .allSetFieldTypes
-            .mapCollectionDataSets(SerializableSample.setProperties)
+            .mapCollectionDataSets(
+                properties = SerializableSample.setNonNullableProperties,
+                nullableProperties = SerializableSample.setNullableProperties
+            )
             .exhaustiveCollectionTesting()
     }
 
@@ -409,11 +364,19 @@ class SerializationTests {
             .allDictionaryFieldTypes
             .map { fieldType: TypeDescriptor.RealmFieldType ->
                 DictionaryTypeSafetyManager<Any?>(
-                    elementType = fieldType.elementType,
-                    properties = SerializableSample.dictionaryProperties
+                    dataSetToLoad = getDataSetForDictionaryClassifier(
+                        fieldType.elementType.classifier,
+                        fieldType.elementType.nullable,
+                        OBJECT_VALUES
+                    ),
+                    property = when (fieldType.elementType.nullable) {
+                        false -> SerializableSample.dictNonNullableProperties[fieldType.elementType.classifier]
+                        true -> SerializableSample.dictNullableProperties[fieldType.elementType.classifier]
+                    }!! as KMutableProperty1<SerializableSample, RealmDictionary<Any?>>,
+                    classifier = fieldType.elementType.classifier
                 )
             }
-            .forEach { dataset ->
+            .forEach { dataset: DictionaryTypeSafetyManager<Any?> ->
                 listOf(
                     dataset.createPrePopulatedContainer(),
                     realm.writeBlocking {

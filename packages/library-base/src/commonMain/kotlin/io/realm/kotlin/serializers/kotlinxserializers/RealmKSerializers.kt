@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.serializers
+package io.realm.kotlin.serializers.kotlinxserializers
 
 import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.ext.asRealmObject
@@ -269,6 +269,12 @@ public class RealmInstantKSerializer : KSerializer<RealmInstant> {
  * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
  */
 public object RealmAnyKSerializer : KSerializer<RealmAny> {
+
+    /**
+     * This class represents a union type of all possible RealmAny types. We cannot write a regular
+     * serializer because we need to be able to resolve the serializer for a RealmObject in runtime,
+     * and the only way to do it is through kserialization internal functions.
+     */
     @Serializable
     private class SerializableRealmAny {
         lateinit var type: String
