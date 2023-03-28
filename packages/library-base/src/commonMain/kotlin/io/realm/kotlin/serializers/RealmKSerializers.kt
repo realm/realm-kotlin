@@ -45,7 +45,7 @@ import org.mongodb.kbson.Decimal128
 
 /**
  * KSerializer implementation for [RealmList]. Serialization is done as a generic list structure,
- * whilst deserialization is done with an unmanaged [RealmList].
+ * whilst deserialization is done into an unmanaged [RealmList].
  *
  * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
  * require to be manually subscribed.
