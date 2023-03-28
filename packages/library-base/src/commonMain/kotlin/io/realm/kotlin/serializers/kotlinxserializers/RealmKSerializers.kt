@@ -47,17 +47,16 @@ import org.mongodb.kbson.Decimal128
  * KSerializer implementation for [RealmList]. Serialization is done as a generic list structure,
  * whilst deserialization is done into an unmanaged [RealmList].
  *
- * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
- * require to be manually subscribed.
+ * It supports any serializable type as a type argument.
  *
- * Subscriptions can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmListKSerializer::class)
  *     var myList: RealmList<String> = realmListOf()
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(RealmListKSerializer::class)
  *
@@ -85,17 +84,16 @@ public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSeria
  * KSerializer implementation for [RealmSet]. Serialization is done as a generic list structure,
  * whilst deserialization is done into an unmanaged [RealmSet].
  *
- * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
- * require to be manually subscribed.
+ * It supports any serializable type as a type argument.
  *
- * Subscription can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmSetKSerializer::class)
  *     var mySet: RealmSet<String> = realmSetOf()
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(RealmSetKSerializer::class)
  *
@@ -123,17 +121,16 @@ public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerial
  * KSerializer implementation for [RealmDictionary]. Serialization is done as a generic map structure,
  * whilst deserialization is done into an unmanaged [RealmDictionary].
  *
- * It supports any serializable type as a type argument. Note that serializers for Realm datatypes
- * require to be manually subscribed.
+ * It supports any serializable type as a type argument.
  *
- * Subscription can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmDictionaryKSerializer::class)
  *     var myDictionary: RealmDictionary<String> = realmDictionaryOf()
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(RealmDictionaryKSerializer::class)
  *
@@ -169,14 +166,14 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
  * ```
  * Deserialization is done with an unmanaged [RealmInstant].
  *
- * Subscription can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmInstantKSerializer::class)
  *     var myInstant: RealmInstant = RealmInstant.now()
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(RealmInstantKSerializer::class)
  *
@@ -190,6 +187,10 @@ public class RealmInstantKSerializer : KSerializer<RealmInstant> {
     private val serializer = SerializableRealmInstant.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
+    /**
+     * Serializing as a map for improved verbosity. Serializing as an Array could improve
+     * performance, but the users are free to implement their own custom serializers.
+     */
     @Serializable
     private class SerializableRealmInstant(
         var epochSeconds: Long = 0,
@@ -237,14 +238,14 @@ public class RealmInstantKSerializer : KSerializer<RealmInstant> {
  *
  * Deserialization is done with an unmanaged [RealmAny].
  *
- * Subscription can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmAnyKSerializer::class)
  *     var myInstant: RealmAny = RealmAny.create("hello world")
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(RealmAnyKSerializer::class)
  *
@@ -344,14 +345,14 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
  * KSerializer implementation for [RealmUUID]. Serialization is done as a [ByteArray], whilst
  * deserialization is done with an unmanaged [RealmUUID].
  *
- * Subscription can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmUUIDKSerializer::class)
  *     var myUUID: RealmUUID = RealmUUID.create()
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(RealmUUIDKSerializer::class)
  *
@@ -377,14 +378,14 @@ public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
  * KSerializer implementation for [ObjectId]. Serialization is done as a [ByteArray], whilst
  * deserialization is done with an unmanaged [ObjectId].
  *
- * Subscription can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmObjectIdKSerializer::class)
  *     var myObjectId: ObjectId = ObjectId.create()
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(RealmObjectIdKSerializer::class)
  *
@@ -410,14 +411,14 @@ public class RealmObjectIdKSerializer : KSerializer<ObjectId> {
  * KSerializer implementation for [MutableRealmInt]. Serialization is done with a primitive long value,
  * whilst deserialization is done with an unmanaged [MutableRealmInt].
  *
- * Subscription can be set up defining the serializer per property
+ * The serializer must be specified per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(MutableRealmIntKSerializer::class)
  *     var myMutableRealmInt: MutableRealmInt = MutableRealmInt.create(0)
  * }
  * ```
- * or per file
+ * or per file:
  * ```
  * @file:UseSerializers(MutableRealmIntKSerializer::class)
  *
