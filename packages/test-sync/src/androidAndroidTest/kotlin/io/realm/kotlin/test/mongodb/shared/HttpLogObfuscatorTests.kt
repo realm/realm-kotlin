@@ -27,6 +27,8 @@ import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
+import io.realm.kotlin.test.util.receiveOrFail
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -80,16 +82,18 @@ class HttpLogObfuscatorTests {
                 ) {
                     channel.trySend(Operation.OBFUSCATED_CUSTOM_FUNCTION)
                 } else if (it.contains(""""password":"$password"""")) {
-                    fail(
-                        """Password was not obfuscated: $message""".trimMargin()
-                    )
+                    channel.cancel(CancellationException("Password was not obfuscated: $message"))
                 } else if (it.contains(""""(("access_token"):(".+?")),(("refresh_token"):(".+?"))""".toRegex())) {
-                    fail(
-                        """Access and refresh tokens were not obfuscated: $message""".trimMargin()
+                    channel.cancel(
+                        CancellationException(
+                            """Access and refresh tokens were not obfuscated: $message""".trimMargin()
+                        )
                     )
                 } else if (it.contains(""""(("key"):(".+?"))""".toRegex())) {
-                    fail(
-                        """API key was not obfuscated: $message""".trimMargin()
+                    channel.cancel(
+                        CancellationException(
+                            """API key was not obfuscated: $message""".trimMargin()
+                        )
                     )
                 }
             }
@@ -232,17 +236,16 @@ class HttpLogObfuscatorTests {
         }
 
         // Create API KEY - response (obfuscate API key)
-        assertEquals(Operation.OBFUSCATED_API_KEY, channel.receive())
+        assertEquals(Operation.OBFUSCATED_API_KEY, channel.receiveOrFail())
         // Login API KEY - request (obfuscate API key)
-        assertEquals(Operation.OBFUSCATED_API_KEY, channel.receive())
+        assertEquals(Operation.OBFUSCATED_API_KEY, channel.receiveOrFail())
         // Login API KEY - response (obfuscate access and refresh tokens)
-        assertEquals(Operation.OBFUSCATED_ACCESS_AND_REFRESH_TOKENS, channel.receive())
+        assertEquals(Operation.OBFUSCATED_ACCESS_AND_REFRESH_TOKENS, channel.receiveOrFail())
     }
 
     @Test
     fun apple_login() = runBlocking {
         app = initApp()
-        createUserAndLoginAssertions()
 
         async {
             // Testing this requires a valid token so let's just test we obfuscate the request
@@ -251,13 +254,12 @@ class HttpLogObfuscatorTests {
             }
         }
         // Login Apple - request (obfuscate token)
-        assertEquals(Operation.OBFUSCATED_APPLE_OR_GOOGLE_ID_TOKEN, channel.receive())
+        assertEquals(Operation.OBFUSCATED_APPLE_OR_GOOGLE_ID_TOKEN, channel.receiveOrFail())
     }
 
     @Test
     fun facebook_login() = runBlocking {
         app = initApp()
-        createUserAndLoginAssertions()
 
         async {
             // Testing this requires a valid token so let's just test we obfuscate the request
@@ -266,13 +268,12 @@ class HttpLogObfuscatorTests {
             }
         }
         // Login Facebook - request (obfuscate token)
-        assertEquals(Operation.OBFUSCATED_FACEBOOK, channel.receive())
+        assertEquals(Operation.OBFUSCATED_FACEBOOK, channel.receiveOrFail())
     }
 
     @Test
     fun googleAuthToken_login() = runBlocking {
         app = initApp()
-        createUserAndLoginAssertions()
 
         async {
             // Testing these two requires a valid token so let's just test we obfuscate the request
@@ -284,9 +285,9 @@ class HttpLogObfuscatorTests {
             }
         }
         // Login Google auth token - request (obfuscate token)
-        assertEquals(Operation.OBFUSCATED_GOOGLE_AUTH_CODE, channel.receive())
+        assertEquals(Operation.OBFUSCATED_GOOGLE_AUTH_CODE, channel.receiveOrFail())
         // Login Google ID token - request (obfuscate token)
-        assertEquals(Operation.OBFUSCATED_APPLE_OR_GOOGLE_ID_TOKEN, channel.receive())
+        assertEquals(Operation.OBFUSCATED_APPLE_OR_GOOGLE_ID_TOKEN, channel.receiveOrFail())
     }
 
     @Test
@@ -301,7 +302,7 @@ class HttpLogObfuscatorTests {
             }
         }
         // Login JWT - request (obfuscate token)
-        assertEquals(Operation.OBFUSCATED_JWT, channel.receive())
+        assertEquals(Operation.OBFUSCATED_JWT, channel.receiveOrFail())
     }
 
     @Test
@@ -317,27 +318,27 @@ class HttpLogObfuscatorTests {
             }
         }
         // 1st custom function call - request (obfuscate arguments)
-        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receive())
+        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receiveOrFail())
         // 1st custom function call - response (obfuscate result)
-        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receive())
+        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receiveOrFail())
 
         // 2nd custom function call - request (obfuscate arguments)
-        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receive())
+        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receiveOrFail())
         // 2nd custom function call - response (obfuscate result)
-        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receive())
+        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receiveOrFail())
 
         // 3rd custom function call - request (obfuscate arguments)
-        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receive())
+        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receiveOrFail())
         // 3rd custom function call - response (obfuscate result)
-        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receive())
+        assertEquals(Operation.OBFUSCATED_CUSTOM_FUNCTION, channel.receiveOrFail())
     }
 
     private suspend fun createUserAndLoginAssertions() {
         coroutineScope {
             val deferred = async { user = app.createUserAndLogin() }
-            assertEquals(Operation.OBFUSCATED_PASSWORD, channel.receive())
-            assertEquals(Operation.OBFUSCATED_PASSWORD, channel.receive())
-            assertEquals(Operation.OBFUSCATED_ACCESS_AND_REFRESH_TOKENS, channel.receive())
+            assertEquals(Operation.OBFUSCATED_PASSWORD, channel.receiveOrFail())
+            assertEquals(Operation.OBFUSCATED_PASSWORD, channel.receiveOrFail())
+            assertEquals(Operation.OBFUSCATED_ACCESS_AND_REFRESH_TOKENS, channel.receiveOrFail())
             deferred.cancel()
         }
     }
