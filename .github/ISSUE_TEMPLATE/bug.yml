@@ -94,7 +94,7 @@ body:
     validations:
       required: true
   - type: textarea
-    id: java-build-environment
+    id: kotlin-build-environment
     attributes:
       label: "Build environment"
       description: Build environment versions
