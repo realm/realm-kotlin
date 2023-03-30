@@ -48,7 +48,7 @@ import org.mongodb.kbson.Decimal128
  *
  * It supports any serializable type as a type argument.
  *
- * The serializer must be specified per property:
+ * The serializer must be registered per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmListKSerializer::class)
@@ -63,7 +63,22 @@ import org.mongodb.kbson.Decimal128
  *     var myList: RealmList<String> = realmListOf()
  * }
  * ```
- * You can find the serializers for all Realm data types in [io.realm.kotlin.serializers].
+ *
+ * Adding the following code snippet to a Kotlin file would conveniently register any field using a
+ * Realm datatype to its correspondent serializer:
+ *
+ * ```
+ * @file:UseSerializers(
+ *     RealmListKSerializer::class,
+ *     RealmSetKSerializer::class,
+ *     RealmAnyKSerializer::class,
+ *     RealmInstantKSerializer::class,
+ *     MutableRealmIntKSerializer::class,
+ *     RealmUUIDKSerializer::class
+ * )
+ * ```
+ *
+ * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmList<E>> {
     private val serializer = ListSerializer(elementSerializer)
@@ -85,7 +100,7 @@ public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSeria
  *
  * It supports any serializable type as a type argument.
  *
- * The serializer must be specified per property:
+ * The serializer must be registered per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmSetKSerializer::class)
@@ -100,6 +115,21 @@ public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSeria
  *     var mySet: RealmSet<String> = realmSetOf()
  * }
  * ```
+ *
+ * Adding the following code snippet to a Kotlin file would conveniently register any field using a
+ * Realm datatype to its correspondent serializer:
+ *
+ * ```
+ * @file:UseSerializers(
+ *     RealmListKSerializer::class,
+ *     RealmSetKSerializer::class,
+ *     RealmAnyKSerializer::class,
+ *     RealmInstantKSerializer::class,
+ *     MutableRealmIntKSerializer::class,
+ *     RealmUUIDKSerializer::class
+ * )
+ * ```
+ *
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmSet<E>> {
@@ -122,7 +152,7 @@ public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerial
  *
  * It supports any serializable type as a type argument.
  *
- * The serializer must be specified per property:
+ * The serializer must be registered per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmDictionaryKSerializer::class)
@@ -137,6 +167,21 @@ public class RealmSetKSerializer<E>(elementSerializer: KSerializer<E>) : KSerial
  *     var myDictionary: RealmDictionary<String> = realmDictionaryOf()
  * }
  * ```
+ *
+ * Adding the following code snippet to a Kotlin file would conveniently register any field using a
+ * Realm datatype to its correspondent serializer:
+ *
+ * ```
+ * @file:UseSerializers(
+ *     RealmListKSerializer::class,
+ *     RealmSetKSerializer::class,
+ *     RealmAnyKSerializer::class,
+ *     RealmInstantKSerializer::class,
+ *     MutableRealmIntKSerializer::class,
+ *     RealmUUIDKSerializer::class
+ * )
+ * ```
+ *
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
@@ -165,7 +210,7 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
  * ```
  * Deserialization is done with an unmanaged [RealmInstant].
  *
- * The serializer must be specified per property:
+ * The serializer must be registered per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmInstantKSerializer::class)
@@ -180,6 +225,21 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
  *     var myInstant: RealmInstant = RealmInstant.now()
  * }
  * ```
+ *
+ * Adding the following code snippet to a Kotlin file would conveniently register any field using a
+ * Realm datatype to its correspondent serializer:
+ *
+ * ```
+ * @file:UseSerializers(
+ *     RealmListKSerializer::class,
+ *     RealmSetKSerializer::class,
+ *     RealmAnyKSerializer::class,
+ *     RealmInstantKSerializer::class,
+ *     MutableRealmIntKSerializer::class,
+ *     RealmUUIDKSerializer::class
+ * )
+ * ```
+ *
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class RealmInstantKSerializer : KSerializer<RealmInstant> {
@@ -237,7 +297,7 @@ public class RealmInstantKSerializer : KSerializer<RealmInstant> {
  *
  * Deserialization is done with an unmanaged [RealmAny].
  *
- * The serializer must be specified per property:
+ * The serializer must be registered per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmAnyKSerializer::class)
@@ -266,7 +326,21 @@ public class RealmInstantKSerializer : KSerializer<RealmInstant> {
  * }
  * ```
  *
- * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
+ * Adding the following code snippet to a Kotlin file would conveniently register any field using a
+ * Realm datatype to its correspondent serializer:
+ *
+ * ```
+ * @file:UseSerializers(
+ *     RealmListKSerializer::class,
+ *     RealmSetKSerializer::class,
+ *     RealmAnyKSerializer::class,
+ *     RealmInstantKSerializer::class,
+ *     MutableRealmIntKSerializer::class,
+ *     RealmUUIDKSerializer::class
+ * )
+ * ```
+ *
+ * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public object RealmAnyKSerializer : KSerializer<RealmAny> {
 
@@ -343,7 +417,7 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
  * KSerializer implementation for [RealmUUID]. Serialization is done as a [ByteArray], whilst
  * deserialization is done with an unmanaged [RealmUUID].
  *
- * The serializer must be specified per property:
+ * The serializer must be registered per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(RealmUUIDKSerializer::class)
@@ -358,7 +432,22 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
  *     var myUUID: RealmUUID = RealmUUID.create()
  * }
  * ```
- * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
+ *
+ * Adding the following code snippet to a Kotlin file would conveniently register any field using a
+ * Realm datatype to its correspondent serializer:
+ *
+ * ```
+ * @file:UseSerializers(
+ *     RealmListKSerializer::class,
+ *     RealmSetKSerializer::class,
+ *     RealmAnyKSerializer::class,
+ *     RealmInstantKSerializer::class,
+ *     MutableRealmIntKSerializer::class,
+ *     RealmUUIDKSerializer::class
+ * )
+ * ```
+ *
+ * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
     private val serializer = ByteArraySerializer()
@@ -376,7 +465,7 @@ public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
  * KSerializer implementation for [MutableRealmInt]. Serialization is done with a primitive long value,
  * whilst deserialization is done with an unmanaged [MutableRealmInt].
  *
- * The serializer must be specified per property:
+ * The serializer must be registered per property:
  * ```
  * class Example : RealmObject {
  *     @Serializable(MutableRealmIntKSerializer::class)
@@ -391,7 +480,22 @@ public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
  *     var myMutableRealmInt: MutableRealmInt = MutableRealmInt.create(0)
  * }
  * ```
- * In [io.realm.kotlin.serializers] you would find the serializers for all Realm data types.
+ *
+ * Adding the following code snippet to a Kotlin file would conveniently register any field using a
+ * Realm datatype to its correspondent serializer:
+ *
+ * ```
+ * @file:UseSerializers(
+ *     RealmListKSerializer::class,
+ *     RealmSetKSerializer::class,
+ *     RealmAnyKSerializer::class,
+ *     RealmInstantKSerializer::class,
+ *     MutableRealmIntKSerializer::class,
+ *     RealmUUIDKSerializer::class
+ * )
+ * ```
+ *
+ * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public class MutableRealmIntKSerializer : KSerializer<MutableRealmInt> {
     override val descriptor: SerialDescriptor = Long.serializer().descriptor
