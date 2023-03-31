@@ -60,6 +60,7 @@ import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -113,7 +114,7 @@ class SyncClientResetIntegrationTests {
         ) {
             val app = TestApp(
                 appName = appName,
-                logLevel = LogLevel.TRACE,
+                logLevel = LogLevel.INFO,
                 customLogger = ClientResetLoggerInspector(logChannel),
                 initialSetup = { app, service ->
                     addEmailProvider(app)
@@ -1019,6 +1020,7 @@ class SyncClientResetIntegrationTests {
     }
 
     @Test
+    @Ignore // FIXME Seems to fail on Ubuntu https://github.com/realm/realm-kotlin/actions/runs/4572319934/jobs/8072085132
     fun recoverUnsyncedChanges_recover_flx() = runBlocking {
         performFlxTest { syncMode, app, user, builder ->
             recoverUnsyncedChanges_recover(syncMode, app, user, builder)
