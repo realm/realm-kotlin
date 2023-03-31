@@ -30,6 +30,7 @@ import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -88,7 +89,7 @@ internal class KtorNetworkTransportTest {
                     mapOf(),
                     body
                 ) { response -> channel.trySend(response) }
-                channel.receive()
+                channel.receiveOrFail()
             }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
@@ -109,7 +110,7 @@ internal class KtorNetworkTransportTest {
                     mapOf(),
                     body
                 ) { response -> channel.trySend(response) }
-                channel.receive()
+                channel.receiveOrFail()
             }
             assertEquals(500, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
@@ -133,7 +134,7 @@ internal class KtorNetworkTransportTest {
                     mapOf(),
                     body
                 ) { response -> channel.trySend(response) }
-                channel.receive()
+                channel.receiveOrFail()
             }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")

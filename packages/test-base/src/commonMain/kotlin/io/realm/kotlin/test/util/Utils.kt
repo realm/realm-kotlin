@@ -21,7 +21,11 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 // Platform independent helper methods
 object Utils {
@@ -84,5 +88,12 @@ fun Instant.toRealmInstant(): RealmInstant {
         val adjustedSeconds = s + 1
         val adjustedNanoSeconds = ns - 1_000_000_000
         RealmInstant.from(adjustedSeconds, adjustedNanoSeconds)
+    }
+}
+
+// Variant of `Channel.receiveOrFail()` that will will throw if a timeout is hit.
+suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 30.seconds): T {
+    return withTimeout(timeout) {
+        receive()
     }
 }

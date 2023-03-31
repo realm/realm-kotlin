@@ -27,6 +27,7 @@ import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -43,12 +44,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private const val password: String = "password1234"
-
-public suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 10.seconds): T {
-    return withTimeout(timeout) {
-        receive()
-    }
-}
 
 class HttpLogObfuscatorTests {
 
