@@ -151,7 +151,7 @@ class HttpLogObfuscatorTests {
     fun nullObfuscator() = runBlocking {
         val logger = CustomLogCollector("NULL-OBFUSCATOR", LogLevel.DEBUG)
         app = TestApp(
-            appName = "${io.realm.kotlin.test.mongodb.SyncServerConfig.appPrefix}-null-obfuscator",
+            appName = "${io.realm.kotlin.test.mongodb.SyncServerConfig.appPrefix}-null-obf",
             logLevel = LogLevel.DEBUG,
             builder = { it.httpLogObfuscator(null) },
             customLogger = logger,

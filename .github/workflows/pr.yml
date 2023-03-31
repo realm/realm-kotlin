@@ -760,9 +760,9 @@ jobs:
         type: [base, sync]
         include:
           - type: base
-            test-title: Results - Android Base (Emulator)
+            test-title: Unit Test Results - Android Base (Emulator)
           - type: sync
-            test-title: Results - Android Sync (Emulator)
+            test-title: Unit Test Results - Android Sync (Emulator)
  
     runs-on: macos-latest
     needs: [check-cache, deploy-baas, build-android-packages, build-jvm-packages]
