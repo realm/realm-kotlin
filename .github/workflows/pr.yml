@@ -884,10 +884,12 @@ jobs:
         include:
           - os: macos-latest
             type: base
+            os-id: macos
             package-prefix: macos-x64
             test-title: Unit Test Results - MacOS x64 Base
           - os: macos-latest
             type: sync
+            os-id: macos
             package-prefix: macos-x64
             test-title: Unit Test Results - MacOS x64 Sync
           # - os: macos-arm
@@ -930,7 +932,7 @@ jobs:
           ./gradlew :test-${{ matrix.type }}:macosTest
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
-          -PsyncTestAppNamePrefix=jvm-${{ matrix.os }}-${{ needs.deploy-baas.outputs.runId }}
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.runId }}
           -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
           -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}

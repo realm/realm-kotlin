@@ -118,7 +118,7 @@ class HttpLogObfuscatorTests {
 
     private fun initApp(): TestApp {
         return TestApp(
-            appName = "${io.realm.kotlin.test.mongodb.SyncServerConfig.appPrefix}-obfuscator",
+            appName = "${io.realm.kotlin.test.mongodb.SyncServerConfig.appPrefix}-obfsctr",
             logLevel = LogLevel.DEBUG,
             customLogger = ObfuscatorLoggerInspector(channel),
             initialSetup = { app, service ->

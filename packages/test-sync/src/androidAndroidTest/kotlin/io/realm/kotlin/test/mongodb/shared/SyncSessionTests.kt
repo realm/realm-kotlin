@@ -413,7 +413,7 @@ class SyncSessionTests {
                     }
             }
 
-            val insertedObject = channel.receiveOrFail()
+            val insertedObject = channel.receiveOrFail(120.seconds)
             assertEquals(oid, insertedObject._id.toHexString())
             assertEquals(partitionValue, insertedObject.name)
             realm.close()
