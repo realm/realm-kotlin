@@ -22,6 +22,7 @@ import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.async
@@ -86,11 +87,11 @@ class RealmTests {
             async(notificationDispatcher) {
                 channel.send(1)
             }
-            assertEquals(1, channel.receive())
+            assertEquals(1, channel.receiveOrFail())
             async(writeDispatcher) {
                 channel.send(2)
             }
-            assertEquals(2, channel.receive())
+            assertEquals(2, channel.receiveOrFail())
             channel.close()
             Unit
         }
