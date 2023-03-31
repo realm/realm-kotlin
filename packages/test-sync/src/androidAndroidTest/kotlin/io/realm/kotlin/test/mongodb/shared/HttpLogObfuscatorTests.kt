@@ -32,7 +32,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonNull
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -40,8 +39,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.fail
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 private const val password: String = "password1234"
 
