@@ -11,7 +11,7 @@ name: deploy-baas
     outputs:
       clusterName:
         value: ${{ jobs.deploy-baas.outputs.clusterName }}
-      appIdPrefix: 
+      runId: 
         value: ${{ github.run_id }}-${{ github.run_attempt }}
     secrets:
       AtlasProjectId:

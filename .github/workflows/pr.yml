@@ -818,7 +818,7 @@ jobs:
           script: |
             adb logcat -c
             adb logcat > logcat.txt &
-            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck -PincludeSdkModules=false -PsyncTestUrl=https://realm-qa.mongodb.com -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }} -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }} -info --stacktrace --no-daemon
+            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck -PincludeSdkModules=false -PsyncTestUrl=https://realm-qa.mongodb.com -PsyncTestAppNamePrefix=jvm-andemu-${{ needs.deploy-baas.outputs.runId }} -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }} -info --stacktrace --no-daemon
 
       - name: Archive LogCat data
         uses: actions/upload-artifact@v3
@@ -930,7 +930,7 @@ jobs:
           ./gradlew :test-${{ matrix.type }}:macosTest
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
-          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os }}-${{ needs.deploy-baas.outputs.runId }}
           -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
           -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
@@ -1012,7 +1012,7 @@ jobs:
           ./gradlew :test-${{ matrix.type }}:${{ matrix.test-task }}
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
-          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os }}-${{ needs.deploy-baas.outputs.runId }}
           -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
           -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
@@ -1098,7 +1098,7 @@ jobs:
           ./gradlew :test-${{ matrix.type }}:jvmTest
           -PincludeSdkModules=false
           -PsyncTestUrl=https://realm-qa.mongodb.com
-          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.appId }}
+          -PsyncTestAppNamePrefix=jvm-${{ matrix.os-id }}-${{ needs.deploy-baas.outputs.runId }}
           -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
           -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }}
           -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
@@ -1228,7 +1228,7 @@ jobs:
     with:
       BaseUrl: https://realm-qa.mongodb.com
       AtlasBaseUrl: https://cloud-qa.mongodb.com
-      AppIdPrefix: ${{ needs.deploy-baas.outputs.appIdPrefix }}
+      AppIdPrefix: ${{ needs.deploy-baas.outputs.runId }}
     secrets:
       AtlasProjectId: ${{ secrets.ATLAS_QA_PROJECT_ID }}
       AtlasPublicKey: ${{ secrets.ATLAS_QA_PUBLIC_API_KEY }}
