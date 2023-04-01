@@ -42,7 +42,7 @@ actual object PlatformUtils {
             // We try to trigger the GC once then retry the delete.
             var counter = 5
             var deleted = false
-            while(!deleted && counter > 0) {
+            while (!deleted && counter > 0) {
                 try {
                     Files.deleteIfExists(p)
                     deleted = true
