@@ -387,16 +387,22 @@ jobs:
           type ninja
           ninja --version
 
-      - name: Build Android Test Apk
+      - name: Build Android Base Test Apk
         working-directory: packages
         run: ./gradlew  :test-base:assembleAndroidTest -PignoreNativeLibs=true
+
+      - name: Build Android Sync Test Apk
+        working-directory: packages
+        run: ./gradlew :test-sync:assembleAndroidTest -PignoreNativeLibs=true \
+          -PsyncTestUrl=https://realm-qa.mongodb.com \
+          -PsyncTestAppNamePrefix=and-devfarm-${{ needs.deploy-baas.outputs.runId }} \
+          -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
+          -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
+          -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }} \
 
       - name: Build packages
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -PignoreNativeLibs=true
-
-      - name: APK zipinfo
-        run: zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -420,11 +426,18 @@ jobs:
           path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
-      - name: Upload Android Test APK
+      - name: Upload Android Base Test APK
         uses: actions/upload-artifact@v3
         with:
           name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+          retention-days: 1
+
+      - name: Upload Android Sync Test APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-sync-test-apk-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           retention-days: 1
 
   # TODO: ccache is not being used by this build for some reason
@@ -841,6 +854,16 @@ jobs:
   test-android-packages-device-farm:
     name: AWS Device Farm
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [base, sync]
+        include:
+          - type: base
+            appId: io.realm.testapp
+          - type: sync
+            appId: io.realm.sync.testapp
+
     runs-on: ubuntu-latest
     needs: [ check-cache, build-android-packages, build-jvm-packages ]
     if: |
@@ -855,7 +878,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+          path: ./packages/test-${{ matrix.type }}/build/outputs/apk/androidTest/debug/test-${{ matrix.type }}-debug-androidTest.apk
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -868,8 +891,8 @@ jobs:
         uses: ./.github/actions/run-android-device-farm-test
         id: run_android_tests
         with:
-          apk-path: ${{ github.workspace }}/packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk/test-base-debug-androidTest.apk
-          app-id: io.realm.testapp.test
+          apk-path: ${{ github.workspace }}/packages/test-${{ matrix.type }}/build/outputs/apk/androidTest/debug/test-${{ matrix.type }}-debug-androidTest.apk/test-${{ matrix.type }}-debug-androidTest.apk
+          app-id: ${{ matrix.appId }}
           project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
