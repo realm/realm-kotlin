@@ -22,6 +22,7 @@ import java.nio.file.Paths
 import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
@@ -34,16 +35,22 @@ actual object PlatformUtils {
         val pathsToDelete: List<Path> =
             Files.walk(rootPath).sorted(Comparator.reverseOrder()).collect(Collectors.toList())
         for (p in pathsToDelete) {
-            try {
-                Files.deleteIfExists(p)
-            } catch (e: java.nio.file.FileSystemException) {
-                // Sometimes (on Windows) we need the give a GC a chance to run and close all native pointers
-                // before we can delete the Realm, otherwise delete will fail with " The process cannot access the
-                // file because it is being used by another process".
-                //
-                // We try to trigger the GC once then retry the delete.
-                triggerGC()
-                Files.deleteIfExists(p)
+            // Sometimes (on Windows) we need the give a GC a chance to run and close all native pointers
+            // before we can delete the Realm, otherwise delete will fail with " The process cannot access the
+            // file because it is being used by another process".
+            //
+            // We try to trigger the GC once then retry the delete.
+            var counter = 5
+            var deleted = false
+            while(!deleted && counter > 0) {
+                try {
+                    Files.deleteIfExists(p)
+                    deleted = true
+                } catch (e: java.nio.file.FileSystemException) {
+                    triggerGC()
+                    sleep(1.seconds)
+                    counter -= 1
+                }
             }
         }
     }

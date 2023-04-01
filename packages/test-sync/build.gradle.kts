@@ -278,6 +278,8 @@ buildkonfig {
  *   An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
  *   Unable to boot device in current state: Booted
  *   ```
+ * 
+ * Note, this seems to be scheduled for a fix in 1.9.0.
  */
 tasks.register("runCloudIosTests")  {
     val  device = project.findProperty("iosDevice") as? String ?: "iPhone 12"
@@ -292,7 +294,7 @@ tasks.register("runCloudIosTests")  {
     doLast {
         val  binary = (kotlin.targets["ios"] as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget).binaries.getTest("DEBUG").outputFile
         exec {
-            commandLine("sh", "-c", "xcrun simctl boot '$device' && xcrun simctl spawn '$device' ${binary.absolutePath} -- --ktest_no_exit_code --ktest_logger=TEAMCITY")
+            commandLine("sh", "-c", "xcrun simctl boot '$device' && xcrun simctl spawn '$device' ${binary.absolutePath} -- --ktest_logger=TEAMCITY")
         }
     }
 }

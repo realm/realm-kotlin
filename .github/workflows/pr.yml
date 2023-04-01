@@ -748,8 +748,6 @@ jobs:
           retention-days: 1
 
 
-  # TODO Split into base and sync tests
-  # TODO If we hook up to Device Farm we can use ubuntu runners instead
   # TODO Compare speed between emulator and Device Farm
   # TODO We should be able to move this into a reusable work-flow
   test-android-packages-emulator:
@@ -839,6 +837,7 @@ jobs:
           list-tests: failed
           fail-on-error: true
 
+  # TODO Enable Sync tests here as well
   test-android-packages-device-farm:
     name: AWS Device Farm
     timeout-minutes: 60
@@ -1020,16 +1019,18 @@ jobs:
           -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
           -info --stacktrace --no-daemon
 
-      - name: Publish Unit Test Results
-        uses: dorny/test-reporter@v1
-        if: always() || failure()
-        with:
-          name: ${{ matrix.test-title }} 
-          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
-          reporter: java-junit
-          list-suites: failed
-          list-tests: failed
-          fail-on-error: true
+      # IOS Sync Tests currently don't create XML test output, so look in the build log for failures instead.
+      # This is expected to be fixed in Kotlin 1.9.0.
+      # - name: Publish Unit Test Results
+      #   uses: dorny/test-reporter@v1
+      #   if: always() || failure()
+      #   with:
+      #     name: ${{ matrix.test-title }} 
+      #     path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+      #     reporter: java-junit
+      #     list-suites: failed
+      #     list-tests: failed
+      #     fail-on-error: true
 
   # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
   test-jvm-packages:
