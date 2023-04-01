@@ -877,8 +877,8 @@ jobs:
       - name: Restore Android Test APK
         uses: actions/download-artifact@v3
         with:
-          name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/test-${{ matrix.type }}/build/outputs/apk/androidTest/debug/test-${{ matrix.type }}-debug-androidTest.apk
+          name: android-${{ matrix.type }}-test-apk-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/test-${{ matrix.type }}/build/outputs/apk/androidTest/debug
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -891,7 +891,7 @@ jobs:
         uses: ./.github/actions/run-android-device-farm-test
         id: run_android_tests
         with:
-          apk-path: ${{ github.workspace }}/packages/test-${{ matrix.type }}/build/outputs/apk/androidTest/debug/test-${{ matrix.type }}-debug-androidTest.apk/test-${{ matrix.type }}-debug-androidTest.apk
+          apk-path: ${{ github.workspace }}/packages/test-${{ matrix.type }}/build/outputs/apk/androidTest/debug/test-${{ matrix.type }}-debug-androidTest.apk
           app-id: ${{ matrix.appId }}
           project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}

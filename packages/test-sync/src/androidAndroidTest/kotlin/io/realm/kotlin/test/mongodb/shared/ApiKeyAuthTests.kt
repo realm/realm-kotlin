@@ -22,6 +22,7 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.types.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -63,8 +64,9 @@ class ApiKeyAuthTests {
 
     @Test
     fun create() = runBlocking {
-        val key = provider.create("foo")
-        assertEquals("foo", key.name)
+        val name = TestHelper.randomString("key-")
+        val key = provider.create(name)
+        assertEquals(name, key.name)
         assertNotNull(key.value)
         assertNotNull(key.id)
         assertTrue(key.enabled)
@@ -105,8 +107,8 @@ class ApiKeyAuthTests {
 
     @Test
     fun fetchAll() = runBlocking {
-        val key1 = provider.create("foo")
-        val key2 = provider.create("bar")
+        val key1 = provider.create(TestHelper.randomString("key-"))
+        val key2 = provider.create(TestHelper.randomString("key-"))
         val keys = provider.fetchAll()
         assertEquals(2, keys.size)
         assertTrue(keys.any { it.id == key1.id })
@@ -121,7 +123,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun delete() = runBlocking {
-        val key1 = provider.create("foo")
+        val key1 = provider.create(TestHelper.randomString("key-"))
         assertNotNull(provider.fetch(key1.id))
         provider.delete(key1.id)
         assertNull(provider.fetch(key1.id))
@@ -129,7 +131,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun delete_nonExisitingKeyNoOps(): Unit = runBlocking {
-        provider.create("foo")
+        provider.create(TestHelper.randomString("key-"))
         val keys = provider.fetchAll()
         assertEquals(1, keys.size)
         provider.delete(ObjectId.create())
@@ -139,7 +141,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun enable(): Unit = runBlocking {
-        val key = provider.create("foo")
+        val key = provider.create(TestHelper.randomString("key-"))
         provider.disable(key.id)
         assertFalse(provider.fetch(key.id)!!.enabled)
         provider.enable(key.id)
@@ -148,7 +150,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun enable_alreadyEnabled() = runBlocking {
-        val key = provider.create("foo")
+        val key = provider.create(TestHelper.randomString("key-"))
         provider.disable(key.id)
         assertFalse(provider.fetch(key.id)!!.enabled)
         provider.enable(key.id)
@@ -168,14 +170,14 @@ class ApiKeyAuthTests {
 
     @Test
     fun disable() = runBlocking {
-        val key = provider.create("foo")
+        val key = provider.create(TestHelper.randomString("key-"))
         provider.disable(key.id)
         assertFalse(provider.fetch(key.id)!!.enabled)
     }
 
     @Test
     fun disable_alreadyDisabled() = runBlocking {
-        val key = provider.create("foo")
+        val key = provider.create(TestHelper.randomString("key-"))
         provider.disable(key.id)
         assertFalse(provider.fetch(key.id)!!.enabled)
         provider.disable(key.id)
@@ -200,7 +202,7 @@ class ApiKeyAuthTests {
             assertFailsWithMessage<ServiceException>("[Service][Unknown(4351)] expected Authorization header with JWT (Bearer schema).") {
                 runBlocking {
                     when (method) {
-                        Method.CREATE -> provider.create("name")
+                        Method.CREATE -> provider.create(TestHelper.randomString("key-"))
                         Method.FETCH_SINGLE -> provider.fetch(ObjectId.create())
                         Method.FETCH_ALL -> provider.fetchAll()
                         Method.DELETE -> provider.delete(ObjectId.create())
