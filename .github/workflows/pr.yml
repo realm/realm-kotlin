@@ -393,12 +393,13 @@ jobs:
 
       - name: Build Android Sync Test Apk
         working-directory: packages
-        run: ./gradlew :test-sync:assembleAndroidTest -PignoreNativeLibs=true \
-          -PsyncTestUrl=https://realm-qa.mongodb.com \
-          -PsyncTestAppNamePrefix=and-devfarm-${{ needs.deploy-baas.outputs.runId }} \
-          -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
-          -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
-          -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }} \
+        run: |
+          ./gradlew :test-sync:assembleAndroidTest -PignoreNativeLibs=true \
+            -PsyncTestUrl=https://realm-qa.mongodb.com \
+            -PsyncTestAppNamePrefix=and-devfarm-${{ needs.deploy-baas.outputs.runId }} \
+            -PsyncTestLoginPublicApiKey=${{ secrets.ATLAS_QA_PUBLIC_API_KEY }} \
+            -PsyncTestLoginPrivateApiKey=${{ secrets.ATLAS_QA_PRIVATE_API_KEY }} \
+            -PsyncTestClusterName=${{ needs.deploy-baas.outputs.clusterName }}
 
       - name: Build packages
         working-directory: packages
