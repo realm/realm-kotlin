@@ -350,7 +350,7 @@ jobs:
       uses: actions/upload-artifact@v3
       if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
-        name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
+        name: jni-windows-lib-${{ steps.find-library-version.outputs.label }}
         path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll
         retention-days: 1
 
