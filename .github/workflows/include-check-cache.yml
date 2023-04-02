@@ -26,6 +26,8 @@ on:
         value: ${{ jobs.check-cache.outputs.packages-android-cache-hit }}
       android-test-base-apk-cache-hit:
         value: ${{ jobs.check-cache.outputs.android-test-base-apk-cache-hit }}
+      android-test-sync-apk-cache-hit:
+        value: ${{ jobs.check-cache.outputs.android-test-sync-apk-cache-hit }}
       packages-macos-x64-cache-hit:
         value: ${{ jobs.check-cache.outputs.packages-macos-x64-cache-hit }}
       packages-macos-arm64-cache-hit: 
@@ -58,6 +60,7 @@ jobs:
       packages-jvm-cache-hit: ${{ steps.jvm-cache.outputs.cache-hit }}
       packages-android-cache-hit: ${{ steps.android-cache.outputs.cache-hit }}
       android-test-base-apk-cache-hit: ${{ steps.android-test-base-apk.outputs.cache-hit }}
+      android-test-sync-apk-cache-hit: ${{ steps.android-test-sync-apk.outputs.cache-hit }}
       packages-macos-x64-cache-hit: ${{ steps.macos-x64-cache.outputs.cache-hit }}
       packages-macos-arm64-cache-hit: ${{ steps.macos-arm64-cache.outputs.cache-hit }}
       packages-ios-x64-cache-hit: ${{ steps.ios-x64-cache.outputs.cache-hit }}
@@ -213,14 +216,14 @@ jobs:
       #
       # Android Base Test APK
       #
-    - name: Check Android Test APK
+    - name: Check Android Base Test APK
       id: android-test-base-apk
       uses: cmelchior/cache@main
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         key: android-base-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
 
-    - name: Save Android Test APK
+    - name: Save Android Base Test APK
       uses: actions/upload-artifact@v3
       if: steps.android-test-base-apk.outputs.cache-hit == 'true'
       with:
@@ -228,12 +231,37 @@ jobs:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
         retention-days: 1
 
-    - name: Delete Android Test APK cache files
+    - name: Delete Android Base Test APK cache files
       id: delete-cache-android-base-test-apk
       uses: JesseTG/rm@v1.0.3
       if: steps.android-test-base-apk.outputs.cache-hit == 'true'
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+
+      #
+      # Android Sync Test APK
+      #
+    - name: Check Android Sync Test APK
+      id: android-test-sync-apk
+      uses: cmelchior/cache@main
+      with:
+        path: ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+        key: android-sync-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
+
+    - name: Save Android Sync Test APK
+      uses: actions/upload-artifact@v3
+      if: steps.android-test-sync-apk.outputs.cache-hit == 'true'
+      with:
+        name: android-sync-test-apk-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+        retention-days: 1
+
+    - name: Delete Android Sync Test APK cache files
+      id: delete-cache-android-sync-test-apk
+      uses: JesseTG/rm@v1.0.3
+      if: steps.android-test-sync-apk.outputs.cache-hit == 'true'
+      with:
+        path: ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
 
     #
     # MacOS arm64
