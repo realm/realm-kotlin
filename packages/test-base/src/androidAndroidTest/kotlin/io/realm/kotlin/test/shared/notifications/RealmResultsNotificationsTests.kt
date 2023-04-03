@@ -34,6 +34,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.OBJECT_VALUES
 import io.realm.kotlin.test.shared.OBJECT_VALUES2
 import io.realm.kotlin.test.shared.OBJECT_VALUES3
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.filterNot
@@ -83,7 +84,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                     }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -112,7 +113,7 @@ class RealmResultsNotificationsTests : FlowableTests {
             }
 
             // Assertion after empty list is emitted
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -128,7 +129,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -151,7 +152,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -179,7 +180,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -207,7 +208,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -230,7 +231,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -250,7 +251,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                     }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -295,11 +296,11 @@ class RealmResultsNotificationsTests : FlowableTests {
                     }
             }
 
-            c1.receive().let { resultsChange ->
+            c1.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
-            c2.receive().let { resultsChange ->
+            c2.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
@@ -310,7 +311,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                 copyToRealm(Sample().apply { stringField = "Baz" })
             }
 
-            c2.receive().let { resultsChange ->
+            c2.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
                 assertEquals(2, resultsChange.list.size)
             }
@@ -352,11 +353,11 @@ class RealmResultsNotificationsTests : FlowableTests {
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
-            assertEquals(1, c.receive())
+            assertEquals(1, c.receiveOrFail())
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })
             }
-            assertEquals(-1, c.receive())
+            assertEquals(-1, c.receiveOrFail())
             observer1.cancel()
             observer2.cancel()
             c.close()
@@ -380,7 +381,7 @@ class RealmResultsNotificationsTests : FlowableTests {
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
-            assertEquals(1, c.receive())
+            assertEquals(1, c.receiveOrFail())
             realm.close()
             observer.cancel()
             c.close()

@@ -11,6 +11,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
@@ -202,7 +203,7 @@ class RealmInMemoryTests {
 
                 try {
                     withTimeout(10000L) {
-                        realmInMainClosedChannel.receive()
+                        realmInMainClosedChannel.receiveOrFail()
                     }
                 } catch (err: Exception) {
                     threadError[0] = Exception("Worker thread was interrupted")
@@ -216,7 +217,7 @@ class RealmInMemoryTests {
 
             // Waits until the worker thread started.
             withTimeout(10000L) {
-                workerCommittedChannel.receive()
+                workerCommittedChannel.receiveOrFail()
                 if (threadError[0] != null) {
                     throw threadError[0]!!
                 }
@@ -239,7 +240,7 @@ class RealmInMemoryTests {
             // Let the worker thread continue.
             realmInMainClosedChannel.send(true)
             withTimeout(10000L) {
-                workerClosedChannel.receive()
+                workerClosedChannel.receiveOrFail()
                 if (threadError[0] != null) {
                     throw threadError[0]!!
                 }

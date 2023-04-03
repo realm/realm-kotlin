@@ -29,6 +29,7 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -453,14 +454,14 @@ class RealmTests {
                 val anotherRealm = Realm.open(configuration)
                 bgThreadReadyChannel.send(Unit)
 
-                readyToCloseChannel.receive()
+                readyToCloseChannel.receiveOrFail()
 
                 anotherRealm.close()
                 closedChannel.send(Unit)
             }
 
             // Waits for background thread opening the same Realm.
-            bgThreadReadyChannel.receive()
+            bgThreadReadyChannel.receiveOrFail()
 
             // Check the realm got created correctly and signal that it can be closed.
             fileSystem.list(testDirPath)
@@ -471,7 +472,7 @@ class RealmTests {
 
             testRealm.close()
 
-            closedChannel.receive()
+            closedChannel.receiveOrFail()
 
             // Delete realm now that it's fully closed.
             Realm.deleteRealm(configuration)
