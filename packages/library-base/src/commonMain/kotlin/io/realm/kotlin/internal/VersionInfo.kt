@@ -24,5 +24,5 @@ import io.realm.kotlin.VersionId
  */
 public data class VersionInfo(val main: VersionData?, val notifier: VersionData?, val writer: VersionData?) {
     val all: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.versions }.flatten().toSet()
-    val allTracked: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.tracked }.flatten().toSet()
+    val allTracked: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.active }.flatten().toSet()
 }

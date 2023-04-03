@@ -97,7 +97,7 @@ class VersionTrackingTests {
             assertEquals(1, allTracked.size, toString())
             assertNull(notifier, toString())
             assertNotNull(writer, toString())
-            assertEquals(0, writer?.tracked?.size, toString())
+            assertEquals(0, writer?.active?.size, toString())
         }
 
         // Until we actually query the object
@@ -106,7 +106,7 @@ class VersionTrackingTests {
             assertEquals(2, allTracked.size, toString())
             assertNull(notifier, toString())
             assertNotNull(writer, toString())
-            assertEquals(1, writer?.tracked?.size, toString())
+            assertEquals(1, writer?.active?.size, toString())
         }
     }
 
@@ -119,13 +119,14 @@ class VersionTrackingTests {
             assertNull(writer)
         }
 
-        // Or if we immediately return the frozen object instance (with <Unit>)
+        // Or if we immediately return the frozen object instance (object is returned even though
+        // not assigned to a variable unless the generic return type is <Unit>)
         realm.write { copyToRealm(Sample()) }
         realm.activeVersions().run {
             assertEquals(2, allTracked.size, toString())
             assertNull(notifier, toString())
             assertNotNull(writer, toString())
-            assertEquals(1, writer?.tracked?.size, toString())
+            assertEquals(1, writer?.active?.size, toString())
         }
     }
 
@@ -148,9 +149,9 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, allTracked.size, toString())
             assertNotNull(notifier, toString())
-            assertEquals(0, notifier?.tracked?.size, toString())
+            assertEquals(0, notifier?.active?.size, toString())
             assertNotNull(writer, toString())
-            assertEquals(0, writer?.tracked?.size, toString())
+            assertEquals(0, writer?.active?.size, toString())
         }
         listener.cancel()
     }
@@ -186,9 +187,9 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(writes + 1, allTracked.size, toString())
             assertNotNull(notifier, toString())
-            assertEquals(writes + 1, notifier?.tracked?.size, toString())
+            assertEquals(writes + 1, notifier?.active?.size, toString())
             assertNotNull(writer, toString())
-            assertEquals(0, writer?.tracked?.size, toString())
+            assertEquals(0, writer?.active?.size, toString())
         }
 
         // Canceling listen will stop tracking versions
@@ -199,9 +200,9 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(writes + 1, allTracked.size, toString())
             assertNotNull(notifier, toString())
-            assertEquals(writes + 1, notifier?.tracked?.size, toString())
+            assertEquals(writes + 1, notifier?.active?.size, toString())
             assertNotNull(writer, toString())
-            assertEquals(0, writer?.tracked?.size, toString())
+            assertEquals(0, writer?.active?.size, toString())
         }
     }
 }

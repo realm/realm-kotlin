@@ -18,13 +18,13 @@ package io.realm.kotlin.internal.interop
 
 /**
  * A __synchronizable object__ that can be used to enforce mutual exclusion so that only one
- * thread can execute the accompanied block across all [synchronized]-call for the same
+ * thread can execute the accompanied block across all [withLock]-call for the same
  * [SynchronizableObject] at a time.
  */
-expect class SynchronizableObject()
-
-/**
- * Execute the given `block` ensuring that no other [synchronized]-call is executing its block for
- * the same [SynchronizableObject] at the same time.
- */
-expect inline fun <R> synchronized(lock: SynchronizableObject, block: () -> R): R
+expect class SynchronizableObject() {
+    /**
+     * Execute the given `block` ensuring that no other [withLock]-call is executing its block for
+     * the same [SynchronizableObject] at the same time.
+     */
+    inline fun <R> withLock(block: () -> R): R
+}

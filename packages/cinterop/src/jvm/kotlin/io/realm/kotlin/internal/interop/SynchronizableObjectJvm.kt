@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal.interop
 
-actual typealias SynchronizableObject = Any
-
-actual inline fun <R> synchronized(lock: SynchronizableObject, block: () -> R): R =
-    kotlin.synchronized(lock) { block() }
+actual class SynchronizableObject {
+    actual inline fun <R> withLock(block: () -> R): R = synchronized(this) { block() }
+}

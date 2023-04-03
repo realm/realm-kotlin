@@ -111,7 +111,7 @@ internal class SuspendableNotifier(
                             override fun onChange(change: RealmChangesPointer) {
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
-                                val frozenObservable = lifeRef.freeze(realm.gcTrackedSnapshot)
+                                val frozenObservable = lifeRef.freeze(realm.gcTrackedSnapshot())
                                 changeFlow.emit(frozenObservable, change)
                             }
                         }

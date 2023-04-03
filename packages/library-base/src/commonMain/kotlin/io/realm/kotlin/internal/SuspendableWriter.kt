@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.VersionId
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -33,43 +32,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.reflect.KClass
-
-/**
- * A **live realm holder** encapsulated common properties of [SuspendableWriter] and
- * [SuspendableNotifier] for easier access to version information and GC-tracked snapshot
- * references when advancing the version of [RealmImpl].
- */
-internal abstract class LiveRealmHolder<out LiveRealm> {
-
-    abstract val realmInitializer: Lazy<LiveRealm>
-    abstract val realm: io.realm.kotlin.internal.LiveRealm
-
-    /**
-     * Current version of the frozen snapshot reference of the live realm. This is not guaranteed
-     * to the same version as the actual live realm, but can be used to indicate that we can
-     * request a more recent GC-tracked snapshot from the [LiveRealmHolder] through [snapshot].
-     */
-    val version: VersionId?
-        get() = if (realmInitializer.isInitialized()) { realm.snapshotVersion } else null
-
-    /**
-     * Returns a GC-tracked snapshot from the underlying [realm]. See [LiveRealm.gcTrackedSnapshot]
-     * for details of the tracking.
-     */
-    val snapshot: FrozenRealmReference?
-        get() = if (realmInitializer.isInitialized()) {
-            realm.gcTrackedSnapshot
-        } else null
-
-    /**
-     * Dump the current snapshot and tracked versions of the LiveRealm used for debugging purpose.
-     */
-    fun versions(): VersionData? = if (realmInitializer.isInitialized()) {
-        realm.versions()
-    } else {
-        null
-    }
-}
 
 /**
  * A _suspendable writer_ to handle all asynchronous updates to a Realm through a suspendable API.
@@ -126,7 +88,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                 // - onRealmChanged - updating the realm.snapshot to also point to the latest key cache
                 // Seems like order is not guaranteed, but it is synchroneous, so updating snapshot
                 // in both callbacks should ensure that we have the right snapshot here
-                realm.updateSnapshots()
+                realm.updateSnapshot()
             }
         }
     }
@@ -155,14 +117,14 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                     throw e
                 }
             }
-            realm.updateSnapshots()
+            realm.updateSnapshot()
             if (shouldFreezeWriteReturnValue(result)) {
                 // Freeze the result in the context of the Dispatcher. The dispatcher should be
                 // single-threaded so will guarantee that no other threads can modify the Realm
                 // between the transaction is committed and we freeze it.
                 // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
                 //  lock this code?
-                val newReference = realm.gcTrackedSnapshot
+                val newReference = realm.gcTrackedSnapshot()
                 freezeWriteReturnValue(newReference, result)
             } else {
                 result

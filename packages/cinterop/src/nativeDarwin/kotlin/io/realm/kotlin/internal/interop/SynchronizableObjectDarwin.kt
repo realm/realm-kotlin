@@ -41,6 +41,15 @@ actual class SynchronizableObject {
         native_pthread_mutex_create(mutex.ptr).checkResult { "Failed to create mutex." }
     }
 
+    actual inline fun <R> withLock(block: () -> R): R {
+        try {
+            this.lock()
+            return block()
+        } finally {
+            this.unlock()
+        }
+    }
+
     fun lock() {
         native_pthread_mutex_lock(mutex.ptr).checkResult { "Failed to lock mutex." }
     }
@@ -52,13 +61,4 @@ actual class SynchronizableObject {
 
 private inline fun Int.checkResult(block: () -> String) {
     check(this == 0, block)
-}
-
-actual inline fun <R> synchronized(lock: SynchronizableObject, block: () -> R): R {
-    try {
-        lock.lock()
-        return block()
-    } finally {
-        lock.unlock()
-    }
 }

@@ -23,7 +23,6 @@ import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
-import io.realm.kotlin.internal.interop.synchronized
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
@@ -205,7 +204,7 @@ public class RealmImpl private constructor(
     }
 
     public fun realmReference(): FrozenRealmReference {
-        synchronized(realmReferenceLock) {
+        realmReferenceLock.withLock {
             val value1 = _realmReference.value
             // We don't consider advancing the version if is is already closed.
             value1?.let {

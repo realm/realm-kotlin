@@ -20,7 +20,6 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
-import io.realm.kotlin.internal.interop.synchronized
 import io.realm.kotlin.internal.platform.WeakReference
 import io.realm.kotlin.internal.platform.runBlocking
 import kotlinx.atomicfu.AtomicRef
@@ -60,15 +59,16 @@ internal abstract class LiveRealm(
     /**
      * References the latest frozen reference snapshot of the live realm. This is advanced from
      * [onRealmChanged]-callbacks from the C-API or when explicitly requested by calls to
-     * [updateSnapshots]. If this is advanced without issuing references to it though
+     * [updateSnapshot]. If this is advanced without issuing references to it though
      * [gcTrackedSnapshot] then the old reference will be closed, allowing Core to release the
      * underlying resources of the no-longer referenced version.
      */
     private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner))
     /**
-     * Flag used to trigger tracking or closing the [_snapshot] when advancing to a newer version.
+     * Flag used to control whether to close or track the [_snapshot] when advancing to a newer
+     * version.
      */
-    private var _trackSnapshot: Boolean = false
+    private var _closeSnapshotWhenAdvancing: Boolean = true
     /**
      * Lock used to synchronize access to the above two properties, allowing us to trigger tracking
      * of the [_snapshot] when obtained by other threads with the purpose of issuing other
@@ -78,9 +78,9 @@ internal abstract class LiveRealm(
 
     /**
      * Version of the internal frozen snapshot reference that points to the most recent frozen
-     * head of the realm. This is allowed to be accessed from other threads, but is not guaranteed
-     * to always be pointing to the same version as the live realm (which can be newer, but never
-     * older).
+     * head of the realm known by this [LiveRealm]. This is allowed to be accessed from other
+     * threads, but is not guaranteed to always be pointing to the same version as the live realm
+     * (which can be newer, but never older).
      */
     internal val snapshotVersion: VersionId
         get() = _snapshot.value.uncheckedVersion()
@@ -88,14 +88,17 @@ internal abstract class LiveRealm(
     /**
      * Garbage collector tracked snapshot that can be used to issue other object, query, etc.
      * reference which lifetime will be controlled by the GC.
+     *
+     * This will update the status of the snapshot so that it will be tracked through the garbage
+     * collector and closed once not reference anymore. This update will happen while holding the
+     * [snapshotLock].
      */
-    internal val gcTrackedSnapshot: FrozenRealmReference
-        get() {
-            return synchronized(snapshotLock) {
-                val snapshot = _snapshot.value
-                log.debug("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
-                _trackSnapshot = true
-                snapshot
+    internal fun gcTrackedSnapshot(): FrozenRealmReference {
+            return snapshotLock.withLock {
+                _snapshot.value.also { snapshot ->
+                    log.debug("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
+                    _closeSnapshotWhenAdvancing = false
+                }
             }
         }
 
@@ -108,26 +111,26 @@ internal abstract class LiveRealm(
 
     // Always executed on the live realm's backing thread
     internal open fun onRealmChanged() {
-        updateSnapshots()
+        updateSnapshot()
     }
     // Always executed on the live realm's backing thread
-    internal fun updateSnapshots() {
-        synchronized(snapshotLock) {
+    internal fun updateSnapshot() {
+        snapshotLock.withLock {
             val version = _snapshot.value.version()
-            if (version == realmReference.version()) {
+            if (realmReference.isClosed() || version == realmReference.version()) {
                 return
             }
-            if (_trackSnapshot) {
+            if (_closeSnapshotWhenAdvancing) {
+                log.debug("${this@LiveRealm} CLOSE-UNTRACKED $version")
+                _snapshot.value.close()
+            } else {
                 // TODO Split into track and clean up as we don't need to hold headLock while
                 //  cleaning up as version tracker is only accessed from the same thread
                 versionTracker.trackAndCloseExpiredReferences(_snapshot.value)
-            } else {
-                log.debug("${this@LiveRealm} CLOSE-UNTRACKED $version")
-                _snapshot.value.close()
             }
             _snapshot.value = realmReference.snapshot(owner)
             log.debug("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
-            _trackSnapshot = false
+            _closeSnapshotWhenAdvancing = true
         }
     }
 
@@ -145,13 +148,14 @@ internal abstract class LiveRealm(
     }
 
     override fun close() {
-        unregisterCallbacks()
+        // Close actual live reference. From this point off the snapshot will not be updated.
+        realmReference.close()
         // Close current reference
         _snapshot.value?.close()
         // Close all intermediate references
         versionTracker.close()
-        // Close actual live reference
-        realmReference.close()
+        // Ensure that we unregister callbacks
+        unregisterCallbacks()
         super.close()
     }
 
@@ -160,13 +164,13 @@ internal abstract class LiveRealm(
      */
     internal fun versions(): VersionData = runBlocking {
         withContext(dispatcher) {
-            synchronized(snapshotLock) {
-                val tracked = if (_trackSnapshot) {
+            snapshotLock.withLock {
+                val active = if (!_closeSnapshotWhenAdvancing) {
                     versionTracker.versions() + _snapshot.value.version()
                 } else {
                     versionTracker.versions()
                 }
-                VersionData(_snapshot.value.version(), tracked)
+                VersionData(_snapshot.value.version(), active)
             }
         }
     }
