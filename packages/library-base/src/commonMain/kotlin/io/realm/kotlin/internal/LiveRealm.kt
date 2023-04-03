@@ -94,13 +94,13 @@ internal abstract class LiveRealm(
      * [snapshotLock].
      */
     internal fun gcTrackedSnapshot(): FrozenRealmReference {
-            return snapshotLock.withLock {
-                _snapshot.value.also { snapshot ->
-                    log.debug("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
-                    _closeSnapshotWhenAdvancing = false
-                }
+        return snapshotLock.withLock {
+            _snapshot.value.also { snapshot ->
+                log.debug("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
+                _closeSnapshotWhenAdvancing = false
             }
         }
+    }
 
     init {
         @Suppress("LeakingThis") // Should be ok as we do not rely on this to be fully initialized
