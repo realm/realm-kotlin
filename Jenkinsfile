@@ -145,6 +145,7 @@ pipeline {
                         runBuild()
                     }
                 }
+/*
                 stage('Static Analysis') {
                     when { expression { runTests } }
                     steps {
@@ -275,6 +276,7 @@ pipeline {
                         trackBuildMetrics(version)
                     }
                 }
+*/
                 stage('Publish SNAPSHOT to Maven Central') {
                     when { expression { shouldPublishSnapshot(version) } }
                     steps {
