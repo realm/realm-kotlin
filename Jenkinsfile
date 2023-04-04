@@ -724,7 +724,6 @@ def build_jvm_windows(String buildType) {
         CMAKE_BUILD_TYPE: "${buildType}",
         REALM_ENABLE_SYNC: "ON",
         CMAKE_TOOLCHAIN_FILE: "c:\\src\\vcpkg\\scripts\\buildsystems\\vcpkg.cmake",
-        CMAKE_SYSTEM_VERSION: '8.1',
         REALM_NO_TESTS: '1',
         REALM_BUILD_LIB_ONLY: "true",
         VCPKG_TARGET_TRIPLET: 'x64-windows-static'
