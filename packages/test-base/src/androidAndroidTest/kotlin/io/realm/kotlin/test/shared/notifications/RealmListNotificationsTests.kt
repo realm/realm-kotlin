@@ -125,10 +125,11 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        if (flowList !is InitialList) {
-                            channel.send(flowList)
-                        }
+                        channel.send(flowList)
                     }
+            }
+            channel.receive().let {
+                assertIs<InitialList<*>>(it)
             }
 
             // Assert a single range is reported

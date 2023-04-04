@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.internal.FrozenRealmReference
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.MutableLiveRealmImpl
 import io.realm.kotlin.internal.RealmImpl
@@ -66,7 +67,7 @@ internal class SyncConfigurationImpl(
     override val initialRemoteData: InitialRemoteDataConfiguration?
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
-    override suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean> {
+    override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         // Partition-based Realms with `waitForInitialRemoteData` enabled will use
         // async open first do download the server side Realm. This is much much faster than
         // creating the Realm locally first and then downloading (and integrating) changes into

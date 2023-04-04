@@ -56,7 +56,7 @@ public abstract class BaseRealmImpl internal constructor(
     internal val log: RealmLog = RealmLog(configuration = configuration.log)
 
     init {
-        log.info("Realm opened: ${configuration.path}")
+        log.info("Realm opened $this")
     }
 
     override fun schemaVersion(): Long {
@@ -96,7 +96,7 @@ public abstract class BaseRealmImpl internal constructor(
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        log.info("Realm closed: $this ${configuration.path}")
+        log.info("Realm closed: $this")
     }
 
     override fun toString(): String = "${this::class.simpleName}[${this.configuration.path}}]"

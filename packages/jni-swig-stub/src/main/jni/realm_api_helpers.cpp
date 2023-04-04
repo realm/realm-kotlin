@@ -273,7 +273,10 @@ public:
     }
 
     void notify() {
-        auto jenv = get_env(true);
+        // There is currently no signaling of creation/tear down of the core notifier thread, so we
+        // just attach it as a daemon thread here on first notification to allow the JVM to
+        // shutdown propertly. See https://github.com/realm/realm-core/issues/6429
+        auto jenv = get_env(true, true, "core-notifier");
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
                              reinterpret_cast<jlong>(m_scheduler));

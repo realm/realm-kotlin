@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,13 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.internal.interop.FrozenRealmPointer
+import io.realm.kotlin.VersionId
 
 /**
- * Minimal frozen Realm implementation that only allows launching queries against it.
+ * Version meta data for an overall [Realm]-instance with [VersionData] for the user-facing [Realm]
+ * and the underlying [SuspendableNotifier]'s and [SuspendableWriter]'s live realms.
  */
-public class TypedFrozenRealmImpl(
-    dbPointer: FrozenRealmPointer,
-    configuration: InternalConfiguration,
-) : InternalTypedRealm, BaseRealmImpl(configuration) {
-
-    override val realmReference: RealmReference = FrozenRealmReferenceImpl(this, dbPointer)
+public data class VersionInfo(val main: VersionData?, val notifier: VersionData?, val writer: VersionData?) {
+    val all: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.versions }.flatten().toSet()
+    val allTracked: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.active }.flatten().toSet()
 }

@@ -19,7 +19,7 @@ package io.realm.kotlin.internal.dynamic
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.BaseRealmImpl
-import io.realm.kotlin.internal.FrozenRealmReference
+import io.realm.kotlin.internal.FrozenRealmReferenceImpl
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmReference
 import io.realm.kotlin.internal.interop.FrozenRealmPointer
@@ -33,7 +33,7 @@ internal open class DynamicRealmImpl(
     dbPointer: FrozenRealmPointer
 ) : BaseRealmImpl(configuration), DynamicRealm {
 
-    override val realmReference: RealmReference = FrozenRealmReference(this, dbPointer)
+    override val realmReference: RealmReference = FrozenRealmReferenceImpl(this, dbPointer)
 
     override fun query(
         className: String,

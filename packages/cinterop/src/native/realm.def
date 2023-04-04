@@ -13,3 +13,31 @@ headerFilter = realm.h realm/error_codes.h
 linkerOpts = -lcompression -lz -framework Foundation -framework CoreFoundation -framework Security
 strictEnums = realm_errno realm_error_category realm_sync_errno_client realm_sync_errno_connection realm_sync_errno_session
 ---
+#include <pthread.h>
+#include <time.h>
+#include <stdio.h>
+
+/* Mutex */
+typedef struct native_pthread_mutex {
+    pthread_mutex_t mutex;
+} native_pthread_mutex_t;
+
+
+static inline int native_pthread_mutex_create(native_pthread_mutex_t *mutex) {
+    pthread_mutexattr_t attributes;
+    pthread_mutexattr_init(&attributes);
+    pthread_mutexattr_settype(&attributes, PTHREAD_MUTEX_RECURSIVE);
+    return pthread_mutex_init(&mutex->mutex, &attributes);
+}
+
+static inline int native_pthread_mutex_lock(native_pthread_mutex_t* mutex) {
+    return pthread_mutex_lock(&mutex->mutex);
+}
+
+static inline int native_pthread_mutex_unlock(native_pthread_mutex_t* mutex) {
+    return pthread_mutex_unlock(&mutex->mutex);
+}
+
+static inline int native_pthread_mutex_destroy(native_pthread_mutex_t* mutex) {
+    return pthread_mutex_destroy(&mutex->mutex);
+}

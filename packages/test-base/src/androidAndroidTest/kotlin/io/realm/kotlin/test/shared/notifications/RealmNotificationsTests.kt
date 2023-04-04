@@ -201,9 +201,11 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     fun closingRealmCompletesFlow() {
         runBlocking {
+            val mutex = Mutex(true)
             val observer = async {
-                realm.asFlow().collect { }
+                realm.asFlow().collect { mutex.unlock() }
             }
+            mutex.lock()
             realm.close()
             withTimeout(5.seconds) {
                 observer.await()

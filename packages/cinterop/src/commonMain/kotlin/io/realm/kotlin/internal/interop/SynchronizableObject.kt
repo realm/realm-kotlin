@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal
-
-import io.realm.kotlin.internal.interop.FrozenRealmPointer
+package io.realm.kotlin.internal.interop
 
 /**
- * Minimal frozen Realm implementation that only allows launching queries against it.
+ * A __synchronizable object__ that can be used to enforce mutual exclusion so that only one
+ * thread can execute the accompanied block across all [withLock]-call for the same
+ * [SynchronizableObject] at a time.
  */
-public class TypedFrozenRealmImpl(
-    dbPointer: FrozenRealmPointer,
-    configuration: InternalConfiguration,
-) : InternalTypedRealm, BaseRealmImpl(configuration) {
-
-    override val realmReference: RealmReference = FrozenRealmReferenceImpl(this, dbPointer)
+expect class SynchronizableObject() {
+    /**
+     * Execute the given `block` ensuring that no other [withLock]-call is executing its block for
+     * the same [SynchronizableObject] at the same time.
+     */
+    inline fun <R> withLock(block: () -> R): R
 }

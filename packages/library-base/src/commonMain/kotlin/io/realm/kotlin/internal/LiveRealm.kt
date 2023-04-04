@@ -16,13 +16,16 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
+import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.WeakReference
-import io.realm.kotlin.internal.util.Validation.sdkError
+import io.realm.kotlin.internal.platform.runBlocking
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.withContext
 
 /**
  * A live realm that can be updated and receive notifications on data and schema changes when
@@ -37,36 +40,67 @@ import kotlinx.coroutines.CoroutineDispatcher
  * @param dispatcher The single thread dispatcher backing the realm scheduler of this realm. The
  * realm itself must only be access on the same thread.
  */
-internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalConfiguration, dispatcher: CoroutineDispatcher? = null) : BaseRealmImpl(configuration) {
+internal abstract class LiveRealm(
+    val owner: RealmImpl,
+    configuration: InternalConfiguration,
+    val dispatcher: CoroutineDispatcher
+) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
     private val schemaChangeRegistration: NotificationToken
 
-    internal val versionTracker = VersionTracker(owner.log)
+    internal val versionTracker = VersionTracker(this, owner.log)
 
     override val realmReference: LiveRealmReference by lazy {
         val (dbPointer, _) = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcher)
         LiveRealmReference(this, dbPointer)
     }
 
-    private val _snapshot: AtomicRef<FrozenRealmReference?> = atomic(null)
+    /**
+     * References the latest frozen reference snapshot of the live realm. This is advanced from
+     * [onRealmChanged]-callbacks from the C-API or when explicitly requested by calls to
+     * [updateSnapshot]. If this is advanced without issuing references to it though
+     * [gcTrackedSnapshot] then the old reference will be closed, allowing Core to release the
+     * underlying resources of the no-longer referenced version.
+     */
+    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner))
+    /**
+     * Flag used to control whether to close or track the [_snapshot] when advancing to a newer
+     * version.
+     */
+    private var _closeSnapshotWhenAdvancing: Boolean = true
+    /**
+     * Lock used to synchronize access to the above two properties, allowing us to trigger tracking
+     * of the [_snapshot] when obtained by other threads with the purpose of issuing other
+     * object, query, etc. references.
+     */
+    private val snapshotLock = SynchronizableObject()
 
     /**
-     * Frozen snapshot reference of the realm.
-     *
-     * NOTE: The snapshot is lazily created and must only be retrieved on the thread of the
-     * dispatcher.
+     * Version of the internal frozen snapshot reference that points to the most recent frozen
+     * head of the realm known by this [LiveRealm]. This is allowed to be accessed from other
+     * threads, but is not guaranteed to always be pointing to the same version as the live realm
+     * (which can be newer, but never older).
      */
-    internal val snapshot: FrozenRealmReference
-        get() {
-            // Initialize a new snapshot that can be reused until cleared again from onRealmChanged
-            if (_snapshot.value == null) {
-                val snapshot: FrozenRealmReference = realmReference.snapshot(owner)
-                versionTracker.trackAndCloseExpiredReferences(snapshot)
-                _snapshot.value = snapshot
+    internal val snapshotVersion: VersionId
+        get() = _snapshot.value.uncheckedVersion()
+
+    /**
+     * Garbage collector tracked snapshot that can be used to issue other object, query, etc.
+     * reference which lifetime will be controlled by the GC.
+     *
+     * This will update the status of the snapshot so that it will be tracked through the garbage
+     * collector and closed once not reference anymore. This update will happen while holding the
+     * [snapshotLock].
+     */
+    internal fun gcTrackedSnapshot(): FrozenRealmReference {
+        return snapshotLock.withLock {
+            _snapshot.value.also { snapshot ->
+                log.debug("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
+                _closeSnapshotWhenAdvancing = false
             }
-            return _snapshot.value ?: sdkError("Snapshot should never be null")
         }
+    }
 
     init {
         @Suppress("LeakingThis") // Should be ok as we do not rely on this to be fully initialized
@@ -75,9 +109,29 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
         schemaChangeRegistration = NotificationToken(RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, callback::onSchemaChanged))
     }
 
-    protected open fun onRealmChanged() {
-        // Just clean snapshot so that a new one is initialized next time it is needed
-        _snapshot.value = null
+    // Always executed on the live realm's backing thread
+    internal open fun onRealmChanged() {
+        updateSnapshot()
+    }
+    // Always executed on the live realm's backing thread
+    internal fun updateSnapshot() {
+        snapshotLock.withLock {
+            val version = _snapshot.value.version()
+            if (realmReference.isClosed() || version == realmReference.version()) {
+                return
+            }
+            if (_closeSnapshotWhenAdvancing) {
+                log.debug("${this@LiveRealm} CLOSE-UNTRACKED $version")
+                _snapshot.value.close()
+            } else {
+                // TODO Split into track and clean up as we don't need to hold headLock while
+                //  cleaning up as version tracker is only accessed from the same thread
+                versionTracker.trackAndCloseExpiredReferences(_snapshot.value)
+            }
+            _snapshot.value = realmReference.snapshot(owner)
+            log.debug("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
+            _closeSnapshotWhenAdvancing = true
+        }
     }
 
     protected open fun onSchemaChanged(schema: RealmSchemaPointer) {
@@ -94,12 +148,31 @@ internal abstract class LiveRealm(val owner: RealmImpl, configuration: InternalC
     }
 
     override fun close() {
-        unregisterCallbacks()
+        // Close actual live reference. From this point off the snapshot will not be updated.
+        realmReference.close()
+        // Close current reference
+        _snapshot.value?.close()
         // Close all intermediate references
         versionTracker.close()
-        // Close actual live reference
-        realmReference.close()
+        // Ensure that we unregister callbacks
+        unregisterCallbacks()
         super.close()
+    }
+
+    /**
+     * Dump the current snapshot and tracked versions for debugging purpose.
+     */
+    internal fun versions(): VersionData = runBlocking {
+        withContext(dispatcher) {
+            snapshotLock.withLock {
+                val active = if (!_closeSnapshotWhenAdvancing) {
+                    versionTracker.versions() + _snapshot.value.version()
+                } else {
+                    versionTracker.versions()
+                }
+                VersionData(_snapshot.value.version(), active)
+            }
+        }
     }
 
     private class WeakLiveRealmCallback(liveRealm: LiveRealm) {
