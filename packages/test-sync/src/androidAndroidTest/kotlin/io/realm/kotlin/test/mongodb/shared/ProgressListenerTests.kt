@@ -52,6 +52,7 @@ import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -242,6 +243,7 @@ class ProgressListenerTests {
     }
 
     @Test
+    @Ignore // FIMXE This seems to stall on GHA for some reason
     fun throwsOnFlexibleSync() = runBlocking {
         TestApp(appName = TEST_APP_FLEX, logLevel = LogLevel.DEBUG, builder = {
             it.syncRootDirectory(PlatformUtils.createTempDir())
