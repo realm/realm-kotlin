@@ -866,11 +866,13 @@ jobs:
             appId: io.realm.sync.testapp
 
     runs-on: ubuntu-latest
-    needs: [ check-cache, build-android-packages, build-jvm-packages ]
+    needs: [ check-cache, deploy-baas, build-android-packages, build-jvm-packages ]
     if: |
       always() &&
       (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped')
+      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
+      (needs.deploy-baas.result == 'success')
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
