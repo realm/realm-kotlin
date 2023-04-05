@@ -37,13 +37,13 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
     fun trackAndCloseExpiredReferences(realmReference: FrozenRealmReference? = null) {
         val references = mutableSetOf<Pair<RealmPointer, WeakReference<RealmReference>>>()
         realmReference?.let {
-            log.debug("$owner TRACK-VERSION ${realmReference.version()}")
+            log.trace("$owner TRACK-VERSION ${realmReference.version()}")
             references.add(Pair(realmReference.dbPointer, WeakReference(it)))
         }
         intermediateReferences.value.forEach { entry ->
             val (pointer, ref) = entry
             if (ref.get() == null) {
-                log.debug("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
+                log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
                 RealmInterop.realm_close(pointer)
             } else {
                 references.add(entry)
@@ -58,7 +58,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
 
     fun close() {
         intermediateReferences.value.forEach { (pointer, _) ->
-            log.debug("$owner CLOSE-ACTIVE ${RealmInterop.realm_get_version_id(pointer)}")
+            log.trace("$owner CLOSE-ACTIVE ${VersionId(RealmInterop.realm_get_version_id(pointer))}")
             RealmInterop.realm_close(pointer)
         }
     }

@@ -96,8 +96,10 @@ internal abstract class LiveRealm(
     internal fun gcTrackedSnapshot(): FrozenRealmReference {
         return snapshotLock.withLock {
             _snapshot.value.also { snapshot ->
-                log.debug("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
-                _closeSnapshotWhenAdvancing = false
+                if (_closeSnapshotWhenAdvancing) {
+                    log.trace("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
+                    _closeSnapshotWhenAdvancing = false
+                }
             }
         }
     }
@@ -121,7 +123,7 @@ internal abstract class LiveRealm(
                 return
             }
             if (_closeSnapshotWhenAdvancing) {
-                log.debug("${this@LiveRealm} CLOSE-UNTRACKED $version")
+                log.trace("${this@LiveRealm} CLOSE-UNTRACKED $version")
                 _snapshot.value.close()
             } else {
                 // TODO Split into track and clean up as we don't need to hold headLock while
@@ -129,7 +131,7 @@ internal abstract class LiveRealm(
                 versionTracker.trackAndCloseExpiredReferences(_snapshot.value)
             }
             _snapshot.value = realmReference.snapshot(owner)
-            log.debug("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
+            log.trace("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
             _closeSnapshotWhenAdvancing = true
         }
     }
@@ -151,7 +153,10 @@ internal abstract class LiveRealm(
         // Close actual live reference. From this point off the snapshot will not be updated.
         realmReference.close()
         // Close current reference
-        _snapshot.value?.close()
+        _snapshot.value?.let {
+            log.trace("$this CLOSE-ACTIVE ${it.version()}")
+            it.close()
+        }
         // Close all intermediate references
         versionTracker.close()
         // Ensure that we unregister callbacks
