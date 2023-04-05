@@ -81,12 +81,17 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         // Channel to work around not being able to use `suspendCoroutine` to wrap the callback, as
         // that results in the `Continuation` being frozen, which breaks it.
         val channel = Channel<Any>(1)
+        @Suppress("invisible_member")
         try {
+            val realmImpl = realm as RealmImpl
             val result: Any = withTimeout(timeout) {
                 // TODO Assuming this is always a RealmImpl is probably dangerous. But should be safe until we introduce a public DynamicRealm.
-                withContext((realm as RealmImpl).notificationDispatcherHolder.dispatcher) {
+                realmImpl.log.debug("waitForSynchronization")
+                withContext(realmImpl.notificationDispatcherHolder.dispatcher) {
+                    realmImpl.log.debug("waitForSynchronization: on notification dispatcher")
                     val callback = object : SubscriptionSetCallback {
                         override fun onChange(state: CoreSubscriptionSetState) {
+                            realmImpl.log.debug("waitForSynchronization: callback $state")
                             when (state) {
                                 CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE -> {
                                     channel.trySend(true)
@@ -105,14 +110,17 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                         CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE,
                         callback
                     )
+                    realmImpl.log.debug("waitForSynchronization: awaiting callback")
                     channel.receive()
                 }
             }
+            realmImpl.log.debug("waitForSynchronization: refreshing subscriptionset")
             refresh()
             // Also refresh the Realm as the data has only been written on a background thread
             // when this is called. So the user facing Realm might not see the data yet.
             //
             if (realm is RealmImpl) {
+                realmImpl.log.debug("waitForSynchronization: refreshing realm")
                 realm.refresh()
             } else {
                 // Currently we only support accessing subscriptions through

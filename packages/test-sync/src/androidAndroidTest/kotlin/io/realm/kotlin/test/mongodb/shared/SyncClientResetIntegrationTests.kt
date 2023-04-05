@@ -170,6 +170,7 @@ class SyncClientResetIntegrationTests {
                         "blue"
                     ).also { add(it) }
                 }.waitForInitialRemoteData(openRealmTimeout)
+                    .log(LogLevel.DEBUG)
             },
             insertElement = { realm: Realm ->
                 realm.writeBlocking {
@@ -212,7 +213,7 @@ class SyncClientResetIntegrationTests {
                     user,
                     TestHelper.randomPartitionValue(),
                     schema = setOf(SyncPerson::class)
-                )
+                ).log(LogLevel.DEBUG)
             },
             insertElement = { realm: Realm ->
                 realm.writeBlocking {
