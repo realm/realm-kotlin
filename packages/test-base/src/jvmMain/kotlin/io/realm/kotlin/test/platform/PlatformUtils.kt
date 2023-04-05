@@ -42,15 +42,20 @@ actual object PlatformUtils {
             // We try to trigger the GC once then retry the delete.
             var counter = 5
             var deleted = false
+            var error: java.nio.file.FileSystemException? = null
             while (!deleted && counter > 0) {
                 try {
                     Files.deleteIfExists(p)
                     deleted = true
                 } catch (e: java.nio.file.FileSystemException) {
+                    error = e
                     triggerGC()
                     sleep(1.seconds)
                     counter -= 1
                 }
+            }
+            if (!deleted) {
+                throw error!!
             }
         }
     }
