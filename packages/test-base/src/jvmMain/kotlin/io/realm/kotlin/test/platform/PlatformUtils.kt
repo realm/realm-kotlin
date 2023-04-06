@@ -19,6 +19,7 @@ package io.realm.kotlin.test.platform
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.PosixFilePermission
 import java.util.stream.Collectors
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
@@ -26,8 +27,16 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
-    actual fun createTempDir(prefix: String): String {
-        return Files.createTempDirectory("$prefix-jvm_tests").absolutePathString()
+    actual fun createTempDir(prefix: String, readOnly: Boolean): String {
+        val dir: Path = Files.createTempDirectory("$prefix-jvm_tests")
+        if (readOnly) {
+            Files.setPosixFilePermissions(dir, setOf(
+                PosixFilePermission.GROUP_READ,
+                PosixFilePermission.OTHERS_READ,
+                PosixFilePermission.OWNER_READ
+            ))
+        }
+        return dir.absolutePathString()
     }
 
     actual fun deleteTempDir(path: String) {
