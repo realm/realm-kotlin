@@ -31,11 +31,14 @@ actual object PlatformUtils {
     actual fun createTempDir(prefix: String, readOnly: Boolean): String {
         val dir: Path = Files.createTempDirectory("$prefix-android_tests")
         if (readOnly) {
-            Files.setPosixFilePermissions(dir, setOf(
-                PosixFilePermission.GROUP_READ,
-                PosixFilePermission.OTHERS_READ,
-                PosixFilePermission.OWNER_READ
-            ))
+            Files.setPosixFilePermissions(
+                dir,
+                setOf(
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OWNER_READ
+                )
+            )
         }
         return dir.absolutePathString()
     }

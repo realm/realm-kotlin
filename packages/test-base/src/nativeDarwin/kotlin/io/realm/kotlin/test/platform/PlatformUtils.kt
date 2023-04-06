@@ -40,7 +40,7 @@ actual object PlatformUtils {
         val path = "${platform.Foundation.NSTemporaryDirectory()}$mask"
         platform.posix.mkdtemp(path.cstr)
         if (readOnly) {
-            platform.posix.chmod(path, (S_IRUSR or S_IRGRP or S_IROTH).toUShort() )
+            platform.posix.chmod(path, (S_IRUSR or S_IRGRP or S_IROTH).toUShort())
         }
         return path
     }
