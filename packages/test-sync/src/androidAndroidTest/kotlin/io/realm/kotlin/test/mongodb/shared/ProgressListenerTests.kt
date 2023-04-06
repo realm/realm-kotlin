@@ -243,9 +243,8 @@ class ProgressListenerTests {
     }
 
     @Test
-    @Ignore // FIMXE This seems to stall on GHA for some reason
     fun throwsOnFlexibleSync() = runBlocking {
-        TestApp(appName = TEST_APP_FLEX, logLevel = LogLevel.DEBUG, builder = {
+        TestApp(appName = TEST_APP_FLEX, builder = {
             it.syncRootDirectory(PlatformUtils.createTempDir())
         }).use { app ->
             val user = app.createUserAndLogIn()
