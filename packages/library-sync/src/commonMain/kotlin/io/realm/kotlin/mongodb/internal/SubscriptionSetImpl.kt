@@ -57,6 +57,10 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         }
     }
 
+    override fun close() {
+        nativePointer.release()
+    }
+
     override suspend fun update(block: MutableSubscriptionSet.(realm: T) -> Unit): SubscriptionSet<T> {
         checkClosed()
         val ptr = RealmInterop.realm_sync_make_subscriptionset_mutable(nativePointer)
