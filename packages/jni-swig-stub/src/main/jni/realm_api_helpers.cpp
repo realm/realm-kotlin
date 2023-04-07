@@ -869,7 +869,7 @@ after_client_reset(void* userdata, realm_t* before_realm,
     // Reuse the scheduler from the beforeRealm, otherwise Core will attempt to recreate a new one,
     // which will fail on platforms that hasn't defined a default scheduler factory.
     realm_scheduler_t scheduler = realm_scheduler(before_realm->get()->scheduler());
-    realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, scheduler);
+    realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, &scheduler);
     auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
 
