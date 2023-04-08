@@ -27,6 +27,7 @@ import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.util.BaasApp
@@ -128,7 +129,7 @@ class FunctionsTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp("functions") { app: BaasApp, service: Service ->
+        app = TestApp("${SyncServerConfig.appPrefix}-funcs") { app: BaasApp, service: Service ->
             initializeDefault(app, service)
             app.addFunction(FIRST_ARG_FUNCTION)
             app.addFunction(NULL_FUNCTION)

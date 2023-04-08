@@ -39,11 +39,11 @@ import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 
-const val TEST_APP_PARTITION = "test-app-partition" // With Partion-based Sync
-const val TEST_APP_FLEX = "test-app-flex" // With Flexible Sync
+val TEST_APP_PARTITION = "${SyncServerConfig.appPrefix}-pbs" // With Partion-based Sync
+val TEST_APP_FLEX = "${SyncServerConfig.appPrefix}-flx" // With Flexible Sync
+val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 
-const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
-
+val TEST_SERVER_BASE_URL = SyncServerConfig.url
 const val DEFAULT_PASSWORD = "password1234"
 
 /**
@@ -128,6 +128,15 @@ open class TestApp private constructor(
     }
 
     companion object {
+        // Expose a try-with-resource pattern for Apps
+        inline fun TestApp.use(action: (TestApp) -> Unit) {
+            try {
+                action(this)
+            } finally {
+                this.close()
+            }
+        }
+
         @Suppress("LongParameterList")
         fun build(
             debug: Boolean,

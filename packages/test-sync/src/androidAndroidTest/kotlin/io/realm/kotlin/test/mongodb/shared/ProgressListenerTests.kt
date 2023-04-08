@@ -58,7 +58,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private const val TEST_SIZE = 500
-private val TIMEOUT = 15.seconds
+private val TIMEOUT = 30.seconds
 
 private val schema = setOf(SyncObjectWithAllTypes::class)
 
@@ -97,7 +97,7 @@ class ProgressListenerTests {
                     )
                     // We are not sure when the realm actually knows of the remote changes and consider
                     // them current, so wait a bit
-                    delay(3.seconds)
+                    delay(10.seconds)
                     realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
                         .run {
                             withTimeout(TIMEOUT) {

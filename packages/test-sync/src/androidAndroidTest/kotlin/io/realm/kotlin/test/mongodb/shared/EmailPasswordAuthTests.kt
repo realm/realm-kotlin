@@ -10,6 +10,7 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
+import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -242,7 +243,7 @@ class EmailPasswordAuthWithEmailConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = "email-confirm", initialSetup = { app: BaasApp, service: Service ->
+        app = TestApp(appName = "${SyncServerConfig.appPrefix}-em-cnfrm", initialSetup = { app: BaasApp, service: Service ->
             addEmailProvider(app, autoConfirm = false)
         })
     }
@@ -280,7 +281,7 @@ class EmailPasswordAuthWithCustomFunctionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = "email-custom", initialSetup = { app: BaasApp, service: Service ->
+        app = TestApp(appName = "${SyncServerConfig.appPrefix}-em-cstm", initialSetup = { app: BaasApp, service: Service ->
             addEmailProvider(app, autoConfirm = false, runConfirmationFunction = true)
         })
     }

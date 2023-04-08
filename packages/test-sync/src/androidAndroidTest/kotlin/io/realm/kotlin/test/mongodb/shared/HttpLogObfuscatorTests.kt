@@ -24,6 +24,7 @@ import io.realm.kotlin.mongodb.GoogleAuthType
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.CustomLogCollector
+import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
@@ -118,7 +119,7 @@ class HttpLogObfuscatorTests {
 
     private fun initApp(): TestApp {
         return TestApp(
-            appName = "obfuscator",
+            appName = "${SyncServerConfig.appPrefix}-obfsctr",
             logLevel = LogLevel.DEBUG,
             customLogger = ObfuscatorLoggerInspector(channel),
             initialSetup = { app, service ->
@@ -143,7 +144,7 @@ class HttpLogObfuscatorTests {
     fun nullObfuscator() = runBlocking {
         val logger = CustomLogCollector("NULL-OBFUSCATOR", LogLevel.DEBUG)
         app = TestApp(
-            appName = "null-obfuscator",
+            appName = "${SyncServerConfig.appPrefix}-null-obf",
             logLevel = LogLevel.DEBUG,
             builder = { it.httpLogObfuscator(null) },
             customLogger = logger,
