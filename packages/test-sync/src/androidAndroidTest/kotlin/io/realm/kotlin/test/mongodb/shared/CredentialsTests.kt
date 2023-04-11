@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.mongodb.shared
 
@@ -23,8 +24,12 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKey
+import io.realm.kotlin.mongodb.customFunctionExperimental
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
+import io.realm.kotlin.mongodb.internal.AppImpl
+import io.realm.kotlin.mongodb.internal.CredentialsImpl
+import io.realm.kotlin.mongodb.internal.KSerializerCredentialsImpl
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -32,6 +37,7 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.serialization.Serializable
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -41,14 +47,20 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 @Serializable
-data class SerializableCustomCredential(
-    val name: String
+data class CustomCredentialsPayload(
+    val id: Int,
+    val mail: String
 )
 
 @Suppress("ForbiddenComment")
 class CredentialsTests {
 
-    private lateinit var app: App
+    private lateinit var app: TestApp
+
+    @BeforeTest
+    fun setup() {
+        app = TestApp()
+    }
 
     @AfterTest
     fun tearDown() {
@@ -59,18 +71,23 @@ class CredentialsTests {
 
     @Test
     fun allCredentials() {
-        for (value in AuthenticationProvider.values()) {
-            val credentials: Credentials = when (value) {
-                AuthenticationProvider.ANONYMOUS -> anonymous()
-                AuthenticationProvider.EMAIL_PASSWORD -> emailPassword()
-                AuthenticationProvider.API_KEY -> apiKey()
-                AuthenticationProvider.APPLE -> apple()
-                AuthenticationProvider.FACEBOOK -> facebook()
-                AuthenticationProvider.GOOGLE -> continue // Ignore, see below
-                AuthenticationProvider.JWT -> jwt()
-                AuthenticationProvider.CUSTOM_FUNCTION -> customFunction()
+        AuthenticationProvider.values().flatMap {
+            when (it) {
+                AuthenticationProvider.ANONYMOUS -> listOf(it to anonymous())
+                AuthenticationProvider.EMAIL_PASSWORD -> listOf(it to emailPassword())
+                AuthenticationProvider.API_KEY -> listOf(it to apiKey())
+                AuthenticationProvider.APPLE -> listOf(it to apple())
+                AuthenticationProvider.FACEBOOK -> listOf(it to facebook())
+                AuthenticationProvider.GOOGLE -> listOf() // Ignore, see below
+                AuthenticationProvider.JWT -> listOf(it to jwt())
+                AuthenticationProvider.CUSTOM_FUNCTION -> listOf(
+                    it to customFunction(),
+                    it to customFunctionExperimental()
+                )
             }
-            assertEquals(value, credentials.authenticationProvider)
+        }.forEach { (authenticationProvider, credentials) ->
+            assertEquals(authenticationProvider, credentials.authenticationProvider)
+
         }
 
         // Special case for Anonymous having 'reuseExisting'
@@ -116,7 +133,7 @@ class CredentialsTests {
     @Suppress("invisible_reference", "invisible_member")
     private fun anonymous(reuseExisting: Boolean = true): Credentials {
         val creds: Credentials = Credentials.anonymous(reuseExisting)
-        val credsImpl = creds as io.realm.kotlin.mongodb.internal.CredentialsImpl
+        val credsImpl = creds as CredentialsImpl
         assertTrue(credsImpl.asJson().contains("anon-user")) // Treat the JSON as an opaque value.
         return creds
     }
@@ -124,7 +141,7 @@ class CredentialsTests {
     @Suppress("invisible_reference", "invisible_member")
     private fun apiKey(): Credentials {
         val creds: Credentials = Credentials.apiKey("token")
-        val credsImpl = creds as io.realm.kotlin.mongodb.internal.CredentialsImpl
+        val credsImpl = creds as CredentialsImpl
         assertTrue(credsImpl.asJson().contains("token")) // Treat the JSON as an opaque value.
         return creds
     }
@@ -140,6 +157,23 @@ class CredentialsTests {
         val id = 700
         val credentials = Credentials.customFunction(
             payload = mapOf("mail" to mail, "id" to id)
+        )
+
+        assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, credentials.authenticationProvider)
+        assertJsonContains(credentials, mail)
+        assertJsonContains(credentials, id.toString())
+        return credentials
+    }
+
+    private fun customFunctionExperimental(): Credentials {
+        val mail = TestHelper.randomEmail()
+        val id = 700
+
+        val credentials = Credentials.customFunctionExperimental(
+            payload = CustomCredentialsPayload(
+                id = id,
+                mail = mail,
+            )
         )
         assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, credentials.authenticationProvider)
         assertJsonContains(credentials, mail)
@@ -188,19 +222,26 @@ class CredentialsTests {
     // Since integration tests of Credentials are very hard to setup, we instead just fake it
     // by checking that the JSON payload we send to the server seems to be correct. If that is
     // the case, we assume the server does the right thing (and has tests for it).
-    @Suppress("invisible_reference", "invisible_member")
     private fun assertJsonContains(creds: Credentials, subString: String) {
-        val credsImpl = creds as io.realm.kotlin.mongodb.internal.CredentialsImpl
+        val jsonEncodedCredentials = when (creds) {
+            is CredentialsImpl -> {
+                creds.asJson()
+            }
+            is KSerializerCredentialsImpl -> {
+                creds.asJson(app.app as AppImpl)
+            }
+            else -> error("Invalid crendentials type ${creds::class.simpleName}")
+        }
 
         // Treat the JSON as a largely opaque value.
-        credsImpl.asJson().let {
-            assertTrue(it.contains(subString), "[$it] does not contain [$subString]")
-        }
+        assertTrue(
+            jsonEncodedCredentials.contains(subString),
+            "[$jsonEncodedCredentials] does not contain [$subString]"
+        )
     }
 
     @Test
     fun anonymousLogin() {
-        app = TestApp()
         runBlocking {
             val firstUser = app.login(Credentials.anonymous())
             assertNotNull(firstUser)
@@ -220,7 +261,6 @@ class CredentialsTests {
 
     @Test
     fun loginUsingCredentials() {
-        app = TestApp()
         runBlocking {
             AuthenticationProvider.values().forEach { provider ->
                 when (provider) {
@@ -233,7 +273,8 @@ class CredentialsTests {
                     }
                     AuthenticationProvider.API_KEY -> {
                         // Log in, create an API key, log out, log in with the key, compare users
-                        val user: User = app.createUserAndLogIn(TestHelper.randomEmail(), "password1234")
+                        val user: User =
+                            app.createUserAndLogIn(TestHelper.randomEmail(), "password1234")
                         val key: ApiKey = user.apiKeyAuth.create("my-key")
                         user.logOut()
                         val apiKeyUser = app.login(Credentials.apiKey(key.value!!))
@@ -243,10 +284,23 @@ class CredentialsTests {
                         val credentials = Credentials.customFunction(
                             payload = mapOf("mail" to TestHelper.randomEmail(), "id" to 700)
                         )
+
                         // We are not testing the authentication function itself, but rather that the
                         // credentials work
                         val functionUser = app.login(credentials)
                         assertNotNull(functionUser)
+
+                        // Test customFunctionExperimental
+                        val credentialsExperimental = Credentials.customFunctionExperimental(
+                            payload = CustomCredentialsPayload(
+                                mail = TestHelper.randomEmail(),
+                                id = 700
+                            )
+                        )
+                        // We are not testing the authentication function itself, but rather that the
+                        // credentials work
+                        val functionUserExperimental = app.login(credentialsExperimental)
+                        assertNotNull(functionUserExperimental)
                     }
                     AuthenticationProvider.EMAIL_PASSWORD -> {
                         val (email, password) = TestHelper.randomEmail() to "password1234"
@@ -281,8 +335,6 @@ class CredentialsTests {
 
     @Test
     fun customFunction_authExceptionThrownOnError() {
-        app = TestApp()
-
         val credentials = Credentials.customFunction(
             payload = mapOf("mail" to TestHelper.randomEmail(), "id" to 0)
         )

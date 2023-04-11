@@ -16,14 +16,14 @@
 
 package io.realm.kotlin.mongodb
 
-import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
-import kotlinx.serialization.encodeToString
+import io.realm.kotlin.mongodb.internal.KSerializerCredentialsImpl
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
+import kotlin.reflect.typeOf
 
 /**
  * This enum contains the list of Google authentication types supported by App Services.
@@ -176,6 +176,8 @@ public interface Credentials {
  * TODO documentation
  */
 public inline fun <reified T> Credentials.Companion.customFunctionExperimental(payload: T): Credentials {
-    // TODO lazy like credentials resolved in runtime due to access to AppImpl
-    return CredentialsImpl(CredentialsImpl.customFunctionString("TODO"))
+    return KSerializerCredentialsImpl(
+        payload = payload,
+        type = typeOf<T>()
+    )
 }
