@@ -20,6 +20,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.UserImpl
 import kotlinx.serialization.decodeFromString
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.Bson
 
 /**
@@ -48,15 +49,19 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
 /**
  * TODO Document, annotate as experimental optin
  */
-public inline fun <reified T> User.profile(): T =
-    (this as UserImpl).profileInternal { ejson ->
-        Bson.decodeFromString(ejson)
+@ExperimentalKSerializerApi
+public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
+    profileInternal { ejson ->
+        this.app.configuration.ejson.decodeFromString(ejson)
     }
+}
 
 /**
  * TODO Document, annotate as experimental optin
  */
-public inline fun <reified T> User.customData(): T? =
-    (this as UserImpl).customDataInternal { ejson ->
-        Bson.decodeFromString(ejson)
+@ExperimentalKSerializerApi
+public inline fun <reified T> User.customData(): T? = with(this as UserImpl) {
+    customDataInternal { ejson ->
+        this.app.configuration.ejson.decodeFromString(ejson)
     }
+}

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalKSerializerApi::class)
+
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -30,6 +32,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.ExperimentalKSerializerApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

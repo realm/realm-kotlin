@@ -30,6 +30,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
+import kotlinx.serialization.Serializable
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals

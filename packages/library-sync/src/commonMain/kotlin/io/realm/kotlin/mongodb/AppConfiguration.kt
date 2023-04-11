@@ -37,6 +37,8 @@ import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
+import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -67,6 +69,12 @@ public interface AppConfiguration {
      * @see [AppConfiguration.Builder.appVersion]
      */
     public val appVersion: String?
+
+    /**
+     * TODO
+     */
+    @OptIn(ExperimentalKSerializerApi::class)
+    public val ejson: EJson
 
     public companion object {
         /**
@@ -110,6 +118,8 @@ public interface AppConfiguration {
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
+        @OptIn(ExperimentalKSerializerApi::class)
+        private var ejson: EJson = EJson
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -230,6 +240,14 @@ public interface AppConfiguration {
         }
 
         /**
+         * TODO
+         */
+        @ExperimentalKSerializerApi
+        public fun ejson(ejson: EJson) {
+            this.ejson = ejson
+        }
+
+        /**
          * TODO Evaluate if this should be part of the public API. For now keep it internal.
          *
          * Removes the default system logger from being installed. If no custom loggers have
@@ -254,6 +272,7 @@ public interface AppConfiguration {
          *
          * @return the AppConfiguration that can be used to create a [App].
          */
+        @OptIn(ExperimentalKSerializerApi::class)
         public fun build(): AppConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
@@ -297,7 +316,8 @@ public interface AppConfiguration {
                 syncRootDirectory = syncRootDirectory,
                 log = appLogger,
                 appName = appName,
-                appVersion = appVersion
+                appVersion = appVersion,
+                ejson = ejson
             )
         }
     }

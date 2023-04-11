@@ -37,10 +37,12 @@ import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
+import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
-public class AppConfigurationImpl constructor(
+public class AppConfigurationImpl @OptIn(ExperimentalKSerializerApi::class) constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
@@ -49,7 +51,8 @@ public class AppConfigurationImpl constructor(
     override val syncRootDirectory: String,
     public val log: RealmLog,
     override val appName: String?,
-    override val appVersion: String?
+    override val appVersion: String?,
+    override val ejson: EJson
 ) : AppConfiguration {
 
     /**

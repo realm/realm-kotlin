@@ -19,9 +19,15 @@ import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.FunctionsImpl
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.serialization.Bson
+import org.mongodb.kbson.serialization.encodeToBsonValue
 
 /**
  * Invokes an Atlas function.
@@ -47,4 +53,29 @@ import org.mongodb.kbson.BsonDocument
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
     vararg args: Any?
-): T = (this as FunctionsImpl).callInternal(name, T::class, args) as T
+): T = with(this as FunctionsImpl) {
+    val serializedEjsonArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList()))
+    val encodedResult = callInternal(name, serializedEjsonArgs)
+
+    BsonEncoder.decodeFromBsonValue(
+        resultClass = T::class,
+        bsonValue = Bson(encodedResult)
+    ) as T
+}
+
+/**
+ * TODO document
+ */
+@OptIn(ExperimentalKSerializerApi::class)
+public suspend inline fun <reified T : Any?> Functions.callExperimental(
+    name: String,
+    vararg args: Any?
+): T = with(this as FunctionsImpl) {
+    val ejson = app.configuration.ejson
+
+    val serializedEjsonArgs = ejson.encodeToString(args.toList())
+    val encodedResult = callInternal(name, serializedEjsonArgs)
+
+    return ejson.decodeFromString(encodedResult)
+}
+

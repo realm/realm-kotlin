@@ -71,13 +71,8 @@ internal class CredentialsImpl constructor(
         internal fun jwt(jwtToken: String): RealmCredentialsPointer =
             RealmInterop.realm_app_credentials_new_jwt(Validation.checkEmpty(jwtToken, "jwtToken"))
 
-        internal fun customFunction(payload: Any): RealmCredentialsPointer =
-            BsonEncoder.encodeToBsonValue(payload).let { bsonValue: BsonValue ->
-                require(bsonValue.bsonType == BsonType.DOCUMENT) {
-                    "Invalid payload type '${payload::class.simpleName}', only BsonDocument and maps are supported."
-                }
-                RealmInterop.realm_app_credentials_new_custom_function(Bson.toJson(bsonValue))
-            }
+        internal fun customFunction(payload: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_custom_function(payload)
 
         @PublishedApi
         internal fun customFunctionString(ejson: String): RealmCredentialsPointer =

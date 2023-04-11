@@ -30,21 +30,17 @@ internal class FunctionsImpl(
     @PublishedApi
     internal suspend fun callInternal(
         name: String,
-        resultClass: KClass<*>,
-        args: Array<out Any?>
-    ): Any? = Channel<Result<Any?>>(1).use { channel ->
+        serializedEjsonArgs: String
+    ): String = Channel<Result<String>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
             name = name,
-            serializedEjsonArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList())),
+            serializedEjsonArgs = serializedEjsonArgs,
             callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
                 // First we decode from ejson -> BsonValue
                 // then from BsonValue -> T
-                BsonEncoder.decodeFromBsonValue(
-                    resultClass = resultClass,
-                    bsonValue = Bson(ejsonEncodedObject)
-                )
+                ejsonEncodedObject
             }
         )
 

@@ -16,9 +16,13 @@
 
 package io.realm.kotlin.mongodb
 
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
 import kotlinx.serialization.encodeToString
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonType
+import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
 
 /**
@@ -144,9 +148,7 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: BsonDocument): Credentials {
-            return CredentialsImpl(CredentialsImpl.customFunction(payload))
-        }
+        public fun customFunction(payload: BsonDocument): Credentials = customFunctionP(payload)
 
         /**
          * Creates credentials representing a login using an App Services Function. The payload would
@@ -157,14 +159,23 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: Map<String, *>): Credentials {
-            return CredentialsImpl(CredentialsImpl.customFunction(payload))
-        }
+        public fun customFunction(payload: Map<String, *>): Credentials = customFunctionP(payload)
+
+        private fun customFunctionP(payload: Any): Credentials =
+            BsonEncoder.encodeToBsonValue(payload).let { bsonValue: BsonValue ->
+                require(bsonValue.bsonType == BsonType.DOCUMENT) {
+                    "Invalid payload type '${payload::class.simpleName}', only BsonDocument and maps are supported."
+                }
+
+                CredentialsImpl(CredentialsImpl.customFunction(Bson.toJson(bsonValue)))
+            }
     }
 }
 
 /**
- * TODO can we overload it like this?
+ * TODO documentation
  */
-public inline fun <reified T> Credentials.Companion.customFunctionAny(payload: T): Credentials =
-    CredentialsImpl(CredentialsImpl.customFunctionString(Bson.encodeToString(payload)))
+public inline fun <reified T> Credentials.Companion.customFunctionExperimental(payload: T): Credentials {
+    // TODO lazy like credentials resolved in runtime due to access to AppImpl
+    return CredentialsImpl(CredentialsImpl.customFunctionString("TODO"))
+}
