@@ -25,6 +25,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.util.receiveOrFail
@@ -118,7 +119,7 @@ class HttpLogObfuscatorTests {
 
     private fun initApp(): TestApp {
         return TestApp(
-            appName = "${io.realm.kotlin.test.mongodb.SyncServerConfig.appPrefix}-obfsctr",
+            appName = syncServerAppName("obfsctr"),
             logLevel = LogLevel.DEBUG,
             customLogger = ObfuscatorLoggerInspector(channel),
             initialSetup = { app, service ->
@@ -143,7 +144,7 @@ class HttpLogObfuscatorTests {
     fun nullObfuscator() = runBlocking {
         val logger = CustomLogCollector("NULL-OBFUSCATOR", LogLevel.DEBUG)
         app = TestApp(
-            appName = "${io.realm.kotlin.test.mongodb.SyncServerConfig.appPrefix}-null-obf",
+            appName = syncServerAppName("null-obf"),
             logLevel = LogLevel.DEBUG,
             builder = { it.httpLogObfuscator(null) },
             customLogger = logger,

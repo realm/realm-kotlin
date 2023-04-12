@@ -136,7 +136,7 @@ class RealmConfigurationTests {
 
     @Test
     fun directory_withSpace() {
-        val realmDir = tmpDir + PATH_SEPARATOR + "dir with space"
+        val realmDir = tmpDir + "${PATH_SEPARATOR}dir with space"
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .build()
@@ -156,7 +156,7 @@ class RealmConfigurationTests {
 
     @Test
     fun directory_createIntermediateDirs() {
-        val realmDir = tmpDir + "/my/intermediate/dir"
+        val realmDir = tmpDir + listOf("my", "intermediate", "dir").joinToString(separator = PATH_SEPARATOR, prefix = PATH_SEPARATOR)
         val configBuilder = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
 
@@ -166,7 +166,7 @@ class RealmConfigurationTests {
 
     @Test
     fun directory_isFileThrows() {
-        val tmpFile = "$tmpDir/file"
+        val tmpFile = "$tmpDir${PATH_SEPARATOR}file"
         platformFileSystem.write(tmpFile.toPath(), mustCreate = true) {
             write(ByteArray(0))
         }

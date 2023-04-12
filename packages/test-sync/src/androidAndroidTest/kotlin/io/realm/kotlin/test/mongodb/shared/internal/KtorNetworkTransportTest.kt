@@ -25,6 +25,7 @@ import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
+import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
@@ -62,7 +63,7 @@ internal class KtorNetworkTransportTest {
                 debug = false,
                 dispatcher = dispatcher
             ).run {
-                getOrCreateApp("${SyncServerConfig.appPrefix}-ktor") { app: BaasApp, service: Service ->
+                getOrCreateApp(syncServerAppName("ktor")) { app: BaasApp, service: Service ->
                     initialize(app, TEST_METHODS)
                 }
             }

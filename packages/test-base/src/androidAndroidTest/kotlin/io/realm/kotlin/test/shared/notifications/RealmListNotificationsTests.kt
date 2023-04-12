@@ -128,7 +128,11 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                         channel.send(flowList)
                     }
             }
-            assertTrue(channel.receive() is InitialList)
+
+            channel.receive().let {
+                assertIs<InitialList<*>>(it)
+            }
+
             // Assert a single range is reported
             //
             // objectListField = [<A, B>]

@@ -14,6 +14,7 @@ import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
+import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
@@ -243,7 +244,7 @@ class EmailPasswordAuthWithEmailConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = "${SyncServerConfig.appPrefix}-em-cnfrm", initialSetup = { app: BaasApp, service: Service ->
+        app = TestApp(appName = syncServerAppName("em-cnfrm"), initialSetup = { app: BaasApp, service: Service ->
             addEmailProvider(app, autoConfirm = false)
         })
     }
@@ -281,7 +282,7 @@ class EmailPasswordAuthWithCustomFunctionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = "${SyncServerConfig.appPrefix}-em-cstm", initialSetup = { app: BaasApp, service: Service ->
+        app = TestApp(appName = syncServerAppName("em-cstm"), initialSetup = { app: BaasApp, service: Service ->
             addEmailProvider(app, autoConfirm = false, runConfirmationFunction = true)
         })
     }

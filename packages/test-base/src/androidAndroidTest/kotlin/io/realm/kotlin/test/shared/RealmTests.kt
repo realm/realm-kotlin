@@ -25,6 +25,7 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
+import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
@@ -467,9 +468,15 @@ class RealmTests {
             // Check the realm got created correctly and signal that it can be closed.
             fileSystem.list(testDirPath)
                 .also { testDirPathList ->
-                    // TODO If on Windows, 3 management files are created, on Mac and Linux, it is 4.
-                    //  Is there a reliable way to detect the platform in Kotlin KMP?
-                    assertTrue(testDirPathList.size in 3..4, "Was ${testDirPathList.size}") // db file, .lock, .management, .note
+                    // We expect the following files: db file, .lock, .management, .note.
+                    // On Linux and Mac, the .note is used to control notifications. This mechanism
+                    // is not used on Windows, so the file is not present there.
+                    val expectedFiles = if (OS_NAME.contains("windows", ignoreCase = true)) {
+                        3
+                    } else {
+                        4
+                    }
+                    assertEquals(expectedFiles, testDirPathList.size)
                     readyToCloseChannel.send(Unit)
                 }
 

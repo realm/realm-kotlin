@@ -162,7 +162,7 @@ class AppConfigurationTests {
             // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
             // the configured `AppConfiguration.syncRootDir`
             val partitionValue = TestHelper.randomPartitionValue()
-            val suffix = "${PATH_SEPARATOR}myCustomDir${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.identity}${PATH_SEPARATOR}s_$partitionValue.realm"
+            val suffix = "${PATH_SEPARATOR}myCustomDir${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}s_$partitionValue.realm"
             val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf()).build()
             assertTrue(config.path.endsWith(suffix), "Failed: ${config.path} vs. $suffix")
         } finally {

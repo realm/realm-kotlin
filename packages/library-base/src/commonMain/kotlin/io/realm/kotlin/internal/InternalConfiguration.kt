@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.Configuration
-import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
@@ -59,7 +58,7 @@ public interface InternalConfiguration : Configuration {
      * @param realm instance of the Realm that is being created.
      * @returns a pair of (LiveRealmPointer, FileCreated)
      */
-    public suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean>
+    public suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean>
 
     /**
      * This function is a way `RealmImpl` can defer how the Realm is initialized once opened.
