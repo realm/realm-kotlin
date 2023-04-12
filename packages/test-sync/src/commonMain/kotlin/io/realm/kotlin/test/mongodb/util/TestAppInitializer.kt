@@ -339,9 +339,9 @@ object TestAppInitializer {
         }
 
         val (type: String, config: String) = if (TEST_APP_CLUSTER_NAME.isEmpty()) {
-            Pair("mongodb", "{ \"uri\": \"mongodb://localhost:26000\" }")
+            "mongodb" to """{ "uri": "mongodb://localhost:26000" }"""
         } else {
-            Pair("mongodb-atlas", "{ \"clusterName\": \"${TEST_APP_CLUSTER_NAME}\" }")
+            "mongodb-atlas" to """{ "clusterName": "$TEST_APP_CLUSTER_NAME" }"""
         }
         addService(
             """
