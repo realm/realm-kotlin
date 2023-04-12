@@ -156,7 +156,7 @@ class RealmConfigurationTests {
 
     @Test
     fun directory_createIntermediateDirs() {
-        val realmDir = tmpDir + "${PATH_SEPARATOR}my${PATH_SEPARATOR}intermediate${PATH_SEPARATOR}dir"
+        val realmDir = tmpDir + listOf("my", "intermediate", "dir").joinToString(separator = PATH_SEPARATOR, prefix = PATH_SEPARATOR)
         val configBuilder = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
 
