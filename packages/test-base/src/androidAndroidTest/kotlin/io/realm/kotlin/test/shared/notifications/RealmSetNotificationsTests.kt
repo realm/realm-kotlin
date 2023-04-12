@@ -124,7 +124,11 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                         channel.send(flowSet)
                     }
             }
-            assertTrue(channel.receive() is InitialSet)
+
+            channel.receive().let {
+                assertIs<InitialSet<*>>(it)
+            }
+
             // Assert a single insertion is reported
             realm.writeBlocking {
                 val queriedContainer = findLatest(container)

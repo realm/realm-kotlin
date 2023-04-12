@@ -208,10 +208,11 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        if (mapChange !is InitialMap<String, *>) {
-                            channel.send(mapChange)
-                        }
+                        channel.send(mapChange)
                     }
+            }
+            channel.receive().let {
+                assertIs<InitialMap<String, *>>(it)
             }
 
             // Assert a single insertion is reported

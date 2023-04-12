@@ -128,12 +128,12 @@ public interface RealmConfiguration : Configuration {
             val notificationDispatcherFactory = if (notificationDispatcher != null) {
                 CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
             } else {
-                CoroutineDispatcherFactory.managed(fileName)
+                CoroutineDispatcherFactory.managed("notifier-$fileName")
             }
             val writerDispatcherFactory = if (writeDispatcher != null) {
                 CoroutineDispatcherFactory.unmanaged(writeDispatcher!!)
             } else {
-                CoroutineDispatcherFactory.managed(fileName)
+                CoroutineDispatcherFactory.managed("writer-$fileName")
             }
 
             return RealmConfigurationImpl(
