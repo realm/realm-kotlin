@@ -39,6 +39,8 @@ public interface RealmReference : RealmState {
         checkClosed()
         return VersionId(RealmInterop.realm_get_version_id(dbPointer))
     }
+    public fun uncheckedVersion(): VersionId =
+        VersionId(RealmInterop.realm_get_version_id(dbPointer))
 
     override fun isFrozen(): Boolean {
         checkClosed()
@@ -69,14 +71,18 @@ public interface RealmReference : RealmState {
     }
 }
 
-public data class FrozenRealmReference(
+public interface FrozenRealmReference : RealmReference {
+    override val dbPointer: FrozenRealmPointer
+}
+
+public data class FrozenRealmReferenceImpl(
     override val owner: BaseRealmImpl,
     override val dbPointer: FrozenRealmPointer,
     override val schemaMetadata: SchemaMetadata = CachedSchemaMetadata(
         dbPointer,
         owner.configuration.mapOfKClassWithCompanion.values
     ),
-) : RealmReference {
+) : FrozenRealmReference {
     init {
         // realm_open/realm_freeze doesn't implicitly create a transaction which can cause the
         // underlying core version to be cleaned up if the realm is advanced before any objects,
@@ -105,7 +111,7 @@ public data class LiveRealmReference(
      * Returns a frozen realm reference of the current live realm reference.
      */
     public fun snapshot(owner: BaseRealmImpl): FrozenRealmReference {
-        return FrozenRealmReference(owner, RealmInterop.realm_freeze(dbPointer), schemaMetadata)
+        return FrozenRealmReferenceImpl(owner, RealmInterop.realm_freeze(dbPointer), schemaMetadata)
     }
 
     /**

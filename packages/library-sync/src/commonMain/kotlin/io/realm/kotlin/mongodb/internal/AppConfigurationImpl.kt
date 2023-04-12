@@ -37,6 +37,7 @@ import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
+import io.realm.kotlin.mongodb.HttpLogObfuscator
 
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
@@ -49,7 +50,8 @@ public class AppConfigurationImpl constructor(
     override val syncRootDirectory: String,
     public val log: RealmLog,
     override val appName: String?,
-    override val appVersion: String?
+    override val appVersion: String?,
+    override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
 
     /**

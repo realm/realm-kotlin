@@ -35,6 +35,7 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
@@ -367,23 +368,23 @@ class RealmAnyTests {
                     }
             }
 
-            assertIs<PendingObject<Sample>>(sampleChannel.receive())
-            assertIs<PendingObject<RealmAnyContainer>>(containerChannel.receive())
+            assertIs<PendingObject<Sample>>(sampleChannel.receiveOrFail())
+            assertIs<PendingObject<RealmAnyContainer>>(containerChannel.receiveOrFail())
 
             val unmanagedContainer = RealmAnyContainer(RealmAny.create(Sample()))
             realm.writeBlocking {
                 copyToRealm(unmanagedContainer)
             }
 
-            assertIs<InitialObject<Sample>>(sampleChannel.receive())
-            assertIs<InitialObject<RealmAnyContainer>>(containerChannel.receive())
+            assertIs<InitialObject<Sample>>(sampleChannel.receiveOrFail())
+            assertIs<InitialObject<RealmAnyContainer>>(containerChannel.receiveOrFail())
 
             realm.writeBlocking {
                 delete(query<Sample>())
             }
 
-            val deletedObjectEvent = sampleChannel.receive()
-            val updatedContainerEvent = containerChannel.receive()
+            val deletedObjectEvent = sampleChannel.receiveOrFail()
+            val updatedContainerEvent = containerChannel.receiveOrFail()
             assertIs<DeletedObject<Sample>>(deletedObjectEvent)
             assertNull(deletedObjectEvent.obj)
             assertIs<UpdatedObject<RealmAnyContainer>>(updatedContainerEvent)

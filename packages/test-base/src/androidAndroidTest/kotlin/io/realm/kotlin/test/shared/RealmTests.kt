@@ -25,10 +25,13 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
+import io.realm.kotlin.internal.platform.OS_NAME
+import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -453,25 +456,33 @@ class RealmTests {
                 val anotherRealm = Realm.open(configuration)
                 bgThreadReadyChannel.send(Unit)
 
-                readyToCloseChannel.receive()
+                readyToCloseChannel.receiveOrFail()
 
                 anotherRealm.close()
                 closedChannel.send(Unit)
             }
 
             // Waits for background thread opening the same Realm.
-            bgThreadReadyChannel.receive()
+            bgThreadReadyChannel.receiveOrFail()
 
             // Check the realm got created correctly and signal that it can be closed.
             fileSystem.list(testDirPath)
                 .also { testDirPathList ->
-                    assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
+                    // We expect the following files: db file, .lock, .management, .note.
+                    // On Linux and Mac, the .note is used to control notifications. This mechanism
+                    // is not used on Windows, so the file is not present there.
+                    val expectedFiles = if (OS_NAME.contains("windows", ignoreCase = true)) {
+                        3
+                    } else {
+                        4
+                    }
+                    assertEquals(expectedFiles, testDirPathList.size)
                     readyToCloseChannel.send(Unit)
                 }
 
             testRealm.close()
 
-            closedChannel.receive()
+            closedChannel.receiveOrFail()
 
             // Delete realm now that it's fully closed.
             Realm.deleteRealm(configuration)
@@ -516,7 +527,7 @@ class RealmTests {
         val anotherRealm = Realm.open(configA)
 
         // Deleting it without having closed it should fail.
-        assertFailsWithMessage<IllegalStateException>("Cannot delete files of an open Realm: '$tempDirA/anotherRealm.realm' is still in use") {
+        assertFailsWithMessage<IllegalStateException>("Cannot delete files of an open Realm: '$tempDirA${PATH_SEPARATOR}anotherRealm.realm' is still in use") {
             Realm.deleteRealm(configA)
         }
 
