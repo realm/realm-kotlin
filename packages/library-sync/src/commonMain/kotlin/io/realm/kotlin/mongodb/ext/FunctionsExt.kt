@@ -64,18 +64,20 @@ public suspend inline fun <reified T : Any?> Functions.call(
 }
 
 /**
- * TODO document
+ * TODO Document there are restrictions on arguments, deserialization works with experimental.
+ *
+ * Serialization of type arguments must be done with [EJson.encodeToBsonValue].
+ *
+ * Write some usage example.
  */
 @OptIn(ExperimentalKSerializerApi::class)
 public suspend inline fun <reified T : Any?> Functions.callExperimental(
     name: String,
     vararg args: Any?
 ): T = with(this as FunctionsImpl) {
-    val ejson = app.configuration.ejson
-
-    val serializedEjsonArgs = ejson.encodeToString(args.toList())
+    val serializedEjsonArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList()))
     val encodedResult = callInternal(name, serializedEjsonArgs)
 
-    return ejson.decodeFromString(encodedResult)
+    app.configuration.ejson.decodeFromString(encodedResult)
 }
 
