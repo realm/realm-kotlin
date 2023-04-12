@@ -306,6 +306,8 @@ buildkonfig {
  *   Unable to boot device in current state: Booted
  *   ```
  *
+ *   Test failures can be found by searching the logs for `testFailed`.
+ *
  * Note, this seems to be scheduled for a fix in 1.9.0.
  */
 tasks.register("runCloudIosTests")  {
