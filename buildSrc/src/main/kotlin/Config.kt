@@ -66,6 +66,7 @@ object Versions {
     // Must be built with same (major.minor!?) kotlin version as 'kotlin' variable below, to be binary compatible with kotlin
     const val atomicfu = "0.18.5" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
+    const val buildkonfig = "0.13.3" // https://github.com/yshrsmz/BuildKonfig
     // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.18.1 is available through the Android SDK.
     // Build also tested successfully with 3.21.4 (latest release).
     const val cmake = "3.22.1"

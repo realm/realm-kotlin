@@ -33,9 +33,12 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.HttpMethod.Companion.Get
 import io.ktor.http.HttpMethod.Companion.Post
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.sync.SyncMode
+import io.realm.kotlin.test.mongodb.SyncServerConfig
+import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -74,7 +77,7 @@ data class LoginResponse(val access_token: String)
 data class Profile(val roles: List<Role>)
 
 @Serializable
-data class Role(val group_id: String? = null)
+data class Role(val role_name: String, val group_id: String? = null)
 
 @Serializable
 data class AuthProvider constructor(
@@ -133,10 +136,14 @@ class AppServicesClient(
             url: String,
             crossinline block: HttpRequestBuilder.() -> Unit = {}
         ): T {
-            return this@typedRequest.request(url) {
+            val response: HttpResponse = this@typedRequest.request(url) {
                 this.method = method
                 this.apply(block)
-            }.bodyAsText()
+            }
+            if (!response.status.isSuccess()) {
+                throw IllegalStateException("Http request failed: $url. ${response.status}: ${response.bodyAsText()}")
+            }
+            return response.bodyAsText()
                 .let {
                     Json { ignoreUnknownKeys = true }.decodeFromString(
                         T::class.serializer(),
@@ -178,12 +185,19 @@ class AppServicesClient(
             // on different threads.
             // Log in using unauthorized client
             val unauthorizedClient = defaultClient("realm-baas-unauthorized", debug)
+
+            var loginMethod: String = "local-userpass"
+            var json: Map<String, String> = mapOf("username" to SyncServerConfig.email, "password" to SyncServerConfig.password)
+            if (SyncServerConfig.publicApiKey.isNotEmpty()) {
+                loginMethod = "mongodb-cloud"
+                json = mapOf("username" to SyncServerConfig.publicApiKey, "apiKey" to SyncServerConfig.privateApiKey)
+            }
             val loginResponse = unauthorizedClient.typedRequest<LoginResponse>(
                 HttpMethod.Post,
-                "$adminUrl/auth/providers/local-userpass/login"
+                "$adminUrl/auth/providers/$loginMethod/login"
             ) {
                 contentType(ContentType.Application.Json)
-                setBody(mapOf("username" to "unique_user@domain.com", "password" to "password"))
+                setBody(json)
             }
 
             // Setup authorized client for the rest of the requests
@@ -249,8 +263,11 @@ class AppServicesClient(
     private suspend fun createApp(
         appName: String,
         initializer: suspend BaasApp.() -> Unit
-    ): BaasApp =
-        withContext(dispatcher) {
+    ): BaasApp {
+        if (appName.length > 32) {
+            throw IllegalArgumentException("App names are restricted to 32 characters: $appName was ${appName.length}")
+        }
+        return withContext(dispatcher) {
             httpClient.typedRequest<BaasApp>(Post, "$groupUrl/apps") {
                 setBody(Json.parseToJsonElement("""{"name": $appName}"""))
                 contentType(ContentType.Application.Json)
@@ -258,6 +275,7 @@ class AppServicesClient(
                 initializer(this)
             }
         }
+    }
 
     val BaasApp.url: String
         get() = "$groupUrl/apps/${this._id}"
@@ -453,7 +471,8 @@ class AppServicesClient(
             return runBlocking {
                 httpClient.typedListRequest<Service>(Get, "$url/services")
                     .first {
-                        it.type == "mongodb"
+                        val type = if (TEST_APP_CLUSTER_NAME.isEmpty()) "mongodb" else "mongodb-atlas"
+                        it.type == type
                     }
             }
         }
