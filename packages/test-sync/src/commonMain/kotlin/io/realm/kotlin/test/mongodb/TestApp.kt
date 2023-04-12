@@ -39,8 +39,8 @@ import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 
-val TEST_APP_PARTITION = "${SyncServerConfig.appPrefix}-pbs" // With Partion-based Sync
-val TEST_APP_FLEX = "${SyncServerConfig.appPrefix}-flx" // With Flexible Sync
+val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partion-based Sync
+val TEST_APP_FLEX = syncServerAppName("flx") // With Flexible Sync
 val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 
 val TEST_SERVER_BASE_URL = SyncServerConfig.url
@@ -194,3 +194,7 @@ suspend fun App.createUserAndLogIn(
 
 suspend fun App.logIn(email: String, password: String): User =
     this.login(Credentials.emailPassword(email, password))
+
+fun syncServerAppName(appNameSuffix: String): String {
+    return "${SyncServerConfig.appPrefix}-$appNameSuffix"
+}
