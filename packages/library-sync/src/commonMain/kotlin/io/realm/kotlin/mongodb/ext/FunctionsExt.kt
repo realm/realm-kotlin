@@ -22,11 +22,11 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.FunctionsImpl
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.Bson
+import org.mongodb.kbson.serialization.EJson
 import org.mongodb.kbson.serialization.encodeToBsonValue
 
 /**
@@ -71,13 +71,31 @@ public suspend inline fun <reified T : Any?> Functions.call(
  * Write some usage example.
  */
 @OptIn(ExperimentalKSerializerApi::class)
-public suspend inline fun <reified T : Any?> Functions.callExperimental(
+public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
-    vararg args: Any?
+    argumentBuilderBlock: CallArgumentBuilder.() -> Unit
 ): T = with(this as FunctionsImpl) {
-    val serializedEjsonArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList()))
-    val encodedResult = callInternal(name, serializedEjsonArgs)
+    val serializedEjsonArgs = Bson.toJson(
+        CallArgumentBuilder(app.configuration.ejson)
+            .apply(argumentBuilderBlock)
+            .arguments
+    )
 
+    val encodedResult = callInternal(name, serializedEjsonArgs)
     app.configuration.ejson.decodeFromString(encodedResult)
 }
 
+@OptIn(ExperimentalKSerializerApi::class)
+public class CallArgumentBuilder
+@PublishedApi
+internal constructor(
+    @PublishedApi
+    internal val ejson: EJson
+) {
+    @PublishedApi
+    internal val arguments: BsonArray = BsonArray()
+
+    public inline fun <reified T : Any> add(argument: T) {
+        arguments.add(ejson.encodeToBsonValue(argument))
+    }
+}

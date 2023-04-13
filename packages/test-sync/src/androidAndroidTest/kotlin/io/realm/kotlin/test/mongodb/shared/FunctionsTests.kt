@@ -26,6 +26,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.call
+import io.realm.kotlin.mongodb.ext.callWithBuilder
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -62,6 +63,9 @@ import org.mongodb.kbson.BsonSymbol
 import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
+import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.serialization.EJson
+import org.mongodb.kbson.serialization.encodeToBsonValue
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -158,6 +162,20 @@ class FunctionsTests {
         functions.call(name, *args)
     }
 
+    @OptIn(ExperimentalKSerializerApi::class)
+    @Test
+    fun testExperimentalVariants() {
+        runBlocking {
+            assertEquals(
+                1.4f,
+                functions.callWithBuilder<Float>("firstArg") {
+                    add(1.4f)
+                    add("Hello world")
+                }
+            )
+        }
+    }
+
     @Test
     fun roundtripWithSupportedTypes() {
         val i32 = 42
@@ -182,7 +200,8 @@ class FunctionsTests {
                 }
                 BsonType.ARRAY -> {
                     listOf(true, i32, i64).let { values: List<Any> ->
-                        val result = functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
+                        val result =
+                            functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
                         assertEquals(
                             values.first(),
                             result.first().asBoolean().value
@@ -190,7 +209,8 @@ class FunctionsTests {
                     }
 
                     listOf<Any>(1, true, 3).let { values: List<Any> ->
-                        val result = functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
+                        val result =
+                            functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
 
                         assertContentEquals(
                             expected = BsonArray(
@@ -205,7 +225,8 @@ class FunctionsTests {
                     }
 
                     setOf(2, "Realm", 3).let { values: Set<Any> ->
-                        val result = functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
+                        val result =
+                            functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
 
                         assertContentEquals(
                             expected = BsonArray(
@@ -546,7 +567,10 @@ class FunctionsTests {
     @Test
     fun callFunction_void() {
         runBlocking {
-            assertEquals(BsonType.UNDEFINED, functions.call<BsonUndefined>(VOID_FUNCTION.name).bsonType)
+            assertEquals(
+                BsonType.UNDEFINED,
+                functions.call<BsonUndefined>(VOID_FUNCTION.name).bsonType
+            )
         }
     }
 
@@ -578,7 +602,14 @@ class FunctionsTests {
                 email = "authorizeduser@example.org",
                 password = "asdfasdf"
             )
-            assertNotNull(authorizedUser.functions.call<BsonDocument>(AUTHORIZED_ONLY_FUNCTION.name, 1, 2, 3))
+            assertNotNull(
+                authorizedUser.functions.call<BsonDocument>(
+                    AUTHORIZED_ONLY_FUNCTION.name,
+                    1,
+                    2,
+                    3
+                )
+            )
         }
     }
 

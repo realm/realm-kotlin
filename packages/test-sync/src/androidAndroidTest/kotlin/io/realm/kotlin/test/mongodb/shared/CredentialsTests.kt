@@ -24,7 +24,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKey
-import io.realm.kotlin.mongodb.customFunctionExperimental
+import io.realm.kotlin.mongodb.customFunction
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.internal.AppImpl
@@ -169,12 +169,13 @@ class CredentialsTests {
         val mail = TestHelper.randomEmail()
         val id = 700
 
-        val credentials = Credentials.customFunctionExperimental(
+        val credentials = Credentials.customFunction(
             payload = CustomCredentialsPayload(
                 id = id,
                 mail = mail,
             )
         )
+
         assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, credentials.authenticationProvider)
         assertJsonContains(credentials, mail)
         assertJsonContains(credentials, id.toString())
@@ -291,7 +292,7 @@ class CredentialsTests {
                         assertNotNull(functionUser)
 
                         // Test customFunctionExperimental
-                        val credentialsExperimental = Credentials.customFunctionExperimental(
+                        val credentialsExperimental = Credentials.customFunction(
                             payload = CustomCredentialsPayload(
                                 mail = TestHelper.randomEmail(),
                                 id = 700

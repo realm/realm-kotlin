@@ -49,7 +49,7 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
 /**
  * TODO Document, annotate as experimental optin
  */
-@ExperimentalKSerializerApi
+@OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
     profileInternal { ejson ->
         this.app.configuration.ejson.decodeFromString(ejson)
@@ -59,7 +59,7 @@ public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
 /**
  * TODO Document, annotate as experimental optin
  */
-@ExperimentalKSerializerApi
+@OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> User.customData(): T? = with(this as UserImpl) {
     customDataInternal { ejson ->
         this.app.configuration.ejson.decodeFromString(ejson)

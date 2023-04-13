@@ -18,12 +18,10 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
-import io.realm.kotlin.mongodb.internal.KSerializerCredentialsImpl
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
-import kotlin.reflect.typeOf
 
 /**
  * This enum contains the list of Google authentication types supported by App Services.
@@ -148,7 +146,7 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: BsonDocument): Credentials = customFunctionP(payload)
+        public fun customFunction(payload: BsonDocument): Credentials = customFunctionInternal(payload)
 
         /**
          * Creates credentials representing a login using an App Services Function. The payload would
@@ -159,9 +157,9 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: Map<String, *>): Credentials = customFunctionP(payload)
+        public fun customFunction(payload: Map<String, *>): Credentials = customFunctionInternal(payload)
 
-        private fun customFunctionP(payload: Any): Credentials =
+        private fun customFunctionInternal(payload: Any): Credentials =
             BsonEncoder.encodeToBsonValue(payload).let { bsonValue: BsonValue ->
                 require(bsonValue.bsonType == BsonType.DOCUMENT) {
                     "Invalid payload type '${payload::class.simpleName}', only BsonDocument and maps are supported."
@@ -170,14 +168,4 @@ public interface Credentials {
                 CredentialsImpl(CredentialsImpl.customFunction(Bson.toJson(bsonValue)))
             }
     }
-}
-
-/**
- * TODO documentation
- */
-public inline fun <reified T> Credentials.Companion.customFunctionExperimental(payload: T): Credentials {
-    return KSerializerCredentialsImpl(
-        payload = payload,
-        type = typeOf<T>()
-    )
 }
