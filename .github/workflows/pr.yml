@@ -305,8 +305,10 @@ jobs:
   build-android-packages:
     runs-on: ubuntu-latest
     needs: check-cache
-    # needs: static-analysis
-    if: needs.check-cache.outputs.packages-android-cache-hit != 'true'
+    if: |
+      needs.check-cache.outputs.packages-android-cache-hit != 'true' ||
+      needs.check-cache.outputs.needs.check-cache.outputs.android-test-base-apk-cache-hit != 'true' ||
+      needs.check-cache.outputs.needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true'
 
     steps:
       - name: Checkout code
