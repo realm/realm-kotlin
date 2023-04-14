@@ -22,11 +22,11 @@ import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.WeakReference
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.RealmLog
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import io.realm.kotlin.log.RealmLog
 
 /**
  * A live realm that can be updated and receive notifications on data and schema changes when

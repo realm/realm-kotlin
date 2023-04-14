@@ -18,7 +18,6 @@ package io.realm.kotlin
 
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.RealmMigration

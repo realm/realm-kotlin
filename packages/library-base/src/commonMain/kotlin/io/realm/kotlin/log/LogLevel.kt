@@ -2,7 +2,6 @@ package io.realm.kotlin.log
 
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.Configuration.SharedBuilder
-import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.log.LogLevel.TRACE
 import io.realm.kotlin.log.LogLevel.WTF
 
