@@ -134,7 +134,8 @@ public interface RealmConfiguration : Configuration {
             // for configuring logging. This should be removed when `LogConfiguration` is removed.
             RealmLog.level = logLevel
             realmConfigLoggers.forEach { RealmLog.add(it) }
-            val allLoggers: List<RealmLogger> = realmConfigLoggers
+            @Suppress("invisible_reference", "invisible_member")
+            val allLoggers: List<RealmLogger> = listOf(RealmLog.systemLoggerInstalled).filterNotNull() + realmConfigLoggers
 
             return RealmConfigurationImpl(
                 directory,
