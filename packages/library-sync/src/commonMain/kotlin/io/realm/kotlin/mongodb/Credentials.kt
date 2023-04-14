@@ -18,12 +18,10 @@ package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
-import io.realm.kotlin.mongodb.internal.KSerializerCredentialsImpl
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.serialization.Bson
-import kotlin.reflect.typeOf
 
 /**
  * This enum contains the list of Google authentication types supported by App Services.

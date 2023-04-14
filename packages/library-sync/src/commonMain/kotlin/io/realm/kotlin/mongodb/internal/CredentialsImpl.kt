@@ -22,32 +22,6 @@ import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
-import kotlinx.serialization.serializer
-import org.mongodb.kbson.ExperimentalKSerializerApi
-import kotlin.reflect.KType
-
-/**
- * TODO document it requires of the encoder defined in the app impl config to evaluate the credentials pointer.
- */
-@PublishedApi
-internal class KSerializerCredentialsImpl constructor(
-    val payload: Any?,
-    val type: KType,
-) : Credentials {
-    override val authenticationProvider: AuthenticationProvider =
-        AuthenticationProvider.CUSTOM_FUNCTION
-
-    @OptIn(ExperimentalKSerializerApi::class)
-    fun nativePointer(appImpl: AppImpl): RealmCredentialsPointer {
-        val serializer = appImpl.configuration.ejson.serializersModule.serializer(type)
-        val ejson = appImpl.configuration.ejson.encodeToString(serializer, payload)
-        return RealmInterop.realm_app_credentials_new_custom_function(ejson)
-    }
-
-    internal fun asJson(appImpl: AppImpl): String {
-        return RealmInterop.realm_app_credentials_serialize_as_json(nativePointer(appImpl))
-    }
-}
 
 @PublishedApi
 internal class CredentialsImpl constructor(

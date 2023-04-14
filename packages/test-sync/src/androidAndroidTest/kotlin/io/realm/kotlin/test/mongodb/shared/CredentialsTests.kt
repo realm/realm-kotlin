@@ -29,7 +29,7 @@ import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
-import io.realm.kotlin.mongodb.internal.KSerializerCredentialsImpl
+import io.realm.kotlin.mongodb.internal.CustomEJsonCredentialsImpl
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -228,7 +228,7 @@ class CredentialsTests {
             is CredentialsImpl -> {
                 creds.asJson()
             }
-            is KSerializerCredentialsImpl -> {
+            is CustomEJsonCredentialsImpl -> {
                 creds.asJson(app.app as AppImpl)
             }
             else -> error("Invalid crendentials type ${creds::class.simpleName}")

@@ -70,7 +70,7 @@ public class AppImpl(
                 nativePointer,
                 when (credentials) {
                     is CredentialsImpl -> credentials.nativePointer
-                    is KSerializerCredentialsImpl -> credentials.nativePointer(this)
+                    is CustomEJsonCredentialsImpl -> credentials.nativePointer(this)
                     else -> throw IllegalArgumentException("Argument 'credentials' is of an invalid type ${credentials::class.simpleName}")
                 },
                 channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->

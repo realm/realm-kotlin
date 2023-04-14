@@ -17,15 +17,18 @@
 package io.realm.kotlin.mongodb.ext
 
 import io.realm.kotlin.mongodb.Credentials
-import io.realm.kotlin.mongodb.internal.KSerializerCredentialsImpl
-import kotlin.reflect.typeOf
+import io.realm.kotlin.mongodb.internal.AppImpl
+import io.realm.kotlin.mongodb.internal.CustomEJsonCredentialsImpl
+import kotlinx.serialization.serializer
+import org.mongodb.kbson.ExperimentalKSerializerApi
 
 /**
  * TODO document
  */
+@OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> Credentials.Companion.customFunction(payload: T): Credentials {
-    return KSerializerCredentialsImpl(
-        payload = payload,
-        type = typeOf<T>()
-    )
+    return CustomEJsonCredentialsImpl { app: AppImpl ->
+        val serializer = app.configuration.ejson.serializersModule.serializer<T>()
+        app.configuration.ejson.encodeToString(serializer, payload)
+    }
 }
