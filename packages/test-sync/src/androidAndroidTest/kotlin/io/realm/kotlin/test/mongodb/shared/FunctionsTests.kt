@@ -17,6 +17,7 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
@@ -26,7 +27,6 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.call
-import io.realm.kotlin.mongodb.ext.callWithBuilder
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -39,10 +39,16 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.NULL_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.SUM_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
+import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.types.MutableRealmInt
+import io.realm.kotlin.types.ObjectId
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
-import org.mongodb.kbson.BsonArray
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonBinary
+import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonBoolean
 import org.mongodb.kbson.BsonDBPointer
 import org.mongodb.kbson.BsonDateTime
@@ -63,6 +69,7 @@ import org.mongodb.kbson.BsonSymbol
 import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
+import org.mongodb.kbson.Decimal128
 import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.EJson
 import org.mongodb.kbson.serialization.encodeToBsonValue
@@ -72,11 +79,36 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.serialization.Serializable
+
+const val STRING_VALUE = "Hello world"
+const val BYTE_VALUE = Byte.MAX_VALUE
+const val SHORT_VALUE = Short.MAX_VALUE
+const val INT_VALUE = Int.MAX_VALUE
+const val LONG_VALUE = Long.MAX_VALUE
+const val CHAR_VALUE = 'a'
+const val FLOAT_VALUE = 1.4f
+const val DOUBLE_VALUE = 1.4
+val REALM_INSTANT_VALUE = RealmInstant.now().let { now ->
+    // RealmInstant has better precision (nanoseconds) than BsonDateTime (millis)
+    // Here we create a RealmInstant with loose of precision to match BsonDateTime
+    val nowAsDuration: Duration = now.toDuration()
+    val nowInMilliseconds = nowAsDuration.inWholeMilliseconds.milliseconds
+    nowInMilliseconds.toRealmInstant()
+}
+val REALM_UUID_VALUE = RealmUUID.random()
+val BYTE_ARRAY_VALUE = byteArrayOf(0, 1, 0)
+val MUTABLE_REALM_INT_VALUE = MutableRealmInt.create(50)
+val REALM_OBJECT_VALUE = SerializablePerson()
+
+@Serializable
+class SerializablePerson : RealmObject {
+    var firstName: String = "FIRST NAME"
+    var lastName: String = "LAST NAME"
+}
 
 class FunctionsTests {
     private data class Dog(var name: String? = null)
@@ -154,215 +186,419 @@ class FunctionsTests {
         }
     }
 
+    @Test
+    fun exhaustiveElementClassifiersTest() {
+        runBlocking {
+            TypeDescriptor.elementClassifiers
+                .filterNot { classifier ->
+                    classifier in listOf(
+                        RealmAny::class, // TODO unsupported ?
+                        Decimal128::class,
+                        ObjectId::class, // BsonType
+                        BsonObjectId::class //
+                    )
+                }
+                .forEach { classifier ->
+                    when (classifier) {
+                        String::class -> testFunctionCall_String()
+                        Char::class -> testFunctionCall_Char()
+                        Byte::class -> testFunctionCall_Byte()
+                        Short::class -> testFunctionCall_Short()
+                        Int::class -> testFunctionCall_Int()
+                        Long::class -> testFunctionCall_Long()
+                        Float::class -> testFunctionCall_Float()
+                        Double::class -> testFunctionCall_Double()
+                        Boolean::class -> testFunctionCall_Boolean()
+                        RealmInstant::class -> testFunctionCall_RealmInstant()
+                        RealmUUID::class -> testFunctionCall_RealmUUID()
+                        ByteArray::class -> testFunctionCall_ByteArray()
+                        MutableRealmInt::class -> testFunctionCall_MutableRealmInt()
+                        RealmObject::class -> testFunctionCall_RealmObject()
+                        else -> error("Untested classifier $classifier")
+                    }
+                }
+        }
+    }
+
+    @Test
+    fun exhaustiveCollectionTest() {
+        runBlocking {
+            CollectionType.values()
+                .forEach { collectionType ->
+                    when (collectionType) {
+                        CollectionType.RLM_COLLECTION_TYPE_NONE -> {}
+                        CollectionType.RLM_COLLECTION_TYPE_LIST -> testFunctionCall_List()
+                        CollectionType.RLM_COLLECTION_TYPE_SET -> testFunctionCall_Set()
+                        CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> testFunctionCall_Dictionary()
+                        else -> error("Untested collection type $collectionType")
+                    }
+                }
+        }
+    }
+
+    @Test
+    fun exhaustiveBsonTypesTest() {
+        runBlocking {
+            BsonType.values()
+                .forEach {
+                    when (it) {
+                        BsonType.END_OF_DOCUMENT -> {} // it is not an actual BsonType
+                        BsonType.DOUBLE -> testFunctionCall_BsonDouble()
+                        BsonType.STRING -> testFunctionCall_BsonString()
+                        BsonType.DOCUMENT -> testFunctionCall_BsonDocument()
+                        BsonType.ARRAY -> testFunctionCall_BsonArray()
+                        BsonType.BINARY -> testFunctionCall_BsonBinary()
+                        BsonType.UNDEFINED -> testFunctionCall_BsonUndefined()
+                        BsonType.OBJECT_ID -> testFunctionCall_BsonObjectId()
+                        BsonType.BOOLEAN -> testFunctionCall_BsonBoolean()
+                        BsonType.DATE_TIME -> testFunctionCall_BsonDateTime()
+                        BsonType.NULL -> testFunctionCall_BsonNull()
+                        BsonType.REGULAR_EXPRESSION -> testFunctionCall_BsonRegularExpresion()
+                        BsonType.DB_POINTER -> testFunctionCall_BsonDBPointer()
+                        BsonType.JAVASCRIPT -> testFunctionCall_BsonJavaScript()
+                        BsonType.SYMBOL -> testFunctionCall_BsonSymbol()
+                        BsonType.JAVASCRIPT_WITH_SCOPE -> testFunctionCall_BsonJavaScriptWithScope()
+                        BsonType.INT32 -> testFunctionCall_BsonInt32()
+                        BsonType.TIMESTAMP -> testFunctionCall_BsonTimestamp()
+                        BsonType.INT64 -> testFunctionCall_BsonInt64()
+                        BsonType.DECIMAL128 -> testFunctionCall_BsonDecimal128()
+                        BsonType.MIN_KEY -> testFunctionCall_BsonMinKey()
+                        BsonType.MAX_KEY -> testFunctionCall_BsonMaxKey()
+                    }
+                }
+        }
+    }
+
+    private fun testFunctionCall_BsonMaxKey() {
+        functionCallRoundTrip(BsonMaxKey, BsonMaxKey)
+    }
+
+    private fun testFunctionCall_BsonMinKey() {
+        functionCallRoundTrip(BsonMinKey, BsonMinKey)
+    }
+
+    private fun testFunctionCall_BsonDecimal128() {
+        BsonDecimal128(LONG_VALUE.toString()).let { decimal128 ->
+            functionCallRoundTrip(decimal128, decimal128)
+        }
+    }
+
+    private fun testFunctionCall_BsonInt64() {
+        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE)
+//        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toLong()) // fails coercion?
+//        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toFloat()) // fails coercion?
+//        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toDouble()) // fails coercion?
+    }
+
+    private fun testFunctionCall_BsonTimestamp() {
+        BsonTimestamp().let { timestamp ->
+            functionCallRoundTrip(timestamp, timestamp)
+        }
+    }
+
+    private fun testFunctionCall_BsonInt32() {
+        functionCallRoundTrip(BsonInt32(BYTE_VALUE.toInt()), BYTE_VALUE)
+        functionCallRoundTrip(BsonInt32(SHORT_VALUE.toInt()), SHORT_VALUE)
+        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE)
+//        functionCallRoundTrip(BsonInt32(INT_VALUE), BsonInt64(INT_VALUE.toLong())) // fails coercion?
+//        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toLong()) // fails coercion?
+//        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toFloat()) // fails coercion?
+//        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toDouble()) // fails coercion?
+    }
+
+    private fun testFunctionCall_BsonJavaScriptWithScope() {
+        BsonJavaScriptWithScope("", BsonDocument()).let { javaScriptWithScope ->
+            functionCallRoundTrip(javaScriptWithScope, javaScriptWithScope)
+        }
+    }
+
+    private fun testFunctionCall_BsonSymbol() {
+        BsonSymbol("").let { bsonSymbol ->
+            functionCallRoundTrip(bsonSymbol, bsonSymbol)
+        }
+    }
+
+    private fun testFunctionCall_BsonJavaScript() {
+        BsonJavaScript("").let { bsonJavaScript ->
+            functionCallRoundTrip(bsonJavaScript, bsonJavaScript)
+        }
+    }
+
+    private fun testFunctionCall_BsonDBPointer() {
+        BsonDBPointer(
+            namespace = "namespace",
+            id = BsonObjectId()
+        ).let { bsonDBPointer ->
+            functionCallRoundTrip(bsonDBPointer, bsonDBPointer)
+        }
+    }
+
+    private fun testFunctionCall_BsonRegularExpresion() {
+        BsonRegularExpression("").let { bsonRegularExpression ->
+            functionCallRoundTrip(bsonRegularExpression, bsonRegularExpression)
+        }
+    }
+
+    private fun testFunctionCall_BsonNull() {
+        functionCallRoundTrip(BsonNull, BsonNull)
+        functionCallRoundTrip(BsonNull, null as String?)
+    }
+
+    private fun testFunctionCall_BsonDateTime() {
+        functionCallRoundTrip(
+            BsonDateTime(REALM_INSTANT_VALUE.epochSeconds),
+            BsonDateTime(REALM_INSTANT_VALUE.epochSeconds)
+        )
+        // TODO no serializer yet
+//        functionCallRoundTrip(BsonDateTime(REALM_INSTANT_VALUE.epochSeconds), REALM_INSTANT_VALUE)
+    }
+
+    private fun testFunctionCall_BsonBoolean() {
+        functionCallRoundTrip(BsonBoolean(true), BsonBoolean(true))
+        functionCallRoundTrip(BsonBoolean(true), true)
+    }
+
+    private fun testFunctionCall_BsonObjectId() {
+        BsonObjectId().let { objectId ->
+            functionCallRoundTrip(objectId, objectId)
+        }
+    }
+
+    private fun testFunctionCall_BsonUndefined() {
+        functionCallRoundTrip(BsonUndefined, BsonUndefined)
+    }
+
+    private fun testFunctionCall_BsonBinary() {
+        functionCallRoundTrip(
+            argument = BsonBinary(BYTE_ARRAY_VALUE),
+            expectedResult = BsonBinary(BYTE_ARRAY_VALUE)
+        ) { expectedResult: BsonBinary, returnValue: BsonBinary ->
+            assertContentEquals(expectedResult.data, returnValue.data)
+        }
+        functionCallRoundTrip(
+            argument = BsonBinary(BYTE_ARRAY_VALUE),
+            expectedResult = BYTE_ARRAY_VALUE
+        ) { expectedResult: ByteArray, returnValue: ByteArray ->
+            assertContentEquals(expectedResult, returnValue)
+        }
+    }
+
+    private fun testFunctionCall_BsonString() {
+        functionCallRoundTrip(
+            BsonString(STRING_VALUE),
+            BsonString(STRING_VALUE)
+        )
+        functionCallRoundTrip(BsonString(STRING_VALUE), STRING_VALUE)
+    }
+
+    private fun testFunctionCall_BsonDocument() {
+        // TODO
+    }
+
+    private fun testFunctionCall_BsonArray() {
+        // TODO
+    }
+
+    private fun testFunctionCall_BsonDouble() {
+        functionCallRoundTrip(
+            BsonDouble(DOUBLE_VALUE),
+            BsonDouble(DOUBLE_VALUE)
+        )
+        functionCallRoundTrip(BsonDouble(DOUBLE_VALUE), DOUBLE_VALUE)
+    }
+
+    @OptIn(ExperimentalKSerializerApi::class)
+    private fun testFunctionCall_RealmObject(): BsonDocument {
+        assertKSerializerFunctionCall(
+            REALM_OBJECT_VALUE,
+            REALM_OBJECT_VALUE
+        ) { expected: SerializablePerson, actual: SerializablePerson ->
+            assertEquals(expected.firstName, actual.firstName)
+            assertEquals(expected.lastName, actual.lastName)
+        }
+        return assertKSerializerFunctionCall(
+            argument = REALM_OBJECT_VALUE,
+            expectedResult = EJson.encodeToBsonValue(
+                REALM_OBJECT_VALUE
+            ).asDocument()
+        ) { expected: BsonDocument, actual: BsonDocument ->
+            assertEquals(expected, actual)
+        }
+    }
+
+    private fun testFunctionCall_MutableRealmInt() {
+        // TODO no serializer yet
+        // functionCallRoundTrip(MUTABLE_REALM_INT_VALUE, MUTABLE_REALM_INT_VALUE)
+    }
+
+    private fun testFunctionCall_ByteArray() {
+        functionCallRoundTrip(
+            argument = BYTE_ARRAY_VALUE,
+            expectedResult = BYTE_ARRAY_VALUE
+        ) { expected: ByteArray, actual: ByteArray ->
+            assertContentEquals(expected, actual)
+        }
+
+        functionCallRoundTrip(
+            argument = BYTE_ARRAY_VALUE,
+            expectedResult = BsonBinary(
+                type = BsonBinarySubType.BINARY,
+                data = BYTE_ARRAY_VALUE
+            )
+        ) { expected: BsonBinary, actual: BsonBinary ->
+            assertContentEquals(expected.data, actual.data)
+        }
+    }
+
+    private fun testFunctionCall_RealmUUID() {
+        // TODO no serializer yet
+        // functionCallRoundTrip(REALM_UUID_VALUE, REALM_UUID_VALUE)
+        // functionCallRoundTrip(
+        //     argument = REALM_UUID_VALUE,
+        //     expectedResult = BsonBinary(
+        //         type = BsonBinarySubType.UUID_STANDARD,
+        //         data = REALM_UUID_VALUE.bytes
+        //     )
+        // )
+    }
+
+    private fun testFunctionCall_RealmInstant() {
+        // TODO no serializer yet
+        // functionCallRoundTrip(REALM_INSTANT_VALUE, REALM_INSTANT_VALUE)
+        // functionCallRoundTrip(
+        //     REALM_INSTANT_VALUE,
+        //     BsonDateTime(REALM_INSTANT_VALUE.epochSeconds)
+        // )
+    }
+
+    private fun testFunctionCall_Boolean() {
+        functionCallRoundTrip(
+            argument = true,
+            expectedResult = true
+        )
+        functionCallRoundTrip(
+            argument = true,
+            expectedResult = BsonBoolean(true)
+        )
+    }
+
+    private fun testFunctionCall_Double() {
+        functionCallRoundTrip(DOUBLE_VALUE, DOUBLE_VALUE)
+        functionCallRoundTrip(DOUBLE_VALUE, BsonDouble(DOUBLE_VALUE))
+        // TODO coercion with Decimal128
+    }
+
+    private fun testFunctionCall_Float() {
+        functionCallRoundTrip(FLOAT_VALUE, FLOAT_VALUE)
+        functionCallRoundTrip(FLOAT_VALUE, BsonDouble(FLOAT_VALUE.toDouble()))
+        // TODO coercion with Decimal128
+    }
+
+    private fun testFunctionCall_Long() {
+        functionCallRoundTrip(LONG_VALUE, LONG_VALUE)
+        functionCallRoundTrip(LONG_VALUE, BsonInt64(LONG_VALUE))
+        // functionCallRoundTrip(LONG_VALUE, LONG_VALUE.toFloat()) // fails coercion?
+        // functionCallRoundTrip(LONG_VALUE, LONG_VALUE.toDouble()) // fails coercion?
+        // TODO coercion with Decimal128
+    }
+
+    private fun testFunctionCall_Int() {
+        functionCallRoundTrip(INT_VALUE, INT_VALUE)
+        functionCallRoundTrip(INT_VALUE, BsonInt32(INT_VALUE))
+        // functionCallRoundTrip(INT_VALUE, BsonInt64(INT_VALUE.toLong())) // fails should we support it?
+        // functionCallRoundTrip(INT_VALUE, INT_VALUE.toLong()) // fails should we support it?
+        // functionCallRoundTrip(INT_VALUE, INT_VALUE.toFloat()) // fails coercion?
+        // functionCallRoundTrip(INT_VALUE, INT_VALUE.toDouble()) // fails coercion?
+        // TODO coercion with Decimal128
+    }
+
+    private fun testFunctionCall_Short() {
+        functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE)
+        functionCallRoundTrip(SHORT_VALUE, BsonInt32(SHORT_VALUE.toInt()))
+        // functionCallRoundTrip(SHORT_VALUE, BsonInt64(SHORT_VALUE.toLong())) // fails should we support it?
+        functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toInt())
+        // functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toLong()) // fails should we support it?
+        // functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toFloat()) // fails coercion?
+        // functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toDouble()) // fails coercion?
+        // TODO coercion with Decimal128
+    }
+
+    private fun testFunctionCall_Byte() {
+        functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE)
+        functionCallRoundTrip(BYTE_VALUE, BsonInt32(BYTE_VALUE.toInt()))
+        // functionCallRoundTrip(BYTE_VALUE, BsonInt64(BYTE_VALUE.toLong())) // fails should we support it?
+        functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toShort())
+        functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toInt())
+        // functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toLong()) // fails should we support it?
+        // functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toFloat()) // fails coercion?
+        // functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toDouble()) // fails coercion?
+        // TODO coercion with Decimal128
+    }
+
+    private fun testFunctionCall_Char() {
+        functionCallRoundTrip(CHAR_VALUE, CHAR_VALUE)
+    }
+
+    private fun testFunctionCall_String() {
+        functionCallRoundTrip(STRING_VALUE, STRING_VALUE)
+        functionCallRoundTrip(STRING_VALUE, BsonString(STRING_VALUE))
+    }
+
+    private fun testFunctionCall_List() {
+        // TODO RealmList serializer not available yet
+    }
+
+    private fun testFunctionCall_Set() {
+        // TODO RealmSet serializer not available yet
+    }
+
+    private fun testFunctionCall_Dictionary() {
+        // TODO RealmDictionary serializer not available yet
+    }
+
+    private inline fun <reified A : Any, reified R> functionCallRoundTrip(
+        argument: A,
+        expectedResult: R,
+        assertionBlock: (expected: R, actual: R) -> Unit =
+            { expected: R, actual: R ->
+                assertEquals(expected, actual)
+            }
+    ) {
+        assertStableSerializerFunctionCall(argument, expectedResult, assertionBlock)
+        assertKSerializerFunctionCall(argument, expectedResult, assertionBlock)
+    }
+
+    // Invokes [functions.call] with a given argument and validates that the result matches a given
+    // expected result.
+    private inline fun <reified A : Any, reified R> assertKSerializerFunctionCall(
+        argument: A,
+        expectedResult: R,
+        assertionBlock: (expected: R, actual: R) -> Unit
+    ) = runBlocking {
+        functions.call<R>(FIRST_ARG_FUNCTION.name) {
+            add(argument)
+        }
+    }.also { returnValue: R ->
+        assertionBlock(expectedResult, returnValue)
+    }
+
+    // Invokes [functions.call] (kserializer version) with a given argument and validates that the
+    // result matches a given expected result.
+    private inline fun <reified A : Any, reified R> assertStableSerializerFunctionCall(
+        argument: A,
+        expectedResult: R,
+        assertionBlock: (expected: R, actual: R) -> Unit
+    ) = runBlocking { functions.call<R>(FIRST_ARG_FUNCTION.name, argument) }
+        .also { returnValue: R ->
+            assertionBlock(expectedResult, returnValue)
+        }
+
     // Facilitates debugging by executing the functions on its own block.
     private inline fun <reified T> Functions.callBlocking(
         name: String,
         vararg args: Any?,
     ): T = runBlocking {
         functions.call(name, *args)
-    }
-
-    @OptIn(ExperimentalKSerializerApi::class)
-    @Test
-    fun testExperimentalVariants() {
-        runBlocking {
-            assertEquals(
-                1.4f,
-                functions.callWithBuilder<Float>("firstArg") {
-                    add(1.4f)
-                    add("Hello world")
-                }
-            )
-        }
-    }
-
-    @Test
-    fun roundtripWithSupportedTypes() {
-        val i32 = 42
-        val i64 = 42L
-
-        for (type in BsonType.values()) {
-            when (type) {
-                BsonType.DOUBLE -> {
-                    assertEquals(
-                        1.4f,
-                        functions.callBlocking<Float>(FIRST_ARG_FUNCTION.name, 1.4f).toFloat()
-                    )
-                    assertEquals(
-                        1.4,
-                        functions.callBlocking<Double>(FIRST_ARG_FUNCTION.name, 1.4).toDouble()
-                    )
-                    assertTypeOfFirstArgFunction(BsonDouble(1.4))
-                }
-                BsonType.STRING -> {
-                    assertTypeOfFirstArgFunction("Realm")
-                    assertTypeOfFirstArgFunction(BsonString("Realm"))
-                }
-                BsonType.ARRAY -> {
-                    listOf(true, i32, i64).let { values: List<Any> ->
-                        val result =
-                            functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
-                        assertEquals(
-                            values.first(),
-                            result.first().asBoolean().value
-                        )
-                    }
-
-                    listOf<Any>(1, true, 3).let { values: List<Any> ->
-                        val result =
-                            functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
-
-                        assertContentEquals(
-                            expected = BsonArray(
-                                listOf(
-                                    BsonInt32(1),
-                                    BsonBoolean.TRUE_VALUE,
-                                    BsonInt32(3)
-                                )
-                            ),
-                            actual = result
-                        )
-                    }
-
-                    setOf(2, "Realm", 3).let { values: Set<Any> ->
-                        val result =
-                            functions.callBlocking<BsonArray>(FIRST_ARG_FUNCTION.name, values)
-
-                        assertContentEquals(
-                            expected = BsonArray(
-                                listOf(
-                                    BsonInt32(2),
-                                    BsonString("Realm"),
-                                    BsonInt32(3)
-                                )
-                            ),
-                            actual = result
-                        )
-                    }
-                }
-                BsonType.BINARY -> {
-                    val value = byteArrayOf(1, 2, 3)
-                    val actual = functions.callBlocking<ByteArray>(FIRST_ARG_FUNCTION.name, value)
-                    assertContentEquals(value, actual)
-                    assertTypeOfFirstArgFunction(BsonBinary(byteArrayOf(1, 2, 3)))
-                }
-                BsonType.OBJECT_ID -> {
-                    assertTypeOfFirstArgFunction(io.realm.kotlin.types.ObjectId.create())
-                    assertTypeOfFirstArgFunction(org.mongodb.kbson.BsonObjectId())
-                }
-                BsonType.BOOLEAN -> {
-                    assertTrue(functions.callBlocking(FIRST_ARG_FUNCTION.name, true))
-                    assertTypeOfFirstArgFunction(BsonBoolean(true))
-                }
-                BsonType.INT32 -> {
-                    assertEquals(
-                        32,
-                        functions.callBlocking<Int>(FIRST_ARG_FUNCTION.name, 32).toInt()
-                    )
-                    assertEquals(
-                        32,
-                        functions.callBlocking<Int>(FIRST_ARG_FUNCTION.name, 32L).toInt()
-                    )
-                    assertTypeOfFirstArgFunction(BsonInt32(32))
-                }
-                BsonType.INT64 -> {
-                    assertEquals(
-                        32L,
-                        functions.callBlocking<Long>(FIRST_ARG_FUNCTION.name, 32L).toLong()
-                    )
-                    assertEquals(
-                        32L,
-                        functions.callBlocking<Long>(FIRST_ARG_FUNCTION.name, 32).toLong()
-                    )
-                    assertTypeOfFirstArgFunction(BsonInt64(32))
-                }
-                BsonType.DECIMAL128 -> {
-                    assertTypeOfFirstArgFunction(BsonDecimal128("32"))
-                }
-                BsonType.DOCUMENT -> {
-                    val map = mapOf("foo" to 5)
-                    val document = BsonDocument(mapOf("foo" to BsonInt32(5)))
-
-                    assertEquals(
-                        document,
-                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, map)
-                    )
-                    assertEquals(
-                        document,
-                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, document)
-                    )
-
-                    var documents = arrayOf(BsonDocument(), BsonDocument())
-                    assertEquals(
-                        documents[0],
-                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, *documents)
-                    )
-
-                    documents = arrayOf(
-                        BsonDocument("KEY", BsonString("VALUE")),
-                        BsonDocument("KEY", BsonString("VALUE")),
-                        BsonDocument("KEY", BsonString("VALUE"))
-                    )
-                    assertEquals(
-                        documents[0],
-                        functions.callBlocking<BsonDocument>(FIRST_ARG_FUNCTION.name, *documents)
-                    )
-                }
-                BsonType.DATE_TIME -> {
-                    // RealmInstant has better precision (nanoseconds) than BsonDateTime (millis)
-                    // Here we create a RealmInstant with loose of precision to match BsonDateTime
-                    val nowAsDuration: Duration = RealmInstant.now().toDuration()
-                    val nowInMilliseconds = nowAsDuration.inWholeMilliseconds.milliseconds
-                    val now = nowInMilliseconds.toRealmInstant()
-                    assertEquals(
-                        now,
-                        functions.callBlocking<RealmInstant>(FIRST_ARG_FUNCTION.name, now)
-                    )
-
-                    BsonDateTime().let {
-                        assertEquals(it, functions.callBlocking(FIRST_ARG_FUNCTION.name, it))
-                    }
-                }
-                BsonType.UNDEFINED -> assertEquals(
-                    BsonUndefined,
-                    functions.callBlocking(FIRST_ARG_FUNCTION.name, BsonUndefined)
-                )
-                BsonType.NULL -> {
-                    assertEquals(
-                        BsonNull,
-                        functions.callBlocking(FIRST_ARG_FUNCTION.name, BsonNull)
-                    )
-                    assertNull(functions.callBlocking<String?>(FIRST_ARG_FUNCTION.name, null))
-                }
-                BsonType.REGULAR_EXPRESSION -> assertTypeOfFirstArgFunction(BsonRegularExpression(""))
-                BsonType.SYMBOL -> assertTypeOfFirstArgFunction(BsonSymbol(""))
-                BsonType.JAVASCRIPT -> assertTypeOfFirstArgFunction(BsonJavaScript(""))
-                BsonType.JAVASCRIPT_WITH_SCOPE -> assertTypeOfFirstArgFunction(
-                    BsonJavaScriptWithScope("", BsonDocument())
-                )
-                BsonType.TIMESTAMP -> assertTypeOfFirstArgFunction(BsonTimestamp())
-                BsonType.MIN_KEY -> assertTypeOfFirstArgFunction(BsonMinKey)
-                BsonType.MAX_KEY -> assertTypeOfFirstArgFunction(BsonMaxKey)
-                BsonType.DB_POINTER -> assertTypeOfFirstArgFunction(
-                    BsonDBPointer(
-                        namespace = "namespace",
-                        id = BsonObjectId()
-                    )
-                )
-                BsonType.END_OF_DOCUMENT -> {
-                    // Not a real Bson type
-                }
-                else -> {
-                    fail("Unsupported BsonType $type")
-                }
-            }
-        }
-    }
-
-    private inline fun <reified T : Any> assertTypeOfFirstArgFunction(
-        value: T
-    ): T = functions.callBlocking<T>(FIRST_ARG_FUNCTION.name, value).also {
-        assertEquals(value, it)
     }
 
     @Test
