@@ -21,7 +21,7 @@ public object RealmLog {
 
     /**
      * The current [LogLevel]. Changing this will affect all registered loggers.
-    */
+     */
     public var level: LogLevel = LogLevel.WARN
         set(value) {
             RealmInterop.realm_set_log_level(value.toCoreLogLevel())
