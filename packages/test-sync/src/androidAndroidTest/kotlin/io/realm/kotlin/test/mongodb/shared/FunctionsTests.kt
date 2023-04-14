@@ -30,6 +30,7 @@ import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.AUTHORIZED_ONLY_FUNCTION
@@ -164,7 +165,7 @@ class FunctionsTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp("functions") { app: BaasApp, service: Service ->
+        app = TestApp(syncServerAppName("funcs")) { app: BaasApp, service: Service ->
             initializeDefault(app, service)
             app.addFunction(FIRST_ARG_FUNCTION)
             app.addFunction(NULL_FUNCTION)

@@ -6,7 +6,7 @@ import kotlin.time.ExperimentalTime
 
 // Platform dependant helper methods
 expect object PlatformUtils {
-    fun createTempDir(prefix: String = Utils.createRandomString(16)): String
+    fun createTempDir(prefix: String = Utils.createRandomString(16), readOnly: Boolean = false): String
     fun deleteTempDir(path: String)
     @OptIn(ExperimentalTime::class)
     fun sleep(duration: Duration)

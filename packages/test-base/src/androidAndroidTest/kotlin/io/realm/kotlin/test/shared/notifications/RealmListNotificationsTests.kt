@@ -31,6 +31,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.OBJECT_VALUES
 import io.realm.kotlin.test.shared.OBJECT_VALUES2
 import io.realm.kotlin.test.shared.OBJECT_VALUES3
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -94,7 +95,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Assertion after empty list is emitted
-            channel.receive().let { listChange ->
+            channel.receiveOrFail().let { listChange ->
                 assertIs<InitialList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -124,10 +125,11 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        if (flowList !is InitialList) {
-                            channel.send(flowList)
-                        }
+                        channel.send(flowList)
                     }
+            }
+            channel.receive().let {
+                assertIs<InitialList<*>>(it)
             }
 
             // Assert a single range is reported
@@ -139,7 +141,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 queriedList.addAll(dataset)
             }
 
-            channel.receive()
+            channel.receiveOrFail()
                 .let { listChange ->
                     assertIs<UpdatedList<*>>(listChange)
 
@@ -164,7 +166,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 queriedList.addAll(dataset3)
             }
 
-            channel.receive().let { listChange ->
+            channel.receiveOrFail().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -190,7 +192,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 queriedList.removeRange(0..3)
             }
 
-            channel.receive().let { listChange ->
+            channel.receiveOrFail().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -214,7 +216,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 queriedList.removeRange(0..1)
             }
 
-            channel.receive().let { listChange ->
+            channel.receiveOrFail().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -236,7 +238,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 val queriedList = queriedContainer!!.objectListField
                 queriedList.addAll(dataset2)
             }
-            channel.receive().let { listChange ->
+            channel.receiveOrFail().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -254,7 +256,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 queriedList[3].stringField = "D"
             }
 
-            channel.receive().let { listChange ->
+            channel.receiveOrFail().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -278,7 +280,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 queriedList.reverse()
             }
 
-            channel.receive().let { listChange ->
+            channel.receiveOrFail().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -322,16 +324,16 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Ignore first emission with empty lists
-            channel1.receive()
-            channel2.receive()
+            channel1.receiveOrFail()
+            channel2.receiveOrFail()
 
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
                 queriedContainer!!.objectListField.addAll(OBJECT_VALUES)
             }
-            assertEquals(OBJECT_VALUES.size, channel1.receive().list.size)
-            assertEquals(OBJECT_VALUES.size, channel2.receive().list.size)
+            assertEquals(OBJECT_VALUES.size, channel1.receiveOrFail().list.size)
+            assertEquals(OBJECT_VALUES.size, channel2.receiveOrFail().list.size)
 
             // Cancel observer 1
             observer1.cancel()
@@ -344,7 +346,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Check channel 1 didn't receive the update
-            assertEquals(OBJECT_VALUES.size + 1, channel2.receive().list.size)
+            assertEquals(OBJECT_VALUES.size + 1, channel2.receiveOrFail().list.size)
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -381,7 +383,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Assert container got populated correctly
-            channel1.receive().let { listChange ->
+            channel1.receiveOrFail().let { listChange ->
                 assertIs<InitialList<*>>(listChange)
 
                 assertNotNull(listChange.list)
@@ -393,12 +395,12 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 delete(findLatest(container)!!)
             }
 
-            channel1.receive().let { listChange ->
+            channel1.receiveOrFail().let { listChange ->
                 assertIs<DeletedList<*>>(listChange)
                 assertTrue(listChange.list.isEmpty())
             }
             // Wait for flow completion
-            assertTrue(channel2.receive())
+            assertTrue(channel2.receiveOrFail())
 
             observer.cancel()
             channel1.close()
@@ -459,7 +461,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 fail("Flow should not be canceled.")
             }
 
-            assertTrue(channel.receive().list.isEmpty())
+            assertTrue(channel.receiveOrFail().list.isEmpty())
 
             realm.close()
             observer.cancel()

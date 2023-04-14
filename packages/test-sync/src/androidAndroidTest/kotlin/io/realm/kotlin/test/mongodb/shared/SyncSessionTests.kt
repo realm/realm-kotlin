@@ -37,6 +37,7 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
@@ -332,7 +333,7 @@ class SyncSessionTests {
 
         runBlocking {
             val deferred = async { Realm.open(config) }
-            val session = channel.receive()
+            val session = channel.receiveOrFail()
             try {
                 assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
                     runBlocking {
@@ -412,7 +413,7 @@ class SyncSessionTests {
                     }
             }
 
-            val insertedObject = channel.receive()
+            val insertedObject = channel.receiveOrFail()
             assertEquals(oid, insertedObject._id.toHexString())
             assertEquals(partitionValue, insertedObject.name)
             realm.close()
@@ -524,7 +525,7 @@ class SyncSessionTests {
             assertNotNull(realm2)
 
             // Await the sync session sent.
-            val session = channel.receive()
+            val session = channel.receiveOrFail()
 
             // Validate that the session was captured and that the configuration cannot be accessed.
             assertIs<SyncSession>(session)

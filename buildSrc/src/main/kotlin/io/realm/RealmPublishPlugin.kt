@@ -32,6 +32,7 @@ import org.gradle.kotlin.dsl.getByType
 import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
+import java.io.File
 import java.net.URI
 import java.time.Duration
 
@@ -72,14 +73,14 @@ class RealmPublishPlugin : Plugin<Project> {
     }
 
     private fun configureTestRepository(project: Project) {
-        val testRepository = getPropertyValue(project, "testRepository")
-        if (!testRepository.isEmpty()) {
+        val relativePathToTestRepository: String = getPropertyValue(project, "testRepository")
+        val testRepository = File(project.rootProject.rootDir.absolutePath + File.separator + relativePathToTestRepository.replace("/", File.separator))
+        if (relativePathToTestRepository.isNotEmpty()) {
             project.extensions.getByType<PublishingExtension>().apply {
                 repositories {
                     maven {
                         name = "Test"
-                        url =
-                            URI("file://${project.rootProject.rootDir.absolutePath}/$testRepository")
+                        url = testRepository.toURI()
                     }
                 }
             }

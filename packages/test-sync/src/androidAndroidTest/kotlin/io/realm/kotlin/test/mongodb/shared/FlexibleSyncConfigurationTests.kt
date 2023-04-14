@@ -16,6 +16,7 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
@@ -132,7 +133,7 @@ class FlexibleSyncConfigurationTests {
     fun defaultPath() {
         val user: User = app.asTestApp.createUserAndLogin()
         val config: SyncConfiguration = SyncConfiguration.create(user, setOf())
-        assertTrue(config.path.endsWith("/default.realm"), "Path is: ${config.path}")
+        assertTrue(config.path.endsWith("${PATH_SEPARATOR}default.realm"), "Path is: ${config.path}")
     }
 
     @Test
@@ -224,6 +225,6 @@ class FlexibleSyncConfigurationTests {
         val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
             .name("custom.realm")
             .build()
-        assertTrue(config.path.endsWith("${app.configuration.appId}/${user.identity}/custom.realm"), "Path is: ${config.path}")
+        assertTrue(config.path.endsWith("${app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}custom.realm"), "Path is: ${config.path}")
     }
 }

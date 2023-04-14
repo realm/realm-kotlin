@@ -23,6 +23,9 @@ import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
+import platform.posix.S_IRGRP
+import platform.posix.S_IROTH
+import platform.posix.S_IRUSR
 import platform.posix.nanosleep
 import platform.posix.pthread_threadid_np
 import platform.posix.timespec
@@ -31,11 +34,14 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
-    actual fun createTempDir(prefix: String): String {
+    actual fun createTempDir(prefix: String, readOnly: Boolean): String {
         // X is a special char which will be replace by mkdtemp template
         val mask = prefix.replace('X', 'Z', ignoreCase = true)
         val path = "${platform.Foundation.NSTemporaryDirectory()}$mask"
         platform.posix.mkdtemp(path.cstr)
+        if (readOnly) {
+            platform.posix.chmod(path, (S_IRUSR or S_IRGRP or S_IROTH).toUShort())
+        }
         return path
     }
 

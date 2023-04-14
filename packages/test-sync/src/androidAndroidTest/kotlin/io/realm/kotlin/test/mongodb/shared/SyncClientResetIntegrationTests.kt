@@ -52,6 +52,7 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeFlexibleSync
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializePartitionSync
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.async
@@ -417,22 +418,22 @@ class SyncClientResetIntegrationTests {
                 }
 
                 // No initial data
-                assertEquals(0, objectChannel.receive().list.size)
+                assertEquals(0, objectChannel.receiveOrFail().list.size)
 
                 app.triggerClientReset(syncMode, realm.syncSession, user.id) {
                     insertElement(realm)
-                    assertEquals(1, objectChannel.receive().list.size)
+                    assertEquals(1, objectChannel.receiveOrFail().list.size)
                 }
 
                 // Validate that the client reset was triggered successfully
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
 
                 // TODO We must not need this. Force updating the instance pointer.
                 realm.write { }
 
                 // Validate Realm instance has been correctly updated
-                assertEquals(0, objectChannel.receive().list.size)
+                assertEquals(0, objectChannel.receiveOrFail().list.size)
 
                 job.cancel()
             }
@@ -510,23 +511,23 @@ class SyncClientResetIntegrationTests {
                 }
 
                 // No initial data
-                assertEquals(0, objectChannel.receive().list.size)
+                assertEquals(0, objectChannel.receiveOrFail().list.size)
 
                 app.triggerClientReset(syncMode, realm.syncSession, user.id) {
                     // Write something while the session is paused to make sure the before realm contains something
                     insertElement(realm)
-                    assertEquals(1, objectChannel.receive().list.size)
+                    assertEquals(1, objectChannel.receiveOrFail().list.size)
                 }
 
                 // Validate that the client reset was triggered successfully
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
 
                 // TODO We must not need this. Force updating the instance pointer.
                 realm.write { }
 
                 // Validate Realm instance has been correctly updated
-                assertEquals(1, objectChannel.receive().list.size)
+                assertEquals(1, objectChannel.receiveOrFail().list.size)
 
                 job.cancel()
             }
@@ -600,8 +601,8 @@ class SyncClientResetIntegrationTests {
                     )
 
                     // TODO Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
         }
@@ -673,8 +674,8 @@ class SyncClientResetIntegrationTests {
                     )
 
                     // TODO Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
         }
@@ -746,9 +747,9 @@ class SyncClientResetIntegrationTests {
                 app.triggerClientReset(syncMode, realm.syncSession, user.id)
 
                 // Validate that the client reset was triggered successfully
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
     }
@@ -830,12 +831,12 @@ class SyncClientResetIntegrationTests {
                 app.triggerClientReset(syncMode, realm.syncSession, user.id)
 
                 // Validate that the client reset was triggered successfully
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
 
                 // TODO Twice until the deprecated method is removed
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
     }
@@ -875,20 +876,20 @@ class SyncClientResetIntegrationTests {
                 // Validate we receive logs on the regular path
                 assertEquals(
                     ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET,
-                    logChannel.receive()
+                    logChannel.receiveOrFail()
                 )
                 assertEquals(
                     ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RECOVERY,
-                    logChannel.receive()
+                    logChannel.receiveOrFail()
                 )
-                // assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receive())
+                // assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receiveOrFail())
 
                 (realm.syncSession as SyncSessionImpl).simulateError(
                     ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
                     SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
                 )
                 // Validate that we receive logs on the error callback
-                val actual = logChannel.receive()
+                val actual = logChannel.receiveOrFail()
                 assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR, actual)
             }
         }
@@ -938,7 +939,7 @@ class SyncClientResetIntegrationTests {
                         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
                     )
 
-                    val exception = channel.receive()
+                    val exception = channel.receiveOrFail()
                     val originalFilePath = assertNotNull(exception.originalFilePath)
                     val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                     assertTrue(fileExists(originalFilePath))
@@ -992,7 +993,7 @@ class SyncClientResetIntegrationTests {
                         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
                     )
 
-                    val exception = channel.receive()
+                    val exception = channel.receiveOrFail()
 
                     val originalFilePath = assertNotNull(exception.originalFilePath)
                     val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
@@ -1061,8 +1062,8 @@ class SyncClientResetIntegrationTests {
                     assertEquals(1, countObjects(realm))
                 }
 
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
             }
         }
     }
@@ -1110,7 +1111,7 @@ class SyncClientResetIntegrationTests {
                     ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
                     SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
                 )
-                val exception = channel.receive()
+                val exception = channel.receiveOrFail()
 
                 assertNotNull(exception.recoveryFilePath)
                 assertNotNull(exception.originalFilePath)
@@ -1173,8 +1174,8 @@ class SyncClientResetIntegrationTests {
                 app.triggerClientReset(syncMode, realm.syncSession, user.id)
 
                 // Validate that the client reset was triggered successfully
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
     }
@@ -1239,7 +1240,7 @@ class SyncClientResetIntegrationTests {
                     )
 
                     // TODO Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
         }
@@ -1301,8 +1302,8 @@ class SyncClientResetIntegrationTests {
                 insertElement(realm)
                 assertEquals(1, countObjects(realm))
 
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_AFTER_RECOVERY, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_AFTER_RECOVERY, channel.receiveOrFail())
             }
         }
     }
@@ -1368,8 +1369,8 @@ class SyncClientResetIntegrationTests {
                     assertEquals(1, countObjects(realm))
                 }
 
-                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receive())
-                assertEquals(ClientResetEvents.ON_AFTER_DISCARD, channel.receive())
+                assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
+                assertEquals(ClientResetEvents.ON_AFTER_DISCARD, channel.receiveOrFail())
             }
         }
     }
@@ -1440,7 +1441,7 @@ class SyncClientResetIntegrationTests {
                     )
 
                     // TODO Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receive())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
         }

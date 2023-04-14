@@ -31,7 +31,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -52,12 +51,14 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
+import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.Dispatchers
@@ -68,8 +69,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
@@ -198,13 +197,13 @@ class SyncedRealmTests {
                     }
             }
 
-            assertEquals(0, channel.receive().list.size)
+            assertEquals(0, channel.receiveOrFail().list.size)
 
             realm1.write {
                 copyToRealm(child)
             }
 
-            val childResults = channel.receive()
+            val childResults = channel.receiveOrFail()
             val childPk = childResults.list[0]
             assertEquals("CHILD_A", childPk._id)
             observer.cancel()
@@ -236,7 +235,7 @@ class SyncedRealmTests {
                 c.send(it)
             }
         }
-        val event: RealmChange<Realm> = c.receive()
+        val event: RealmChange<Realm> = c.receiveOrFail()
         assertTrue(event is InitialRealm)
 
         // Write remote change
@@ -259,7 +258,7 @@ class SyncedRealmTests {
         try {
             withTimeout(timeout = 10.seconds) {
                 while (true) {
-                    val updateEvent: RealmChange<Realm> = c.receive()
+                    val updateEvent: RealmChange<Realm> = c.receiveOrFail()
                     assertTrue(updateEvent is UpdatedRealm)
                     if (updateEvent.realm.query<SyncObjectWithAllTypes>().find().size == 1)
                         break
@@ -339,7 +338,7 @@ class SyncedRealmTests {
                 channel.trySend(AssertionError("Realm was successfully opened"))
             }
 
-            val error = channel.receive()
+            val error = channel.receiveOrFail()
             assertTrue(error is UnrecoverableSyncException, "Was $error")
             val message = error.message
             assertNotNull(message)
@@ -385,7 +384,7 @@ class SyncedRealmTests {
             assertNotNull(realm2)
 
             // Await for exception to happen
-            val exception = channel.receive()
+            val exception = channel.receiveOrFail()
 
             channel.close()
 
@@ -572,13 +571,13 @@ class SyncedRealmTests {
                 // Create another Realm to ensure the log files are generated.
                 val anotherRealm = Realm.open(configuration)
                 bgThreadReadyChannel.send(Unit)
-                readyToCloseChannel.receive()
+                readyToCloseChannel.receiveOrFail()
                 anotherRealm.close()
                 closedChannel.send(Unit)
             }
 
             // Waits for background thread opening the same Realm.
-            bgThreadReadyChannel.receive()
+            bgThreadReadyChannel.receiveOrFail()
 
             // Check the realm got created correctly and signal that it can be closed.
             fileSystem.list(syncDir)
@@ -587,7 +586,7 @@ class SyncedRealmTests {
                     readyToCloseChannel.send(Unit)
                 }
             testRealm.close()
-            closedChannel.receive()
+            closedChannel.receiveOrFail()
 
             // Delete realm now that it's fully closed.
             Realm.deleteRealm(configuration)
@@ -744,7 +743,7 @@ class SyncedRealmTests {
             realm.writeBlocking { copyToRealm(masterObject) }
             realm.syncSession.uploadAllLocalChanges()
         }
-        assertEquals(42, counterValue.receive())
+        assertEquals(42, counterValue.receiveOrFail())
 
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
@@ -760,7 +759,7 @@ class SyncedRealmTests {
                 }
             }
         }
-        assertEquals(43, counterValue.receive())
+        assertEquals(43, counterValue.receiveOrFail())
 
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
@@ -776,7 +775,7 @@ class SyncedRealmTests {
                 }
             }
         }
-        assertEquals(44, counterValue.receive())
+        assertEquals(44, counterValue.receiveOrFail())
 
         increment1.cancel()
         increment2.cancel()
@@ -1252,36 +1251,6 @@ class SyncedRealmTests {
         } finally {
             realm1.close()
             flexApp.close()
-        }
-    }
-
-    /**
-     * Logged collecting all logs it has seen.
-     */
-    private class CustomLogCollector(
-        override val tag: String,
-        override val level: LogLevel
-    ) : RealmLogger {
-
-        private val mutex = Mutex()
-        private val _logs = mutableListOf<String>()
-        /**
-         * Returns a snapshot of the current state of the logs.
-         */
-        val logs: List<String>
-            get() = runBlocking {
-                mutex.withLock {
-                    _logs.toList()
-                }
-            }
-
-        override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-            val logMessage: String = message!!
-            runBlocking {
-                mutex.withLock {
-                    _logs.add(logMessage)
-                }
-            }
         }
     }
 

@@ -1,4 +1,61 @@
-## 1.7.0 (YYYY-MM-DD)
+## 1.8.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
+* [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.7.1 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+ 
+### Fixed
+* [Sync] Client Reset on JVM on Linux would crash with `No built-in scheduler implementation for this platform. Register your own with Scheduler::set_default_factory()`
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.7.0 (2023-03-15)
 
 ### Breaking Changes
 * None.
@@ -9,6 +66,7 @@
 * Wrong use of `val` for persisted properties will now throw a compiler time error, instead of crashing at runtime. (Issue [#1306](https://github.com/realm/realm-kotlin/issues/1306))
 * Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
 * Added support for `RealmDictionary` in model classes. `RealmDictionary` is a `Map` of strings to values. Contrary to `RealmSet` and `RealmList` it is possible to store nullable objects/embedded objects in this data structure. See the class documentation for more details. (Issue [#537](https://github.com/realm/realm-kotlin/issues/537))
+* Add Realm datatypes serialization support with `Kserializer`. Serializers can be found in `io.realm.kotlin.serializers`. (Issue [#1283](https://github.com/realm/realm-kotlin/pull/1283))
 * [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
 * [Sync] Added `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
 * [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
@@ -30,6 +88,7 @@
   * Ktor 2.1.2 and above.
   * Coroutines 1.6.4 and above.
   * AtomicFu 0.18.3 and above.
+  * Kotlin Serialization 1.4.0 and above
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Gradle version: 6.7.1.
 * Minimum Android Gradle Plugin version: 4.0.0.

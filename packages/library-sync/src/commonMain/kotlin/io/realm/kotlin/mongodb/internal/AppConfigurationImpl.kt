@@ -37,6 +37,7 @@ import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
+import io.realm.kotlin.mongodb.HttpLogObfuscator
 import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
@@ -52,7 +53,8 @@ public class AppConfigurationImpl @OptIn(ExperimentalKSerializerApi::class) cons
     public val log: RealmLog,
     override val appName: String?,
     override val appVersion: String?,
-    override val ejson: EJson
+    override val ejson: EJson,
+    override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
 
     /**
