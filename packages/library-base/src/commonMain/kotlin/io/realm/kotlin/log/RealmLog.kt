@@ -35,7 +35,8 @@ public object RealmLog {
     // Lock preventing multiple threads modifying the list of loggers.
     private val loggersMutex = SynchronizableObject()
     // Reference to the currently installed system logger (if any)
-    private var systemLoggerInstalled: RealmLogger? = null
+    // `internal` until we can remove the old log API
+    internal var systemLoggerInstalled: RealmLogger? = null
     // Kotlin Multiplatform are currently lacking primitives like CopyOnWriteArrayList. We could
     // use `io.realm.kotlin.internal.interop.SynchronizableObject`, but it would require locking
     // when reporting a log statement which feel a bit heavy, so instead we have added locks around

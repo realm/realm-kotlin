@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.Configuration
@@ -377,7 +376,7 @@ public interface SyncConfiguration : Configuration {
             // Prime builder with log configuration from AppConfiguration
             val appLog = (user as UserImpl).app.configuration.logger
             this.logLevel = appLog.level
-            this.userLoggers = appLog.loggers
+            this.appConfigLoggers = appLog.loggers
         }
 
         /**
@@ -405,7 +404,7 @@ public interface SyncConfiguration : Configuration {
             apply {
                 // Will clear any primed configuration
                 this.logLevel = level
-                this.userLoggers = customLoggers
+                this.realmConfigLoggers = customLoggers
             }
 
         /**
@@ -493,11 +492,6 @@ public interface SyncConfiguration : Configuration {
 
         @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
-            // Configure logging during creation of SyncConfiguration to keep old behavior for
-            // configuring logging. This should be removed when `LogConfiguration` is removed.
-            val allLoggers = mutableListOf<RealmLogger>()
-            allLoggers.addAll(userLoggers)
-
             // Set default error handler after setting config logging logic
             if (this.errorHandler == null) {
                 this.errorHandler = object : SyncSession.ErrorHandler {
@@ -541,6 +535,13 @@ public interface SyncConfiguration : Configuration {
             val fullPathToFile = getAbsolutePath(name)
             val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
             val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
+
+            // Configure logging during creation of a (Realm/Sync)Configuration to keep old behavior
+            // for configuring logging. This should be removed when `LogConfiguration` is removed.
+            RealmLog.level = logLevel
+            realmConfigLoggers.forEach { RealmLog.add(it) }
+            @Suppress("invisible_reference", "invisible_member")
+            val allLoggers: List<RealmLogger> = listOf(RealmLog.systemLoggerInstalled).filterNotNull() + appConfigLoggers + realmConfigLoggers
 
             val baseConfiguration = ConfigurationImpl(
                 directory,
