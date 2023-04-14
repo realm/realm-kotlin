@@ -6,30 +6,43 @@ import io.realm.kotlin.internal.interop.LogCallback
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
-import kotlinx.atomicfu.atomic
+import io.realm.kotlin.log.RealmLog.add
+import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
 
 /**
- * Logger class used by Realm components. One logger is created for each Realm instance.
+ * Global logger class used by all Realm components.
+ *
+ * By default all logs will go to a default system logger that will depend on the system. See
+ * [addDefaultSystemLogger] for more details.
+ *
+ * Custom loggers can be added by registering a class implementing [RealmLogger] using [add].
  */
 public object RealmLog {
 
     /**
-     * TODO
-     */
-    public var logLevel: LogLevel = LogLevel.WARN
+     * The current [LogLevel]. Changing this will affect all registered loggers.
+    */
+    public var level: LogLevel = LogLevel.WARN
         set(value) {
             RealmInterop.realm_set_log_level(value.toCoreLogLevel())
             field = value
         }
 
+    // Lock preventing multiple threads modifying the list of loggers.
     private val loggersMutex = SynchronizableObject()
-    private val systemLoggerInstalled = atomic<RealmLogger?>(null)
-    private val loggers: MutableList<RealmLogger> = mutableListOf()
+    // Reference to the currently installed system logger (if any)
+    private var systemLoggerInstalled: RealmLogger? = null
+    // Kotlin Multiplatform are currently lacking primitives like CopyOnWriteArrayList. We could
+    // use `io.realm.kotlin.internal.interop.SynchronizableObject`, but it would require locking
+    // when reporting a log statement which feel a bit heavy, so instead we have added locks around
+    // all modifications to this array (which are expected to be rare) and the `doLog` method must
+    // copy this reference before using it.
+    private var loggers: MutableList<RealmLogger> = mutableListOf()
 
     init {
-        registerDefaultSystemLogger()
+        addDefaultSystemLogger()
         RealmInterop.realm_set_log_callback(
-            logLevel.toCoreLogLevel(),
+            level.toCoreLogLevel(),
             object : LogCallback {
                 override fun log(logLevel: Short, message: String?) {
                     doLog(fromCoreLogLevel(CoreLogLevel.valueFromPriority(logLevel)), null, message)
@@ -39,47 +52,73 @@ public object RealmLog {
     }
 
     /**
-     * TODO
+     * Add a logger that will be notified on log events that are equal to or exceed the currently
+     * configured [level].
+     *
+     * @param logger logger to add.
      */
-    public fun addLogger(logger: RealmLogger) {
+    public fun add(logger: RealmLogger) {
         loggersMutex.withLock {
             loggers.add(logger)
         }
     }
 
     /**
-     * TODO
+     * Removes the given logger if possible.
+     *
+     * @param logger logger that should be removed.
+     * @return `true` if the logger was removed, `false` if it wasn't registered.
      */
-    public fun removeLogger(logger: RealmLogger): Boolean {
+    public fun remove(logger: RealmLogger): Boolean {
         loggersMutex.withLock {
-            return loggers.remove(logger)
-        }
-    }
-
-    /**
-     * TODO
-     */
-    public fun removeAllLoggers(removeDefaultSystemLogger: Boolean = false): Boolean {
-        loggersMutex.withLock {
-            return loggers.removeAll {
-                if (!removeDefaultSystemLogger) {
-                    it != systemLoggerInstalled.value
-                } else {
-                    true
-                }
+            val updatedLoggers = MutableList(loggers.size) { loggers[it] }
+            return updatedLoggers.remove(logger).also {
+                loggers = updatedLoggers
             }
         }
     }
 
     /**
-     * TODO
+     * Removes all loggers. The default system logger will be removed as well unless
+     * [removeDefaultSystemLogger] is set to `false`. [addDefaultSystemLogger] can be used
+     * to add the default logger again if it was removed.
+     *
+     * @param removeDefaultSystemLogger whether or not to also remove the default system logger.
+     * @return `true` will be returned if one or more loggers were removed, `false` if no loggers were
+     * removed.
      */
-    public fun registerDefaultSystemLogger(): Boolean {
+    public fun removeAll(removeDefaultSystemLogger: Boolean = true): Boolean {
         loggersMutex.withLock {
-            if (systemLoggerInstalled.value == null) {
+            val updatedLoggers = MutableList(loggers.size) { loggers[it] }
+            return updatedLoggers.removeAll {
+                if (!removeDefaultSystemLogger) {
+                    it != systemLoggerInstalled
+                } else {
+                    true
+                }
+            }.also {
+                loggers = updatedLoggers
+            }
+        }
+    }
+
+    /**
+     * Adds a default system logger. Where it report log events will depend on the system:
+     * - On Android it will go to LogCat.
+     * - On JVM it will go to std out.
+     * - On MacOS it will go to NSLog.
+     * - On iOS it will go to NSLog.
+     *
+     * @return `true` if the system logger was added, `false` if it was already present.
+     */
+    public fun addDefaultSystemLogger(): Boolean {
+        loggersMutex.withLock {
+            if (systemLoggerInstalled == null) {
                 val systemLogger = createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG)
-                loggers.add(systemLogger)
-                systemLoggerInstalled.value = systemLogger
+                val updatedLoggers = MutableList(loggers.size) { loggers[it] }
+                updatedLoggers.add(systemLogger)
+                systemLoggerInstalled = systemLogger
+                loggers = updatedLoggers
                 return true
             }
             return false
@@ -213,7 +252,9 @@ public object RealmLog {
     }
 
     private fun doLog(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-        if (level.priority >= logLevel.priority) {
+        if (level.priority >= this.level.priority) {
+            // Copy the reference to loggers so they are stable while iterating them.
+            val loggers = this.loggers
             loggers.forEach {
                 it.log(level, throwable, message, *args)
             }

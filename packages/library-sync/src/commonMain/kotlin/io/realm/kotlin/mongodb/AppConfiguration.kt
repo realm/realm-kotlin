@@ -268,8 +268,8 @@ public interface AppConfiguration {
             val allLoggers = mutableListOf<RealmLogger>()
             allLoggers.addAll(userLoggers)
             val logConfig = LogConfiguration(this.logLevel, allLoggers)
-            RealmLog.logLevel = logLevel
-            userLoggers.forEach { RealmLog.addLogger(it) }
+            RealmLog.level = logLevel
+            userLoggers.forEach { RealmLog.add(it) }
 
             val appNetworkDispatcherFactory = if (dispatcher != null) {
                 CoroutineDispatcherFactory.unmanaged(dispatcher!!)

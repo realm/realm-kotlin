@@ -138,8 +138,8 @@ public open class ConfigurationImpl constructor(
 
         // Configure logging during creation of a (Realm/Sync)Configuration to keep old behavior
         // for configuring logging. This should be removed when `LogConfiguration` is removed.
-        io.realm.kotlin.log.RealmLog.logLevel = log.level
-        log.loggers.forEach { io.realm.kotlin.log.RealmLog.addLogger(it) }
+        io.realm.kotlin.log.RealmLog.level = log.level
+        log.loggers.forEach { io.realm.kotlin.log.RealmLog.add(it) }
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->

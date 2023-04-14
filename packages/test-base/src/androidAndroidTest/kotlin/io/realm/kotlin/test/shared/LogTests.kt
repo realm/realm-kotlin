@@ -43,24 +43,24 @@ class LogTests {
 
     @BeforeTest
     fun setUp() {
-        existingLogLevel = RealmLog.logLevel
-        RealmLog.logLevel = LogLevel.ALL
-        RealmLog.addLogger(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+        existingLogLevel = RealmLog.level
+        RealmLog.level = LogLevel.ALL
+        RealmLog.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
         log = RealmLog
     }
 
     @AfterTest
     fun tearDown() {
-        RealmLog.logLevel = existingLogLevel
-        RealmLog.removeAllLoggers()
+        RealmLog.level = existingLogLevel
+        RealmLog.removeAllLoggers(removeDefaultSystemLogger = false)
     }
 
     @Test
     fun ignoreEventsLowerThanLogLevel() {
         val customLogger = TestLogger()
         RealmLog.apply {
-            logLevel = LogLevel.WARN
-            addLogger(customLogger)
+            level = LogLevel.WARN
+            add(customLogger)
             warn("Testing 1")
             assertEquals("Testing 1", customLogger.message)
             error("Testing 2")
@@ -73,8 +73,8 @@ class LogTests {
     @Test
     fun customLogger() {
         val customLogger = TestLogger()
-        RealmLog.logLevel = LogLevel.ALL
-        RealmLog.addLogger(customLogger)
+        RealmLog.level = LogLevel.ALL
+        RealmLog.add(customLogger)
 
         var message = "Testing"
 
