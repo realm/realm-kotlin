@@ -114,10 +114,9 @@ public interface RealmConfiguration : Configuration {
         }
 
         override fun build(): RealmConfiguration {
+            // Configure logging during creation of SyncConfiguration to keep old behavior for
+            // configuring logging. This should be removed when `LogConfiguration` is removed.
             val allLoggers = mutableListOf<RealmLogger>()
-            if (!removeSystemLogger) {
-                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-            }
             allLoggers.addAll(userLoggers)
 
             // Sync configs might not set 'name' but local configs always do, therefore it will

@@ -29,6 +29,7 @@ import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.terminateWhen
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
@@ -99,7 +100,7 @@ public class RealmImpl private constructor(
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
     //  would require us to sync that up. Didn't address this as we already have a todo on fixing
     //  constructing the initial frozen version in the initialization of updatableRealm.
-    private val versionTracker = VersionTracker(this, log)
+    private val versionTracker = VersionTracker(this)
 
     // Injection point for synchronized Realms. This property should only be used to hold state
     // required by synchronized realms. See `SyncedRealmContext` for more details.
@@ -119,7 +120,7 @@ public class RealmImpl private constructor(
                 configuration.initializeRealmData(this@RealmImpl, fileCreated)
             }
             if (!realmStateFlow.tryEmit(State.OPEN)) {
-                log.warn("Cannot signal internal open")
+                RealmLog.warn("Cannot signal internal open")
             }
         } catch (ex: Throwable) {
             // Something went wrong initializing Realm, delete the file, so initialization logic
@@ -132,7 +133,7 @@ public class RealmImpl private constructor(
                     // Ignore. See https://github.com/realm/realm-kotlin/issues/851
                     // Currently there is no reliable way to delete a synchronized
                     // Realm. So ignore if this fails for now.
-                    log.debug(
+                    RealmLog.debug(
                         "An error happened while trying to reset the realm after " +
                             "opening it for the first time failed. The realm must be manually " +
                             "deleted if `initialData` and `initialSubscriptions` should run " +
@@ -227,7 +228,7 @@ public class RealmImpl private constructor(
             }
             if (newest != null) {
                 _realmReference.value = newest.snapshot
-                log.debug("$this ADVANCING $version -> ${_realmReference.value?.version()}")
+                RealmLog.debug("$this ADVANCING $version -> ${_realmReference.value?.version()}")
             }
         }
         return _realmReference.value ?: sdkError("Accessing realmReference before realm has been opened")
@@ -254,7 +255,7 @@ public class RealmImpl private constructor(
             }
         }
         if (!realmStateFlow.tryEmit(State.CLOSED)) {
-            log.warn("Cannot signal internal close")
+            RealmLog.warn("Cannot signal internal close")
         }
         notificationDispatcherHolder.close()
         writeDispatcherHolder.close()

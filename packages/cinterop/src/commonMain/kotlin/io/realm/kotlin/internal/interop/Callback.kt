@@ -42,7 +42,7 @@ interface SyncSessionTransferCompletionCallback {
     fun invoke(error: SyncErrorCode?)
 }
 
-interface SyncLogCallback {
+interface LogCallback {
     // Passes core log levels as shorts to avoid unnecessary jumping between the SDK and JNI
     fun log(logLevel: Short, message: String?)
 }

@@ -17,6 +17,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.BaseRealm
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.internal.Callback
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.types.BaseRealmObject
@@ -53,10 +54,8 @@ public abstract class BaseRealmImpl internal constructor(
         return super.isClosed()
     }
 
-    internal val log: RealmLog = RealmLog(configuration = configuration.log)
-
     init {
-        log.info("Realm opened $this")
+        RealmLog.info("Realm opened: ${configuration.path}")
     }
 
     override fun schemaVersion(): Long {
@@ -96,7 +95,7 @@ public abstract class BaseRealmImpl internal constructor(
 
     // Not all sub classes of `BaseRealm` can be closed by users.
     internal open fun close() {
-        log.info("Realm closed: $this")
+        RealmLog.info("Realm closed: $this ${configuration.path}")
     }
 
     override fun toString(): String = "${this::class.simpleName}[${this.configuration.path}}]"

@@ -17,17 +17,16 @@
 @file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
-import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.test.util.TestLogger
 import io.realm.kotlin.test.util.Utils
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -39,34 +38,48 @@ import kotlin.test.assertTrue
  */
 class LogTests {
 
+    private lateinit var existingLogLevel: LogLevel
     private lateinit var log: RealmLog
 
     @BeforeTest
     fun setUp() {
-        val loggers = listOf(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-        log = RealmLog(configuration = LogConfiguration(LogLevel.ALL, loggers))
+        existingLogLevel = RealmLog.logLevel
+        RealmLog.logLevel = LogLevel.ALL
+        RealmLog.addLogger(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
+        log = RealmLog
+    }
+
+    @AfterTest
+    fun tearDown() {
+        RealmLog.logLevel = existingLogLevel
+        RealmLog.removeAllLoggers()
     }
 
     @Test
     fun ignoreEventsLowerThanLogLevel() {
         val customLogger = TestLogger()
-        log = RealmLog(configuration = LogConfiguration(LogLevel.WARN, listOf(customLogger)))
-        log.warn("Testing 1")
-        assertEquals("Testing 1", customLogger.message)
-        log.error("Testing 2")
-        assertEquals("Testing 2", customLogger.message)
-        log.info("Testing 3") // This should be swallowed
-        assertEquals("Testing 2", customLogger.message)
+        RealmLog.apply {
+            logLevel = LogLevel.WARN
+            addLogger(customLogger)
+            warn("Testing 1")
+            assertEquals("Testing 1", customLogger.message)
+            error("Testing 2")
+            assertEquals("Testing 2", customLogger.message)
+            info("Testing 3") // This should be swallowed
+            assertEquals("Testing 2", customLogger.message)
+        }
     }
 
     @Test
     fun customLogger() {
         val customLogger = TestLogger()
-        log = RealmLog(configuration = LogConfiguration(LogLevel.ALL, listOf(customLogger)))
+        RealmLog.logLevel = LogLevel.ALL
+        RealmLog.addLogger(customLogger)
+
         var message = "Testing"
 
         // Simple message
-        log.warn(message)
+        RealmLog.warn(message)
         assertEquals(LogLevel.WARN, customLogger.logLevel)
         assertNull(customLogger.throwable)
         assertEquals(message, customLogger.message)
@@ -76,7 +89,7 @@ class LogTests {
         val throwable = RuntimeException("BOOM")
         message = "Message: %s"
         val args: Array<out Any?> = arrayOf("foo")
-        log.error(throwable, message, *args)
+        RealmLog.error(throwable, message, *args)
         assertEquals(LogLevel.ERROR, customLogger.logLevel)
         assertEquals(throwable, customLogger.throwable)
         assertEquals(message, customLogger.message)
@@ -193,19 +206,5 @@ class LogTests {
                 else -> throw IllegalArgumentException("Unknown level: $it")
             }
         }
-    }
-
-    @Test
-    fun equals_same() {
-        val loggers = listOf(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-        val other = RealmLog(configuration = LogConfiguration(LogLevel.ALL, loggers))
-        assertEquals(log, other)
-    }
-
-    @Test
-    fun equals_different() {
-        val loggers = listOf(createDefaultSystemLogger("SOME_TAG"))
-        val other = RealmLog(configuration = LogConfiguration(LogLevel.DEBUG, loggers))
-        assertNotEquals(log, other)
     }
 }

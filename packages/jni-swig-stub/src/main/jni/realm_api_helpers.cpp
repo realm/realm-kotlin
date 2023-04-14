@@ -679,23 +679,24 @@ realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
                                     });
 }
 
-void set_log_callback(realm_sync_client_config_t* sync_client_config, jobject log_callback) {
+void set_log_callback(jint j_log_level, jobject log_callback) {
     auto jenv = get_env(false);
-    realm_sync_client_config_set_log_callback(sync_client_config,
-                                              [](void* userdata, realm_log_level_e level, const char* message) {
-                                                  auto log_callback = static_cast<jobject>(userdata);
-                                                  auto jenv = get_env(true);
-                                                  static JavaMethod log_method(jenv,
-                                                                               JavaClassGlobalDef::sync_log_callback(),
-                                                                               "log",
-                                                                               "(SLjava/lang/String;)V");
-                                                  jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
-                                                  jni_check_exception(jenv);
-                                              },
-                                              jenv->NewGlobalRef(log_callback), // userdata is the log callback
-                                              [](void* userdata) {
-                                                  get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-                                              });
+    auto log_level = static_cast<realm_log_level_e>(j_log_level);
+    realm_set_log_callback([](void* userdata, realm_log_level_e level, const char* message) {
+                                  auto log_callback = static_cast<jobject>(userdata);
+                                  auto jenv = get_env(true);
+                                  static JavaMethod log_method(jenv,
+                                                               JavaClassGlobalDef::log_callback(),
+                                                               "log",
+                                                               "(SLjava/lang/String;)V");
+                                  jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
+                                  jni_check_exception(jenv);
+                              },
+                              log_level,
+                              jenv->NewGlobalRef(log_callback), // userdata is the log callback
+                              [](void* userdata) {
+                                  get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                              });
 }
 
 jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error) {

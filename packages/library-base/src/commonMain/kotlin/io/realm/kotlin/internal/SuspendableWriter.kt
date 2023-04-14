@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -77,7 +78,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
     suspend fun updateSchema(schema: RealmSchemaImpl) {
         return withContext(dispatcher) {
             transactionMutex.withLock {
-                realm.log.debug("Updating schema: $schema")
+                RealmLog.debug("Updating schema: $schema")
                 val classPropertyList = schema.classes.map { realmClass: RealmClassImpl ->
                     realmClass.cinteropClass to realmClass.cinteropProperties
                 }
