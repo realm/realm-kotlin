@@ -14,29 +14,31 @@
  * limitations under the License.
  */
 
-@file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.shared
 
-import io.realm.kotlin.Realm
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
+import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.test.util.TestLogger
 import io.realm.kotlin.test.util.Utils
+import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * Class that exercises the logger implementation.
  *
- * It isn't possible, in any sane manner, to validate the output actually being correct, so this class mostly just
- * exercises the relevant code paths in order to check for crashes.
+ * It isn't possible, in any sane manner, to validate output on the default system logger actually
+ * being correct, so this class mostly just exercises the relevant code paths in order to check for
+ * crashes.
  */
-class LogTests {
+class RealmLogTests {
 
     private lateinit var existingLogLevel: LogLevel
     private lateinit var log: RealmLog
@@ -45,14 +47,14 @@ class LogTests {
     fun setUp() {
         existingLogLevel = RealmLog.level
         RealmLog.level = LogLevel.ALL
-        RealmLog.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
         log = RealmLog
     }
 
     @AfterTest
     fun tearDown() {
         RealmLog.level = existingLogLevel
-        RealmLog.removeAllLoggers(removeDefaultSystemLogger = false)
+        RealmLog.removeAll(removeDefaultSystemLogger = true)
+        RealmLog.addDefaultSystemLogger()
     }
 
     @Test
@@ -206,5 +208,125 @@ class LogTests {
                 else -> throw IllegalArgumentException("Unknown level: $it")
             }
         }
+    }
+
+    @Test
+    fun addLogger() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?
+            ) {
+                assertEquals("Hello", message)
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertTrue(called.value)
+    }
+
+    @Test
+    fun addLogger_twice() {
+        val called = atomic(0)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?
+            ) {
+                assertEquals("Hello", message)
+                called.incrementAndGet()
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertEquals(2, called.value)
+    }
+
+    @Test
+    fun removeLogger_success() {
+        val called = atomic(0)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?
+            ) {
+                assertEquals("Hello", message)
+                called.incrementAndGet()
+            }
+        }
+        RealmLog.add(customLogger)
+        assertTrue(RealmLog.remove(customLogger))
+    }
+
+    @Test
+    fun removeLogger_failure() {
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?
+            ) {
+                fail()
+            }
+        }
+        assertFalse(RealmLog.remove(customLogger))
+    }
+
+    @Test
+    fun removeAll_success() {
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?
+            ) {
+                fail()
+            }
+        }
+        RealmLog.add(customLogger)
+        assertTrue(RealmLog.removeAll())
+        RealmLog.trace("Hello") // Should not hit `fail()`
+    }
+
+    @Test
+    fun removeAll_failure() {
+        assertFalse(RealmLog.removeAll(removeDefaultSystemLogger = false))
+    }
+
+    @Test
+    fun removeAll_includingSystemLogger() {
+        assertTrue(RealmLog.removeAll(removeDefaultSystemLogger = true))
+    }
+
+    @Test
+    fun addDefaultSystemLogger_success() {
+        RealmLog.removeAll(removeDefaultSystemLogger = true)
+        assertTrue(RealmLog.addDefaultSystemLogger())
+    }
+
+    @Test
+    fun addDefaultSystemLogger_failure() {
+        assertFalse(RealmLog.addDefaultSystemLogger())
     }
 }

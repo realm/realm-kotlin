@@ -16,6 +16,10 @@ import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
  * [addDefaultSystemLogger] for more details.
  *
  * Custom loggers can be added by registering a class implementing [RealmLogger] using [add].
+ *
+ * When logging messages, it it possible to use a subset of String format options as known from
+ * Java. Only `%s`, `%d` and `%f` are supported. See https://stackoverflow.com/a/64499248/1389357
+ * and https://youtrack.jetbrains.com/issue/KT-25506 for more information.
  */
 public object RealmLog {
 
@@ -97,6 +101,9 @@ public object RealmLog {
                     true
                 }
             }.also {
+                if (removeDefaultSystemLogger) {
+                    systemLoggerInstalled = null
+                }
                 loggers = updatedLoggers
             }
         }
@@ -126,126 +133,192 @@ public object RealmLog {
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.TRACE] event.
+     *
+     * @param throwable optional exception to log.
      */
     public fun trace(throwable: Throwable?) {
         doLog(LogLevel.TRACE, throwable, null)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.TRACE] event.
+     *
+     * @param throwable optional exception to log.
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun trace(throwable: Throwable?, message: String, vararg args: Any?) {
         doLog(LogLevel.TRACE, throwable, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.TRACE] event.
+     *
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun trace(message: String, vararg args: Any?) {
         doLog(LogLevel.TRACE, null, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.DEBUG] event.
+     *
+     * @param throwable optional exception to log.
      */
     public fun debug(throwable: Throwable?) {
         doLog(LogLevel.DEBUG, throwable, null)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.DEBUG] event.
+     *
+     * @param throwable optional exception to log.
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun debug(throwable: Throwable?, message: String, vararg args: Any?) {
         doLog(LogLevel.DEBUG, throwable, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.DEBUG] event.
+     *
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun debug(message: String, vararg args: Any?) {
         doLog(LogLevel.DEBUG, null, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.INFO] event.
+     *
+     * @param throwable optional exception to log.
      */
     public fun info(throwable: Throwable?) {
         doLog(LogLevel.INFO, throwable, null)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.INFO] event.
+     *
+     * @param throwable optional exception to log.
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun info(throwable: Throwable?, message: String, vararg args: Any?) {
         doLog(LogLevel.INFO, throwable, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.INFO] event.
+     *
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun info(message: String, vararg args: Any?) {
         doLog(LogLevel.INFO, null, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.WARN] event.
+     *
+     * @param throwable optional exception to log.
      */
     public fun warn(throwable: Throwable?) {
         doLog(LogLevel.WARN, throwable, null)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.WARN] event.
+     *
+     * @param throwable optional exception to log.
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun warn(throwable: Throwable?, message: String, vararg args: Any?) {
         doLog(LogLevel.WARN, throwable, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.INFO] event.
+     *
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun warn(message: String, vararg args: Any?) {
         doLog(LogLevel.WARN, null, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.ERROR] event.
+     *
+     * @param throwable optional exception to log.
      */
     public fun error(throwable: Throwable?) {
         doLog(LogLevel.ERROR, throwable, null)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.ERROR] event.
+     *
+     * @param throwable optional exception to log.
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun error(throwable: Throwable?, message: String, vararg args: Any?) {
         doLog(LogLevel.ERROR, throwable, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.ERROR] event.
+     *
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun error(message: String, vararg args: Any?) {
         doLog(LogLevel.ERROR, null, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.WTF] event.
+     *
+     * @param throwable optional exception to log.
      */
     public fun wtf(throwable: Throwable?) {
         doLog(LogLevel.WTF, throwable, null)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.WTF] event.
+     *
+     * @param throwable optional exception to log.
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun wtf(throwable: Throwable?, message: String, vararg args: Any?) {
         doLog(LogLevel.WTF, throwable, message, *args)
     }
 
     /**
-     * TODO
+     * Logs a [LogLevel.WTF] event.
+     *
+     * @param message optional message.
+     * @param args optional args used to format the message using a subset of `String.format`
+     * options. Only `%s`, `%d` and `%f` are supported.
      */
     public fun wtf(message: String, vararg args: Any?) {
         doLog(LogLevel.WTF, null, message, *args)
