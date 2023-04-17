@@ -695,7 +695,15 @@ void set_log_callback(jint j_log_level, jobject log_callback) {
                               log_level,
                               jenv->NewGlobalRef(log_callback), // userdata is the log callback
                               [](void* userdata) {
-                                  get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                  // The log callback is a static global method that is intended to
+                                  // live for the lifetime of the application. On JVM it looks like
+                                  // is being destroyed after the JNIEnv has been destroyed, which
+                                  // will e.g. crash the Gradle test setup. So instead, we just do a
+                                  // best effort of cleaning up the registered callback.
+                                  JNIEnv *env = get_env_or_null();
+                                  if (env) {
+                                      env->DeleteGlobalRef(static_cast<jobject>(userdata));
+                                  }
                               });
 }
 
