@@ -29,10 +29,8 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.fileExists
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -53,12 +51,14 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
+import io.realm.kotlin.test.CustomLogCollector
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.Dispatchers
@@ -197,13 +197,13 @@ class SyncedRealmTests {
                     }
             }
 
-            assertEquals(0, channel.receive().list.size)
+            assertEquals(0, channel.receiveOrFail().list.size)
 
             realm1.write {
                 copyToRealm(child)
             }
 
-            val childResults = channel.receive()
+            val childResults = channel.receiveOrFail()
             val childPk = childResults.list[0]
             assertEquals("CHILD_A", childPk._id)
             observer.cancel()
@@ -215,7 +215,6 @@ class SyncedRealmTests {
     }
 
     // Test for https://github.com/realm/realm-kotlin/issues/1070
-    @Ignore // Enable once #1070 is fixed
     @Test
     fun realmAsFlow_acrossSyncedChanges() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
@@ -236,7 +235,7 @@ class SyncedRealmTests {
                 c.send(it)
             }
         }
-        val event: RealmChange<Realm> = c.receive()
+        val event: RealmChange<Realm> = c.receiveOrFail()
         assertTrue(event is InitialRealm)
 
         // Write remote change
@@ -249,8 +248,7 @@ class SyncedRealmTests {
             Realm.open(config).use { realm ->
                 realm.write {
                     val id = "id-${Random.nextLong()}"
-                    val masterObject = SyncObjectWithAllTypes.createWithSampleData(id)
-                    copyToRealm(masterObject)
+                    copyToRealm(SyncObjectWithAllTypes().apply { _id = id })
                 }
                 realm.syncSession.uploadAllLocalChanges()
             }
@@ -258,11 +256,13 @@ class SyncedRealmTests {
 
         // Wait for Realm.asFlow() to be updated based on remote change.
         try {
-            withTimeout(timeout = 30.seconds) {
-                val updateEvent: RealmChange<Realm> = c.receive()
-                assertTrue(updateEvent is UpdatedRealm)
-                assertEquals(1, updateEvent.realm.query<SyncObjectWithAllTypes>().find().size)
-                assertEquals(1, realm.query<SyncObjectWithAllTypes>().find().size)
+            withTimeout(timeout = 10.seconds) {
+                while (true) {
+                    val updateEvent: RealmChange<Realm> = c.receiveOrFail()
+                    assertTrue(updateEvent is UpdatedRealm)
+                    if (updateEvent.realm.query<SyncObjectWithAllTypes>().find().size == 1)
+                        break
+                }
             }
         } finally {
             realm1.close()
@@ -313,7 +313,7 @@ class SyncedRealmTests {
 
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
-        val channel = Channel<Throwable>(1).freeze()
+        val channel = Channel<Throwable>(1)
         // Remove permissions to generate a sync error containing ONLY the original path
         // This way we assert we don't read wrong data from the user_info field
         val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
@@ -338,7 +338,7 @@ class SyncedRealmTests {
                 channel.trySend(AssertionError("Realm was successfully opened"))
             }
 
-            val error = channel.receive()
+            val error = channel.receiveOrFail()
             assertTrue(error is UnrecoverableSyncException, "Was $error")
             val message = error.message
             assertNotNull(message)
@@ -353,7 +353,7 @@ class SyncedRealmTests {
     @Test
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
-        val channel = Channel<SyncException>(1).freeze()
+        val channel = Channel<SyncException>(1)
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -384,7 +384,7 @@ class SyncedRealmTests {
             assertNotNull(realm2)
 
             // Await for exception to happen
-            val exception = channel.receive()
+            val exception = channel.receiveOrFail()
 
             channel.close()
 
@@ -571,13 +571,13 @@ class SyncedRealmTests {
                 // Create another Realm to ensure the log files are generated.
                 val anotherRealm = Realm.open(configuration)
                 bgThreadReadyChannel.send(Unit)
-                readyToCloseChannel.receive()
+                readyToCloseChannel.receiveOrFail()
                 anotherRealm.close()
                 closedChannel.send(Unit)
             }
 
             // Waits for background thread opening the same Realm.
-            bgThreadReadyChannel.receive()
+            bgThreadReadyChannel.receiveOrFail()
 
             // Check the realm got created correctly and signal that it can be closed.
             fileSystem.list(syncDir)
@@ -586,7 +586,7 @@ class SyncedRealmTests {
                     readyToCloseChannel.send(Unit)
                 }
             testRealm.close()
-            closedChannel.receive()
+            closedChannel.receiveOrFail()
 
             // Delete realm now that it's fully closed.
             Realm.deleteRealm(configuration)
@@ -743,7 +743,7 @@ class SyncedRealmTests {
             realm.writeBlocking { copyToRealm(masterObject) }
             realm.syncSession.uploadAllLocalChanges()
         }
-        assertEquals(42, counterValue.receive())
+        assertEquals(42, counterValue.receiveOrFail())
 
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
@@ -759,7 +759,7 @@ class SyncedRealmTests {
                 }
             }
         }
-        assertEquals(43, counterValue.receive())
+        assertEquals(43, counterValue.receiveOrFail())
 
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
@@ -775,7 +775,7 @@ class SyncedRealmTests {
                 }
             }
         }
-        assertEquals(44, counterValue.receive())
+        assertEquals(44, counterValue.receiveOrFail())
 
         increment1.cancel()
         increment2.cancel()
@@ -886,7 +886,7 @@ class SyncedRealmTests {
                     }
                 )
             }
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<IllegalStateException> {
                 localRealm.writeCopyTo(flexSyncConfig)
             }
         }
@@ -1254,33 +1254,17 @@ class SyncedRealmTests {
         }
     }
 
-    /**
-     * Logged collecting all logs it has seen.
-     */
-    private class CustomLogCollector(
-        override val tag: String,
-        override val level: LogLevel
-    ) : RealmLogger {
-
-        private val _logs = mutableListOf<String>()
-        public val logs: List<String>
-            get() = _logs
-
-        override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-            val logMessage: String = message!!
-            _logs.add(logMessage)
-        }
-    }
-
     @Test
     fun customLoggersReceiveSyncLogs() = runBlocking {
-        val customLogger = CustomLogCollector("CUSTOM", LogLevel.DEBUG)
+        val customLogger = CustomLogCollector("CUSTOM", LogLevel.ALL)
         val section = Random.nextInt()
         val flexApp = TestApp(
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
-                it.log(level = LogLevel.DEBUG, listOf(customLogger))
+                it.log(level = LogLevel.ALL, listOf(customLogger))
+                it.appName("MyCustomApp")
+                it.appVersion("1.0.0")
             }
         )
         val (email, password) = randomEmail() to "password1234"
@@ -1303,11 +1287,8 @@ class SyncedRealmTests {
             flexSyncRealm.syncSession.uploadAllLocalChanges()
         }
         assertTrue(customLogger.logs.isNotEmpty())
-        assertTrue(
-            customLogger.logs
-                .filter { it.contains("Connection[1]: Negotiated protocol version:") }
-                .isNotEmpty()
-        )
+        assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
+        assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") }, "Missing MyCustomApp/1.0.0")
         flexApp.close()
     }
 

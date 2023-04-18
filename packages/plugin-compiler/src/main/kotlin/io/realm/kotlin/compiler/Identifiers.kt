@@ -63,6 +63,8 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
     val REALM_OBJECT_HELPER_GET_SET = Name.identifier("getSet")
     val REALM_OBJECT_HELPER_SET_SET = Name.identifier("setSet")
+    val REALM_OBJECT_HELPER_GET_DICTIONARY = Name.identifier("getDictionary")
+    val REALM_OBJECT_HELPER_SET_DICTIONARY = Name.identifier("setDictionary")
     val REALM_OBJECT_HELPER_GET_MUTABLE_INT = Name.identifier("getMutableInt")
 
     // Schema related names
@@ -73,6 +75,7 @@ internal object Names {
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
     val PROPERTY_COLLECTION_TYPE_SET = Name.identifier("RLM_COLLECTION_TYPE_SET")
+    val PROPERTY_COLLECTION_TYPE_DICTIONARY = Name.identifier("RLM_COLLECTION_TYPE_DICTIONARY")
 }
 
 internal object FqNames {
@@ -114,6 +117,7 @@ internal object FqNames {
     // Realm data types
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
     val REALM_SET = FqName("io.realm.kotlin.types.RealmSet")
+    val REALM_DICTIONARY = FqName("io.realm.kotlin.types.RealmDictionary")
     val REALM_INSTANT = FqName("io.realm.kotlin.types.RealmInstant")
     val REALM_BACKLINKS = FqName("io.realm.kotlin.types.BacklinksDelegate")
     val REALM_EMBEDDED_BACKLINKS = FqName("io.realm.kotlin.types.EmbeddedBacklinksDelegate")

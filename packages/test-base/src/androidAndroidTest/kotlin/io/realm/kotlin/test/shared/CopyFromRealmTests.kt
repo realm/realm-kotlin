@@ -27,8 +27,10 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.copyFromRealm
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.RealmObjectInternal
@@ -36,6 +38,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
@@ -45,6 +48,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
@@ -219,6 +223,37 @@ class CopyFromRealmTests {
     }
 
     @Test
+    fun realmAny_dictionary_realmObjectReferences() {
+        val inner = Sample().apply { stringField = "inner" }
+
+        val expectedEntry = "A" to RealmAny.create(inner)
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(
+                Sample().apply {
+                    nullableRealmAnyDictionaryField =
+                        realmDictionaryOf(expectedEntry)
+                }
+            )
+        }
+        val unmanagedObj = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        val realmAnyDictionaryField = unmanagedObj.nullableRealmAnyDictionaryField
+        assertNotNull(realmAnyDictionaryField)
+        assertEquals(1, realmAnyDictionaryField.size)
+        val entry = assertNotNull(realmAnyDictionaryField.iterator().next())
+        assertEquals(expectedEntry.first, entry.key)
+        val value = assertNotNull(entry.value)
+        val innerObjectInsideRealmAny = value.asRealmObject<Sample>()
+        assertNotNull(innerObjectInsideRealmAny)
+        assertFalse(innerObjectInsideRealmAny.isManaged())
+        assertEquals(inner.stringField, innerObjectInsideRealmAny.stringField)
+    }
+
+    @Test
     fun embeddedObjectReferences() {
         val child = EmbeddedChild("inner")
         val parent = EmbeddedParent().apply {
@@ -332,7 +367,7 @@ class CopyFromRealmTests {
     fun embeddedObjectLists() {
         // Create object with list of 5 objects
         val sample = EmbeddedParent().apply {
-            children = (1..5).map { i ->
+            childrenList = (1..5).map { i ->
                 EmbeddedChild(i.toString())
             }.toRealmList()
         }
@@ -347,8 +382,8 @@ class CopyFromRealmTests {
         realm.close()
 
         assertNotSame(insertedObj, unmanagedObj)
-        assertNotNull(unmanagedObj.children)
-        val copiedList = unmanagedObj.children
+        assertNotNull(unmanagedObj.childrenList)
+        val copiedList = unmanagedObj.childrenList
         assertEquals(5, copiedList.size)
         copiedList.forEachIndexed { i, el ->
             assertFalse(el.isManaged())
@@ -449,6 +484,100 @@ class CopyFromRealmTests {
     }
 
     @Test
+    fun primitiveDictionaries() {
+        val type = Sample::class
+        val schemaProperties = type.realmObjectCompanionOrThrow().io_realm_kotlin_schema().properties
+        val fields: Map<String, KProperty1<*, *>> = type.realmObjectCompanionOrThrow().io_realm_kotlin_fields
+
+        // Dynamically set data on the Sample object
+        val originalObject = Sample()
+        schemaProperties.forEach { prop: RealmProperty ->
+            if (prop.type is MapPropertyType) {
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val dictionary: RealmDictionary<Any?> = createPrimitiveDictionaryData(prop, accessor)
+                accessor.set(originalObject, dictionary)
+            }
+        }
+
+        // Round-trip object through `copyToRealm` and `copyFromRealm`.
+        val unmanagedCopy = realm.writeBlocking {
+            copyToRealm(originalObject).copyFromRealm()
+        }
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        // Validate that all primitive list fields were round-tripped correctly.
+        schemaProperties.forEach { prop: RealmProperty ->
+            if (prop.type is MapPropertyType) {
+                val accessor: KMutableProperty1<BaseRealmObject, Any?> = fields[prop.name] as KMutableProperty1<BaseRealmObject, Any?>
+                val dictionary: RealmDictionary<Any?> = createPrimitiveDictionaryData(prop, accessor)
+
+                if (prop.type.storageType == RealmStorageType.BINARY) {
+                    val copy = accessor.get(unmanagedCopy) as RealmDictionary<ByteArray?>
+                    assertEquals(dictionary.size, copy.size)
+                    assertTrue(dictionary.keys.containsAll(copy.keys))
+                    copy.forEach { entry ->
+                        // Weird approach but makes it easier to iterate over the elements of the
+                        // dictionary similarly to the set test above
+                        val copiedValue = entry.value
+                        if (copiedValue == null) {
+                            assertTrue(dictionary.containsValue(null))
+                        } else {
+                            assertTrue(
+                                dictionary.any {
+                                    (it.value as ByteArray).contentEquals(copiedValue)
+                                },
+                                "${prop.name} failed: $copiedValue"
+                            )
+                        }
+                    }
+                } else {
+                    val copiedDictionary = accessor.get(unmanagedCopy) as RealmDictionary<Any?>
+                    assertEquals(dictionary.size, copiedDictionary.size)
+                    assertTrue(dictionary.keys.containsAll(copiedDictionary.keys))
+                    copiedDictionary.forEach { entry ->
+                        // Order is not guaranteed in the set when round-tripped through Core.
+                        assertTrue(dictionary.containsKey(entry.key), "${prop.name} failed key: $entry")
+                        assertTrue(dictionary.containsValue(entry.value), "${prop.name} failed value: $entry")
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun objectDictionary() {
+        val sample = Sample().apply {
+            nullableObjectDictionaryFieldNotNull = (1..5).map { i ->
+                val key = i.toString()
+                val value = Sample().apply { stringField = i.toString() }
+                key to value
+            }.toRealmDictionary()
+        }
+
+        val insertedObj = realm.writeBlocking {
+            copyToRealm(sample)
+        }
+        val unmanagedObj: Sample = insertedObj.copyFromRealm()
+
+        // Close Realm to ensure data is decoupled from Realm
+        realm.close()
+
+        assertNotSame(insertedObj, unmanagedObj)
+        assertNotNull(unmanagedObj.nullableObjectDictionaryFieldNotNull)
+        val copiedDictionary: RealmDictionary<Sample?> = unmanagedObj.nullableObjectDictionaryFieldNotNull
+        assertEquals(5, copiedDictionary.size)
+        copiedDictionary.forEach { copiedEntry ->
+            val actual = sample.nullableObjectDictionaryFieldNotNull.filter { expectedEntry ->
+                assertNotNull(copiedEntry.value).stringField == expectedEntry.value?.stringField
+            }.size
+
+            assertEquals(1, actual)
+        }
+    }
+
+    @Test
     fun realmResults() {
         realm.writeBlocking {
             copyToRealm(Sample().apply { stringField = "sample" })
@@ -479,8 +608,11 @@ class CopyFromRealmTests {
         // Copying collections from a closed Realm should fail
         val managedList: RealmList<Sample> = managedObj.objectListField
         val managedSet: RealmSet<Sample> = managedObj.objectSetField
+        val managedDictionary: RealmDictionary<Sample?> = managedObj.nullableObjectDictionaryFieldNotNull
         val results: RealmResults<Sample> = realm.query<Sample>().find()
+
         realm.close()
+
         assertFailsWith<IllegalArgumentException> {
             realm.copyFromRealm(managedObj)
         }
@@ -500,6 +632,12 @@ class CopyFromRealmTests {
             managedSet.copyFromRealm()
         }
         assertFailsWith<IllegalArgumentException> {
+            realm.copyFromRealm(managedDictionary)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            managedDictionary.copyFromRealm()
+        }
+        assertFailsWith<IllegalArgumentException> {
             realm.copyFromRealm(results)
         }
         assertFailsWith<IllegalArgumentException> {
@@ -512,11 +650,13 @@ class CopyFromRealmTests {
         val sample = Sample().apply {
             objectListField.add(Sample().apply { stringField = "listObject" })
             objectSetField.add(Sample().apply { stringField = "listObject" })
+            nullableObjectDictionaryFieldNotNull["A"] = Sample().apply { stringField = "listObject" }
         }
         realm.writeBlocking {
             val liveObj = copyToRealm(sample)
             val liveList = liveObj.objectListField
             val liveSet = liveObj.objectSetField
+            val liveDictionary = liveObj.nullableObjectDictionaryFieldNotNull
             delete(liveObj)
 
             // Copying deleted objects should fail
@@ -537,6 +677,12 @@ class CopyFromRealmTests {
             }
             assertFailsWith<IllegalArgumentException> {
                 liveSet.copyFromRealm()
+            }
+            assertFailsWith<IllegalArgumentException> {
+                realm.copyFromRealm(liveDictionary)
+            }
+            assertFailsWith<IllegalArgumentException> {
+                liveDictionary.copyFromRealm()
             }
         }
     }
@@ -561,18 +707,27 @@ class CopyFromRealmTests {
         assertFailsWith<IllegalArgumentException> {
             realm.copyFromRealm(realmSetOf(Sample()))
         }
+        assertFailsWith<IllegalArgumentException> {
+            realmDictionaryOf<Sample?>("A" to Sample()).copyFromRealm()
+        }
+        assertFailsWith<IllegalArgumentException> {
+            realm.copyFromRealm(realmDictionaryOf("A" to Sample()))
+        }
     }
 
     @Test
     fun emptyCollection() {
-        var result = realm.copyFromRealm(listOf())
-        assertEquals(0, result.size)
+        val listResult = realm.copyFromRealm(listOf())
+        assertEquals(0, listResult.size)
 
-        result = realm.copyFromRealm(realmListOf())
-        assertEquals(0, result.size)
+        val realmListResult = realm.copyFromRealm(realmListOf())
+        assertEquals(0, realmListResult.size)
 
-        result = realm.copyFromRealm(realmSetOf())
-        assertEquals(0, result.size)
+        val realmSetResult = realm.copyFromRealm(realmSetOf())
+        assertEquals(0, realmSetResult.size)
+
+        val realmDictionaryResult = realm.copyFromRealm(realmDictionaryOf())
+        assertEquals(0, realmDictionaryResult.size)
     }
 
     @Test
@@ -585,6 +740,7 @@ class CopyFromRealmTests {
             nullableObject = topLevelObject
             objectListField = realmListOf(topLevelObject)
             objectSetField = realmSetOf(topLevelObject)
+            nullableObjectDictionaryFieldNotNull = realmDictionaryOf("A" to topLevelObject)
         }
 
         val unmanagedCopy = realm.writeBlocking {
@@ -594,6 +750,7 @@ class CopyFromRealmTests {
         assertSame(unmanagedCopy, unmanagedCopy.nullableObject)
         assertSame(unmanagedCopy, unmanagedCopy.objectListField.first())
         assertSame(unmanagedCopy, unmanagedCopy.objectSetField.first())
+        assertSame(unmanagedCopy, unmanagedCopy.nullableObjectDictionaryFieldNotNull["A"])
     }
 
     @Test
@@ -657,6 +814,16 @@ class CopyFromRealmTests {
                     )
                 }
             )
+            nullableObjectDictionaryFieldNotNull = realmDictionaryOf(
+                "A" to Sample().apply {
+                    stringField = "dictionary-depth-1"
+                    nullableObjectDictionaryFieldNotNull = realmDictionaryOf(
+                        "B" to Sample().apply {
+                            stringField = "dictionary-depth-2"
+                        }
+                    )
+                }
+            )
         }
 
         val managedObj = realm.writeBlocking {
@@ -665,14 +832,28 @@ class CopyFromRealmTests {
         assertEquals("obj-depth-2", managedObj.nullableObject!!.nullableObject!!.stringField)
         assertEquals("list-depth-2", managedObj.objectListField.first().objectListField.first().stringField)
         assertEquals("set-depth-2", managedObj.objectSetField.first().objectSetField.first().stringField)
+        assertEquals(
+            "dictionary-depth-2",
+            assertNotNull(managedObj.nullableObjectDictionaryFieldNotNull["A"]).let { objLevel1 ->
+                assertNotNull(objLevel1.nullableObjectDictionaryFieldNotNull["B"]).stringField
+            }
+        )
 
         val unmanagedCopy = managedObj.copyFromRealm(depth = 1u)
         assertEquals("obj-depth-1", unmanagedCopy.nullableObject!!.stringField)
         assertEquals("list-depth-1", unmanagedCopy.objectListField.first().stringField)
         assertEquals("set-depth-1", unmanagedCopy.objectSetField.first().stringField)
+        assertEquals(
+            "dictionary-depth-1",
+            assertNotNull(unmanagedCopy.nullableObjectDictionaryFieldNotNull["A"]).stringField
+        )
         assertNull(unmanagedCopy.nullableObject!!.nullableObject)
         assertEquals(0, unmanagedCopy.objectListField.first().objectListField.size)
         assertEquals(0, unmanagedCopy.objectSetField.first().objectSetField.size)
+        assertEquals(
+            0,
+            assertNotNull(unmanagedCopy.nullableObjectDictionaryFieldNotNull["A"]).objectSetField.size
+        )
     }
 
     @Test
@@ -691,6 +872,12 @@ class CopyFromRealmTests {
                     stringField = "set-depth-1"
                 }
             )
+            stringDictionaryField = realmDictionaryOf("A" to "foo", "B" to "bar")
+            nullableObjectDictionaryFieldNotNull = realmDictionaryOf(
+                "A" to Sample().apply {
+                    stringField = "set-depth-1"
+                }
+            )
         }
 
         val managedObj = realm.writeBlocking {
@@ -700,8 +887,10 @@ class CopyFromRealmTests {
         assertNull(unmanagedCopy.nullableObject)
         assertEquals(0, unmanagedCopy.objectListField.size)
         assertEquals(0, unmanagedCopy.objectSetField.size)
+        assertEquals(0, unmanagedCopy.nullableObjectDictionaryFieldNotNull.size)
         assertEquals(2, unmanagedCopy.stringListField.size)
         assertEquals(2, unmanagedCopy.stringSetField.size)
+        assertEquals(2, unmanagedCopy.stringDictionaryField.size)
     }
 
     @Test
@@ -820,5 +1009,40 @@ class CopyFromRealmTests {
             set.add(null)
         }
         return set
+    }
+
+    // Create Sample data for dictionary properties
+    private fun createPrimitiveDictionaryData(
+        prop: RealmProperty,
+        accessor: KMutableProperty1<BaseRealmObject, Any?>
+    ): RealmDictionary<Any?> {
+        val type: KType = accessor.returnType
+        val genericType: KType = type.arguments.first().type!!
+        val dictionary: RealmDictionary<Any?> = when (genericType.classifier) {
+            String::class -> {
+                realmDictionaryOf("A" to "foo", "B" to "bar")
+            }
+            Byte::class -> realmDictionaryOf("A" to 1.toByte(), "B" to 2.toByte())
+            Char::class -> realmDictionaryOf("A" to 'a', "B" to 'b')
+            Short::class -> realmDictionaryOf("A" to 3.toShort(), "B" to 4.toShort())
+            Int::class -> realmDictionaryOf("A" to 5, "B" to 6)
+            Long::class -> realmDictionaryOf("A" to 7.toLong(), "B" to 8.toLong())
+            Boolean::class -> realmDictionaryOf("A" to true, "B" to false)
+            Float::class -> realmDictionaryOf("A" to 1.23.toFloat(), "B" to 1.34.toFloat())
+            Double::class -> realmDictionaryOf("A" to 1.234, "B" to 1.345)
+            ByteArray::class -> realmDictionaryOf("A" to byteArrayOf(42), "B" to byteArrayOf(43))
+            RealmInstant::class -> realmDictionaryOf("A" to RealmInstant.from(1, 0), "B" to RealmInstant.from(1, 1))
+            ObjectId::class -> realmDictionaryOf("A" to ObjectId.from("635a1a95184a200db8a07bfc"), "B" to ObjectId.from("735a1a95184a200db8a07bfc"))
+            RealmUUID::class -> realmDictionaryOf("A" to RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), "B" to RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
+            BsonObjectId::class -> realmDictionaryOf("A" to BsonObjectId("635a1a95184a200db8a07bfc"), "B" to BsonObjectId("735a1a95184a200db8a07bfc"))
+            Decimal128::class -> realmDictionaryOf("A" to Decimal128("1.8446744073709551618E-615"), "B" to Decimal128("2.8446744073709551618E-6151"))
+            RealmAny::class -> realmDictionaryOf("A" to RealmAny.create(1))
+            Sample::class -> realmDictionaryOf() // Object references are not part of this test
+            else -> fail("Missing support for $genericType")
+        }
+        if (prop.isNullable) {
+            dictionary["C"] = null
+        }
+        return dictionary
     }
 }

@@ -52,29 +52,6 @@ class PersistedNameTests {
     }
 
     @Test
-    fun `same persisted and public name warns`() {
-        val result = Compiler.compileFromSource(
-            plugins = listOf(Registrar()),
-            source = SourceFile.kotlin(
-                "samePersistedAndPublicName.kt",
-                """
-                    import io.realm.kotlin.types.RealmObject
-                    import io.realm.kotlin.types.annotations.PersistedName
-                    
-                    class InvalidSample : RealmObject {
-                        @PersistedName("sameName")
-                        var sameName: String? = ""
-                    }
-                """.trimIndent()
-            )
-        )
-
-        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
-        val compilerLog = result.messages
-        assertContains(compilerLog, "The Kotlin name and the persisted name are the same value: 'sameName'")
-    }
-
-    @Test
     fun `duplicate name fails`() {
         val result = Compiler.compileFromSource(
             plugins = listOf(Registrar()),

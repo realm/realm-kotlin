@@ -23,13 +23,17 @@ import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.test.NotificationTests
+import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -40,8 +44,9 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.seconds
 
-class BacklinksNotificationsTests : NotificationTests {
+class BacklinksNotificationsTests : RealmEntityNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -86,7 +91,7 @@ class BacklinksNotificationsTests : NotificationTests {
                         }
                 }
 
-                c.receive().let { resultsChange ->
+                c.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
                     assertTrue(resultsChange.list.isEmpty())
                 }
@@ -139,7 +144,7 @@ class BacklinksNotificationsTests : NotificationTests {
                 }
 
                 // Assertion after empty list is emitted
-                c.receive().let { resultsChange ->
+                c.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -151,7 +156,7 @@ class BacklinksNotificationsTests : NotificationTests {
                     delete(findLatest(results.first())!!)
                 }
 
-                c.receive().let { resultsChange ->
+                c.receiveOrFail().let { resultsChange ->
                     assertIs<UpdatedResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -161,6 +166,38 @@ class BacklinksNotificationsTests : NotificationTests {
                 observer.cancel()
                 c.close()
             }
+        }
+    }
+
+    @Test
+    fun verifyChangeEvents() {
+        runBlocking {
+            val target = realm.write {
+                copyToRealm(Sample())
+            }
+            val c = Channel<ResultsChange<Sample>>(capacity = 5)
+            val collection = async {
+                target.objectBacklinks.asFlow().collect {
+                    c.trySend(it)
+                }
+            }
+
+            c.receiveOrFail().let {
+                assertIs<InitialResults<*>>(it)
+                assertEquals(0, it.list.size)
+            }
+
+            realm.write {
+                copyToRealm(Sample().apply { nullableObject = findLatest(target) })
+            }
+
+            c.receiveOrFail().let {
+                assertIs<UpdatedResults<*>>(it)
+                assertEquals(1, it.list.size)
+                assertEquals(0, it.deletions.size)
+                assertEquals(1, it.insertions.size)
+            }
+            collection.cancel()
         }
     }
 
@@ -210,11 +247,11 @@ class BacklinksNotificationsTests : NotificationTests {
                     }
                 }
 
-                c1.receive().let { resultsChange ->
+                c1.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
                     assertEquals(1, resultsChange.list.size)
                 }
-                c2.receive().let { resultsChange ->
+                c2.receiveOrFail().let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
                     assertEquals(1, resultsChange.list.size)
                 }
@@ -225,7 +262,7 @@ class BacklinksNotificationsTests : NotificationTests {
                     delete(findLatest(results.first())!!)
                 }
 
-                c2.receive().let { resultsChange ->
+                c2.receiveOrFail().let { resultsChange ->
                     assertIs<UpdatedResults<*>>(resultsChange)
                     assertEquals(0, resultsChange.list.size)
                 }
@@ -238,7 +275,7 @@ class BacklinksNotificationsTests : NotificationTests {
     }
 
     @Test
-    override fun deleteObservable() {
+    override fun deleteEntity() {
         runBlocking {
             listOf(
                 realm.write { copyToRealm(Sample()) }.let { Pair(it, it.objectBacklinks) },
@@ -271,7 +308,7 @@ class BacklinksNotificationsTests : NotificationTests {
                 }
 
                 // Assertion after empty list is emitted
-                c.receive()!!.let { resultsChange ->
+                c.receiveOrFail()!!.let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -279,7 +316,7 @@ class BacklinksNotificationsTests : NotificationTests {
                 }
 
                 // Assertion after subquery is emitted
-                sc.receive()!!.let { resultsChange ->
+                sc.receiveOrFail()!!.let { resultsChange ->
                     assertIs<InitialResults<*>>(resultsChange)
 
                     assertNotNull(resultsChange.list)
@@ -291,14 +328,40 @@ class BacklinksNotificationsTests : NotificationTests {
                     delete(findLatest(target)!!)
                 }
 
-                assertNull(c.receive())
-                assertNull(sc.receive())
+                assertNull(c.receiveOrFail())
+                assertNull(sc.receiveOrFail())
 
                 observer.cancel()
                 c.close()
 
                 subqueryObserver.cancel()
                 sc.close()
+            }
+        }
+    }
+
+    @Test
+    override fun asFlowOnDeleteEntity() {
+        runBlocking {
+            val sample = realm.write { copyToRealm(Sample()) }
+            val mutex = Mutex(true)
+            val flow = async { sample.objectBacklinks.asFlow().collect { mutex.unlock() } }
+
+            // Await that flow is actually running
+            mutex.lock()
+            // And delete containing entity
+            realm.write { delete(findLatest(sample)!!) }
+
+            // Await that notifier has signalled the deletion so we are certain that the entity
+            // has been deleted
+            withTimeout(10.seconds) {
+                flow.await()
+            }
+
+            // Verify that a flow on the deleted entity will signal a deletion and complete gracefully
+            withTimeout(10.seconds) {
+                // First and only change should be a deletion event
+                sample.objectBacklinks.asFlow().collect { fail("Flow on deleted backlinks shouldn't emit any events") }
             }
         }
     }
@@ -320,7 +383,8 @@ class BacklinksNotificationsTests : NotificationTests {
                     .asFlow()
                     .filterNot {
                         it.list.isEmpty()
-                    }.collect {
+                    }
+                    .collect {
                         c.send(it.list.size)
                     }
                 fail("Flow should not be canceled.")
@@ -333,8 +397,13 @@ class BacklinksNotificationsTests : NotificationTests {
                     }
                 )
             }
-            assertEquals(1, c.receive())
+
+            // Await that collect is actually collecting
+            withTimeout(10.seconds) {
+                assertEquals(1, c.receiveOrFail())
+            }
             realm.close()
+            delay(1.seconds)
             observer.cancel()
             c.close()
         }

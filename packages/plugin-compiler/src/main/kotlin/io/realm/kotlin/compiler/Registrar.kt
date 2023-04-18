@@ -16,10 +16,12 @@
 
 package io.realm.kotlin.compiler
 
+import com.google.auto.service.AutoService
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.com.intellij.mock.MockProject
+import org.jetbrains.kotlin.com.intellij.openapi.extensions.LoadingOrder
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
@@ -43,11 +45,7 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
  * The [RealmObjectCompanion] holds static information about the schema (members, primary key, etc.)
  * and utility methods for constructing objects, etc.
  */
-// For some reason the plugin is not picked up when applied by adding the artifact as a
-// 'kotlinCompilerPluginClasspath'-dependency if using the auto service infrastructure, so
-// registering it through
-// resources/META-INF/services/org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar instead.
-// @AutoService(ComponentRegistrar::class)
+@AutoService(ComponentRegistrar::class)
 @OptIn(ExperimentalCompilerApi::class)
 class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(
@@ -58,14 +56,22 @@ class Registrar : ComponentRegistrar {
             configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY, MessageCollector.NONE)
         SchemaCollector.properties.clear()
 
-        // Trigger generation of companion objects and addition of the RealmObjectCompanion to it
-        SyntheticResolveExtension.registerExtension(
-            project,
-            RealmModelSyntheticCompanionExtension()
-        )
-
-        // Adds RealmObjectInternal properties, rewires accessors and adds static companion
-        // properties and methods
-        IrGenerationExtension.registerExtension(project, RealmModelLoweringExtension())
+        // We load our extensions LAST to avoid exposing our internal attributes to other plugins,
+        // like serialization (issue https://github.com/realm/realm-kotlin/issues/1251).
+        project.extensionArea.run {
+            // Trigger generation of companion objects and addition of the RealmObjectCompanion to it
+            getExtensionPoint(SyntheticResolveExtension.extensionPointName).registerExtension(
+                RealmModelSyntheticCompanionExtension(),
+                LoadingOrder.LAST,
+                project
+            )
+            // Adds RealmObjectInternal properties, rewires accessors and adds static companion
+            // properties and methods
+            getExtensionPoint(IrGenerationExtension.extensionPointName).registerExtension(
+                RealmModelLoweringExtension(),
+                LoadingOrder.LAST,
+                project
+            )
+        }
     }
 }

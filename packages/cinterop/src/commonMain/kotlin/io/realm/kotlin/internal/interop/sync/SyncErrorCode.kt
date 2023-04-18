@@ -16,6 +16,9 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CodeDescription
+import io.realm.kotlin.internal.interop.UnknownCodeDescription
+
 /**
  * Wrapper for C-API `realm_sync_error_code`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3306

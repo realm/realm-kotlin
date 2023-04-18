@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
@@ -84,20 +85,19 @@ internal fun checkRealmClosed(realm: RealmReference) {
 internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>): T =
     create(mediator, realm, type, realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`)
 
-internal fun <T : BaseRealmObject> create(mediator: Mediator, realm: LiveRealmReference, type: KClass<T>, className: String): T {
-    try {
-        val key = realm.schemaMetadata.getOrThrow(className).classKey
-        return key?.let {
-            RealmInterop.realm_object_create(realm.dbPointer, key).toRealmObject(
-                realm = realm,
-                mediator = mediator,
-                clazz = type,
-            )
-        } ?: throw IllegalArgumentException("Schema doesn't include class '$className'")
-    } catch (e: Throwable) {
-        throw CoreExceptionConverter.convertToPublicException(
-            e,
-            "Failed to create object of type '$className'"
+internal fun <T : BaseRealmObject> create(
+    mediator: Mediator,
+    realm: LiveRealmReference,
+    type: KClass<T>,
+    className: String
+): T {
+
+    val key = realm.schemaMetadata.getOrThrow(className).classKey
+    return key.let {
+        RealmInterop.realm_object_create(realm.dbPointer, key).toRealmObject(
+            realm = realm,
+            mediator = mediator,
+            clazz = type,
         )
     }
 }
@@ -111,30 +111,23 @@ internal fun <T : BaseRealmObject> create(
     primaryKey: RealmValue,
     updatePolicy: UpdatePolicy
 ): T {
-    try {
-        val key = realm.schemaMetadata.getOrThrow(className).classKey
-        return key?.let {
-            when (updatePolicy) {
-                UpdatePolicy.ERROR -> RealmInterop.realm_object_create_with_primary_key(
-                    realm.dbPointer,
-                    key,
-                    primaryKey
-                )
-                UpdatePolicy.ALL -> RealmInterop.realm_object_get_or_create_with_primary_key(
-                    realm.dbPointer,
-                    key,
-                    primaryKey
-                )
-            }.toRealmObject(
-                realm = realm,
-                mediator = mediator,
-                clazz = type,
+    val key = realm.schemaMetadata.getOrThrow(className).classKey
+    return key.let {
+        when (updatePolicy) {
+            UpdatePolicy.ERROR -> RealmInterop.realm_object_create_with_primary_key(
+                realm.dbPointer,
+                key,
+                primaryKey
             )
-        } ?: error("Couldn't find key for class $className")
-    } catch (e: Throwable) {
-        throw CoreExceptionConverter.convertToPublicException(
-            e,
-            "Failed to create object of type '$className'"
+            UpdatePolicy.ALL -> RealmInterop.realm_object_get_or_create_with_primary_key(
+                realm.dbPointer,
+                key,
+                primaryKey
+            )
+        }.toRealmObject(
+            realm = realm,
+            mediator = mediator,
+            clazz = type,
         )
     }
 }
@@ -196,14 +189,20 @@ internal fun <T : BaseRealmObject> copyToRealm(
         }
         val target = if (hasPrimaryKey) {
             inputScope {
-                create(
-                    mediator,
-                    realmReference,
-                    element::class,
-                    className,
-                    convertArg(primaryKey),
-                    updatePolicy
-                )
+                try {
+                    create(
+                        mediator,
+                        realmReference,
+                        element::class,
+                        className,
+                        convertArg(primaryKey),
+                        updatePolicy
+                    )
+                } catch (e: IllegalStateException) {
+                    // Remap exception to avoid a breaking change. To core this is an IllegalStateException
+                    // as it considers that there is no issue with the argument.
+                    throw IllegalArgumentException(e.message, e.cause)
+                }
             }
         } else {
             create(mediator, realmReference, element::class, className)
@@ -260,6 +259,17 @@ public fun <T : BaseRealm> RealmSet<*>.getRealm(): T? {
         }
         else -> {
             throw IllegalStateException("Unsupported set type: ${this::class}")
+        }
+    }
+}
+public fun <T : BaseRealm> RealmDictionary<*>.getRealm(): T? {
+    return when (this) {
+        is UnmanagedRealmDictionary -> null
+        is ManagedRealmDictionary -> {
+            return this.operator.realmReference.owner as T
+        }
+        else -> {
+            throw IllegalStateException("Unsupported dictionary type: ${this::class}")
         }
     }
 }

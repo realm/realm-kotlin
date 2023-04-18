@@ -88,3 +88,18 @@ fun interface AsyncOpenCallback {
 fun interface ProgressCallback {
     fun onChange(transferredBytes: Long, totalBytes: Long)
 }
+
+fun interface ConnectionStateChangeCallback {
+    fun onChange(oldState: Int, newState: Int)
+}
+
+interface SyncThreadObserver {
+    // Should return the name of the Java Sync thread.
+    fun threadName(): String
+    // Called when the underlying Sync thread is created
+    fun onCreated()
+    // Called when the underlying Sync thread is destroyed
+    fun onDestroyed()
+    // Called when an error occurred on the underlying Sync thread
+    fun onError(error: String)
+}

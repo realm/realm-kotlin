@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedSet
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 
@@ -51,7 +52,9 @@ public interface RealmSet<E> : MutableSet<E>, Deleteable {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
-     * @return a flow representing changes to the list.
+     * @return a flow representing changes to the set.
+     * @throws CancellationException if the stream produces changes faster than the consumer can
+     * consume them and results in a buffer overflow.
      */
     public fun asFlow(): Flow<SetChange<E>>
 }

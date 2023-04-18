@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AppConfiguration
@@ -24,6 +25,7 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -32,7 +34,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 // private const val CUSTOM_HEADER_NAME = "Foo"
@@ -129,7 +133,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory() {
         val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-        val expectedRoot = "${appFilesDirectory()}/myCustomDir"
+        val expectedRoot = "${appFilesDirectory()}${PATH_SEPARATOR}myCustomDir"
         val config = builder
             .syncRootDirectory(expectedRoot)
             .build()
@@ -139,7 +143,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory_writeProtectedDir() {
         val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-        val dir = "/"
+        val dir = PlatformUtils.createTempDir(readOnly = true)
         assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
     }
 
@@ -147,7 +151,7 @@ class AppConfigurationTests {
     // the configured `AppConfiguration.syncRootDir`
     @Test
     fun syncRootDirectory_appendDirectoryToPath() = runBlocking {
-        val expectedRoot = "${appFilesDirectory()}/myCustomDir"
+        val expectedRoot = "${appFilesDirectory()}${PATH_SEPARATOR}myCustomDir"
         val app = TestApp(builder = {
             it.syncRootDirectory(expectedRoot)
         })
@@ -158,7 +162,7 @@ class AppConfigurationTests {
             // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
             // the configured `AppConfiguration.syncRootDir`
             val partitionValue = TestHelper.randomPartitionValue()
-            val suffix = "/myCustomDir/mongodb-realm/${user.app.configuration.appId}/${user.identity}/s_$partitionValue.realm"
+            val suffix = "${PATH_SEPARATOR}myCustomDir${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}s_$partitionValue.realm"
             val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf()).build()
             assertTrue(config.path.endsWith(suffix), "Failed: ${config.path} vs. $suffix")
         } finally {
@@ -174,49 +178,45 @@ class AppConfigurationTests {
 //        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(file) }
 //    }
 //
-//    @Test
-//    fun appName() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .appName("app-name")
-//            .build()
-//        assertEquals("app-name", config.appName)
-//    }
-//
-//    @Test
-//    fun appName_defaultValue() {
-//        val config = AppConfiguration.Builder(APP_ID).build()
-//        assertEquals(null, config.appName)
-//    }
-//
-//    @Test
-//    fun appName_invalidValuesThrows() {
-//        val builder = AppConfiguration.Builder(APP_ID)
-//
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appName(TestHelper.getNull()) }
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appName("") }
-//    }
-//
-//    @Test
-//    fun appVersion() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .appVersion("app-version")
-//            .build()
-//        assertEquals("app-version", config.appVersion)
-//    }
-//
-//    @Test
-//    fun appVersion_defaultValue() {
-//        val config = AppConfiguration.Builder(APP_ID).build()
-//        assertEquals(null, config.appVersion)
-//    }
-//
-//    @Test
-//    fun appVersion_invalidValuesThrows() {
-//        val builder = AppConfiguration.Builder(APP_ID)
-//
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appVersion(TestHelper.getNull()) }
-//        assertFailsWith<java.lang.IllegalArgumentException> { builder.appVersion("") }
-//    }
+    @Test
+    fun appName() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .appName("app-name")
+            .build()
+        assertEquals("app-name", config.appName)
+    }
+
+    @Test
+    fun appName_defaultValue() {
+        val config = AppConfiguration.Builder(APP_ID).build()
+        assertEquals(null, config.appName)
+    }
+
+    @Test
+    fun appName_invalidValuesThrows() {
+        val builder = AppConfiguration.Builder(APP_ID)
+        assertFailsWith<IllegalArgumentException> { builder.appName("") }
+    }
+
+    @Test
+    fun appVersion() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .appVersion("app-version")
+            .build()
+        assertEquals("app-version", config.appVersion)
+    }
+
+    @Test
+    fun appVersion_defaultValue() {
+        val config = AppConfiguration.Builder(APP_ID).build()
+        assertEquals(null, config.appVersion)
+    }
+
+    @Test
+    fun appVersion_invalidValuesThrows() {
+        val builder = AppConfiguration.Builder(APP_ID)
+        assertFailsWith<IllegalArgumentException> { builder.appVersion("") }
+    }
 
     @Test
     fun baseUrl() {
@@ -313,6 +313,22 @@ class AppConfigurationTests {
         }
     }
 
+    @Test
+    fun httpLogObfuscator_null() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .httpLogObfuscator(null)
+            .build()
+        assertNull(config.httpLogObfuscator)
+    }
+
+    @Suppress("invisible_reference", "invisible_member")
+    @Test
+    fun defaultLoginInfoObfuscator() {
+        val config = AppConfiguration.Builder(APP_ID).build()
+        assertNotNull(config.httpLogObfuscator)
+        assertTrue(config.httpLogObfuscator is io.realm.kotlin.mongodb.internal.LogObfuscatorImpl)
+    }
+
 //
 //    @Test
 //    fun requestTimeout() {
@@ -353,21 +369,6 @@ class AppConfigurationTests {
 //        assertEquals(configCodecRegistry, config.defaultCodecRegistry)
 //    }
 //
-//    @Test
-//    fun httpLogObfuscator_null() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .httpLogObfuscator(TestHelper.getNull())
-//            .build()
-//        assertNull(config.httpLogObfuscator)
-//    }
-//
-//    @Test
-//    fun defaultLoginInfoObfuscator() {
-//        val config = AppConfiguration.Builder(APP_ID).build()
-//
-//        val defaultHttpLogObfuscator = HttpLogObfuscator(LOGIN_FEATURE, AppConfiguration.loginObfuscators)
-//        assertEquals(defaultHttpLogObfuscator, config.httpLogObfuscator)
-//    }
 //    // Check that custom headers and auth header renames are correctly used for HTTP requests
 //    // performed from Java.
 //    @Test

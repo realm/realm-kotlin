@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.test.mongodb.util
 
+import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import kotlinx.serialization.decodeFromString
@@ -34,7 +35,8 @@ object TestAppInitializer {
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializeFlexibleSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false // TODO
     ) {
         val databaseName = app.clientAppId
         service.setSyncConfig(
@@ -43,21 +45,11 @@ object TestAppInitializer {
                 "flexible_sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "queryable_fields_names": [
                         "name",
                         "section"
-                    ],
-                    "permissions": {
-                        "rules": {},
-                        "defaultRoles": [
-                            {
-                                "name": "read-write",
-                                "applyWhen": {},
-                                "read": true,
-                                "write": true
-                            }
-                        ]
-                    }
+                    ]
                 }
             }
             """.trimIndent()
@@ -159,7 +151,8 @@ object TestAppInitializer {
     @Suppress("LongMethod")
     suspend fun AppServicesClient.initializePartitionSync(
         app: BaasApp,
-        service: Service
+        service: Service,
+        recoveryDisabled: Boolean = false // TODO
     ) {
         val databaseName = app.clientAppId
 
@@ -172,6 +165,7 @@ object TestAppInitializer {
                 "sync": {
                     "state": "enabled",
                     "database_name": "$databaseName",
+                    "is_recovery_mode_disabled": $recoveryDisabled,
                     "partition": {
                         "key": "realm_id",
                         "type": "string",
@@ -344,30 +338,36 @@ object TestAppInitializer {
             enable(true)
         }
 
+        val (type: String, config: String) = if (TEST_APP_CLUSTER_NAME.isEmpty()) {
+            "mongodb" to """{ "uri": "mongodb://localhost:26000" }"""
+        } else {
+            "mongodb-atlas" to """{ "clusterName": "$TEST_APP_CLUSTER_NAME" }"""
+        }
         addService(
             """
             {
                 "name": "BackingDB",
-                "type": "mongodb",
-                "config": { "uri": "mongodb://localhost:26000" }
+                "type": "$type",
+                "config": $config
             }
             """.trimIndent()
         ).let { service: Service ->
             val dbName = app.clientAppId
-            service.addRule(
+            service.addDefaultRule(
                 """
                 {
-                    "database": "$dbName",
-                    "collection": "UserData",
-                    "roles": [
-                        {
-                            "name": "default",
-                            "apply_when": {},
-                            "insert": true,
-                            "delete": true,
-                            "additional_fields": {}
-                        }
-                    ]
+                    "roles": [{
+                        "name": "defaultRole",
+                        "apply_when": {},
+                        "document_filters": {
+                            "read": true,
+                            "write": true
+                        },
+                        "write": true,
+                        "read": true,
+                        "insert": true,
+                        "delete": true
+                    }]
                 }
                 """.trimIndent()
             )

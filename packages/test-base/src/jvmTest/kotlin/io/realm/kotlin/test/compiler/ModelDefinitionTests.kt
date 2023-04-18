@@ -132,4 +132,77 @@ class ModelDefinitionTests {
         assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using anonymous objects")
         assertTrue(result.messages.contains("Anonymous objects are not supported."))
     }
+
+    @Test
+    fun `model_class_with_unsupported_type`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "object_declaration.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        class Foo : RealmObject {
+                            var unknownType = mutableListOf<String>()
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Compilation should fail when using unsupported types")
+        assertTrue(result.messages.contains("Realm does not support persisting properties of this type."), "Error was: ${result.messages}")
+    }
+
+    @Test
+    fun `model_class_with_unsupported_type_is_ignored`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "object_declaration.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        import io.realm.kotlin.types.annotations.Ignore
+                        
+                        class Foo : RealmObject {
+                            var name: String = "HelloWorld"
+                            @Ignore
+                            var unknownType = mutableListOf<String>()
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+    }
+
+    @Test
+    fun `persisted_properties_with_val_should_fail`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "persisted_properties_val.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        class Person(val name: String) : RealmObject
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Persisted properties does not allow val")
+        assertTrue(result.messages.contains("Persisted properties must be marked with `var`"))
+    }
+
+    @Test
+    fun `persisted_properties_with_lateinit_should_fail`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "persisted_properties_lateinit.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        class Person : RealmObject {
+                            lateinit var name: String
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Persisted properties does not allow lateinit")
+        assertTrue(result.messages.contains("Persisted properties must not be marked with `lateinit`."))
+    }
 }

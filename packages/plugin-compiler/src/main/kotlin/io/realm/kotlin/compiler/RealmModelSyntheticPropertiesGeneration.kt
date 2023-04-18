@@ -38,6 +38,7 @@ import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
+import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_DICTIONARY
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
@@ -260,7 +261,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext,
             realmObjectCompanionInterface,
             REALM_OBJECT_COMPANION_CLASS_MEMBER,
-            pluginContext.irBuiltIns.kClassClass.defaultType
+            pluginContext.irBuiltIns.kClassClass.typeWith(clazz.defaultType)
         ) { startOffset, endOffset ->
             IrClassReferenceImpl(
                 startOffset = startOffset,
@@ -536,7 +537,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 // Ensure that the names are valid and do not conflict with prior persisted or public names
                                 ensureValidName(persistedName, persistedAndPublicNameToLocation, location)
                                 persistedAndPublicNameToLocation[persistedName] = location
-                                if (value.hasPersistedNameAnnotation) {
+                                if (publicName != "") {
                                     ensureValidName(publicName, persistedAndPublicNameToLocation, location)
                                     persistedAndPublicNameToLocation[publicName] = location
                                 }
@@ -571,8 +572,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
                                         CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
                                         CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
-                                        else ->
-                                            error("Unsupported collection type '${value.collectionType}' for field ${entry.key}")
+                                        CollectionType.DICTIONARY -> PROPERTY_COLLECTION_TYPE_DICTIONARY
                                     }
                                     putValueArgument(
                                         arg++,
@@ -595,7 +595,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                     PROPERTY_COLLECTION_TYPE_NONE ->
                                                         backingField.type
                                                     PROPERTY_COLLECTION_TYPE_LIST,
-                                                    PROPERTY_COLLECTION_TYPE_SET ->
+                                                    PROPERTY_COLLECTION_TYPE_SET,
+                                                    PROPERTY_COLLECTION_TYPE_DICTIONARY ->
                                                         getCollectionElementType(backingField.type)
                                                             ?: error("Could not get collection type from ${backingField.type}")
                                                     else ->
@@ -798,19 +799,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
      * @param location the location of the current property being parsed
      */
     private fun ensureValidName(name: String, existingNames: MutableMap<String, CompilerMessageSourceLocation>, location: CompilerMessageSourceLocation) {
-        if (name.isEmpty()) {
-            logError(
-                "Names must contain at least 1 character.",
-                location
-            )
-        }
         if (existingNames.containsKey(name)) {
             val duplicationLocation = existingNames[name]!!
-            if (location.line == duplicationLocation.line) {
-                // The message passed will only be contained in the compiler messages if `logDebug`
-                // or `logError` is used, not `logWarn` or `logInfo`. Thus, we opt for `logDebug` here.
-                logDebug("The Kotlin name and the persisted name are the same value: '$name'")
-            } else {
+            if (location.line != duplicationLocation.line) {
                 logError(
                     "Kotlin names and persisted names must be unique. '$name' has already been used for the field on line ${duplicationLocation.line}.",
                     location

@@ -33,7 +33,7 @@
     *;
 }
 # Utils to convert core errors into Kotlin exceptions
--keep class io.realm.kotlin.internal.interop.CoreErrorUtils {
+-keep class io.realm.kotlin.internal.interop.CoreErrorConverter {
     *;
 }
 -keep class io.realm.kotlin.internal.interop.JVMScheduler {
@@ -110,6 +110,13 @@
 -keep class io.realm.kotlin.internal.interop.sync.ApiKeyWrapper {
     *;
 }
+-keep class io.realm.kotlin.internal.interop.ConnectionStateChangeCallback {
+    *;
+}
+-keep class io.realm.kotlin.internal.interop.SyncThreadObserver {
+    *;
+}
+
 # Preserve Function<X> methods as they back various functional interfaces called from JNI
 -keep class kotlin.jvm.functions.Function* {
     *;

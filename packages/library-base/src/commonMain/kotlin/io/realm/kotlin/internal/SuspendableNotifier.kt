@@ -1,20 +1,17 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.Validation.sdkError
-import io.realm.kotlin.internal.util.checkForBufferOverFlow
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import io.realm.kotlin.schema.RealmSchema
 import kotlinx.atomicfu.AtomicRef
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
@@ -39,10 +36,11 @@ import kotlinx.coroutines.withContext
 internal class SuspendableNotifier(
     private val owner: RealmImpl,
     private val dispatcher: CoroutineDispatcher
-) {
+) : LiveRealmHolder<LiveRealm>() {
+    // Flow used to emit events when the version of the live realm is updated
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
-    private val _realmChanged = MutableSharedFlow<FrozenRealmReference>(
+    private val _realmChanged = MutableSharedFlow<VersionId>(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
         extraBufferCapacity = 1
     )
@@ -54,7 +52,7 @@ internal class SuspendableNotifier(
         // update as we get all callbacks on the same single thread dispatcher
         override fun onRealmChanged() {
             super.onRealmChanged()
-            if (!_realmChanged.tryEmit(this.snapshot)) {
+            if (!_realmChanged.tryEmit(version())) {
                 // Should never fail to emit snapshot version as we just drop oldest
                 sdkError("Failed to emit snapshot version")
             }
@@ -69,67 +67,61 @@ internal class SuspendableNotifier(
         }
     }
 
-    private val realmInitializer = lazy { NotifierRealm() }
+    override val realmInitializer = lazy<LiveRealm> { NotifierRealm() }
     // Must only be accessed from the dispatchers thread
-    private val realm: NotifierRealm by realmInitializer
+    override val realm: LiveRealm by realmInitializer
 
     /**
-     * FIXME Currently this is a hacked implementation that only does the correct thing if
-     *  other RealmResults or RealmObjects are being observed. But all writes should also flow
-     *  from [SuspendableWriter], so no Realm updates will be lost to end users.
-     *
      * Listen to changes to a Realm.
      *
      * This flow is guaranteed to emit before any other streams listening to individual objects or
      * query results.
      */
-    internal fun realmChanged(): Flow<FrozenRealmReference> {
+    internal suspend fun realmChanged(): Flow<VersionId> {
+        // Touching realm will open the underlying realm and register change listeners, but must
+        // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
+        if (!realmInitializer.isInitialized()) {
+            withContext(dispatcher) { realm }
+        }
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T, C> registerObserver(thawableObservable: Thawable<Observable<T, C>>): Flow<C> {
-        var cancelCallback: () -> Unit = {}
-
-        return object :
-            Cancellable,
-            Flow<C> by callbackFlow({
-                cancelCallback = {
-                    cancel()
-                }
-                val token: AtomicRef<Cancellable> =
-                    kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
-                withContext(dispatcher) {
-                    ensureActive()
-                    val liveRef: Observable<T, C> = thawableObservable.thaw(realm.realmReference)
-                        ?: error("Cannot listen for changes on a deleted Realm reference")
-                    val interopCallback: io.realm.kotlin.internal.interop.Callback<RealmChangesPointer> =
-                        object : io.realm.kotlin.internal.interop.Callback<RealmChangesPointer> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>): Flow<C> {
+        return callbackFlow {
+            val token: AtomicRef<Cancellable> =
+                kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
+            withContext(dispatcher) {
+                ensureActive()
+                // Ensure that the live realm is always up to date to avoid registering
+                // notifications on newer objects.
+                realm.refresh()
+                val observable = flowable.notifiable()
+                val lifeRef = observable.coreObservable(realm)
+                val changeFlow = observable.changeFlow(this@callbackFlow)
+                // Only emit events during registration if the observed entity is already deleted
+                // (lifeRef == null) as there is no guarantee when the first callback is delivered
+                // by core (either on the version where the callback is registered or on a future
+                // version if there is an ongoing transaction). If the observed entity exists upon
+                // registration then the initial event will always be reported from the callback,
+                // but can still be a deletion-event if the observed element is deleted at that
+                // moment in time.
+                if (lifeRef != null) {
+                    val interopCallback: Callback<RealmChangesPointer> =
+                        object : Callback<RealmChangesPointer> {
                             override fun onChange(change: RealmChangesPointer) {
-                                // FIXME How to make sure the Realm isn't closed when handling this?
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
-                                liveRef.emitFrozenUpdate(realm.snapshot, change, this@callbackFlow)
-                                    ?.run { // this: ChannelResult<T>
-                                        checkForBufferOverFlow()?.let { overflowException: CancellationException ->
-                                            // Cancel scope if the user does not keep up to signal
-                                            // that we are loosing events
-                                            this@callbackFlow.cancel(overflowException)
-                                        }
-                                    }
+                                val frozenObservable = lifeRef.freeze(realm.gcTrackedSnapshot())
+                                changeFlow.emit(frozenObservable, change)
                             }
-                        }.freeze<io.realm.kotlin.internal.interop.Callback<RealmChangesPointer>>() // Freeze to allow cleaning up on another thread
-                    val newToken =
-                        NotificationToken(
-                            token = liveRef.registerForNotification(interopCallback)
-                        )
-                    token.value = newToken
+                        }
+                    token.value = NotificationToken(lifeRef.registerForNotification(interopCallback))
+                } else {
+                    changeFlow.emit(null)
                 }
-                awaitClose {
-                    token.value.cancel()
-                }
-            }) {
-            override fun cancel() {
-                cancelCallback()
+            }
+            awaitClose {
+                token.value.cancel()
             }
         }
     }
@@ -150,10 +142,8 @@ internal class SuspendableNotifier(
      * Manually force a refresh of the Realm, moving it to the latest version.
      * This will also trigger the evaluation of all change listeners, which will
      * be triggered as normal if anything changed.
-     *
-     * @return a frozen reference to the version of the Realm after the refresh.
      */
-    suspend fun refresh(): FrozenRealmReference {
+    suspend fun refresh() {
         return withContext(dispatcher) {
             // This logic should be safe due to the following reasons:
             // - Notifications and `refresh()` run on the same single-threaded dispatcher.
@@ -165,9 +155,8 @@ internal class SuspendableNotifier(
             val dbPointer = realm.realmReference.dbPointer
             RealmInterop.realm_refresh(dbPointer)
             val refreshedVersion = VersionId(RealmInterop.realm_get_version_id(dbPointer))
-            realm.snapshot.also { snapshot ->
+            realm.snapshotVersion.also { snapshotVersion ->
                 // Assert that the above invariants never break
-                val snapshotVersion = snapshot.version()
                 if (snapshotVersion != refreshedVersion) {
                     throw IllegalStateException(
                         """

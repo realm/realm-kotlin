@@ -37,24 +37,29 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
 bool throw_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
-        std::string message("[" + std::to_string(error.error) + "]: " + error.message);
-        realm_clear_last_error();
 
-        // Invoke CoreErrorUtils.coreErrorAsThrowable() to retrieve an exception instance that
+        // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
         // maps to the core error.
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
         static JavaMethod error_type_as_exception(jenv,
                                                   error_type_class,
-                                                  "coreErrorAsThrowable",
-                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+                                                  "asThrowable",
+                                                  "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
 
-        jstring error_message = (jenv)->NewStringUTF(message.c_str());
+        jstring error_message = (jenv)->NewStringUTF(error.message);
+        jstring error_path = (jenv)->NewStringUTF(error.path);
 
         jobject exception = (jenv)->CallStaticObjectMethod(
                 error_type_class,
                 error_type_as_exception,
+                jint(error.categories),
                 jint(error.error),
-                error_message);
+                error_message,
+                error_path,
+                nullptr
+        );
+
+        realm_clear_last_error();
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
         return true;
     } else {
@@ -162,20 +167,11 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
     );
 }
 
-realm_notification_token_t *
-register_notification_cb(int64_t collection_ptr, realm_collection_type_e collection_type,
-                         jobject callback) {
-    auto jenv = get_env();
+realm_on_object_change_func_t get_on_object_change() {
+    auto jenv = get_env(true);
     static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
-
-    auto user_data = static_cast<jobject>(get_env()->NewGlobalRef(callback));
-    auto user_data_free = [](void *userdata) {
-        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
-    };
-
-    // TODO this is instantiated also for object callbacks which shouldn't be the case
-    auto on_collection_change = [](void *userdata, const realm_collection_changes_t *changes) {
+    return [](realm_userdata_t userdata, const realm_object_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
         //  https://github.com/realm/realm-kotlin/issues/889
@@ -185,6 +181,47 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                              on_change_method,
                              reinterpret_cast<jlong>(changes));
     };
+}
+
+realm_on_collection_change_func_t get_on_collection_change() {
+    auto jenv = get_env(true);
+    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
+    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    return [](realm_userdata_t userdata, const realm_collection_changes_t* changes) {
+        // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
+        //  like the C-API error callback below
+        //  https://github.com/realm/realm-kotlin/issues/889
+        auto jenv = get_env(true);
+        jni_check_exception(jenv);
+        jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                             on_change_method,
+                             reinterpret_cast<jlong>(changes));
+    };
+}
+
+realm_on_dictionary_change_func_t get_on_dictionary_change() {
+    auto jenv = get_env(true);
+    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
+    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    return [](realm_userdata_t userdata, const realm_dictionary_changes_t* changes) {
+        // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
+        //  like the C-API error callback below
+        //  https://github.com/realm/realm-kotlin/issues/889
+        auto jenv = get_env(true);
+        jni_check_exception(jenv);
+        jenv->CallVoidMethod(static_cast<jobject>(userdata),
+                             on_change_method,
+                             reinterpret_cast<jlong>(changes));
+    };
+}
+
+realm_notification_token_t *
+register_notification_cb(int64_t collection_ptr, realm_collection_type_e collection_type,
+                         jobject callback) {
+    auto user_data = static_cast<jobject>(get_env()->NewGlobalRef(callback));
+    auto user_data_free = [](void *userdata) {
+        get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
+    };
 
     switch (collection_type) {
         case RLM_COLLECTION_TYPE_NONE: return realm_object_add_notification_callback(
@@ -192,32 +229,29 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    [](void *userdata, const realm_object_changes_t *changes) { // object change callback
-                        // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
-                        //  like the C-API error callback below
-                        //  https://github.com/realm/realm-kotlin/issues/889
-                        auto jenv = get_env(true);
-                        jni_check_exception(jenv);
-                        jenv->CallVoidMethod(static_cast<jobject>(userdata),
-                                             on_change_method,
-                                             reinterpret_cast<jlong>(changes));
-                    }
+                    get_on_object_change()
             );
         case RLM_COLLECTION_TYPE_LIST: return realm_list_add_notification_callback(
                     reinterpret_cast<realm_list_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    on_collection_change // change callback
+                    get_on_collection_change()
             );
         case RLM_COLLECTION_TYPE_SET: return realm_set_add_notification_callback(
                     reinterpret_cast<realm_set_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
                     NULL, // See https://github.com/realm/realm-kotlin/issues/661
-                    on_collection_change // change callback
+                    get_on_collection_change()
             );
-        case RLM_COLLECTION_TYPE_DICTIONARY: throw std::runtime_error("Dictionaries are not supported yet.");
+        case RLM_COLLECTION_TYPE_DICTIONARY: return realm_dictionary_add_notification_callback(
+                    reinterpret_cast<realm_dictionary_t*>(collection_ptr),
+                    user_data, // Use the callback as user data
+                    user_data_free,
+                    NULL, // See https://github.com/realm/realm-kotlin/issues/661
+                    get_on_dictionary_change()
+            );
     }
 }
 
@@ -239,7 +273,10 @@ public:
     }
 
     void notify() {
-        auto jenv = get_env(true);
+        // There is currently no signaling of creation/tear down of the core notifier thread, so we
+        // just attach it as a daemon thread here on first notification to allow the JVM to
+        // shutdown propertly. See https://github.com/realm/realm-core/issues/6429
+        auto jenv = get_env(true, true, "core-notifier");
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
                              reinterpret_cast<jlong>(m_scheduler));
@@ -302,8 +339,8 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
                                                 "(IIILjava/lang/String;Ljava/lang/String;)Lio/realm/kotlin/internal/interop/sync/AppError;",
                                                 true);
 
-    jint category = static_cast<jint>(error->error_category);
-    jint code = static_cast<jint>(error->error_code);
+    jint category = static_cast<jint>(error->categories);
+    jint code = static_cast<jint>(error->error);
     jint httpCode = static_cast<jint>(error->http_status_code);
     jstring message = to_jstring(env, error->message);
     jstring serverLogs = to_jstring(env, error->link_to_server_logs);
@@ -785,11 +822,11 @@ void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_
         realm_error_t err;
         realm_get_async_error(error, &err);
         std::string message("[" + std::to_string(err.error) + "]: " + err.message);
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_utils();
+        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
         static JavaMethod error_type_as_exception(env,
                                                   error_type_class,
-                                                  "coreErrorAsThrowable",
-                                                  "(ILjava/lang/String;)Ljava/lang/Throwable;", true);
+                                                  "asThrowable",
+                                                  "(Lio/realm/kotlin/internal/interop/RealmCoreException;)Ljava/lang/Throwable;", true);
         jstring error_message = (env)->NewStringUTF(message.c_str());
         exception = (env)->CallStaticObjectMethod(
                 error_type_class,
@@ -832,7 +869,10 @@ after_client_reset(void* userdata, realm_t* before_realm,
                                                    "onAfterReset",
                                                    "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Z)V");
     auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
-    realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, NULL);
+    // Reuse the scheduler from the beforeRealm, otherwise Core will attempt to recreate a new one,
+    // which will fail on platforms that hasn't defined a default scheduler factory.
+    realm_scheduler_t scheduler = realm_scheduler(before_realm->get()->scheduler());
+    realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, &scheduler);
     auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
 
@@ -878,6 +918,17 @@ realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferr
 
     jni_check_exception(env);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jlong(transferred_bytes), jlong(total_bytes));
+    jni_check_exception(env);
+}
+
+void
+realm_sync_session_connection_state_change_callback(void *userdata, realm_sync_connection_state_e old_state, realm_sync_connection_state_e new_state) {
+    auto env = get_env(true);
+
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::connection_state_change_callback(), "onChange", "(II)V");
+
+    jni_check_exception(env);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, jint(old_state), jint(new_state));
     jni_check_exception(env);
 }
 
@@ -928,4 +979,41 @@ realm_value_t_cleanup(realm_value_t* value) {
         default:
             break;
     }
+}
+
+void
+realm_sync_thread_created(realm_userdata_t userdata) {
+    // Attach the sync client thread to the JVM so errors can be returned properly
+    // Note, we need to hardcode the name as there is no good way to inject it from JVM as that itself
+    // would require access to the JNiEnv.
+    auto env = get_env(true, false, util::Optional<std::string>("SyncThread"));
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::sync_thread_observer(), "onCreated", "()V");
+    jni_check_exception(env);
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method);
+    jni_check_exception(env);
+}
+
+void
+realm_sync_thread_destroyed(realm_userdata_t userdata) {
+    auto env = get_env(true);
+    // Avoid touching any JNI methods if we have a pending exception
+    // otherwise we will crash with  "JNI called with pending exception" instead of the real
+    // error.
+    if (env->ExceptionCheck() == JNI_FALSE) {
+        static JavaMethod java_callback_method(env, JavaClassGlobalDef::sync_thread_observer(), "onDestroyed", "()V");
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method);
+        jni_check_exception(env);
+    }
+    // Detach from the Java thread associated with the Sync Client Thread, otherwise
+    // the JVM will not be able to shutdown.
+    detach_current_thread();
+}
+
+void
+realm_sync_thread_error(realm_userdata_t userdata, const char* error) {
+    JNIEnv* env = get_env(true);
+    std::string msg = util::format("An exception has been thrown on the sync client thread:\n%1", error);
+    static JavaMethod java_callback_method(env, JavaClassGlobalDef::sync_thread_observer(), "onError", "(Ljava/lang/String;)V");
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, to_jstring(env, msg));
+    jni_check_exception(env);
 }

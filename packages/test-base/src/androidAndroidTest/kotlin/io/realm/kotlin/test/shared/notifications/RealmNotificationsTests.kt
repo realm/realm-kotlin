@@ -25,15 +25,16 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.InitialRealm
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
-import io.realm.kotlin.test.NotificationTests
+import io.realm.kotlin.test.FlowableTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
-import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -42,11 +43,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class RealmNotificationsTests : NotificationTests {
+class RealmNotificationsTests : FlowableTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -79,7 +80,7 @@ class RealmNotificationsTests : NotificationTests {
                     c.send(it)
                 }
             }
-            c.receive().let { realmChange ->
+            c.receiveOrFail().let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
@@ -101,7 +102,7 @@ class RealmNotificationsTests : NotificationTests {
             }
 
             // We should first receive an initial Realm notification.
-            c.receive().let { realmChange ->
+            c.receiveOrFail().let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
@@ -109,7 +110,7 @@ class RealmNotificationsTests : NotificationTests {
             realm.write { /* Do nothing */ }
 
             // Now we we should receive an updated Realm change notification.
-            c.receive().let { realmChange ->
+            c.receiveOrFail().let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
@@ -125,24 +126,30 @@ class RealmNotificationsTests : NotificationTests {
             val c1 = Channel<RealmChange<Realm>>(1)
             val c2 = Channel<RealmChange<Realm>>(1)
             val startingVersion = realm.version()
+
             val observer1 = async {
                 realm.asFlow().collect {
                     c1.send(it)
                 }
             }
+            val observer2Cancelled = Mutex(false)
             val observer2 = async {
                 realm.asFlow().collect {
-                    c2.send(it)
+                    if (!observer2Cancelled.isLocked) {
+                        c2.send(it)
+                    } else {
+                        fail("Should not receive notifications on a canceled scope")
+                    }
                 }
             }
 
             // We should first receive an initial Realm notification.
-            c1.receive().let { realmChange ->
+            c1.receiveOrFail().let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
 
-            c2.receive().let { realmChange ->
+            c2.receiveOrFail().let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
@@ -150,24 +157,24 @@ class RealmNotificationsTests : NotificationTests {
             realm.write { /* Do nothing */ }
 
             // Now we we should receive an updated Realm change notification.
-            c1.receive().let { realmChange ->
+            c1.receiveOrFail().let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
 
-            c2.receive().let { realmChange ->
+            c2.receiveOrFail().let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
 
+            // Stop one observer and ensure that we dont receive any more notifications in that scope
             observer2.cancel()
+            observer2Cancelled.lock()
 
             realm.write { /* Do nothing */ }
 
-            // Closing an observer should prevent the channel on receiving further notifications
-            assertTrue(c2.isEmpty)
             // But unclosed channels should receive notifications
-            c1.receive().let { realmChange ->
+            c1.receiveOrFail().let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
             }
@@ -177,12 +184,6 @@ class RealmNotificationsTests : NotificationTests {
             c1.close()
             c2.close()
         }
-    }
-
-    @Test
-    @Ignore
-    override fun deleteObservable() {
-        // Realms cannot be deleted, so Realm Flows do not need to handle this case
     }
 
     @Test
@@ -200,24 +201,15 @@ class RealmNotificationsTests : NotificationTests {
     @Test
     fun closingRealmCompletesFlow() {
         runBlocking {
-            val c = Channel<RealmChange<*>>(1)
-            val cancelledChannel = Channel<Boolean>(1)
-
+            val mutex = Mutex(true)
             val observer = async {
-                realm.asFlow()
-                    .onCompletion {
-                        // Signal completion
-                        cancelledChannel.send(true)
-                    }
-                    .collect {
-                        c.trySend(it)
-                    }
+                realm.asFlow().collect { mutex.unlock() }
             }
+            mutex.lock()
             realm.close()
-            cancelledChannel.receive()
-            assertTrue(observer.isCompleted)
-            observer.cancel()
-            c.close()
+            withTimeout(5.seconds) {
+                observer.await()
+            }
         }
     }
 

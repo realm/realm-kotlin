@@ -23,16 +23,24 @@ import io.realm.kotlin.demo.javacompatibility.TAG
 import io.realm.kotlin.demo.javacompatibility.data.Repository
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PrimaryKey
 
 class KotlinEntity : RealmObject {
+    @PrimaryKey
+    var id: String = ""
     var name: String = "KOTLIN"
 }
 
 class KotlinRepository: Repository {
 
-    val realm = Realm.open(RealmConfiguration.Builder(setOf(KotlinEntity::class)).name("kotlin.realm").build())
+    val realm: Realm
 
     init {
+        val config = RealmConfiguration.Builder(setOf(KotlinEntity::class))
+            .name("kotlin.realm")
+            .build()
+        Realm.deleteRealm(config)
+        realm = Realm.open(config)
         realm.writeBlocking { copyToRealm(KotlinEntity()) }
         val entities = realm.query<KotlinEntity>().find()
         Log.w(TAG, "KOTLIN: ${entities.size}")

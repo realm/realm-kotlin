@@ -21,6 +21,8 @@ import android.util.Log
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.RealmModel
+import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
 import io.realm.annotations.RealmClass
 import io.realm.kotlin.demo.javacompatibility.TAG
 import io.realm.kotlin.demo.javacompatibility.data.Repository
@@ -32,18 +34,23 @@ open class JavaEntity : RealmModel {
     var name: String = "JAVA"
 }
 
+open class JavaEntityWithBaseObject : RealmObject() {
+    @PrimaryKey
+    var id: String = ""
+}
+
 class JavaRepository(appContext: Context) : Repository {
 
     var realm: Realm
 
     init {
         Realm.init(appContext)
-        realm = Realm.getInstance(
-            RealmConfiguration.Builder()
-                .name("java.realm")
-                .allowWritesOnUiThread(true)
-                .build()
-        )
+        val config = RealmConfiguration.Builder()
+            .name("java.realm")
+            .allowWritesOnUiThread(true)
+            .build()
+        Realm.deleteRealm(config)
+        realm = Realm.getInstance(config)
         realm.executeTransaction {
             realm.createObject(JavaEntity::class.java)
             val entities = realm.where(JavaEntity::class.java).findAll()

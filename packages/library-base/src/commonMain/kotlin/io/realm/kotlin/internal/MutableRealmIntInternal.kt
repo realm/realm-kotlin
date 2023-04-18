@@ -67,10 +67,10 @@ internal class ManagedMutableRealmInt(
         obj.checkValid()
         try {
             block()
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
+        } catch (exception: IllegalStateException) {
+            throw IllegalStateException(
                 "$message `${obj.className}.$${obj.metadata[propertyKey]!!.name}` with passed value `$value`: $NOT_IN_A_TRANSACTION_MSG",
+                exception
             )
         }
     }

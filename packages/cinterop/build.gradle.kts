@@ -31,12 +31,16 @@ buildscript {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
     }
 }
+
 apply(plugin = "kotlinx-atomicfu")
 // AtomicFu cannot transform JVM code. Throws
 // ClassCastException: org.objectweb.asm.tree.InsnList cannot be cast to java.lang.Iterable
 project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtension::class) {
     transformJvm = false
 }
+
+// Directory for generated Version.kt holding VERSION constant
+val versionDirectory = "$buildDir/generated/source/version/"
 
 // Types of builds supported
 enum class BuildType(val type: String, val buildDirSuffix: String) {
@@ -202,9 +206,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("stdlib-common"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
-
                 api("org.mongodb.kbson:kbson:${Versions.kbson}")
             }
+            kotlin.srcDir(versionDirectory)
         }
         val commonTest by getting
         val jvm by creating {
@@ -218,6 +222,10 @@ kotlin {
         }
         val androidMain by getting {
             dependsOn(jvm)
+            dependencies {
+                implementation("androidx.startup:startup-runtime:${Versions.androidxStartup}")
+                implementation("com.getkeepsafe.relinker:relinker:${Versions.relinker}")
+            }
         }
         val androidTest by getting {
             dependencies {
@@ -672,9 +680,32 @@ realmPublish {
     }
 }
 
+// Generate code with version constant
+tasks.create("generateSdkVersionConstant") {
+    val outputDir = file(versionDirectory)
+
+    inputs.property("version", project.version)
+    outputs.dir(outputDir)
+
+    doLast {
+        val versionFile = file("$outputDir/io/realm/kotlin/internal/Version.kt")
+        versionFile.parentFile.mkdirs()
+        versionFile.writeText(
+            """
+            // Generated file. Do not edit!
+            package io.realm.kotlin.internal
+            public const val SDK_VERSION: String = "${project.version}"
+            """.trimIndent()
+        )
+    }
+}
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
+    dependsOn("generateSdkVersionConstant")
+}
+
 tasks.named("clean") {
     doLast {
-        delete(project.file(".cxx"))
         delete(buildJVMSharedLibs.get().outputs)
+        delete(project.file(".cxx"))
     }
 }

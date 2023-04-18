@@ -21,7 +21,9 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.query.AggregatorQueryType
@@ -44,11 +46,14 @@ import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.coroutines.TimeoutCancellationException
@@ -304,44 +309,32 @@ class QueryTests {
 
     @Test
     fun find_realm_malformedQueryThrows() {
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Request for argument at index 0 but no arguments are provided") {
             realm.query<QuerySample>("stringField = $0")
-        }.let {
-            assertTrue(it.message!!.contains("Have you specified all parameters"))
         }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("Unsupported comparison between type 'string' and type 'int'") {
             realm.query<QuerySample>("stringField = 42")
-        }.let {
-            assertTrue(it.message!!.contains("Wrong query field"))
         }
 
-        assertFailsWith<IllegalArgumentException> {
+        assertFailsWithMessage<IllegalArgumentException>("'QuerySample' has no property 'nonExistingField'") {
             realm.query<QuerySample>("nonExistingField = 13")
-        }.let {
-            assertTrue(it.message!!.contains("Wrong query field"))
         }
     }
 
     @Test
     fun find_mutableRealm_malformedQueryThrows() {
         realm.writeBlocking {
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("Request for argument at index 0 but no arguments are provided") {
                 query<QuerySample>("stringField = $0")
-            }.let {
-                assertTrue(it.message!!.contains("Have you specified all parameters"))
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("Unsupported comparison between type 'string' and type 'int'") {
                 query<QuerySample>("stringField = 42")
-            }.let {
-                assertTrue(it.message!!.contains("Wrong query field"))
             }
 
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWithMessage<IllegalArgumentException>("'QuerySample' has no property 'nonExistingField'") {
                 query<QuerySample>("nonExistingField = 13")
-            }.let {
-                assertTrue(it.message!!.contains("Wrong query field"))
             }
         }
     }
@@ -360,7 +353,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -384,7 +377,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -393,7 +386,7 @@ class QueryTests {
                 copyToRealm(QuerySample())
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
@@ -421,7 +414,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
@@ -430,7 +423,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -1022,7 +1015,7 @@ class QueryTests {
                     }
             }
 
-            assertEquals(0, channel.receive())
+            assertEquals(0, channel.receiveOrFail())
 
             observer.cancel()
             channel.close()
@@ -1044,13 +1037,13 @@ class QueryTests {
                     }
             }
 
-            assertEquals(0, channel.receive())
+            assertEquals(0, channel.receiveOrFail())
 
             realm.writeBlocking {
                 copyToRealm(QuerySample())
             }
 
-            assertEquals(1, channel.receive())
+            assertEquals(1, channel.receiveOrFail())
             observer.cancel()
             channel.close()
         }
@@ -1075,13 +1068,13 @@ class QueryTests {
                     }
             }
 
-            assertEquals(1, channel.receive())
+            assertEquals(1, channel.receiveOrFail())
 
             realm.write {
                 delete(query<QuerySample>())
             }
 
-            assertEquals(0, channel.receive())
+            assertEquals(0, channel.receiveOrFail())
 
             observer.cancel()
             channel.close()
@@ -1111,8 +1104,8 @@ class QueryTests {
                     }
             }
 
-            assertEquals(0, channel1.receive())
-            assertEquals(0, channel2.receive())
+            assertEquals(0, channel1.receiveOrFail())
+            assertEquals(0, channel2.receiveOrFail())
 
             // Write one object
             realm.write {
@@ -1120,8 +1113,8 @@ class QueryTests {
             }
 
             // Assert emission and cancel first subscription
-            assertEquals(1, channel1.receive())
-            assertEquals(1, channel2.receive())
+            assertEquals(1, channel1.receiveOrFail())
+            assertEquals(1, channel2.receiveOrFail())
             observer1.cancel()
 
             // Write another object
@@ -1130,7 +1123,7 @@ class QueryTests {
             }
 
             // Assert emission and that the original channel hasn't been received
-            assertEquals(2, channel2.receive())
+            assertEquals(2, channel2.receiveOrFail())
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -1155,7 +1148,7 @@ class QueryTests {
 
     // ------------------
     // Aggregators - sum
-    // --------timestampField----------
+    // ------------------
     @Test
     fun verifySupportedSumAggregators() {
         assertEquals(
@@ -1865,7 +1858,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertTrue(channel.isEmpty) // Validates that this is the first event and only event
                 assertIs<PendingObject<QuerySample>>(objectChange)
             }
@@ -1878,7 +1871,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertTrue(channel.isEmpty) // Validates that this is the first event and only event
 
                 assertIs<InitialObject<QuerySample>>(objectChange)
@@ -1893,7 +1886,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<QuerySample>>(objectChange)
                 assertEquals(6, objectChange.obj.intField)
             }
@@ -1906,7 +1899,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<QuerySample>>(objectChange)
                 assertEquals(7, objectChange.obj.intField)
             }
@@ -1917,9 +1910,9 @@ class QueryTests {
                 delete(query<QuerySample>("intField = $0", 7).first().find()!!)
             }
 
-            assertIs<DeletedObject<QuerySample>>(channel.receive())
+            assertIs<DeletedObject<QuerySample>>(channel.receiveOrFail())
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<QuerySample>>(objectChange)
                 assertEquals(4, objectChange.obj.intField)
             }
@@ -1932,7 +1925,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<QuerySample>>(objectChange)
                 assertEquals(7, objectChange.obj.intField)
             }
@@ -1946,9 +1939,9 @@ class QueryTests {
                 }
             }
 
-            assertIs<DeletedObject<QuerySample>>(channel.receive())
+            assertIs<DeletedObject<QuerySample>>(channel.receiveOrFail())
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<QuerySample>>(objectChange)
                 assertEquals(10, objectChange.obj.intField)
             }
@@ -1959,7 +1952,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            assertIs<DeletedObject<QuerySample>>(channel.receive())
+            assertIs<DeletedObject<QuerySample>>(channel.receiveOrFail())
 
             observer.cancel()
             channel.close()
@@ -1989,8 +1982,8 @@ class QueryTests {
                     }
             }
 
-            assertIs<PendingObject<*>>(channel1.receive())
-            assertIs<PendingObject<*>>(channel2.receive())
+            assertIs<PendingObject<*>>(channel1.receiveOrFail())
+            assertIs<PendingObject<*>>(channel2.receiveOrFail())
 
             // Write one object
             realm.write {
@@ -1998,8 +1991,8 @@ class QueryTests {
             }
 
             // Assert emission and cancel first subscription
-            assertIs<InitialObject<*>>(channel1.receive())
-            assertIs<InitialObject<*>>(channel2.receive())
+            assertIs<InitialObject<*>>(channel1.receiveOrFail())
+            assertIs<InitialObject<*>>(channel2.receiveOrFail())
             observer1.cancel()
 
             // Update object
@@ -2010,7 +2003,7 @@ class QueryTests {
             }
 
             // Assert emission and that the original channel hasn't been received
-            assertIs<UpdatedObject<*>>(channel2.receive())
+            assertIs<UpdatedObject<*>>(channel2.receiveOrFail())
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -2019,9 +2012,206 @@ class QueryTests {
         }
     }
 
-    // -------------------------------------------------------
-    // TODO - add tests for queries on collections when ready
-    // -------------------------------------------------------
+    @Test
+    fun list_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                QuerySample().apply {
+                    intListField = realmListOf(1, 2, 3)
+                    floatListField = realmListOf(1f, 2f, 3f)
+                    doubleListField = realmListOf(1.0, 2.0, 3.0)
+                    decimal128ListField = realmListOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                    nullableIntListField = realmListOf(1, 2, 3)
+                    nullableFloatListField = realmListOf(1f, 2f, 3f)
+                    nullableDoubleListField = realmListOf(1.0, 2.0, 3.0)
+                    nullableDecimal128ListField = realmListOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                }
+            )
+        }
+
+        // Supported fields for aggregations
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::intListField.name, // Just test one Long value
+                    QuerySample::floatListField.name,
+                    QuerySample::doubleListField.name,
+                    QuerySample::decimal128ListField.name,
+                    QuerySample::nullableIntListField.name,
+                    QuerySample::nullableFloatListField.name,
+                    QuerySample::nullableDoubleListField.name,
+                    QuerySample::nullableDecimal128ListField.name,
+                ).forEach { field ->
+                    realm.query<QuerySample>("$field.$aggregator < 7")
+                        .find { assertEquals(1, it.size) }
+                    realm.query<QuerySample>("$field.$aggregator > 42")
+                        .find { assertTrue(it.isEmpty()) }
+                }
+            }
+
+        // Unsupported fields
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::booleanListField.name,
+                    QuerySample::objectIdListField.name,
+                    QuerySample::bsonObjectIdListField.name,
+                    QuerySample::timestampListField.name,
+                    QuerySample::binaryListField.name,
+                    QuerySample::nullableBooleanListField.name,
+                    QuerySample::nullableObjectIdListField.name,
+                    QuerySample::nullableBsonObjectIdListField.name,
+                    QuerySample::nullableTimestampListField.name,
+                    QuerySample::nullableBinaryListField.name,
+                ).forEach { field ->
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.$aggregator' for this type of property") {
+                        realm.query<QuerySample>("$field.$aggregator > 42")
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun set_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                QuerySample().apply {
+                    intSetField = realmSetOf(1, 2, 3)
+                    floatSetField = realmSetOf(1f, 2f, 3f)
+                    doubleSetField = realmSetOf(1.0, 2.0, 3.0)
+                    decimal128SetField = realmSetOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                    nullableIntSetField = realmSetOf(1, 2, 3)
+                    nullableFloatSetField = realmSetOf(1f, 2f, 3f)
+                    nullableDoubleSetField = realmSetOf(1.0, 2.0, 3.0)
+                    nullableDecimal128SetField = realmSetOf(
+                        Decimal128("1"),
+                        Decimal128("2"),
+                        Decimal128("3")
+                    )
+                }
+            )
+        }
+
+        // Supported fields for aggregations
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::intSetField.name, // Just test one Long value
+                    QuerySample::floatSetField.name,
+                    QuerySample::doubleSetField.name,
+                    QuerySample::decimal128SetField.name,
+                    QuerySample::nullableIntSetField.name,
+                    QuerySample::nullableFloatSetField.name,
+                    QuerySample::nullableDoubleSetField.name,
+                    QuerySample::nullableDecimal128SetField.name,
+                ).forEach { field ->
+                    realm.query<QuerySample>("$field.$aggregator < 7")
+                        .find { assertEquals(1, it.size) }
+                    realm.query<QuerySample>("$field.$aggregator > 42")
+                        .find { assertTrue(it.isEmpty()) }
+                }
+            }
+
+        // Unsupported fields
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::booleanSetField.name,
+                    QuerySample::objectIdSetField.name,
+                    QuerySample::bsonObjectIdSetField.name,
+                    QuerySample::timestampSetField.name,
+                    QuerySample::binaryListField.name,
+                    QuerySample::nullableBooleanSetField.name,
+                    QuerySample::nullableObjectIdSetField.name,
+                    QuerySample::nullableBsonObjectIdSetField.name,
+                    QuerySample::nullableTimestampSetField.name,
+                    QuerySample::nullableBinaryListField.name,
+                ).forEach { field ->
+                    assertFailsWithMessage<IllegalArgumentException>("Cannot use aggregate '.$aggregator' for this type of property") {
+                        realm.query<QuerySample>("$field.$aggregator > 42")
+                    }
+                }
+            }
+    }
+
+    @Test
+    fun dictionary_query() {
+        realm.writeBlocking {
+            copyToRealm(
+                QuerySample().apply {
+                    intDictionaryField = realmDictionaryOf("A" to 1, "B" to 2, "C" to 3)
+                    floatDictionaryField = realmDictionaryOf("A" to 1f, "B" to 2f, "C" to 3f)
+                    doubleDictionaryField = realmDictionaryOf("A" to 1.0, "B" to 2.0, "C" to 3.0)
+                    decimal128DictionaryField = realmDictionaryOf(
+                        "A" to Decimal128("1"),
+                        "B" to Decimal128("2"),
+                        "C" to Decimal128("3")
+                    )
+                    nullableIntDictionaryField = realmDictionaryOf("A" to 1, "B" to 2, "C" to 3)
+                    nullableFloatDictionaryField = realmDictionaryOf("A" to 1f, "B" to 2f, "C" to 3f)
+                    nullableDoubleDictionaryField = realmDictionaryOf("A" to 1.0, "B" to 2.0, "C" to 3.0)
+                    nullableDecimal128DictionaryField = realmDictionaryOf(
+                        "A" to Decimal128("1"),
+                        "B" to Decimal128("2"),
+                        "C" to Decimal128("3")
+                    )
+                }
+            )
+        }
+
+        // Supported fields for aggregations
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::intDictionaryField.name, // Just test one Long value
+                    QuerySample::floatDictionaryField.name,
+                    QuerySample::doubleDictionaryField.name,
+                    QuerySample::decimal128DictionaryField.name,
+                    QuerySample::nullableIntDictionaryField.name,
+                    QuerySample::nullableFloatDictionaryField.name,
+                    QuerySample::nullableDoubleDictionaryField.name,
+                    QuerySample::nullableDecimal128DictionaryField.name,
+                ).forEach { field ->
+                    realm.query<QuerySample>("$field.$aggregator < 7")
+                        .find { assertEquals(1, it.size) }
+                    realm.query<QuerySample>("$field.$aggregator > 42")
+                        .find { assertTrue(it.isEmpty()) }
+                }
+            }
+
+        // Unsupported fields
+        listOf("@sum", "@min", "@max", "@avg")
+            .forEach { aggregator ->
+                listOf(
+                    QuerySample::booleanDictionaryField.name,
+                    QuerySample::objectIdDictionaryField.name,
+                    QuerySample::bsonObjectIdDictionaryField.name,
+                    QuerySample::timestampDictionaryField.name,
+                    QuerySample::binaryListField.name,
+                    QuerySample::nullableBooleanDictionaryField.name,
+                    QuerySample::nullableObjectIdDictionaryField.name,
+                    QuerySample::nullableBsonObjectIdDictionaryField.name,
+                    QuerySample::nullableTimestampDictionaryField.name,
+                    QuerySample::nullableBinaryListField.name,
+                ).forEach { field ->
+                    assertFailsWith<IllegalArgumentException> {
+                        realm.query<QuerySample>("$field.$aggregator > 42")
+                    }
+                }
+            }
+    }
 
     // ----------------------------------
     // Multithreading with query objects
@@ -2048,7 +2238,7 @@ class QueryTests {
                 val results = query!!.find()
                 channel.send(results)
             }
-            val results = channel.receive()
+            val results = channel.receiveOrFail()
             assertEquals(1, results.size)
 
             query!!.find { res ->
@@ -2287,7 +2477,7 @@ class QueryTests {
                     }
             }
 
-            val aggregatedValue = channel.receive()
+            val aggregatedValue = channel.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (aggregatedValue) {
                     is Number -> assertEquals(0, aggregatedValue.toInt())
@@ -2303,7 +2493,7 @@ class QueryTests {
                 saveData(propertyDescriptor)
             }
 
-            val receivedAggregate = channel.receive()
+            val receivedAggregate = channel.receiveOrFail()
             when (propertyDescriptor.clazz) {
                 RealmAny::class -> when (type) {
                     AggregatorQueryType.MIN -> {
@@ -2353,12 +2543,12 @@ class QueryTests {
             when (propertyDescriptor.clazz) {
                 RealmAny::class -> when (type) {
                     AggregatorQueryType.SUM -> assertFailsWith<TimeoutCancellationException> {
-                        withTimeout(100) { channel.receive() }
+                        withTimeout(100) { channel.receiveOrFail() }
                     }
                     // MAX for RealmAny is RealmObject so emitted objects will not be the same
                     // even though they may the same at a structural level
                     AggregatorQueryType.MAX -> {
-                        val receivedRepeatedAggregate = channel.receive()
+                        val receivedRepeatedAggregate = channel.receiveOrFail()
                         val actualString = (receivedRepeatedAggregate as RealmAny)
                             .asRealmObject<QuerySample>()
                             .stringField
@@ -2368,11 +2558,11 @@ class QueryTests {
                         assertEquals(expectedString, actualString)
                     }
                     AggregatorQueryType.MIN -> assertFailsWith<TimeoutCancellationException> {
-                        withTimeout(100) { channel.receive() }
+                        withTimeout(100) { channel.receiveOrFail() }
                     }
                 }
                 else -> assertFailsWith<TimeoutCancellationException> {
-                    withTimeout(100) { channel.receive() }
+                    withTimeout(100) { channel.receiveOrFail() }
                 }
             }
 
@@ -2381,7 +2571,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            val finalAggregatedValue = channel.receive()
+            val finalAggregatedValue = channel.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (finalAggregatedValue) {
                     is Number -> assertEquals(0, finalAggregatedValue.toInt())
@@ -2441,7 +2631,7 @@ class QueryTests {
                     }
             }
 
-            val receivedAggregate = channel.receive()
+            val receivedAggregate = channel.receiveOrFail()
             when (propertyDescriptor.clazz) {
                 RealmAny::class -> when (type) {
                     AggregatorQueryType.MIN -> {
@@ -2479,7 +2669,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            val aggregatedValue = channel.receive()
+            val aggregatedValue = channel.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (aggregatedValue) {
                     is Number -> assertEquals(0, aggregatedValue.toInt())
@@ -2556,8 +2746,8 @@ class QueryTests {
                     }
             }
 
-            val initialAggregate1 = channel1.receive()
-            val initialAggregate2 = channel2.receive()
+            val initialAggregate1 = channel1.receiveOrFail()
+            val initialAggregate2 = channel2.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (initialAggregate1) {
                     is Number -> {
@@ -2588,7 +2778,7 @@ class QueryTests {
             }
 
             // Assert emission and that the original channel hasn't been received
-            val receivedAggregate = channel2.receive()
+            val receivedAggregate = channel2.receiveOrFail()
             if (propertyDescriptor.clazz == RealmAny::class) {
                 when (type) {
                     AggregatorQueryType.SUM -> {
@@ -2885,7 +3075,6 @@ class QuerySample() : RealmObject {
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
-//    var realmAnyField: RealmAny? = RealmAny.create(42)
     var realmAnyField: RealmAny? = RealmAny.create("Hello")
 
     var nullableStringField: String? = null
@@ -2917,6 +3106,7 @@ class QuerySample() : RealmObject {
     var timestampListField: RealmList<RealmInstant> = realmListOf()
     var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
+    var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<QuerySample> = realmListOf()
 
     var nullableStringListField: RealmList<String?> = realmListOf()
@@ -2932,6 +3122,69 @@ class QuerySample() : RealmObject {
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
     var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
+    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
+
+    var stringSetField: RealmSet<String> = realmSetOf()
+    var byteSetField: RealmSet<Byte> = realmSetOf()
+    var charSetField: RealmSet<Char> = realmSetOf()
+    var shortSetField: RealmSet<Short> = realmSetOf()
+    var intSetField: RealmSet<Int> = realmSetOf()
+    var longSetField: RealmSet<Long> = realmSetOf()
+    var booleanSetField: RealmSet<Boolean> = realmSetOf()
+    var floatSetField: RealmSet<Float> = realmSetOf()
+    var doubleSetField: RealmSet<Double> = realmSetOf()
+    var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
+    var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
+    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
+    var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
+    var binarySetField: RealmSet<ByteArray> = realmSetOf()
+    var objectSetField: RealmSet<QuerySample> = realmSetOf()
+
+    var nullableStringSetField: RealmSet<String?> = realmSetOf()
+    var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
+    var nullableCharSetField: RealmSet<Char?> = realmSetOf()
+    var nullableShortSetField: RealmSet<Short?> = realmSetOf()
+    var nullableIntSetField: RealmSet<Int?> = realmSetOf()
+    var nullableLongSetField: RealmSet<Long?> = realmSetOf()
+    var nullableBooleanSetField: RealmSet<Boolean?> = realmSetOf()
+    var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
+    var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
+    var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
+    var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
+    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
+    var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
+    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
+
+    var stringDictionaryField: RealmDictionary<String> = realmDictionaryOf()
+    var byteDictionaryField: RealmDictionary<Byte> = realmDictionaryOf()
+    var charDictionaryField: RealmDictionary<Char> = realmDictionaryOf()
+    var shortDictionaryField: RealmDictionary<Short> = realmDictionaryOf()
+    var intDictionaryField: RealmDictionary<Int> = realmDictionaryOf()
+    var longDictionaryField: RealmDictionary<Long> = realmDictionaryOf()
+    var booleanDictionaryField: RealmDictionary<Boolean> = realmDictionaryOf()
+    var floatDictionaryField: RealmDictionary<Float> = realmDictionaryOf()
+    var doubleDictionaryField: RealmDictionary<Double> = realmDictionaryOf()
+    var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
+    var timestampDictionaryField: RealmDictionary<RealmInstant> = realmDictionaryOf()
+    var objectIdDictionaryField: RealmDictionary<ObjectId> = realmDictionaryOf()
+    var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
+    var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
+
+    var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
+    var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
+    var nullableCharDictionaryField: RealmDictionary<Char?> = realmDictionaryOf()
+    var nullableShortDictionaryField: RealmDictionary<Short?> = realmDictionaryOf()
+    var nullableIntDictionaryField: RealmDictionary<Int?> = realmDictionaryOf()
+    var nullableLongDictionaryField: RealmDictionary<Long?> = realmDictionaryOf()
+    var nullableBooleanDictionaryField: RealmDictionary<Boolean?> = realmDictionaryOf()
+    var nullableFloatDictionaryField: RealmDictionary<Float?> = realmDictionaryOf()
+    var nullableDoubleDictionaryField: RealmDictionary<Double?> = realmDictionaryOf()
+    var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
+    var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
+    var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
+    var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
+    var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
+    var nullableObjectDictionaryField: RealmDictionary<QuerySample?> = realmDictionaryOf()
 
     var child: QuerySample? = null
 }

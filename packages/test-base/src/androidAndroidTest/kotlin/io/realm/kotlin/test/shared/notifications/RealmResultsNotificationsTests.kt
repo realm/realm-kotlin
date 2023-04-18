@@ -28,12 +28,13 @@ import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.find
-import io.realm.kotlin.test.NotificationTests
+import io.realm.kotlin.test.FlowableTests
 import io.realm.kotlin.test.assertIsChangeSet
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.OBJECT_VALUES
 import io.realm.kotlin.test.shared.OBJECT_VALUES2
 import io.realm.kotlin.test.shared.OBJECT_VALUES3
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.filterNot
@@ -48,7 +49,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-class RealmResultsNotificationsTests : NotificationTests {
+class RealmResultsNotificationsTests : FlowableTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -83,7 +84,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -112,7 +113,7 @@ class RealmResultsNotificationsTests : NotificationTests {
             }
 
             // Assertion after empty list is emitted
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -128,7 +129,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -151,7 +152,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -179,7 +180,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -207,7 +208,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -230,7 +231,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -250,7 +251,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
 
-            c.receive().let { resultsChange ->
+            c.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
 
                 assertNotNull(resultsChange.list)
@@ -295,11 +296,11 @@ class RealmResultsNotificationsTests : NotificationTests {
                     }
             }
 
-            c1.receive().let { resultsChange ->
+            c1.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
-            c2.receive().let { resultsChange ->
+            c2.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
@@ -310,7 +311,7 @@ class RealmResultsNotificationsTests : NotificationTests {
                 copyToRealm(Sample().apply { stringField = "Baz" })
             }
 
-            c2.receive().let { resultsChange ->
+            c2.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
                 assertEquals(2, resultsChange.list.size)
             }
@@ -318,45 +319,6 @@ class RealmResultsNotificationsTests : NotificationTests {
             observer2.cancel()
             c1.close()
             c2.close()
-        }
-    }
-
-    @Test
-    override fun deleteObservable() {
-        runBlocking {
-            val c = Channel<ResultsChange<Sample>>(1)
-            realm.write {
-                copyToRealm(
-                    Sample().apply {
-                        stringField = "Foo"
-                    }
-                )
-            }
-            val observer = async {
-                realm.query<Sample>()
-                    .asFlow()
-                    .collect {
-                        c.trySend(it)
-                    }
-            }
-            c.receive().let { resultsChange ->
-                assertIs<InitialResults<*>>(resultsChange)
-                assertEquals(1, resultsChange.list.size)
-            }
-            realm.write {
-                query<Sample>()
-                    .first()
-                    .find { sample ->
-                        assertNotNull(sample)
-                        delete(sample)
-                    }
-            }
-            c.receive().let { resultsChange ->
-                assertIs<UpdatedResults<*>>(resultsChange)
-                assertTrue(resultsChange.list.isEmpty())
-            }
-            observer.cancel()
-            c.close()
         }
     }
 
@@ -391,11 +353,11 @@ class RealmResultsNotificationsTests : NotificationTests {
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
-            assertEquals(1, c.receive())
+            assertEquals(1, c.receiveOrFail())
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })
             }
-            assertEquals(-1, c.receive())
+            assertEquals(-1, c.receiveOrFail())
             observer1.cancel()
             observer2.cancel()
             c.close()
@@ -419,7 +381,7 @@ class RealmResultsNotificationsTests : NotificationTests {
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
-            assertEquals(1, c.receive())
+            assertEquals(1, c.receiveOrFail())
             realm.close()
             observer.cancel()
             c.close()

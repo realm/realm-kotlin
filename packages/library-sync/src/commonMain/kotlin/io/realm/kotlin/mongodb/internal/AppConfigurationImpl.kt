@@ -35,9 +35,9 @@ import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
+import io.realm.kotlin.mongodb.HttpLogObfuscator
 
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
@@ -48,7 +48,10 @@ public class AppConfigurationImpl constructor(
     internal val networkTransportFactory: () -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
-    public val log: RealmLog
+    public val log: RealmLog,
+    override val appName: String?,
+    override val appVersion: String?,
+    override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
 
     /**
@@ -64,8 +67,22 @@ public class AppConfigurationImpl constructor(
         // be no reason for people to have multiple app instances for the same app, so the net
         // effect should be the same
         val networkTransport = networkTransportFactory()
-        val appConfigPointer: RealmAppConfigurationPointer = initializeRealmAppConfig(networkTransport)
-        val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig()
+        val appConfigPointer: RealmAppConfigurationPointer =
+            initializeRealmAppConfig(appName, appVersion, networkTransport)
+        var applicationInfo: String? = null
+        // Define user agent strings sent when making the WebSocket connection to Device Sync
+        if (appName != null || appVersion == null) {
+            val info = StringBuilder()
+            appName?.let { info.append(appName) } ?: info.append("Unknown")
+            info.append("/")
+            appVersion?.let { info.append(appVersion) } ?: info.append("Unknown")
+            applicationInfo = info.toString()
+        }
+        val sdkInfo = "RealmKotlin/$SDK_VERSION"
+        val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig(
+            sdkInfo,
+            applicationInfo.toString()
+        )
         return Pair(
             networkTransport,
             RealmInterop.realm_app_get(
@@ -98,13 +115,19 @@ public class AppConfigurationImpl constructor(
 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
-    private fun initializeRealmAppConfig(networkTransport: NetworkTransport): RealmAppConfigurationPointer =
-        RealmInterop.realm_app_config_new(
+    private fun initializeRealmAppConfig(
+        localAppName: String?,
+        localAppVersion: String?,
+        networkTransport: NetworkTransport
+    ): RealmAppConfigurationPointer {
+        return RealmInterop.realm_app_config_new(
             appId = appId,
             baseUrl = baseUrl,
             networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
             connectionParams = SyncConnectionParams(
                 sdkVersion = SDK_VERSION,
+                localAppName = localAppName,
+                localAppVersion = localAppVersion,
                 platform = OS_NAME,
                 platformVersion = OS_VERSION,
                 cpuArch = CPU_ARCH,
@@ -113,12 +136,14 @@ public class AppConfigurationImpl constructor(
                 framework = RUNTIME,
                 frameworkVersion = RUNTIME_VERSION
             )
-        ).freeze()
+        )
+    }
 
-    private fun initializeSyncClientConfig(): RealmSyncClientConfigurationPointer =
+    private fun initializeSyncClientConfig(sdkInfo: String?, applicationInfo: String?): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
                 // Initialize client configuration first
+                RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)
                 RealmInterop.realm_sync_client_config_set_log_level(
                     syncClientConfig,
                     CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
@@ -155,10 +180,24 @@ public class AppConfigurationImpl constructor(
                     syncRootDirectory
                 )
 
-                if (encryptionKey != null) {
+                encryptionKey?.let {
                     RealmInterop.realm_sync_client_config_set_metadata_encryption_key(
                         syncClientConfig,
-                        encryptionKey
+                        it
+                    )
+                }
+
+                sdkInfo?.let {
+                    RealmInterop.realm_sync_client_config_set_user_agent_binding_info(
+                        syncClientConfig,
+                        it
+                    )
+                }
+
+                applicationInfo?.let {
+                    RealmInterop.realm_sync_client_config_set_user_agent_application_info(
+                        syncClientConfig,
+                        it
                     )
                 }
             }

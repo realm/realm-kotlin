@@ -54,8 +54,11 @@ public class RealmUUIDImpl : RealmUUID {
 
     override fun equals(other: Any?): Boolean {
         // Check if 'other' is null since type coercion would fail in that case
-        if (other == null) return false
-        return (other as RealmUUID).bytes.contentEquals(bytes)
+        return when (other) {
+            null -> false
+            is RealmUUID -> other.bytes.contentEquals(bytes)
+            else -> false
+        }
     }
 
     override fun hashCode(): Int {

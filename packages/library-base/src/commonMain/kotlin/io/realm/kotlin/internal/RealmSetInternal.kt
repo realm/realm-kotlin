@@ -17,7 +17,10 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.Versioned
+import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
@@ -27,14 +30,16 @@ import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.query.ObjectBoundQuery
+import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
 import io.realm.kotlin.notifications.internal.UpdatedSetImpl
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmSet
-import kotlinx.coroutines.channels.ChannelResult
-import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
@@ -54,10 +59,11 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
 /**
  * Implementation for managed sets, backed by Realm.
  */
-internal class ManagedRealmSet<E>(
+internal class ManagedRealmSet<E> constructor(
+    internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
-) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, Observable<ManagedRealmSet<E>, SetChange<E>>, Flowable<SetChange<E>> {
+) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, CoreNotifiable<ManagedRealmSet<E>, SetChange<E>>, Versioned by operator.realmReference {
 
     override val size: Int
         get() {
@@ -66,76 +72,98 @@ internal class ManagedRealmSet<E>(
         }
 
     override fun add(element: E): Boolean {
-        operator.realmReference.checkClosed()
-        try {
-            return operator.add(element)
-        } catch (exception: Throwable) {
-            throw CoreExceptionConverter.convertToPublicException(
-                exception,
-                "Could not add element to set"
-            )
-        }
+        return operator.add(element)
     }
 
     override fun clear() {
-        operator.realmReference.checkClosed()
-        RealmInterop.realm_set_clear(nativePointer)
+        operator.clear()
     }
 
     override fun contains(element: E): Boolean {
-        operator.realmReference.checkClosed()
         return operator.contains(element)
     }
 
+    override fun remove(element: E): Boolean {
+        return operator.remove(element)
+    }
+
+    override fun removeAll(elements: Collection<E>): Boolean {
+        return operator.removeAll(elements)
+    }
+
     override fun iterator(): MutableIterator<E> {
-        operator.realmReference.checkClosed()
         return object : MutableIterator<E> {
 
-            private var pos = -1
+            private var expectedModCount = operator.modCount // Current modifications in the map
+            private var cursor = 0 // The position returned by next()
+            private var lastReturned = -1 // The last known returned position
 
-            override fun hasNext(): Boolean = pos + 1 < size
+            override fun hasNext(): Boolean {
+                checkConcurrentModification()
+
+                return cursor < size
+            }
 
             override fun next(): E {
-                pos = pos.inc()
-                if (pos >= size) {
-                    throw NoSuchElementException("Cannot access index $pos when size is $size. Remember to check hasNext() before using next().")
+                checkConcurrentModification()
+
+                val position = cursor
+                if (position >= size) {
+                    throw IndexOutOfBoundsException("Cannot access index $position when size is $size. Remember to check hasNext() before using next().")
                 }
-                return operator.get(pos)
+                val next = operator.get(position)
+                lastReturned = position
+                cursor = position + 1
+                return next
             }
 
             override fun remove() {
-                if (pos < 0) {
-                    throw NoSuchElementException("Could not remove last element returned by the iterator: iterator never returned an element.")
-                }
-                if (isEmpty()) {
+                checkConcurrentModification()
+
+                if (size == 0) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: set is empty.")
+                }
+                if (lastReturned < 0) {
+                    throw IllegalStateException("Could not remove last element returned by the iterator: iterator never returned an element.")
                 }
 
                 val erased = getterScope {
-                    val transport = realm_set_get(nativePointer, pos.toLong())
-                    RealmInterop.realm_set_erase(nativePointer, transport)
+                    val element = operator.get(lastReturned)
+                    operator.remove(element)
+                        .also {
+                            if (lastReturned < cursor) {
+                                cursor -= 1
+                            }
+                            lastReturned = -1
+                        }
                 }
+                expectedModCount = operator.modCount
                 if (!erased) {
                     throw NoSuchElementException("Could not remove last element returned by the iterator: was there an element to remove?")
+                }
+            }
+
+            private fun checkConcurrentModification() {
+                if (operator.modCount != expectedModCount) {
+                    throw ConcurrentModificationException("The underlying RealmSet was modified while iterating it.")
                 }
             }
         }
     }
 
     override fun asFlow(): Flow<SetChange<E>> {
-        operator.realmReference.checkClosed()
         return operator.realmReference.owner.registerObserver(this)
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmSet<E>? {
         return RealmInterop.realm_set_resolve_in(nativePointer, frozenRealm.dbPointer)?.let {
-            ManagedRealmSet(it, operator.copy(frozenRealm, it))
+            ManagedRealmSet(parent, it, operator.copy(frozenRealm, it))
         }
     }
 
     override fun thaw(liveRealm: RealmReference): ManagedRealmSet<E>? {
         return RealmInterop.realm_set_resolve_in(nativePointer, liveRealm.dbPointer)?.let {
-            ManagedRealmSet(it, operator.copy(liveRealm, it))
+            ManagedRealmSet(parent, it, operator.copy(liveRealm, it))
         }
     }
 
@@ -145,27 +173,8 @@ internal class ManagedRealmSet<E>(
         return RealmInterop.realm_set_add_notification_callback(nativePointer, callback)
     }
 
-    override fun emitFrozenUpdate(
-        frozenRealm: RealmReference,
-        change: RealmChangesPointer,
-        channel: SendChannel<SetChange<E>>
-    ): ChannelResult<Unit>? {
-        val frozenSet: ManagedRealmSet<E>? = freeze(frozenRealm)
-        return if (frozenSet != null) {
-            val builder = SetChangeSetBuilderImpl(change)
-
-            if (builder.isEmpty()) {
-                channel.trySend(InitialSetImpl(frozenSet))
-            } else {
-                channel.trySend(UpdatedSetImpl(frozenSet, builder.build()))
-            }
-        } else {
-            channel.trySend(DeletedSetImpl(UnmanagedRealmSet()))
-                .also {
-                    channel.close()
-                }
-        }
-    }
+    override fun changeFlow(scope: ProducerScope<SetChange<E>>): ChangeFlow<ManagedRealmSet<E>, SetChange<E>> =
+        RealmSetChangeFlow(scope)
 
     override fun delete() {
         RealmInterop.realm_set_remove_all(nativePointer)
@@ -176,12 +185,52 @@ internal class ManagedRealmSet<E>(
     }
 }
 
+internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
+    query: String,
+    args: Array<out Any?>
+): RealmQuery<E> {
+    val operator: RealmObjectSetOperator<E> = operator as RealmObjectSetOperator<E>
+    val queryPointer = inputScope {
+        val queryArgs = convertToQueryArgs(args)
+        RealmInterop.realm_query_parse_for_set(
+            this@query.nativePointer,
+            query,
+            queryArgs
+        )
+    }
+    return ObjectBoundQuery(
+        parent,
+        ObjectQuery(
+            operator.realmReference,
+            operator.classKey,
+            operator.clazz,
+            operator.mediator,
+            queryPointer,
+        )
+    )
+}
+
 /**
  * Operator interface abstracting the connection between the API and and the interop layer.
  */
-internal interface SetOperator<E> : CollectionOperator<E> {
+internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
+
+    // Modification counter used to detect concurrent writes from the iterator, taken from Java's
+    // AbstractList implementation
+    var modCount: Int
+    override val nativePointer: RealmSetPointer
 
     fun add(
+        element: E,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    ): Boolean {
+        realmReference.checkClosed()
+        return addInternal(element, updatePolicy, cache)
+            .also { modCount++ }
+    }
+
+    fun addInternal(
         element: E,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
@@ -192,15 +241,46 @@ internal interface SetOperator<E> : CollectionOperator<E> {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean {
+        realmReference.checkClosed()
+        return addAllInternal(elements, updatePolicy, cache)
+            .also { modCount++ }
+    }
+
+    fun addAllInternal(
+        elements: Collection<E>,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    ): Boolean {
         @Suppress("VariableNaming")
         var changed = false
         for (e in elements) {
-            val hasChanged = add(e, updatePolicy, cache)
+            val hasChanged = addInternal(e, updatePolicy, cache)
             if (hasChanged) {
                 changed = true
             }
         }
         return changed
+    }
+
+    fun clear() {
+        realmReference.checkClosed()
+        RealmInterop.realm_set_clear(nativePointer)
+        modCount++
+    }
+
+    fun remove(element: E): Boolean {
+        return inputScope {
+            with(valueConverter) {
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_set_erase(nativePointer, transport)
+            }
+        }.also { modCount++ }
+    }
+
+    fun removeAll(elements: Collection<E>): Boolean {
+        return elements.fold(false) { accumulator, value ->
+            remove(value) or accumulator
+        }
     }
 
     fun get(index: Int): E
@@ -211,29 +291,29 @@ internal interface SetOperator<E> : CollectionOperator<E> {
 internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<E>,
-    private val nativePointer: RealmSetPointer
+    override val valueConverter: RealmValueConverter<E>,
+    override val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
+
+    override var modCount: Int = 0
 
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            with(converter) {
+            with(valueConverter) {
                 val transport = realm_set_get(nativePointer, index.toLong())
-                with(converter) {
-                    realmValueToPublic(transport)
-                }
+                realmValueToPublic(transport)
             } as E
         }
     }
 
-    override fun add(
+    override fun addInternal(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
         return inputScope {
-            with(converter) {
+            with(valueConverter) {
                 val transport = publicToRealmValue(element)
                 RealmInterop.realm_set_insert(nativePointer, transport)
             }
@@ -242,7 +322,7 @@ internal class PrimitiveSetOperator<E>(
 
     override fun contains(element: E): Boolean {
         return inputScope {
-            with(converter) {
+            with(valueConverter) {
                 val transport = publicToRealmValue(element)
                 RealmInterop.realm_set_find(nativePointer, transport)
             }
@@ -253,18 +333,21 @@ internal class PrimitiveSetOperator<E>(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<E> =
-        PrimitiveSetOperator(mediator, realmReference, converter, nativePointer)
+        PrimitiveSetOperator(mediator, realmReference, valueConverter, nativePointer)
 }
 
-internal class RealmObjectSetOperator<E>(
+internal class RealmObjectSetOperator<E> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val converter: RealmValueConverter<E>,
-    private val clazz: KClass<E & Any>,
-    private val nativePointer: RealmSetPointer
+    override val valueConverter: RealmValueConverter<E>,
+    override val nativePointer: RealmSetPointer,
+    val clazz: KClass<E & Any>,
+    val classKey: ClassKey
 ) : SetOperator<E> {
 
-    override fun add(
+    override var modCount: Int = 0
+
+    override fun addInternal(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache
@@ -285,7 +368,7 @@ internal class RealmObjectSetOperator<E>(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            with(converter) {
+            with(valueConverter) {
                 realm_set_get(nativePointer, index.toLong())
                     .let { transport ->
                         when (ValueType.RLM_TYPE_NULL) {
@@ -317,8 +400,20 @@ internal class RealmObjectSetOperator<E>(
     ): SetOperator<E> {
         val converter =
             converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectSetOperator(mediator, realmReference, converter, clazz, nativePointer)
+        return RealmObjectSetOperator(mediator, realmReference, converter, nativePointer, clazz, classKey)
     }
+}
+
+internal class RealmSetChangeFlow<E>(scope: ProducerScope<SetChange<E>>) :
+    ChangeFlow<ManagedRealmSet<E>, SetChange<E>>(scope) {
+    override fun initial(frozenRef: ManagedRealmSet<E>): SetChange<E> = InitialSetImpl(frozenRef)
+
+    override fun update(frozenRef: ManagedRealmSet<E>, change: RealmChangesPointer): SetChange<E>? {
+        val builder = SetChangeSetBuilderImpl(change)
+        return UpdatedSetImpl(frozenRef, builder.build())
+    }
+
+    override fun delete(): SetChange<E> = DeletedSetImpl(UnmanagedRealmSet())
 }
 
 internal fun <T> Array<out T>.asRealmSet(): RealmSet<T> =
