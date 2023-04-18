@@ -67,7 +67,6 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irGet
-import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irReturn
@@ -728,7 +727,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         getter.body = pluginContext.blockBody(getter.symbol) {
             at(startOffset, endOffset)
             +irReturn(
-                irGetField(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
+                irGetFieldWrapper(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
             )
         }
 
