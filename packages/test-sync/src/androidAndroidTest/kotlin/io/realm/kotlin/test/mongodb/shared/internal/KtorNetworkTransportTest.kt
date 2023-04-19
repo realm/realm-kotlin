@@ -24,11 +24,13 @@ import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
+import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.AppServicesClient
 import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
@@ -50,7 +52,7 @@ internal class KtorNetworkTransportTest {
         val dispatcherFactory = CoroutineDispatcherFactory.unmanaged(dispatcher)
 
         transport = KtorNetworkTransport(
-            timeoutMs = 5000,
+            timeoutMs = 60000,
             dispatcherFactory = dispatcherFactory
         )
 
@@ -60,7 +62,7 @@ internal class KtorNetworkTransportTest {
                 debug = false,
                 dispatcher = dispatcher
             ).run {
-                getOrCreateApp("ktor-network-test") { app: BaasApp, service: Service ->
+                getOrCreateApp(syncServerAppName("ktor")) { app: BaasApp, service: Service ->
                     initialize(app, TEST_METHODS)
                 }
             }
@@ -87,7 +89,7 @@ internal class KtorNetworkTransportTest {
                     mapOf(),
                     body
                 ) { response -> channel.trySend(response) }
-                channel.receive()
+                channel.receiveOrFail()
             }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
@@ -108,7 +110,7 @@ internal class KtorNetworkTransportTest {
                     mapOf(),
                     body
                 ) { response -> channel.trySend(response) }
-                channel.receive()
+                channel.receiveOrFail()
             }
             assertEquals(500, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")
@@ -132,7 +134,7 @@ internal class KtorNetworkTransportTest {
                     mapOf(),
                     body
                 ) { response -> channel.trySend(response) }
-                channel.receive()
+                channel.receiveOrFail()
             }
             assertEquals(200, response.httpResponseCode, "$method failed")
             assertEquals(0, response.customResponseCode, "$method failed")

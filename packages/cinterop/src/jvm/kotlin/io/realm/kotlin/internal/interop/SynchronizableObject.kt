@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,8 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal
+package io.realm.kotlin.internal.interop
 
-import io.realm.kotlin.internal.interop.FrozenRealmPointer
-
-/**
- * Minimal frozen Realm implementation that only allows launching queries against it.
- */
-public class TypedFrozenRealmImpl(
-    dbPointer: FrozenRealmPointer,
-    configuration: InternalConfiguration,
-) : InternalTypedRealm, BaseRealmImpl(configuration) {
-
-    override val realmReference: RealmReference = FrozenRealmReferenceImpl(this, dbPointer)
+actual class SynchronizableObject {
+    actual inline fun <R> withLock(block: () -> R): R = synchronized(this) { block() }
 }

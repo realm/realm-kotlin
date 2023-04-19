@@ -28,6 +28,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES2
 import io.realm.kotlin.test.shared.SET_OBJECT_VALUES3
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -90,7 +91,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Assertion after empty set is emitted
-            channel.receive().let { setChange ->
+            channel.receiveOrFail().let { setChange ->
                 assertIs<InitialSet<*>>(setChange)
 
                 assertNotNull(setChange.set)
@@ -120,10 +121,12 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                 container.objectSetField
                     .asFlow()
                     .collect { flowSet ->
-                        if (flowSet !is InitialSet) {
-                            channel.send(flowSet)
-                        }
+                        channel.send(flowSet)
                     }
+            }
+
+            channel.receive().let {
+                assertIs<InitialSet<*>>(it)
             }
 
             // Assert a single insertion is reported
@@ -133,7 +136,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                 queriedSet.addAll(dataset)
             }
 
-            channel.receive().let { setChange ->
+            channel.receiveOrFail().let { setChange ->
                 assertIs<UpdatedSet<*>>(setChange)
 
                 assertNotNull(setChange.set)
@@ -157,7 +160,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                 iterator.remove()
             }
 
-            channel.receive().let { setChange ->
+            channel.receiveOrFail().let { setChange ->
                 assertIs<UpdatedSet<*>>(setChange)
 
                 assertNotNull(setChange.set)
@@ -196,16 +199,16 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Ignore first emission with empty sets
-            channel1.receive()
-            channel2.receive()
+            channel1.receiveOrFail()
+            channel2.receiveOrFail()
 
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
                 queriedContainer!!.objectSetField.addAll(SET_OBJECT_VALUES)
             }
-            assertEquals(SET_OBJECT_VALUES.size, channel1.receive().set.size)
-            assertEquals(SET_OBJECT_VALUES.size, channel2.receive().set.size)
+            assertEquals(SET_OBJECT_VALUES.size, channel1.receiveOrFail().set.size)
+            assertEquals(SET_OBJECT_VALUES.size, channel2.receiveOrFail().set.size)
 
             // Cancel observer 1
             observer1.cancel()
@@ -218,7 +221,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Check channel 1 didn't receive the update
-            assertEquals(SET_OBJECT_VALUES.size + 1, channel2.receive().set.size)
+            assertEquals(SET_OBJECT_VALUES.size + 1, channel2.receiveOrFail().set.size)
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -254,7 +257,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Assert container got populated correctly
-            channel1.receive().let { setChange ->
+            channel1.receiveOrFail().let { setChange ->
                 assertIs<InitialSet<*>>(setChange)
 
                 assertNotNull(setChange.set)
@@ -266,12 +269,12 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                 delete(findLatest(container)!!)
             }
 
-            channel1.receive().let { setChange ->
+            channel1.receiveOrFail().let { setChange ->
                 assertIs<DeletedSet<*>>(setChange)
                 assertTrue(setChange.set.isEmpty())
             }
             // Wait for flow completion
-            assertTrue(channel2.receive())
+            assertTrue(channel2.receiveOrFail())
 
             observer.cancel()
             channel1.close()
@@ -332,7 +335,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                 fail("Flow should not be canceled.")
             }
 
-            assertTrue(channel.receive().set.isEmpty())
+            assertTrue(channel.receiveOrFail().set.isEmpty())
 
             realm.close()
             observer.cancel()

@@ -46,6 +46,7 @@ import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
@@ -352,7 +353,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -376,7 +377,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -385,7 +386,7 @@ class QueryTests {
                 copyToRealm(QuerySample())
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
@@ -413,7 +414,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<InitialResults<*>>(resultsChange)
                 assertEquals(1, resultsChange.list.size)
             }
@@ -422,7 +423,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            channel.receive().let { resultsChange ->
+            channel.receiveOrFail().let { resultsChange ->
                 assertIs<UpdatedResults<*>>(resultsChange)
                 assertTrue(resultsChange.list.isEmpty())
             }
@@ -1014,7 +1015,7 @@ class QueryTests {
                     }
             }
 
-            assertEquals(0, channel.receive())
+            assertEquals(0, channel.receiveOrFail())
 
             observer.cancel()
             channel.close()
@@ -1036,13 +1037,13 @@ class QueryTests {
                     }
             }
 
-            assertEquals(0, channel.receive())
+            assertEquals(0, channel.receiveOrFail())
 
             realm.writeBlocking {
                 copyToRealm(QuerySample())
             }
 
-            assertEquals(1, channel.receive())
+            assertEquals(1, channel.receiveOrFail())
             observer.cancel()
             channel.close()
         }
@@ -1067,13 +1068,13 @@ class QueryTests {
                     }
             }
 
-            assertEquals(1, channel.receive())
+            assertEquals(1, channel.receiveOrFail())
 
             realm.write {
                 delete(query<QuerySample>())
             }
 
-            assertEquals(0, channel.receive())
+            assertEquals(0, channel.receiveOrFail())
 
             observer.cancel()
             channel.close()
@@ -1103,8 +1104,8 @@ class QueryTests {
                     }
             }
 
-            assertEquals(0, channel1.receive())
-            assertEquals(0, channel2.receive())
+            assertEquals(0, channel1.receiveOrFail())
+            assertEquals(0, channel2.receiveOrFail())
 
             // Write one object
             realm.write {
@@ -1112,8 +1113,8 @@ class QueryTests {
             }
 
             // Assert emission and cancel first subscription
-            assertEquals(1, channel1.receive())
-            assertEquals(1, channel2.receive())
+            assertEquals(1, channel1.receiveOrFail())
+            assertEquals(1, channel2.receiveOrFail())
             observer1.cancel()
 
             // Write another object
@@ -1122,7 +1123,7 @@ class QueryTests {
             }
 
             // Assert emission and that the original channel hasn't been received
-            assertEquals(2, channel2.receive())
+            assertEquals(2, channel2.receiveOrFail())
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -1857,7 +1858,7 @@ class QueryTests {
                     }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertTrue(channel.isEmpty) // Validates that this is the first event and only event
                 assertIs<PendingObject<QuerySample>>(objectChange)
             }
@@ -1870,7 +1871,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertTrue(channel.isEmpty) // Validates that this is the first event and only event
 
                 assertIs<InitialObject<QuerySample>>(objectChange)
@@ -1885,7 +1886,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<QuerySample>>(objectChange)
                 assertEquals(6, objectChange.obj.intField)
             }
@@ -1898,7 +1899,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<QuerySample>>(objectChange)
                 assertEquals(7, objectChange.obj.intField)
             }
@@ -1909,9 +1910,9 @@ class QueryTests {
                 delete(query<QuerySample>("intField = $0", 7).first().find()!!)
             }
 
-            assertIs<DeletedObject<QuerySample>>(channel.receive())
+            assertIs<DeletedObject<QuerySample>>(channel.receiveOrFail())
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<QuerySample>>(objectChange)
                 assertEquals(4, objectChange.obj.intField)
             }
@@ -1924,7 +1925,7 @@ class QueryTests {
                 }
             }
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<QuerySample>>(objectChange)
                 assertEquals(7, objectChange.obj.intField)
             }
@@ -1938,9 +1939,9 @@ class QueryTests {
                 }
             }
 
-            assertIs<DeletedObject<QuerySample>>(channel.receive())
+            assertIs<DeletedObject<QuerySample>>(channel.receiveOrFail())
 
-            channel.receive().let { objectChange ->
+            channel.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<QuerySample>>(objectChange)
                 assertEquals(10, objectChange.obj.intField)
             }
@@ -1951,7 +1952,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            assertIs<DeletedObject<QuerySample>>(channel.receive())
+            assertIs<DeletedObject<QuerySample>>(channel.receiveOrFail())
 
             observer.cancel()
             channel.close()
@@ -1981,8 +1982,8 @@ class QueryTests {
                     }
             }
 
-            assertIs<PendingObject<*>>(channel1.receive())
-            assertIs<PendingObject<*>>(channel2.receive())
+            assertIs<PendingObject<*>>(channel1.receiveOrFail())
+            assertIs<PendingObject<*>>(channel2.receiveOrFail())
 
             // Write one object
             realm.write {
@@ -1990,8 +1991,8 @@ class QueryTests {
             }
 
             // Assert emission and cancel first subscription
-            assertIs<InitialObject<*>>(channel1.receive())
-            assertIs<InitialObject<*>>(channel2.receive())
+            assertIs<InitialObject<*>>(channel1.receiveOrFail())
+            assertIs<InitialObject<*>>(channel2.receiveOrFail())
             observer1.cancel()
 
             // Update object
@@ -2002,7 +2003,7 @@ class QueryTests {
             }
 
             // Assert emission and that the original channel hasn't been received
-            assertIs<UpdatedObject<*>>(channel2.receive())
+            assertIs<UpdatedObject<*>>(channel2.receiveOrFail())
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -2237,7 +2238,7 @@ class QueryTests {
                 val results = query!!.find()
                 channel.send(results)
             }
-            val results = channel.receive()
+            val results = channel.receiveOrFail()
             assertEquals(1, results.size)
 
             query!!.find { res ->
@@ -2476,7 +2477,7 @@ class QueryTests {
                     }
             }
 
-            val aggregatedValue = channel.receive()
+            val aggregatedValue = channel.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (aggregatedValue) {
                     is Number -> assertEquals(0, aggregatedValue.toInt())
@@ -2492,7 +2493,7 @@ class QueryTests {
                 saveData(propertyDescriptor)
             }
 
-            val receivedAggregate = channel.receive()
+            val receivedAggregate = channel.receiveOrFail()
             when (propertyDescriptor.clazz) {
                 RealmAny::class -> when (type) {
                     AggregatorQueryType.MIN -> {
@@ -2542,12 +2543,12 @@ class QueryTests {
             when (propertyDescriptor.clazz) {
                 RealmAny::class -> when (type) {
                     AggregatorQueryType.SUM -> assertFailsWith<TimeoutCancellationException> {
-                        withTimeout(100) { channel.receive() }
+                        withTimeout(100) { channel.receiveOrFail() }
                     }
                     // MAX for RealmAny is RealmObject so emitted objects will not be the same
                     // even though they may the same at a structural level
                     AggregatorQueryType.MAX -> {
-                        val receivedRepeatedAggregate = channel.receive()
+                        val receivedRepeatedAggregate = channel.receiveOrFail()
                         val actualString = (receivedRepeatedAggregate as RealmAny)
                             .asRealmObject<QuerySample>()
                             .stringField
@@ -2557,11 +2558,11 @@ class QueryTests {
                         assertEquals(expectedString, actualString)
                     }
                     AggregatorQueryType.MIN -> assertFailsWith<TimeoutCancellationException> {
-                        withTimeout(100) { channel.receive() }
+                        withTimeout(100) { channel.receiveOrFail() }
                     }
                 }
                 else -> assertFailsWith<TimeoutCancellationException> {
-                    withTimeout(100) { channel.receive() }
+                    withTimeout(100) { channel.receiveOrFail() }
                 }
             }
 
@@ -2570,7 +2571,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            val finalAggregatedValue = channel.receive()
+            val finalAggregatedValue = channel.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (finalAggregatedValue) {
                     is Number -> assertEquals(0, finalAggregatedValue.toInt())
@@ -2630,7 +2631,7 @@ class QueryTests {
                     }
             }
 
-            val receivedAggregate = channel.receive()
+            val receivedAggregate = channel.receiveOrFail()
             when (propertyDescriptor.clazz) {
                 RealmAny::class -> when (type) {
                     AggregatorQueryType.MIN -> {
@@ -2668,7 +2669,7 @@ class QueryTests {
                 delete(query<QuerySample>())
             }
 
-            val aggregatedValue = channel.receive()
+            val aggregatedValue = channel.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (aggregatedValue) {
                     is Number -> assertEquals(0, aggregatedValue.toInt())
@@ -2745,8 +2746,8 @@ class QueryTests {
                     }
             }
 
-            val initialAggregate1 = channel1.receive()
-            val initialAggregate2 = channel2.receive()
+            val initialAggregate1 = channel1.receiveOrFail()
+            val initialAggregate2 = channel2.receiveOrFail()
             when (type) {
                 AggregatorQueryType.SUM -> when (initialAggregate1) {
                     is Number -> {
@@ -2777,7 +2778,7 @@ class QueryTests {
             }
 
             // Assert emission and that the original channel hasn't been received
-            val receivedAggregate = channel2.receive()
+            val receivedAggregate = channel2.receiveOrFail()
             if (propertyDescriptor.clazz == RealmAny::class) {
                 when (type) {
                     AggregatorQueryType.SUM -> {

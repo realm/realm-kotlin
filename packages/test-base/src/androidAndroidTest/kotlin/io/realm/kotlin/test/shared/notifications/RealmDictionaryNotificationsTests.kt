@@ -28,6 +28,7 @@ import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.shared.DICTIONARY_KEYS_FOR_NULLABLE
 import io.realm.kotlin.test.shared.NULLABLE_DICTIONARY_OBJECT_VALUES
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -100,7 +101,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Assert container got populated correctly
-            channel1.receive().let { mapChange ->
+            channel1.receiveOrFail().let { mapChange ->
                 assertIs<InitialMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -112,12 +113,12 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 delete(findLatest(container)!!)
             }
 
-            channel1.receive().let { mapChange ->
+            channel1.receiveOrFail().let { mapChange ->
                 assertIs<DeletedMap<String, *>>(mapChange)
                 assertTrue(mapChange.map.isEmpty())
             }
             // Wait for flow completion
-            assertTrue(channel2.receive())
+            assertTrue(channel2.receiveOrFail())
 
             observer.cancel()
             channel1.close()
@@ -178,7 +179,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Assertion after empty dictionary is emitted
-            channel.receive().let { mapChange ->
+            channel.receiveOrFail().let { mapChange ->
                 assertIs<InitialMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -207,10 +208,11 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        if (mapChange !is InitialMap<String, *>) {
-                            channel.send(mapChange)
-                        }
+                        channel.send(mapChange)
                     }
+            }
+            channel.receive().let {
+                assertIs<InitialMap<String, *>>(it)
             }
 
             // Assert a single insertion is reported
@@ -220,7 +222,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 queriedDictionary[dataSet[0].first] = dataSet[0].second
             }
 
-            channel.receive().let { mapChange ->
+            channel.receiveOrFail().let { mapChange ->
                 assertIs<UpdatedMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -240,7 +242,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 queriedDictionary[dataSet[0].first] = dataSet[1].second
             }
 
-            channel.receive().let { mapChange ->
+            channel.receiveOrFail().let { mapChange ->
                 assertIs<UpdatedMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -260,7 +262,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 queriedDictionary.putAll(dataSet.subList(1, dataSet.size))
             }
 
-            channel.receive().let { mapChange ->
+            channel.receiveOrFail().let { mapChange ->
                 assertIs<UpdatedMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -283,7 +285,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 queriedDictionary.remove(dataSet[0].first)
             }
 
-            channel.receive().let { mapChange ->
+            channel.receiveOrFail().let { mapChange ->
                 assertIs<UpdatedMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -302,7 +304,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 iterator.remove()
             }
 
-            channel.receive().let { mapChange ->
+            channel.receiveOrFail().let { mapChange ->
                 assertIs<UpdatedMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -321,7 +323,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 iterator.remove()
             }
 
-            channel.receive().let { mapChange ->
+            channel.receiveOrFail().let { mapChange ->
                 assertIs<UpdatedMap<String, *>>(mapChange)
 
                 assertNotNull(mapChange.map)
@@ -363,16 +365,16 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Ignore first emission with empty dictionaries
-            channel1.receive()
-            channel2.receive()
+            channel1.receiveOrFail()
+            channel2.receiveOrFail()
 
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
                 queriedContainer!!.nullableObjectDictionaryField.putAll(values)
             }
-            assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, channel1.receive().map.size)
-            assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, channel2.receive().map.size)
+            assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, channel1.receiveOrFail().map.size)
+            assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size, channel2.receiveOrFail().map.size)
 
             // Cancel observer 1
             observer1.cancel()
@@ -388,7 +390,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             }
 
             // Check channel 1 didn't receive the update
-            assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size + 1, channel2.receive().map.size)
+            assertEquals(NULLABLE_DICTIONARY_OBJECT_VALUES.size + 1, channel2.receiveOrFail().map.size)
             assertTrue(channel1.isEmpty)
 
             observer2.cancel()
@@ -419,7 +421,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 fail("Flow should not be canceled.")
             }
 
-            assertTrue(channel.receive().map.isEmpty())
+            assertTrue(channel.receiveOrFail().map.isEmpty())
 
             realm.close()
             observer.cancel()

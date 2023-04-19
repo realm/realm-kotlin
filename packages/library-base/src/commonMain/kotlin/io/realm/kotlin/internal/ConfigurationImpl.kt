@@ -99,9 +99,13 @@ public open class ConfigurationImpl constructor(
         return configInitializer(nativeConfig)
     }
 
-    override suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean> {
+    override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         val configPtr = realm.configuration.createNativeConfiguration()
-        return RealmInterop.realm_open(configPtr)
+        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr)
+        val liveRealmReference = LiveRealmReference(realm, dbPointer)
+        val frozenReference = liveRealmReference.snapshot(realm)
+        liveRealmReference.close()
+        return frozenReference to fileCreated
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {

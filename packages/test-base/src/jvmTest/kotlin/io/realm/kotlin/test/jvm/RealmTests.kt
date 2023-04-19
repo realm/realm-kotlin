@@ -22,15 +22,18 @@ import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 fun totalThreadCount() = Thread.getAllStackTraces().size
@@ -43,28 +46,52 @@ class RealmTests {
     @Test
     fun cleanupDispatcherThreadsOnClose() = runBlocking {
         val tmpDir = PlatformUtils.createTempDir()
-        val startingThreadCount = totalThreadCount()
+
+        val initialThreads = Thread.getAllStackTraces().keys
+        fun newThreads(): List<Thread> = Thread.getAllStackTraces().keys.filter { !initialThreads.contains(it) }
+
         // Finalizer might be running if a another Realm has been opened first. Once started it will
         // for as long as the process is alive.
         val finalizerRunning = Thread.getAllStackTraces().filter { it.key.name == "RealmFinalizerThread" }.isNotEmpty()
         val configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .build()
-        assertEquals(startingThreadCount, totalThreadCount(), "Creating a configuration should not start any threads.")
-        Realm.open(configuration).use {
+
+        newThreads().let {
+            assertTrue(it.isEmpty(), "Creating a configuration should not start any threads, but started $it")
+        }
+
+        Realm.open(configuration).use { it ->
             // Opening a Realm will also start a Notifier and Writer dispatcher
+            // For some reason the notifier thread is only started if something is actually executed
+            // on it, so trigger some notifications
+            it.asFlow().first()
+
             val realmThreads = 2 + if (finalizerRunning) 0 else 1
-            assertEquals(startingThreadCount + realmThreads, totalThreadCount(), "Failed to start Realm dispatchers.")
+            newThreads().let {
+                assertEquals(realmThreads, it.size, "Unexpected thread count after Realm.open: Newly created threads are $it")
+            }
+
+            // Doing updates will trigger the core notifier and attach with a shadow thread
+            it.write { }
+            newThreads().let {
+                assertEquals(realmThreads + 1, it.size, "Unexpected thread count after Realm.write: Newly created threads are $it")
+            }
         }
         // Closing a Realm should also cleanup our default (internal) dispatchers.
-        // The finalizer thread will never be closed.
-        val expectedThreadCount = startingThreadCount + if (finalizerRunning) 0 else 1
+        // The core notifier and the finalizer thread will never be closed.
+        val expectedThreadCount = initialThreads.size + 1 /* core-notifier */ + if (finalizerRunning) 0 else 1
         var counter = 5 // Wait 5 seconds for threads to settle
         while (totalThreadCount() != expectedThreadCount && counter > 0) {
             delay(1000)
             counter--
         }
-        assertEquals(expectedThreadCount, totalThreadCount(), "Failed to close notifier dispatchers in time.")
+        assertEquals(expectedThreadCount, totalThreadCount(), "Unexpected thread count after closing realm: ${newThreads()}")
+
+        // Verify that all remaining threads are daemon threads, so that we don't keep the JVM alive
+        newThreads().filter { !it.isDaemon }.let {
+            assertTrue(it.isEmpty(), "Some left over threads are not daemon threads: $it")
+        }
     }
 
     @Test
@@ -86,11 +113,11 @@ class RealmTests {
             async(notificationDispatcher) {
                 channel.send(1)
             }
-            assertEquals(1, channel.receive())
+            assertEquals(1, channel.receiveOrFail())
             async(writeDispatcher) {
                 channel.send(2)
             }
-            assertEquals(2, channel.receive())
+            assertEquals(2, channel.receiveOrFail())
             channel.close()
             Unit
         }

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AppConfiguration
@@ -24,6 +25,7 @@ import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -131,7 +133,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory() {
         val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-        val expectedRoot = "${appFilesDirectory()}/myCustomDir"
+        val expectedRoot = "${appFilesDirectory()}${PATH_SEPARATOR}myCustomDir"
         val config = builder
             .syncRootDirectory(expectedRoot)
             .build()
@@ -141,7 +143,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory_writeProtectedDir() {
         val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-        val dir = "/"
+        val dir = PlatformUtils.createTempDir(readOnly = true)
         assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
     }
 
@@ -149,7 +151,7 @@ class AppConfigurationTests {
     // the configured `AppConfiguration.syncRootDir`
     @Test
     fun syncRootDirectory_appendDirectoryToPath() = runBlocking {
-        val expectedRoot = "${appFilesDirectory()}/myCustomDir"
+        val expectedRoot = "${appFilesDirectory()}${PATH_SEPARATOR}myCustomDir"
         val app = TestApp(builder = {
             it.syncRootDirectory(expectedRoot)
         })
@@ -160,7 +162,7 @@ class AppConfigurationTests {
             // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
             // the configured `AppConfiguration.syncRootDir`
             val partitionValue = TestHelper.randomPartitionValue()
-            val suffix = "/myCustomDir/mongodb-realm/${user.app.configuration.appId}/${user.identity}/s_$partitionValue.realm"
+            val suffix = "${PATH_SEPARATOR}myCustomDir${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}s_$partitionValue.realm"
             val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf()).build()
             assertTrue(config.path.endsWith(suffix), "Failed: ${config.path} vs. $suffix")
         } finally {

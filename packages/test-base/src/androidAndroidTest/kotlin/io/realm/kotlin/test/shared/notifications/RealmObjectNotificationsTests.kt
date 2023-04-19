@@ -26,6 +26,7 @@ import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.test.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.update
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -86,7 +87,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                 }
             }
 
-            c.receive().let { objectChange ->
+            c.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
                 assertEquals("Foo", objectChange.obj.stringField)
             }
@@ -109,7 +110,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                 }
             }
 
-            c.receive().let { objectChange ->
+            c.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
                 assertEquals("Foo", objectChange.obj.stringField)
             }
@@ -117,7 +118,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             obj.update {
                 stringField = "Bar"
             }
-            c.receive().let { objectChange ->
+            c.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
 
                 assertEquals(1, objectChange.changedFields.size)
@@ -130,7 +131,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                 stringField = "Baz"
                 booleanField = false
             }
-            c.receive().let { objectChange ->
+            c.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
 
                 assertEquals(2, objectChange.changedFields.size)
@@ -166,11 +167,11 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                 }
             }
             // First event should be the initial value
-            c1.receive().let { objectChange ->
+            c1.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
                 assertEquals("Foo", objectChange.obj.stringField)
             }
-            c2.receive().let { objectChange ->
+            c2.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
                 assertEquals("Foo", objectChange.obj.stringField)
             }
@@ -178,11 +179,11 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             obj.update {
                 stringField = "Bar"
             }
-            c1.receive().let { objectChange ->
+            c1.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
                 assertEquals("Bar", objectChange.obj.stringField)
             }
-            c2.receive().let { objectChange ->
+            c2.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
                 assertEquals("Bar", objectChange.obj.stringField)
             }
@@ -191,7 +192,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             obj.update {
                 stringField = "Baz"
             }
-            c2.receive().let { objectChange ->
+            c2.receiveOrFail().let { objectChange ->
                 assertIs<UpdatedObject<Sample>>(objectChange)
                 assertEquals("Baz", objectChange.obj.stringField)
             }
@@ -220,19 +221,19 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                         c1.send(it)
                     }
             }
-            c1.receive().let { objectChange ->
+            c1.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
                 assertNotNull(objectChange.obj)
             }
             realm.write {
                 delete(findLatest(obj)!!)
             }
-            c1.receive().let { objectChange ->
+            c1.receiveOrFail().let { objectChange ->
                 assertIs<DeletedObject<Sample>>(objectChange)
                 assertNull(objectChange.obj)
             }
             // Test for sentinel value
-            assertEquals(Unit, c2.receive())
+            assertEquals(Unit, c2.receiveOrFail())
             observer.cancel()
             c1.close()
             c2.close()
@@ -291,7 +292,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                 }
                 fail("Flow should not be canceled.")
             }
-            c.receive().let { objectChange ->
+            c.receiveOrFail().let { objectChange ->
                 assertIs<InitialObject<Sample>>(objectChange)
                 assertEquals("Foo", objectChange.obj.stringField)
             }
