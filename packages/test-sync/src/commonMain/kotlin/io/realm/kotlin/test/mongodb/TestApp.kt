@@ -15,6 +15,7 @@
  */
 
 @file:Suppress("invisible_member", "invisible_reference")
+@file:OptIn(ExperimentalKSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb
 
@@ -38,6 +39,8 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
+import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partion-based Sync
 val TEST_APP_FLEX = syncServerAppName("flx") // With Flexible Sync
@@ -78,6 +81,7 @@ open class TestApp private constructor(
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
         networkTransport: NetworkTransport? = null,
+        ejson: EJson = EJson,
         initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
             initializeDefault(app, service)
         }
@@ -91,6 +95,7 @@ open class TestApp private constructor(
             dispatcher = dispatcher,
             builder = builder,
             networkTransport = networkTransport,
+            ejson = ejson,
             initialSetup = initialSetup
         )
     )
@@ -146,6 +151,7 @@ open class TestApp private constructor(
             dispatcher: CoroutineDispatcher,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
             networkTransport: NetworkTransport?,
+            ejson: EJson,
             initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
         ): Pair<App, AppAdmin> {
             val appAdmin: AppAdmin = runBlocking(dispatcher) {
@@ -163,6 +169,7 @@ open class TestApp private constructor(
             var config = AppConfiguration.Builder(appAdmin.clientAppId)
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .networkTransport(networkTransport)
+                .ejson(ejson)
                 .log(
                     logLevel,
                     if (customLogger == null) emptyList<RealmLogger>()

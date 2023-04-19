@@ -21,7 +21,20 @@ import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.FunctionsImpl
-import kotlinx.serialization.decodeFromString
+import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmUUIDKSerializer
+import io.realm.kotlin.types.MutableRealmInt
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmUUID
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.ExperimentalKSerializerApi
@@ -73,29 +86,52 @@ public suspend inline fun <reified T : Any?> Functions.call(
 @OptIn(ExperimentalKSerializerApi::class)
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
-    argumentBuilderBlock: CallArgumentBuilder.() -> Unit
+    argumentBuilderBlock: CallBuilder<T>.() -> Unit
 ): T = with(this as FunctionsImpl) {
-    val serializedEjsonArgs = Bson.toJson(
-        CallArgumentBuilder(app.configuration.ejson)
-            .apply(argumentBuilderBlock)
-            .arguments
-    )
+    CallBuilder<T>(app.configuration.ejson)
+        .apply(argumentBuilderBlock)
+        .run {
+            val serializedEjsonArgs = Bson.toJson(arguments)
 
-    val encodedResult = callInternal(name, serializedEjsonArgs)
-    app.configuration.ejson.decodeFromString(encodedResult)
+            val encodedResult = callInternal(name, serializedEjsonArgs)
+
+            val returnValueSerializer =
+                returnValueSerializer
+                    ?: ejson.serializersModule.serializerOrRealmBuiltInSerializer()
+
+            println(encodedResult)
+            println(T::class)
+
+            ejson.decodeFromString(returnValueSerializer, encodedResult)
+        }
 }
 
 @OptIn(ExperimentalKSerializerApi::class)
-public class CallArgumentBuilder
+public class CallBuilder<T>
 @PublishedApi
 internal constructor(
     @PublishedApi
-    internal val ejson: EJson
+    internal val ejson: EJson,
 ) {
     @PublishedApi
     internal val arguments: BsonArray = BsonArray()
+    public var returnValueSerializer: KSerializer<T>? = null
+
+    @Suppress("UNCHECKED_CAST")
+    public inline fun <reified T> SerializersModule.serializerOrRealmBuiltInSerializer(): KSerializer<T> =
+        when (T::class) {
+            MutableRealmInt::class -> MutableRealmIntKSerializer
+            RealmUUID::class -> RealmUUIDKSerializer
+            RealmInstant::class -> RealmInstantKSerializer
+            RealmAny::class -> RealmAnyKSerializer
+            else -> serializer<T>()
+        } as KSerializer<T>
 
     public inline fun <reified T : Any> add(argument: T) {
-        arguments.add(ejson.encodeToBsonValue(argument))
+        add(argument, ejson.serializersModule.serializerOrRealmBuiltInSerializer())
+    }
+
+    public inline fun <reified T : Any> add(argument: T, serializer: KSerializer<T>) {
+        arguments.add(ejson.encodeToBsonValue(serializer, argument))
     }
 }

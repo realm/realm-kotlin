@@ -14,19 +14,27 @@
  * limitations under the License.
  */
 @file:Suppress("invisible_member", "invisible_reference")
+@file:OptIn(ExperimentalKSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.ext.toRealmDictionary
+import io.realm.kotlin.ext.toRealmList
+import io.realm.kotlin.ext.toRealmSet
+import io.realm.kotlin.internal.asBsonDateTime
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.internal.toDuration
-import io.realm.kotlin.internal.toRealmInstant
+import io.realm.kotlin.internal.withMillisPrecision
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.ext.CallBuilder
 import io.realm.kotlin.mongodb.ext.call
+import io.realm.kotlin.serializers.kotlinxserializers.RealmDictionaryKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
+import io.realm.kotlin.serializers.kotlinxserializers.RealmSetKSerializer
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -44,15 +52,24 @@ import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
+import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonBoolean
 import org.mongodb.kbson.BsonDBPointer
-import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonDouble
@@ -81,9 +98,6 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
-import kotlinx.serialization.Serializable
 
 const val STRING_VALUE = "Hello world"
 const val BYTE_VALUE = Byte.MAX_VALUE
@@ -93,17 +107,29 @@ const val LONG_VALUE = Long.MAX_VALUE
 const val CHAR_VALUE = 'a'
 const val FLOAT_VALUE = 1.4f
 const val DOUBLE_VALUE = 1.4
-val REALM_INSTANT_VALUE = RealmInstant.now().let { now ->
-    // RealmInstant has better precision (nanoseconds) than BsonDateTime (millis)
-    // Here we create a RealmInstant with loose of precision to match BsonDateTime
-    val nowAsDuration: Duration = now.toDuration()
-    val nowInMilliseconds = nowAsDuration.inWholeMilliseconds.milliseconds
-    nowInMilliseconds.toRealmInstant()
-}
+val REALM_INSTANT_VALUE = RealmInstant.now().withMillisPrecision()
 val REALM_UUID_VALUE = RealmUUID.random()
 val BYTE_ARRAY_VALUE = byteArrayOf(0, 1, 0)
 val MUTABLE_REALM_INT_VALUE = MutableRealmInt.create(50)
 val REALM_OBJECT_VALUE = SerializablePerson()
+val LIST_VALUE = listOf("hello", "world", null)
+val SET_VALUE = LIST_VALUE.toSet()
+val REALM_LIST_VALUE = LIST_VALUE.toRealmList()
+val REALM_SET_VALUE = SET_VALUE.toRealmSet()
+val BSON_ARRAY_VALUE = BsonArray(LIST_VALUE.map { it ->
+    it?.let { BsonString(it) } ?: BsonNull
+})
+
+val MAP_VALUE: Map<String, String?> = LIST_VALUE.mapIndexed { index, s ->
+    "$index" to s
+}.toMap()
+val REALM_MAP_VALUE = MAP_VALUE.toRealmDictionary()
+
+val BSON_DOCUMENT_VALUE = BsonDocument(
+    MAP_VALUE.map { entry ->
+        entry.key to (entry.value?.let { BsonString(it) } ?: BsonNull)
+    }.toMap()
+)
 
 @Serializable
 class SerializablePerson : RealmObject {
@@ -165,7 +191,16 @@ class FunctionsTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(syncServerAppName("funcs")) { app: BaasApp, service: Service ->
+        app = TestApp(
+            syncServerAppName("funcs"),
+            ejson = EJson(
+                serializersModule = SerializersModule {
+                    polymorphic(RealmObject::class) {
+                        subclass(SerializablePerson::class)
+                    }
+                }
+            )
+        ) { app: BaasApp, service: Service ->
             initializeDefault(app, service)
             app.addFunction(FIRST_ARG_FUNCTION)
             app.addFunction(NULL_FUNCTION)
@@ -193,7 +228,6 @@ class FunctionsTests {
             TypeDescriptor.elementClassifiers
                 .filterNot { classifier ->
                     classifier in listOf(
-                        RealmAny::class, // TODO unsupported ?
                         Decimal128::class,
                         ObjectId::class, // BsonType
                         BsonObjectId::class //
@@ -215,6 +249,7 @@ class FunctionsTests {
                         ByteArray::class -> testFunctionCall_ByteArray()
                         MutableRealmInt::class -> testFunctionCall_MutableRealmInt()
                         RealmObject::class -> testFunctionCall_RealmObject()
+                        RealmAny::class -> testFunctionCall_RealmAny()
                         else -> error("Untested classifier $classifier")
                     }
                 }
@@ -286,9 +321,9 @@ class FunctionsTests {
 
     private fun testFunctionCall_BsonInt64() {
         functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE)
-//        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toLong()) // fails coercion?
-//        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toFloat()) // fails coercion?
-//        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toDouble()) // fails coercion?
+        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toLong())
+        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toFloat())
+        functionCallRoundTrip(BsonInt64(LONG_VALUE), LONG_VALUE.toDouble())
     }
 
     private fun testFunctionCall_BsonTimestamp() {
@@ -301,10 +336,10 @@ class FunctionsTests {
         functionCallRoundTrip(BsonInt32(BYTE_VALUE.toInt()), BYTE_VALUE)
         functionCallRoundTrip(BsonInt32(SHORT_VALUE.toInt()), SHORT_VALUE)
         functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE)
-//        functionCallRoundTrip(BsonInt32(INT_VALUE), BsonInt64(INT_VALUE.toLong())) // fails coercion?
-//        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toLong()) // fails coercion?
-//        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toFloat()) // fails coercion?
-//        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toDouble()) // fails coercion?
+        functionCallRoundTrip(BsonInt32(INT_VALUE), BsonInt64(INT_VALUE.toLong()))
+        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toLong())
+        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toFloat())
+        functionCallRoundTrip(BsonInt32(INT_VALUE), INT_VALUE.toDouble())
     }
 
     private fun testFunctionCall_BsonJavaScriptWithScope() {
@@ -346,12 +381,14 @@ class FunctionsTests {
     }
 
     private fun testFunctionCall_BsonDateTime() {
-        functionCallRoundTrip(
-            BsonDateTime(REALM_INSTANT_VALUE.epochSeconds),
-            BsonDateTime(REALM_INSTANT_VALUE.epochSeconds)
-        )
-        // TODO no serializer yet
-//        functionCallRoundTrip(BsonDateTime(REALM_INSTANT_VALUE.epochSeconds), REALM_INSTANT_VALUE)
+        REALM_INSTANT_VALUE.asBsonDateTime().let { bsonDateTimeValue ->
+            functionCallRoundTrip(
+                bsonDateTimeValue,
+                bsonDateTimeValue
+            )
+
+            functionCallRoundTrip(bsonDateTimeValue, REALM_INSTANT_VALUE)
+        }
     }
 
     private fun testFunctionCall_BsonBoolean() {
@@ -373,15 +410,11 @@ class FunctionsTests {
         functionCallRoundTrip(
             argument = BsonBinary(BYTE_ARRAY_VALUE),
             expectedResult = BsonBinary(BYTE_ARRAY_VALUE)
-        ) { expectedResult: BsonBinary, returnValue: BsonBinary ->
-            assertContentEquals(expectedResult.data, returnValue.data)
-        }
+        )
         functionCallRoundTrip(
             argument = BsonBinary(BYTE_ARRAY_VALUE),
             expectedResult = BYTE_ARRAY_VALUE
-        ) { expectedResult: ByteArray, returnValue: ByteArray ->
-            assertContentEquals(expectedResult, returnValue)
-        }
+        )
     }
 
     private fun testFunctionCall_BsonString() {
@@ -393,11 +426,43 @@ class FunctionsTests {
     }
 
     private fun testFunctionCall_BsonDocument() {
-        // TODO
+        functionCallRoundTrip(BSON_DOCUMENT_VALUE, BSON_DOCUMENT_VALUE)
+
+        assertKSerializerFunctionCall(
+            BSON_DOCUMENT_VALUE,
+            MAP_VALUE
+        )
+        assertKSerializerFunctionCall(
+            argument = BSON_DOCUMENT_VALUE,
+            expectedResult = REALM_MAP_VALUE
+        ) { arg: BsonDocument ->
+            add(arg)
+            returnValueSerializer = RealmDictionaryKSerializer<String?>(String.serializer().nullable)
+        }
     }
 
     private fun testFunctionCall_BsonArray() {
-        // TODO
+        functionCallRoundTrip(BSON_ARRAY_VALUE, BSON_ARRAY_VALUE)
+
+        // only kserializer can deserialize RealmList and lists
+        assertKSerializerFunctionCall(BSON_ARRAY_VALUE, LIST_VALUE)
+        assertKSerializerFunctionCall(
+            argument = BSON_ARRAY_VALUE,
+            expectedResult = REALM_LIST_VALUE
+        ) { arg: BsonArray ->
+            add(arg)
+            returnValueSerializer = RealmListKSerializer<String?>(String.serializer().nullable)
+        }
+
+        // only kserializer can deserialize RealmSet and sets
+        assertKSerializerFunctionCall(BSON_ARRAY_VALUE, SET_VALUE)
+        assertKSerializerFunctionCall(
+            argument = BSON_ARRAY_VALUE,
+            expectedResult = REALM_SET_VALUE
+        ) { arg: BsonArray ->
+            add(arg)
+            returnValueSerializer = RealmSetKSerializer<String?>(String.serializer().nullable)
+        }
     }
 
     private fun testFunctionCall_BsonDouble() {
@@ -410,35 +475,54 @@ class FunctionsTests {
 
     @OptIn(ExperimentalKSerializerApi::class)
     private fun testFunctionCall_RealmObject(): BsonDocument {
+        // The "stable" serializer does not support RealmObject serialization
+
         assertKSerializerFunctionCall(
             REALM_OBJECT_VALUE,
             REALM_OBJECT_VALUE
-        ) { expected: SerializablePerson, actual: SerializablePerson ->
-            assertEquals(expected.firstName, actual.firstName)
-            assertEquals(expected.lastName, actual.lastName)
-        }
+        )
         return assertKSerializerFunctionCall(
             argument = REALM_OBJECT_VALUE,
             expectedResult = EJson.encodeToBsonValue(
                 REALM_OBJECT_VALUE
             ).asDocument()
-        ) { expected: BsonDocument, actual: BsonDocument ->
-            assertEquals(expected, actual)
+        )
+    }
+
+    private fun testFunctionCall_RealmAny() {
+        functionCallRoundTrip(
+            RealmAny.create(STRING_VALUE),
+            RealmAny.create(STRING_VALUE)
+        )
+        functionCallRoundTrip(
+            RealmAny.create(INT_VALUE),
+            RealmAny.create(INT_VALUE)
+        )
+        assertFailsWithMessage<SerializationException>("Polymorphic values are not supported.") {
+            assertKSerializerFunctionCall(
+                RealmAny.create(REALM_OBJECT_VALUE),
+                RealmAny.create(REALM_OBJECT_VALUE)
+            )
         }
     }
 
     private fun testFunctionCall_MutableRealmInt() {
-        // TODO no serializer yet
-        // functionCallRoundTrip(MUTABLE_REALM_INT_VALUE, MUTABLE_REALM_INT_VALUE)
+        assertStableSerializerFunctionCall(
+            argument = MUTABLE_REALM_INT_VALUE,
+            expectedResult = MUTABLE_REALM_INT_VALUE,
+        )
+
+        assertKSerializerFunctionCall(
+            argument = MUTABLE_REALM_INT_VALUE,
+            expectedResult = MUTABLE_REALM_INT_VALUE
+        )
     }
 
     private fun testFunctionCall_ByteArray() {
         functionCallRoundTrip(
             argument = BYTE_ARRAY_VALUE,
             expectedResult = BYTE_ARRAY_VALUE
-        ) { expected: ByteArray, actual: ByteArray ->
-            assertContentEquals(expected, actual)
-        }
+        )
 
         functionCallRoundTrip(
             argument = BYTE_ARRAY_VALUE,
@@ -446,30 +530,23 @@ class FunctionsTests {
                 type = BsonBinarySubType.BINARY,
                 data = BYTE_ARRAY_VALUE
             )
-        ) { expected: BsonBinary, actual: BsonBinary ->
-            assertContentEquals(expected.data, actual.data)
-        }
+        )
     }
 
     private fun testFunctionCall_RealmUUID() {
-        // TODO no serializer yet
-        // functionCallRoundTrip(REALM_UUID_VALUE, REALM_UUID_VALUE)
-        // functionCallRoundTrip(
-        //     argument = REALM_UUID_VALUE,
-        //     expectedResult = BsonBinary(
-        //         type = BsonBinarySubType.UUID_STANDARD,
-        //         data = REALM_UUID_VALUE.bytes
-        //     )
-        // )
+        functionCallRoundTrip(REALM_UUID_VALUE, REALM_UUID_VALUE)
+        functionCallRoundTrip(
+            argument = REALM_UUID_VALUE,
+            expectedResult = BsonBinary(
+                type = BsonBinarySubType.UUID_STANDARD,
+                data = REALM_UUID_VALUE.bytes
+            )
+        )
     }
 
     private fun testFunctionCall_RealmInstant() {
-        // TODO no serializer yet
-        // functionCallRoundTrip(REALM_INSTANT_VALUE, REALM_INSTANT_VALUE)
-        // functionCallRoundTrip(
-        //     REALM_INSTANT_VALUE,
-        //     BsonDateTime(REALM_INSTANT_VALUE.epochSeconds)
-        // )
+        functionCallRoundTrip(REALM_INSTANT_VALUE, REALM_INSTANT_VALUE)
+        functionCallRoundTrip(REALM_INSTANT_VALUE, REALM_INSTANT_VALUE.asBsonDateTime())
     }
 
     private fun testFunctionCall_Boolean() {
@@ -498,41 +575,41 @@ class FunctionsTests {
     private fun testFunctionCall_Long() {
         functionCallRoundTrip(LONG_VALUE, LONG_VALUE)
         functionCallRoundTrip(LONG_VALUE, BsonInt64(LONG_VALUE))
-        // functionCallRoundTrip(LONG_VALUE, LONG_VALUE.toFloat()) // fails coercion?
-        // functionCallRoundTrip(LONG_VALUE, LONG_VALUE.toDouble()) // fails coercion?
+        functionCallRoundTrip(LONG_VALUE, LONG_VALUE.toFloat())
+        functionCallRoundTrip(LONG_VALUE, LONG_VALUE.toDouble())
         // TODO coercion with Decimal128
     }
 
     private fun testFunctionCall_Int() {
         functionCallRoundTrip(INT_VALUE, INT_VALUE)
         functionCallRoundTrip(INT_VALUE, BsonInt32(INT_VALUE))
-        // functionCallRoundTrip(INT_VALUE, BsonInt64(INT_VALUE.toLong())) // fails should we support it?
-        // functionCallRoundTrip(INT_VALUE, INT_VALUE.toLong()) // fails should we support it?
-        // functionCallRoundTrip(INT_VALUE, INT_VALUE.toFloat()) // fails coercion?
-        // functionCallRoundTrip(INT_VALUE, INT_VALUE.toDouble()) // fails coercion?
+        functionCallRoundTrip(INT_VALUE, BsonInt64(INT_VALUE.toLong()))
+        functionCallRoundTrip(INT_VALUE, INT_VALUE.toLong())
+        functionCallRoundTrip(INT_VALUE, INT_VALUE.toFloat())
+        functionCallRoundTrip(INT_VALUE, INT_VALUE.toDouble())
         // TODO coercion with Decimal128
     }
 
     private fun testFunctionCall_Short() {
         functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE)
         functionCallRoundTrip(SHORT_VALUE, BsonInt32(SHORT_VALUE.toInt()))
-        // functionCallRoundTrip(SHORT_VALUE, BsonInt64(SHORT_VALUE.toLong())) // fails should we support it?
+        functionCallRoundTrip(SHORT_VALUE, BsonInt64(SHORT_VALUE.toLong()))
         functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toInt())
-        // functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toLong()) // fails should we support it?
-        // functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toFloat()) // fails coercion?
-        // functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toDouble()) // fails coercion?
+        functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toLong())
+        functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toFloat())
+        functionCallRoundTrip(SHORT_VALUE, SHORT_VALUE.toDouble())
         // TODO coercion with Decimal128
     }
 
     private fun testFunctionCall_Byte() {
         functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE)
         functionCallRoundTrip(BYTE_VALUE, BsonInt32(BYTE_VALUE.toInt()))
-        // functionCallRoundTrip(BYTE_VALUE, BsonInt64(BYTE_VALUE.toLong())) // fails should we support it?
+        functionCallRoundTrip(BYTE_VALUE, BsonInt64(BYTE_VALUE.toLong()))
         functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toShort())
         functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toInt())
-        // functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toLong()) // fails should we support it?
-        // functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toFloat()) // fails coercion?
-        // functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toDouble()) // fails coercion?
+        functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toLong())
+        functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toFloat())
+        functionCallRoundTrip(BYTE_VALUE, BYTE_VALUE.toDouble())
         // TODO coercion with Decimal128
     }
 
@@ -546,27 +623,116 @@ class FunctionsTests {
     }
 
     private fun testFunctionCall_List() {
-        // TODO RealmList serializer not available yet
+        // common roundtrips
+        functionCallRoundTrip(LIST_VALUE, BSON_ARRAY_VALUE)
+
+        val serializer = RealmListKSerializer<String?>(String.serializer().nullable)
+
+        // only kserializer can deserialize RealmList and lists
+        assertKSerializerFunctionCall(LIST_VALUE, LIST_VALUE)
+        assertKSerializerFunctionCall(
+            argument = LIST_VALUE,
+            expectedResult = REALM_LIST_VALUE
+        ) { arg: List<String?> ->
+            add(arg)
+            returnValueSerializer = serializer
+        }
+
+        assertKSerializerFunctionCall(
+            argument = REALM_LIST_VALUE,
+            expectedResult = LIST_VALUE
+        ) { arg: RealmList<String?> ->
+            add(arg, serializer)
+        }
+
+        assertKSerializerFunctionCall(
+            argument = REALM_LIST_VALUE,
+            expectedResult = REALM_LIST_VALUE
+        ) { arg: RealmList<String?> ->
+            add(arg, serializer)
+            returnValueSerializer = serializer
+        }
     }
 
     private fun testFunctionCall_Set() {
-        // TODO RealmSet serializer not available yet
+        // common roundtrips
+        functionCallRoundTrip(SET_VALUE, BSON_ARRAY_VALUE)
+
+        // these roundtrips are only possible with the kserializer function call
+        val serializer = RealmSetKSerializer<String?>(String.serializer().nullable)
+
+        assertKSerializerFunctionCall(
+            SET_VALUE,
+            SET_VALUE
+        )
+        assertKSerializerFunctionCall(
+            argument = SET_VALUE,
+            expectedResult = REALM_SET_VALUE
+        ) { arg: Set<String?> ->
+            add(arg)
+            returnValueSerializer = serializer
+        }
+
+        assertKSerializerFunctionCall(
+            argument = REALM_SET_VALUE,
+            expectedResult = SET_VALUE
+        ) { arg: RealmSet<String?> ->
+            add(arg, serializer)
+        }
+
+        assertKSerializerFunctionCall(
+            argument = REALM_SET_VALUE,
+            expectedResult = REALM_SET_VALUE
+        ) { arg: RealmSet<String?> ->
+            add(arg, serializer)
+            returnValueSerializer = serializer
+        }
     }
 
     private fun testFunctionCall_Dictionary() {
-        // TODO RealmDictionary serializer not available yet
+        // common roundtrips
+        functionCallRoundTrip(MAP_VALUE, BSON_DOCUMENT_VALUE)
+
+        // these roundtrips are only possible with the kserializer function call
+        val serializer = RealmDictionaryKSerializer<String?>(String.serializer().nullable)
+
+        assertKSerializerFunctionCall(MAP_VALUE, MAP_VALUE)
+        assertKSerializerFunctionCall(
+            argument = MAP_VALUE,
+            expectedResult = REALM_MAP_VALUE
+        ) { arg: Map<String, String?> ->
+            add(arg)
+            returnValueSerializer = serializer
+        }
+
+        assertKSerializerFunctionCall(
+            argument = REALM_MAP_VALUE,
+            expectedResult = MAP_VALUE
+        ) { arg: RealmDictionary<String?> ->
+            add(arg, serializer)
+        }
+
+        assertKSerializerFunctionCall(
+            argument = REALM_MAP_VALUE,
+            expectedResult = REALM_MAP_VALUE
+        ) { arg: RealmDictionary<String?> ->
+            add(arg, serializer)
+            returnValueSerializer = serializer
+        }
     }
 
     private inline fun <reified A : Any, reified R> functionCallRoundTrip(
         argument: A,
-        expectedResult: R,
-        assertionBlock: (expected: R, actual: R) -> Unit =
-            { expected: R, actual: R ->
-                assertEquals(expected, actual)
-            }
+        expectedResult: R
     ) {
-        assertStableSerializerFunctionCall(argument, expectedResult, assertionBlock)
-        assertKSerializerFunctionCall(argument, expectedResult, assertionBlock)
+        assertStableSerializerFunctionCall(
+            argument = argument,
+            expectedResult = expectedResult
+        )
+        assertKSerializerFunctionCall(
+            argument = argument,
+            expectedResult = expectedResult
+        )
     }
 
     // Invokes [functions.call] with a given argument and validates that the result matches a given
@@ -574,24 +740,53 @@ class FunctionsTests {
     private inline fun <reified A : Any, reified R> assertKSerializerFunctionCall(
         argument: A,
         expectedResult: R,
-        assertionBlock: (expected: R, actual: R) -> Unit
+        crossinline callBuilderBlock: CallBuilder<R>.(arg: A) -> Unit = { arg ->
+            add(arg)
+        }
     ) = runBlocking {
         functions.call<R>(FIRST_ARG_FUNCTION.name) {
-            add(argument)
+            this.callBuilderBlock(argument)
         }
     }.also { returnValue: R ->
-        assertionBlock(expectedResult, returnValue)
+        assertValueEquals(expectedResult, returnValue)
+    }
+
+    private fun <T> assertValueEquals(expected: T, actual: T) {
+        when (expected) {
+            is SerializablePerson -> {
+                actual as SerializablePerson
+
+                assertEquals(expected.firstName, actual.firstName)
+                assertEquals(expected.lastName, actual.lastName)
+            }
+            is BsonBinary -> {
+                actual as BsonBinary
+                assertContentEquals(expected.data, actual.data)
+            }
+            is ByteArray -> {
+                actual as ByteArray
+                assertContentEquals(expected, actual)
+            }
+            is RealmUUID -> {
+                actual as RealmUUID
+                assertEquals(expected, actual)
+            }
+            is Iterable<*> -> {
+                actual as Iterable<*>
+                assertContentEquals(expected, actual)
+            }
+            else -> assertEquals(expected, actual)
+        }
     }
 
     // Invokes [functions.call] (kserializer version) with a given argument and validates that the
     // result matches a given expected result.
     private inline fun <reified A : Any, reified R> assertStableSerializerFunctionCall(
         argument: A,
-        expectedResult: R,
-        assertionBlock: (expected: R, actual: R) -> Unit
+        expectedResult: R
     ) = runBlocking { functions.call<R>(FIRST_ARG_FUNCTION.name, argument) }
         .also { returnValue: R ->
-            assertionBlock(expectedResult, returnValue)
+            assertValueEquals(expectedResult, returnValue)
         }
 
     // Facilitates debugging by executing the functions on its own block.
@@ -599,7 +794,7 @@ class FunctionsTests {
         name: String,
         vararg args: Any?,
     ): T = runBlocking {
-        functions.call(name, *args)
+        call(name, *args)
     }
 
     @Test

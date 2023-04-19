@@ -145,9 +145,9 @@ internal object BsonEncoder {
                         BsonDateTime::class -> bsonValue.asDateTime()
                         BsonDecimal128::class -> bsonValue.asDecimal128()
                         BsonDocument::class -> bsonValue
-                        BsonDouble::class -> bsonValue.asDouble()
-                        BsonInt32::class -> bsonValue.asInt32()
-                        BsonInt64::class -> bsonValue.asInt64()
+                        BsonDouble::class -> BsonDouble(bsonValue.asNumber().doubleValue())
+                        BsonInt32::class -> BsonInt32(bsonValue.asNumber().intValue())
+                        BsonInt64::class -> BsonInt64(bsonValue.asNumber().longValue())
                         BsonJavaScript::class -> bsonValue.asJavaScript()
                         BsonJavaScriptWithScope::class -> bsonValue.asJavaScriptWithScope()
                         BsonMaxKey::class -> bsonValue.asBsonMaxKey()
@@ -215,11 +215,7 @@ internal object BsonEncoder {
         type: String?,
         block: (BsonNumber) -> T
     ): T {
-        return block(bsonValue.asNumber()).also {
-            if (bsonValue.asNumber().doubleValue() != it.toDouble()) {
-                throw BsonInvalidOperationException("Could not convert ${bsonValue.bsonType} to a $type without losing precision")
-            }
-        }
+        return block(bsonValue.asNumber())
     }
 
     private fun Collection<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })

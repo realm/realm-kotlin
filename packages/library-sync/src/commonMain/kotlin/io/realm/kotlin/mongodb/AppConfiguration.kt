@@ -265,7 +265,7 @@ public interface AppConfiguration {
          * TODO
          */
         @ExperimentalKSerializerApi
-        public fun ejson(ejson: EJson) {
+        public fun ejson(ejson: EJson): Builder = apply {
             this.ejson = ejson
         }
 
