@@ -22,6 +22,7 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.ext.subscribe
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
@@ -346,4 +347,157 @@ class MutableSubscriptionSetTests {
         }
         Unit
     }
+
+    @Test
+    fun subscribe_realmQuery_unnamed() = runBlocking {
+        realm.query<FlexParentObject>().subscribe()
+        val updatedSubs = realm.subscriptions
+        assertEquals(1, updatedSubs.size)
+        assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+        val sub: Subscription = updatedSubs.first()
+        assertNull(sub.name)
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("FlexParentObject", sub.objectType)
+    }
+
+    @Test
+    fun subscribe_realmQuery_unnamed_waitOnCreation() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_unnamed_waitOnNever() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_unnamed_waitAlways() {
+        TODO()
+    }
+    
+    @Test
+    fun subscribe_realmQuery_unnamed_timeOut_fails() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_unnamed_throwsInsideWrite() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_named() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_named_waitOnCreation() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_named_waitOnNever() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_named_waitAlways() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_named_timeOut_fails() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmQuery_named_throwsInsideWrite() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_unnamed() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_subquery_unnamed() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_unnamed_waitOnCreation() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_unnamed_waitOnNever() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_unnamed_waitAlways() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_unnamed_timeOut_fails() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_unnamed_throwsInsideWrite() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_named() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_subquery_named() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_named_waitOnCreation() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_named_waitOnNever() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_named_waitAlways() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_named_timeOut_fails() {
+        TODO()
+    }
+
+    @Test
+    fun subscribe_realmResults_named_throwsInsideWrite() {
+        TODO()
+    }
+
+    @Test
+    fun unsubscribe_realmResults() {
+        TODO()
+    }
+
+    @Test
+    fun unsubscribe_realmResults_throwsInsideWrite() {
+        TODO()
+    }
+
+    @Test
+    fun anonymousSubscriptionsOverlap() {
+        TODO("Check that anonymous RealmQuery and RealmResults .subscribe calls result in the same sub")
+    }
+
 }
