@@ -7,6 +7,7 @@
 * None.
  
 ### Fixed
+* Fix compilation issue with Kotlin 1.8.20. (Issue [1346](https://github.com/realm/realm-kotlin/issues/1346))
 * [Sync] Client Reset on JVM on Linux would crash with `No built-in scheduler implementation for this platform. Register your own with Scheduler::set_default_factory()`
 * [Sync] Return correct provider for JWT-authenticated users. (Issue [#1350](https://github.com/realm/realm-kotlin/issues/1350))
 
