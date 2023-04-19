@@ -32,7 +32,6 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.SetSerializer
@@ -41,6 +40,8 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import org.mongodb.kbson.BsonBinary
+import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
@@ -439,14 +440,17 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
 public object RealmUUIDKSerializer : KSerializer<RealmUUID> {
-    private val serializer = ByteArraySerializer()
+    private val serializer = BsonBinary.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
     override fun deserialize(decoder: Decoder): RealmUUID =
-        RealmUUID.from(decoder.decodeSerializableValue(serializer))
+        RealmUUID.from(decoder.decodeSerializableValue(serializer).data)
 
     override fun serialize(encoder: Encoder, value: RealmUUID) {
-        encoder.encodeSerializableValue(serializer, value.bytes)
+        encoder.encodeSerializableValue(
+            serializer = serializer,
+            value = BsonBinary(BsonBinarySubType.UUID_STANDARD, value.bytes)
+        )
     }
 }
 

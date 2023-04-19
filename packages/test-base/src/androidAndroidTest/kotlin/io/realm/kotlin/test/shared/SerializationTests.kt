@@ -31,9 +31,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.ext.asRealmObject
-import io.realm.kotlin.ext.toRealmDictionary
-import io.realm.kotlin.ext.toRealmList
-import io.realm.kotlin.ext.toRealmSet
+import io.realm.kotlin.internal.withMillisPrecision
 import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
@@ -70,7 +68,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
-import io.realm.kotlin.internal.withMillisPrecision
 
 class SerializationTests {
     private lateinit var tmpDir: String
