@@ -1,4 +1,4 @@
-## 1.8.0 (YYYY-MM-DD)
+## 1.8.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -27,7 +27,35 @@
 * None.
 
 
-## 1.7.1 (YYYY-MM-DD)
+## 1.7.2-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.7.1 (2023-04-19)
 
 ### Breaking Changes
 * None.
@@ -36,7 +64,9 @@
 * None.
  
 ### Fixed
+* Fix compilation issue with Kotlin 1.8.20. (Issue [1346](https://github.com/realm/realm-kotlin/issues/1346))
 * [Sync] Client Reset on JVM on Linux would crash with `No built-in scheduler implementation for this platform. Register your own with Scheduler::set_default_factory()`
+* [Sync] Return correct provider for JWT-authenticated users. (Issue [#1350](https://github.com/realm/realm-kotlin/issues/1350))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
