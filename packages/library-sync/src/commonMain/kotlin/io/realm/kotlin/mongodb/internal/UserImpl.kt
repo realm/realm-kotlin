@@ -94,6 +94,7 @@ public class UserImpl(
         }
 
     override suspend fun logOut() {
+        val reportLoggedOut = loggedIn
         Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_log_out(
                 app.nativePointer,
@@ -103,11 +104,16 @@ public class UserImpl(
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also {
+                    if (reportLoggedOut) {
+                        app.reportUserLoggedOut(this)
+                    }
+                }
         }
     }
 
     override suspend fun remove(): User {
+        val reportLogOut = loggedIn
         Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_remove_user(
                 app.nativePointer,
@@ -117,7 +123,11 @@ public class UserImpl(
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also {
+                    if (reportLogOut) {
+                        app.reportUserLoggedOut(this)
+                    }
+                }
         }
         return this
     }
@@ -135,7 +145,9 @@ public class UserImpl(
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also {
+                    app.reportUserLoggedOut(this)
+                }
         }
     }
 

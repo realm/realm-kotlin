@@ -25,10 +25,14 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.App
+import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.cancel
 
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
@@ -37,6 +41,7 @@ public class AppImpl(
 
     internal val nativePointer: RealmAppPointer
     private val networkTransport: NetworkTransport
+    private val authenticationChangeFlow = MutableSharedFlow<AuthenticationChange>()
 
     init {
         val appResources: Pair<NetworkTransport, NativePointer<RealmAppT>> = configuration.createNativeApp()
@@ -73,8 +78,22 @@ public class AppImpl(
                 }
             )
             return channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { user: User ->
+                    reportUserLoggedIn(user)
+                }
         }
+    }
+
+    private suspend fun reportUserLoggedIn(user: User) {
+        authenticationChangeFlow.emit(AuthenticationChange(AuthenticationChange.Type.LOGGED_IN, user))
+    }
+
+    internal suspend fun reportUserLoggedOut(user: User) {
+        authenticationChangeFlow.emit(AuthenticationChange(AuthenticationChange.Type.LOGGED_OUT, user))
+    }
+
+    override fun authenticationChangeAsFlow(): Flow<AuthenticationChange> {
+        return authenticationChangeFlow
     }
 
     override fun close() {
