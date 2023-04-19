@@ -19,6 +19,8 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
+import io.realm.kotlin.internal.toDuration
+import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmAny.Type
@@ -30,7 +32,6 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ByteArraySerializer
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.SetSerializer
@@ -39,8 +40,12 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import org.mongodb.kbson.BsonBinary
+import org.mongodb.kbson.BsonBinarySubType
+import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * KSerializer implementation for [RealmList]. Serialization is done as a generic list structure,
@@ -80,7 +85,8 @@ import org.mongodb.kbson.Decimal128
  *
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
-public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) : KSerializer<RealmList<E>> {
+public class RealmListKSerializer<E>(elementSerializer: KSerializer<E>) :
+    KSerializer<RealmList<E>> {
     private val serializer = ListSerializer(elementSerializer)
 
     override val descriptor: SerialDescriptor =
@@ -200,15 +206,9 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
 }
 
 /**
- * KSerializer implementation for [RealmInstant]. Serialization is done with a map containing the following
- * structure:
- *
- * ```
- * realmInstant:
- *     epochSeconds: Long
- *     nanosecondsOfSecond: Int
- * ```
- * Deserialization is done with an unmanaged [RealmInstant].
+ * KSerializer implementation for [RealmInstant]. Serialization is done with [BsonDateTime],
+ * whilst deserialization is done with an unmanaged [MutableRealmInt]. Serialization can incur in
+ * precision loss because [RealmInstant] has nanoseconds precision whilst [BsonDateTime] milliseconds.
  *
  * The serializer must be registered per property:
  * ```
@@ -242,35 +242,17 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
  *
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
-public class RealmInstantKSerializer : KSerializer<RealmInstant> {
-    private val serializer = SerializableRealmInstant.serializer()
+public object RealmInstantKSerializer : KSerializer<RealmInstant> {
+    private val serializer = BsonDateTime.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
-    /**
-     * Serializing as a map for improved verbosity. Serializing as an Array could improve
-     * performance, but the users are free to implement their own custom serializers.
-     */
-    @Serializable
-    private class SerializableRealmInstant(
-        var epochSeconds: Long = 0,
-        var nanosecondsOfSecond: Int = 0
-    )
-
     override fun deserialize(decoder: Decoder): RealmInstant =
-        decoder.decodeSerializableValue(serializer).let { instant: SerializableRealmInstant ->
-            RealmInstant.from(
-                instant.epochSeconds,
-                instant.nanosecondsOfSecond
-            )
-        }
+        decoder.decodeSerializableValue(serializer).value.milliseconds.toRealmInstant()
 
     override fun serialize(encoder: Encoder, value: RealmInstant) {
         encoder.encodeSerializableValue(
-            serializer,
-            SerializableRealmInstant(
-                value.epochSeconds,
-                value.nanosecondsOfSecond
-            )
+            serializer = serializer,
+            value = BsonDateTime(value.toDuration().inWholeMilliseconds)
         )
     }
 }
@@ -356,12 +338,14 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
         var bool: Boolean? = null
         var string: String? = null
         var binary: ByteArray? = null
+
         @Serializable(RealmInstantKSerializer::class)
         var instant: RealmInstant? = null
         var float: Float? = null
         var double: Double? = null
         var decimal128: Decimal128? = null
         var objectId: BsonObjectId? = null
+
         @Serializable(RealmUUIDKSerializer::class)
         var uuid: RealmUUID? = null
         var realmObject: RealmObject? = null
@@ -414,8 +398,8 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
 }
 
 /**
- * KSerializer implementation for [RealmUUID]. Serialization is done as a [ByteArray], whilst
- * deserialization is done with an unmanaged [RealmUUID].
+ * KSerializer implementation for [RealmUUID]. Serialization is done as a [BsonBinary] of
+ * [BsonBinarySubType.UUID_STANDARD], whilst deserialization is done with an unmanaged [RealmUUID].
  *
  * The serializer must be registered per property:
  * ```
@@ -449,15 +433,18 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
  *
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
-public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
-    private val serializer = ByteArraySerializer()
+public object RealmUUIDKSerializer : KSerializer<RealmUUID> {
+    private val serializer = BsonBinary.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
     override fun deserialize(decoder: Decoder): RealmUUID =
-        RealmUUID.from(decoder.decodeSerializableValue(serializer))
+        RealmUUID.from(decoder.decodeSerializableValue(serializer).data)
 
     override fun serialize(encoder: Encoder, value: RealmUUID) {
-        encoder.encodeSerializableValue(serializer, value.bytes)
+        encoder.encodeSerializableValue(
+            serializer = serializer,
+            value = BsonBinary(BsonBinarySubType.UUID_STANDARD, value.bytes)
+        )
     }
 }
 
@@ -497,7 +484,7 @@ public class RealmUUIDKSerializer : KSerializer<RealmUUID> {
  *
  * Serializers for all Realm data types can be found in [io.realm.kotlin.serializers].
  */
-public class MutableRealmIntKSerializer : KSerializer<MutableRealmInt> {
+public object MutableRealmIntKSerializer : KSerializer<MutableRealmInt> {
     override val descriptor: SerialDescriptor = Long.serializer().descriptor
 
     override fun deserialize(decoder: Decoder): MutableRealmInt =

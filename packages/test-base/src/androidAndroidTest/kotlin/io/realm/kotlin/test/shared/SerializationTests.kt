@@ -21,7 +21,7 @@
     MutableRealmIntKSerializer::class,
     RealmUUIDKSerializer::class
 )
-@file:Suppress("UNCHECKED_CAST")
+@file:Suppress("UNCHECKED_CAST", "invisible_member", "invisible_reference")
 
 package io.realm.kotlin.test.shared
 
@@ -31,6 +31,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.internal.withMillisPrecision
 import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
 import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
@@ -114,7 +115,7 @@ class SerializationTests {
         nullableProperties: Map<KClass<out Any>, KMutableProperty1<*, *>>,
     ): List<CollectionTypeSafetyManager<Any?>> = map { fieldType: TypeDescriptor.RealmFieldType ->
         CollectionTypeSafetyManager<Any?>(
-            dataSetToLoad = getDataSetForCollectionClassifier(
+            dataSet = getDataSetForCollectionClassifier(
                 classifier = fieldType.elementType.classifier,
                 nullable = fieldType.elementType.nullable,
                 realmObjects = OBJECT_VALUES
@@ -129,9 +130,17 @@ class SerializationTests {
 
     private class CollectionTypeSafetyManager<T>(
         override val property: KMutableProperty1<SerializableSample, MutableCollection<T>>,
-        override val dataSetToLoad: List<T>,
+        dataSet: List<T>,
         val classifier: KClassifier
     ) : GenericTypeSafetyManager<T, SerializableSample, MutableCollection<T>> {
+
+        // Drop RealmInstant to milliseconds precision
+        override val dataSetToLoad: List<T> = when (classifier) {
+            RealmInstant::class -> dataSet.map {
+                (it as RealmInstant?)?.withMillisPrecision() as T
+            }
+            else -> dataSet
+        }
 
         override fun toString(): String = property.name
 
@@ -158,10 +167,18 @@ class SerializationTests {
     }
 
     private class DictionaryTypeSafetyManager<T> constructor(
-        override val dataSetToLoad: List<Pair<String, T>>,
+        dataSet: List<Pair<String, T>>,
         override val property: KMutableProperty1<SerializableSample, RealmDictionary<T>>,
         val classifier: KClassifier
     ) : GenericTypeSafetyManager<Pair<String, T>, SerializableSample, RealmDictionary<T>> {
+
+        // Drop RealmInstant to milliseconds precision
+        override val dataSetToLoad: List<Pair<String, T>> = when (classifier) {
+            RealmInstant::class -> dataSet.map { entry ->
+                entry.first to (entry.second as RealmInstant?)?.withMillisPrecision() as T
+            }
+            else -> dataSet
+        }
 
         override fun toString(): String = property.name
 
@@ -377,7 +394,7 @@ class SerializationTests {
             }
             .map { fieldType: TypeDescriptor.RealmFieldType ->
                 DictionaryTypeSafetyManager<Any?>(
-                    dataSetToLoad = getDataSetForDictionaryClassifier(
+                    dataSet = getDataSetForDictionaryClassifier(
                         fieldType.elementType.classifier,
                         fieldType.elementType.nullable,
                         OBJECT_VALUES
