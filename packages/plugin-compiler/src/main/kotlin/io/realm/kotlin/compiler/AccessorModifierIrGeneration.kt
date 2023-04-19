@@ -68,7 +68,6 @@ import org.jetbrains.kotlin.ir.builders.Scope
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
-import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irLetS
@@ -845,7 +844,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             type = getter.returnType,
                             subject = irGet(objectReferenceType, valueSymbol),
                             // Unmanaged object, return backing field
-                            thenPart = irGetField(irGet(receiver), backingField),
+                            thenPart = irGetFieldWrapper(irGet(receiver), backingField),
                             // Managed object, return realm value
                             elsePart = publicValue
                         )
