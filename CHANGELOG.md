@@ -1,4 +1,4 @@
-## 1.7.1 (YYYY-MM-DD)
+## 1.7.1 (2023-04-19)
 
 ### Breaking Changes
 * None.
