@@ -206,15 +206,9 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
 }
 
 /**
- * KSerializer implementation for [RealmInstant]. Serialization is done with a map containing the following
- * structure:
- *
- * ```
- * realmInstant:
- *     epochSeconds: Long
- *     nanosecondsOfSecond: Int
- * ```
- * Deserialization is done with an unmanaged [RealmInstant].
+ * KSerializer implementation for [RealmInstant]. Serialization is done with [BsonDateTime],
+ * whilst deserialization is done with an unmanaged [MutableRealmInt]. Serialization can incur in
+ * precision loss because [RealmInstant] has nanoseconds precision whilst [BsonDateTime] milliseconds.
  *
  * The serializer must be registered per property:
  * ```
@@ -404,8 +398,8 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
 }
 
 /**
- * KSerializer implementation for [RealmUUID]. Serialization is done as a [ByteArray], whilst
- * deserialization is done with an unmanaged [RealmUUID].
+ * KSerializer implementation for [RealmUUID]. Serialization is done as a [BsonBinary] of
+ * [BsonBinarySubType.UUID_STANDARD], whilst deserialization is done with an unmanaged [RealmUUID].
  *
  * The serializer must be registered per property:
  * ```
