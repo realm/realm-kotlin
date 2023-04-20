@@ -207,10 +207,10 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
 
 /**
  * KSerializer implementation for [RealmInstant]. It is serialized as a [BsonDateTime], to allow direct
- * usage on Mongodb function calls, and deserialized as an unmanaged [MutableRealmInt].
+ * usage on Mongodb function calls, and deserialized as an unmanaged [RealmInstant].
  *
- * Warning: because [RealmInstant] and [BsonDateTime] have different precision the serialization would
- * lose precision from nanoseconds to milliseconds.
+ * Warning: because [RealmInstant] and [BsonDateTime] have different precision the serialization will
+ * lose precision as nanoseconds get truncated to milliseconds.
  *
  * The serializer must be registered per property:
  * ```
