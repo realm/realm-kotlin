@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+@file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.shared
 
 import io.realm.kotlin.log.LogLevel
@@ -65,7 +65,7 @@ class RealmLogTests {
             add(customLogger)
             warn("Testing 1")
             assertEquals("Testing 1", customLogger.message)
-            error("Testing 2")
+            this.error("Testing 2")
             assertEquals("Testing 2", customLogger.message)
             info("Testing 3") // This should be swallowed
             assertEquals("Testing 2", customLogger.message)

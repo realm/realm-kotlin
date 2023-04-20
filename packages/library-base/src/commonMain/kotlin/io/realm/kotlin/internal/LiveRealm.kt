@@ -22,7 +22,6 @@ import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.WeakReference
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.RealmLog
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
@@ -50,7 +49,7 @@ internal abstract class LiveRealm(
     private val realmChangeRegistration: NotificationToken
     private val schemaChangeRegistration: NotificationToken
 
-    internal val versionTracker = VersionTracker(this)
+    internal val versionTracker = VersionTracker(this, owner.log)
 
     override val realmReference: LiveRealmReference by lazy {
         val (dbPointer, _) = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcher)
@@ -98,7 +97,7 @@ internal abstract class LiveRealm(
         return snapshotLock.withLock {
             _snapshot.value.also { snapshot ->
                 if (_closeSnapshotWhenAdvancing) {
-                    RealmLog.trace("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
+                    log.trace("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
                     _closeSnapshotWhenAdvancing = false
                 }
             }
@@ -124,7 +123,7 @@ internal abstract class LiveRealm(
                 return
             }
             if (_closeSnapshotWhenAdvancing) {
-                RealmLog.trace("${this@LiveRealm} CLOSE-UNTRACKED $version")
+                log.trace("${this@LiveRealm} CLOSE-UNTRACKED $version")
                 _snapshot.value.close()
             } else {
                 // TODO Split into track and clean up as we don't need to hold headLock while
@@ -132,7 +131,7 @@ internal abstract class LiveRealm(
                 versionTracker.trackAndCloseExpiredReferences(_snapshot.value)
             }
             _snapshot.value = realmReference.snapshot(owner)
-            RealmLog.trace("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
+            log.trace("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
             _closeSnapshotWhenAdvancing = true
         }
     }
@@ -155,7 +154,7 @@ internal abstract class LiveRealm(
         realmReference.close()
         // Close current reference
         _snapshot.value?.let {
-            RealmLog.trace("$this CLOSE-ACTIVE ${it.version()}")
+            log.trace("$this CLOSE-ACTIVE ${it.version()}")
             it.close()
         }
         // Close all intermediate references

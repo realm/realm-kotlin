@@ -685,11 +685,12 @@ void set_log_callback(jint j_log_level, jobject log_callback) {
     realm_set_log_callback([](void* userdata, realm_log_level_e level, const char* message) {
                                   auto log_callback = static_cast<jobject>(userdata);
                                   auto jenv = get_env(true);
+                                  auto java_level = static_cast<jshort>(level);
                                   static JavaMethod log_method(jenv,
                                                                JavaClassGlobalDef::log_callback(),
                                                                "log",
                                                                "(SLjava/lang/String;)V");
-                                  jenv->CallVoidMethod(log_callback, log_method, level, to_jstring(jenv, message));
+                                  jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, message));
                                   jni_check_exception(jenv);
                               },
                               log_level,

@@ -202,7 +202,7 @@ public interface Configuration {
 
         // 'name' must be nullable as it is optional when getting SyncClient's default path!
         protected abstract var name: String?
-        protected var logLevel: LogLevel = LogLevel.WARN
+        protected var logLevel: LogLevel = LogLevel.INFO
         protected var appConfigLoggers: List<RealmLogger> = listOf()
         protected var realmConfigLoggers: List<RealmLogger> = listOf()
         protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
@@ -264,7 +264,7 @@ public interface Configuration {
          */
         @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
         public open fun log(
-            level: LogLevel = LogLevel.WARN,
+            level: LogLevel = LogLevel.INFO,
             customLoggers: List<RealmLogger> = emptyList()
         ): S = apply {
             this.logLevel = level

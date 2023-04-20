@@ -20,7 +20,6 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.platform.WeakReference
-import io.realm.kotlin.log.RealmLog
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
@@ -30,7 +29,7 @@ import kotlinx.atomicfu.atomic
  *
  * NOTE: This is not thread safe, so synchronization should be enforced by the owner/caller.
  */
-internal class VersionTracker(private val owner: BaseRealmImpl) {
+internal class VersionTracker(private val owner: BaseRealmImpl, private val log: ContextLogger) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
     private val intermediateReferences: AtomicRef<Set<Pair<RealmPointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())
@@ -38,13 +37,13 @@ internal class VersionTracker(private val owner: BaseRealmImpl) {
     fun trackAndCloseExpiredReferences(realmReference: FrozenRealmReference? = null) {
         val references = mutableSetOf<Pair<RealmPointer, WeakReference<RealmReference>>>()
         realmReference?.let {
-            RealmLog.trace("$owner TRACK-VERSION ${realmReference.version()}")
+            log.trace("$owner TRACK-VERSION ${realmReference.version()}")
             references.add(Pair(realmReference.dbPointer, WeakReference(it)))
         }
         intermediateReferences.value.forEach { entry ->
             val (pointer, ref) = entry
             if (ref.get() == null) {
-                RealmLog.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
+                log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
                 RealmInterop.realm_close(pointer)
             } else {
                 references.add(entry)
@@ -59,7 +58,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl) {
 
     fun close() {
         intermediateReferences.value.forEach { (pointer, _) ->
-            RealmLog.trace("$owner CLOSE-ACTIVE ${VersionId(RealmInterop.realm_get_version_id(pointer))}")
+            log.trace("$owner CLOSE-ACTIVE ${VersionId(RealmInterop.realm_get_version_id(pointer))}")
             RealmInterop.realm_close(pointer)
         }
     }

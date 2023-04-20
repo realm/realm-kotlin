@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.mongodb
 
 import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
@@ -108,7 +108,7 @@ public interface AppConfiguration {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
         private var encryptionKey: ByteArray? = null
-        private var logLevel: LogLevel = LogLevel.WARN
+        private var logLevel: LogLevel = LogLevel.INFO
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
@@ -160,7 +160,7 @@ public interface AppConfiguration {
          * @return the Builder instance used.
          */
         @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
-        public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder =
+        public fun log(level: LogLevel = LogLevel.INFO, customLoggers: List<RealmLogger> = emptyList()): Builder =
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
@@ -280,12 +280,13 @@ public interface AppConfiguration {
                 CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
+            val appLogger = ContextLogger("Sdk")
             val networkTransport: () -> NetworkTransport = {
                 val logger: Logger? = if (logLevel <= LogLevel.DEBUG) {
                     object : Logger {
                         override fun log(message: String) {
                             val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
-                            RealmLog.debug(obfuscatedMessage ?: message)
+                            appLogger.debug(obfuscatedMessage ?: message)
                         }
                     }
                 } else {

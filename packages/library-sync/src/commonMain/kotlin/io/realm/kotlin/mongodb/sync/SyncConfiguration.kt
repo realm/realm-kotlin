@@ -21,6 +21,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -492,12 +493,14 @@ public interface SyncConfiguration : Configuration {
 
         @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
+            val realmLogger = ContextLogger("Sdk")
+
             // Set default error handler after setting config logging logic
             if (this.errorHandler == null) {
                 this.errorHandler = object : SyncSession.ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
                         error.message?.let {
-                            RealmLog.warn(it)
+                            realmLogger.warn(it)
                         }
                     }
                 }
@@ -507,22 +510,22 @@ public interface SyncConfiguration : Configuration {
             if (syncClientResetStrategy == null) {
                 syncClientResetStrategy = object : RecoverOrDiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
-                        RealmLog.info("Client reset: attempting to automatically recover unsynced changes in Realm: ${realm.configuration.path}")
+                        realmLogger.info("Client reset: attempting to automatically recover unsynced changes in Realm: ${realm.configuration.path}")
                     }
 
                     override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
-                        RealmLog.info("Client reset: successfully recovered all unsynced changes in Realm: ${after.configuration.path}")
+                        realmLogger.info("Client reset: successfully recovered all unsynced changes in Realm: ${after.configuration.path}")
                     }
 
                     override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
-                        RealmLog.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
+                        realmLogger.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
                     }
 
                     override fun onManualResetFallback(
                         session: SyncSession,
                         exception: ClientResetRequiredException
                     ) {
-                        RealmLog.error("Client reset: manual reset required for Realm in '${exception.originalFilePath}'")
+                        realmLogger.error("Client reset: manual reset required for Realm in '${exception.originalFilePath}'")
                     }
                 }
             }
@@ -566,7 +569,8 @@ public interface SyncConfiguration : Configuration {
                 null, // migration is not relevant for sync,
                 initialDataCallback,
                 partitionValue == null,
-                inMemory
+                inMemory,
+                realmLogger
             )
 
             return SyncConfigurationImpl(

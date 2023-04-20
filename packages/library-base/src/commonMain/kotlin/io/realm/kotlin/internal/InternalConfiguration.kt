@@ -35,6 +35,7 @@ public interface InternalConfiguration : Configuration {
     public val notificationDispatcherFactory: CoroutineDispatcherFactory
     public val writeDispatcherFactory: CoroutineDispatcherFactory
     public val schemaMode: SchemaMode
+    public val logger: ContextLogger
 
     // Temporary work-around for https://github.com/realm/realm-kotlin/issues/724
     public val isFlexibleSyncConfiguration: Boolean

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin
 
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
@@ -114,6 +115,8 @@ public interface RealmConfiguration : Configuration {
         }
 
         override fun build(): RealmConfiguration {
+            val realmLogger = ContextLogger("Sdk")
+
             // Sync configs might not set 'name' but local configs always do, therefore it will
             // never be null here
             val fileName = name!!
@@ -151,7 +154,8 @@ public interface RealmConfiguration : Configuration {
                 compactOnLaunchCallback,
                 migration,
                 initialDataCallback,
-                inMemory
+                inMemory,
+                realmLogger
             )
         }
     }
