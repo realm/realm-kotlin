@@ -96,6 +96,7 @@
 * Wrong use of `val` for persisted properties will now throw a compiler time error, instead of crashing at runtime. (Issue [#1306](https://github.com/realm/realm-kotlin/issues/1306))
 * Add support for querying on RealmSets containing objects with `RealmSet.query(...)`.  (Issue [#1037](https://github.com/realm/realm-kotlin/issues/1258))
 * Added support for `RealmDictionary` in model classes. `RealmDictionary` is a `Map` of strings to values. Contrary to `RealmSet` and `RealmList` it is possible to store nullable objects/embedded objects in this data structure. See the class documentation for more details. (Issue [#537](https://github.com/realm/realm-kotlin/issues/537))
+* Add Realm datatypes serialization support with `Kserializer`. Serializers can be found in `io.realm.kotlin.serializers`. (Issue [#1283](https://github.com/realm/realm-kotlin/pull/1283))
 * [Sync] Add support for setting App Services connection identifiers through `AppConfiguration.appName` and `AppConfiguration.appVersion`, making it easier to identify connections in the server logs. (Issue (#407)[https://github.com/realm/realm-kotlin/issues/407])
 * [Sync] Added `RecoverUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client.
 * [Sync] Added `RecoverOrDiscardUnsyncedChangesStrategy`, an alternative automatic client reset strategy that tries to automatically recover any unsynced data from the client, and discards any unsynced data if recovery is not possible. This is now the default policy.
@@ -117,6 +118,7 @@
   * Ktor 2.1.2 and above.
   * Coroutines 1.6.4 and above.
   * AtomicFu 0.18.3 and above.
+  * Kotlin Serialization 1.4.0 and above
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Gradle version: 6.7.1.
 * Minimum Android Gradle Plugin version: 4.0.0.
