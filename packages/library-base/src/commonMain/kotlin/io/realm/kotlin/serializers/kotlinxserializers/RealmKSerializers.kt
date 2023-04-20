@@ -206,9 +206,11 @@ public class RealmDictionaryKSerializer<E>(elementSerializer: KSerializer<E>) :
 }
 
 /**
- * KSerializer implementation for [RealmInstant]. Serialization is done with [BsonDateTime],
- * whilst deserialization is done with an unmanaged [MutableRealmInt]. Serialization can incur in
- * precision loss because [RealmInstant] has nanoseconds precision whilst [BsonDateTime] milliseconds.
+ * KSerializer implementation for [RealmInstant]. It is serialized as a [BsonDateTime], to allow direct
+ * usage on Mongodb function calls, and deserialized as an unmanaged [MutableRealmInt].
+ *
+ * Warning: because [RealmInstant] and [BsonDateTime] have different precision the serialization would
+ * lose precision from nanoseconds to milliseconds.
  *
  * The serializer must be registered per property:
  * ```
@@ -398,8 +400,8 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
 }
 
 /**
- * KSerializer implementation for [RealmUUID]. Serialization is done as a [BsonBinary] of
- * [BsonBinarySubType.UUID_STANDARD], whilst deserialization is done with an unmanaged [RealmUUID].
+ * KSerializer implementation for [RealmUUID]. Serialized as a [BsonBinary] with subtype
+ * [BsonBinarySubType.UUID_STANDARD], and deserialized as an unmanaged [RealmUUID].
  *
  * The serializer must be registered per property:
  * ```
