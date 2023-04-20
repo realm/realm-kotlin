@@ -281,15 +281,11 @@ class AppTests {
         val loggedInEvent = c.receiveOrFail()
         assertTrue(loggedInEvent is LoggedIn)
         assertSame(user1, loggedInEvent.user)
-        assertTrue(loggedInEvent.didLogIn())
-        assertFalse(loggedInEvent.didLogOut())
 
         user1.logOut()
         val loggedOutEvent = c.receiveOrFail()
         assertTrue(loggedOutEvent is LoggedOut)
         assertSame(user1, loggedOutEvent.user)
-        assertTrue(loggedOutEvent.didLogOut())
-        assertFalse(loggedOutEvent.didLogIn())
 
         // Repeating logout does not trigger a new event
         user1.logOut()
@@ -318,8 +314,6 @@ class AppTests {
         val loggedOutEvent = c.receiveOrFail()
         assertTrue(loggedOutEvent is Removed)
         assertSame(user1, loggedOutEvent.user)
-        assertTrue(loggedOutEvent.didLogOut())
-        assertFalse(loggedOutEvent.didLogIn())
 
         job.cancel()
         c.close()
@@ -345,8 +339,6 @@ class AppTests {
         val loggedOutEvent = c.receiveOrFail()
         assertTrue(loggedOutEvent is Removed)
         assertSame(user, loggedOutEvent.user)
-        assertTrue(loggedOutEvent.didLogOut())
-        assertFalse(loggedOutEvent.didLogIn())
 
         job.cancel()
         c.close()
