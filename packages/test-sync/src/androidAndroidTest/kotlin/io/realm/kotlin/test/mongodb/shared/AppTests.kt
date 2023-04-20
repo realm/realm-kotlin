@@ -22,11 +22,15 @@ import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.fileExists
+import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
+import io.realm.kotlin.mongodb.LoggedIn
+import io.realm.kotlin.mongodb.LoggedOut
+import io.realm.kotlin.mongodb.Removed
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
@@ -40,7 +44,6 @@ import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -276,14 +279,14 @@ class AppTests {
 
         val user1 = app.login(Credentials.anonymous())
         val loggedInEvent = c.receiveOrFail()
-        assertEquals(AuthenticationChange.Type.LOGGED_IN, loggedInEvent.type)
+        assertTrue(loggedInEvent is LoggedIn)
         assertSame(user1, loggedInEvent.user)
         assertTrue(loggedInEvent.didLogIn())
         assertFalse(loggedInEvent.didLogOut())
 
         user1.logOut()
         val loggedOutEvent = c.receiveOrFail()
-        assertEquals(AuthenticationChange.Type.LOGGED_OUT, loggedOutEvent.type)
+        assertTrue(loggedOutEvent is LoggedOut)
         assertSame(user1, loggedOutEvent.user)
         assertTrue(loggedOutEvent.didLogOut())
         assertFalse(loggedOutEvent.didLogIn())
@@ -293,7 +296,7 @@ class AppTests {
         val user2 = app.login(Credentials.anonymous())
         val reloginEvent = c.receiveOrFail()
         assertEquals(user2, reloginEvent.user)
-        assertEquals(AuthenticationChange.Type.LOGGED_IN, reloginEvent.type)
+        assertTrue(reloginEvent is LoggedIn)
 
         job.cancel()
         c.close()
@@ -309,11 +312,11 @@ class AppTests {
         }
         val user1 = app.login(Credentials.anonymous(reuseExisting = true))
         val loggedInEvent = c.receiveOrFail()
-        assertEquals(AuthenticationChange.Type.LOGGED_IN, loggedInEvent.type)
+        assertTrue(loggedInEvent is LoggedIn)
 
         user1.remove()
         val loggedOutEvent = c.receiveOrFail()
-        assertEquals(AuthenticationChange.Type.LOGGED_OUT, loggedOutEvent.type)
+        assertTrue(loggedOutEvent is Removed)
         assertSame(user1, loggedOutEvent.user)
         assertTrue(loggedOutEvent.didLogOut())
         assertFalse(loggedOutEvent.didLogIn())
@@ -336,11 +339,11 @@ class AppTests {
         }
         val user = app.login(Credentials.anonymous(reuseExisting = true))
         val loggedInEvent = c.receiveOrFail()
-        assertEquals(AuthenticationChange.Type.LOGGED_IN, loggedInEvent.type)
+        assertTrue(loggedInEvent is LoggedIn)
 
         user.delete()
         val loggedOutEvent = c.receiveOrFail()
-        assertEquals(AuthenticationChange.Type.LOGGED_OUT, loggedOutEvent.type)
+        assertTrue(loggedOutEvent is Removed)
         assertSame(user, loggedOutEvent.user)
         assertTrue(loggedOutEvent.didLogOut())
         assertFalse(loggedOutEvent.didLogIn())

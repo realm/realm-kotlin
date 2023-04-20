@@ -113,7 +113,7 @@ public class UserImpl(
     }
 
     override suspend fun remove(): User {
-        val reportLogOut = loggedIn
+        val reportRemoved = loggedIn
         Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_remove_user(
                 app.nativePointer,
@@ -124,8 +124,8 @@ public class UserImpl(
             )
             return@use channel.receive()
                 .getOrThrow().also {
-                    if (reportLogOut) {
-                        app.reportUserLoggedOut(this)
+                    if (reportRemoved) {
+                        app.reportUserRemoved(this)
                     }
                 }
         }
@@ -146,7 +146,7 @@ public class UserImpl(
             )
             return@use channel.receive()
                 .getOrThrow().also {
-                    app.reportUserLoggedOut(this)
+                    app.reportUserRemoved(this)
                 }
         }
     }

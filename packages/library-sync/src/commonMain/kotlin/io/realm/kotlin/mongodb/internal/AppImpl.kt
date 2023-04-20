@@ -32,7 +32,6 @@ import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.cancel
 
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
@@ -85,11 +84,15 @@ public class AppImpl(
     }
 
     private suspend fun reportUserLoggedIn(user: User) {
-        authenticationChangeFlow.emit(AuthenticationChange(AuthenticationChange.Type.LOGGED_IN, user))
+        authenticationChangeFlow.emit(LoggedInImpl(user))
     }
 
     internal suspend fun reportUserLoggedOut(user: User) {
-        authenticationChangeFlow.emit(AuthenticationChange(AuthenticationChange.Type.LOGGED_OUT, user))
+        authenticationChangeFlow.emit(LoggedOutImpl(user))
+    }
+
+    internal suspend fun reportUserRemoved(user: User) {
+        authenticationChangeFlow.emit(RemovedImpl(user))
     }
 
     override fun authenticationChangeAsFlow(): Flow<AuthenticationChange> {

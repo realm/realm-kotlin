@@ -23,7 +23,6 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.AppImpl
-import io.realm.kotlin.mongodb.sync.ConnectionStateChange
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -109,7 +108,7 @@ public interface App {
      *
      * @return a [Flow] of authentication events for users associated with this app.
      */
-    public fun authenticationChangeAsFlow(): Flow<AuthenticationChange>;
+    public fun authenticationChangeAsFlow(): Flow<AuthenticationChange>
 
     /**
      * Close the app instance and release all underlying resources.

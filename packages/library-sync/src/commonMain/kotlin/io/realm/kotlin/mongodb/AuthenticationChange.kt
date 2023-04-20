@@ -3,38 +3,32 @@ package io.realm.kotlin.mongodb
 /**
  * TODO
  */
-public data class AuthenticationChange(
-    /**
-     * TODO
-     */
-    public val type: Type,
+public sealed interface AuthenticationChange {
     /**
      * TODO
      */
     public val user: User
-) {
-
     /**
      * TODO
      */
-    public enum class Type {
-        /**
-         * TODO
-         */
-        LOGGED_IN,
-        /**
-         * TODO
-         */
-        LOGGED_OUT
-    }
-
+    public fun didLogIn(): Boolean
     /**
      * TODO
      */
-    public fun didLogIn(): Boolean = (type == Type.LOGGED_IN)
-
-    /**
-     * TODO
-     */
-    public fun didLogOut(): Boolean = (type == Type.LOGGED_OUT)
+    public fun didLogOut(): Boolean
 }
+
+/**
+ * TODO
+ */
+public interface LoggedIn : AuthenticationChange
+
+/**
+ * TODO
+ */
+public interface LoggedOut : AuthenticationChange
+
+/**
+ * TODO
+ */
+public interface Removed : AuthenticationChange
