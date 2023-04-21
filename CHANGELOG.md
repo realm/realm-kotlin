@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
+* Support for initialization of a realm file with a bundled realm through `RealmConfiguration.Builder(...).assetFile(...)`. (Issue [#577](https://github.com/realm/realm-kotlin/issues/577))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 
 ### Fixed
