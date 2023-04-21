@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -79,6 +80,8 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -570,6 +573,20 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
         }
     }
 }
+
+/**
+ * Returns the underlying schema name for a given class type
+ */
+fun getSchemaClassName(clazz: IrClass): String {
+    return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
+        @Suppress("UNCHECKED_CAST")
+        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+    } else {
+        clazz.name.identifier
+    }
+}
+
+
 
 /** Finds the line and column of [IrDeclaration] */
 fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {

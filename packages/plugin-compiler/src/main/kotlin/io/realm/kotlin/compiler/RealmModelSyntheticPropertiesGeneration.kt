@@ -87,9 +87,10 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
+import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -102,6 +103,7 @@ import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
+import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.Name
@@ -249,7 +251,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
-        val className = clazz.name.identifier
+        val className = getSchemaClassName(clazz)
         val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
@@ -403,6 +405,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         val companionObject = irClass.companionObject() as? IrClass
             ?: fatalError("Companion object not available")
 
+        val className = getSchemaClassName(irClass)
+
         val fields: MutableMap<String, SchemaProperty> =
             SchemaCollector.properties.getOrDefault(irClass, mutableMapOf())
 
@@ -449,7 +453,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
                             // Name
-                            putValueArgument(arg++, irString(irClass.name.identifier))
+                            putValueArgument(arg++, irString(className))
                             // Primary key
                             putValueArgument(
                                 arg++,
@@ -602,8 +606,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                 irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                             }
                                             linkingObjectType -> {
-                                                val linkTargetType = getBacklinksTargetType(backingField)
-                                                irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
+                                                val linkTargetType: IrType = getBacklinksTargetType(backingField)
+                                                val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
+                                                irString(getSchemaClassName(classRef))
                                             }
                                             else -> {
                                                 irString("")
