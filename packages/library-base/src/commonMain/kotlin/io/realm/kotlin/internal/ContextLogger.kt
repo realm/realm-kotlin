@@ -85,6 +85,6 @@ public class ContextLogger(public val context: String? = null) {
     }
 
     private inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
-        RealmLog.doLog(level, throwable, message, args)
+        RealmLog.doLog(level, throwable, message, *args)
     }
 }
