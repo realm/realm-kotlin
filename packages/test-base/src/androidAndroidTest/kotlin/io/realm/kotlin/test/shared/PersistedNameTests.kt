@@ -30,7 +30,6 @@ import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
