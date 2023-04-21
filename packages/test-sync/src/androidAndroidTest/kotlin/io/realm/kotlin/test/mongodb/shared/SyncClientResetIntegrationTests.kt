@@ -340,7 +340,8 @@ class SyncClientResetIntegrationTests {
 
     @AfterTest
     fun tearDown() {
-        RealmLog.removeAll(removeDefaultSystemLogger = false)
+        RealmLog.removeAll()
+        RealmLog.addDefaultSystemLogger()
         RealmLog.level = initialLogLevel
     }
 

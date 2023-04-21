@@ -102,7 +102,7 @@ public object RealmLog {
      */
     public fun removeAll(): Boolean {
         loggersMutex.withLock {
-            val loggerRemoved = loggers.isNotEmpty() || systemLoggerInstalled != null
+            val loggerRemoved = loggers.isNotEmpty()
             loggers = mutableListOf()
             systemLoggerInstalled = null
             return loggerRemoved
