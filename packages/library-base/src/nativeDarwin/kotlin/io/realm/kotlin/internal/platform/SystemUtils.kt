@@ -6,6 +6,16 @@ import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
+import kotlinx.cinterop.BooleanVar
+import kotlinx.cinterop.ObjCObjectVar
+import kotlinx.cinterop.ULongVar
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.alloc
+import kotlinx.cinterop.convert
+import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.pointed
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import platform.CoreCrypto.CC_SHA256
 import platform.CoreCrypto.CC_SHA256_DIGEST_LENGTH
