@@ -150,7 +150,9 @@ public interface RealmConfiguration : Configuration {
                 compactOnLaunchCallback,
                 migration,
                 initialDataCallback,
-                inMemory
+                inMemory,
+                assetFile,
+                assetFileChecksum,
             )
         }
     }

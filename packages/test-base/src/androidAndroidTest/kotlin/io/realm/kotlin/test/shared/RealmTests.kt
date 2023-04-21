@@ -27,6 +27,8 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
 import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
+import io.realm.kotlin.internal.platform.fileExists
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -635,6 +637,118 @@ class RealmTests {
         }
     }
 
+    @Test
+    fun assetFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .log(LogLevel.DEBUG)
+            // Need a separate name to avoid clashes with this.realm
+            .name("prefilled.realm")
+            .schemaVersion(1)
+            .assetFile("asset.realm")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        Realm.open(config).use {
+            val schema = it.schema()
+            // Verify that the initial realm already has some data in it
+            assertEquals(4, it.query<Parent>().find().size)
+
+            it.writeBlocking { delete(query<Parent>()) }
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+
+        // Verify that reopening the file see the updates and doesn't reinitialize the realm from
+        // the assetFile
+        Realm.open(config).use {
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+    }
+
+    @Test
+    fun assetFile_withChecksum() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("prefilled.realm")
+            .log(LogLevel.DEBUG)
+            .schemaVersion(1)
+            .assetFile("asset.realm", "d4cdef5d8da2b2e2ae692f2e2fead4ef8deeaccb8e4cf0790c2a2ae0dbaabbc4")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        Realm.open(config).use {
+            val schema = it.schema()
+            // Verify that the initial realm already has some data in it
+            assertEquals(4, it.query<Parent>().find().size)
+
+            it.writeBlocking { delete(query<Parent>()) }
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+
+        // Verify that reopening the file see the updates and doesn't reinitialize the realm from
+        // the assetFile
+        Realm.open(config).use {
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+    }
+
+    @Test
+    fun assetFile_invalidChecksum() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("prefilled.realm")
+            .log(LogLevel.DEBUG)
+            .schemaVersion(1)
+            .assetFile("asset.realm", "asdf")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        assertFailsWithMessage<RuntimeException>("Asset file checksum for 'asset.realm' does not match. Expected 'asdf' but was 'd4cdef5d8da2b2e2ae692f2e2fead4ef8deeaccb8e4cf0790c2a2ae0dbaabbc4'") {
+            Realm.open(config)
+        }
+    }
+
+    @Test
+    fun assetFile_nonExistingFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("prefilled.realm")
+            .log(LogLevel.DEBUG)
+            .schemaVersion(1)
+            .assetFile("nonexistingfile.realm")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        assertFailsWithMessage<IllegalArgumentException>("Asset file not found: 'nonexistingfile.realm'") {
+            Realm.open(config)
+        }
+    }
+
+    @Test
+    fun assetFile_existingFileDisregardWrongAssetFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("default.realm")
+            .log(LogLevel.DEBUG)
+            .assetFile("nonexistingfile.realm")
+            .build()
+
+        assertTrue(fileExists(config.path))
+        Realm.open(config).use { }
+    }
+
+    @Test
+    fun assetFile_existingFileDisregardWrongChecksum() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("default.realm")
+            .log(LogLevel.DEBUG)
+            .assetFile("asset.realm", "invalid_checksum")
+            .build()
+
+        assertTrue(fileExists(config.path))
+        Realm.open(config).use { }
+    }
     // TODO Cannot verify intermediate versions as they are now spread across user facing, notifier
     //  and writer realms. Tests were anyway ignored, so don't really know what to do with these.
 //    @Test

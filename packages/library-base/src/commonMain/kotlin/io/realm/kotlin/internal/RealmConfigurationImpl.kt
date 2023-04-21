@@ -44,6 +44,8 @@ internal class RealmConfigurationImpl constructor(
     migration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
+    assetFile: String?,
+    assetFileChecksum: String?
 ) : ConfigurationImpl(
     directory,
     name,
@@ -62,6 +64,8 @@ internal class RealmConfigurationImpl constructor(
     migration,
     initialDataCallback,
     false,
-    inMemory
+    inMemory,
+    assetFile,
+    assetFileChecksum
 ),
     RealmConfiguration

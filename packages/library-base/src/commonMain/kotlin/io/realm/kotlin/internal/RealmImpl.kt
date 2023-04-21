@@ -23,6 +23,7 @@ import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
+import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
@@ -112,6 +113,13 @@ public class RealmImpl private constructor(
         var realmFileCreated = false
         try {
             runBlocking {
+                // FIXME We cannot ensure exclusive access to the realm file, so for now multiple
+                //  processes/threads could potentially race each other here
+                //  https://github.com/realm/realm-core/issues/6492
+                if (configuration.assetFile != null && !fileExists(configuration.path)) {
+                    log.debug("Copying asset file: ${configuration.assetFile}")
+                    copyAssetFile(configuration.path, configuration.assetFile!!, configuration.assetFileChecksum)
+                }
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = fileCreated
                 versionTracker.trackAndCloseExpiredReferences(frozenReference)

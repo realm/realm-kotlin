@@ -170,6 +170,9 @@ public interface Configuration {
      */
     public val inMemory: Boolean
 
+    public val assetFile: String?
+    public val assetFileChecksum: String?
+
     /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
@@ -211,6 +214,8 @@ public interface Configuration {
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
+        protected var assetFile: String? = null
+        protected var assetFileChecksum: String? = null
 
         /**
          * Sets the filename of the realm file.
@@ -370,6 +375,40 @@ public interface Configuration {
          */
         public fun inMemory(): S =
             apply { this.inMemory = true } as S
+
+        /**
+         * Initializes a realm file with a bundled asset realm files.
+         *
+         * When opening the realm for the first time the realm file is initialized from the given
+         * [assetFile]. This only happens if the realm files at [path] not already exists.
+         *
+         * The asset file is sought located on the platform's conventional locations for bundled
+         * assets/resources:
+         * - Android: Through android.content.res.AssetManager.open(assetFilename)
+         * - JVM: Class<T>.javaClass.classLoader.getResource(assetFilename)
+         * - Darwin: NSBundle.mainBundle.pathForResource(assetFilenameBase, assetFilenameExtension)
+         * And it is the responsibility of the developer to place the files at the appropriate
+         * location.
+         *
+         * // FIXME validate
+         * This cannot be combined with {@link #deleteRealmIfMigrationNeeded()} as doing so would just result in the
+         * copied file being deleted.
+         *
+         * NOTE: This could potentially be a lengthy operation and should ideally be done on a
+         * background thread.
+         * NOTE: There is currently no protection against race conditions in copying the asset file
+         * in place, so user must ensure that only one process is trying to trigger this at a time.
+         *
+         * @param assetFile the name of the assetFile in the platform's default asset/resource
+         * location. If the asset file cannot be located when opening the realm for the first time
+         * [Realm.open] will fail with a [IllegalArgumentException].
+         * @param sha256checkSum a SHA256-checksum used to verify the integrity of the asset file.
+         * If this is specified and the checksum does not match the computed checksum of the
+         * [assetFile] when the realm is opened the first time [Realm.open] will fail with a
+         * [IllegalArgumentException].
+         */
+        public fun assetFile(assetFile: String, sha256checkSum: String? = null): S =
+            apply { this.assetFile = assetFile; this.assetFileChecksum = sha256checkSum } as S
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have

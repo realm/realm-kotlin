@@ -16,8 +16,10 @@
 package io.realm.kotlin.internal
 
 import android.content.Context
+import android.content.res.AssetManager
 import androidx.startup.Initializer
 import java.io.File
+import java.io.InputStream
 
 /**
  * An **initializer** to allow Realm to access context properties.
@@ -30,10 +32,13 @@ class RealmInitializer : Initializer<Context> {
     companion object {
         // Watch out for storing things here. Could conflict with live refresh in Android Studio
         lateinit var filesDir: File
+        lateinit var assetManager: AssetManager
+        fun asset(filename: String): InputStream = assetManager.open(filename)
     }
 
     override fun create(context: Context): Context {
         filesDir = context.filesDir
+        assetManager = context.assets
         loadAndroidNativeLibs(context, SDK_VERSION)
         return context
     }

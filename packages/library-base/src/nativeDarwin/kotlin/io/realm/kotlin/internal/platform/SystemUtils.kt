@@ -2,21 +2,22 @@ package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.interop.SyncConnectionParams
+import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
-import kotlinx.cinterop.BooleanVar
-import kotlinx.cinterop.ObjCObjectVar
-import kotlinx.cinterop.ULongVar
-import kotlinx.cinterop.alloc
-import kotlinx.cinterop.memScoped
-import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
+import platform.CoreCrypto.CC_SHA256
+import platform.CoreCrypto.CC_SHA256_DIGEST_LENGTH
+import platform.Foundation.NSBundle
+import platform.Foundation.NSData
 import platform.Foundation.NSDate
 import platform.Foundation.NSError
+import platform.Foundation.NSFileManager
 import platform.Foundation.NSURL
+import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.timeIntervalSince1970
+import platform.posix.memcpy
 import platform.posix.pthread_threadid_np
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
@@ -73,7 +74,7 @@ internal actual fun currentTime(): RealmInstant {
 }
 
 public actual fun fileExists(path: String): Boolean {
-    val fm = platform.Foundation.NSFileManager.defaultManager
+    val fm = NSFileManager.defaultManager
     memScoped {
         val isDir = alloc<BooleanVar>()
         val exists = fm.fileExistsAtPath(path, isDir.ptr)
@@ -82,7 +83,7 @@ public actual fun fileExists(path: String): Boolean {
 }
 
 public actual fun directoryExists(path: String): Boolean {
-    val fm = platform.Foundation.NSFileManager.defaultManager
+    val fm = NSFileManager.defaultManager
     memScoped {
         val isDir = alloc<BooleanVar>()
         val exists = fm.fileExistsAtPath(path, isDir.ptr)
@@ -91,7 +92,7 @@ public actual fun directoryExists(path: String): Boolean {
 }
 
 public actual fun canWrite(path: String): Boolean {
-    val fm = platform.Foundation.NSFileManager.defaultManager
+    val fm = NSFileManager.defaultManager
     return fm.isWritableFileAtPath(path)
 }
 
@@ -115,7 +116,7 @@ public actual fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>
 }
 
 private fun preparePath(directoryPath: String, dir: NSURL) {
-    val fm = platform.Foundation.NSFileManager.defaultManager
+    val fm = NSFileManager.defaultManager
     memScoped {
         val isDir = alloc<BooleanVar>()
         val exists = fm.fileExistsAtPath(directoryPath, isDir.ptr)
@@ -134,5 +135,51 @@ private fun preparePath(directoryPath: String, dir: NSURL) {
         if (exists && !isDir.value) {
             throw IllegalArgumentException("Provided directory is a file: $directoryPath")
         }
+    }
+}
+
+public fun assetFilePath(assetFileName: String): String? {
+    val pathParts: List<String> = assetFileName.split("[.|/]".toRegex())
+    val path: String? = NSBundle.mainBundle.pathForResource(pathParts[0], pathParts[1])
+    return path
+}
+
+public actual fun copyAssetFile(
+    realmFilename: String,
+    assetFilename: String,
+    sha256Checksum: String?
+) {
+    val assetFilePath = assetFilePath(assetFilename) ?: throw Exceptions.assetFileNotFound(assetFilename)
+    sha256Checksum?.let {
+        val input2: NSData? = NSData.dataWithContentsOfFile(assetFilePath)
+        val input = input2!!.toByteArray()
+        val digest = UByteArray(CC_SHA256_DIGEST_LENGTH)
+        input.usePinned { inputPinned ->
+            digest.usePinned { digestPinned ->
+                CC_SHA256(
+                    inputPinned.addressOf(0),
+                    input!!.size.convert(),
+                    digestPinned.addressOf(0)
+                )
+            }
+        }
+        val actual = digest.joinToString(separator = "") { it ->
+            // We don't have a String.format, so just pad single character elements with a zero
+            if (it < 16U) {
+                "0" + it.toString(16)
+            } else {
+                it.toString(16)
+            }
+        }
+        if (!actual.equals(sha256Checksum)) {
+            throw Exceptions.assetFileChecksumMismatch(assetFilename, sha256Checksum, actual)
+        }
+    }
+    NSFileManager.defaultManager.copyItemAtPath(assetFilePath, realmFilename, null)
+}
+
+private fun NSData.toByteArray(): ByteArray = ByteArray(this@toByteArray.length.toInt()).apply {
+    usePinned {
+        memcpy(it.addressOf(0), this@toByteArray.bytes, this@toByteArray.length)
     }
 }

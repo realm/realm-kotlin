@@ -583,7 +583,9 @@ public interface SyncConfiguration : Configuration {
                 null, // migration is not relevant for sync,
                 initialDataCallback,
                 partitionValue == null,
-                inMemory
+                inMemory,
+                assetFile,
+                assetFileChecksum,
             )
 
             return SyncConfigurationImpl(
