@@ -21,62 +21,70 @@ public class ContextLogger(public val context: String? = null) {
 
     // TRACE
     public fun trace(throwable: Throwable?) {
-        RealmLog.doLog(LogLevel.TRACE, throwable, null)
+        doLog(LogLevel.TRACE, throwable)
     }
     public fun trace(throwable: Throwable?, message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.TRACE, throwable, { contextPrefix + message }, *args)
+        doLog(LogLevel.TRACE, throwable, { contextPrefix + message }, *args)
     }
     public fun trace(message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.TRACE, null, { contextPrefix + message }, *args)
+        doLog(LogLevel.TRACE, null, { contextPrefix + message }, *args)
     }
     // DEBUG
     public fun debug(throwable: Throwable?) {
-        RealmLog.doLog(LogLevel.DEBUG, throwable, null)
+        doLog(LogLevel.DEBUG, throwable)
     }
     public fun debug(throwable: Throwable?, message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.DEBUG, throwable, { contextPrefix + message }, *args)
+        doLog(LogLevel.DEBUG, throwable, { contextPrefix + message }, *args)
     }
     public fun debug(message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.DEBUG, null, { contextPrefix + message }, *args)
+        doLog(LogLevel.DEBUG, null, { contextPrefix + message }, *args)
     }
     // INFO
     public fun info(throwable: Throwable?) {
-        RealmLog.doLog(LogLevel.INFO, throwable, null)
+        doLog(LogLevel.INFO, throwable)
     }
     public fun info(throwable: Throwable?, message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.INFO, throwable, { contextPrefix + message }, *args)
+        doLog(LogLevel.INFO, throwable, { contextPrefix + message }, *args)
     }
     public fun info(message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.INFO, null, { contextPrefix + message }, *args)
+        doLog(LogLevel.INFO, null, { contextPrefix + message }, *args)
     }
     // WARN
     public fun warn(throwable: Throwable?) {
-        RealmLog.doLog(LogLevel.WARN, throwable, null)
+        doLog(LogLevel.WARN, throwable)
     }
     public fun warn(throwable: Throwable?, message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.WARN, throwable, { contextPrefix + message }, *args)
+        doLog(LogLevel.WARN, throwable, { contextPrefix + message }, *args)
     }
     public fun warn(message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.WARN, null, { contextPrefix + message }, *args)
+        doLog(LogLevel.WARN, null, { contextPrefix + message }, *args)
     }
     // ERROR
     public fun error(throwable: Throwable?) {
-        RealmLog.doLog(LogLevel.ERROR, throwable, null)
+        doLog(LogLevel.ERROR, throwable)
     }
     public fun error(throwable: Throwable?, message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.ERROR, throwable, { contextPrefix + message }, *args)
+        doLog(LogLevel.ERROR, throwable, { contextPrefix + message }, *args)
     }
     public fun error(message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.ERROR, null, { contextPrefix + message }, *args)
+        doLog(LogLevel.ERROR, null, { contextPrefix + message }, *args)
     }
     // WTF
     public fun wtf(throwable: Throwable?) {
-        RealmLog.doLog(LogLevel.WTF, throwable, null)
+        doLog(LogLevel.WTF, throwable)
     }
     public fun wtf(throwable: Throwable?, message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.WTF, throwable, { contextPrefix + message }, *args)
+        doLog(LogLevel.WTF, throwable, { contextPrefix + message }, *args)
     }
     public fun wtf(message: String, vararg args: Any?) {
-        RealmLog.doLog(LogLevel.WTF, null, { contextPrefix + message }, *args)
+        doLog(LogLevel.WTF, null, { contextPrefix + message }, *args)
+    }
+
+    private inline fun doLog(level: LogLevel, throwable: Throwable?) {
+        RealmLog.doLog(level, throwable, null)
+    }
+
+    private inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
+        RealmLog.doLog(level, throwable, message, args)
     }
 }

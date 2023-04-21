@@ -53,7 +53,7 @@ class RealmLogTests {
     @AfterTest
     fun tearDown() {
         RealmLog.level = existingLogLevel
-        RealmLog.removeAll(removeDefaultSystemLogger = true)
+        RealmLog.removeAll()
         RealmLog.addDefaultSystemLogger()
     }
 
@@ -271,10 +271,12 @@ class RealmLogTests {
         }
         RealmLog.add(customLogger)
         assertTrue(RealmLog.remove(customLogger))
+        log.error("Hello")
+        assertEquals(0, called.value)
     }
 
     @Test
-    fun removeLogger_failure() {
+    fun removeLogger_falseForNonExistingLogger() {
         val customLogger = object : RealmLogger {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
@@ -310,18 +312,14 @@ class RealmLogTests {
     }
 
     @Test
-    fun removeAll_failure() {
-        assertFalse(RealmLog.removeAll(removeDefaultSystemLogger = false))
-    }
-
-    @Test
-    fun removeAll_includingSystemLogger() {
-        assertTrue(RealmLog.removeAll(removeDefaultSystemLogger = true))
+    fun removeAll_falseIfNoLoggerWereRemoved() {
+        assertTrue(RealmLog.removeAll())
+        assertFalse(RealmLog.removeAll())
     }
 
     @Test
     fun addDefaultSystemLogger_success() {
-        RealmLog.removeAll(removeDefaultSystemLogger = true)
+        RealmLog.removeAll()
         assertTrue(RealmLog.addDefaultSystemLogger())
     }
 

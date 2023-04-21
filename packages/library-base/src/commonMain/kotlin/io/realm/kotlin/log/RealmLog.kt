@@ -37,7 +37,7 @@ public object RealmLog {
     // Reference to the currently installed system logger (if any)
     // `internal` until we can remove the old log API
     internal var systemLoggerInstalled: RealmLogger? = null
-    // Kotlin Multiplatform are currently lacking primitives like CopyOnWriteArrayList. We could
+    // Kotlin Multiplatform is currently lacking primitives like CopyOnWriteArrayList. We could
     // use `io.realm.kotlin.internal.interop.SynchronizableObject`, but it would require locking
     // when reporting a log statement which feel a bit heavy, so instead we have added locks around
     // all modifications to this array (which are expected to be rare) and the `doLog` method must
@@ -71,7 +71,10 @@ public object RealmLog {
      */
     public fun add(logger: RealmLogger) {
         loggersMutex.withLock {
-            loggers.add(logger)
+            val updatedLoggers = MutableList(loggers.size) { loggers[it] }
+            updatedLoggers.add(logger).also {
+                loggers = updatedLoggers
+            }
         }
     }
 
@@ -91,29 +94,18 @@ public object RealmLog {
     }
 
     /**
-     * Removes all loggers. The default system logger will be removed as well unless
-     * [removeDefaultSystemLogger] is set to `false`. [addDefaultSystemLogger] can be used
-     * to add the default logger again if it was removed.
+     * Removes all loggers, including the default system logger. The default logger can be re-added
+     * by calling [addDefaultSystemLogger] again.
      *
-     * @param removeDefaultSystemLogger whether or not to also remove the default system logger.
      * @return `true` will be returned if one or more loggers were removed, `false` if no loggers were
      * removed.
      */
-    public fun removeAll(removeDefaultSystemLogger: Boolean = true): Boolean {
+    public fun removeAll(): Boolean {
         loggersMutex.withLock {
-            val updatedLoggers = MutableList(loggers.size) { loggers[it] }
-            return updatedLoggers.removeAll {
-                if (!removeDefaultSystemLogger) {
-                    it != systemLoggerInstalled
-                } else {
-                    true
-                }
-            }.also {
-                if (removeDefaultSystemLogger) {
-                    systemLoggerInstalled = null
-                }
-                loggers = updatedLoggers
-            }
+            val loggerRemoved = loggers.isNotEmpty() || systemLoggerInstalled != null
+            loggers = mutableListOf()
+            systemLoggerInstalled = null
+            return loggerRemoved
         }
     }
 
