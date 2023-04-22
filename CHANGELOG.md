@@ -28,7 +28,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.9.2, commit 979a4e67164272edb83f4d2e9e14000968b773a3.
+* Updated to Realm Core 13.9.2, commit 804d84e7e6e4d980cd5d040efa89cd110eec28f2.
 
 
 ## 1.7.1 (YYYY-MM-DD)
