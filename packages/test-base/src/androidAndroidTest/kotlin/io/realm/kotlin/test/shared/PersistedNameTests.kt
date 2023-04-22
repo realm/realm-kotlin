@@ -376,10 +376,10 @@ class PersistedNameTests {
 
     @Test
     fun schemaWithOverlappingClassNamesThrow() {
-        assertFailsWithMessage<java.lang.IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
+        assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
             RealmConfiguration.create(schema = setOf(RealmParent::class, PersistedParent::class, RealmChild::class))
         }
-        assertFailsWithMessage<java.lang.IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
+        assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
             RealmConfiguration.create(schema = setOf(PersistedParent::class, RealmParent::class, RealmChild::class))
         }
     }
