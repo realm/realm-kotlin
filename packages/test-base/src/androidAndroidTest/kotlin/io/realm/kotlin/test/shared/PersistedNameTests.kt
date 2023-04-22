@@ -175,13 +175,13 @@ class PersistedNameTests {
             copyToRealm(PersistedNameSample())
         }
 
-        val dynamicSample = realm.asDynamicRealm().query(PersistedNameSample::class.simpleName!!)
+        val dynamicSample = realm.asDynamicRealm().query("AlternativePersistedNameSample")
             .find()
             .single()
 
         assertNotNull(dynamicSample)
         assertEquals("Realm", dynamicSample.getValue("persistedNameStringField"))
-        assertFailsWithMessage<IllegalArgumentException>("Schema for type '${PersistedNameSample::class.simpleName!!}' doesn't contain a property named 'publicNameStringField'") {
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'AlternativePersistedNameSample' doesn't contain a property named 'publicNameStringField'") {
             dynamicSample.getValue("publicNameStringField")
         }
     }
@@ -257,7 +257,7 @@ class PersistedNameTests {
 
     @Test
     fun schema_propertyUsesPersistedName() {
-        val realmClass = realm.schema()[PersistedNameSample::class.simpleName!!]!!
+        val realmClass = realm.schema()["AlternativePersistedNameSample"]!!
 
         assertNotNull(realmClass["persistedNameStringField"])
         assertEquals(RealmStorageType.STRING, realmClass["persistedNameStringField"]!!.type.storageType)
@@ -266,7 +266,7 @@ class PersistedNameTests {
 
     @Test
     fun dynamicRealmSchema_propertyUsesPersistedName() {
-        val realmClass = realm.asDynamicRealm().schema()[PersistedNameSample::class.simpleName!!]!!
+        val realmClass = realm.asDynamicRealm().schema()["AlternativePersistedNameSample"]!!
 
         assertNotNull(realmClass["persistedNameStringField"])
         assertEquals(RealmStorageType.STRING, realmClass["persistedNameStringField"]!!.type.storageType)
