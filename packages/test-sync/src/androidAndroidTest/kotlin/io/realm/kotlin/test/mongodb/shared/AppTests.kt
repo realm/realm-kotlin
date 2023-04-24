@@ -44,6 +44,8 @@ import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -342,6 +344,28 @@ class AppTests {
 
         job.cancel()
         c.close()
+    }
+
+    @Test
+    fun authenticationChangeAsFlow_throwsWhenExceedCapacity() = runBlocking<Unit> {
+        val latch = Mutex(locked = true)
+        val job = async {
+            app.authenticationChangeAsFlow().collect {
+                // Block `flow` from collecting any more events beside the first.
+                latch.withLock {
+                    // Allow flow to continue
+                }
+            }
+        }
+        // Logging in 9 users should hit the capacity of the flow, causing the next
+        // login to fail.
+        repeat(9) {
+            app.createUserAndLogIn()
+        }
+        assertFailsWith<IllegalStateException> {
+            app.createUserAndLogIn()
+        }
+        job.cancel()
     }
 
     @Test
