@@ -379,8 +379,15 @@ class PersistedNameTests {
         assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
             RealmConfiguration.create(schema = setOf(RealmParent::class, PersistedParent::class, RealmChild::class))
         }
+
+        // Clash between model name and @PersistedName
         assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
             RealmConfiguration.create(schema = setOf(PersistedParent::class, RealmParent::class, RealmChild::class))
+        }
+
+        // Clash between two @PersistedName annotations
+        assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
+            RealmConfiguration.create(schema = setOf(RealmParent::class, RealmParent2::class, RealmChild::class))
         }
     }
 
@@ -452,6 +459,12 @@ class PersistedNameChildSample : RealmObject {
 
 @PersistedName("PersistedParent")
 class RealmParent(var id: Int) : RealmObject {
+    constructor() : this(0)
+    var child: RealmChild? = null
+}
+
+@PersistedName("PersistedParent")
+class RealmParent2(var id: Int) : RealmObject {
     constructor() : this(0)
     var child: RealmChild? = null
 }
