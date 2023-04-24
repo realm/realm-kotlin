@@ -131,7 +131,9 @@ actual enum class ProtocolSessionErrorCode(
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED("InitialSyncNotCompleted", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED),
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED("WriteNotAllowed", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED),
     RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE("CompensatingWrite", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE),
-    RLM_SYNC_ERR_SESSION_BAD_PROGRESS("BadProgress", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_BAD_PROGRESS);
+    RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX("MigrateToFlexibleSync", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX),
+    RLM_SYNC_ERR_SESSION_BAD_PROGRESS("BadProgress", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_BAD_PROGRESS),
+    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS("RevertToPartitionBasedSync", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_REVERT_TO_PBS);
 
     override val nativeValue: Int = errorCode.value.toInt()
 

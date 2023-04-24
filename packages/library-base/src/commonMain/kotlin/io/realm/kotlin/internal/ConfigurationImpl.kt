@@ -61,7 +61,8 @@ public open class ConfigurationImpl constructor(
     private val userMigration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
     override val isFlexibleSyncConfiguration: Boolean,
-    inMemory: Boolean
+    inMemory: Boolean,
+    logger: ContextLogger
 ) : InternalConfiguration {
 
     override val path: String
@@ -77,6 +78,8 @@ public open class ConfigurationImpl constructor(
     override val schemaVersion: Long
 
     override val schemaMode: SchemaMode
+
+    override val logger: ContextLogger = logger
 
     override val encryptionKey: ByteArray?
         get(): ByteArray? = userEncryptionKey

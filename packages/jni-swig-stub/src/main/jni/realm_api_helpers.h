@@ -45,7 +45,7 @@ realm_http_transport_t*
 realm_network_transport_new(jobject network_transport);
 
 void
-set_log_callback(realm_sync_client_config_t* sync_client_config, jobject log_callback);
+set_log_callback(jint log_level, jobject log_callback);
 
 realm_t*
 open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);

@@ -1,9 +1,13 @@
 ## 1.8.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* `RealmLog` is now a global singleton shared between all Realm API's. Previously log configuration happened using the `log` builder method on `AppConfiguration`, `SyncConfiguration` or `RealmConfiguration`. These API's are still present and for apps only using a single Atlas App ID, the behaviour is the same. For apps that have configured multiple Atlas App ID's, it will no longer be possible to configure different log levels and loggers for each app. Instead, the last `AppConfiguration` created will override the logger configuration from other `AppConfiguration`s.
 
 ### Enhancements
+* Multiple processes can now access the same encrypted Realm instead of throwing `Encrypted interprocess sharing is currently unsupported`. (Core Issue [#1845](https://github.com/realm/realm-core/issues/1845))
+* Added a public `RealmLog` class that replaces `AppConfiguration.Builder.log()`. (Issue [#1347](https://github.com/realm/realm-kotlin/pull/1347))
+* Realm logs will now contain more debug information from the underlying database when `LogLevel.DEBUG` or below is enabled.
+* Default log level has been changed from `LogLevel.WARN` to `LogLevel.INFO`.
 * Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 * [Sync] `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
@@ -25,7 +29,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.9.2, commit 804d84e7e6e4d980cd5d040efa89cd110eec28f2.
 
 
 ## 1.7.2-SNAPSHOT (YYYY-MM-DD)
