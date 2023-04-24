@@ -30,6 +30,7 @@ import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
@@ -174,13 +175,13 @@ class PersistedNameTests {
             copyToRealm(PersistedNameSample())
         }
 
-        val dynamicSample = realm.asDynamicRealm().query(PersistedNameSample::class.simpleName!!)
+        val dynamicSample = realm.asDynamicRealm().query("AlternativePersistedNameSample")
             .find()
             .single()
 
         assertNotNull(dynamicSample)
         assertEquals("Realm", dynamicSample.getValue("persistedNameStringField"))
-        assertFailsWithMessage<IllegalArgumentException>("Schema for type '${PersistedNameSample::class.simpleName!!}' doesn't contain a property named 'publicNameStringField'") {
+        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'AlternativePersistedNameSample' doesn't contain a property named 'publicNameStringField'") {
             dynamicSample.getValue("publicNameStringField")
         }
     }
@@ -256,7 +257,7 @@ class PersistedNameTests {
 
     @Test
     fun schema_propertyUsesPersistedName() {
-        val realmClass = realm.schema()[PersistedNameSample::class.simpleName!!]!!
+        val realmClass = realm.schema()["AlternativePersistedNameSample"]!!
 
         assertNotNull(realmClass["persistedNameStringField"])
         assertEquals(RealmStorageType.STRING, realmClass["persistedNameStringField"]!!.type.storageType)
@@ -265,7 +266,7 @@ class PersistedNameTests {
 
     @Test
     fun dynamicRealmSchema_propertyUsesPersistedName() {
-        val realmClass = realm.asDynamicRealm().schema()[PersistedNameSample::class.simpleName!!]!!
+        val realmClass = realm.asDynamicRealm().schema()["AlternativePersistedNameSample"]!!
 
         assertNotNull(realmClass["persistedNameStringField"])
         assertEquals(RealmStorageType.STRING, realmClass["persistedNameStringField"]!!.type.storageType)
@@ -345,6 +346,51 @@ class PersistedNameTests {
         Realm.open(newConfig).close()
     }
 
+    @Test
+    fun backlinkQueryOnPersistedClassName() {
+        val config = RealmConfiguration
+            .Builder(schema = setOf(RealmParent::class, RealmChild::class))
+            .directory(tmpDir)
+            .name("persistedClassName.realm")
+            .build()
+        Realm.open(config).use { realm ->
+            realm.writeBlocking {
+                repeat(5) { no: Int ->
+                    copyToRealm(
+                        RealmParent().apply {
+                            this.id = no
+                            this.child = RealmChild(no)
+                        }
+                    )
+                }
+            }
+
+            assertEquals(5, realm.query<RealmParent>().count().find())
+            val result = realm.query<RealmChild>("@links.PersistedParent.child.id == $0", 1).find()
+            assertEquals(1, result.size)
+            val child: RealmChild = result.first()
+            assertEquals(1, child.parents.size)
+            assertEquals(1, child.parents.first().id)
+        }
+    }
+
+    @Test
+    fun schemaWithOverlappingClassNamesThrow() {
+        assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
+            RealmConfiguration.create(schema = setOf(RealmParent::class, PersistedParent::class, RealmChild::class))
+        }
+
+        // Clash between model name and @PersistedName
+        assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
+            RealmConfiguration.create(schema = setOf(PersistedParent::class, RealmParent::class, RealmChild::class))
+        }
+
+        // Clash between two @PersistedName annotations
+        assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
+            RealmConfiguration.create(schema = setOf(RealmParent::class, RealmParent2::class, RealmChild::class))
+        }
+    }
+
     private fun <T> assertCanQuerySingle(property: KMutableProperty1<PersistedNameSample, T>, nameToQueryBy: String, value: T) {
         realm.query<PersistedNameSample>("$nameToQueryBy = $0", value)
             .find()
@@ -356,6 +402,7 @@ class PersistedNameTests {
     }
 }
 
+@PersistedName("AlternativePersistedNameSample")
 class PersistedNameSample : RealmObject {
 
     @PersistedName("persistedNamePrimaryKey")
@@ -408,4 +455,27 @@ class PersistedNameParentSample(var id: Int) : RealmObject {
 class PersistedNameChildSample : RealmObject {
     @PersistedName("persistedNameParents")
     val publicNameParents by backlinks(PersistedNameParentSample::publicNameChildField)
+}
+
+@PersistedName("PersistedParent")
+class RealmParent(var id: Int) : RealmObject {
+    constructor() : this(0)
+    var child: RealmChild? = null
+}
+
+@PersistedName("PersistedParent")
+class RealmParent2(var id: Int) : RealmObject {
+    constructor() : this(0)
+    var child: RealmChild? = null
+}
+
+// Should conflict with RealmParent if included in the same Realm.
+class PersistedParent(var id: Int) : RealmObject {
+    constructor() : this(0)
+    var child: RealmChild? = null
+}
+
+class RealmChild(var id: Int) : RealmObject {
+    constructor() : this(0)
+    val parents by backlinks(RealmParent::child)
 }

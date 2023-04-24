@@ -179,6 +179,19 @@ public open class ConfigurationImpl constructor(
             }
         }
 
+        // Verify schema invariants that cannot be captured at compile time nor by Core.
+        // For now, the only invariant we capture here is wrong use of @PersistedName on classes
+        // which might accidentally create multiple model classes with the same name.
+        val duplicates: Set<String> = mapOfKClassWithCompanion.values
+            .map { it.`io_realm_kotlin_schema`().name }
+            .groupingBy { it }
+            .eachCount()
+            .filter { it.value > 1 }
+            .keys
+        if (duplicates.isNotEmpty()) {
+            throw IllegalArgumentException("The schema has declared the following class names multiple times: ${duplicates.joinToString()}")
+        }
+
         // Invariant: All native modifications should happen inside this initializer, as that
         // wil allow us to construct multiple Config objects in Core that all can be used to open
         // the same Realm.
