@@ -29,6 +29,7 @@ import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -40,7 +41,17 @@ public class AppImpl(
 
     internal val nativePointer: RealmAppPointer
     private val networkTransport: NetworkTransport
-    private val authenticationChangeFlow = MutableSharedFlow<AuthenticationChange>()
+
+    // Allow some delay between events being reported and them being consumed.
+    // When the (somewhat arbitrary) limit is hit, we will throw an exception, since we assume the
+    // consumer is doing something wrong. This is also needed because we don't
+    // want to block user events like logout, delete and remove.
+    @Suppress("MagicNumber")
+    private val authenticationChangeFlow = MutableSharedFlow<AuthenticationChange>(
+        replay = 0,
+        extraBufferCapacity = 8,
+        onBufferOverflow = BufferOverflow.SUSPEND
+    )
 
     init {
         val appResources: Pair<NetworkTransport, NativePointer<RealmAppT>> = configuration.createNativeApp()
@@ -83,13 +94,19 @@ public class AppImpl(
         }
     }
 
-    internal suspend fun reportAuthenticationChange(user: User, change: User.State) {
+    internal fun reportAuthenticationChange(user: User, change: User.State) {
         val event: AuthenticationChange = when (change) {
             User.State.LOGGED_OUT -> LoggedOutImpl(user)
             User.State.LOGGED_IN -> LoggedInImpl(user)
             User.State.REMOVED -> RemovedImpl(user)
         }
-        authenticationChangeFlow.emit(event)
+        if (!authenticationChangeFlow.tryEmit(event)) {
+            throw IllegalStateException(
+                "It wasn't possible to emit authentication changes " +
+                    "because a consuming flow was blocked. Increase dispatcher processing resources " +
+                    "or buffer `App.authenticationChangeAsFlow()` with buffer(...)."
+            )
+        }
     }
 
     override fun authenticationChangeAsFlow(): Flow<AuthenticationChange> {
