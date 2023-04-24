@@ -23,7 +23,12 @@ import kotlinx.coroutines.flow.Flow
  */
 public sealed interface AuthenticationChange {
     /**
-     * A reference to the [User] that the event happened to.
+     * A reference to the [User] this event happened to.
+     *
+     * *Warning:* This is the live user object, so the [User.state]] might have diverged from the
+     * event it is associated with, i.e. if a users logs out and back in while the event is
+     * propagating, the state of the user might be [User.State.LOGGED_IN], even though it was
+     * reported as a [LoggedOut] event.
      */
     public val user: User
 }

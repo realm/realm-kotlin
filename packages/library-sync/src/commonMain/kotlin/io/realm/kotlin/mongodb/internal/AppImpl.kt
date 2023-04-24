@@ -78,21 +78,18 @@ public class AppImpl(
             )
             return channel.receive()
                 .getOrThrow().also { user: User ->
-                    reportUserLoggedIn(user)
+                    reportAuthenticationChange(user, User.State.LOGGED_IN)
                 }
         }
     }
 
-    private suspend fun reportUserLoggedIn(user: User) {
-        authenticationChangeFlow.emit(LoggedInImpl(user))
-    }
-
-    internal suspend fun reportUserLoggedOut(user: User) {
-        authenticationChangeFlow.emit(LoggedOutImpl(user))
-    }
-
-    internal suspend fun reportUserRemoved(user: User) {
-        authenticationChangeFlow.emit(RemovedImpl(user))
+    internal suspend fun reportAuthenticationChange(user: User, change: User.State) {
+        val event: AuthenticationChange = when (change) {
+            User.State.LOGGED_OUT -> LoggedOutImpl(user)
+            User.State.LOGGED_IN -> LoggedInImpl(user)
+            User.State.REMOVED -> RemovedImpl(user)
+        }
+        authenticationChangeFlow.emit(event)
     }
 
     override fun authenticationChangeAsFlow(): Flow<AuthenticationChange> {
