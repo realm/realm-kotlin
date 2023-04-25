@@ -24,7 +24,7 @@ import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.asBsonDateTime
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.internal.withMillisPrecision
+import io.realm.kotlin.internal.restrictToMillisPrecision
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
@@ -107,7 +107,7 @@ const val LONG_VALUE = Long.MAX_VALUE
 const val CHAR_VALUE = 'a'
 const val FLOAT_VALUE = 1.4f
 const val DOUBLE_VALUE = 1.4
-val REALM_INSTANT_VALUE = RealmInstant.now().withMillisPrecision()
+val REALM_INSTANT_VALUE = RealmInstant.now().restrictToMillisPrecision()
 val REALM_UUID_VALUE = RealmUUID.random()
 val BYTE_ARRAY_VALUE = byteArrayOf(0, 1, 0)
 val MUTABLE_REALM_INT_VALUE = MutableRealmInt.create(50)

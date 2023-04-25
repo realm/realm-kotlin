@@ -42,7 +42,7 @@ internal fun Duration.toRealmInstant(): RealmInstant {
     return RealmInstant.from(seconds, nanos.inWholeNanoseconds.toInt())
 }
 
-internal fun RealmInstant.withMillisPrecision() =
+internal fun RealmInstant.restrictToMillisPrecision() =
     toDuration().inWholeMilliseconds.milliseconds.toRealmInstant()
 
 internal fun RealmInstant.asBsonDateTime() = BsonDateTime(toDuration().inWholeMilliseconds)

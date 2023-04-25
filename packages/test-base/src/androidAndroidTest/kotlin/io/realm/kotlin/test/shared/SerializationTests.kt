@@ -31,7 +31,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.ext.asRealmObject
-import io.realm.kotlin.internal.withMillisPrecision
+import io.realm.kotlin.internal.restrictToMillisPrecision
 import io.realm.kotlin.serializers.MutableRealmIntKSerializer
 import io.realm.kotlin.serializers.RealmAnyKSerializer
 import io.realm.kotlin.serializers.RealmInstantKSerializer
@@ -137,7 +137,7 @@ class SerializationTests {
         // Drop RealmInstant to milliseconds precision
         override val dataSetToLoad: List<T> = when (classifier) {
             RealmInstant::class -> dataSet.map {
-                (it as RealmInstant?)?.withMillisPrecision() as T
+                (it as RealmInstant?)?.restrictToMillisPrecision() as T
             }
             else -> dataSet
         }
@@ -175,7 +175,7 @@ class SerializationTests {
         // Drop RealmInstant to milliseconds precision
         override val dataSetToLoad: List<Pair<String, T>> = when (classifier) {
             RealmInstant::class -> dataSet.map { entry ->
-                entry.first to (entry.second as RealmInstant?)?.withMillisPrecision() as T
+                entry.first to (entry.second as RealmInstant?)?.restrictToMillisPrecision() as T
             }
             else -> dataSet
         }
