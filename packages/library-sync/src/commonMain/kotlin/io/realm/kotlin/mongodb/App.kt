@@ -23,6 +23,7 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.AppImpl
+import kotlinx.coroutines.flow.Flow
 
 /**
  * An **App** is the main client-side entry point for interacting with an **Atlas App Services
@@ -100,6 +101,14 @@ public interface App {
      * communicating with App Services. See [AppException] for details.
      */
     public suspend fun login(credentials: Credentials): User
+
+    /**
+     * Create a [Flow] of [AuthenticationChange]-events to receive notifications of updates to all
+     * app user authentication states: login, logout and removal.
+     *
+     * @return a [Flow] of authentication events for users associated with this app.
+     */
+    public fun authenticationChangeAsFlow(): Flow<AuthenticationChange>
 
     /**
      * Close the app instance and release all underlying resources.
