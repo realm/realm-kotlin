@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback
 import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import kotlinx.serialization.SerialName
@@ -39,7 +40,6 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.fail
 
 @Serializable
@@ -219,8 +219,7 @@ class UserProfileTests {
         setEmptyProfile()
 
         val user = app.createUserAndLogin()
-        assertFailsWith<SerializationException> {
-            // TODO review as it fails because of missing fields. should it break like this?
+        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
             user.profile<UserProfile>()
         }
     }

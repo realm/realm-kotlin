@@ -22,7 +22,9 @@ import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 
 /**
- * TODO document it requires of the encoder defined in the app impl config to evaluate the credentials pointer.
+ * Credentials for a EJson payload. It solved the issue where payload serialization requires access to
+ * the  app instance. This credentials implementation is late evaluated when the credentials are used by
+ * the app, then the app instance is passed to the lambda block that serializes the payload.
  */
 @PublishedApi
 internal class CustomEJsonCredentialsImpl constructor(
