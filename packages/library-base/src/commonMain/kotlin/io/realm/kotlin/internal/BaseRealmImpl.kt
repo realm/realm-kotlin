@@ -53,10 +53,11 @@ public abstract class BaseRealmImpl internal constructor(
         return super.isClosed()
     }
 
-    internal val log: RealmLog = RealmLog(configuration = configuration.log)
+    internal val log: ContextLogger = configuration.logger
 
     init {
-        log.info("Realm opened $this")
+        @Suppress("LeakingThis")
+        log.info("Realm opened: $this")
     }
 
     override fun schemaVersion(): Long {

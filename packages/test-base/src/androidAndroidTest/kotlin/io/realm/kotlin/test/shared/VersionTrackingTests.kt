@@ -28,6 +28,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.VersionInfo
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -45,12 +46,14 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class VersionTrackingTests {
+    private lateinit var initialLogLevel: LogLevel
     private lateinit var configuration: RealmConfiguration
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
+        initialLogLevel = RealmLog.level
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration.Builder(
             schema = setOf(
@@ -70,6 +73,7 @@ class VersionTrackingTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+        RealmLog.level = initialLogLevel
     }
 
     @Test
@@ -158,6 +162,7 @@ class VersionTrackingTests {
 
     @Test
     fun objectNotificationsCausesTracking() = runBlocking {
+        RealmLog.level = LogLevel.TRACE // See https://github.com/realm/realm-kotlin/issues/1348
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)

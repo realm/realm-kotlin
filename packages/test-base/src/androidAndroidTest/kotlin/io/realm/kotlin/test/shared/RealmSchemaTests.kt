@@ -40,6 +40,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -52,7 +53,7 @@ private val SCHEMA_VARIATION_CLASS_NAME = SchemaVariations::class.simpleName!!
  * This test suite doesn't exhaust all modeling features, but should have full coverage of the
  * schema API code paths.
  */
-public class RealmSchemaTests {
+class RealmSchemaTests {
 
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
@@ -60,8 +61,16 @@ public class RealmSchemaTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
+        val schema = setOf(
+            SchemaVariations::class,
+            Sample::class,
+            EmbeddedParent::class,
+            EmbeddedChild::class,
+            EmbeddedInnerChild::class,
+            PersistedNameSample::class
+        )
         val configuration =
-            RealmConfiguration.Builder(schema = setOf(SchemaVariations::class, Sample::class, EmbeddedParent::class, EmbeddedChild::class, EmbeddedInnerChild::class))
+            RealmConfiguration.Builder(schema = schema)
                 .directory(tmpDir)
                 .build()
         realm = Realm.open(configuration)
@@ -79,7 +88,7 @@ public class RealmSchemaTests {
     fun realmClass() {
         val schema = realm.schema()
 
-        assertEquals(5, schema.classes.size)
+        assertEquals(6, schema.classes.size)
 
         val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]
             ?: fail("Couldn't find class")
@@ -98,6 +107,13 @@ public class RealmSchemaTests {
         assertEquals(embeddedChildName, embeddedChildDescriptor.name)
         assertTrue(embeddedChildDescriptor.isEmbedded)
         assertNull(embeddedChildDescriptor.primaryKey)
+    }
+
+    @Test
+    fun realmClass_persistedName() {
+        val schema = realm.schema()
+        assertNotNull(schema["AlternativePersistedNameSample"])
+        assertNull(schema["PersistedNameSample"])
     }
 
     @Test
