@@ -9,6 +9,7 @@
 * Realm logs will now contain more debug information from the underlying database when `LogLevel.DEBUG` or below is enabled.
 * Default log level has been changed from `LogLevel.WARN` to `LogLevel.INFO`.
 * Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
+* `Realm.compactRealm(configuration)` has been added as way to compact a Realm file without having to open it. (Issue [#571](https://github.com/realm/realm-kotlin/issues/571))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 * [Sync] `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
 
