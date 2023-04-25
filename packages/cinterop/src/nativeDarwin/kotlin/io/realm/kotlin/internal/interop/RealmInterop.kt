@@ -599,6 +599,14 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_compact(realm: RealmPointer): Boolean {
+        memScoped {
+            val compacted = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_compact(realm.cptr(), compacted.ptr))
+            return compacted.value
+        }
+    }
+
     actual fun realm_convert_with_config(
         realm: RealmPointer,
         config: RealmConfigurationPointer,

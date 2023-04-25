@@ -128,3 +128,8 @@ internal expect fun currentTime(): RealmInstant
  * JVM and macOS: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
  */
 public expect fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType
+
+/**
+ * Returns whether or not we are running on Windows
+ */
+public fun isWindows(): Boolean = OS_NAME.contains("windows", ignoreCase = true)
