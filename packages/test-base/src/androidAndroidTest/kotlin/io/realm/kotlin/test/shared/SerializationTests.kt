@@ -32,12 +32,12 @@ import io.realm.kotlin.entities.SerializableEmbeddedObject
 import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.withMillisPrecision
-import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmSetKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmUUIDKSerializer
+import io.realm.kotlin.serializers.MutableRealmIntKSerializer
+import io.realm.kotlin.serializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.RealmInstantKSerializer
+import io.realm.kotlin.serializers.RealmListKSerializer
+import io.realm.kotlin.serializers.RealmSetKSerializer
+import io.realm.kotlin.serializers.RealmUUIDKSerializer
 import io.realm.kotlin.test.GenericTypeSafetyManager
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
@@ -354,6 +354,18 @@ class SerializationTests {
             }
         }
 
+    /**
+     * The following function exhaustively test all possible nullable or non-nullable values
+     *
+     * It does so, by serializing/deserializing a Realm object containing a dataset for an specific type.
+     *
+     * The process goes like:
+     * - mapCollectionDataSets: For each field type create a CollectionTypeSafetyManager, a class
+     *   that allows the creation of a RealmObject with a dataset for the given type.
+     * - exhaustiveCollectionTesting: Instantiate a managed and an unmanaged RealmObjects, each one
+     *   would be serialized and deserialized, and then validate that the deserialized and original
+     *   values match.
+     */
     @Test
     fun exhaustiveRealmListTest() {
         TypeDescriptor
@@ -369,6 +381,18 @@ class SerializationTests {
             .exhaustiveCollectionTesting()
     }
 
+    /**
+     * The following function exhaustively test all possible nullable or non-nullable values
+     *
+     * It does so, by serializing/deserializing a Realm object containing a dataset for an specific type.
+     *
+     * The process goes like:
+     * - mapCollectionDataSets: For each field type create a CollectionTypeSafetyManager, a class
+     *   that allows the creation of a RealmObject with a dataset for the given type.
+     * - exhaustiveCollectionTesting: Instantiate a managed and an unmanaged RealmObjects, each one
+     *   would be serialized and deserialized, and then validate that the deserialized and original
+     *   values match.
+     */
     @Test
     fun exhaustiveRealmSetTest() {
         TypeDescriptor
@@ -384,6 +408,18 @@ class SerializationTests {
             .exhaustiveCollectionTesting()
     }
 
+
+    /**
+     * The following function exhaustively test all possible nullable or non-nullable values
+     *
+     * It does so, by serializing/deserializing a Realm object containing a dataset for an specific type.
+     *
+     * The process goes like:
+     * - mapCollectionDataSets: For each field type create a CollectionTypeSafetyManager, a class
+     *   that allows the creation of a RealmObject with a dataset for the given type.
+     * - Instantiate a managed and an unmanaged RealmObjects, each one would be serialized and
+     *   deserialized, and then validate that the deserialized and original values match.
+     */
     @Test
     fun exhaustiveRealmDictTest() {
         TypeDescriptor

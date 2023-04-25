@@ -601,11 +601,9 @@ expect object RealmInterop {
         basePath: String
     )
 
-    fun realm_sync_client_config_set_log_callback(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        callback: SyncLogCallback
-    )
-    fun realm_sync_client_config_set_log_level(syncClientConfig: RealmSyncClientConfigurationPointer, level: CoreLogLevel)
+    fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
+
+    fun realm_set_log_level(level: CoreLogLevel)
 
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,

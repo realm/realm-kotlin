@@ -1,11 +1,44 @@
-## 1.8.0 (YYYY-MM-DD)
+## 1.8.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* `RealmLog` is now a global singleton shared between all Realm API's. Previously log configuration happened using the `log` builder method on `AppConfiguration`, `SyncConfiguration` or `RealmConfiguration`. These API's are still present and for apps only using a single Atlas App ID, the behaviour is the same. For apps that have configured multiple Atlas App ID's, it will no longer be possible to configure different log levels and loggers for each app. Instead, the last `AppConfiguration` created will override the logger configuration from other `AppConfiguration`s.
+
+### Enhancements
+* Multiple processes can now access the same encrypted Realm instead of throwing `Encrypted interprocess sharing is currently unsupported`. (Core Issue [#1845](https://github.com/realm/realm-core/issues/1845))
+* Added a public `RealmLog` class that replaces `AppConfiguration.Builder.log()`. (Issue [#1347](https://github.com/realm/realm-kotlin/pull/1347))
+* Realm logs will now contain more debug information from the underlying database when `LogLevel.DEBUG` or below is enabled.
+* Default log level has been changed from `LogLevel.WARN` to `LogLevel.INFO`.
+* Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
+* [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
+* [Sync] `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.7.20 and above.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Gradle version: 6.7.1.
+* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.9.2, commit 804d84e7e6e4d980cd5d040efa89cd110eec28f2.
+
+
+## 1.7.2-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
-* [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
+* None.
 
 ### Fixed
 * None.
@@ -27,7 +60,7 @@
 * None.
 
 
-## 1.7.1 (YYYY-MM-DD)
+## 1.7.1 (2023-04-19)
 
 ### Breaking Changes
 * None.
@@ -36,7 +69,9 @@
 * None.
  
 ### Fixed
+* Fix compilation issue with Kotlin 1.8.20. (Issue [1346](https://github.com/realm/realm-kotlin/issues/1346))
 * [Sync] Client Reset on JVM on Linux would crash with `No built-in scheduler implementation for this platform. Register your own with Scheduler::set_default_factory()`
+* [Sync] Return correct provider for JWT-authenticated users. (Issue [#1350](https://github.com/realm/realm-kotlin/issues/1350))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
