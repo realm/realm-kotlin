@@ -21,11 +21,11 @@ import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.FunctionsImpl
-import io.realm.kotlin.serializers.kotlinxserializers.MutableRealmIntKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmAnyKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmInstantKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmUUIDKSerializer
+import io.realm.kotlin.serializers.MutableRealmIntKSerializer
+import io.realm.kotlin.serializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.RealmInstantKSerializer
+import io.realm.kotlin.serializers.RealmListKSerializer
+import io.realm.kotlin.serializers.RealmUUIDKSerializer
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant

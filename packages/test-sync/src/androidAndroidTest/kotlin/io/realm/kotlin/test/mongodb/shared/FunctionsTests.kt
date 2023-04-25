@@ -32,9 +32,9 @@ import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.CallBuilder
 import io.realm.kotlin.mongodb.ext.call
-import io.realm.kotlin.serializers.kotlinxserializers.RealmDictionaryKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmListKSerializer
-import io.realm.kotlin.serializers.kotlinxserializers.RealmSetKSerializer
+import io.realm.kotlin.serializers.RealmDictionaryKSerializer
+import io.realm.kotlin.serializers.RealmListKSerializer
+import io.realm.kotlin.serializers.RealmSetKSerializer
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
