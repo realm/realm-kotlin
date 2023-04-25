@@ -104,7 +104,7 @@ public interface App {
 
     /**
      * Create a [Flow] of [AuthenticationChange]-events to receive notifications of updates to all
-     * app user authentication states, like login and logout.
+     * app user authentication states: login, logout and removal.
      *
      * @return a [Flow] of authentication events for users associated with this app.
      */
