@@ -209,6 +209,11 @@ class VersionTrackingTests {
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
+        assertEquals(
+            6,
+            samples.size,
+            samples.map { it.list.version() }.joinToString { it.toString() }
+        )
     }
 }
 
