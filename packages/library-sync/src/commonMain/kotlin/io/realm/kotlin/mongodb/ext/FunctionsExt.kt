@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.mongodb.ext
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.exceptions.AppException
@@ -95,6 +96,7 @@ public suspend inline fun <reified T : Any?> Functions.call(
  * @param T the function return value type.
  * @return result of the function call.
  */
+@ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKSerializerApi::class)
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
@@ -118,6 +120,7 @@ public suspend inline fun <reified T : Any?> Functions.call(
 /**
  * Builder used to construct a call defining serializers for the different arguments and return value.
  */
+@ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKSerializerApi::class)
 public class CallBuilder<T>
 @PublishedApi

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.mongodb.ext
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.UserImpl
@@ -55,6 +56,7 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
  * @param T the type to decoded the user profile.
  * @return The profile for this user.
  */
+@ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
     profileInternal { ejson ->
@@ -73,6 +75,7 @@ public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
  * @param T the type to decoded the user custom data.
  * @return The custom user data associated with the user.
  */
+@ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> User.customData(): T? = with(this as UserImpl) {
     customDataInternal { ejson ->

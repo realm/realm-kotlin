@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalKSerializerApi::class)
+@file:OptIn(ExperimentalKSerializerApi::class, ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.internal.platform.fileExists

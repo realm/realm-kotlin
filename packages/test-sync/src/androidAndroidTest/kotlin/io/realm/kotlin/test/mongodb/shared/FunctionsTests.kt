@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 @file:Suppress("invisible_member", "invisible_reference")
-@file:OptIn(ExperimentalKSerializerApi::class)
+@file:OptIn(ExperimentalKSerializerApi::class, ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet

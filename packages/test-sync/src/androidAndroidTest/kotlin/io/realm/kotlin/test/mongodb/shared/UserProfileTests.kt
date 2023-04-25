@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalKSerializerApi::class)
+@file:OptIn(ExperimentalKSerializerApi::class, ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback

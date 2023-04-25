@@ -32,7 +32,6 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.ext.customData
-import io.realm.kotlin.mongodb.ext.customFunction
 import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport

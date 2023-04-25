@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 @file:Suppress("invisible_member", "invisible_reference")
+@file:OptIn(ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AuthenticationProvider
@@ -26,7 +28,6 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
-import io.realm.kotlin.mongodb.ext.customFunction
 import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
 import io.realm.kotlin.mongodb.internal.CustomEJsonCredentialsImpl
