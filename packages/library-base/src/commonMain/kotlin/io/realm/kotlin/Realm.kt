@@ -19,7 +19,6 @@ import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.Constants
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.notifications.RealmChange

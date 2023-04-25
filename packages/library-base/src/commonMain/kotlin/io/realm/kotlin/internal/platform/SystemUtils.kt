@@ -132,4 +132,4 @@ public expect fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>
 /**
  * Returns whether or not we are running on Windows
  */
-public fun isWindows(): Boolean = OS_NAME.contains("windows", ignoreCase = true)
+public expect fun isWindows(): Boolean
