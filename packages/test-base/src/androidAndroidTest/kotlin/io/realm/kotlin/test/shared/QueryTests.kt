@@ -2250,6 +2250,41 @@ class QueryTests {
         }
     }
 
+    // ----------------------------------
+    // Verify that IN operator can accept Kotlin Iterables as input
+    // ----------------------------------
+    @Test
+    fun in_operator() = runBlocking {
+        realm.writeBlocking {
+            copyToRealm(QuerySample(intField = 1, stringField = "f'oo"))
+            copyToRealm(QuerySample(intField = 2, stringField = "ba'r"))
+            copyToRealm(QuerySample(intField = 3, stringField = "baz'"))
+            copyToRealm(QuerySample(intField = 4, stringField = "f\"oo"))
+            copyToRealm(QuerySample(intField = 5, stringField = "ba\"r"))
+            copyToRealm(QuerySample(intField = 6, stringField = "baz\""))
+        }
+
+        val intValues = listOf(1, 2)
+        val queryValues = intValues.joinToString(separator = ",", prefix = "{", postfix = "}")
+        val result = realm.query(QuerySample::class, "intField IN $queryValues").find()
+        assertEquals(2, result.size)
+        assertEquals(1, result.first().intField)
+        assertEquals(2, result.last().intField)
+
+
+        val stringValues = listOf("f'oo", "ba'r")
+        val stringQueryValues = stringValues.toQueryString()
+        println(stringQueryValues)
+        val result2 = realm.query(QuerySample::class, "stringField IN $stringQueryValues").find()
+        assertEquals(4, result2.size)
+    }
+
+    fun List<String>.toQueryString(): String {
+        return joinToString(separator = ", ", prefix = "{", postfix = "}") {
+            "\"$it\""
+        }
+    }
+
     // --------------------------------------------------
     // Class instantiation with property setting helpers
     // --------------------------------------------------

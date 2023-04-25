@@ -63,7 +63,6 @@ actual value class RealmValue actual constructor(
             ValueType.RLM_TYPE_OBJECT_ID -> getObjectIdBytes().toString()
             ValueType.RLM_TYPE_LINK -> getLink().toString()
             ValueType.RLM_TYPE_UUID -> getUUIDBytes().toString()
-            else -> "RealmValueTransport{type: UNKNOWN, value: UNKNOWN}"
         }
         return "RealmValueTransport{type: ${getType()}, value: $valueAsString}"
     }

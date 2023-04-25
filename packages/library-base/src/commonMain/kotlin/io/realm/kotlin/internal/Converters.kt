@@ -339,6 +339,17 @@ internal object RealmValueArgumentConverter {
                     realmObjectTransport(objRef)
                 }
                 is RealmAny -> realmAnyToRealmValue(value)
+                is Iterable<*> -> {
+                    val iter = value.iterator()
+                    if (!iter.hasNext()) {
+                        // Return empty list()
+                    } else {
+                        // Check first element to find the specific type
+                        val firstElement = iter.next()
+                    }
+                    //
+                    throw IllegalArgumentException("Iterables cannot be used as query arguments")
+                }
                 else -> {
                     primitiveTypeConverters[it::class]?.let { converter ->
                         with(converter as RealmValueConverter<Any?>) {

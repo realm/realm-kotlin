@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.asInternalDeleteable
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
 import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.inputScope
@@ -192,7 +193,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
             filter: String,
             args: Array<out Any?>
         ): RealmQueryPointer = inputScope {
-            val queryArgs = convertToQueryArgs(args)
+            val queryArgs: Pair<Int, RealmQueryArgsTransport> = convertToQueryArgs(args)
 
             try {
                 RealmInterop.realm_query_parse(realmReference.dbPointer, classKey, filter, queryArgs)
