@@ -93,32 +93,32 @@ internal object BsonEncoder {
                 try {
                     when (resultClass) {
                         Byte::class -> {
-                            deserializeNumber(bsonValue, Byte::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.intValue().toByte()
                             }
                         }
                         Short::class -> {
-                            deserializeNumber(bsonValue, Short::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.intValue().toShort()
                             }
                         }
                         Int::class -> {
-                            deserializeNumber(bsonValue, Int::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.intValue()
                             }
                         }
                         Long::class -> {
-                            deserializeNumber(bsonValue, Long::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.longValue()
                             }
                         }
                         Float::class -> {
-                            deserializeNumber(bsonValue, Float::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.doubleValue().toFloat()
                             }
                         }
                         Double::class -> {
-                            deserializeNumber(bsonValue, Double::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.doubleValue()
                             }
                         }
@@ -161,7 +161,7 @@ internal object BsonEncoder {
                         BsonUndefined::class -> bsonValue.asBsonUndefined()
                         BsonValue::class -> bsonValue
                         MutableRealmInt::class -> {
-                            deserializeNumber(bsonValue, "MutableRealmInt") {
+                            deserializeNumber(bsonValue) {
                                 MutableRealmInt.create(it.longValue())
                             }
                         }
@@ -212,7 +212,6 @@ internal object BsonEncoder {
 
     private inline fun <T : Number> deserializeNumber(
         bsonValue: BsonValue,
-        type: String?,
         block: (BsonNumber) -> T
     ): T {
         return block(bsonValue.asNumber())

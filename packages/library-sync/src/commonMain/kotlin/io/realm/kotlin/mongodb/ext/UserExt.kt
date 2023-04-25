@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.mongodb.ext
 
+import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.UserImpl
 import kotlinx.serialization.decodeFromString
@@ -47,7 +48,12 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
     }
 
 /**
- * TODO Document, annotate as experimental optin
+ * Returns the profile for this user as a [T].
+ *
+ * **Note** Profile will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ *
+ * @param T the type to decoded the user profile.
+ * @return The profile for this user.
  */
 @OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
@@ -57,7 +63,15 @@ public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
 }
 
 /**
- * TODO Document, annotate as experimental optin
+ * Return the custom user data associated with the user in the Realm App as [T].
+ *
+ * The data is only refreshed when the user's access token is refreshed or when explicitly
+ * calling [User.refreshCustomData].
+ *
+ * **Note** Custom data will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ *
+ * @param T the type to decoded the user custom data.
+ * @return The custom user data associated with the user.
  */
 @OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> User.customData(): T? = with(this as UserImpl) {

@@ -408,7 +408,6 @@ class SerializationTests {
             .exhaustiveCollectionTesting()
     }
 
-
     /**
      * The following function exhaustively test all possible nullable or non-nullable values
      *

@@ -29,8 +29,6 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
-import org.mongodb.kbson.BsonDocument
-import org.mongodb.kbson.serialization.Bson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(

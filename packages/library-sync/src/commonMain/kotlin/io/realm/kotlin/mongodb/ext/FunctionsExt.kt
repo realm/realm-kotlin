@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.mongodb.ext
 
+import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
@@ -24,15 +25,12 @@ import io.realm.kotlin.mongodb.internal.FunctionsImpl
 import io.realm.kotlin.serializers.MutableRealmIntKSerializer
 import io.realm.kotlin.serializers.RealmAnyKSerializer
 import io.realm.kotlin.serializers.RealmInstantKSerializer
-import io.realm.kotlin.serializers.RealmListKSerializer
 import io.realm.kotlin.serializers.RealmUUIDKSerializer
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
-import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
@@ -40,7 +38,6 @@ import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.Bson
 import org.mongodb.kbson.serialization.EJson
-import org.mongodb.kbson.serialization.encodeToBsonValue
 
 /**
  * Invokes an Atlas function.
@@ -77,19 +74,34 @@ public suspend inline fun <reified T : Any?> Functions.call(
 }
 
 /**
- * TODO Document there are restrictions on arguments, deserialization works with experimental.
+ * Invokes an Atlas function using the EJson encoder defined in [AppConfiguration.ejson].
  *
- * Serialization of type arguments must be done with [EJson.encodeToBsonValue].
+ * Due to some particularities of the serialization engine the call is defined with a builder available
+ * in [callBuilderBlock]. If required, during the build phase you can define any serializers for the
+ * arguments or return types.
  *
- * Write some usage example.
+ * Example:
+ *
+ * ```
+ * val dog: Dog = user.functions.call("RetrieveDog") {
+ *     add("a parameter")
+ *     add(1.5)
+ *     returnValueSerializer = DogSerializer
+ * }
+ * ```
+ *
+ * @param name name of the function to call.
+ * @param callBuilderBlock code block that sets the call arguments and serializers.
+ * @param T the function return value type.
+ * @return result of the function call.
  */
 @OptIn(ExperimentalKSerializerApi::class)
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
-    argumentBuilderBlock: CallBuilder<T>.() -> Unit
+    callBuilderBlock: CallBuilder<T>.() -> Unit
 ): T = with(this as FunctionsImpl) {
     CallBuilder<T>(app.configuration.ejson)
-        .apply(argumentBuilderBlock)
+        .apply(callBuilderBlock)
         .run {
             val serializedEjsonArgs = Bson.toJson(arguments)
 
@@ -99,13 +111,13 @@ public suspend inline fun <reified T : Any?> Functions.call(
                 returnValueSerializer
                     ?: ejson.serializersModule.serializerOrRealmBuiltInSerializer()
 
-            println(encodedResult)
-            println(T::class)
-
             ejson.decodeFromString(returnValueSerializer, encodedResult)
         }
 }
 
+/**
+ * Builder used to construct a call defining serializers for the different arguments and return value.
+ */
 @OptIn(ExperimentalKSerializerApi::class)
 public class CallBuilder<T>
 @PublishedApi
@@ -115,11 +127,23 @@ internal constructor(
 ) {
     @PublishedApi
     internal val arguments: BsonArray = BsonArray()
+
+    /**
+     * Serializer that would be used to deserialize the returned value, null by default.
+     *
+     * If null, the return value will be deserialized using the embedded type serializer.
+     */
     public var returnValueSerializer: KSerializer<T>? = null
 
     @Suppress("UNCHECKED_CAST")
     public inline fun <reified T> SerializersModule.serializerOrRealmBuiltInSerializer(): KSerializer<T> =
         when (T::class) {
+            /**
+             * Resolve automatically any Realm datatype serializer
+             *
+             * ReamLists, Sets and others cannot be resolved here as we don't have the type information
+             * required to instantiate them.
+             */
             MutableRealmInt::class -> MutableRealmIntKSerializer
             RealmUUID::class -> RealmUUIDKSerializer
             RealmInstant::class -> RealmInstantKSerializer
@@ -127,10 +151,23 @@ internal constructor(
             else -> serializer<T>()
         } as KSerializer<T>
 
+    /**
+     * Adds an argument with the default serializer for its type to the function call.
+     *
+     * @param T argument type.
+     * @param argument value.
+     */
     public inline fun <reified T : Any> add(argument: T) {
         add(argument, ejson.serializersModule.serializerOrRealmBuiltInSerializer())
     }
 
+    /**
+     * Adds an argument with a user defined serializer to the function call.
+     *
+     * @param T argument type.
+     * @param argument value.
+     * @param serializer argument serializer.
+     */
     public inline fun <reified T : Any> add(argument: T, serializer: KSerializer<T>) {
         arguments.add(ejson.encodeToBsonValue(serializer, argument))
     }

@@ -31,6 +31,9 @@ import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.mongodb.ext.customData
+import io.realm.kotlin.mongodb.ext.customFunction
+import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
@@ -70,7 +73,12 @@ public interface AppConfiguration {
     public val appVersion: String?
 
     /**
-     * TODO
+     * The default EJson decoder that would be use to encode and decode arguments and results
+     * when calling remote App [Functions], authenticating with a [customFunction], and retrieving
+     * a user [profile] or [customData].
+     *
+     * It can be set with [Builder.ejson] if a certain configuration, such as contextual classes, is
+     * required.
      */
     @OptIn(ExperimentalKSerializerApi::class)
     public val ejson: EJson
@@ -260,7 +268,9 @@ public interface AppConfiguration {
         }
 
         /**
-         * TODO
+         * Sets the default EJson decoder that would be use to encode and decode arguments and results
+         * when calling remote Atlas [Functions], authenticating with a [customFunction], and retrieving
+         * a user [profile] or [customData].
          */
         @ExperimentalKSerializerApi
         public fun ejson(ejson: EJson): Builder = apply {

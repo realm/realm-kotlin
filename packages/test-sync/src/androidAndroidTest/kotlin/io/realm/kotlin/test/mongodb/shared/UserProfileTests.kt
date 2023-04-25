@@ -159,7 +159,7 @@ class UserProfileTests {
                             }
                             """.trimIndent()
                         url.endsWith("/providers/local-userpass/register") ||
-                                url.endsWith("auth/session") -> ""
+                            url.endsWith("auth/session") -> ""
                         else -> fail("Unexpected request url: $url")
                     }
                     callback.response(

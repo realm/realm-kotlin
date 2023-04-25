@@ -36,7 +36,6 @@ import io.realm.kotlin.test.util.TestHelper.randomEmail
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.mongodb.kbson.BsonDocument
-import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.Bson
@@ -689,7 +688,6 @@ class UserTests {
         val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
-
 
         val serializableCustomData = user.customData<SerializableCustomData>()
         assertNotNull(serializableCustomData)

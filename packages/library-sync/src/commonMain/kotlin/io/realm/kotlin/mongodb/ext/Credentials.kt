@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.mongodb.ext
 
+import io.realm.kotlin.mongodb.App
+import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.internal.CustomEJsonCredentialsImpl
@@ -23,7 +25,15 @@ import kotlinx.serialization.serializer
 import org.mongodb.kbson.ExperimentalKSerializerApi
 
 /**
- * TODO document
+ * Creates credentials representing a login using an App Services Function. The payload would
+ * be serialized and parsed as an argument to the remote function. The payload keys must
+ * match the format and names the function expects.
+ *
+ * **Note** The payload will be serialized using the the EJson encoder defined in [AppConfiguration.ejson].
+ *
+ * @param payload The payload that will be passed as an argument to the server function.
+ * @return a set of credentials that can be used to log into an App Services Application
+ * using [App.login].
  */
 @OptIn(ExperimentalKSerializerApi::class)
 public inline fun <reified T> Credentials.Companion.customFunction(payload: T): Credentials {

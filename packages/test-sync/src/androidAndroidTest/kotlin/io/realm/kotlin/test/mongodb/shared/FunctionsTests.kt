@@ -116,9 +116,11 @@ val LIST_VALUE = listOf("hello", "world", null)
 val SET_VALUE = LIST_VALUE.toSet()
 val REALM_LIST_VALUE = LIST_VALUE.toRealmList()
 val REALM_SET_VALUE = SET_VALUE.toRealmSet()
-val BSON_ARRAY_VALUE = BsonArray(LIST_VALUE.map { it ->
-    it?.let { BsonString(it) } ?: BsonNull
-})
+val BSON_ARRAY_VALUE = BsonArray(
+    LIST_VALUE.map { value ->
+        value?.let { stringValue: String -> BsonString(stringValue) } ?: BsonNull
+    }
+)
 
 val MAP_VALUE: Map<String, String?> = LIST_VALUE.mapIndexed { index, s ->
     "$index" to s

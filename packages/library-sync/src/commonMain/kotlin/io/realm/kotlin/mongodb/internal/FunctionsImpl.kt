@@ -19,8 +19,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.Functions
 import kotlinx.coroutines.channels.Channel
-import org.mongodb.kbson.serialization.Bson
-import kotlin.reflect.KClass
 
 @PublishedApi
 internal class FunctionsImpl(
