@@ -19,7 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get_changes
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -2279,29 +2278,20 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
-    actual fun realm_sync_client_config_set_log_callback(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        callback: SyncLogCallback
-    ) {
-        realm_wrapper.realm_sync_client_config_set_log_callback(
-            syncClientConfig.cptr(),
+    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
+        realm_wrapper.realm_set_log_callback(
             staticCFunction { userData, logLevel, message ->
-                val userDataLogCallback = safeUserData<SyncLogCallback>(userData)
+                val userDataLogCallback = safeUserData<LogCallback>(userData)
                 userDataLogCallback.log(logLevel.toShort(), message?.toKString())
             },
+            level.priority.toUInt(),
             StableRef.create(callback).asCPointer(),
-            staticCFunction { userData -> disposeUserData<() -> SyncLogCallback>(userData) }
+            staticCFunction { userData -> disposeUserData<() -> LogCallback>(userData) }
         )
     }
 
-    actual fun realm_sync_client_config_set_log_level(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        level: CoreLogLevel
-    ) {
-        realm_wrapper.realm_sync_client_config_set_log_level(
-            syncClientConfig.cptr(),
-            level.priority.toUInt()
-        )
+    actual fun realm_set_log_level(level: CoreLogLevel) {
+        realm_wrapper.realm_set_log_level(level.priority.toUInt())
     }
 
     actual fun realm_sync_client_config_set_metadata_mode(

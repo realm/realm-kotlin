@@ -128,6 +128,8 @@ public interface User {
      *
      * @throws io.realm.kotlin.mongodb.exceptions.ServiceException if a failure occurred when
      * communicating with App Services. See [AppException] for details.
+     * @throws IllegalStateException if a consumer listening to [App.authenticationChangeAsFlow]
+     * is too slow consuming events.
      */
     // FIXME add references to allUsers and remove when ready
     //     * All other users will be marked as [User.State.LOGGED_OUT]
@@ -147,6 +149,8 @@ public interface User {
      * @throws IllegalStateException if the user was already removed.
      * @throws io.realm.kotlin.mongodb.exceptions.ServiceException if a failure occurred when
      * communicating with App Services. See [AppException] for details.
+     * @throws IllegalStateException if a consumer listening to [App.authenticationChangeAsFlow]
+     * is too slow consuming events.
      */
     // TODO Document how this method behave if offline
     public suspend fun remove(): User
@@ -163,6 +167,8 @@ public interface User {
      * @throws IllegalStateException if the user was already removed or not logged in.
      * @throws io.realm.kotlin.mongodb.exceptions.ServiceException if a failure occurred when
      * communicating with App Services. See [AppException] for details.
+     * @throws IllegalStateException if a consumer listening to [App.authenticationChangeAsFlow]
+     * is too slow consuming events.
      */
     public suspend fun delete()
 

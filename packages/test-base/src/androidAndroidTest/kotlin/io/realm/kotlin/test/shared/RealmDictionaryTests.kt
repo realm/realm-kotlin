@@ -1338,112 +1338,113 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     ): DictionaryTypeSafetyManager<*> = when (nullable) {
         true -> DictionaryTypeSafetyManager(
             property = RealmDictionaryContainer.nullableProperties[classifier]!!,
-            dataSetToLoad = getDataSetForClassifier(classifier, true)
+            dataSetToLoad = getDataSetForDictionaryClassifier(classifier, true, NULLABLE_DICTIONARY_OBJECT_VALUES)
         )
         false -> DictionaryTypeSafetyManager(
             property = RealmDictionaryContainer.nonNullableProperties[classifier]!!,
-            dataSetToLoad = getDataSetForClassifier(classifier, false)
+            dataSetToLoad = getDataSetForDictionaryClassifier(classifier, false, NULLABLE_DICTIONARY_OBJECT_VALUES)
         )
     }
+}
 
-    @Suppress("UNCHECKED_CAST", "ComplexMethod")
-    private fun <T> getDataSetForClassifier(
-        classifier: KClassifier,
-        nullable: Boolean
-    ): List<T> = when (classifier) {
-        Byte::class -> if (nullable) {
-            NULLABLE_BYTE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            BYTE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        }
-        Char::class -> if (nullable) {
-            NULLABLE_CHAR_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            CHAR_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        }
-        Short::class -> if (nullable) {
-            NULLABLE_SHORT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            SHORT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        }
-        Int::class -> if (nullable) {
-            NULLABLE_INT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            INT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        }
-        Long::class -> if (nullable) {
-            NULLABLE_LONG_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            LONG_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        Boolean::class -> if (nullable) {
-            NULLABLE_BOOLEAN_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            BOOLEAN_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        Float::class -> if (nullable) {
-            NULLABLE_FLOAT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            FLOAT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        Double::class -> if (nullable) {
-            NULLABLE_DOUBLE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            DOUBLE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        String::class -> if (nullable) {
-            NULLABLE_STRING_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            STRING_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        RealmInstant::class -> if (nullable) {
-            NULLABLE_TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        ObjectId::class -> if (nullable) {
-            NULLABLE_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        BsonObjectId::class -> if (nullable) {
-            NULLABLE_BSON_OBJECT_ID_VALUES.mapIndexed { i, value ->
-                Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value)
-            }
-        } else {
-            BSON_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        RealmUUID::class -> if (nullable) {
-            NULLABLE_UUID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            UUID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        ByteArray::class -> if (nullable) {
-            NULLABLE_BINARY_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            BINARY_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        RealmObject::class -> NULLABLE_DICTIONARY_OBJECT_VALUES.mapIndexed { i, value ->
+@Suppress("UNCHECKED_CAST", "ComplexMethod")
+fun <T> getDataSetForDictionaryClassifier(
+    classifier: KClassifier,
+    nullable: Boolean,
+    realmObjectValues: List<RealmObject?>
+): List<T> = when (classifier) {
+    Byte::class -> if (nullable) {
+        NULLABLE_BYTE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        BYTE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    }
+    Char::class -> if (nullable) {
+        NULLABLE_CHAR_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        CHAR_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    }
+    Short::class -> if (nullable) {
+        NULLABLE_SHORT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        SHORT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    }
+    Int::class -> if (nullable) {
+        NULLABLE_INT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        INT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    }
+    Long::class -> if (nullable) {
+        NULLABLE_LONG_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        LONG_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    Boolean::class -> if (nullable) {
+        NULLABLE_BOOLEAN_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        BOOLEAN_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    Float::class -> if (nullable) {
+        NULLABLE_FLOAT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        FLOAT_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    Double::class -> if (nullable) {
+        NULLABLE_DOUBLE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        DOUBLE_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    String::class -> if (nullable) {
+        NULLABLE_STRING_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        STRING_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    RealmInstant::class -> if (nullable) {
+        NULLABLE_TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        TIMESTAMP_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    ObjectId::class -> if (nullable) {
+        NULLABLE_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    BsonObjectId::class -> if (nullable) {
+        NULLABLE_BSON_OBJECT_ID_VALUES.mapIndexed { i, value ->
             Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value)
         }
-        Decimal128::class -> if (nullable) {
-            NULLABLE_DECIMAL128_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
-        } else {
-            DECIMAL128_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
-        }
-        RealmAny::class -> {
-            val anyValues = REALM_ANY_PRIMITIVE_VALUES + REALM_ANY_REALM_OBJECT
+    } else {
+        BSON_OBJECT_ID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    RealmUUID::class -> if (nullable) {
+        NULLABLE_UUID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        UUID_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    ByteArray::class -> if (nullable) {
+        NULLABLE_BINARY_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        BINARY_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    RealmObject::class -> realmObjectValues.mapIndexed { i, value ->
+        Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value)
+    }
+    Decimal128::class -> if (nullable) {
+        NULLABLE_DECIMAL128_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS_FOR_NULLABLE[i], value) }
+    } else {
+        DECIMAL128_VALUES.mapIndexed { i, value -> Pair(DICTIONARY_KEYS[i], value) }
+    }
+    RealmAny::class -> {
+        val anyValues = REALM_ANY_PRIMITIVE_VALUES + RealmAny.create(realmObjectValues.first()!!)
 
-            // Generate as many keys as RealmAny values
-            var key = 'A'
-            val keys = anyValues.map { key.also { key += 1 } }
+        // Generate as many keys as RealmAny values
+        var key = 'A'
+        val keys = anyValues.map { key.also { key += 1 } }
 
-            // Now create pairs of key-RealmAny for the dataset
-            anyValues.mapIndexed { i, value -> Pair(keys[i].toString(), value) }
-        }
-        else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
-    } as List<T>
-}
+        // Now create pairs of key-RealmAny for the dataset
+        anyValues.mapIndexed { i, value -> Pair(keys[i].toString(), value) }
+    }
+    else -> throw IllegalArgumentException("Wrong classifier: '$classifier'")
+} as List<T>
 
 /**
  * Tester interface defining the operations that have to be tested exhaustively.
