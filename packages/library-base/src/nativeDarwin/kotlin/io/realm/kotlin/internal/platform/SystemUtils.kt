@@ -136,3 +136,5 @@ private fun preparePath(directoryPath: String, dir: NSURL) {
         }
     }
 }
+
+public actual fun isWindows(): Boolean = false
