@@ -418,15 +418,15 @@ public interface Configuration {
          * [RealmConfiguration.Builder.deleteRealmIfMigrationNeeded]. Attempts to do so will cause
          * [build] to throw an [IllegalStateException].
          *
-         * NOTE: This could potentially lead to opening the realm being a lengthy operation and this
-         * should then ideally be done on a background thread.
+         * NOTE: This could potentially be a lengthy operation, so opening a Realm with a predefined
+         * asset file should ideally be done on a background thread.
          * NOTE: There is currently no protection against multiple processes trying to copy the
          * asset file in place at the same time, so user must ensure that only one process is trying
          * to trigger this at a time.
          *
          * @param assetFile the name of the assetFile in the platform's default asset/resource
          * location. If the asset file cannot be located when opening the realm for the first time
-         * [Realm.open] will fail with a [IllegalArgumentException].
+         * [Realm.open] will fail with an [IllegalArgumentException].
          * @param sha256checkSum a SHA256-checksum used to verify the integrity of the asset file.
          * If this is specified and the checksum does not match the computed checksum of the
          * [assetFile] when the realm is opened the first time [Realm.open] will fail with a
