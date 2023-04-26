@@ -36,6 +36,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.Bson
 import org.mongodb.kbson.serialization.EJson
@@ -128,6 +129,14 @@ internal constructor(
     @PublishedApi
     internal val ejson: EJson,
 ) {
+    /**
+     * Contains all given arguments transformed as [BsonValue]. The encoding is done on each [add] call
+     * as in that context we have type information from the reified type.
+     *
+     * Usually we would store the arguments in a `List<Any>` and would serialize just before invoking
+     * the call, but that would require to do a runtime look up of the argument serializers an operation
+     * that unfortunately is internal to kserializer and not stable cross all platforms.
+     */
     @PublishedApi
     internal val arguments: BsonArray = BsonArray()
 
