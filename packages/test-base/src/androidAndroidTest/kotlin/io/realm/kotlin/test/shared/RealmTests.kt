@@ -762,6 +762,20 @@ class RealmTests {
         Realm.open(config).use { }
     }
 
+    @Test
+    fun assetFile_initialData() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("default.realm")
+            .assetFile("asset.realm", "invalid_checksum")
+            .initialData {
+            }
+            .build()
+
+        assertTrue(fileExists(config.path))
+        Realm.open(config).use { }
+    }
+    
     // TODO Cannot verify intermediate versions as they are now spread across user facing, notifier
     //  and writer realms. Tests were anyway ignored, so don't really know what to do with these.
 //    @Test

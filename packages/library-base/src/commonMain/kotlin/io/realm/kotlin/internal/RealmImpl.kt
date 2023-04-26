@@ -113,6 +113,7 @@ public class RealmImpl private constructor(
         var realmFileCreated = false
         try {
             runBlocking {
+                var assetFileCopied = false
                 configuration.assetFileConfiguration?.let {
                     val path = configuration.path
                     if (!fileExists(path)) {
@@ -123,16 +124,17 @@ public class RealmImpl private constructor(
                         assetProcessingLock.withLock {
                             if (!fileExists(path)) {
                                 log.debug("Copying asset file: ${it.assetFile}")
+                                assetFileCopied = true
                                 copyAssetFile(path, it.assetFile, it.assetFileChecksum)
                             }
                         }
                     }
                 }
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
-                realmFileCreated = fileCreated
+                realmFileCreated = assetFileCopied || fileCreated
                 versionTracker.trackAndCloseExpiredReferences(frozenReference)
                 _realmReference.value = frozenReference
-                configuration.initializeRealmData(this@RealmImpl, fileCreated)
+                configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }
             if (!realmStateFlow.tryEmit(State.OPEN)) {
                 log.warn("Cannot signal internal open")

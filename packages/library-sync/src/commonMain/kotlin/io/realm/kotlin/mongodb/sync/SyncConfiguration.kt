@@ -570,8 +570,7 @@ public interface SyncConfiguration : Configuration {
                 initialDataCallback,
                 partitionValue == null,
                 inMemory,
-                assetFile,
-                assetFileChecksum,
+                assetFileConfiguration,
                 realmLogger
             )
 
