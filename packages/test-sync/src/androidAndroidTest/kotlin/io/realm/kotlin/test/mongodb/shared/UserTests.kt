@@ -453,7 +453,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             anonUser.linkCredentials(credentials)
         }.let {
-            assertTrue(it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"), it.message)
+            assertTrue(
+                it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"),
+                it.message
+            )
         }
     }
 
@@ -469,7 +472,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             emailUser1.linkCredentials(credentials2)
         }.let {
-            assertTrue(it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"), it.message)
+            assertTrue(
+                it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"),
+                it.message
+            )
         }
     }
 
@@ -482,7 +488,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             emailUser1.linkCredentials(Credentials.anonymous())
         }.let {
-            assertTrue(it.message!!.contains("linking an anonymous identity is not allowed"), it.message)
+            assertTrue(
+                it.message!!.contains("linking an anonymous identity is not allowed"),
+                it.message
+            )
         }
     }
 
@@ -497,7 +506,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             anonUser.linkCredentials(creds)
         }.let {
-            assertTrue(it.message!!.contains("a user already exists with the specified provider"), it.message)
+            assertTrue(
+                it.message!!.contains("a user already exists with the specified provider"),
+                it.message
+            )
         }
     }
 
@@ -634,27 +646,32 @@ class UserTests {
     )
 
     @Test
-    fun customDataAsBsonDocument_initiallyNull() {
+    fun customData_initiallyNull() {
         val user = runBlocking {
             val (email, password) = randomEmail() to "123456"
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
-        assertNull(user.customData())
+        assertNull(user.customData<SerializableCustomData>())
+        assertNull(user.customData(SerializableCustomData.serializer()))
     }
 
     @Test
-    fun customDataAsBsonDocument_refresh() {
+    fun customData_refresh() {
         val user = runBlocking {
             val (email, password) = randomEmail() to "123456"
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
-        assertNull(user.customData())
+        assertNull(user.customData<SerializableCustomData>())
+        assertNull(user.customData<SerializableCustomData>(SerializableCustomData.serializer()))
 
-        updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+        updatecustomDataAsBsonDocument(
+            user,
+            BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE))
+        )
 
         runBlocking {
             user.refreshCustomData()
@@ -663,22 +680,30 @@ class UserTests {
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
 
-        val serializableCustomData = user.customData<SerializableCustomData>()
-        assertNotNull(serializableCustomData)
-        assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
+        setOf(
+            user.customData<SerializableCustomData>(),
+            user.customData<SerializableCustomData>(SerializableCustomData.serializer())
+        ).forEach { serializableCustomData ->
+            assertNotNull(serializableCustomData)
+            assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
+        }
     }
 
     @Test
-    fun customDataAsBsonDocument_refreshByLogout() {
+    fun customData_refreshByLogout() {
         val (email, password) = randomEmail() to "123456"
         val user = runBlocking {
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
-        assertNull(user.customData())
+        assertNull(user.customData<SerializableCustomData>())
+        assertNull(user.customData<SerializableCustomData>(SerializableCustomData.serializer()))
 
-        updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+        updatecustomDataAsBsonDocument(
+            user,
+            BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE))
+        )
 
         // But will be updated when authorization token is refreshed
         runBlocking {
@@ -690,9 +715,13 @@ class UserTests {
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
 
-        val serializableCustomData = user.customData<SerializableCustomData>()
-        assertNotNull(serializableCustomData)
-        assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
+        setOf(
+            user.customData<SerializableCustomData>(),
+            user.customData<SerializableCustomData>(SerializableCustomData.serializer())
+        ).forEach { serializableCustomData ->
+            assertNotNull(serializableCustomData)
+            assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
+        }
     }
 
     private fun updatecustomDataAsBsonDocument(user: User, data: BsonDocument) {
@@ -701,7 +730,10 @@ class UserTests {
         val USER_ID_FIELD = "user_id"
 
         runBlocking {
-            app.insertDocument(COLLECTION_NAME, Bson.toJson(data.append(USER_ID_FIELD, BsonString(user.id))))
+            app.insertDocument(
+                COLLECTION_NAME,
+                Bson.toJson(data.append(USER_ID_FIELD, BsonString(user.id)))
+            )
         }
     }
 

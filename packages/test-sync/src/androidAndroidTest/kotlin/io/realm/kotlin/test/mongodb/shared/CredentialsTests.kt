@@ -83,7 +83,8 @@ class CredentialsTests {
                 AuthenticationProvider.JWT -> listOf(it to jwt())
                 AuthenticationProvider.CUSTOM_FUNCTION -> listOf(
                     it to customFunction(),
-                    it to customFunctionExperimental()
+                    it to customFunctionExperimental(),
+                    it to customFunctionExperimentalWithSerializer(),
                 )
             }
         }.forEach { (authenticationProvider, credentials) ->
@@ -174,6 +175,24 @@ class CredentialsTests {
                 id = id,
                 mail = mail,
             )
+        )
+
+        assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, credentials.authenticationProvider)
+        assertJsonContains(credentials, mail)
+        assertJsonContains(credentials, id.toString())
+        return credentials
+    }
+
+    private fun customFunctionExperimentalWithSerializer(): Credentials {
+        val mail = TestHelper.randomEmail()
+        val id = 700
+
+        val credentials = Credentials.customFunction(
+            payload = CustomCredentialsPayload(
+                id = id,
+                mail = mail,
+            ),
+            serializer = CustomCredentialsPayload.serializer()
         )
 
         assertEquals(AuthenticationProvider.CUSTOM_FUNCTION, credentials.authenticationProvider)
@@ -291,17 +310,27 @@ class CredentialsTests {
                         val functionUser = app.login(credentials)
                         assertNotNull(functionUser)
 
-                        // Test customFunctionExperimental
-                        val credentialsExperimental = Credentials.customFunction(
-                            payload = CustomCredentialsPayload(
-                                mail = TestHelper.randomEmail(),
-                                id = 700
+                        // Test customFunction with kserializer
+                        setOf(
+                            Credentials.customFunction(
+                                payload = CustomCredentialsPayload(
+                                    mail = TestHelper.randomEmail(),
+                                    id = 700
+                                )
+                            ),
+                            Credentials.customFunction(
+                                payload = CustomCredentialsPayload(
+                                    mail = TestHelper.randomEmail(),
+                                    id = 700
+                                ),
+                                serializer = CustomCredentialsPayload.serializer()
                             )
-                        )
-                        // We are not testing the authentication function itself, but rather that the
-                        // credentials work
-                        val functionUserExperimental = app.login(credentialsExperimental)
-                        assertNotNull(functionUserExperimental)
+                        ).forEach { credentials: Credentials ->
+                            // We are not testing the authentication function itself, but rather that the
+                            // credentials work
+                            val functionUserExperimental = app.login(credentials)
+                            assertNotNull(functionUserExperimental)
+                        }
                     }
                     AuthenticationProvider.EMAIL_PASSWORD -> {
                         val (email, password) = TestHelper.randomEmail() to "password1234"

@@ -23,17 +23,8 @@ import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.FunctionsImpl
-import io.realm.kotlin.serializers.MutableRealmIntKSerializer
-import io.realm.kotlin.serializers.RealmAnyKSerializer
-import io.realm.kotlin.serializers.RealmInstantKSerializer
-import io.realm.kotlin.serializers.RealmUUIDKSerializer
-import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.RealmAny
-import io.realm.kotlin.types.RealmInstant
-import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.mongodb.internal.serializerOrRealmBuiltInSerializer
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
@@ -146,22 +137,6 @@ internal constructor(
      * If null, the return value will be deserialized using the embedded type serializer.
      */
     public var returnValueSerializer: KSerializer<T>? = null
-
-    @Suppress("UNCHECKED_CAST")
-    public inline fun <reified T> SerializersModule.serializerOrRealmBuiltInSerializer(): KSerializer<T> =
-        when (T::class) {
-            /**
-             * Resolve automatically any Realm datatype serializer
-             *
-             * ReamLists, Sets and others cannot be resolved here as we don't have the type information
-             * required to instantiate them.
-             */
-            MutableRealmInt::class -> MutableRealmIntKSerializer
-            RealmUUID::class -> RealmUUIDKSerializer
-            RealmInstant::class -> RealmInstantKSerializer
-            RealmAny::class -> RealmAnyKSerializer
-            else -> serializer<T>()
-        } as KSerializer<T>
 
     /**
      * Adds an argument with the default serializer for its type to the function call.

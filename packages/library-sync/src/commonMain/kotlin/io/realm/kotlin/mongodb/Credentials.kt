@@ -21,7 +21,8 @@ import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
 import io.realm.kotlin.mongodb.internal.CustomEJsonCredentialsImpl
-import kotlinx.serialization.serializer
+import io.realm.kotlin.mongodb.internal.serializerOrRealmBuiltInSerializer
+import kotlinx.serialization.KSerializer
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
@@ -151,7 +152,8 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: BsonDocument): Credentials = customFunctionInternal(payload)
+        public fun customFunction(payload: BsonDocument): Credentials =
+            customFunctionInternal(payload)
 
         /**
          * Creates credentials representing a login using an App Services Function. The payload would
@@ -162,7 +164,8 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: Map<String, *>): Credentials = customFunctionInternal(payload)
+        public fun customFunction(payload: Map<String, *>): Credentials =
+            customFunctionInternal(payload)
 
         private fun customFunctionInternal(payload: Any): Credentials =
             BsonEncoder.encodeToBsonValue(payload).let { bsonValue: BsonValue ->
@@ -180,17 +183,40 @@ public interface Credentials {
          *
          * **Note** The payload will be serialized using the the EJson encoder defined in [AppConfiguration.ejson].
          *
+         * @param T the payload type.
+         * @param payload The payload that will be passed as an argument to the server function.
+         * @param serializer serialization strategy for [T].
+         * @return a set of credentials that can be used to log into an App Services Application
+         * using [App.login].
+         */
+        @ExperimentalRealmSerializerApi
+        @OptIn(ExperimentalKSerializerApi::class)
+        public fun <T> customFunction(payload: T, serializer: KSerializer<T>): Credentials =
+            CustomEJsonCredentialsImpl { app: AppImpl ->
+                app.configuration.ejson.encodeToString(serializer, payload)
+            }
+
+        /**
+         * Creates credentials representing a login using an App Services Function. The payload would
+         * be serialized and parsed as an argument to the remote function. The payload keys must
+         * match the format and names the function expects.
+         *
+         * **Note** The payload will be serialized using the the EJson encoder defined in [AppConfiguration.ejson].
+         *
          * @param payload The payload that will be passed as an argument to the server function.
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
         @ExperimentalRealmSerializerApi
         @OptIn(ExperimentalKSerializerApi::class)
-        public inline fun <reified T> customFunction(payload: T): Credentials {
-            return CustomEJsonCredentialsImpl { app: AppImpl ->
-                val serializer = app.configuration.ejson.serializersModule.serializer<T>()
-                app.configuration.ejson.encodeToString(serializer, payload)
+        public inline fun <reified T> customFunction(payload: T): Credentials =
+            CustomEJsonCredentialsImpl { app: AppImpl ->
+                app.configuration.ejson.run {
+                    app.configuration.ejson.encodeToString(
+                        serializer = serializersModule.serializerOrRealmBuiltInSerializer<T>(),
+                        value = payload
+                    )
+                }
             }
-        }
     }
 }

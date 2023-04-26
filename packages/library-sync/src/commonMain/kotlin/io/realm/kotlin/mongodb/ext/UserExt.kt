@@ -20,10 +20,14 @@ import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.UserImpl
+import io.realm.kotlin.mongodb.internal.serializerOrRealmBuiltInSerializer
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.ExperimentalKSerializerApi
 import org.mongodb.kbson.serialization.Bson
+import org.mongodb.kbson.serialization.EJson
 
 /**
  * Returns the profile for this user as [BsonDocument].
@@ -54,18 +58,39 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
  * **Note** Profile will be deserialized using the encoder defined in [AppConfiguration.ejson].
  *
  * @param T the type to decoded the user profile.
+ * @param serializer deserialization strategy for [T].
  * @return The profile for this user.
  */
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKSerializerApi::class)
-public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
-    profileInternal { ejson ->
-        this.app.configuration.ejson.decodeFromString(ejson)
+public fun <T> User.profile(serializer: KSerializer<T>): T =
+    (this as UserImpl).app.configuration.ejson.let { ejson: EJson ->
+        profileInternal { ejsonEncodedProfile ->
+            ejson.decodeFromString(serializer, ejsonEncodedProfile)
+        }
     }
-}
 
 /**
- * Return the custom user data associated with the user in the Realm App as [T].
+ * Returns the profile for this user as a [T].
+ *
+ * **Note** Profile will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ *
+ * @param T the type to decoded the user profile.
+ * @return The profile for this user.
+ */
+@OptIn(ExperimentalKSerializerApi::class)
+@ExperimentalRealmSerializerApi
+public inline fun <reified T> User.profile(): T =
+    profile(
+        (this as UserImpl).app
+            .configuration
+            .ejson
+            .serializersModule
+            .serializerOrRealmBuiltInSerializer<T>()
+    )
+
+/**
+ * Returns the custom user data associated with the user in the Realm App as [T].
  *
  * The data is only refreshed when the user's access token is refreshed or when explicitly
  * calling [User.refreshCustomData].
@@ -77,8 +102,35 @@ public inline fun <reified T> User.profile(): T = with(this as UserImpl) {
  */
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKSerializerApi::class)
-public inline fun <reified T> User.customData(): T? = with(this as UserImpl) {
-    customDataInternal { ejson ->
-        this.app.configuration.ejson.decodeFromString(ejson)
+public inline fun <reified T> User.customData(): T? =
+    customData(
+        (this as UserImpl).app
+            .configuration
+            .ejson
+            .serializersModule
+            .serializerOrRealmBuiltInSerializer<T>()
+    )
+
+/**
+ * Returns the custom user data associated with the user in the Realm App as [T].
+ *
+ * The data is only refreshed when the user's access token is refreshed or when explicitly
+ * calling [User.refreshCustomData].
+ *
+ * **Note** Custom data will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ *
+ * @param T the type to decoded the user custom data.
+ * @param serializer deserialization strategy for [T].
+ * @return The custom user data associated with the user.
+ */
+@ExperimentalRealmSerializerApi
+@OptIn(ExperimentalKSerializerApi::class)
+public fun <T> User.customData(serializer: KSerializer<T>): T? =
+    (this as UserImpl).app.configuration.ejson.let { ejson: EJson ->
+        customDataInternal { ejsonEncodedCustomData ->
+            ejson.decodeFromString(
+                deserializer = serializer,
+                string = ejsonEncodedCustomData
+            )
+        }
     }
-}

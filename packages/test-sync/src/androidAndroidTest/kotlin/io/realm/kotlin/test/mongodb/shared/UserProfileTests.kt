@@ -209,9 +209,12 @@ class UserProfileTests {
         setDefaultProfile()
 
         val user = app.createUserAndLogin()
-        val userProfile = user.profile<UserProfile>()
-
-        assertEquals(Companion.userProfile, userProfile)
+        setOf(
+            user.profile<UserProfile>(),
+            user.profile<UserProfile>(UserProfile.serializer()),
+        ).forEach { profile ->
+            assertEquals(Companion.userProfile, userProfile)
+        }
     }
 
     @Test
@@ -221,6 +224,9 @@ class UserProfileTests {
         val user = app.createUserAndLogin()
         assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
             user.profile<UserProfile>()
+        }
+        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
+            user.profile<UserProfile>(UserProfile.serializer())
         }
     }
 }

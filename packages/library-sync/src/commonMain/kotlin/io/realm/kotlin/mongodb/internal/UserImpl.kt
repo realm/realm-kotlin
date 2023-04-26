@@ -59,11 +59,11 @@ public class UserImpl(
     override val functions: Functions by lazy { FunctionsImpl(app, this) }
 
     @PublishedApi
-    internal fun <T> profileInternal(block: (ejson: String) -> T): T =
+    internal fun <T> profileInternal(block: (ejsonEncodedProfile: String) -> T): T =
         block(RealmInterop.realm_user_get_profile(nativePointer))
 
     @PublishedApi
-    internal fun <T> customDataInternal(block: (ejson: String) -> T?): T? =
+    internal fun <T> customDataInternal(block: (ejsonEncodedCustomData: String) -> T?): T? =
         RealmInterop.realm_user_get_custom_data(nativePointer)?.let(block)
 
     override suspend fun refreshCustomData() {
