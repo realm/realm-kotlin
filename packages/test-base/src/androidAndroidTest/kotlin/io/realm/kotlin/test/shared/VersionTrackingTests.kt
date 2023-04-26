@@ -162,7 +162,6 @@ class VersionTrackingTests {
 
     @Test
     fun objectNotificationsCausesTracking() = runBlocking {
-        RealmLog.level = LogLevel.TRACE // See https://github.com/realm/realm-kotlin/issues/1348
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
@@ -209,6 +208,11 @@ class VersionTrackingTests {
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
+        assertEquals(
+            6,
+            samples.size,
+            samples.map { it.list.version() }.joinToString { it.toString() }
+        )
     }
 }
 
