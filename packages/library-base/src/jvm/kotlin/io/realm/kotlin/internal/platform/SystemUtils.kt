@@ -71,7 +71,7 @@ public expect fun assetFileAsStream(assetFilename: String): InputStream
 
 @Suppress("NestedBlockDepth")
 public actual fun copyAssetFile(
-    realmFilename: String,
+    realmFilePath: String,
     assetFilename: String,
     sha256Checksum: String?
 ) {
@@ -82,7 +82,7 @@ public actual fun copyAssetFile(
             inputStream
         }
     }.use { assetStream ->
-        val outputFile = File(realmFilename)
+        val outputFile = File(realmFilePath)
         try {
             outputFile.outputStream().use { outputStream ->
                 copyStream(assetStream, outputStream)

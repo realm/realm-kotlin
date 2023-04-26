@@ -72,7 +72,7 @@ public expect fun appFilesDirectory(): String
  * - JVM: Class<T>.javaClass.classLoader.getResource(assetFilename)
  * - Darwin: NSBundle.mainBundle.pathForResource(assetFilenameBase, assetFilenameExtension)
  */
-public expect fun copyAssetFile(realmFilename: String, assetFilename: String, sha256Checksum: String?)
+public expect fun copyAssetFile(realmFilePath: String, assetFilename: String, sha256Checksum: String?)
 
 /**
  * Checks whether a file in the specified path exists.

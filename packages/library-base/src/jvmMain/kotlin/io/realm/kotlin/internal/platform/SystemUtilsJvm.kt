@@ -1,5 +1,6 @@
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.log.LogLevel
@@ -19,8 +20,7 @@ public actual val DEVICE_MODEL: String = ""
 public actual fun appFilesDirectory(): String = System.getProperty("user.dir") ?: "."
 
 public actual fun assetFileAsStream(assetFilename: String): InputStream {
-    // FIXME How to get hold of the right class loader
-    val classLoader = String.javaClass.classLoader
+    val classLoader = Realm.javaClass.classLoader
     val resource: URL = classLoader.getResource(assetFilename) ?: throw Exceptions.assetFileNotFound(assetFilename)
     return resource.openStream()
 }

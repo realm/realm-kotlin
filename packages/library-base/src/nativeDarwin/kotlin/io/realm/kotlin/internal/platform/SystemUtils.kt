@@ -155,7 +155,7 @@ public fun assetFilePath(assetFileName: String): String? {
 }
 
 public actual fun copyAssetFile(
-    realmFilename: String,
+    realmFilePath: String,
     assetFilename: String,
     sha256Checksum: String?
 ) {
@@ -185,7 +185,7 @@ public actual fun copyAssetFile(
             throw Exceptions.assetFileChecksumMismatch(assetFilename, sha256Checksum, actual)
         }
     }
-    NSFileManager.defaultManager.copyItemAtPath(assetFilePath, realmFilename, null)
+    NSFileManager.defaultManager.copyItemAtPath(assetFilePath, realmFilePath, null)
 }
 
 private fun NSData.toByteArray(): ByteArray = ByteArray(this@toByteArray.length.toInt()).apply {

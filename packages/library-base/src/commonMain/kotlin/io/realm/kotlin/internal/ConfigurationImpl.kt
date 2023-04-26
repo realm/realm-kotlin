@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.AssetFileConfiguration
 import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.LogConfiguration
@@ -62,8 +63,7 @@ public open class ConfigurationImpl constructor(
     initialDataCallback: InitialDataCallback?,
     override val isFlexibleSyncConfiguration: Boolean,
     inMemory: Boolean,
-    assetFile: String?,
-    assetFileChecksum: String?,
+    assetFileConfiguration: AssetFileConfiguration?
 ) : InternalConfiguration {
 
     override val path: String
@@ -95,8 +95,7 @@ public open class ConfigurationImpl constructor(
 
     override val initialDataCallback: InitialDataCallback?
     override val inMemory: Boolean
-    override val assetFile: String?
-    override val assetFileChecksum: String?
+    override val assetFileConfiguration: AssetFileConfiguration?
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
         val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
@@ -139,8 +138,7 @@ public open class ConfigurationImpl constructor(
         this.compactOnLaunchCallback = compactOnLaunchCallback
         this.initialDataCallback = initialDataCallback
         this.inMemory = inMemory
-        this.assetFile = assetFile
-        this.assetFileChecksum = assetFileChecksum
+        this.assetFileConfiguration = assetFileConfiguration
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->

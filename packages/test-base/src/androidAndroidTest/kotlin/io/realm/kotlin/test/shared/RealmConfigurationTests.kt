@@ -439,6 +439,53 @@ class RealmConfigurationTests {
         assertFailsWithEncryptionKey(builder, 256)
     }
 
+    @Test
+    fun assetFile_defaultIsNull() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+        val config = builder.build()
+        assertNull(config.assetFileConfiguration)
+    }
+
+    @Test
+    fun assetFile_roundTrip() {
+        RealmConfiguration.Builder(setOf(Sample::class))
+            .assetFile("FILENAME", "SHA256")
+            .build()
+            .assetFileConfiguration!!
+            .run {
+                assertEquals("FILENAME", assetFile)
+                assertEquals("SHA256", assetFileChecksum)
+            }
+    }
+
+    @Test
+    fun assetFile_throwsOnEmptyFilename() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+        assertFailsWithMessage<IllegalArgumentException>("Asset file must be a non-empty filename.") {
+            builder.assetFile("")
+        }
+    }
+
+    @Test
+    fun assetFile_throwsIfDeleteRealmIfMigrationNeeded() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+            .assetFile("ASSETFILE")
+            .deleteRealmIfMigrationNeeded()
+        assertFailsWithMessage<IllegalStateException>("Cannot combine `assetFile` and `deleteRealmIfMigrationNeeded` configuration options") {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun assetFile_throwsIfInMemory() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+            .assetFile("ASSETFILE")
+            .inMemory()
+        assertFailsWithMessage<IllegalStateException>("Cannot combine `assetFile` and `inMemory` configuration options") {
+            builder.build()
+        }
+    }
+
     private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {
         val key = Random.nextBytes(keyLength)
         assertFailsWith(

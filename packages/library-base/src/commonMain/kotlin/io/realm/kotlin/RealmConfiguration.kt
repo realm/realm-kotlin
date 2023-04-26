@@ -113,7 +113,17 @@ public interface RealmConfiguration : Configuration {
             this.name = name
         }
 
+        override fun verifyConfig() {
+            super.verifyConfig()
+            assetFileConfiguration?.let {
+                if (deleteRealmIfMigrationNeeded) {
+                    throw IllegalStateException("Cannot combine `assetFile` and `deleteRealmIfMigrationNeeded` configuration options")
+                }
+            }
+        }
+
         override fun build(): RealmConfiguration {
+            verifyConfig()
             val allLoggers = mutableListOf<RealmLogger>()
             if (!removeSystemLogger) {
                 allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
@@ -151,8 +161,7 @@ public interface RealmConfiguration : Configuration {
                 migration,
                 initialDataCallback,
                 inMemory,
-                assetFile,
-                assetFileChecksum,
+                assetFileConfiguration
             )
         }
     }

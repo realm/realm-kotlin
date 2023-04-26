@@ -641,10 +641,8 @@ class RealmTests {
     fun assetFile() {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
-            .log(LogLevel.DEBUG)
-            // Need a separate name to avoid clashes with this.realm
+            // Need a separate name to avoid clashes with this.realm initialized in setup()
             .name("prefilled.realm")
-            .schemaVersion(1)
             .assetFile("asset.realm")
             .build()
 
@@ -670,9 +668,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("prefilled.realm")
-            .log(LogLevel.DEBUG)
-            .schemaVersion(1)
-            .assetFile("asset.realm", "d4cdef5d8da2b2e2ae692f2e2fead4ef8deeaccb8e4cf0790c2a2ae0dbaabbc4")
+            .assetFile("asset.realm", "8984dda08008bbc6b56d2b8f6ba50dc378bb865a59a082eb42862ad31c21ad21")
             .build()
 
         assertFalse(fileExists(config.path))
@@ -697,13 +693,11 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("prefilled.realm")
-            .log(LogLevel.DEBUG)
-            .schemaVersion(1)
             .assetFile("asset.realm", "asdf")
             .build()
 
         assertFalse(fileExists(config.path))
-        assertFailsWithMessage<RuntimeException>("Asset file checksum for 'asset.realm' does not match. Expected 'asdf' but was 'd4cdef5d8da2b2e2ae692f2e2fead4ef8deeaccb8e4cf0790c2a2ae0dbaabbc4'") {
+        assertFailsWithMessage<RuntimeException>("Asset file checksum for 'asset.realm' does not match. Expected 'asdf' but was '8984dda08008bbc6b56d2b8f6ba50dc378bb865a59a082eb42862ad31c21ad21'") {
             Realm.open(config)
         }
     }
@@ -713,8 +707,6 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("prefilled.realm")
-            .log(LogLevel.DEBUG)
-            .schemaVersion(1)
             .assetFile("nonexistingfile.realm")
             .build()
 
@@ -729,7 +721,6 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("default.realm")
-            .log(LogLevel.DEBUG)
             .assetFile("nonexistingfile.realm")
             .build()
 
@@ -742,13 +733,13 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("default.realm")
-            .log(LogLevel.DEBUG)
             .assetFile("asset.realm", "invalid_checksum")
             .build()
 
         assertTrue(fileExists(config.path))
         Realm.open(config).use { }
     }
+
     // TODO Cannot verify intermediate versions as they are now spread across user facing, notifier
     //  and writer realms. Tests were anyway ignored, so don't really know what to do with these.
 //    @Test

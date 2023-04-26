@@ -113,12 +113,20 @@ public class RealmImpl private constructor(
         var realmFileCreated = false
         try {
             runBlocking {
-                // FIXME We cannot ensure exclusive access to the realm file, so for now multiple
-                //  processes/threads could potentially race each other here
-                //  https://github.com/realm/realm-core/issues/6492
-                if (configuration.assetFile != null && !fileExists(configuration.path)) {
-                    log.debug("Copying asset file: ${configuration.assetFile}")
-                    copyAssetFile(configuration.path, configuration.assetFile!!, configuration.assetFileChecksum)
+                configuration.assetFileConfiguration?.let {
+                    val path = configuration.path
+                    if (!fileExists(path)) {
+                        // TODO We cannot ensure exclusive access to the realm file, so for now
+                        //  just try avoid having multiple threads in the same process copying
+                        //  asset files at the same time.
+                        //  https://github.com/realm/realm-core/issues/6492
+                        assetProcessingLock.withLock {
+                            if (!fileExists(path)) {
+                                log.debug("Copying asset file: ${it.assetFile}")
+                                copyAssetFile(path, it.assetFile, it.assetFileChecksum)
+                            }
+                        }
+                    }
                 }
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = fileCreated
@@ -269,6 +277,10 @@ public class RealmImpl private constructor(
     }
 
     internal companion object {
+        // Mutex to ensure that only one thread is trying to copy asset files in place at a time.
+        //  https://github.com/realm/realm-core/issues/6492
+        private val assetProcessingLock = SynchronizableObject()
+
         internal fun create(configuration: InternalConfiguration): RealmImpl {
             return RealmImpl(configuration)
         }

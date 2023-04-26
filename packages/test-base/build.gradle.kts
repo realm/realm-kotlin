@@ -216,9 +216,9 @@ kotlin {
     }
 }
 
-// FIXME Add appropriate pattern for getting test files into place for loading through the assetFile
-//  configuration. This only targets Kotlin Native. For JVM platforms the files are placed in
-//  `src/jvmTest/resources`(non-Android JVM) and `src/androidTest/assets` (Android).
+// Rules for getting Kotlin Native resource test files in place for locating it with the `assetFile`
+// configuration. For JVM platforms the files are placed in
+// `src/jvmTest/resources`(non-Android JVM) and `src/androidTest/assets` (Android).
 kotlin {
     targets.filterIsInstance<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests<*>>().forEach { simulatorTargets ->
         val target = simulatorTargets.name

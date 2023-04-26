@@ -16,6 +16,7 @@
 
 package io.realm.kotlin
 
+import io.realm.kotlin.Configuration.SharedBuilder
 import io.realm.kotlin.internal.MISSING_PLUGIN_MESSAGE
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
@@ -86,6 +87,21 @@ public data class LogConfiguration(
      * than the value defined in [LogConfiguration.level].
      */
     public val loggers: List<RealmLogger>
+)
+
+/**
+ * Configuration for pre-bundled asset files used as initial state of the realm file.
+ */
+public data class AssetFileConfiguration(
+    /**
+     * Asset file name. See [SharedBuilder.assetFile] for details.
+     */
+    val assetFile: String,
+    /**
+     * Asset file SHA256-checksum used to verify the integrity of the asset file. See
+     * [SharedBuilder.assetFile] for details.
+     */
+    val assetFileChecksum: String?
 )
 
 /**
@@ -170,8 +186,11 @@ public interface Configuration {
      */
     public val inMemory: Boolean
 
-    public val assetFile: String?
-    public val assetFileChecksum: String?
+    /**
+     * Asset file configuration that holds details of a bundled asset file used as initial state of
+     * the realm file. See [SharedBuilder.assetFile] for details.
+     */
+    public val assetFileConfiguration: AssetFileConfiguration?
 
     /**
      * Base class for configuration builders that holds properties available to both
@@ -214,8 +233,7 @@ public interface Configuration {
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
-        protected var assetFile: String? = null
-        protected var assetFileChecksum: String? = null
+        protected var assetFileConfiguration: AssetFileConfiguration? = null
 
         /**
          * Sets the filename of the realm file.
@@ -229,6 +247,9 @@ public interface Configuration {
          * Creates the RealmConfiguration based on the builder properties.
          *
          * @return the created RealmConfiguration.
+         *
+         * @throws IllegalStateException if trying to build a configuration with incompatible
+         * options.
          */
         public abstract fun build(): T
 
@@ -390,14 +411,15 @@ public interface Configuration {
          * And it is the responsibility of the developer to place the files at the appropriate
          * location.
          *
-         * // FIXME validate
-         * This cannot be combined with {@link #deleteRealmIfMigrationNeeded()} as doing so would just result in the
-         * copied file being deleted.
+         * This cannot be combined with [inMemory] or
+         * [RealmConfiguration.Builder.deleteRealmIfMigrationNeeded]. Attempts to do so will cause
+         * [build] to throw an [IllegalStateException].
          *
-         * NOTE: This could potentially be a lengthy operation and should ideally be done on a
-         * background thread.
-         * NOTE: There is currently no protection against race conditions in copying the asset file
-         * in place, so user must ensure that only one process is trying to trigger this at a time.
+         * NOTE: This could potentially lead to opening the realm being a lengthy operation and this
+         * should then ideally be done on a background thread.
+         * NOTE: There is currently no protection against multiple processes trying to copy the
+         * asset file in place at the same time, so user must ensure that only one process is trying
+         * to trigger this at a time.
          *
          * @param assetFile the name of the assetFile in the platform's default asset/resource
          * location. If the asset file cannot be located when opening the realm for the first time
@@ -406,9 +428,16 @@ public interface Configuration {
          * If this is specified and the checksum does not match the computed checksum of the
          * [assetFile] when the realm is opened the first time [Realm.open] will fail with a
          * [IllegalArgumentException].
+         *
+         * @throws IllegalArgumentException if called with an empty [assetFile].
          */
-        public fun assetFile(assetFile: String, sha256checkSum: String? = null): S =
-            apply { this.assetFile = assetFile; this.assetFileChecksum = sha256checkSum } as S
+        public fun assetFile(assetFile: String, sha256checkSum: String? = null): S {
+            require(assetFile.isNotEmpty()) {
+                "Asset file must be a non-empty filename."
+            }
+            this.assetFileConfiguration = AssetFileConfiguration(assetFile, sha256checkSum)
+            return this as S
+        }
 
         /**
          * Removes the default system logger from being installed. If no custom loggers have
@@ -436,6 +465,14 @@ public interface Configuration {
             }
             require(name != REALM_FILE_EXTENSION) {
                 "'$REALM_FILE_EXTENSION' is not a valid filename"
+            }
+        }
+
+        protected open fun verifyConfig() {
+            assetFileConfiguration?.let {
+                if (inMemory) {
+                    throw IllegalStateException("Cannot combine `assetFile` and `inMemory` configuration options")
+                }
             }
         }
     }
