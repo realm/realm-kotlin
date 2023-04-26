@@ -29,7 +29,7 @@ import kotlinx.atomicfu.atomic
  *
  * NOTE: This is not thread safe, so synchronization should be enforced by the owner/caller.
  */
-internal class VersionTracker(private val owner: BaseRealmImpl, private val log: RealmLog) {
+internal class VersionTracker(private val owner: BaseRealmImpl, private val log: ContextLogger) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
     private val intermediateReferences: AtomicRef<Set<Pair<RealmPointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())

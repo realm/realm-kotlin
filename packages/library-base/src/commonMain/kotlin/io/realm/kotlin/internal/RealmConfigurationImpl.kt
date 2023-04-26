@@ -45,7 +45,8 @@ internal class RealmConfigurationImpl constructor(
     migration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
-    override val assetFileConfiguration: AssetFileConfiguration?
+    override val assetFileConfiguration: AssetFileConfiguration?,
+    logger: ContextLogger
 ) : ConfigurationImpl(
     directory,
     name,
@@ -66,5 +67,6 @@ internal class RealmConfigurationImpl constructor(
     false,
     inMemory,
     assetFileConfiguration,
+    logger
 ),
     RealmConfiguration

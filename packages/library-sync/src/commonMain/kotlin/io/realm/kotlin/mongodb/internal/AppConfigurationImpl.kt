@@ -16,15 +16,13 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.internal.RealmLog
+import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.internal.SDK_VERSION
-import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
-import io.realm.kotlin.internal.interop.SyncLogCallback
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.CPU_ARCH
@@ -48,7 +46,7 @@ public class AppConfigurationImpl constructor(
     internal val networkTransportFactory: () -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
-    public val log: RealmLog,
+    public val logger: LogConfiguration,
     override val appName: String?,
     override val appVersion: String?,
     override val httpLogObfuscator: HttpLogObfuscator?
@@ -102,14 +100,13 @@ public class AppConfigurationImpl constructor(
         if (appId != (other.appId)) return false
         if (baseUrl != (other.baseUrl)) return false
         if (metadataMode != (other.metadataMode)) return false
-        return log == other.log
+        return true
     }
 
     override fun hashCode(): Int {
         var result = appId.hashCode()
         result = 31 * result + baseUrl.hashCode()
         result = 31 * result + metadataMode.hashCode()
-        result = 31 * result + log.hashCode()
         return result
     }
 
@@ -144,33 +141,6 @@ public class AppConfigurationImpl constructor(
             .also { syncClientConfig ->
                 // Initialize client configuration first
                 RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)
-                RealmInterop.realm_sync_client_config_set_log_level(
-                    syncClientConfig,
-                    CoreLogLevel.valueFromPriority(log.logLevel.priority.toShort())
-                )
-
-                // TODO Redirect all Sync logs to the App configured logger. This makes it
-                //  impossible to configure a different TAG for these logs. Previously
-                //  these logs had a `SYNC` tag in contrast to the `REALM` tag used by the database.
-                //  A redesign of this should also take into account that unified error logging
-                //  is also coming in Core.
-                RealmInterop.realm_sync_client_config_set_log_callback(
-                    syncClientConfig,
-                    object : SyncLogCallback {
-                        override fun log(logLevel: Short, message: String?) {
-                            when (val coreLogLevel = CoreLogLevel.valueFromPriority(logLevel)) {
-                                CoreLogLevel.RLM_LOG_LEVEL_TRACE -> log.trace(message ?: "")
-                                CoreLogLevel.RLM_LOG_LEVEL_DEBUG -> log.debug(message ?: "")
-                                CoreLogLevel.RLM_LOG_LEVEL_DETAIL -> log.debug(message ?: "")
-                                CoreLogLevel.RLM_LOG_LEVEL_INFO -> log.info(message ?: "")
-                                CoreLogLevel.RLM_LOG_LEVEL_WARNING -> log.warn(message ?: "")
-                                CoreLogLevel.RLM_LOG_LEVEL_ERROR -> log.error(message ?: "")
-                                CoreLogLevel.RLM_LOG_LEVEL_FATAL -> log.error(message ?: "")
-                                else -> throw IllegalStateException("Unsupported level: $coreLogLevel")
-                            }
-                        }
-                    }
-                )
                 RealmInterop.realm_sync_client_config_set_metadata_mode(
                     syncClientConfig,
                     metadataMode

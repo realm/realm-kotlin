@@ -267,6 +267,7 @@ expect object RealmInterop {
     fun realm_is_frozen(realm: RealmPointer): Boolean
     fun realm_close(realm: RealmPointer)
     fun realm_delete_files(path: String)
+    fun realm_compact(realm: RealmPointer): Boolean
     fun realm_convert_with_config(
         realm: RealmPointer,
         config: RealmConfigurationPointer,
@@ -601,11 +602,9 @@ expect object RealmInterop {
         basePath: String
     )
 
-    fun realm_sync_client_config_set_log_callback(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        callback: SyncLogCallback
-    )
-    fun realm_sync_client_config_set_log_level(syncClientConfig: RealmSyncClientConfigurationPointer, level: CoreLogLevel)
+    fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
+
+    fun realm_set_log_level(level: CoreLogLevel)
 
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,

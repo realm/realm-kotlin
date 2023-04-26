@@ -122,3 +122,5 @@ private fun preparePath(directoryPath: String) {
         throw IllegalArgumentException("Provided directory is a file: $directoryPath")
     }
 }
+
+public actual fun isWindows(): Boolean = OS_NAME.contains("windows", ignoreCase = true)

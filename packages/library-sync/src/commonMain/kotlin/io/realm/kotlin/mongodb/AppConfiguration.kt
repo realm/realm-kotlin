@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.mongodb
 
 import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.internal.RealmLog
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.canWrite
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
@@ -110,8 +108,7 @@ public interface AppConfiguration {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
         private var encryptionKey: ByteArray? = null
-        private var logLevel: LogLevel = LogLevel.WARN
-        private var removeSystemLogger: Boolean = false
+        private var logLevel: LogLevel = LogLevel.INFO
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
@@ -162,7 +159,8 @@ public interface AppConfiguration {
          * LogCat on Android and NSLog on iOS.
          * @return the Builder instance used.
          */
-        public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder =
+        @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
+        public fun log(level: LogLevel = LogLevel.INFO, customLoggers: List<RealmLogger> = emptyList()): Builder =
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
@@ -252,18 +250,6 @@ public interface AppConfiguration {
         }
 
         /**
-         * TODO Evaluate if this should be part of the public API. For now keep it internal.
-         *
-         * Removes the default system logger from being installed. If no custom loggers have
-         * been configured, no log events will be reported, regardless of the configured
-         * log level.
-         *
-         * @return the Builder instance used.
-         * @see [RealmConfiguration.Builder.log]
-         */
-        internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
-
-        /**
          * Allows defining a custom network transport. It is used by some tests that require simulating
          * network responses.
          */
@@ -277,12 +263,13 @@ public interface AppConfiguration {
          * @return the AppConfiguration that can be used to create a [App].
          */
         public fun build(): AppConfiguration {
+            // Configure logging during creation of AppConfiguration to keep old behavior for
+            // configuring logging. This should be removed when `LogConfiguration` is removed.
             val allLoggers = mutableListOf<RealmLogger>()
-            if (!removeSystemLogger) {
-                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-            }
             allLoggers.addAll(userLoggers)
-            val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
+            val logConfig = LogConfiguration(this.logLevel, allLoggers)
+            RealmLog.level = logLevel
+            userLoggers.forEach { RealmLog.add(it) }
 
             val appNetworkDispatcherFactory = if (dispatcher != null) {
                 CoroutineDispatcherFactory.unmanaged(dispatcher!!)
@@ -293,6 +280,7 @@ public interface AppConfiguration {
                 CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
+            val appLogger = ContextLogger("Sdk")
             val networkTransport: () -> NetworkTransport = {
                 val logger: Logger? = if (logLevel <= LogLevel.DEBUG) {
                     object : Logger {
@@ -323,7 +311,7 @@ public interface AppConfiguration {
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
                 networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
-                log = appLogger,
+                logger = logConfig,
                 appName = appName,
                 appVersion = appVersion,
                 httpLogObfuscator = httpLogObfuscator

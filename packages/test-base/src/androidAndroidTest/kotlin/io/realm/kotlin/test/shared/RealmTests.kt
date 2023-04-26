@@ -25,10 +25,9 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
-import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.fileExists
-import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -473,7 +472,7 @@ class RealmTests {
                     // We expect the following files: db file, .lock, .management, .note.
                     // On Linux and Mac, the .note is used to control notifications. This mechanism
                     // is not used on Windows, so the file is not present there.
-                    val expectedFiles = if (OS_NAME.contains("windows", ignoreCase = true)) {
+                    val expectedFiles = if (isWindows()) {
                         3
                     } else {
                         4
@@ -634,6 +633,29 @@ class RealmTests {
             assertFailsWith<IllegalArgumentException> {
                 realm.writeCopyTo(configB)
             }
+        }
+    }
+
+    @Test
+    fun compactRealm() {
+        realm.close()
+        if (isWindows()) {
+            assertFailsWith<NotImplementedError> {
+                Realm.compactRealm(configuration)
+            }
+        } else {
+            assertTrue(Realm.compactRealm(configuration))
+        }
+    }
+
+    @Test
+    fun compactRealm_failsIfOpen() {
+        if (isWindows()) {
+            assertFailsWith<NotImplementedError> {
+                Realm.compactRealm(configuration)
+            }
+        } else {
+            assertFalse(Realm.compactRealm(configuration))
         }
     }
 

@@ -76,6 +76,7 @@ public fun interface InitialDataCallback {
 /**
  * Configuration for log events created by a Realm instance.
  */
+@Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
 public data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
@@ -127,6 +128,7 @@ public interface Configuration {
     /**
      * The log configuration used for the realm instance.
      */
+    @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
     public val log: LogConfiguration
 
     /**
@@ -222,9 +224,9 @@ public interface Configuration {
 
         // 'name' must be nullable as it is optional when getting SyncClient's default path!
         protected abstract var name: String?
-        protected var logLevel: LogLevel = LogLevel.WARN
-        protected var removeSystemLogger: Boolean = false
-        protected var userLoggers: List<RealmLogger> = listOf()
+        protected var logLevel: LogLevel = LogLevel.INFO
+        protected var appConfigLoggers: List<RealmLogger> = listOf()
+        protected var realmConfigLoggers: List<RealmLogger> = listOf()
         protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
         protected var notificationDispatcher: CoroutineDispatcher? = null
         protected var writeDispatcher: CoroutineDispatcher? = null
@@ -286,12 +288,13 @@ public interface Configuration {
          * installed by default that will redirect to the common logging framework on the platform,
          * i.e. LogCat on Android and NSLog on iOS.
          */
+        @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
         public open fun log(
-            level: LogLevel = LogLevel.WARN,
+            level: LogLevel = LogLevel.INFO,
             customLoggers: List<RealmLogger> = emptyList()
         ): S = apply {
             this.logLevel = level
-            this.userLoggers = customLoggers
+            this.realmConfigLoggers = customLoggers
         } as S
 
         /**
@@ -438,16 +441,6 @@ public interface Configuration {
             this.assetFileConfiguration = AssetFileConfiguration(assetFile, sha256checkSum)
             return this as S
         }
-
-        /**
-         * Removes the default system logger from being installed. If no custom loggers have
-         * been configured, no log events will be reported, regardless of the configured
-         * log level.
-         *
-         * @see [Configuration.SharedBuilder.log]
-         */
-        // TODO Evaluate if this should be part of the public API. For now keep it internal.
-        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
 
         protected fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
             if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {

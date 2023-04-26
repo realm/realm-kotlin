@@ -16,10 +16,11 @@
 
 package io.realm.kotlin
 
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
@@ -124,11 +125,7 @@ public interface RealmConfiguration : Configuration {
 
         override fun build(): RealmConfiguration {
             verifyConfig()
-            val allLoggers = mutableListOf<RealmLogger>()
-            if (!removeSystemLogger) {
-                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-            }
-            allLoggers.addAll(userLoggers)
+            val realmLogger = ContextLogger("Sdk")
 
             // Sync configs might not set 'name' but local configs always do, therefore it will
             // never be null here
@@ -146,6 +143,13 @@ public interface RealmConfiguration : Configuration {
                 CoroutineDispatcherFactory.managed("writer-$fileName")
             }
 
+            // Configure logging during creation of a (Realm/Sync)Configuration to keep old behavior
+            // for configuring logging. This should be removed when `LogConfiguration` is removed.
+            RealmLog.level = logLevel
+            realmConfigLoggers.forEach { RealmLog.add(it) }
+            @Suppress("invisible_reference", "invisible_member")
+            val allLoggers: List<RealmLogger> = listOf(RealmLog.systemLoggerInstalled).filterNotNull() + realmConfigLoggers
+
             return RealmConfigurationImpl(
                 directory,
                 fileName,
@@ -161,7 +165,8 @@ public interface RealmConfiguration : Configuration {
                 migration,
                 initialDataCallback,
                 inMemory,
-                assetFileConfiguration
+                assetFileConfiguration,
+                realmLogger
             )
         }
     }

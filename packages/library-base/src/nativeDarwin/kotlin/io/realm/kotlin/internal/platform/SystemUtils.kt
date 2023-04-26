@@ -193,3 +193,5 @@ private fun NSData.toByteArray(): ByteArray = ByteArray(this@toByteArray.length.
         memcpy(it.addressOf(0), this@toByteArray.bytes, this@toByteArray.length)
     }
 }
+
+public actual fun isWindows(): Boolean = false

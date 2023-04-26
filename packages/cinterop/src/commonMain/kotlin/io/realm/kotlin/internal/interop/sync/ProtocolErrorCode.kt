@@ -122,7 +122,9 @@ expect enum class ProtocolSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_INITIAL_SYNC_NOT_COMPLETED,
     RLM_SYNC_ERR_SESSION_WRITE_NOT_ALLOWED,
     RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE,
-    RLM_SYNC_ERR_SESSION_BAD_PROGRESS;
+    RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX,
+    RLM_SYNC_ERR_SESSION_BAD_PROGRESS,
+    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS;
 
     companion object {
         internal fun of(nativeValue: Int): ProtocolSessionErrorCode?

@@ -30,6 +30,7 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
@@ -114,7 +115,7 @@ class SyncClientResetIntegrationTests {
         ) {
             val app = TestApp(
                 appName = appName,
-                logLevel = LogLevel.TRACE,
+                logLevel = LogLevel.INFO,
                 customLogger = ClientResetLoggerInspector(logChannel),
                 initialSetup = { app, service ->
                     addEmailProvider(app)
@@ -328,15 +329,20 @@ class SyncClientResetIntegrationTests {
         }
     }
 
+    private lateinit var initialLogLevel: LogLevel
     private lateinit var partitionValue: String
 
     @BeforeTest
     fun setup() {
+        initialLogLevel = RealmLog.level
         partitionValue = TestHelper.randomPartitionValue()
     }
 
     @AfterTest
     fun tearDown() {
+        RealmLog.removeAll()
+        RealmLog.addDefaultSystemLogger()
+        RealmLog.level = initialLogLevel
     }
 
     // ---------------------------------------------------------------------------------------
