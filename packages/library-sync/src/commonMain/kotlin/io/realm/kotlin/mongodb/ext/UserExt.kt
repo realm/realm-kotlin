@@ -22,10 +22,8 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.internal.UserImpl
 import io.realm.kotlin.mongodb.internal.serializerOrRealmBuiltInSerializer
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.serializer
 import org.mongodb.kbson.BsonDocument
-import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.Bson
 import org.mongodb.kbson.serialization.EJson
 
@@ -62,7 +60,7 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
  * @return The profile for this user.
  */
 @ExperimentalRealmSerializerApi
-@OptIn(ExperimentalKSerializerApi::class)
+@OptIn(ExperimentalKBsonSerializerApi::class)
 public fun <T> User.profile(serializer: KSerializer<T>): T =
     (this as UserImpl).app.configuration.ejson.let { ejson: EJson ->
         profileInternal { ejsonEncodedProfile ->
@@ -78,8 +76,8 @@ public fun <T> User.profile(serializer: KSerializer<T>): T =
  * @param T the type to decoded the user profile.
  * @return The profile for this user.
  */
-@OptIn(ExperimentalKSerializerApi::class)
 @ExperimentalRealmSerializerApi
+@OptIn(ExperimentalKBsonSerializerApi::class)
 public inline fun <reified T> User.profile(): T =
     profile(
         (this as UserImpl).app
@@ -101,7 +99,7 @@ public inline fun <reified T> User.profile(): T =
  * @return The custom user data associated with the user.
  */
 @ExperimentalRealmSerializerApi
-@OptIn(ExperimentalKSerializerApi::class)
+@OptIn(ExperimentalKBsonSerializerApi::class)
 public inline fun <reified T> User.customData(): T? =
     customData(
         (this as UserImpl).app
@@ -124,7 +122,7 @@ public inline fun <reified T> User.customData(): T? =
  * @return The custom user data associated with the user.
  */
 @ExperimentalRealmSerializerApi
-@OptIn(ExperimentalKSerializerApi::class)
+@OptIn(ExperimentalKBsonSerializerApi::class)
 public fun <T> User.customData(serializer: KSerializer<T>): T? =
     (this as UserImpl).app.configuration.ejson.let { ejson: EJson ->
         customDataInternal { ejsonEncodedCustomData ->

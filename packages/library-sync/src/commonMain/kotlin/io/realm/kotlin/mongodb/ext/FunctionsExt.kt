@@ -28,7 +28,7 @@ import kotlinx.serialization.KSerializer
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
-import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.Bson
 import org.mongodb.kbson.serialization.EJson
 
@@ -89,7 +89,7 @@ public suspend inline fun <reified T : Any?> Functions.call(
  * @return result of the function call.
  */
 @ExperimentalRealmSerializerApi
-@OptIn(ExperimentalKSerializerApi::class)
+@OptIn(ExperimentalKBsonSerializerApi::class)
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
     callBuilderBlock: CallBuilder<T>.() -> Unit
@@ -113,7 +113,7 @@ public suspend inline fun <reified T : Any?> Functions.call(
  * Builder used to construct a call defining serializers for the different arguments and return value.
  */
 @ExperimentalRealmSerializerApi
-@OptIn(ExperimentalKSerializerApi::class)
+@OptIn(ExperimentalKBsonSerializerApi::class)
 public class CallBuilder<T>
 @PublishedApi
 internal constructor(

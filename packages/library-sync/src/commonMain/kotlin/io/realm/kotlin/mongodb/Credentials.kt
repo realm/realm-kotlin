@@ -26,7 +26,7 @@ import kotlinx.serialization.KSerializer
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
-import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.Bson
 
 /**
@@ -190,7 +190,7 @@ public interface Credentials {
          * using [App.login].
          */
         @ExperimentalRealmSerializerApi
-        @OptIn(ExperimentalKSerializerApi::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         public fun <T> customFunction(payload: T, serializer: KSerializer<T>): Credentials =
             CustomEJsonCredentialsImpl { app: AppImpl ->
                 app.configuration.ejson.encodeToString(serializer, payload)
@@ -208,7 +208,7 @@ public interface Credentials {
          * using [App.login].
          */
         @ExperimentalRealmSerializerApi
-        @OptIn(ExperimentalKSerializerApi::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         public inline fun <reified T> customFunction(payload: T): Credentials =
             CustomEJsonCredentialsImpl { app: AppImpl ->
                 app.configuration.ejson.run {

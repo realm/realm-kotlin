@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 @file:Suppress("invisible_member", "invisible_reference")
-@file:OptIn(ExperimentalKSerializerApi::class, ExperimentalRealmSerializerApi::class)
+@file:OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.shared
 
@@ -89,7 +89,7 @@ import org.mongodb.kbson.BsonTimestamp
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonUndefined
 import org.mongodb.kbson.Decimal128
-import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 import org.mongodb.kbson.serialization.encodeToBsonValue
 import kotlin.test.AfterTest
@@ -123,9 +123,10 @@ val BSON_ARRAY_VALUE = BsonArray(
     }
 )
 
-val MAP_VALUE: Map<String, String?> = LIST_VALUE.mapIndexed { index, s ->
-    "$index" to s
+val MAP_VALUE: Map<String, String?> = LIST_VALUE.mapIndexed { index, stringValue ->
+    "$index" to stringValue
 }.toMap()
+
 val REALM_MAP_VALUE = MAP_VALUE.toRealmDictionary()
 
 val BSON_DOCUMENT_VALUE = BsonDocument(
@@ -476,7 +477,6 @@ class FunctionsTests {
         functionCallRoundTrip(BsonDouble(DOUBLE_VALUE), DOUBLE_VALUE)
     }
 
-    @OptIn(ExperimentalKSerializerApi::class)
     private fun testFunctionCall_RealmObject(): BsonDocument {
         // The "stable" serializer does not support RealmObject serialization
 

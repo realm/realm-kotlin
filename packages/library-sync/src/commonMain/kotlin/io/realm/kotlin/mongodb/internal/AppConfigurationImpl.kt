@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.LogConfiguration
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.SDK_VERSION
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
@@ -36,12 +37,13 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
-import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to AppImpl
+
 @Suppress("LongParameterList")
-public class AppConfigurationImpl @OptIn(ExperimentalKSerializerApi::class) constructor(
+public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,

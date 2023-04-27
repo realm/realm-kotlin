@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalKSerializerApi::class, ExperimentalRealmSerializerApi::class)
+@file:OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.shared
 
@@ -38,7 +38,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonString
-import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.Bson
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest

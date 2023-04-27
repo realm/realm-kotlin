@@ -18,6 +18,7 @@ package io.realm.kotlin.mongodb
 import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -38,7 +39,7 @@ import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
-import org.mongodb.kbson.ExperimentalKSerializerApi
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
 /**
@@ -79,7 +80,7 @@ public interface AppConfiguration {
      * It can be set with [Builder.ejson] if a certain configuration, such as contextual classes, is
      * required.
      */
-    @OptIn(ExperimentalKSerializerApi::class)
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     public val ejson: EJson
 
     /**
@@ -129,7 +130,7 @@ public interface AppConfiguration {
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
-        @OptIn(ExperimentalKSerializerApi::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         private var ejson: EJson = EJson
         private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
 
@@ -271,7 +272,8 @@ public interface AppConfiguration {
          * when calling remote Atlas [Functions], authenticating with a [customFunction], and retrieving
          * a user [profile] or [customData].
          */
-        @ExperimentalKSerializerApi
+        @ExperimentalRealmSerializerApi
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         public fun ejson(ejson: EJson): Builder = apply {
             this.ejson = ejson
         }
@@ -289,7 +291,7 @@ public interface AppConfiguration {
          *
          * @return the AppConfiguration that can be used to create a [App].
          */
-        @OptIn(ExperimentalKSerializerApi::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         public fun build(): AppConfiguration {
             // Configure logging during creation of AppConfiguration to keep old behavior for
             // configuring logging. This should be removed when `LogConfiguration` is removed.
