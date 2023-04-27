@@ -102,7 +102,8 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
         return result
     }
 
-    override fun removeAll(): Boolean {
+    override fun removeAll(anonymousOnly: Boolean): Boolean {
+        // FIXME removeAll() need to check for anonymousOnly
         return RealmInterop.realm_sync_subscriptionset_clear(nativePointer)
     }
 }

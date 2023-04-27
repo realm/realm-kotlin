@@ -3,11 +3,11 @@ package io.realm.kotlin.mongodb.sync
 /**
  * TODO
  */
-public enum class WaitForSynchronizationMode {
+public enum class WaitForSync {
     /**
      * TODO
      */
-    ON_CREATION,
+    FIRST_TIME,
     /**
      * TODO
      */

@@ -37,6 +37,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
+import org.mongodb.kbson.ObjectId
 import kotlin.reflect.KClass
 
 /**
@@ -53,8 +54,11 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     @Suppress("UnusedPrivateMember")
-    private val mode: Mode = Mode.RESULTS
+    private val mode: Mode = Mode.RESULTS,
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreNotifiable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
+
+    // Field allowing the RealmResult to track the subscription it corresponds to.
+    internal var backingSubscriptionId: ObjectId? = null
 
     @Suppress("UNCHECKED_CAST")
     private val converter = realmObjectConverter(
