@@ -775,7 +775,7 @@ class RealmTests {
         assertTrue(fileExists(config.path))
         Realm.open(config).use { }
     }
-    
+
     // TODO Cannot verify intermediate versions as they are now spread across user facing, notifier
     //  and writer realms. Tests were anyway ignored, so don't really know what to do with these.
 //    @Test
