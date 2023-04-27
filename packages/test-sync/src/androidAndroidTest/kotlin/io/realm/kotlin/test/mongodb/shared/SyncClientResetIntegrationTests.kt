@@ -115,7 +115,7 @@ class SyncClientResetIntegrationTests {
         ) {
             val app = TestApp(
                 appName = appName,
-                logLevel = LogLevel.WARN,
+                logLevel = LogLevel.INFO,
                 customLogger = ClientResetLoggerInspector(logChannel),
                 initialSetup = { app, service ->
                     addEmailProvider(app)
