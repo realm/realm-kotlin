@@ -115,7 +115,7 @@ class SyncClientResetIntegrationTests {
         ) {
             val app = TestApp(
                 appName = appName,
-                logLevel = LogLevel.INFO,
+                logLevel = LogLevel.WARN,
                 customLogger = ClientResetLoggerInspector(logChannel),
                 initialSetup = { app, service ->
                     addEmailProvider(app)
@@ -301,7 +301,7 @@ class SyncClientResetIntegrationTests {
     ) : RealmLogger {
 
         override val level: LogLevel
-            get() = LogLevel.INFO
+            get() = LogLevel.WARN
         override val tag: String
             get() = "SyncClientResetIntegrationTests"
 
