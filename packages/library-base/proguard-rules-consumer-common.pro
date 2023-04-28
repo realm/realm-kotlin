@@ -60,7 +60,7 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.kotlin.internal.interop.SyncLogCallback {
+-keep class io.realm.kotlin.internal.interop.LogCallback {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }

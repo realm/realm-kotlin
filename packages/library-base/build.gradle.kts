@@ -19,6 +19,7 @@ plugins {
     id("com.android.library")
     id("realm-publisher")
     id("org.jetbrains.dokka")
+    kotlin("plugin.serialization") version Versions.kotlin
 }
 
 buildscript {
@@ -60,6 +61,7 @@ kotlin {
                 api(project(":cinterop"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}")
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serialization}")
             }
         }
 
