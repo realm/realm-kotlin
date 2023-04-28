@@ -14,7 +14,7 @@
 * [Sync] Add support for `App.authenticationChangeAsFlow()` which make it possible to listen to authentication changes like "LoggedIn", "LoggedOut" and "Removed" across all users of the app. (Issue [#749](https://github.com/realm/realm-kotlin/issues/749)).
 
 ### Fixed
-* Querying on a `RealmSet` using a list of values would result in a SIGABRT. (Issue [#1183](https://github.com/realm/realm-kotlin/issues/1183))
+* Querying a `RealmList` or `RealmSet` with more than eight entries with a list of values could result in a SIGABRT. (Issue [#1183](https://github.com/realm/realm-kotlin/issues/1183))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
