@@ -7,15 +7,14 @@
 * Multiple processes can now access the same encrypted Realm instead of throwing `Encrypted interprocess sharing is currently unsupported`. (Core Issue [#1845](https://github.com/realm/realm-core/issues/1845))
 * Added a public `RealmLog` class that replaces `AppConfiguration.Builder.log()`. (Issue [#1347](https://github.com/realm/realm-kotlin/pull/1347))
 * Realm logs will now contain more debug information from the underlying database when `LogLevel.DEBUG` or below is enabled.
-* Default log level has been changed from `LogLevel.WARN` to `LogLevel.INFO`.
 * Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
 * `Realm.compactRealm(configuration)` has been added as way to compact a Realm file without having to open it. (Issue [#571](https://github.com/realm/realm-kotlin/issues/571))
+* `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 * [Sync] Add support for `App.authenticationChangeAsFlow()` which make it possible to listen to authentication changes like "LoggedIn", "LoggedOut" and "Removed" across all users of the app. (Issue [#749](https://github.com/realm/realm-kotlin/issues/749)).
-* [Sync] `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
 
 ### Fixed
-* None.
+* Querying a `RealmList` or `RealmSet` with more than eight entries with a list of values could result in a SIGABRT. (Issue [#1183](https://github.com/realm/realm-kotlin/issues/1183))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -31,7 +30,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.9.2, commit 804d84e7e6e4d980cd5d040efa89cd110eec28f2.
+* Updated to Realm Core 13.9.3, commit 1edcd929894d120694e19b892cbd9edcb2adc73c.
 
 
 ## 1.7.2-SNAPSHOT (YYYY-MM-DD)
