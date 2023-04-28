@@ -73,6 +73,7 @@ import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.reflect.KClass
@@ -1290,6 +1291,41 @@ class SyncedRealmTests {
         assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
         assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") }, "Missing MyCustomApp/1.0.0")
         flexApp.close()
+    }
+
+    // This test verifies that the user facing Realm instance is actually advanced on an on-needed
+    // basis even though there is no actual listener or explicit await download/upload calls.
+    @Test
+    fun advanceRealmWithoutListening() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        partitionValue = TestHelper.randomPartitionValue()
+
+        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+
+        Realm.open(config1).use { realm1 ->
+            Realm.open(config2).use { realm2 ->
+                runBlocking {
+                    async {
+                        realm1.write {
+                            copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                            copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                            copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                        }
+                        realm1.syncSession.uploadAllLocalChanges(30.seconds)
+                    }
+                    withTimeout(30.seconds) {
+                        while (realm2.query<ParentPk>().find().size < 3) {
+                            delay(1.seconds)
+                        }
+                    }
+                }
+            }
+        }
     }
 
 //    @Test
