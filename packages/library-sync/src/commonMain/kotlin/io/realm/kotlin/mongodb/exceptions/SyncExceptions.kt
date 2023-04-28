@@ -16,6 +16,15 @@
 
 package io.realm.kotlin.mongodb.exceptions
 
+import io.realm.kotlin.internal.RealmInstantImpl
+import io.realm.kotlin.internal.RealmUUIDImpl
+import io.realm.kotlin.internal.interop.RealmValue
+import io.realm.kotlin.internal.interop.ValueType
+import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
+import io.realm.kotlin.internal.realmValueToDecimal128
+import io.realm.kotlin.types.RealmAny
+import org.mongodb.kbson.BsonObjectId
+
 /**
  * This exception is considered the top-level exception or general "catch-all" for problems related
  * to using Device Sync.
@@ -26,9 +35,7 @@ package io.realm.kotlin.mongodb.exceptions
  *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
-public open class SyncException : AppException {
-    internal constructor(message: String) : super(message)
-}
+public open class SyncException internal constructor(message: String) : AppException(message)
 
 /**
  * Thrown when something has gone wrong with Device Sync in a way that is not recoverable.
@@ -44,22 +51,55 @@ public open class SyncException : AppException {
  *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
-public class UnrecoverableSyncException : SyncException {
-    internal constructor(message: String) : super(message)
-}
+public class UnrecoverableSyncException internal constructor(message: String) :
+    SyncException(message)
 
 /**
  * Thrown when the type of sync used by the server does not match the one used by the client, i.e.
  * the server and client disagrees whether to use Partition-based or Flexible Sync.
  */
-public class WrongSyncTypeException : SyncException {
-    internal constructor(message: String) : super(message)
-}
+public class WrongSyncTypeException internal constructor(message: String) : SyncException(message)
 
 /**
  * Thrown when the server does not support one or more of the queries defined in the
  * [io.realm.kotlin.mongodb.sync.SubscriptionSet].
  */
-public class BadFlexibleSyncQueryException : SyncException {
-    internal constructor(message: String) : super(message)
+public class BadFlexibleSyncQueryException internal constructor(message: String) :
+    SyncException(message)
+
+/**
+ * TODO
+ */
+public class CompensatingWriteException internal constructor(
+    message: String,
+    compensatingWrites: List<CoreCompensatingWriteInfo>?
+) : SyncException(message) {
+    public val compensatingWrites: List<CompensatingWriteInfo> = compensatingWrites?.map {
+        CompensatingWriteInfo(
+            reason = it.reason,
+            objectName = it.objectName,
+            primaryKey = it.primaryKey.asRealmAny(),
+        )
+    } ?: emptyList()
+
+    private fun RealmValue.asRealmAny(): RealmAny? = when (val type = getType()) {
+        ValueType.RLM_TYPE_NULL -> null
+        ValueType.RLM_TYPE_INT -> RealmAny.create(getLong())
+        ValueType.RLM_TYPE_BOOL -> RealmAny.create(getBoolean())
+        ValueType.RLM_TYPE_STRING -> RealmAny.create(getString())
+        ValueType.RLM_TYPE_BINARY -> RealmAny.create(getByteArray())
+        ValueType.RLM_TYPE_TIMESTAMP -> RealmAny.create(RealmInstantImpl(getTimestamp()))
+        ValueType.RLM_TYPE_FLOAT -> RealmAny.create(getFloat())
+        ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(getDouble())
+        ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(realmValueToDecimal128(this))
+        ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(BsonObjectId(getObjectIdBytes()))
+        ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(getUUIDBytes()))
+        else -> throw IllegalArgumentException("Unsupported primary key type: ${type.name}")
+    }
+
+    public inner class CompensatingWriteInfo(
+        public val reason: String,
+        public val objectName: String,
+        public val primaryKey: RealmAny?
+    )
 }

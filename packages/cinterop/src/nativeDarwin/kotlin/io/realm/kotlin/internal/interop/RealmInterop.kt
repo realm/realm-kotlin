@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -2370,14 +2371,28 @@ actual object RealmInterop {
                             }
                         }.toMap()
 
+                    val compensatingWrites: List<CoreCompensatingWriteInfo> =
+                        (0 until compensating_writes_length.toInt())
+                            .mapNotNull {
+                                compensating_writes?.get(it)
+                            }
+                            .mapNotNull {
+                                CoreCompensatingWriteInfo(
+                                    reason = it.reason.safeKString(),
+                                    objectName = it.object_name.safeKString(),
+                                    primaryKey = RealmValue(it.primary_key)
+                                )
+                            }
+
                     SyncError(
-                        code,
-                        detailed_message.safeKString(),
-                        userInfoMap[c_original_file_path_key.safeKString()],
-                        userInfoMap[c_recovery_file_path_key.safeKString()],
-                        is_fatal,
-                        is_unrecognized_by_client,
-                        is_client_reset_requested
+                        errorCode = code,
+                        detailedMessage = detailed_message.safeKString(),
+                        originalFilePath = userInfoMap[c_original_file_path_key.safeKString()],
+                        recoveryFilePath = userInfoMap[c_recovery_file_path_key.safeKString()],
+                        isFatal = is_fatal,
+                        isUnrecognizedByClient = is_unrecognized_by_client,
+                        isClientResetRequested = is_client_reset_requested,
+                        compensatingWrites = compensatingWrites
                     )
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)

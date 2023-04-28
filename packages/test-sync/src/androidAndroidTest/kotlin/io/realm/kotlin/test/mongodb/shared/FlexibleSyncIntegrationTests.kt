@@ -22,20 +22,28 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.exceptions.CompensatingWriteException
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
+import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -287,6 +295,47 @@ class FlexibleSyncIntegrationTests {
             val obj = realm2.query<FlexParentObject>().first().find()!!
             assertEquals("blueChild", obj.child!!.name)
             assertEquals("blueEmbedded", obj.embedded!!.embeddedName)
+        }
+    }
+
+    @Test
+    fun writeData_WhenOutsideOfSubscriptions_GetsRevertedByServer() {
+        val user1 = app.createUserAndLogin()
+
+        val channel = Channel<CompensatingWriteException>(1)
+
+        val config1 = SyncConfiguration.Builder(user1, defaultSchema)
+            .errorHandler { _: SyncSession, syncException: SyncException ->
+                runBlocking {
+                    channel.send(syncException as CompensatingWriteException)
+                }
+            }
+            .build()
+
+        runBlocking {
+            val expectedPrimaryKey = BsonObjectId()
+
+            Realm.open(config1).use { realm ->
+                realm.subscriptions.update {
+                    add(realm.query<FlexParentObject>("_id = $0", ObjectId()))
+                }.waitForSynchronization(30.seconds)
+
+                realm.write {
+                    copyToRealm(FlexParentObject().apply { _id = expectedPrimaryKey })
+                }
+                realm.syncSession.uploadAllLocalChanges(30.seconds)
+            }
+
+            val exception: CompensatingWriteException = channel.receiveOrFail()
+
+            assertEquals("[Session][CompensatingWrite(231)] Client attempted a write that is disallowed by permissions, or modifies an object outside the current query, and the server undid the change.", exception.message)
+            assertEquals(1, exception.compensatingWrites.size)
+
+            exception.compensatingWrites[0].run {
+                assertContains(reason, "object is outside of the current query view")
+                assertEquals("FlexParentObject", objectName)
+                assertEquals(expectedPrimaryKey, primaryKey?.asObjectId())
+            }
         }
     }
 }

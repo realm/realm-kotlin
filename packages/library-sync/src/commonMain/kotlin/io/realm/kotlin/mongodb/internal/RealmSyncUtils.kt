@@ -13,6 +13,7 @@ import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
+import io.realm.kotlin.mongodb.exceptions.CompensatingWriteException
 import io.realm.kotlin.mongodb.exceptions.ConnectionException
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
@@ -69,10 +70,10 @@ internal fun <T, R> channelResultCallback(
 internal fun convertSyncError(error: SyncError): SyncException {
     // TODO In a normal environment we only expose the information in the SyncErrorCode.
     //  In debug mode we could consider using `detailedMessage` instead.
-    return convertSyncErrorCode(error.errorCode)
+    return convertSyncErrorCode(error.errorCode, error)
 }
 
-internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
+internal fun convertSyncErrorCode(syncError: SyncErrorCode, error: SyncError? = null): SyncException {
     // FIXME Client Reset errors are just reported as normal Sync Errors for now.
     //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
     val message = createMessageFromSyncError(syncError)
@@ -119,6 +120,8 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
                     // Permission denied errors should be unrecoverable according to Core, i.e. the
                     // client will disconnect sync and transition to the "inactive" state
                     UnrecoverableSyncException(message)
+                ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE ->
+                    CompensatingWriteException(message, error?.compensatingWrites)
                 else -> SyncException(message)
             }
         }
