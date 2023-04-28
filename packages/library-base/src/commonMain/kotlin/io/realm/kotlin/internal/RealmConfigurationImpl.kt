@@ -44,6 +44,7 @@ internal class RealmConfigurationImpl constructor(
     migration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
+    logger: ContextLogger
 ) : ConfigurationImpl(
     directory,
     name,
@@ -62,6 +63,7 @@ internal class RealmConfigurationImpl constructor(
     migration,
     initialDataCallback,
     false,
-    inMemory
+    inMemory,
+    logger
 ),
     RealmConfiguration

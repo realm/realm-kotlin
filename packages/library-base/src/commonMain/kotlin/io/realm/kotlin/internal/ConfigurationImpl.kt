@@ -62,7 +62,8 @@ public open class ConfigurationImpl constructor(
     private val userMigration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
     override val isFlexibleSyncConfiguration: Boolean,
-    inMemory: Boolean
+    inMemory: Boolean,
+    logger: ContextLogger
 ) : InternalConfiguration {
 
     override val path: String
@@ -78,6 +79,8 @@ public open class ConfigurationImpl constructor(
     override val schemaVersion: Long
 
     override val schemaMode: SchemaMode
+
+    override val logger: ContextLogger = logger
 
     override val encryptionKey: ByteArray?
         get(): ByteArray? = userEncryptionKey
@@ -178,6 +181,19 @@ public open class ConfigurationImpl constructor(
                 }
                 else -> TODO("Unsupported migration") // Should never be hit, but build is sometimes complaining that when is not exhausted
             }
+        }
+
+        // Verify schema invariants that cannot be captured at compile time nor by Core.
+        // For now, the only invariant we capture here is wrong use of @PersistedName on classes
+        // which might accidentally create multiple model classes with the same name.
+        val duplicates: Set<String> = mapOfKClassWithCompanion.values
+            .map { it.`io_realm_kotlin_schema`().name }
+            .groupingBy { it }
+            .eachCount()
+            .filter { it.value > 1 }
+            .keys
+        if (duplicates.isNotEmpty()) {
+            throw IllegalArgumentException("The schema has declared the following class names multiple times: ${duplicates.joinToString()}")
         }
 
         // Invariant: All native modifications should happen inside this initializer, as that
