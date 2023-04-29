@@ -55,6 +55,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.FullText
 import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
@@ -2251,6 +2252,37 @@ class QueryTests {
     }
 
     // --------------------------------------------------
+    // Full-text search smoke tests
+    // --------------------------------------------------
+    @Test
+    fun fullTextSearch() {
+        realm.writeBlocking {
+            copyToRealm(QuerySample(1).apply { fulltextField = "The quick brown fox jumped over the lazy dog." })
+            copyToRealm(QuerySample(2).apply { fulltextField = "The cat in the hat." })
+            copyToRealm(QuerySample(3).apply { fulltextField = "To be or not to be, that is the question." })
+            copyToRealm(QuerySample(4).apply { fulltextField = "She sells seashells by the seashore" })
+            copyToRealm(QuerySample(5).apply { fulltextField = "Rødgrød med fløde" })
+            copyToRealm(QuerySample(6).apply { fulltextField = "full-text with limitations!" })
+            copyToRealm(QuerySample(6).apply { fulltextField = "En To Tre - 123 - One#Two#Three" })
+        }
+
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'quick dog'").find().size) // words at different locations
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'brown -fox'").find().size) // exclusion
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // - token prefix search does not work
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'QUICK BROWN'").find().size) // - case insensitive
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'fløde'").find().size) // - nordic chars
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'full-text limitations'").find().size) // - cannot be used inside a token
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'One'").find().size) // Special chars split tokens
+    }
+
+    @Test
+    fun fullTextSearch_onNonFullTextFieldThrows() {
+        assertFailsWithMessage<IllegalStateException>("Column has no fulltext index") {
+            realm.query<QuerySample>("stringField TEXT 'foo'")
+        }
+    }
+
+    // --------------------------------------------------
     // Class instantiation with property setting helpers
     // --------------------------------------------------
 
@@ -3059,6 +3091,9 @@ class QuerySample() : RealmObject {
 
     @PersistedName("persistedNameStringField")
     var publicNameStringField: String = "Realm"
+
+    @FullText
+    var fulltextField: String = "A very long string"
 
     var stringField: String = "Realm"
     var byteField: Byte = 0

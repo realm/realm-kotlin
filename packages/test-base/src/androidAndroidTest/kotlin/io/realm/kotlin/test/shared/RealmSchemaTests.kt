@@ -137,6 +137,19 @@ class RealmSchemaTests {
                 assertFalse(isNullable)
                 assertTrue(isPrimaryKey)
                 assertFalse(isIndexed) // See https://github.com/realm/realm-core/issues/6187
+                assertFalse(isFullTextIndexed)
+            }
+            assertFalse(isNullable)
+        }
+        schemaVariationsDescriptor["fulltext"]!!.run {
+            assertEquals("fulltext", name)
+            type.run {
+                assertIs<ValuePropertyType>(this)
+                assertEquals(RealmStorageType.STRING, storageType)
+                assertFalse(isNullable)
+                assertFalse(isPrimaryKey)
+                assertFalse(isIndexed)
+                assertTrue(isFullTextIndexed)
             }
             assertFalse(isNullable)
         }

@@ -28,6 +28,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.FullText
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.BsonObjectId
@@ -51,6 +52,8 @@ class SchemaVariations : RealmObject {
 
     @PrimaryKey
     var string: String = "Realm"
+    @FullText
+    var fulltext: String = "A very long string"
     var date: RealmInstant = RealmInstant.from(0, 0)
     var objectId: ObjectId = ObjectId.create()
     var bsonObjectId: BsonObjectId = BsonObjectId()

@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.CLASS_INFO
 import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
@@ -87,6 +88,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
+import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.getClass
@@ -212,6 +214,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmObjectIdType,
             realmUUIDType,
             realmAnyType
+        ).map { it.classifierOrFail }
+    }
+    private val fullTextIndexableTypes = with(pluginContext.irBuiltIns) {
+        setOf(
+            stringType
         ).map { it.classifierOrFail }
     }
 
@@ -529,6 +536,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         property.locationOf()
                                     )
                                 }
+                                val isFullTextIndexed = backingField.hasAnnotation(FULLTEXT_ANNOTATION)
+                                if (isFullTextIndexed && backingField.type.classifierOrFail !in fullTextIndexableTypes) {
+                                    logError(
+                                        "Full-text key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${fullTextIndexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        property.locationOf()
+                                    )
+                                }
+                                // FIXME: Is @Index and @FullText allowed to be mixed on the same property?
 
                                 val location = property.locationOf()
                                 val persistedName = value.persistedName
@@ -548,7 +563,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     type = propertyClass.defaultType,
                                     symbol = propertyCreateMethod.symbol,
                                     typeArgumentsCount = 0,
-                                    valueArgumentsCount = 9
+                                    valueArgumentsCount = 10
                                 ).apply {
                                     dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
@@ -630,6 +645,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(arg++, irBoolean(primaryKey))
                                     // isIndexed
                                     putValueArgument(arg++, irBoolean(isIndexed))
+                                    // IsFullTextIndexed
+                                    putValueArgument(arg++, irBoolean(isFullTextIndexed))
                                 }
                             }
                         )
