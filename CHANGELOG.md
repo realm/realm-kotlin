@@ -12,6 +12,7 @@
 * `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 * [Sync] Add support for `App.authenticationChangeAsFlow()` which make it possible to listen to authentication changes like "LoggedIn", "LoggedOut" and "Removed" across all users of the app. (Issue [#749](https://github.com/realm/realm-kotlin/issues/749)).
+* [Sync] Support for migrating from Partition-based to Flexible Sync automatically on the device if the server has migrated to Flexible Sync. ([Core Issue #6554](https://github.com/realm/realm-core/issues/6554))
 
 ### Fixed
 * Querying a `RealmList` or `RealmSet` with more than eight entries with a list of values could result in a SIGABRT. (Issue [#1183](https://github.com/realm/realm-kotlin/issues/1183))
@@ -30,7 +31,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.9.3, commit 1edcd929894d120694e19b892cbd9edcb2adc73c.
+* Updated to Realm Core 13.10.0, commit 7b9ab24d631437364dbe955ac3ea1f550b26cf10.
 
 
 ## 1.7.2-SNAPSHOT (YYYY-MM-DD)
