@@ -67,7 +67,7 @@ public data class ValuePropertyType(
      */
     public val isIndexed: Boolean,
     /**
-     * TODO
+     * Indicates whether there is a full-text index associated with this property.
      */
     public val isFullTextIndexed: Boolean
 ) : RealmPropertyType

@@ -543,7 +543,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         property.locationOf()
                                     )
                                 }
-                                // FIXME: Is @Index and @FullText allowed to be mixed on the same property?
+
+                                if (isIndexed && isFullTextIndexed) {
+                                    logError(
+                                        "@FullText and @Index cannot be combined on property ${property.name}",
+                                        property.locationOf()
+                                    )
+                                }
 
                                 val location = property.locationOf()
                                 val persistedName = value.persistedName

@@ -108,6 +108,33 @@ class FullTextTests {
     }
 
     @Test
+    fun fulltext_and_index_cannot_be_combined() {
+        val result = compileFromSource(
+            plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+            source = SourceFile.kotlin(
+                "fulltext_index.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        import io.realm.kotlin.RealmConfiguration
+                        import io.realm.kotlin.types.annotations.FullText
+                        import io.realm.kotlin.types.annotations.Index
+
+                        class A : RealmObject {
+                            @FullText
+                            @Index
+                            var fullTextKey: String = ""
+                        }
+
+                        val configuration =
+                            RealmConfiguration.create(schema = setOf(A::class))
+                    """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+        assertTrue(result.messages.contains("@FullText and @Index cannot be combined on property fullTextKey"), result.messages)
+    }
+
+    @Test
     fun fulltext_collections_unsupported() {
         val collectionsAndDefaults = listOf(
             "RealmList" to "realmListOf()",
