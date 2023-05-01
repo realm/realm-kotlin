@@ -1,4 +1,4 @@
-## 1.8.0-SNAPSHOT (YYYY-MM-DD)
+## 1.8.0 (2023-05-01)
 
 ### Breaking Changes
 * `RealmLog` is now a global singleton shared between all Realm API's. Previously log configuration happened using the `log` builder method on `AppConfiguration`, `SyncConfiguration` or `RealmConfiguration`. These API's are still present and for apps only using a single Atlas App ID, the behaviour is the same. For apps that have configured multiple Atlas App ID's, it will no longer be possible to configure different log levels and loggers for each app. Instead, the last `AppConfiguration` created will override the logger configuration from other `AppConfiguration`s.
