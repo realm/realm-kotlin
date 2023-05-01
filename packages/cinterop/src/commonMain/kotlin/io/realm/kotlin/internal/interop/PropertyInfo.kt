@@ -58,9 +58,9 @@ data class PropertyInfo( // Kotlin variant of realm_property_info
         ): PropertyInfo {
             val flags =
                 (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or
-                        (if (isPrimaryKey) RLM_PROPERTY_PRIMARY_KEY else 0) or
-                        (if (isIndexed) RLM_PROPERTY_INDEXED else 0) or
-                        (if (isFullTextIndexed) RLM_PROPERTY_FULLTEXT_INDEXED else 0)
+                    (if (isPrimaryKey) RLM_PROPERTY_PRIMARY_KEY else 0) or
+                    (if (isIndexed) RLM_PROPERTY_INDEXED else 0) or
+                    (if (isFullTextIndexed) RLM_PROPERTY_FULLTEXT_INDEXED else 0)
             return PropertyInfo(
                 name,
                 publicName ?: SCHEMA_NO_VALUE,

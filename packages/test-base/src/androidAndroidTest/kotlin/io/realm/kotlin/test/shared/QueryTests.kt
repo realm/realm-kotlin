@@ -2258,21 +2258,20 @@ class QueryTests {
     fun fullTextSearch() {
         realm.writeBlocking {
             copyToRealm(QuerySample(1).apply { fulltextField = "The quick brown fox jumped over the lazy dog." })
-            copyToRealm(QuerySample(2).apply { fulltextField = "The cat in the hat." })
-            copyToRealm(QuerySample(3).apply { fulltextField = "To be or not to be, that is the question." })
-            copyToRealm(QuerySample(4).apply { fulltextField = "She sells seashells by the seashore" })
-            copyToRealm(QuerySample(5).apply { fulltextField = "Rødgrød med fløde" })
-            copyToRealm(QuerySample(6).apply { fulltextField = "full-text with limitations!" })
-            copyToRealm(QuerySample(6).apply { fulltextField = "En To Tre - 123 - One#Two#Three" })
+            copyToRealm(QuerySample(2).apply { fulltextField = "I sat at the cafè, drinking a BIG cup of coffee" })
+            copyToRealm(QuerySample(3).apply { fulltextField = "Rødgrød med fløde" })
+            copyToRealm(QuerySample(4).apply { fulltextField = "full-text-search is hard to implement!" })
+            copyToRealm(QuerySample(5).apply { fulltextField = "Trying to search for an emoji, like 😊, inside a text string is not supported." })
         }
 
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'quick dog'").find().size) // words at different locations
         assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'brown -fox'").find().size) // exclusion
-        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // - token prefix search does not work
-        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'QUICK BROWN'").find().size) // - case insensitive
-        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'fløde'").find().size) // - nordic chars
-        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'full-text limitations'").find().size) // - cannot be used inside a token
-        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'One'").find().size) // Special chars split tokens
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // token prefix search does not work
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'cafe big'").find().size) // case- and diacritics-insensitive
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'rødgrød'").find().size) // Latin-1 supplement
+        assertEquals(2, realm.query<QuerySample>("fulltextField TEXT 'text-search'").find().size) // - is splitting tokens.
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT '😊'").find().size) // Emoji are turned into whitespace and ignored
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT ''").find().size) // Empty strings return nothing
     }
 
     @Test

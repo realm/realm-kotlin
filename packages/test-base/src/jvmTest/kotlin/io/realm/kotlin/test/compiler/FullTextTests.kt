@@ -127,7 +127,7 @@ class FullTextTests {
 
                         val configuration =
                             RealmConfiguration.create(schema = setOf(A::class))
-                    """.trimIndent()
+                """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
