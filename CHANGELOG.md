@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Added support for simple Full-text search using `@FullText` on `String` properties. Read the documentation on `@FullText` before using this. (Issue []())
+* Support for simple token full-text search using `@FullText` on `String` properties. Read the documentation on `@FullText` for more info. (Issue [#1368](https://github.com/realm/realm-kotlin/pull/1368))
 
 ### Fixed
 * None.
@@ -26,7 +26,7 @@
 * None.
 
 
-## 1.8.0-SNAPSHOT (YYYY-MM-DD)
+## 1.8.0 (2023-05-01)
 
 ### Breaking Changes
 * `RealmLog` is now a global singleton shared between all Realm API's. Previously log configuration happened using the `log` builder method on `AppConfiguration`, `SyncConfiguration` or `RealmConfiguration`. These API's are still present and for apps only using a single Atlas App ID, the behaviour is the same. For apps that have configured multiple Atlas App ID's, it will no longer be possible to configure different log levels and loggers for each app. Instead, the last `AppConfiguration` created will override the logger configuration from other `AppConfiguration`s.
@@ -40,6 +40,7 @@
 * `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 * [Sync] Add support for `App.authenticationChangeAsFlow()` which make it possible to listen to authentication changes like "LoggedIn", "LoggedOut" and "Removed" across all users of the app. (Issue [#749](https://github.com/realm/realm-kotlin/issues/749)).
+* [Sync] Support for migrating from Partition-based to Flexible Sync automatically on the device if the server has migrated to Flexible Sync. ([Core Issue #6554](https://github.com/realm/realm-core/issues/6554))
 
 ### Fixed
 * Querying a `RealmList` or `RealmSet` with more than eight entries with a list of values could result in a SIGABRT. (Issue [#1183](https://github.com/realm/realm-kotlin/issues/1183))
@@ -58,35 +59,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.9.3, commit 1edcd929894d120694e19b892cbd9edcb2adc73c.
-
-
-## 1.7.2-SNAPSHOT (YYYY-MM-DD)
-
-### Breaking Changes
-* None.
-
-### Enhancements
-* None.
-
-### Fixed
-* None.
-
-### Compatibility
-* File format: Generates Realms with file format v23.
-* Realm Studio 13.0.0 or above is required to open Realms created by this version.
-* This release is compatible with the following Kotlin releases:
-  * Kotlin 1.7.20 and above.
-  * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above.
-  * AtomicFu 0.18.3 and above.
-  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-* Minimum Gradle version: 6.7.1.
-* Minimum Android Gradle Plugin version: 4.0.0.
-* Minimum Android SDK: 16.
-
-### Internal
-* None.
+* Updated to Realm Core 13.10.0, commit 7b9ab24d631437364dbe955ac3ea1f550b26cf10.
 
 
 ## 1.7.1 (2023-04-19)
