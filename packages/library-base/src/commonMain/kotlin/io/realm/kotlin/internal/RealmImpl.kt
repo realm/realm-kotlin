@@ -42,11 +42,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
@@ -66,13 +63,8 @@ public class RealmImpl private constructor(
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
-    private val notifierFlow: SharedFlow<RealmChange<Realm>> by lazy {
-        runBlocking {
-            @Suppress("UNCHECKED_CAST")
-            notifier.realmChanged()
-                .map { UpdatedRealmImpl(this@RealmImpl) } as Flow<RealmChange<Realm>>
-        }.shareIn(realmScope, SharingStarted.WhileSubscribed())
-    }
+    private val notifierFlow: MutableSharedFlow<RealmChange<Realm>> =
+        MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private val notifier =
         SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
     private val writer =
@@ -117,6 +109,12 @@ public class RealmImpl private constructor(
                 versionTracker.trackAndCloseExpiredReferences(frozenReference)
                 _realmReference.value = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, fileCreated)
+            }
+
+            realmScope.launch {
+                notifier.realmChanged().collect {
+                    notifierFlow.emit(UpdatedRealmImpl(this@RealmImpl))
+                }
             }
             if (!realmStateFlow.tryEmit(State.OPEN)) {
                 log.warn("Cannot signal internal open")
