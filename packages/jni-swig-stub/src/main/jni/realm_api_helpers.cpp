@@ -758,8 +758,6 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
                 &compensating_write_info.primary_key
         );
 
-        jenv->NewGlobalRef(j_compensating_write_info);
-
         jenv->SetObjectArrayElement(
                 j_compensating_write_info_array,
                 index,
