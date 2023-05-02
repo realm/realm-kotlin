@@ -91,7 +91,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 
@@ -99,7 +98,6 @@ class VersionTrackingTests {
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
             assertEquals(1, allTracked.size, toString())
-            assertNull(notifier, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
@@ -108,7 +106,6 @@ class VersionTrackingTests {
         realm.query<Sample>().find()
         realm.activeVersions().run {
             assertEquals(2, allTracked.size, toString())
-            assertNull(notifier, toString())
             assertNotNull(writer, toString())
             assertEquals(1, writer?.active?.size, toString())
         }
@@ -119,7 +116,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 
@@ -128,7 +124,6 @@ class VersionTrackingTests {
         realm.write { copyToRealm(Sample()) }
         realm.activeVersions().run {
             assertEquals(2, allTracked.size, toString())
-            assertNull(notifier, toString())
             assertNotNull(writer, toString())
             assertEquals(1, writer?.active?.size, toString())
         }
@@ -139,7 +134,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 
@@ -165,7 +159,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 

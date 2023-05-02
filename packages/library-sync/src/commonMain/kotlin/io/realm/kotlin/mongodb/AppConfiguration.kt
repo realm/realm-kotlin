@@ -108,7 +108,7 @@ public interface AppConfiguration {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
         private var encryptionKey: ByteArray? = null
-        private var logLevel: LogLevel = LogLevel.INFO
+        private var logLevel: LogLevel = LogLevel.WARN
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
@@ -160,7 +160,7 @@ public interface AppConfiguration {
          * @return the Builder instance used.
          */
         @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
-        public fun log(level: LogLevel = LogLevel.INFO, customLoggers: List<RealmLogger> = emptyList()): Builder =
+        public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder =
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
