@@ -660,10 +660,10 @@ class RealmTests {
     }
 
     @Ignore // Test to generate a realm file to use in initialRealmFile. Copy the generated file to
-    // - test-base/src/androidMain/assets/asset-fs.realm
-    // - test-base/src/jvmTest/resources/asset-fs.realm
-    // - test-base/src/iosTest/resources/asset-fs.realm
-    // - test-base/src/macosTest/resources/asset-fs.realm
+    // - test-base/src/androidMain/assets/subdir/asset.realm
+    // - test-base/src/jvmTest/resources/subdir/asset.realm
+    // - test-base/src/iosTest/resources/subdir/asset.realm
+    // - test-base/src/macosTest/resources/subdir/asset.realm
     @Test
     fun createInitialRealmFile() {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
@@ -801,6 +801,20 @@ class RealmTests {
         assertFalse(fileExists(config.path))
         Realm.open(config).use {
             assertEquals(0, it.query<Parent>().find().size)
+        }
+    }
+
+    @Test
+    fun initialRealmFile_throwsWithSyncInitialRealmFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("initial_realm.realm")
+            .initialRealmFile("asset-pbs.realm")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        assertFailsWithMessage<IllegalStateException>("has history type 'SyncClient'") {
+            Realm.open(config)
         }
     }
 

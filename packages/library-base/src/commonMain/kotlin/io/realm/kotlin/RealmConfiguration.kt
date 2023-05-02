@@ -118,7 +118,7 @@ public interface RealmConfiguration : Configuration {
             super.verifyConfig()
             initialRealmFileConfiguration?.let {
                 if (deleteRealmIfMigrationNeeded) {
-                    throw IllegalStateException("Cannot combine `assetFile` and `deleteRealmIfMigrationNeeded` configuration options")
+                    throw IllegalStateException("Cannot combine `initialRealmFile` and `deleteRealmIfMigrationNeeded` configuration options")
                 }
             }
         }

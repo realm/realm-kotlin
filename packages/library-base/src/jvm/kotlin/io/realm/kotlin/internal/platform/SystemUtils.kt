@@ -1,5 +1,6 @@
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.internal.Constants.FILE_COPY_BUFFER_SIZE
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.types.RealmInstant
@@ -52,8 +53,7 @@ public actual fun prepareRealmFilePath(directoryPath: String, filename: String):
 }
 
 private fun copyStream(inputStream: InputStream, outputStream: OutputStream) {
-    @Suppress("MagicNumber")
-    val buf = ByteArray(4096)
+    val buf = ByteArray(FILE_COPY_BUFFER_SIZE)
     var bytesRead: Int
     while ((inputStream.read(buf).also { bytesRead = it }) > -1) {
         outputStream.write(buf, 0, bytesRead)

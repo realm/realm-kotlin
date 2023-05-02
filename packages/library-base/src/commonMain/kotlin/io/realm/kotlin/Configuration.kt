@@ -190,7 +190,7 @@ public interface Configuration {
 
     /**
      * Configuration that holds details of a bundled asset file used as initial state of the realm
-     * file. See [SharedBuilder.initialRealmFile] for details. `null` is returned if no initial realm 
+     * file. See [SharedBuilder.initialRealmFile] for details. `null` is returned if no initial realm
      * file has been configured.
      */
     public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
@@ -468,7 +468,7 @@ public interface Configuration {
         protected open fun verifyConfig() {
             initialRealmFileConfiguration?.let {
                 if (inMemory) {
-                    throw IllegalStateException("Cannot combine `assetFile` and `inMemory` configuration options")
+                    throw IllegalStateException("Cannot combine `initialRealmFile` and `inMemory` configuration options")
                 }
             }
         }

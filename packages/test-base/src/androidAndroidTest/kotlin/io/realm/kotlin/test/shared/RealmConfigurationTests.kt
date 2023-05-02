@@ -462,7 +462,7 @@ class RealmConfigurationTests {
         val builder = RealmConfiguration.Builder(setOf(Sample::class))
             .initialRealmFile("ASSETFILE")
             .deleteRealmIfMigrationNeeded()
-        assertFailsWithMessage<IllegalStateException>("Cannot combine `assetFile` and `deleteRealmIfMigrationNeeded` configuration options") {
+        assertFailsWithMessage<IllegalStateException>("Cannot combine `initialRealmFile` and `deleteRealmIfMigrationNeeded` configuration options") {
             builder.build()
         }
     }
@@ -472,7 +472,7 @@ class RealmConfigurationTests {
         val builder = RealmConfiguration.Builder(setOf(Sample::class))
             .initialRealmFile("ASSETFILE")
             .inMemory()
-        assertFailsWithMessage<IllegalStateException>("Cannot combine `assetFile` and `inMemory` configuration options") {
+        assertFailsWithMessage<IllegalStateException>("Cannot combine `initialRealmFile` and `inMemory` configuration options") {
             builder.build()
         }
     }
