@@ -68,7 +68,8 @@ public class BadFlexibleSyncQueryException internal constructor(message: String)
     SyncException(message)
 
 /**
- * TODO documentation
+ * Thrown when the server undoes one or more client writes. Details on undone writes can be found in
+ * [compensatingWrites].
  */
 public class CompensatingWriteException internal constructor(
     message: String,
