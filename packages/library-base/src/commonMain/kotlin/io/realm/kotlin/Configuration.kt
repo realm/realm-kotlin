@@ -102,7 +102,7 @@ public data class InitialRealmFileConfiguration(
      * Asset file SHA256-checksum used to verify the integrity of the asset file. See
      * [SharedBuilder.initialRealmFile] for details.
      */
-    val assetFileChecksum: String?
+    val checksum: String?
 )
 
 /**
@@ -437,6 +437,9 @@ public interface Configuration {
         public fun initialRealmFile(assetFile: String, sha256checkSum: String? = null): S {
             require(assetFile.isNotEmpty()) {
                 "Asset file must be a non-empty filename."
+            }
+            require(sha256checkSum == null || sha256checkSum.isNotEmpty()) {
+                "Checksum must be null or a non-empty string."
             }
             this.initialRealmFileConfiguration = InitialRealmFileConfiguration(assetFile, sha256checkSum)
             return this as S

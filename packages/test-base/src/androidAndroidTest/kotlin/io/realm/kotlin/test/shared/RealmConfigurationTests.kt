@@ -445,7 +445,7 @@ class RealmConfigurationTests {
             .initialRealmFileConfiguration!!
             .run {
                 assertEquals("FILENAME", assetFile)
-                assertEquals("SHA256", assetFileChecksum)
+                assertEquals("SHA256", checksum)
             }
     }
 

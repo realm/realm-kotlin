@@ -125,7 +125,7 @@ public class RealmImpl private constructor(
                             if (!fileExists(path)) {
                                 log.debug("Copying asset file: ${it.assetFile}")
                                 assetFileCopied = true
-                                copyAssetFile(path, it.assetFile, it.assetFileChecksum)
+                                copyAssetFile(path, it.assetFile, it.checksum)
                             }
                         }
                     }

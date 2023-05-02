@@ -148,11 +148,8 @@ private fun preparePath(directoryPath: String, dir: NSURL) {
     }
 }
 
-public fun assetFilePath(assetFileName: String): String? {
-    val pathParts: List<String> = assetFileName.split("[.|/]".toRegex())
-    val path: String? = NSBundle.mainBundle.pathForResource(pathParts[0], pathParts[1])
-    return path
-}
+public fun assetFilePath(assetFileName: String): String? =
+    NSBundle.mainBundle.pathForResource(assetFileName, null)
 
 public actual fun copyAssetFile(
     realmFilePath: String,
