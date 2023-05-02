@@ -93,14 +93,14 @@ public data class LogConfiguration(
 /**
  * Configuration for pre-bundled asset files used as initial state of the realm file.
  */
-public data class AssetFileConfiguration(
+public data class InitialRealmFileConfiguration(
     /**
-     * Asset file name. See [SharedBuilder.assetFile] for details.
+     * Asset file name. See [SharedBuilder.initialRealmFile] for details.
      */
     val assetFile: String,
     /**
      * Asset file SHA256-checksum used to verify the integrity of the asset file. See
-     * [SharedBuilder.assetFile] for details.
+     * [SharedBuilder.initialRealmFile] for details.
      */
     val assetFileChecksum: String?
 )
@@ -189,10 +189,10 @@ public interface Configuration {
     public val inMemory: Boolean
 
     /**
-     * Asset file configuration that holds details of a bundled asset file used as initial state of
-     * the realm file. See [SharedBuilder.assetFile] for details.
+     * Configuration that holds details of a bundled asset file used as initial state of the realm
+     * file. See [SharedBuilder.initialRealmFile] for details.
      */
-    public val assetFileConfiguration: AssetFileConfiguration?
+    public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
     /**
      * Base class for configuration builders that holds properties available to both
@@ -235,7 +235,7 @@ public interface Configuration {
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
-        protected var assetFileConfiguration: AssetFileConfiguration? = null
+        protected var initialRealmFileConfiguration: InitialRealmFileConfiguration? = null
 
         /**
          * Sets the filename of the realm file.
@@ -434,11 +434,11 @@ public interface Configuration {
          *
          * @throws IllegalArgumentException if called with an empty [assetFile].
          */
-        public fun assetFile(assetFile: String, sha256checkSum: String? = null): S {
+        public fun initialRealmFile(assetFile: String, sha256checkSum: String? = null): S {
             require(assetFile.isNotEmpty()) {
                 "Asset file must be a non-empty filename."
             }
-            this.assetFileConfiguration = AssetFileConfiguration(assetFile, sha256checkSum)
+            this.initialRealmFileConfiguration = InitialRealmFileConfiguration(assetFile, sha256checkSum)
             return this as S
         }
 
@@ -462,7 +462,7 @@ public interface Configuration {
         }
 
         protected open fun verifyConfig() {
-            assetFileConfiguration?.let {
+            initialRealmFileConfiguration?.let {
                 if (inMemory) {
                     throw IllegalStateException("Cannot combine `assetFile` and `inMemory` configuration options")
                 }

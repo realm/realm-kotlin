@@ -659,13 +659,35 @@ class RealmTests {
         }
     }
 
+    @Ignore // Test to generate a realm file to use in initialRealmFile. Copy the generated file to
+    // - test-base/src/androidMain/assets/asset-fs.realm
+    // - test-base/src/jvmTest/resources/asset-fs.realm
+    // - test-base/src/iosTest/resources/asset-fs.realm
+    // - test-base/src/macosTest/resources/asset-fs.realm
     @Test
-    fun assetFile() {
+    fun createAssetFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            // Need a separate name to avoid clashes with this.realm initialized in setup()
+            .name("asset.realm")
+            .build()
+        Realm.deleteRealm(config)
+        Realm.open(config).use {
+            it.writeBlocking {
+                copyToRealm(Parent())
+                copyToRealm(Parent())
+                copyToRealm(Parent())
+                copyToRealm(Parent())
+            }
+        }
+    }
+
+    @Test
+    fun initialRealmFile() {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             // Need a separate name to avoid clashes with this.realm initialized in setup()
             .name("prefilled.realm")
-            .assetFile("asset.realm")
+            .initialRealmFile("asset.realm")
             .build()
 
         assertFalse(fileExists(config.path))
@@ -690,7 +712,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("prefilled.realm")
-            .assetFile("asset.realm", "8984dda08008bbc6b56d2b8f6ba50dc378bb865a59a082eb42862ad31c21ad21")
+            .initialRealmFile("asset.realm", "8984dda08008bbc6b56d2b8f6ba50dc378bb865a59a082eb42862ad31c21ad21")
             .build()
 
         assertFalse(fileExists(config.path))
@@ -715,7 +737,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("prefilled.realm")
-            .assetFile("asset.realm", "asdf")
+            .initialRealmFile("asset.realm", "asdf")
             .build()
 
         assertFalse(fileExists(config.path))
@@ -729,7 +751,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("prefilled.realm")
-            .assetFile("nonexistingfile.realm")
+            .initialRealmFile("nonexistingfile.realm")
             .build()
 
         assertFalse(fileExists(config.path))
@@ -743,7 +765,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("default.realm")
-            .assetFile("nonexistingfile.realm")
+            .initialRealmFile("nonexistingfile.realm")
             .build()
 
         assertTrue(fileExists(config.path))
@@ -755,7 +777,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("default.realm")
-            .assetFile("asset.realm", "invalid_checksum")
+            .initialRealmFile("asset.realm", "invalid_checksum")
             .build()
 
         assertTrue(fileExists(config.path))
@@ -767,7 +789,7 @@ class RealmTests {
         val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .name("default.realm")
-            .assetFile("asset.realm", "invalid_checksum")
+            .initialRealmFile("asset.realm", "invalid_checksum")
             .initialData {
             }
             .build()

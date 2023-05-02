@@ -114,7 +114,7 @@ public class RealmImpl private constructor(
         try {
             runBlocking {
                 var assetFileCopied = false
-                configuration.assetFileConfiguration?.let {
+                configuration.initialRealmFileConfiguration?.let {
                     val path = configuration.path
                     if (!fileExists(path)) {
                         // TODO We cannot ensure exclusive access to the realm file, so for now

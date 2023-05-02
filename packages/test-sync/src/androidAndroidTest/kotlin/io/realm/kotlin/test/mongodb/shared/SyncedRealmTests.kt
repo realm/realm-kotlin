@@ -73,6 +73,7 @@ import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
 import kotlin.reflect.KClass
@@ -1292,6 +1293,86 @@ class SyncedRealmTests {
         flexApp.close()
     }
 
+    @Test
+    @Ignore // Test to generate a realm file to use in assetFile_partitionBasedSync. Copy the
+    // generated file to
+    // - test-sync/src/androidMain/assets/asset-pbs.realm
+    // - test-sync/src/jvmTest/resources/asset-pbs.realm
+    // - test-sync/src/iosTest/resources/asset-pbs.realm
+    // - test-sync/src/macosTest/resources/asset-pbs.realm
+    fun createInitialRealmPbs() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        val config1 = RealmConfiguration.Builder(setOf(ParentPk::class, ChildPk::class))
+            .directory(PlatformUtils.createTempDir())
+            .initialData {
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+            }
+            .build()
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        Realm.open(config1).use {
+            assertEquals(2, it.query<ParentPk>().find().size)
+            it.writeCopyTo(config2)
+            assertNotNull(it)
+        }
+        // Debug this test, breakpoint here and grab the bundled realm from the location
+        println("Partition based sync bundled realm is in ${config2.path}")
+    }
+
+    @Test
+    fun initialRealm_partitionBasedSync() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val config1 = createSyncConfig(
+            user = user, partitionValue = partitionValue, name = "db1",
+            errorHandler = object : SyncSession.ErrorHandler {
+                override fun onError(session: SyncSession, error: SyncException) {
+                    fail("Realm 1: $error")
+                }
+            },
+        ) {
+            initialRealmFile("asset-pbs.realm")
+            initialData {
+                assertEquals(2, query<ParentPk>().find().size)
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                assertEquals(4, query<ParentPk>().find().size)
+            }
+        }
+        val realm1 = Realm.open(config1)
+        runBlocking {
+            assertEquals(4, realm1.query<ParentPk>().find().size)
+            realm1.syncSession.uploadAllLocalChanges(30.seconds)
+        }
+
+        val config2 = createSyncConfig(
+            user = user, partitionValue = partitionValue, name = "db1",
+            errorHandler = object : SyncSession.ErrorHandler {
+                override fun onError(session: SyncSession, error: SyncException) {
+                    fail("Realm 1: $error")
+                }
+            }
+        ) {
+            waitForInitialRemoteData(30.seconds)
+            initialData {
+                // Verify that initial data is running before data is synced
+                assertEquals(0, query<ParentPk>().find().size)
+            }
+        }
+        Realm.open(config2).use {
+            runBlocking {
+                it.syncSession.downloadAllServerChanges(30.seconds)
+                assertEquals(4, it.query<ParentPk>().find().size)
+            }
+        }
+    }
+
 //    @Test
 //    fun initialVersion() {
 //        assertEquals(INITIAL_VERSION, realm.version())
@@ -1642,6 +1723,7 @@ class SyncedRealmTests {
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
         schema: Set<KClass<out BaseRealmObject>> = setOf(ParentPk::class, ChildPk::class),
+        block: SyncConfiguration.Builder.() -> Unit = {}
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = schema,
         user = user,
@@ -1650,6 +1732,7 @@ class SyncedRealmTests {
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
         if (log != null) builder.log(log.level, log.loggers)
+        block(builder)
     }.build()
 
     @Suppress("LongParameterList")
@@ -1664,7 +1747,8 @@ class SyncedRealmTests {
             FlexChildObject::class,
             FlexEmbeddedObject::class
         ),
-        initialSubscriptions: InitialSubscriptionsCallback? = null
+        initialSubscriptions: InitialSubscriptionsCallback? = null,
+        block: SyncConfiguration.Builder.() -> Unit = {},
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
         schema = schema
@@ -1673,5 +1757,6 @@ class SyncedRealmTests {
         if (errorHandler != null) builder.errorHandler(errorHandler)
         if (log != null) builder.log(log.level, log.loggers)
         if (initialSubscriptions != null) builder.initialSubscriptions(false, initialSubscriptions)
+        block(builder)
     }.build()
 }

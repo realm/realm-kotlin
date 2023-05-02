@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.AssetFileConfiguration
+import io.realm.kotlin.InitialRealmFileConfiguration
 import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.LogConfiguration
@@ -45,7 +45,7 @@ internal class RealmConfigurationImpl constructor(
     migration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
-    override val assetFileConfiguration: AssetFileConfiguration?,
+    override val initialRealmFileConfiguration: InitialRealmFileConfiguration?,
     logger: ContextLogger
 ) : ConfigurationImpl(
     directory,
@@ -66,7 +66,7 @@ internal class RealmConfigurationImpl constructor(
     initialDataCallback,
     false,
     inMemory,
-    assetFileConfiguration,
+    initialRealmFileConfiguration,
     logger
 ),
     RealmConfiguration

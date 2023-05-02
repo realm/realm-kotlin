@@ -116,7 +116,7 @@ public interface RealmConfiguration : Configuration {
 
         override fun verifyConfig() {
             super.verifyConfig()
-            assetFileConfiguration?.let {
+            initialRealmFileConfiguration?.let {
                 if (deleteRealmIfMigrationNeeded) {
                     throw IllegalStateException("Cannot combine `assetFile` and `deleteRealmIfMigrationNeeded` configuration options")
                 }
@@ -165,7 +165,7 @@ public interface RealmConfiguration : Configuration {
                 migration,
                 initialDataCallback,
                 inMemory,
-                assetFileConfiguration,
+                initialRealmFileConfiguration,
                 realmLogger
             )
         }
