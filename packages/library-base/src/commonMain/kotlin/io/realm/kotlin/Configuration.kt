@@ -95,7 +95,7 @@ public data class LogConfiguration(
  */
 public data class InitialRealmFileConfiguration(
     /**
-     * Path to the assetFile. This will be interpreted differently depending on the platform. See [SharedBuilder.initialRealmFile] for details.
+     * Path to the realm file. This will be interpreted differently depending on the platform. See [SharedBuilder.initialRealmFile] for details.
      */
     val assetFile: String,
     /**
@@ -190,7 +190,8 @@ public interface Configuration {
 
     /**
      * Configuration that holds details of a bundled asset file used as initial state of the realm
-     * file. See [SharedBuilder.initialRealmFile] for details.
+     * file. See [SharedBuilder.initialRealmFile] for details. `null` is returned if no initial realm 
+     * file has been configured.
      */
     public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
