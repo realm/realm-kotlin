@@ -95,7 +95,7 @@ public data class LogConfiguration(
  */
 public data class InitialRealmFileConfiguration(
     /**
-     * Asset file name. See [SharedBuilder.initialRealmFile] for details.
+     * Path to the assetFile. This will be interpreted differently depending on the platform. See [SharedBuilder.initialRealmFile] for details.
      */
     val assetFile: String,
     /**
@@ -401,7 +401,7 @@ public interface Configuration {
             apply { this.inMemory = true } as S
 
         /**
-         * Initializes a realm file with a bundled asset realm files.
+         * Initializes a realm file with a bundled asset realm file.
          *
          * When opening the realm for the first time the realm file is initialized from the given
          * [assetFile]. This only happens if the realm files at [path] not already exists.
