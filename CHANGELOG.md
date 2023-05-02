@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Support for initialization of a realm file with a bundled realm through `RealmConfiguration.Builder(...).initialRealmFile(...)` and `SyncConfiguration.Builder(...).initialRealmFile(...)`. (Issue [#577](https://github.com/realm/realm-kotlin/issues/577))
 
 ### Fixed
 * None.

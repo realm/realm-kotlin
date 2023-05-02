@@ -23,6 +23,7 @@ import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
+import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
@@ -104,11 +105,28 @@ public class RealmImpl private constructor(
         var realmFileCreated = false
         try {
             runBlocking {
+                var assetFileCopied = false
+                configuration.initialRealmFileConfiguration?.let {
+                    val path = configuration.path
+                    if (!fileExists(path)) {
+                        // TODO We cannot ensure exclusive access to the realm file, so for now
+                        //  just try avoid having multiple threads in the same process copying
+                        //  asset files at the same time.
+                        //  https://github.com/realm/realm-core/issues/6492
+                        assetProcessingLock.withLock {
+                            if (!fileExists(path)) {
+                                log.debug("Copying asset file: ${it.assetFile}")
+                                assetFileCopied = true
+                                copyAssetFile(path, it.assetFile, it.checksum)
+                            }
+                        }
+                    }
+                }
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
-                realmFileCreated = fileCreated
+                realmFileCreated = assetFileCopied || fileCreated
                 versionTracker.trackAndCloseExpiredReferences(frozenReference)
                 _realmReference.value = frozenReference
-                configuration.initializeRealmData(this@RealmImpl, fileCreated)
+                configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }
 
             realmScope.launch {
@@ -259,6 +277,10 @@ public class RealmImpl private constructor(
     }
 
     internal companion object {
+        // Mutex to ensure that only one thread is trying to copy asset files in place at a time.
+        //  https://github.com/realm/realm-core/issues/6492
+        private val assetProcessingLock = SynchronizableObject()
+
         internal fun create(configuration: InternalConfiguration): RealmImpl {
             return RealmImpl(configuration)
         }
