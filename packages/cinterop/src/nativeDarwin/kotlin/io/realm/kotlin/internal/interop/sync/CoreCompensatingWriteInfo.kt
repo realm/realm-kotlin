@@ -17,8 +17,8 @@ package io.realm.kotlin.internal.interop.sync
 
 import io.realm.kotlin.internal.interop.RealmValue
 
-expect class CoreCompensatingWriteInfo {
-    val reason: String
-    val objectName: String
-    val primaryKey: RealmValue
-}
+actual class CoreCompensatingWriteInfo(
+    actual val reason: String,
+    actual val objectName: String,
+    actual val primaryKey: RealmValue
+)

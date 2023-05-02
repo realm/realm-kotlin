@@ -28,7 +28,7 @@ data class SyncError constructor(
     val isFatal: Boolean,
     val isUnrecognizedByClient: Boolean,
     val isClientResetRequested: Boolean,
-    val compensatingWrites: List<CoreCompensatingWriteInfo>
+    val compensatingWrites: Array<CoreCompensatingWriteInfo>
 ) {
     // Constructor used by JNI so we avoid creating too many objects on the JNI side.
     constructor(
@@ -41,7 +41,7 @@ data class SyncError constructor(
         isFatal: Boolean,
         isUnrecognizedByClient: Boolean,
         isClientResetRequested: Boolean,
-        compensatingWrites: List<CoreCompensatingWriteInfo>
+        compensatingWrites: Array<CoreCompensatingWriteInfo>
     ) : this(
         SyncErrorCode.newInstance(category, value, message),
         detailedMessage,

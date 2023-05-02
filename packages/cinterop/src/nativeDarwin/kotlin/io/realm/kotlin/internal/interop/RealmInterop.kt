@@ -19,6 +19,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -2367,22 +2368,21 @@ actual object RealmInterop {
                             when {
                                 it.key != null && it.value != null ->
                                     Pair(it.key.safeKString(), it.value.safeKString())
+
                                 else -> null
                             }
                         }.toMap()
 
-                    val compensatingWrites: List<CoreCompensatingWriteInfo> =
-                        (0 until compensating_writes_length.toInt())
-                            .mapNotNull {
-                                compensating_writes?.get(it)
-                            }
-                            .mapNotNull {
+                    val compensatingWrites =
+                        Array<CoreCompensatingWriteInfo>(compensating_writes_length.toInt()) { index ->
+                            compensating_writes!![index].let { compensatingWriteInfo ->
                                 CoreCompensatingWriteInfo(
-                                    reason = it.reason.safeKString(),
-                                    objectName = it.object_name.safeKString(),
-                                    primaryKey = RealmValue(it.primary_key)
+                                    reason = compensatingWriteInfo.reason.safeKString(),
+                                    objectName = compensatingWriteInfo.object_name.safeKString(),
+                                    primaryKey = RealmValue(compensatingWriteInfo.primary_key)
                                 )
                             }
+                        }
 
                     SyncError(
                         errorCode = code,

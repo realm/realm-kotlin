@@ -713,7 +713,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-                                             "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ)V");
+    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
 
     jint category = static_cast<jint>(error.error_code.category);
     jint value = error.error_code.value;
@@ -729,6 +729,42 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     for (int i = 0; i < error.user_info_length; i++) {
         realm_sync_error_user_info_t user_info = error.user_info_map[i];
         user_info_map->insert(std::make_pair(user_info.key, user_info.value));
+    }
+
+    static JavaMethod core_compensating_write_info_constructor(
+            jenv,
+            JavaClassGlobalDef::core_compensating_write_info(),
+            "<init>",
+            "(Ljava/lang/String;Ljava/lang/String;J)V"
+    );
+
+    auto j_compensating_write_info_array = jenv->NewObjectArray(
+            error.compensating_writes_length,
+            JavaClassGlobalDef::core_compensating_write_info(),
+            NULL
+    );
+
+    for (int index = 0; index < error.compensating_writes_length; index++) {
+        realm_sync_error_compensating_write_info_t& compensating_write_info = error.compensating_writes[index];
+
+        auto reason = to_jstring(jenv, compensating_write_info.reason);
+        auto object_name = to_jstring(jenv, compensating_write_info.object_name);
+
+        jobject j_compensating_write_info = jenv->NewObject(
+                JavaClassGlobalDef::core_compensating_write_info(),
+                core_compensating_write_info_constructor,
+                reason,
+                object_name,
+                &compensating_write_info.primary_key
+        );
+
+        jenv->NewGlobalRef(j_compensating_write_info);
+
+        jenv->SetObjectArrayElement(
+                j_compensating_write_info_array,
+                index,
+                j_compensating_write_info
+        );
     }
 
     // We can't only rely on 'error.is_client_reset_requested' (even though we should) to extract
@@ -752,17 +788,20 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         }
     }
 
-    return jenv->NewObject(JavaClassGlobalDef::sync_error(),
-                           sync_error_constructor,
-                           category,
-                           value,
-                           msg,
-                           detailed_msg,
-                           joriginal_file_path,
-                           jrecovery_file_path,
-                           is_fatal,
-                           is_unrecognized_by_client,
-                           is_client_reset_requested);
+    return jenv->NewObject(
+            JavaClassGlobalDef::sync_error(),
+            sync_error_constructor,
+            category,
+            value,
+            msg,
+            detailed_msg,
+            joriginal_file_path,
+            jrecovery_file_path,
+            is_fatal,
+            is_unrecognized_by_client,
+            is_client_reset_requested,
+            j_compensating_write_info_array
+    );
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {

@@ -68,19 +68,19 @@ public class BadFlexibleSyncQueryException internal constructor(message: String)
     SyncException(message)
 
 /**
- * TODO
+ * TODO documentation
  */
 public class CompensatingWriteException internal constructor(
     message: String,
-    compensatingWrites: List<CoreCompensatingWriteInfo>?
+    compensatingWrites: Array<CoreCompensatingWriteInfo>
 ) : SyncException(message) {
-    public val compensatingWrites: List<CompensatingWriteInfo> = compensatingWrites?.map {
+    public val compensatingWrites: List<CompensatingWriteInfo> = compensatingWrites.map {
         CompensatingWriteInfo(
             reason = it.reason,
             objectName = it.objectName,
             primaryKey = it.primaryKey.asRealmAny(),
         )
-    } ?: emptyList()
+    }
 
     private fun RealmValue.asRealmAny(): RealmAny? = when (val type = getType()) {
         ValueType.RLM_TYPE_NULL -> null

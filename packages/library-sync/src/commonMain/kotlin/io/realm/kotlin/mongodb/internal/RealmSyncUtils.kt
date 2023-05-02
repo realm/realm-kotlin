@@ -121,7 +121,7 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode, error: SyncError? = 
                     // client will disconnect sync and transition to the "inactive" state
                     UnrecoverableSyncException(message)
                 ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE ->
-                    CompensatingWriteException(message, error?.compensatingWrites)
+                    CompensatingWriteException(message, error!!.compensatingWrites)
                 else -> SyncException(message)
             }
         }
