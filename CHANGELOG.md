@@ -11,7 +11,7 @@
 * Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 * [Sync] `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
-* [Sync] Added experimental full document serialization support on Credentials with Custom Function, user profile and custom data, and App Services Function calls. (Issue [#1355](https://github.com/realm/realm-kotlin/pull/1355))
+* [Sync] Added experimental full document serialization support on Credentials with a Custom Function, App Services Function calls, user profile, and custom data. (Issue [#1355](https://github.com/realm/realm-kotlin/pull/1355))
 
 ### Fixed
 * None.
