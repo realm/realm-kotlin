@@ -1,18 +1,10 @@
-## 1.8.0-SNAPSHOT (YYYY-MM-DD)
+## 1.9.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
-* `RealmLog` is now a global singleton shared between all Realm API's. Previously log configuration happened using the `log` builder method on `AppConfiguration`, `SyncConfiguration` or `RealmConfiguration`. These API's are still present and for apps only using a single Atlas App ID, the behaviour is the same. For apps that have configured multiple Atlas App ID's, it will no longer be possible to configure different log levels and loggers for each app. Instead, the last `AppConfiguration` created will override the logger configuration from other `AppConfiguration`s.
+* None.
 
 ### Enhancements
-* Multiple processes can now access the same encrypted Realm instead of throwing `Encrypted interprocess sharing is currently unsupported`. (Core Issue [#1845](https://github.com/realm/realm-core/issues/1845))
-* Added a public `RealmLog` class that replaces `AppConfiguration.Builder.log()`. (Issue [#1347](https://github.com/realm/realm-kotlin/pull/1347))
-* Realm logs will now contain more debug information from the underlying database when `LogLevel.DEBUG` or below is enabled.
-* Default log level has been changed from `LogLevel.WARN` to `LogLevel.INFO`.
-* Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
-* `Realm.compactRealm(configuration)` has been added as way to compact a Realm file without having to open it. (Issue [#571](https://github.com/realm/realm-kotlin/issues/571))
-* [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
-* [Sync] Add support for `App.authenticationChangeAsFlow()` which make it possible to listen to authentication changes like "LoggedIn", "LoggedOut" and "Removed" across all users of the app. (Issue [#749](https://github.com/realm/realm-kotlin/issues/749)).
-* [Sync] `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
+* Support for initialization of a realm file with a bundled realm through `RealmConfiguration.Builder(...).initialRealmFile(...)` and `SyncConfiguration.Builder(...).initialRealmFile(...)`. (Issue [#577](https://github.com/realm/realm-kotlin/issues/577))
 * [Sync] The new sync exception `CompensatingWriteException` will be thrown when the server undoes one or more client writes. (Issue [#1372](https://github.com/realm/realm-kotlin/issues/1372))
 
 ### Fixed
@@ -32,19 +24,27 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.9.2, commit 804d84e7e6e4d980cd5d040efa89cd110eec28f2.
+* None.
 
 
-## 1.7.2-SNAPSHOT (YYYY-MM-DD)
+## 1.8.0 (2023-05-01)
 
 ### Breaking Changes
-* None.
+* `RealmLog` is now a global singleton shared between all Realm API's. Previously log configuration happened using the `log` builder method on `AppConfiguration`, `SyncConfiguration` or `RealmConfiguration`. These API's are still present and for apps only using a single Atlas App ID, the behaviour is the same. For apps that have configured multiple Atlas App ID's, it will no longer be possible to configure different log levels and loggers for each app. Instead, the last `AppConfiguration` created will override the logger configuration from other `AppConfiguration`s.
 
 ### Enhancements
-* None.
+* Multiple processes can now access the same encrypted Realm instead of throwing `Encrypted interprocess sharing is currently unsupported`. (Core Issue [#1845](https://github.com/realm/realm-core/issues/1845))
+* Added a public `RealmLog` class that replaces `AppConfiguration.Builder.log()`. (Issue [#1347](https://github.com/realm/realm-kotlin/pull/1347))
+* Realm logs will now contain more debug information from the underlying database when `LogLevel.DEBUG` or below is enabled.
+* Avoid tracking unreferenced realm versions through the garbage collector. (Issue [#1234](https://github.com/realm/realm-kotlin/issues/1234))
+* `Realm.compactRealm(configuration)` has been added as way to compact a Realm file without having to open it. (Issue [#571](https://github.com/realm/realm-kotlin/issues/571))
+* `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
+* [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
+* [Sync] Add support for `App.authenticationChangeAsFlow()` which make it possible to listen to authentication changes like "LoggedIn", "LoggedOut" and "Removed" across all users of the app. (Issue [#749](https://github.com/realm/realm-kotlin/issues/749)).
+* [Sync] Support for migrating from Partition-based to Flexible Sync automatically on the device if the server has migrated to Flexible Sync. ([Core Issue #6554](https://github.com/realm/realm-core/issues/6554))
 
 ### Fixed
-* None.
+* Querying a `RealmList` or `RealmSet` with more than eight entries with a list of values could result in a SIGABRT. (Issue [#1183](https://github.com/realm/realm-kotlin/issues/1183))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -60,7 +60,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.10.0, commit 7b9ab24d631437364dbe955ac3ea1f550b26cf10.
 
 
 ## 1.7.1 (2023-04-19)
