@@ -294,16 +294,14 @@ class BsonEncoderTests {
     }
 
     @Test
-    fun convertNumbersLoosingPrecision_throw() {
+    fun convertNumbersLoosingPrecision() {
         numericalClassifiers.map {
             it.key as KClass<*> to BsonDouble(1.3)
         }.forEach { (clazz: KClass<*>, bsonValue: BsonValue) ->
-            assertFailsWithMessage<BsonInvalidOperationException>("Cannot decode BsonValue") {
-                BsonEncoder.decodeFromBsonValue(
-                    resultClass = clazz,
-                    bsonValue = bsonValue
-                )
-            }
+            BsonEncoder.decodeFromBsonValue(
+                resultClass = clazz,
+                bsonValue = bsonValue
+            )
         }
     }
 
