@@ -73,7 +73,7 @@ public interface AppConfiguration {
     public val appVersion: String?
 
     /**
-     * The default EJson decoder that would be use to encode and decode arguments and results
+     * The default EJson decoder that would be used to encode and decode arguments and results
      * when calling remote App [Functions], authenticating with a [customFunction], and retrieving
      * a user [profile] or [customData].
      *
