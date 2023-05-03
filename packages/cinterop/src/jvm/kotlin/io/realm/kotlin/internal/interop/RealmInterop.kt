@@ -247,6 +247,12 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_compact(realm: RealmPointer): Boolean {
+        val compacted = booleanArrayOf(false)
+        realmc.realm_compact(realm.cptr(), compacted)
+        return compacted.first()
+    }
+
     actual fun realm_convert_with_config(
         realm: RealmPointer,
         config: RealmConfigurationPointer,

@@ -77,7 +77,7 @@ open class TestApp private constructor(
     constructor(
         appName: String = TEST_APP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-        logLevel: LogLevel = LogLevel.INFO,
+        logLevel: LogLevel = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,

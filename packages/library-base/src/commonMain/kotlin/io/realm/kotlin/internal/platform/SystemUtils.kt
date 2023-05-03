@@ -1,9 +1,11 @@
+@file:JvmName("SystemUtilsJvm")
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
+import kotlin.jvm.JvmName
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
@@ -61,6 +63,16 @@ public expect val PATH_SEPARATOR: String
  * Returns the root directory of the platform's App data.
  */
 public expect fun appFilesDirectory(): String
+
+/**
+ * Copies an asset file into location if the realm files does not exist.
+ *
+ * The asset file is located according to the platform conventions:
+ * - Android: Through android.content.res.AssetManager.open(assetFilename)
+ * - JVM: Class<T>.javaClass.classLoader.getResource(assetFilename)
+ * - Darwin: NSBundle.mainBundle.pathForResource(assetFilenameBase, assetFilenameExtension)
+ */
+public expect fun copyAssetFile(realmFilePath: String, assetFilename: String, sha256Checksum: String?)
 
 /**
  * Checks whether a file in the specified path exists.
@@ -128,3 +140,8 @@ internal expect fun currentTime(): RealmInstant
  * JVM and macOS: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
  */
 public expect fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType
+
+/**
+ * Returns whether or not we are running on Windows
+ */
+public expect fun isWindows(): Boolean

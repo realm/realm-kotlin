@@ -86,30 +86,48 @@ public class UserImpl(
         }
 
     override suspend fun logOut() {
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State?>>(1).use { channel ->
+            val reportLoggedOut = loggedIn
             RealmInterop.realm_app_log_out(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
+                channelResultCallback<Unit, User.State?>(channel) {
+                    if (reportLoggedOut) {
+                        User.State.LOGGED_OUT
+                    } else {
+                        null
+                    }
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State? ->
+                    if (state != null) {
+                        app.reportAuthenticationChange(this, state)
+                    }
+                }
         }
     }
 
     override suspend fun remove(): User {
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State?>>(1).use { channel ->
+            val reportRemoved = loggedIn
             RealmInterop.realm_app_remove_user(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
+                channelResultCallback<Unit, User.State?>(channel) {
+                    if (reportRemoved) {
+                        User.State.REMOVED
+                    } else {
+                        null
+                    }
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State? ->
+                    if (state != null) {
+                        app.reportAuthenticationChange(this, state)
+                    }
+                }
         }
         return this
     }
@@ -118,16 +136,18 @@ public class UserImpl(
         if (state != User.State.LOGGED_IN) {
             throw IllegalStateException("User must be logged in, in order to be deleted.")
         }
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State>>(1).use { channel ->
             RealmInterop.realm_app_delete_user(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
+                channelResultCallback<Unit, User.State>(channel) {
+                    User.State.REMOVED
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State ->
+                    app.reportAuthenticationChange(this, state)
+                }
         }
     }
 

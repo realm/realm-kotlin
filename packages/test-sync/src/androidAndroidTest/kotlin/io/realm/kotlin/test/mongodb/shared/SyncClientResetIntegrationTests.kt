@@ -301,7 +301,7 @@ class SyncClientResetIntegrationTests {
     ) : RealmLogger {
 
         override val level: LogLevel
-            get() = LogLevel.INFO
+            get() = LogLevel.WARN
         override val tag: String
             get() = "SyncClientResetIntegrationTests"
 
