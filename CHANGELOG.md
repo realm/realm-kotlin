@@ -14,7 +14,7 @@
 * [Sync] Added experimental full document serialization support on Credentials with a Custom Function, App Services Function calls, user profile, and custom data. (Issue [#1355](https://github.com/realm/realm-kotlin/pull/1355))
 
 ### Fixed
-* None.
+* [Sync] `BsonEncoder` now allows the conversion of numerical values with precision lose.
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
