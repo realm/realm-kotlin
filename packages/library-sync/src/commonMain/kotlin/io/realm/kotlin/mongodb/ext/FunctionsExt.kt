@@ -69,19 +69,21 @@ public suspend inline fun <reified T : Any?> Functions.call(
 /**
  * Invokes an Atlas function using the EJson encoder defined in [AppConfiguration.ejson].
  *
- * Due to some particularities of the serialization engine the call is defined with a builder available
- * in [callBuilderBlock]. If required, during the build phase you can define any serializers for the
- * arguments or return types.
- *
- * Example:
+ * **Note** This method supports full document serialization. The call arguments are defined with the builder
+ * [CallBuilder]. This same builder also allows to bind manually any argument or the return type to
+ * a specific serializer. Arguments and the return value will be encoded and decoded with [AppConfiguration.ejson].
  *
  * ```
  * val dog: Dog = user.functions.call("RetrieveDog") {
  *     add("a parameter")
- *     add(1.5)
- *     returnValueSerializer = DogSerializer
+ *     add(1.5, FloatSerializer) // sets the serializer for this particular argument
+ *     returnValueSerializer = DogSerializer // sets the serializer for the return type
  * }
  * ```
+ *
+ * We cannot use a generic
+ * - There is no serializer available for Any,
+ * - any [KClass<T>.serializer() Internal](https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-core/kotlinx.serialization/serializer.html)
  *
  * @param name name of the function to call.
  * @param callBuilderBlock code block that sets the call arguments and serializers.
@@ -134,7 +136,14 @@ internal constructor(
     /**
      * Serializer that would be used to deserialize the returned value, null by default.
      *
-     * If null, the return value will be deserialized using the embedded type serializer.
+     * If null, the return value will be deserialized using the embedded type serializer. Note that
+     * Realm collection types must be set as they don't have an embedded serializer, for example:
+     *
+     * ```kotlin
+     * CallBuilder<RealmList<String>> {
+     *     returnValueSerializer = RealmListKSerializer(String.serializer())
+     * }
+     * ```
      */
     public var returnValueSerializer: KSerializer<T>? = null
 

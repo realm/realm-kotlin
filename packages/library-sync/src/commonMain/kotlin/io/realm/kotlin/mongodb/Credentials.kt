@@ -181,7 +181,8 @@ public interface Credentials {
          * be serialized and parsed as an argument to the remote function. The payload keys must
          * match the format and names the function expects.
          *
-         * **Note** The payload will be serialized using the the EJson encoder defined in [AppConfiguration.ejson].
+         * **Note** This method supports full document serialization. The payload will be serialized
+         * with [serializer] and encoded with [AppConfiguration.ejson].
          *
          * @param T the payload type.
          * @param payload The payload that will be passed as an argument to the server function.
@@ -201,7 +202,8 @@ public interface Credentials {
          * be serialized and parsed as an argument to the remote function. The payload keys must
          * match the format and names the function expects.
          *
-         * **Note** The payload will be serialized using the the EJson encoder defined in [AppConfiguration.ejson].
+         * **Note** This method supports full document serialization. The payload will be serialized
+         * with the built-in serializer for [T] and encoded with [AppConfiguration.ejson].
          *
          * @param payload The payload that will be passed as an argument to the server function.
          * @return a set of credentials that can be used to log into an App Services Application

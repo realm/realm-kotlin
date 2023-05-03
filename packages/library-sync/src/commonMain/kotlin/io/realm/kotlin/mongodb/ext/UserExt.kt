@@ -53,7 +53,8 @@ public inline fun User.customDataAsBsonDocument(): BsonDocument? =
 /**
  * Returns the profile for this user as a [T].
  *
- * **Note** Profile will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ * **Note** This method supports full document serialization. The user profile will be deserialized with
+ * [serializer] and decoded with [AppConfiguration.ejson].
  *
  * @param T the type to decoded the user profile.
  * @param serializer deserialization strategy for [T].
@@ -71,7 +72,8 @@ public fun <T> User.profile(serializer: KSerializer<T>): T =
 /**
  * Returns the profile for this user as a [T].
  *
- * **Note** Profile will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ * **Note** This method supports full document serialization. The user profile will be deserialized with
+ * the built-in serializer for [T] and decoded with [AppConfiguration.ejson].
  *
  * @param T the type to decoded the user profile.
  * @return The profile for this user.
@@ -93,7 +95,8 @@ public inline fun <reified T> User.profile(): T =
  * The data is only refreshed when the user's access token is refreshed or when explicitly
  * calling [User.refreshCustomData].
  *
- * **Note** Custom data will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ * **Note** This method supports full document serialization. Custom data will be deserialized with
+ * the built-in serializer for [T] and decoded with [AppConfiguration.ejson].
  *
  * @param T the type to decoded the user custom data.
  * @return The custom user data associated with the user.
@@ -115,7 +118,8 @@ public inline fun <reified T> User.customData(): T? =
  * The data is only refreshed when the user's access token is refreshed or when explicitly
  * calling [User.refreshCustomData].
  *
- * **Note** Custom data will be deserialized using the encoder defined in [AppConfiguration.ejson].
+ * **Note** This method supports full document serialization. Custom data will be deserialized
+ * with [serializer] and decoded with [AppConfiguration.ejson].
  *
  * @param T the type to decoded the user custom data.
  * @param serializer deserialization strategy for [T].

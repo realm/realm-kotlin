@@ -17,7 +17,6 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.LogConfiguration
-import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.SDK_VERSION
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmAppPointer

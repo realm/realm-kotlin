@@ -24,7 +24,7 @@ package io.realm.kotlin.annotations
 @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 /**
  * This annotation marks Realm APIs that use **experimental** serializer APIs under the hood.
- * Calling these APIs when not using the same version of Kotlin Serialization that Realm depends on 
+ * Calling these APIs when not using the same version of Kotlin Serialization that Realm depends on
  * will have undefined behavior. See https://github.com/realm/realm-kotlin#version-compatibility-matrix
  * or https://github.com/realm/realm-kotlin/blob/main/CHANGELOG.md to see which version of Kotlin
  * Serialization that is used.
