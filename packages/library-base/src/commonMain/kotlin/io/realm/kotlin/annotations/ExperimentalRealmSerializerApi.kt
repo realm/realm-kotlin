@@ -22,7 +22,6 @@ package io.realm.kotlin.annotations
     AnnotationTarget.TYPEALIAS
 )
 @RequiresOptIn(level = RequiresOptIn.Level.ERROR)
-
 /**
  * Marks declarations that use **experimental** serializer APIs from `org.mongodb.kbson` in 'io.realm.kotlin'.
  * It means that the corresponding declarations might have issues due to incompatible versions when
