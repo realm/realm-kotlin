@@ -77,7 +77,7 @@ internal class CredentialsImpl constructor(
             RealmInterop.realm_app_credentials_new_jwt(Validation.checkEmpty(jwtToken, "jwtToken"))
 
         @PublishedApi
-        internal fun customFunction(payload: String): RealmCredentialsPointer =
-            RealmInterop.realm_app_credentials_new_custom_function(payload)
+        internal fun customFunction(ejsonEncodedPayload: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_custom_function(ejsonEncodedPayload)
     }
 }
