@@ -5,7 +5,7 @@
 
 ### Enhancements
 * Support for initialization of a realm file with a bundled realm through `RealmConfiguration.Builder(...).initialRealmFile(...)` and `SyncConfiguration.Builder(...).initialRealmFile(...)`. (Issue [#577](https://github.com/realm/realm-kotlin/issues/577))
-* [Sync] The new sync exception `CompensatingWriteException` will be thrown when the server undoes one or more client writes. (Issue [#1372](https://github.com/realm/realm-kotlin/issues/1372))
+* [Sync] The new sync exception `CompensatingWriteException` will be thrown in the `SyncSession.ErrorHandler` when the server undoes one or more client writes. (Issue [#1372](https://github.com/realm/realm-kotlin/issues/1372))
 
 ### Fixed
 * None.
