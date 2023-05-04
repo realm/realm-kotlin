@@ -33,6 +33,6 @@ import org.mongodb.kbson.BsonObjectId
  * [Short], [Int], [Long], [RealmInstant], [ObjectId], [BsonObjectId], [RealmUUID] as well as their
  * nullable variants.
  *
- * On [String] properties, this annotation cannot be used at the same time as [FullText].
+ * This annotation cannot be used at the same time as [FullText].
  */
 public annotation class Index
