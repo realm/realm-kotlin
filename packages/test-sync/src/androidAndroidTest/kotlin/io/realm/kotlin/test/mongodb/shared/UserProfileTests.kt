@@ -14,24 +14,46 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
+
 package io.realm.kotlin.test.mongodb.shared
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback
+import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.fail
+
+@Serializable
+data class UserProfile(
+    val name: String,
+    val email: String,
+    @SerialName("picture_url") val pictureUrl: String,
+    @SerialName("first_name") val firstName: String,
+    @SerialName("last_name") val lastName: String,
+    val gender: String,
+    val birthday: String,
+    @SerialName("min_age") val minAge: Long,
+    @SerialName("max_age") val maxAge: Long,
+)
 
 class UserProfileTests {
     companion object {
@@ -41,15 +63,18 @@ class UserProfileTests {
             """eyJhbGciOiJSUzI1NiIsImtpZCI6IjVlNjk2M2RmYWZlYTYzMjU0NTgxYzAyNiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1ODkxNDk0MDgsImlhdCI6MTU4Mzk2NTQwOCwic3RpdGNoX2RhdGEiOm51bGwsInN0aXRjaF9kZXZJZCI6IjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCIsInN0aXRjaF9kb21haW5JZCI6IjVlNjk2M2RlYWZlYTYzMjU0NTgxYzAyNSIsInN0aXRjaF9pZCI6IjVlNjk2NGUwYWZlYTYzMjU0NTgxYzFhMyIsInN0aXRjaF9pZGVudCI6eyJpZCI6IjVlNjk2NGUwYWZlYTYzMjU0NTgxYzFhMC1oaWF2b3ZkbmJxbGNsYXBwYnl1cmJpaW8iLCJwcm92aWRlcl90eXBlIjoiYW5vbi11c2VyIiwicHJvdmlkZXJfaWQiOiI1ZTY5NjNlMGFmZWE2MzI1NDU4MWMwNGEifSwic3ViIjoiNWU2OTY0ZTBhZmVhNjMyNTQ1ODFjMWExIiwidHlwIjoicmVmcmVzaCJ9.FhLdpmL48Mw0SyUKWuaplz3wfeS8TCO8S7I9pIJenQww9nPqQ7lIvykQxjCCtinGvsZIJKt_7R31xYCq4Jp53Nw81By79IwkXtO7VXHPsXXZG5_2xV-s0u44e85sYD5su_H-xnx03sU2piJbWJLSB8dKu3rMD4mO-S0HNXCCAty-JkYKSaM2-d_nS8MNb6k7Vfm7y69iz_uwHc-bb_1rPg7r827K6DEeEMF41Hy3Nx1kCdAUOM9-6nYv3pZSU1PFrGYi2uyTXPJ7R7HigY5IGHWd0hwONb_NUr4An2omqfvlkLEd77ut4V9m6mExFkoKzRz7shzn-IGkh3e4h7ECGA"""
         const val USER_ID = "5e6964e0afea63254581c1a1"
         const val DEVICE_ID = "000000000000000000000000"
-        const val NAME = "NAME"
-        const val EMAIL = "unique_user@domain.com"
-        const val PICTURE_URL = "PICTURE_URL"
-        const val FIRST_NAME = "FIRST_NAME"
-        const val LAST_NAME = "LAST_NAME"
-        const val GENDER = "GENDER"
-        const val BIRTHDAY = "BIRTHDAY"
-        const val MIN_AGE = 1L
-        const val MAX_AGE = 99L
+
+        val userProfile = UserProfile(
+            name = "NAME",
+            email = "unique_user@domain.com",
+            pictureUrl = "PICTURE_URL",
+            firstName = "FIRST_NAME",
+            lastName = "LAST_NAME",
+            gender = "GENDER",
+            birthday = "BIRTHDAY",
+            minAge = 1L,
+            maxAge = 99L,
+        )
     }
 
     private lateinit var app: TestApp
@@ -57,15 +82,15 @@ class UserProfileTests {
 
     private fun setDefaultProfile() {
         profileBody = mapOf(
-            "name" to NAME,
-            "email" to EMAIL,
-            "picture_url" to PICTURE_URL,
-            "first_name" to FIRST_NAME,
-            "last_name" to LAST_NAME,
-            "gender" to GENDER,
-            "birthday" to BIRTHDAY,
-            "min_age" to "$MIN_AGE",
-            "max_age" to "$MAX_AGE"
+            "name" to userProfile.name,
+            "email" to userProfile.email,
+            "picture_url" to userProfile.pictureUrl,
+            "first_name" to userProfile.firstName,
+            "last_name" to userProfile.lastName,
+            "gender" to userProfile.gender,
+            "birthday" to userProfile.birthday,
+            "min_age" to "${userProfile.minAge}",
+            "max_age" to "${userProfile.maxAge}"
         )
     }
 
@@ -161,7 +186,7 @@ class UserProfileTests {
     }
 
     @Test
-    fun profile() {
+    fun profileAsBsonDocument() {
         setDefaultProfile()
         val user = app.createUserAndLogin()
         val document = user.profileAsBsonDocument()
@@ -176,6 +201,32 @@ class UserProfileTests {
                 else -> TODO()
             }
             assertEquals(profileBody[key], stringValue, "failed comparing key $key")
+        }
+    }
+
+    @Test
+    fun profile() {
+        setDefaultProfile()
+
+        val user = app.createUserAndLogin()
+        setOf(
+            user.profile<UserProfile>(),
+            user.profile<UserProfile>(UserProfile.serializer()),
+        ).forEach { profile ->
+            assertEquals(Companion.userProfile, userProfile)
+        }
+    }
+
+    @Test
+    fun profileEmpty() {
+        setEmptyProfile()
+
+        val user = app.createUserAndLogin()
+        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
+            user.profile<UserProfile>()
+        }
+        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
+            user.profile<UserProfile>(UserProfile.serializer())
         }
     }
 }

@@ -26,4 +26,10 @@
 -keep class io.realm.kotlin.types.MutableRealmInt
 -keep class io.realm.kotlin.types.RealmUUID
 -keep class io.realm.kotlin.types.RealmList
--keep class org.mongodb.kbson.*
+-keep class org.mongodb.kbson.* {
+    *;
+}
+
+-keep class org.mongodb.kbson.serialization.* {
+    *;
+}
