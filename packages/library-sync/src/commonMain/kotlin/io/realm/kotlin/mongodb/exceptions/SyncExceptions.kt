@@ -86,7 +86,7 @@ public class CompensatingWriteException internal constructor(
         )
     }
 
-    private fun RealmValue.asRealmAny(): RealmAny? = when (val type = getType()) {
+    private fun RealmValue.asRealmAny(): RealmAny? = when (getType()) {
         ValueType.RLM_TYPE_NULL -> null
         ValueType.RLM_TYPE_INT -> RealmAny.create(getLong())
         ValueType.RLM_TYPE_BOOL -> RealmAny.create(getBoolean())
