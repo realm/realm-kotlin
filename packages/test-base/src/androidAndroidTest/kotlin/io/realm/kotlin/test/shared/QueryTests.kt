@@ -2258,8 +2258,8 @@ class QueryTests {
     fun fullTextSearch() {
         realm.writeBlocking {
             copyToRealm(QuerySample(1).apply { fulltextField = "The quick brown fox jumped over the lazy dog." })
-            copyToRealm(QuerySample(2).apply { fulltextField = "I sat at the cafè, drinking a BIG cup of coffee" })
-            copyToRealm(QuerySample(3).apply { fulltextField = "Rødgrød med fløde" })
+            copyToRealm(QuerySample(2).apply { fulltextField = "I sat at the cafè, drinking a BIG cup of coffee." })
+            copyToRealm(QuerySample(3).apply { fulltextField = "Rødgrød med fløde." })
             copyToRealm(QuerySample(4).apply { fulltextField = "full-text-search is hard to implement!" })
             copyToRealm(QuerySample(5).apply { fulltextField = "Trying to search for an emoji, like 😊, inside a text string is not supported." })
         }
@@ -2269,9 +2269,17 @@ class QueryTests {
         assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // token prefix search does not work
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'cafe big'").find().size) // case- and diacritics-insensitive
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'rødgrød'").find().size) // Latin-1 supplement
-        assertEquals(2, realm.query<QuerySample>("fulltextField TEXT 'text-search'").find().size) // - is splitting tokens.
-        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT '😊'").find().size) // Emoji are turned into whitespace and ignored
-        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT ''").find().size) // Empty strings return nothing
+    }
+
+    @Test
+    fun fullTextSearch_invalidArguments() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.query<QuerySample>("fulltextField TEXT '😊'").find().size
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            realm.query<QuerySample>("fulltextField TEXT ''").find().size
+        }
     }
 
     @Test
