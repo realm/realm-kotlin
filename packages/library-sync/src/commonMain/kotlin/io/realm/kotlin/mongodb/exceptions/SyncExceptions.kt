@@ -69,13 +69,16 @@ public class BadFlexibleSyncQueryException internal constructor(message: String)
 
 /**
  * Thrown when the server undoes one or more client writes. Details on undone writes can be found in
- * [compensatingWrites].
+ * [writes].
  */
 public class CompensatingWriteException internal constructor(
     message: String,
     compensatingWrites: Array<CoreCompensatingWriteInfo>
 ) : SyncException(message) {
-    public val compensatingWrites: List<CompensatingWriteInfo> = compensatingWrites.map {
+    /**
+     * List with all the reversed writes that have triggered this exception.
+     */
+    public val writes: List<CompensatingWriteInfo> = compensatingWrites.map {
         CompensatingWriteInfo(
             reason = it.reason,
             objectName = it.objectName,
@@ -95,12 +98,26 @@ public class CompensatingWriteException internal constructor(
         ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(realmValueToDecimal128(this))
         ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(BsonObjectId(getObjectIdBytes()))
         ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(getUUIDBytes()))
-        else -> throw IllegalArgumentException("Unsupported primary key type: ${type.name}")
+        else -> RealmAny.create("Unknown")
     }
 
+    /**
+     * Class that describes the details for a reversed write.
+     */
     public inner class CompensatingWriteInfo(
+        /**
+         * Reason for the compensating write.
+         */
         public val reason: String,
+
+        /**
+         * Name of the object which write was reversed.
+         */
         public val objectName: String,
+
+        /**
+         * Primary key for the object which write was reversed.
+         */
         public val primaryKey: RealmAny?
     )
 }

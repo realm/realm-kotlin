@@ -38,7 +38,6 @@ import io.realm.kotlin.test.util.use
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.BsonObjectId
-import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -329,9 +328,9 @@ class FlexibleSyncIntegrationTests {
             val exception: CompensatingWriteException = channel.receiveOrFail()
 
             assertEquals("[Session][CompensatingWrite(231)] Client attempted a write that is disallowed by permissions, or modifies an object outside the current query, and the server undid the change.", exception.message)
-            assertEquals(1, exception.compensatingWrites.size)
+            assertEquals(1, exception.writes.size)
 
-            exception.compensatingWrites[0].run {
+            exception.writes[0].run {
                 assertContains(reason, "object is outside of the current query view")
                 assertEquals("FlexParentObject", objectName)
                 assertEquals(expectedPrimaryKey, primaryKey?.asObjectId())
