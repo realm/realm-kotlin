@@ -70,8 +70,8 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 inline jboolean jni_check_exception(JNIEnv *jenv = get_env()) {
     if (jenv->ExceptionCheck()) {
         jthrowable exception = jenv->ExceptionOccurred();
-        realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
         jenv->ExceptionClear();
+        realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
         return false;
     }
     return true;
