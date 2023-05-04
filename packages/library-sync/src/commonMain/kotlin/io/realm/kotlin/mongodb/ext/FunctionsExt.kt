@@ -81,9 +81,9 @@ public suspend inline fun <reified T : Any?> Functions.call(
  * }
  * ```
  *
- * We cannot use a generic
- * - There is no serializer available for Any,
- * - any [KClass<T>.serializer() Internal](https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-core/kotlinx.serialization/serializer.html)
+ * We cannot use a generic because:
+ * - There is no serializer available for Any.
+ * - any [KClass<T>.serializer() is marked as Internal](https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-core/kotlinx.serialization/serializer.html)
  *
  * @param name name of the function to call.
  * @param callBuilderBlock code block that sets the call arguments and serializers.
