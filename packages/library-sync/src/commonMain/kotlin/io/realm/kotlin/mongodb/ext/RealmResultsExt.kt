@@ -8,6 +8,7 @@ import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.WaitForSync
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.RealmObject
 import kotlin.time.Duration
 
@@ -18,7 +19,8 @@ public suspend fun <T : RealmObject> RealmResults<T>.subscribe(
     mode: WaitForSync = WaitForSync.FIRST_TIME,
     timeout: Duration = Duration.INFINITE
 ): RealmResults<T> {
-    val query: RealmQuery<T> = this.query("")
+    // FIXME https://github.com/realm/realm-core/issues/6566
+    val query: RealmQuery<T> = this.query(TRUE_PREDICATE)
     return query.subscribe(mode, timeout)
 }
 
@@ -31,7 +33,8 @@ public suspend fun <T : RealmObject> RealmResults<T>.subscribe(
     mode: WaitForSync = WaitForSync.FIRST_TIME,
     timeout: Duration = Duration.INFINITE
 ): RealmResults<T> {
-    val query: RealmQuery<T> = this.query("")
+    // FIXME https://github.com/realm/realm-core/issues/6566
+    val query: RealmQuery<T> = this.query(TRUE_PREDICATE)
     return query.subscribe(name, updateExisting, mode, timeout)
 }
 

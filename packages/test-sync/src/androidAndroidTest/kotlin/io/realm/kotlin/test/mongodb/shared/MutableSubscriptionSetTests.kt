@@ -17,32 +17,45 @@
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.entities.sync.SyncPerson
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.ext.subscribe
+import io.realm.kotlin.mongodb.ext.unsubscribe
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.WaitForSync
+import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.toRealmInstant
+import io.realm.kotlin.test.util.use
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Class wrapping tests for modifying a subscription set.
@@ -325,7 +338,7 @@ class MutableSubscriptionSetTests {
         } catch (ex: RuntimeException) {
             if (ex.message == "Boom!") {
                 realm.close()
-                // Realm.deleteRealm(config)
+                 Realm.deleteRealm(config)
             }
         }
         Unit
@@ -349,150 +362,201 @@ class MutableSubscriptionSetTests {
     }
 
     @Test
-    fun subscribe_realmQuery_unnamed() = runBlocking {
-        realm.query<FlexParentObject>().subscribe()
-        val updatedSubs = realm.subscriptions
+    fun subscribe_realmQuery_waitFirstTime() = runBlocking<Unit> {
+        // Unnamed
+        realm.query<FlexParentObject>().subscribe() // Default value is WaitForSync.FIRST_TIME
+        var updatedSubs = realm.subscriptions
         assertEquals(1, updatedSubs.size)
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
-        val sub: Subscription = updatedSubs.first()
+        var sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("FlexParentObject", sub.objectType)
+
+        // Named
+        realm.query<FlexParentObject>().subscribe("my-name") // Default value is WaitForSync.FIRST_TIME
+        updatedSubs = realm.subscriptions
+        assertEquals(2, updatedSubs.size)
+        assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+        sub = updatedSubs.last()
+        assertEquals("my-name", sub.name)
         assertEquals("TRUEPREDICATE ", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
     }
 
     @Test
-    fun subscribe_realmQuery_unnamed_waitOnCreation() {
-        TODO()
+    fun subscribe_realmQuery_waitNever() = runBlocking {
+        // Un-named
+        realm.query<FlexParentObject>().subscribe(mode = WaitForSync.NEVER)
+        var updatedSubs = realm.subscriptions
+        assertEquals(1, updatedSubs.size)
+        // Updating the subscription will happen in the background, but
+        // hopefully hasn't reached COMPLETE yet.
+        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+
+        // Named
+        realm.query<FlexParentObject>().subscribe(name = "my-name", mode = WaitForSync.NEVER)
+        updatedSubs = realm.subscriptions
+        assertEquals(2, updatedSubs.size)
+        // Updating the subscription will happen in the background, but
+        // hopefully hasn't reached COMPLETE yet.
+        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
     }
 
     @Test
-    fun subscribe_realmQuery_unnamed_waitOnNever() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmQuery_unnamed_waitAlways() {
-        TODO()
+    fun subscribe_realmQuery_waitAlways() = runBlocking {
+        val sectionId = Random.nextInt()
+        val results1 = realm.query<FlexParentObject>("section = $0", sectionId).subscribe() // Default value is WaitForSync.FIRST_TIME
+        assertEquals(0, results1.size)
+        uploadServerData(sectionId, 5)
+        // Since the subscription is already present, we cannot control if the data is downloaded
+        // before creating the next subscription. Instead we pause the syncSession and verify
+        // that WaitForSync.ALWAYS timeout during network failures and resuming the session should
+        // then work
+        realm.syncSession.pause()
+        assertFailsWith<TimeoutCancellationException> {
+            realm.query<FlexParentObject>("section = $0", sectionId).subscribe(timeout = 3.seconds, mode = WaitForSync.ALWAYS)
+        }
+        realm.syncSession.resume()
+        val results2 = realm.query<FlexParentObject>("section = $0", sectionId).subscribe(mode = WaitForSync.ALWAYS)
+        assertEquals(5, results2.size)
     }
     
     @Test
-    fun subscribe_realmQuery_unnamed_timeOut_fails() {
-        TODO()
+    fun subscribe_realmQuery_timeOut_fails() = runBlocking<Unit> {
+        assertFailsWith<TimeoutCancellationException> {
+            realm.query<FlexParentObject>().subscribe(timeout = 1.nanoseconds)
+        }
     }
 
     @Test
-    fun subscribe_realmQuery_unnamed_throwsInsideWrite() {
-        TODO()
+    fun subscribe_realmQuery_throwsInsideWrite() {
+        realm.writeBlocking {
+            // `subscribe()` being a suspend function make in hard to call
+            // subscribe inside a write, but we should still detect it.
+            runBlocking {
+                assertFailsWith<IllegalStateException> {
+                    query<FlexParentObject>().subscribe()
+                }
+                assertFailsWith<IllegalStateException> {
+                    query<FlexParentObject>().subscribe(name = "my-name")
+                }
+            }
+        }
     }
 
     @Test
-    fun subscribe_realmQuery_named() {
-        TODO()
+    fun subscribe_realmResults_waitFirstTime() = runBlocking {
+        // Unnamed
+        realm.query<FlexParentObject>().find().subscribe() // Default value is WaitForSync.FIRST_TIME
+        var updatedSubs = realm.subscriptions
+        assertEquals(1, updatedSubs.size)
+        assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+        var sub: Subscription = updatedSubs.first()
+        assertNull(sub.name)
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("FlexParentObject", sub.objectType)
+
+        // Named
+        realm.query<FlexParentObject>().find().subscribe("my-name") // Default value is WaitForSync.FIRST_TIME
+        updatedSubs = realm.subscriptions
+        assertEquals(2, updatedSubs.size)
+        assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+        sub = updatedSubs.last()
+        assertEquals("my-name", sub.name)
+        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("FlexParentObject", sub.objectType)
     }
 
     @Test
-    fun subscribe_realmQuery_named_waitOnCreation() {
-        TODO()
+    fun subscribe_realmResults_waitOnNever() = runBlocking {
+        // Un-named
+        realm.query<FlexParentObject>().find().subscribe(mode = WaitForSync.NEVER)
+        var updatedSubs = realm.subscriptions
+        assertEquals(1, updatedSubs.size)
+        // Updating the subscription will happen in the background, but
+        // hopefully hasn't reached COMPLETE yet.
+        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+
+        // Named
+        realm.query<FlexParentObject>().find().subscribe(name = "my-name", mode = WaitForSync.NEVER)
+        updatedSubs = realm.subscriptions
+        assertEquals(2, updatedSubs.size)
+        // Updating the subscription will happen in the background, but
+        // hopefully hasn't reached COMPLETE yet.
+        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)    }
+
+    @Test
+    fun subscribe_realmResults_waitAlways() = runBlocking {
+        val sectionId = Random.nextInt()
+        val results1 = realm.query<FlexParentObject>("section = $0", sectionId).find().subscribe() // Default value is WaitForSync.FIRST_TIME
+        assertEquals(0, results1.size)
+        uploadServerData(sectionId, 5)
+        // Since the subscription is already present, we cannot control if the data is downloaded
+        // before creating the next subscription. Instead we pause the syncSession and verify
+        // that WaitForSync.ALWAYS timeout during network failures and resuming the session should
+        // then work
+        realm.syncSession.pause()
+        assertFailsWith<TimeoutCancellationException> {
+            realm.query<FlexParentObject>("section = $0", sectionId).find().subscribe(timeout = 3.seconds, mode = WaitForSync.ALWAYS)
+        }
+        realm.syncSession.resume()
+        val results2 = realm.query<FlexParentObject>("section = $0", sectionId).find().subscribe(mode = WaitForSync.ALWAYS)
+        assertEquals(5, results2.size)
     }
 
     @Test
-    fun subscribe_realmQuery_named_waitOnNever() {
-        TODO()
+    fun subscribe_realmResults_subquery() = runBlocking {
+        val topQueryResult: RealmResults<FlexParentObject> = realm.query<FlexParentObject>("section = 42").find()
+        val subQueryResult: RealmResults<FlexParentObject> = topQueryResult.query("name == $0", "Jane").find()
+        subQueryResult.subscribe()
+        val subs = realm.subscriptions
+        assertEquals(1, subs.size)
+        assertEquals("section == 42 and name == \"Jane\" and TRUEPREDICATE ", subs.first().queryDescription)
+        subQueryResult.subscribe("my-name")
+        assertEquals(2, subs.size)
+        val lastSub = subs.last()
+        assertEquals("my-name", lastSub.name)
+        assertEquals("section == 42 and name == \"Jane\" and TRUEPREDICATE ", lastSub.queryDescription)
     }
 
     @Test
-    fun subscribe_realmQuery_named_waitAlways() {
-        TODO()
+    fun subscribe_realmResults_timeOut_fails() = runBlocking {
+        assertFailsWith<TimeoutCancellationException> {
+            realm.query<FlexParentObject>().find().subscribe(timeout = 1.nanoseconds)
+        }
     }
 
     @Test
-    fun subscribe_realmQuery_named_timeOut_fails() {
-        TODO()
+    fun subscribe_realmResults_throwsInsideWrite() = runBlocking {
+        realm.writeBlocking {
+            // `subscribe()` being a suspend function make in hard to call
+            // subscribe inside a write, but we should still detect it.
+            runBlocking {
+                assertFailsWith<IllegalStateException> {
+                    query<FlexParentObject>().find().subscribe()
+                }
+                assertFailsWith<IllegalStateException> {
+                    query<FlexParentObject>().find().subscribe(name = "my-name")
+                }
+            }
+        }
     }
 
     @Test
-    fun subscribe_realmQuery_named_throwsInsideWrite() {
-        TODO()
-    }
+    fun unsubscribe_realmResults() = runBlocking {
 
-    @Test
-    fun subscribe_realmResults_unnamed() {
-        TODO()
-    }
+        // Fluent interface, no way to capture the initial RealmResult
+        realm.query<SyncPerson>().subscribe().asFlow().collect { change ->
+            val result: RealmResults<SyncPerson> = change.list
+            result.unsubscribe()
+        }
 
-    @Test
-    fun subscribe_realmResults_subquery_unnamed() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_unnamed_waitOnCreation() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_unnamed_waitOnNever() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_unnamed_waitAlways() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_unnamed_timeOut_fails() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_unnamed_throwsInsideWrite() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_named() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_subquery_named() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_named_waitOnCreation() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_named_waitOnNever() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_named_waitAlways() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_named_timeOut_fails() {
-        TODO()
-    }
-
-    @Test
-    fun subscribe_realmResults_named_throwsInsideWrite() {
-        TODO()
-    }
-
-    @Test
-    fun unsubscribe_realmResults() {
-        TODO()
-    }
-
-    @Test
-    fun unsubscribe_realmResults_throwsInsideWrite() {
-        TODO()
+        // You can just write the code like this to do it, but it would be more annoying
+        val results: RealmResults<SyncPerson> = realm.query<SyncPerson>().subscribe()
+        results.asFlow().collect {
+            results.unsubscribe() // This would be easy
+        }
     }
 
     @Test
@@ -500,4 +564,22 @@ class MutableSubscriptionSetTests {
         TODO("Check that anonymous RealmQuery and RealmResults .subscribe calls result in the same sub")
     }
 
+    private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
+        val user = app.createUserAndLogin()
+        val config = SyncConfiguration.Builder(user, setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class))
+            .initialSubscriptions {
+                it.query<FlexParentObject>().subscribe()
+            }
+            .waitForInitialRemoteData()
+            .build()
+
+        Realm.open(config).use { realm ->
+            realm.writeBlocking {
+                repeat(noOfObjects) {
+                    copyToRealm(FlexParentObject(sectionId))
+                }
+            }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+    }
 }

@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.RealmAppT
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.App
@@ -40,6 +41,7 @@ public class AppImpl(
 ) : App {
 
     internal val nativePointer: RealmAppPointer
+    internal val appNetworkDispatcher: DispatcherHolder
     private val networkTransport: NetworkTransport
 
     // Allow some delay between events being reported and them being consumed.
@@ -54,9 +56,10 @@ public class AppImpl(
     )
 
     init {
-        val appResources: Pair<NetworkTransport, NativePointer<RealmAppT>> = configuration.createNativeApp()
-        networkTransport = appResources.first
-        nativePointer = appResources.second
+        val appResources: Triple<DispatcherHolder, NetworkTransport, NativePointer<RealmAppT>> = configuration.createNativeApp()
+        appNetworkDispatcher = appResources.first
+        networkTransport = appResources.second
+        nativePointer = appResources.third
     }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }

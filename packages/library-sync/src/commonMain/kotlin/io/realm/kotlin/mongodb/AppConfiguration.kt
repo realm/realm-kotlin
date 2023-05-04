@@ -27,6 +27,7 @@ import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
@@ -281,7 +282,7 @@ public interface AppConfiguration {
             }
 
             val appLogger = ContextLogger("Sdk")
-            val networkTransport: () -> NetworkTransport = {
+            val networkTransport: (dispatcher: DispatcherHolder) -> NetworkTransport = { dispatcherHolder ->
                 val logger: Logger? = if (logLevel <= LogLevel.DEBUG) {
                     object : Logger {
                         override fun log(message: String) {
@@ -297,7 +298,7 @@ public interface AppConfiguration {
                     //  constant in AppConfiguration.Companion
                     //  https://github.com/realm/realm-kotlin/issues/408
                     timeoutMs = 60000,
-                    dispatcherFactory = appNetworkDispatcherFactory,
+                    dispatcherHolder = dispatcherHolder,
                     logger = logger
                 )
             }
@@ -309,6 +310,7 @@ public interface AppConfiguration {
                 metadataMode = if (encryptionKey == null)
                     MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
+                appNetworkDispatcherFactory = appNetworkDispatcherFactory,
                 networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 logger = logConfig,

@@ -50,11 +50,10 @@ public class KtorNetworkTransport(
     // FIXME Rework timeout to take a Duration instead
     //  https://github.com/realm/realm-kotlin/issues/408
     timeoutMs: Long,
-    dispatcherFactory: CoroutineDispatcherFactory,
+    private val dispatcherHolder: DispatcherHolder,
     logger: Logger? = null,
 ) : NetworkTransport {
 
-    private val dispatcherHolder: DispatcherHolder = dispatcherFactory.create()
     private val clientCache: HttpClientCache = HttpClientCache(timeoutMs, logger)
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")

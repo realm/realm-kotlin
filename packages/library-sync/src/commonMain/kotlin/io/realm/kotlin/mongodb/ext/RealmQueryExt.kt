@@ -2,14 +2,22 @@
 package io.realm.kotlin.mongodb.ext
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.subscriptions
+import io.realm.kotlin.mongodb.sync.Subscription
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.WaitForSync
+import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import org.mongodb.kbson.ObjectId
 import kotlin.time.Duration
 
 /**
@@ -41,27 +49,39 @@ private suspend fun <T: RealmObject> createSubscriptionFromQuery(
     mode: WaitForSync,
     timeout: Duration
 ): RealmResults<T> {
-    // TODO Use the AppDispatcherFactory so we share threads with the NetworkTransport
-    return withContext(Dispatchers.Default) {
-        val objectQuery = (query as io.realm.kotlin.internal.query.ObjectQuery<T>)
-        val realm = objectQuery.getRealm<Realm>()
-        val subscriptions = realm.subscriptions
-        val existingSubscription = if (name != null) subscriptions.findByName(name) else subscriptions.findByQuery(query)
-        var subscriptionId = existingSubscription?.id
-        if (existingSubscription == null || updateExisting) {
-            subscriptions.update {
-                subscriptionId = this.add(query, name, updateExisting).id
+
+    if (query !is io.realm.kotlin.internal.query.ObjectQuery<T>) {
+        throw IllegalStateException("Only queries on objects are supported. This was: ${query::class}")
+    }
+    if (query.realmReference.owner !is RealmImpl) {
+        throw IllegalStateException("Calling `subscribe()` inside a write transaction is not allowed.")
+    }
+    val realm: Realm = query.getRealm()
+    val subscriptions = realm.subscriptions
+    val appDispatcher: CoroutineDispatcher = ((realm.configuration as SyncConfiguration).user.app as AppImpl).appNetworkDispatcher.dispatcher
+
+    return withTimeout(timeout) {
+        withContext(appDispatcher) {
+            val existingSubscription: Subscription? =
+                // FIXME Check that findByQuery actually works
+                if (name != null) subscriptions.findByName(name) else subscriptions.findByQuery(query)
+            var subscriptionId: ObjectId? = existingSubscription?.id
+            if (existingSubscription == null || updateExisting) {
+                subscriptions.update {
+                    subscriptionId = this.add(query, name, updateExisting).id
+                }
             }
-        }
-        if (
-            (mode == WaitForSync.FIRST_TIME && existingSubscription == null) ||
-            (mode == WaitForSync.ALWAYS)
-        ) {
-            subscriptions.waitForSynchronization(timeout)
-        }
-        // Rerun the query on the latest Realm version.
-        realm.query(objectQuery.clazz, objectQuery.description()).find().also {
-            (it as io.realm.kotlin.internal.RealmResultsImpl).backingSubscriptionId = subscriptionId
+            if ((mode == WaitForSync.FIRST_TIME || mode == WaitForSync.ALWAYS) && existingSubscription == null) {
+                subscriptions.waitForSynchronization()
+            } else if (mode == WaitForSync.ALWAYS) {
+                // The subscription should already exist, just make sure we downloaded all
+                // server data before continuing.
+                realm.syncSession.downloadAllServerChanges()
+            }
+            // Rerun the query on the latest Realm version.
+            realm.query(query.clazz, query.description()).find().also {
+                (it as io.realm.kotlin.internal.RealmResultsImpl).backingSubscriptionId = subscriptionId
+            }
         }
     }
 }

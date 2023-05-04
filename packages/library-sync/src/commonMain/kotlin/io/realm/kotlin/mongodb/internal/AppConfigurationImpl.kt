@@ -33,6 +33,8 @@ import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
@@ -43,7 +45,8 @@ public class AppConfigurationImpl constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
-    internal val networkTransportFactory: () -> NetworkTransport,
+    private val appNetworkDispatcherFactory: CoroutineDispatcherFactory,
+    internal val networkTransportFactory: (dispatcher: DispatcherHolder) -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
     public val logger: LogConfiguration,
@@ -59,12 +62,13 @@ public class AppConfigurationImpl constructor(
      * Thus this method should only be called from [AppImpl] and will create both a native
      * AppConfiguration and App at the same time.
      */
-    public fun createNativeApp(): Pair<NetworkTransport, RealmAppPointer> {
+    public fun createNativeApp(): Triple<DispatcherHolder, NetworkTransport, RealmAppPointer> {
         // Create a new network transport for each App instance. This which allow the App to control
         // the lifecycle of any threadpools created by the network transport. Also, there should
         // be no reason for people to have multiple app instances for the same app, so the net
         // effect should be the same
-        val networkTransport = networkTransportFactory()
+        val appDispatcher = appNetworkDispatcherFactory.create()
+        val networkTransport = networkTransportFactory(appDispatcher)
         val appConfigPointer: RealmAppConfigurationPointer =
             initializeRealmAppConfig(appName, appVersion, networkTransport)
         var applicationInfo: String? = null
@@ -81,7 +85,8 @@ public class AppConfigurationImpl constructor(
             sdkInfo,
             applicationInfo.toString()
         )
-        return Pair(
+        return Triple(
+            appDispatcher,
             networkTransport,
             RealmInterop.realm_app_get(
                 appConfigPointer,
