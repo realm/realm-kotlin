@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package io.realm.kotlin.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -34,9 +36,9 @@ import io.realm.kotlin.internal.schema.PropertyMetadata
 import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import io.realm.kotlin.types.TypedRealmObject
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -49,7 +51,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
-@OptIn(ExperimentalCompilerApi::class)
 class GenerationExtensionTest {
     /**
      * Wrapping conventions around test cases.
@@ -372,6 +373,7 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
     }
 
+    @OptIn(ExperimentalCompilerApi::class)
     private fun compile(
         inputs: Files,
         plugins: List<ComponentRegistrar> = listOf(Registrar())
@@ -380,7 +382,6 @@ class GenerationExtensionTest {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
-//            compilerPlugins = plugins,
             componentRegistrars = plugins
 //            compilerPluginRegistrars = plugins
             inheritClassPath = true

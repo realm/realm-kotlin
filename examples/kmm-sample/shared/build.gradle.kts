@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
-    id("kotlin-android-extensions")
     // Apply Realm specific linting plugin to get common Realm linting tasks
     id("realm-lint")
     id("io.realm.kotlin")

@@ -172,7 +172,7 @@ kotlin {
             dependencies {
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
-                implementation("dev.zacsweers.kctfork:core:${Versions.kotlinCompileTesting}")
+                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
             }
         }
         val jvmTest by getting {
