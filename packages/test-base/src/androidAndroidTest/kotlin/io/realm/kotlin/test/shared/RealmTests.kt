@@ -26,6 +26,7 @@ import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.assertFailsWithMessage
@@ -655,6 +656,165 @@ class RealmTests {
             }
         } else {
             assertFalse(Realm.compactRealm(configuration))
+        }
+    }
+
+    @Ignore // Test to generate a realm file to use in initialRealmFile. Copy the generated file to
+    // - test-base/src/androidMain/assets/subdir/asset.realm
+    // - test-base/src/jvmTest/resources/subdir/asset.realm
+    // - test-base/src/iosTest/resources/subdir/asset.realm
+    // - test-base/src/macosTest/resources/subdir/asset.realm
+    @Test
+    fun createInitialRealmFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            // Need a separate name to avoid clashes with this.realm initialized in setup()
+            .name("asset.realm")
+            .build()
+        Realm.deleteRealm(config)
+        Realm.open(config).use {
+            it.writeBlocking {
+                copyToRealm(Parent())
+                copyToRealm(Parent())
+                copyToRealm(Parent())
+                copyToRealm(Parent())
+            }
+        }
+    }
+
+    @Test
+    fun initialRealmFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            // Need a separate name to avoid clashes with this.realm initialized in setup()
+            .name("prefilled.realm")
+            .initialRealmFile("subdir/asset.realm")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        Realm.open(config).use {
+            val schema = it.schema()
+            // Verify that the initial realm already has some data in it
+            assertEquals(4, it.query<Parent>().find().size)
+
+            it.writeBlocking { delete(query<Parent>()) }
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+
+        // Verify that reopening the file see the updates and doesn't reinitialize the realm from
+        // the initialRealmFile
+        Realm.open(config).use {
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+    }
+
+    @Test
+    fun initialRealmFile_withChecksum() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("prefilled.realm")
+            .initialRealmFile("subdir/asset.realm", "8984dda08008bbc6b56d2b8f6ba50dc378bb865a59a082eb42862ad31c21ad21")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        Realm.open(config).use {
+            val schema = it.schema()
+            // Verify that the initial realm already has some data in it
+            assertEquals(4, it.query<Parent>().find().size)
+
+            it.writeBlocking { delete(query<Parent>()) }
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+
+        // Verify that reopening the file see the updates and doesn't reinitialize the realm from
+        // the initialRealmFile
+        Realm.open(config).use {
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+    }
+
+    @Test
+    fun initialRealmFile_invalidChecksum() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("prefilled.realm")
+            .initialRealmFile("subdir/asset.realm", "asdf")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        assertFailsWithMessage<RuntimeException>("Asset file checksum for 'subdir/asset.realm' does not match. Expected 'asdf' but was '8984dda08008bbc6b56d2b8f6ba50dc378bb865a59a082eb42862ad31c21ad21'") {
+            Realm.open(config)
+        }
+    }
+
+    @Test
+    fun initialRealmFile_nonExistingFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("prefilled.realm")
+            .initialRealmFile("nonexistingfile.realm")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        assertFailsWithMessage<IllegalArgumentException>("Asset file not found: 'nonexistingfile.realm'") {
+            Realm.open(config)
+        }
+    }
+
+    @Test
+    fun initialRealmFile_existingFileDisregardWrongAssetFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("default.realm")
+            .initialRealmFile("nonexistingfile.realm")
+            .build()
+
+        assertTrue(fileExists(config.path))
+        Realm.open(config).use { }
+    }
+
+    @Test
+    fun initialRealmFile_existingFileDisregardWrongChecksum() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("default.realm")
+            .initialRealmFile("subdir/asset.realm", "invalid_checksum")
+            .build()
+
+        assertTrue(fileExists(config.path))
+        Realm.open(config).use { }
+    }
+
+    @Test
+    fun initialRealmFile_initialDataOnTopOfInitialRealmFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("initial_realm.realm")
+            .initialRealmFile("subdir/asset.realm")
+            .initialData {
+                // Verify that initialData is executing on top of initialRealmFile
+                val results = query<Parent>().find()
+                assertEquals(4, results.size)
+                delete(results)
+            }
+            .build()
+
+        assertFalse(fileExists(config.path))
+        Realm.open(config).use {
+            assertEquals(0, it.query<Parent>().find().size)
+        }
+    }
+
+    @Test
+    fun initialRealmFile_throwsWithSyncInitialRealmFile() {
+        val config = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("initial_realm.realm")
+            .initialRealmFile("asset-pbs.realm")
+            .build()
+
+        assertFalse(fileExists(config.path))
+        assertFailsWithMessage<IllegalStateException>("has history type 'SyncClient'") {
+            Realm.open(config)
         }
     }
 

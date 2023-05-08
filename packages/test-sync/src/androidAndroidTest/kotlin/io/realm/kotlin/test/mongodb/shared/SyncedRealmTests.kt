@@ -52,6 +52,7 @@ import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.CustomLogCollector
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -1328,6 +1329,225 @@ class SyncedRealmTests {
         }
     }
 
+    @Test
+    @Ignore // Test to generate a realm file to use in assetFile_partitionBasedSync. Copy the
+    // generated file to
+    // - test-sync/src/androidMain/assets/asset-pbs.realm
+    // - test-sync/src/jvmTest/resources/asset-pbs.realm
+    // - test-sync/src/iosTest/resources/asset-pbs.realm
+    // - test-sync/src/macosTest/resources/asset-pbs.realm
+    fun createInitialRealmPbs() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        val config1 = RealmConfiguration.Builder(setOf(ParentPk::class, ChildPk::class))
+            .directory(PlatformUtils.createTempDir())
+            .initialData {
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+            }
+            .build()
+        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        Realm.open(config1).use {
+            assertEquals(2, it.query<ParentPk>().find().size)
+            it.writeCopyTo(config2)
+            assertNotNull(it)
+        }
+        // Debug this test, breakpoint here and grab the bundled realm from the location
+        println("Partition based sync bundled realm is in ${config2.path}")
+    }
+
+    @Test
+    fun initialRealm_partitionBasedSync() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+        val config1 = createSyncConfig(
+            user = user, partitionValue = partitionValue, name = "db1",
+            errorHandler = object : SyncSession.ErrorHandler {
+                override fun onError(session: SyncSession, error: SyncException) {
+                    fail("Realm 1: $error")
+                }
+            },
+        ) {
+            initialRealmFile("asset-pbs.realm")
+            initialData {
+                assertEquals(2, query<ParentPk>().find().size)
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
+                assertEquals(4, query<ParentPk>().find().size)
+            }
+        }
+        val realm1 = Realm.open(config1)
+        runBlocking {
+            assertEquals(4, realm1.query<ParentPk>().find().size)
+            realm1.syncSession.uploadAllLocalChanges(30.seconds)
+        }
+
+        val config2 = createSyncConfig(
+            user = user, partitionValue = partitionValue, name = "db1",
+            errorHandler = object : SyncSession.ErrorHandler {
+                override fun onError(session: SyncSession, error: SyncException) {
+                    fail("Realm 1: $error")
+                }
+            }
+        ) {
+            waitForInitialRemoteData(30.seconds)
+            initialData {
+                // Verify that initial data is running before data is synced
+                assertEquals(0, query<ParentPk>().find().size)
+            }
+        }
+        Realm.open(config2).use {
+            runBlocking {
+                it.syncSession.downloadAllServerChanges(30.seconds)
+                assertEquals(4, it.query<ParentPk>().find().size)
+            }
+        }
+    }
+
+    @Test
+    @Ignore // Test to generate a realm file to use in assetFile_partitionBasedSync. Copy the
+    // generated file to
+    // - test-sync/src/androidMain/assets/asset-fs.realm
+    // - test-sync/src/jvmTest/resources/asset-fs.realm
+    // - test-sync/src/iosTest/resources/asset-fs.realm
+    // - test-sync/src/macosTest/resources/asset-fs.realm
+    fun createInitialRealmFx() = runBlocking {
+        val flexApp = TestApp(
+            logLevel = LogLevel.ALL,
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
+        val section = Random.nextInt()
+        val (email1, password1) = randomEmail() to "password1234"
+        val user1 = flexApp.createUserAndLogIn(email1, password1)
+        val syncConfig1 = createFlexibleSyncConfig(
+            user = user1,
+            name = "sync1.realm",
+            errorHandler = { _, error ->
+                fail(error.toString())
+            },
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            ),
+            initialSubscriptions = { realm: Realm ->
+                realm.query<FlexParentObject>()
+                    .subscribe(name = "parentSubscription")
+            }
+        )
+        val syncConfig2 = createFlexibleSyncConfig(
+            user = user1,
+            name = "asset-fs.realm",
+            errorHandler = { _, error ->
+                fail(error.toString())
+            },
+            schema = setOf(
+                FlexParentObject::class,
+                FlexChildObject::class,
+                FlexEmbeddedObject::class
+            )
+        )
+
+        Realm.open(syncConfig1).use { flexRealm1: Realm ->
+            // It is not possible to use `writeCopyTo` if data is written to the Realm before
+            // the SubscriptionSet is `COMPLETE`. Work around the issue for now.
+            flexRealm1.subscriptions.waitForSynchronization(30.seconds)
+            flexRealm1.write {
+                copyToRealm(
+                    FlexParentObject(section).apply {
+                        name = "User1Object"
+                    }
+                )
+            }
+            flexRealm1.syncSession.uploadAllLocalChanges(30.seconds)
+            assertEquals(SubscriptionSetState.COMPLETE, flexRealm1.subscriptions.state)
+            // Copy to another flex RealmRealm
+            flexRealm1.writeCopyTo(syncConfig2)
+            assertTrue(fileExists(syncConfig2.path))
+            // Debug this test, breakpoint here and grab the bundled realm from the location
+            println("Flexible sync bundled realm is in ${syncConfig2.path}")
+        }
+    }
+
+    // Sanity check that we can in fact open a flexible sync realm file as initial file
+    @Test
+    fun initialRealm_flexibleSync() = runBlocking {
+        val flexApp = TestApp(
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
+        try {
+            val (email1, password1) = randomEmail() to "password1234"
+            val user1 = flexApp.createUserAndLogIn(email1, password1)
+            val syncConfig1 = createFlexibleSyncConfig(
+                user = user1,
+                name = "sync1.realm",
+                errorHandler = { _, error ->
+                    fail(error.toString())
+                },
+                schema = setOf(
+                    FlexParentObject::class,
+                    FlexChildObject::class,
+                    FlexEmbeddedObject::class
+                ),
+            ) {
+                initialRealmFile("asset-fs.realm")
+                initialData {
+                    assertEquals(1, query<FlexParentObject>().find().size)
+                }
+            }
+
+            Realm.open(syncConfig1).use { flexRealm1: Realm ->
+                assertEquals(1, flexRealm1.subscriptions.size)
+                assertNotNull(flexRealm1.subscriptions.findByName("parentSubscription"))
+            }
+        } finally {
+            flexApp.close()
+        }
+    }
+
+    @Test
+    fun partitionBasedSyncConfig_throwsWithLocalInitialRealmFile() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        val local = createSyncConfig(user = user, partitionValue = partitionValue, name = "local") {
+            initialRealmFile("asset-local.realm")
+        }
+        assertFalse(fileExists(local.path))
+        assertFailsWithMessage<IllegalStateException>("has history type 'Local in-Realm'") {
+            Realm.open(local)
+        }
+    }
+
+    @Test
+    fun flexibleSync_throwsWithLocalInitialRealmFile() {
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        val local = createFlexibleSyncConfig(user = user, name = "local") {
+            initialRealmFile("asset-local.realm")
+        }
+        assertFalse(fileExists(local.path))
+        assertFailsWithMessage<IllegalStateException>("has history type 'Local in-Realm'") {
+            Realm.open(local)
+        }
+    }
+
 //    @Test
 //    fun initialVersion() {
 //        assertEquals(INITIAL_VERSION, realm.version())
@@ -1678,6 +1898,7 @@ class SyncedRealmTests {
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
         schema: Set<KClass<out BaseRealmObject>> = setOf(ParentPk::class, ChildPk::class),
+        block: SyncConfiguration.Builder.() -> Unit = {}
     ): SyncConfiguration = SyncConfiguration.Builder(
         schema = schema,
         user = user,
@@ -1686,6 +1907,7 @@ class SyncedRealmTests {
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
         if (log != null) builder.log(log.level, log.loggers)
+        block(builder)
     }.build()
 
     @Suppress("LongParameterList")
@@ -1700,7 +1922,8 @@ class SyncedRealmTests {
             FlexChildObject::class,
             FlexEmbeddedObject::class
         ),
-        initialSubscriptions: InitialSubscriptionsCallback? = null
+        initialSubscriptions: InitialSubscriptionsCallback? = null,
+        block: SyncConfiguration.Builder.() -> Unit = {},
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
         schema = schema
@@ -1709,5 +1932,6 @@ class SyncedRealmTests {
         if (errorHandler != null) builder.errorHandler(errorHandler)
         if (log != null) builder.log(log.level, log.loggers)
         if (initialSubscriptions != null) builder.initialSubscriptions(false, initialSubscriptions)
+        block(builder)
     }.build()
 }

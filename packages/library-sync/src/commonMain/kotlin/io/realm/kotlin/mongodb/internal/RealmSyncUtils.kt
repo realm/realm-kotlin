@@ -24,8 +24,19 @@ import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
 import io.realm.kotlin.mongodb.exceptions.UserNotFoundException
 import io.realm.kotlin.mongodb.exceptions.WrongSyncTypeException
+import io.realm.kotlin.serializers.MutableRealmIntKSerializer
+import io.realm.kotlin.serializers.RealmAnyKSerializer
+import io.realm.kotlin.serializers.RealmInstantKSerializer
+import io.realm.kotlin.serializers.RealmUUIDKSerializer
+import io.realm.kotlin.types.MutableRealmInt
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.serializer
 
 @PublishedApi
 internal fun <T, R> channelResultCallback(
@@ -390,3 +401,20 @@ private fun createMessageFromAppError(error: AppError): String {
     val errorDesc = "$errorCodeDesc(${error.code.nativeValue})"
     return "[$categoryDesc][$errorDesc]$msg$serverLogsLink"
 }
+
+@Suppress("UNCHECKED_CAST")
+@PublishedApi
+internal inline fun <reified T> SerializersModule.serializerOrRealmBuiltInSerializer(): KSerializer<T> =
+    when (T::class) {
+        /**
+         * Automatically resolves any Realm datatype serializer or defaults to the type built in.
+         *
+         * ReamLists, Sets and others cannot be resolved here as we don't have the type information
+         * required to instantiate them. They require to be instantiated by the user.
+         */
+        MutableRealmInt::class -> MutableRealmIntKSerializer
+        RealmUUID::class -> RealmUUIDKSerializer
+        RealmInstant::class -> RealmInstantKSerializer
+        RealmAny::class -> RealmAnyKSerializer
+        else -> serializer<T>()
+    } as KSerializer<T>

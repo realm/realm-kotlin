@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.RealmAppT
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
@@ -69,7 +70,8 @@ public class AppImpl(
             ?.let { UserImpl(it, this) }
 
     override fun allUsers(): Map<String, User> {
-        val nativeUsers: List<RealmUserPointer> = RealmInterop.realm_app_get_all_users(nativePointer)
+        val nativeUsers: List<RealmUserPointer> =
+            RealmInterop.realm_app_get_all_users(nativePointer)
         val map = mutableMapOf<String, User>()
         nativeUsers.map { ptr: RealmUserPointer ->
             val user = UserImpl(ptr, this)
@@ -85,7 +87,11 @@ public class AppImpl(
         Channel<Result<User>>(1).use { channel ->
             RealmInterop.realm_app_log_in_with_credentials(
                 nativePointer,
-                Validation.checkType<CredentialsImpl>(credentials, "credentials").nativePointer,
+                when (credentials) {
+                    is CredentialsImpl -> credentials.nativePointer
+                    is CustomEJsonCredentialsImpl -> credentials.nativePointer(this)
+                    else -> throw IllegalArgumentException("Argument 'credentials' is of an invalid type ${credentials::class.simpleName}")
+                },
                 channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
                     UserImpl(userPointer, this)
                 }

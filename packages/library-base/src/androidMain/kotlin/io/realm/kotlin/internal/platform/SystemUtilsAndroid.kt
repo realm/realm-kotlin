@@ -2,8 +2,11 @@ package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmInitializer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
+import io.realm.kotlin.internal.util.Exceptions
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
+import java.io.FileNotFoundException
+import java.io.InputStream
 
 @Suppress("MayBeConst") // Cannot make expect/actual const
 
@@ -23,6 +26,12 @@ public actual val DEVICE_MODEL: String = android.os.Build.MODEL
 
 // Returns the root directory of the platform's App data
 public actual fun appFilesDirectory(): String = RealmInitializer.filesDir.absolutePath
+
+public actual fun assetFileAsStream(assetFilename: String): InputStream = try {
+    RealmInitializer.asset(assetFilename)
+} catch (e: FileNotFoundException) {
+    throw Exceptions.assetFileNotFound(assetFilename, e)
+}
 
 // Returns the default logger for the platform
 public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
