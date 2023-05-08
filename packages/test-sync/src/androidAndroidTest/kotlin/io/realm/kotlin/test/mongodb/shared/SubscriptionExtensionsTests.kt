@@ -5,7 +5,6 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.ext.subscribe
 import io.realm.kotlin.mongodb.subscriptions
@@ -17,20 +16,15 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlin.random.Random
-import kotlin.test.BeforeTest
 import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
-import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
-
 
 /**
  * Class for testing the various extension methods we have for bridging the gap between Subscriptions
@@ -125,25 +119,17 @@ class SubscriptionExtensionsTests {
 
     @Test
     fun realmQuery_subscribe_anonymous_synchronizeFirstTime() {
-
     }
 
     @Test
     fun realmQuery_subscribeToAnonymous_synchronizeAlways() {
-
     }
 
     @Test
     fun realmQuery_subscribeToAnonymous_synchronizeNever() {
-
     }
-
 
     @Test
     fun realmResults_unsubscribe_throwsInsideWrite() {
-
     }
-
-
-
 }

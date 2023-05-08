@@ -22,9 +22,7 @@ import io.realm.kotlin.internal.interop.RealmAppT
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
-import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.DispatcherHolder
-import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AuthenticationChange

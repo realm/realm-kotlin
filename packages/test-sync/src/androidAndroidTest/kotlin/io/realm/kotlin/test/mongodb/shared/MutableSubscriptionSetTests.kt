@@ -47,13 +47,11 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -338,7 +336,7 @@ class MutableSubscriptionSetTests {
         } catch (ex: RuntimeException) {
             if (ex.message == "Boom!") {
                 realm.close()
-                 Realm.deleteRealm(config)
+                Realm.deleteRealm(config)
             }
         }
         Unit
@@ -421,7 +419,7 @@ class MutableSubscriptionSetTests {
         val results2 = realm.query<FlexParentObject>("section = $0", sectionId).subscribe(mode = WaitForSync.ALWAYS)
         assertEquals(5, results2.size)
     }
-    
+
     @Test
     fun subscribe_realmQuery_timeOut_fails() = runBlocking<Unit> {
         assertFailsWith<TimeoutCancellationException> {
@@ -484,7 +482,8 @@ class MutableSubscriptionSetTests {
         assertEquals(2, updatedSubs.size)
         // Updating the subscription will happen in the background, but
         // hopefully hasn't reached COMPLETE yet.
-        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)    }
+        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+    }
 
     @Test
     fun subscribe_realmResults_waitAlways() = runBlocking {

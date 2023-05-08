@@ -14,7 +14,6 @@ import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.ObjectId
@@ -23,7 +22,7 @@ import kotlin.time.Duration
 /**
  * TODO Create anonymous query
  */
-public suspend fun <T: RealmObject> RealmQuery<T>.subscribe(
+public suspend fun <T : RealmObject> RealmQuery<T>.subscribe(
     mode: WaitForSync = WaitForSync.FIRST_TIME,
     timeout: Duration = Duration.INFINITE
 ): RealmResults<T> {
@@ -33,7 +32,7 @@ public suspend fun <T: RealmObject> RealmQuery<T>.subscribe(
 /**
  * TODO Create named query
  */
-public suspend fun <T: RealmObject> RealmQuery<T>.subscribe(
+public suspend fun <T : RealmObject> RealmQuery<T>.subscribe(
     name: String,
     updateExisting: Boolean = false,
     mode: WaitForSync = WaitForSync.FIRST_TIME,
@@ -42,7 +41,7 @@ public suspend fun <T: RealmObject> RealmQuery<T>.subscribe(
     return createSubscriptionFromQuery(this, name, updateExisting, mode, timeout)
 }
 
-private suspend fun <T: RealmObject> createSubscriptionFromQuery(
+private suspend fun <T : RealmObject> createSubscriptionFromQuery(
     query: RealmQuery<T>,
     name: String?,
     updateExisting: Boolean = false,
@@ -85,6 +84,3 @@ private suspend fun <T: RealmObject> createSubscriptionFromQuery(
         }
     }
 }
-
-
-

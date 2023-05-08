@@ -17,4 +17,3 @@ public enum class WaitForSync {
      */
     NEVER
 }
-
