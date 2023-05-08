@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.Constants
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.platform.fileExists
+import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
@@ -99,6 +100,28 @@ public interface Realm : TypedRealm {
         public fun deleteRealm(configuration: Configuration) {
             if (!fileExists(configuration.path)) return
             RealmInterop.realm_delete_files(configuration.path)
+        }
+
+        /**
+         * Compacts the Realm file defined by the given configuration. Compaction can only succeed
+         * if all references to the Realm file has been closed.
+         *
+         * This method is not available on Windows (JVM), and will throw an [NotImplementedError]
+         * there.
+         *
+         * @param configuration configuration for the Realm to compact.
+         * @return `true` if compaction succeeded, `false` if not.
+         */
+        public fun compactRealm(configuration: Configuration): Boolean {
+            if (isWindows()) {
+                throw NotImplementedError("Realm.compact() is not supported on Windows. See https://github.com/realm/realm-core/issues/4111 for more information.")
+            }
+            if (!fileExists(configuration.path)) return false
+            val config = (configuration as InternalConfiguration)
+            val (dbPointer, _) = RealmInterop.realm_open(config.createNativeConfiguration())
+            return RealmInterop.realm_compact(dbPointer).also {
+                RealmInterop.realm_close(dbPointer)
+            }
         }
     }
 

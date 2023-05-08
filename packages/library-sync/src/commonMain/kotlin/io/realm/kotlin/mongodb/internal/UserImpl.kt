@@ -29,8 +29,6 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
-import org.mongodb.kbson.BsonDocument
-import org.mongodb.kbson.serialization.Bson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -61,17 +59,12 @@ public class UserImpl(
     override val functions: Functions by lazy { FunctionsImpl(app, this) }
 
     @PublishedApi
-    internal fun profileAsBsonDocumentInternal(): BsonDocument {
-        return Bson(RealmInterop.realm_user_get_profile(nativePointer)) as BsonDocument
-    }
+    internal fun <T> profileInternal(block: (ejsonEncodedProfile: String) -> T): T =
+        block(RealmInterop.realm_user_get_profile(nativePointer))
 
     @PublishedApi
-    internal fun customDataAsBsonDocumentInternal(): BsonDocument? {
-        return RealmInterop.realm_user_get_custom_data(nativePointer)
-            ?.let { ejsonCustomData: String ->
-                Bson(ejsonCustomData) as BsonDocument
-            }
-    }
+    internal fun <T> customDataInternal(block: (ejsonEncodedCustomData: String) -> T?): T? =
+        RealmInterop.realm_user_get_custom_data(nativePointer)?.let(block)
 
     override suspend fun refreshCustomData() {
         Channel<Result<Unit>>(1).use { channel ->
@@ -93,30 +86,48 @@ public class UserImpl(
         }
 
     override suspend fun logOut() {
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State?>>(1).use { channel ->
+            val reportLoggedOut = loggedIn
             RealmInterop.realm_app_log_out(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
+                channelResultCallback<Unit, User.State?>(channel) {
+                    if (reportLoggedOut) {
+                        User.State.LOGGED_OUT
+                    } else {
+                        null
+                    }
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State? ->
+                    if (state != null) {
+                        app.reportAuthenticationChange(this, state)
+                    }
+                }
         }
     }
 
     override suspend fun remove(): User {
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State?>>(1).use { channel ->
+            val reportRemoved = loggedIn
             RealmInterop.realm_app_remove_user(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
+                channelResultCallback<Unit, User.State?>(channel) {
+                    if (reportRemoved) {
+                        User.State.REMOVED
+                    } else {
+                        null
+                    }
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State? ->
+                    if (state != null) {
+                        app.reportAuthenticationChange(this, state)
+                    }
+                }
         }
         return this
     }
@@ -125,16 +136,18 @@ public class UserImpl(
         if (state != User.State.LOGGED_IN) {
             throw IllegalStateException("User must be logged in, in order to be deleted.")
         }
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State>>(1).use { channel ->
             RealmInterop.realm_app_delete_user(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
+                channelResultCallback<Unit, User.State>(channel) {
+                    User.State.REMOVED
                 }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State ->
+                    app.reportAuthenticationChange(this, state)
+                }
         }
     }
 

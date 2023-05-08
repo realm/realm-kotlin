@@ -2,7 +2,9 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.types.RealmInstant
+import org.mongodb.kbson.BsonDateTime
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -39,3 +41,8 @@ internal fun Duration.toRealmInstant(): RealmInstant {
     val nanos: Duration = (this - seconds.seconds)
     return RealmInstant.from(seconds, nanos.inWholeNanoseconds.toInt())
 }
+
+internal fun RealmInstant.restrictToMillisPrecision() =
+    toDuration().inWholeMilliseconds.milliseconds.toRealmInstant()
+
+internal fun RealmInstant.asBsonDateTime() = BsonDateTime(toDuration().inWholeMilliseconds)

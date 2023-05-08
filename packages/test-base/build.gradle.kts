@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTes
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
+    kotlin("plugin.serialization") version Versions.kotlin
     // Test relies on the compiler plugin, but we cannot apply our full plugin from within the same
     // gradle run, so we just apply the compiler plugin directly as a dependency below instead
     // id("io.realm.kotlin")
@@ -67,6 +68,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:atomicfu:${Versions.atomicfu}")
                 implementation("com.squareup.okio:okio:${Versions.okio}")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:${Versions.serialization}")
             }
         }
 
@@ -213,5 +215,24 @@ kotlin {
         val macosTest by getting { dependsOn(nativeDarwinTest) }
         val iosMain by getting { dependsOn(nativeDarwin) }
         val iosTest by getting { dependsOn(nativeDarwinTest) }
+    }
+}
+
+// Rules for getting Kotlin Native resource test files in place for locating it with the `assetFile`
+// configuration. For JVM platforms the files are placed in
+// `src/jvmTest/resources`(non-Android JVM) and `src/androidTest/assets` (Android).
+kotlin {
+    targets.filterIsInstance<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests<*>>().forEach { simulatorTargets ->
+        val target = simulatorTargets.name
+        val testTaskName = "${target}Test"
+        val testTask = tasks.findByName(testTaskName) ?: error("Cannot locate test task: '$testTaskName")
+        val copyTask = tasks.register<Copy>("${target}TestResources") {
+            from("src/${testTaskName}/resources")
+            val parent = testTask.inputs.files.first().parent
+            into(parent)
+        }
+        testTask.let {
+            it.dependsOn(copyTask)
+        }
     }
 }

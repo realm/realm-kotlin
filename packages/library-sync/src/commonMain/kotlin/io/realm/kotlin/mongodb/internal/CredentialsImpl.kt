@@ -22,10 +22,8 @@ import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
-import org.mongodb.kbson.BsonType
-import org.mongodb.kbson.BsonValue
-import org.mongodb.kbson.serialization.Bson
 
+@PublishedApi
 internal class CredentialsImpl constructor(
     internal val nativePointer: RealmCredentialsPointer
 ) : Credentials {
@@ -56,25 +54,30 @@ internal class CredentialsImpl constructor(
             RealmInterop.realm_app_credentials_new_apple(Validation.checkEmpty(idToken, "idToken"))
 
         internal fun facebook(accessToken: String): RealmCredentialsPointer =
-            RealmInterop.realm_app_credentials_new_facebook(Validation.checkEmpty(accessToken, "accessToken"))
+            RealmInterop.realm_app_credentials_new_facebook(
+                Validation.checkEmpty(
+                    accessToken,
+                    "accessToken"
+                )
+            )
 
         internal fun google(token: String, type: GoogleAuthType): RealmCredentialsPointer {
             Validation.checkEmpty(token, "token")
             return when (type) {
-                GoogleAuthType.AUTH_CODE -> RealmInterop.realm_app_credentials_new_google_auth_code(token)
-                GoogleAuthType.ID_TOKEN -> RealmInterop.realm_app_credentials_new_google_id_token(token)
+                GoogleAuthType.AUTH_CODE -> RealmInterop.realm_app_credentials_new_google_auth_code(
+                    token
+                )
+                GoogleAuthType.ID_TOKEN -> RealmInterop.realm_app_credentials_new_google_id_token(
+                    token
+                )
             }
         }
 
         internal fun jwt(jwtToken: String): RealmCredentialsPointer =
             RealmInterop.realm_app_credentials_new_jwt(Validation.checkEmpty(jwtToken, "jwtToken"))
 
-        internal fun customFunction(payload: Any): RealmCredentialsPointer =
-            BsonEncoder.encodeToBsonValue(payload).let { bsonValue: BsonValue ->
-                require(bsonValue.bsonType == BsonType.DOCUMENT) {
-                    "Invalid payload type '${payload::class.simpleName}', only BsonDocument and maps are supported."
-                }
-                RealmInterop.realm_app_credentials_new_custom_function(Bson.toJson(bsonValue))
-            }
+        @PublishedApi
+        internal fun customFunction(ejsonEncodedPayload: String): RealmCredentialsPointer =
+            RealmInterop.realm_app_credentials_new_custom_function(ejsonEncodedPayload)
     }
 }

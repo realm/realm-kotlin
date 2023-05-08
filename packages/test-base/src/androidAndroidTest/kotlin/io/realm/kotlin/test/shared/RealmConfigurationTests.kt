@@ -271,15 +271,6 @@ class RealmConfigurationTests {
         assertEquals(logger, config.log.loggers.last())
     }
 
-    @Suppress("invisible_member")
-    @Test
-    fun removeSystemLogger() {
-        val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
-            .removeSystemLogger()
-            .build()
-        assertTrue(config.log.loggers.isEmpty())
-    }
-
     @Test
     fun defaultMaxNumberOfActiveVersions() {
         val config = RealmConfiguration.create(schema = setOf(Sample::class))
@@ -437,6 +428,53 @@ class RealmConfigurationTests {
         assertFailsWithEncryptionKey(builder, 32)
         assertFailsWithEncryptionKey(builder, 128)
         assertFailsWithEncryptionKey(builder, 256)
+    }
+
+    @Test
+    fun assetFile_defaultIsNull() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+        val config = builder.build()
+        assertNull(config.initialRealmFileConfiguration)
+    }
+
+    @Test
+    fun assetFile_roundTrip() {
+        RealmConfiguration.Builder(setOf(Sample::class))
+            .initialRealmFile("FILENAME", "SHA256")
+            .build()
+            .initialRealmFileConfiguration!!
+            .run {
+                assertEquals("FILENAME", assetFile)
+                assertEquals("SHA256", checksum)
+            }
+    }
+
+    @Test
+    fun assetFile_throwsOnEmptyFilename() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+        assertFailsWithMessage<IllegalArgumentException>("Asset file must be a non-empty filename.") {
+            builder.initialRealmFile("")
+        }
+    }
+
+    @Test
+    fun assetFile_throwsIfDeleteRealmIfMigrationNeeded() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+            .initialRealmFile("ASSETFILE")
+            .deleteRealmIfMigrationNeeded()
+        assertFailsWithMessage<IllegalStateException>("Cannot combine `initialRealmFile` and `deleteRealmIfMigrationNeeded` configuration options") {
+            builder.build()
+        }
+    }
+
+    @Test
+    fun assetFile_throwsIfInMemory() {
+        val builder = RealmConfiguration.Builder(setOf(Sample::class))
+            .initialRealmFile("ASSETFILE")
+            .inMemory()
+        assertFailsWithMessage<IllegalStateException>("Cannot combine `initialRealmFile` and `inMemory` configuration options") {
+            builder.build()
+        }
     }
 
     private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {

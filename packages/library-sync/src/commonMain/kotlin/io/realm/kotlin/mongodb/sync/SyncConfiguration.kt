@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.Configuration
@@ -22,15 +21,15 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
-import io.realm.kotlin.internal.RealmLog
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
@@ -230,7 +229,7 @@ public interface SyncConfiguration : Configuration {
         private var syncClientResetStrategy: SyncClientResetStrategy? = null
         private var initialSubscriptions: InitialSubscriptionsConfiguration? = null
         private var waitForServerChanges: InitialRemoteDataConfiguration? = null
-        private lateinit var appLog: RealmLog
+
         /**
          * Creates a [SyncConfiguration.Builder] for Flexible Sync. Flexible Sync must be enabled
          * on the server for this to work.
@@ -376,10 +375,9 @@ public interface SyncConfiguration : Configuration {
                 throw IllegalArgumentException("A valid, logged in user is required.")
             }
             // Prime builder with log configuration from AppConfiguration
-            appLog = (user as UserImpl).app.configuration.log
-            this.logLevel = appLog.configuration.level
-            this.userLoggers = appLog.configuration.loggers
-            this.removeSystemLogger = true
+            val appLog = (user as UserImpl).app.configuration.logger
+            this.logLevel = appLog.level
+            this.appConfigLoggers = appLog.loggers
         }
 
         /**
@@ -407,8 +405,7 @@ public interface SyncConfiguration : Configuration {
             apply {
                 // Will clear any primed configuration
                 this.logLevel = level
-                this.userLoggers = customLoggers
-                this.removeSystemLogger = false
+                this.realmConfigLoggers = customLoggers
             }
 
         /**
@@ -496,32 +493,14 @@ public interface SyncConfiguration : Configuration {
 
         @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
-            val allLoggers = userLoggers.toMutableList()
-            // TODO This will not remove the system logger if it was added in AppConfiguration and
-            //  no overrides are done for this builder. But as removeSystemLogger() is not public
-            //  and most people will only specify loggers on the AppConfiguration this is OK for
-            //  now.
-            if (!removeSystemLogger) {
-                allLoggers.add(0, createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-            }
+            val realmLogger = ContextLogger("Sdk")
 
             // Set default error handler after setting config logging logic
             if (this.errorHandler == null) {
                 this.errorHandler = object : SyncSession.ErrorHandler {
-
-                    private val fallbackErrorLogger: RealmLogger by lazy {
-                        createDefaultSystemLogger("SYNC_ERROR")
-                    }
-
                     override fun onError(session: SyncSession, error: SyncException) {
                         error.message?.let {
-                            // Grab user logger if present or use fallback to at least show something
-                            // in case no loggers are to be found
-                            if (userLoggers.isNotEmpty()) {
-                                userLoggers[0].log(LogLevel.WARN, it)
-                            } else {
-                                fallbackErrorLogger.log(LogLevel.WARN, it)
-                            }
+                            realmLogger.warn(it)
                         }
                     }
                 }
@@ -531,22 +510,22 @@ public interface SyncConfiguration : Configuration {
             if (syncClientResetStrategy == null) {
                 syncClientResetStrategy = object : RecoverOrDiscardUnsyncedChangesStrategy {
                     override fun onBeforeReset(realm: TypedRealm) {
-                        appLog.info("Client reset: attempting to automatically recover unsynced changes in Realm: ${realm.configuration.path}")
+                        realmLogger.info("Client reset: attempting to automatically recover unsynced changes in Realm: ${realm.configuration.path}")
                     }
 
                     override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
-                        appLog.info("Client reset: successfully recovered all unsynced changes in Realm: ${after.configuration.path}")
+                        realmLogger.info("Client reset: successfully recovered all unsynced changes in Realm: ${after.configuration.path}")
                     }
 
                     override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
-                        appLog.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
+                        realmLogger.info("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm: ${after.configuration.path}")
                     }
 
                     override fun onManualResetFallback(
                         session: SyncSession,
                         exception: ClientResetRequiredException
                     ) {
-                        appLog.error("Client reset: manual reset required for Realm in '${exception.originalFilePath}'")
+                        realmLogger.error("Client reset: manual reset required for Realm in '${exception.originalFilePath}'")
                     }
                 }
             }
@@ -559,6 +538,13 @@ public interface SyncConfiguration : Configuration {
             val fullPathToFile = getAbsolutePath(name)
             val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
             val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
+
+            // Configure logging during creation of a (Realm/Sync)Configuration to keep old behavior
+            // for configuring logging. This should be removed when `LogConfiguration` is removed.
+            RealmLog.level = logLevel
+            realmConfigLoggers.forEach { RealmLog.add(it) }
+            @Suppress("invisible_reference", "invisible_member")
+            val allLoggers: List<RealmLogger> = listOf(RealmLog.systemLoggerInstalled).filterNotNull() + appConfigLoggers + realmConfigLoggers
 
             val baseConfiguration = ConfigurationImpl(
                 directory,
@@ -583,7 +569,9 @@ public interface SyncConfiguration : Configuration {
                 null, // migration is not relevant for sync,
                 initialDataCallback,
                 partitionValue == null,
-                inMemory
+                inMemory,
+                initialRealmFileConfiguration,
+                realmLogger
             )
 
             return SyncConfigurationImpl(

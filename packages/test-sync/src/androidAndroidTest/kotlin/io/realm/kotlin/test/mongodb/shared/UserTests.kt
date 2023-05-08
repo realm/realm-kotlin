@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
+
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
@@ -24,14 +27,18 @@ import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
+import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonString
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.Bson
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -446,7 +453,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             anonUser.linkCredentials(credentials)
         }.let {
-            assertTrue(it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"), it.message)
+            assertTrue(
+                it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"),
+                it.message
+            )
         }
     }
 
@@ -462,7 +472,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             emailUser1.linkCredentials(credentials2)
         }.let {
-            assertTrue(it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"), it.message)
+            assertTrue(
+                it.message!!.contains("linking a local-userpass identity is not allowed when one is already linked"),
+                it.message
+            )
         }
     }
 
@@ -475,7 +488,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             emailUser1.linkCredentials(Credentials.anonymous())
         }.let {
-            assertTrue(it.message!!.contains("linking an anonymous identity is not allowed"), it.message)
+            assertTrue(
+                it.message!!.contains("linking an anonymous identity is not allowed"),
+                it.message
+            )
         }
     }
 
@@ -490,7 +506,10 @@ class UserTests {
         assertFailsWith<CredentialsCannotBeLinkedException> {
             anonUser.linkCredentials(creds)
         }.let {
-            assertTrue(it.message!!.contains("a user already exists with the specified provider"), it.message)
+            assertTrue(
+                it.message!!.contains("a user already exists with the specified provider"),
+                it.message
+            )
         }
     }
 
@@ -619,26 +638,40 @@ class UserTests {
         assertEquals(user.hashCode(), sameUserNewLogin.hashCode())
     }
 
+    @Serializable
+    data class SerializableCustomData(
+        @SerialName("_id") val id: String,
+        @SerialName("user_id") val userId: String,
+        @SerialName("custom_field") val customField: String
+    )
+
     @Test
-    fun customDataAsBsonDocument_initiallyNull() {
+    fun customData_initiallyNull() {
         val user = runBlocking {
             val (email, password) = randomEmail() to "123456"
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
+        assertNull(user.customData<SerializableCustomData>())
+        assertNull(user.customData(SerializableCustomData.serializer()))
     }
 
     @Test
-    fun customDataAsBsonDocument_refresh() {
+    fun customData_refresh() {
         val user = runBlocking {
             val (email, password) = randomEmail() to "123456"
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
+        assertNull(user.customData<SerializableCustomData>())
+        assertNull(user.customData<SerializableCustomData>(SerializableCustomData.serializer()))
 
-        updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+        updatecustomDataAsBsonDocument(
+            user,
+            BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE))
+        )
 
         runBlocking {
             user.refreshCustomData()
@@ -646,27 +679,49 @@ class UserTests {
         val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
+
+        setOf(
+            user.customData<SerializableCustomData>(),
+            user.customData<SerializableCustomData>(SerializableCustomData.serializer())
+        ).forEach { serializableCustomData ->
+            assertNotNull(serializableCustomData)
+            assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
+        }
     }
 
     @Test
-    fun customDataAsBsonDocument_refreshByLogout() {
+    fun customData_refreshByLogout() {
         val (email, password) = randomEmail() to "123456"
         val user = runBlocking {
             createUserAndLogin(email, password)
         }
         // Newly registered users do not have any custom data with current test server setup
         assertNull(user.customDataAsBsonDocument())
+        assertNull(user.customData<SerializableCustomData>())
+        assertNull(user.customData<SerializableCustomData>(SerializableCustomData.serializer()))
 
-        updatecustomDataAsBsonDocument(user, BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE)))
+        updatecustomDataAsBsonDocument(
+            user,
+            BsonDocument(CUSTOM_USER_DATA_FIELD to BsonString(CUSTOM_USER_DATA_VALUE))
+        )
 
         // But will be updated when authorization token is refreshed
         runBlocking {
             user.logOut()
             app.login(Credentials.emailPassword(email, password))
         }
+
         val userData = user.customDataAsBsonDocument()
         assertNotNull(userData)
         assertEquals(CUSTOM_USER_DATA_VALUE, userData[CUSTOM_USER_DATA_FIELD]!!.asString().value)
+
+        setOf(
+            user.customData<SerializableCustomData>(),
+            user.customData<SerializableCustomData>(SerializableCustomData.serializer())
+        ).forEach { serializableCustomData ->
+            assertNotNull(serializableCustomData)
+            assertEquals(CUSTOM_USER_DATA_VALUE, serializableCustomData.customField)
+        }
     }
 
     private fun updatecustomDataAsBsonDocument(user: User, data: BsonDocument) {
@@ -675,7 +730,10 @@ class UserTests {
         val USER_ID_FIELD = "user_id"
 
         runBlocking {
-            app.insertDocument(COLLECTION_NAME, Bson.toJson(data.append(USER_ID_FIELD, BsonString(user.id))))
+            app.insertDocument(
+                COLLECTION_NAME,
+                Bson.toJson(data.append(USER_ID_FIELD, BsonString(user.id)))
+            )
         }
     }
 

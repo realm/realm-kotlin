@@ -576,6 +576,18 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
     }
 }
 
+/**
+ * Returns the underlying schema name for a given class type
+ */
+fun getSchemaClassName(clazz: IrClass): String {
+    return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
+        @Suppress("UNCHECKED_CAST")
+        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+    } else {
+        clazz.name.identifier
+    }
+}
+
 /** Finds the line and column of [IrDeclaration] */
 fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
     val sourceRangeInfo = file.fileEntry.getSourceRangeInfo(

@@ -28,6 +28,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.VersionInfo
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -45,12 +46,14 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class VersionTrackingTests {
+    private lateinit var initialLogLevel: LogLevel
     private lateinit var configuration: RealmConfiguration
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
 
     @BeforeTest
     fun setup() {
+        initialLogLevel = RealmLog.level
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration.Builder(
             schema = setOf(
@@ -70,6 +73,7 @@ class VersionTrackingTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+        RealmLog.level = initialLogLevel
     }
 
     @Test
@@ -87,7 +91,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 
@@ -95,7 +98,6 @@ class VersionTrackingTests {
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
             assertEquals(1, allTracked.size, toString())
-            assertNull(notifier, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
@@ -104,7 +106,6 @@ class VersionTrackingTests {
         realm.query<Sample>().find()
         realm.activeVersions().run {
             assertEquals(2, allTracked.size, toString())
-            assertNull(notifier, toString())
             assertNotNull(writer, toString())
             assertEquals(1, writer?.active?.size, toString())
         }
@@ -115,7 +116,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 
@@ -124,7 +124,6 @@ class VersionTrackingTests {
         realm.write { copyToRealm(Sample()) }
         realm.activeVersions().run {
             assertEquals(2, allTracked.size, toString())
-            assertNull(notifier, toString())
             assertNotNull(writer, toString())
             assertEquals(1, writer?.active?.size, toString())
         }
@@ -135,7 +134,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 
@@ -161,7 +159,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
             assertNull(writer)
         }
 
@@ -204,6 +201,11 @@ class VersionTrackingTests {
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
+        assertEquals(
+            6,
+            samples.size,
+            samples.map { it.list.version() }.joinToString { it.toString() }
+        )
     }
 }
 

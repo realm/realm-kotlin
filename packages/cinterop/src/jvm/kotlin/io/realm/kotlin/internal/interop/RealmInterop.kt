@@ -249,6 +249,12 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_compact(realm: RealmPointer): Boolean {
+        val compacted = booleanArrayOf(false)
+        realmc.realm_compact(realm.cptr(), compacted)
+        return compacted.first()
+    }
+
     actual fun realm_convert_with_config(
         realm: RealmPointer,
         config: RealmConfigurationPointer,
@@ -1200,18 +1206,12 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
-    actual fun realm_sync_client_config_set_log_callback(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        callback: SyncLogCallback
-    ) {
-        realmc.set_log_callback(syncClientConfig.cptr(), callback)
+    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
+        realmc.set_log_callback(level.priority, callback)
     }
 
-    actual fun realm_sync_client_config_set_log_level(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        level: CoreLogLevel
-    ) {
-        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.priority)
+    actual fun realm_set_log_level(level: CoreLogLevel) {
+        realmc.realm_set_log_level(level.priority)
     }
 
     actual fun realm_sync_client_config_set_metadata_mode(
@@ -1543,7 +1543,7 @@ actual object RealmInterop {
         serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, null, callback)
     }
 
     actual fun realm_app_call_reset_password_function(
