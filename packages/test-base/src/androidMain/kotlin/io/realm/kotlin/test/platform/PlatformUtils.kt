@@ -24,7 +24,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     @SuppressLint("NewApi")

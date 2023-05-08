@@ -236,7 +236,9 @@ internal fun IrPluginContext.lookupConstructorInClass(
 internal fun <T> IrClass.lookupCompanionDeclaration(
     name: Name
 ): T {
-    return this.companionObject()?.declarations?.first { it: IrDeclaration -> it is IrDeclarationWithName && it.name == name } as T
+    return this.companionObject()?.declarations?.first {
+        it is IrDeclarationWithName && it.name == name
+    } as T
         ?: fatalError("Cannot find companion method ${name.asString()} on ${this.name}")
 }
 

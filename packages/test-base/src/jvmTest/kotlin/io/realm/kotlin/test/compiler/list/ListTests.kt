@@ -24,11 +24,6 @@ import io.realm.kotlin.test.compiler.OBJECT_CLASS
 import io.realm.kotlin.test.compiler.createFileAndCompile
 import io.realm.kotlin.test.compiler.getTestCodeForCollection
 import io.realm.kotlin.test.compiler.globalNonNullableTypes
-import io.realm.kotlin.test.util.Compiler.compileFromSource
-import io.realm.kotlin.test.util.TypeDescriptor
-import io.realm.kotlin.types.RealmAny
-import io.realm.kotlin.types.RealmObject
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
