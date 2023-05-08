@@ -47,6 +47,8 @@ import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
  */
 @AutoService(ComponentRegistrar::class)
 @OptIn(ExperimentalCompilerApi::class)
+// TODO ComponentRegistrar is deprecated. Should be migrated to CompilerPluginRegistrar to support
+//  indicating whether plugin is k2-compatible, etc.
 class Registrar : ComponentRegistrar {
     override fun registerProjectComponents(
         project: MockProject,

@@ -382,8 +382,6 @@ class GenerationExtensionTest {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
-            // TODO Deprecated should be replaced with compilerPluginRegistrars but requires type of
-            //  plugins to be updated to CompilerPluginRegistrars
             componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf(

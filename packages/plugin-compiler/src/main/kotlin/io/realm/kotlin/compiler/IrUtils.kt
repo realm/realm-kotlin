@@ -476,9 +476,6 @@ internal fun IrClass.addFakeOverrides(
     }
 }
 
-fun IrBuilderWithScope.irGetFieldWrapper(receiver: IrGetValueImpl, field: IrField, type: IrType = field.type): IrExpression =
-    IrGetFieldImpl(startOffset, endOffset, field.symbol, type, receiver)
-
 // Copy of Kotlin's Fir2IrComponents.createSafeCallConstruction
 fun IrBlockBuilder.createSafeCallConstruction(
     receiverVariable: IrVariable,
