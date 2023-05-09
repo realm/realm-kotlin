@@ -316,7 +316,7 @@ class FlexibleSyncIntegrationTests {
 
             Realm.open(config1).use { realm ->
                 realm.subscriptions.update {
-                    add(realm.query<FlexParentObject>("_id = $0", ObjectId()))
+                    add(realm.query<FlexParentObject>("_id = $0", BsonObjectId()))
                 }.waitForSynchronization(30.seconds)
 
                 realm.write {
