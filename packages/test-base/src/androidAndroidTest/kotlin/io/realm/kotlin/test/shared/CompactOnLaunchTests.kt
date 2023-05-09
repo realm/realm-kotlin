@@ -65,15 +65,59 @@ class CompactOnLaunchTests {
         assertEquals(Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK, config.compactOnLaunchCallback)
     }
 
+    private val Int.MB get() = (this * 1024 * 1024).toLong()
+
+    private val Int.Bytes get() = (this).toLong()
+
     @Test
     fun defaultCallback_boundaries() {
+        // This callback will only return [True] if the file is above 50 MB and 50% or more of the space can be reclaimed.
         val callback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK
-        assertFalse(callback.shouldCompact(50 * 1024 * 1024, 40 * 1024 * 1024))
-        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024))
-        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 3))
-        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 4))
-        assertFalse(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 5))
-        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25))
+
+        fun assert(shouldCompact: Boolean, fileSize: Long, usage: Double) {
+            assertEquals(
+                expected = shouldCompact,
+                actual = callback.shouldCompact(
+                    totalBytes = fileSize,
+                    usedBytes = (fileSize * usage).toLong()
+                ),
+                message = "fileSize: $fileSize usage: $usage"
+            )
+        }
+
+        // File size <= 50MB, it will never reclaim
+        assert(
+            shouldCompact = false,
+            fileSize = 50.MB,
+            usage = 0.49
+        )
+        assert(
+            shouldCompact = false,
+            fileSize = 50.MB,
+            usage = 0.5
+        )
+        assert(
+            shouldCompact = false,
+            fileSize = 50.MB,
+            usage = 0.51
+        )
+
+        // File size > 50MB, only reclaims if usage >= 0.5
+        assert(
+            shouldCompact = true,
+            fileSize = 50.MB + 1.Bytes,
+            usage = 0.49
+        )
+        assert(
+            shouldCompact = true,
+            fileSize = 50.MB + 1.Bytes,
+            usage = 0.5
+        )
+        assert(
+            shouldCompact = false,
+            fileSize = 50.MB + 1.Bytes,
+            usage = 0.51
+        )
     }
 
     @Test
