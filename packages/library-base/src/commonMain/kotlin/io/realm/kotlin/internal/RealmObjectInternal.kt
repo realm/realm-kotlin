@@ -18,7 +18,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
-import kotlinx.serialization.Transient
 
 /**
  * Internal interface for Realm objects.
@@ -30,6 +29,5 @@ import kotlinx.serialization.Transient
 // TODO Public due to being a transitive dependency of Mediator
 @Suppress("VariableNaming")
 public interface RealmObjectInternal : BaseRealmObject {
-    @Transient
     public var `io_realm_kotlin_objectReference`: RealmObjectReference<out BaseRealmObject>?
 }

@@ -33,7 +33,7 @@ object Compiler {
             sources = listOf(source)
             useIR = true
             messageOutputStream = System.out
-            compilerPluginRegistrars = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf("-Xjvm-default=enable")
         }.compile()

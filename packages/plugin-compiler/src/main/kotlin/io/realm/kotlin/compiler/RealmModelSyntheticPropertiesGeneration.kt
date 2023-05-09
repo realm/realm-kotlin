@@ -126,9 +126,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val realmObjectCompanionInterface =
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
-    val kotlinTransientAnnotationClass by lazy {
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_SERIALIZATION_TRANSIENT_ANNOTATION)
-    }
 
     private val classInfoClass = pluginContext.lookupClassOrThrow(CLASS_INFO)
     val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
@@ -691,22 +688,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     ) {
         // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         // Also add @kotlin.
-        val transientAnnotation = IrConstructorCallImpl(
-            type = kotlinTransientAnnotationClass.defaultType,
-            symbol = kotlinTransientAnnotationClass.constructors.first().symbol,
-            constructorTypeArgumentsCount = 0,
-            valueArgumentsCount = 0,
-            startOffset = UNDEFINED_OFFSET,
-            endOffset = UNDEFINED_OFFSET,
-            typeArgumentsCount = 0
-        )
         val property = addProperty {
             at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             name = propertyName
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             isVar = true
-            annotations = listOf(transientAnnotation)
         }
         // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
         property.backingField = pluginContext.irFactory.buildField {
@@ -716,7 +703,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             visibility = DescriptorVisibilities.PRIVATE
             modality = property.modality
             type = propertyType
-            annotations = listOf(transientAnnotation)
         }.apply {
             // EXPRESSION_BODY
             //  CONST Boolean type=kotlin.Boolean value=false

@@ -113,7 +113,6 @@ internal object FqNames {
     val PERSISTED_NAME_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PersistedName")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
-    val KOTLIN_SERIALIZATION_TRANSIENT_ANNOTATION = FqName("kotlinx.serialization.Transient")
 
     // Realm data types
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")

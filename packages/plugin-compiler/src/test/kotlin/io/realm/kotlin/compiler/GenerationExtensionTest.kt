@@ -37,7 +37,6 @@ import io.realm.kotlin.internal.schema.SchemaMetadata
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
-import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
@@ -374,16 +373,15 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
     }
 
-    @OptIn(ExperimentalCompilerApi::class)
     private fun compile(
         inputs: Files,
-        plugins: List<CompilerPluginRegistrar> = listOf(Registrar())
+        plugins: List<ComponentRegistrar> = listOf(Registrar())
     ): KotlinCompilation.Result =
         KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
-            compilerPluginRegistrars = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
                 "-Xjvm-default=enable",
@@ -394,13 +392,13 @@ class GenerationExtensionTest {
 
     private fun compileFromSource(
         source: SourceFile,
-        plugins: List<CompilerPluginRegistrar> = listOf(Registrar())
+        plugins: List<ComponentRegistrar> = listOf(Registrar())
     ): KotlinCompilation.Result =
         KotlinCompilation().apply {
             sources = listOf(source)
             useIR = true
             messageOutputStream = System.out
-            compilerPluginRegistrars = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf("-Xjvm-default=enable")
         }.compile()
