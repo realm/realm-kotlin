@@ -374,7 +374,6 @@ class PersistedNameTests {
         }
     }
 
-
     @Test
     fun persistedName_on_objectLink() {
         val config = RealmConfiguration
@@ -510,8 +509,7 @@ class Parent : RealmObject {
     var child: Child? = null
 }
 
-@PersistedName(name="RenamedChild")
+@PersistedName(name = "RenamedChild")
 class Child : RealmObject {
     var name = "child"
 }
-

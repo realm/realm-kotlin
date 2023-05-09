@@ -604,7 +604,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                 }
                                             }
                                             linkingObjectType -> getBacklinksTargetType(backingField)
-                                            else ->  null
+                                            else -> null
                                         }?.let { linkTargetType: IrType ->
                                             val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
                                             irString(getSchemaClassName(classRef))
