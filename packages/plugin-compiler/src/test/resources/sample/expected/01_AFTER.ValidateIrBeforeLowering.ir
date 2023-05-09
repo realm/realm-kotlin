@@ -60,10 +60,33 @@ MODULE_FRAGMENT name:<main>
                     obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<set-id>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                     propertyName: CONST String type=kotlin.String value="id"
                     value: GET_VAR '<set-?>: kotlin.Long declared in sample.input.Sample.<set-id>' type=kotlin.Long origin=null
+      PROPERTY name:ignoredDelegate visibility:public modality:FINAL [delegated,val]
+        annotations:
+          Ignore
+        FIELD PROPERTY_DELEGATE name:ignoredDelegate$delegate type:kotlin.Lazy<kotlin.String> visibility:private [final]
+          EXPRESSION_BODY
+            CALL 'public final fun lazy <T> (initializer: kotlin.Function0<T of kotlin.LazyKt.lazy>): kotlin.Lazy<T of kotlin.LazyKt.lazy> declared in kotlin.LazyKt' type=kotlin.Lazy<kotlin.String> origin=null
+              <T>: kotlin.String
+              initializer: FUN_EXPR type=kotlin.Function0<kotlin.String> origin=LAMBDA
+                FUN LOCAL_FUNCTION_FOR_LAMBDA name:<anonymous> visibility:local modality:FINAL <> () returnType:kotlin.String
+                  BLOCK_BODY
+                    RETURN type=kotlin.Nothing from='local final fun <anonymous> (): kotlin.String declared in sample.input.Sample.ignoredDelegate$delegate'
+                      CONST String type=kotlin.String value=""
+        FUN DELEGATED_PROPERTY_ACCESSOR name:<get-ignoredDelegate> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:ignoredDelegate visibility:public modality:FINAL [delegated,val]
+          $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-ignoredDelegate> (): kotlin.String declared in sample.input.Sample'
+              CALL 'public final fun getValue <T> (thisRef: kotlin.Any?, property: kotlin.reflect.KProperty<*>): T of kotlin.LazyKt.getValue [inline,operator] declared in kotlin.LazyKt' type=kotlin.String origin=null
+                <T>: kotlin.String
+                $receiver: GET_FIELD 'FIELD PROPERTY_DELEGATE name:ignoredDelegate$delegate type:kotlin.Lazy<kotlin.String> visibility:private [final]' type=kotlin.Lazy<kotlin.String> origin=null
+                  receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-ignoredDelegate>' type=sample.input.Sample origin=null
+                thisRef: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-ignoredDelegate>' type=sample.input.Sample origin=null
+                property: PROPERTY_REFERENCE 'public final ignoredDelegate: kotlin.String [delegated,val]' field=null getter='public final fun <get-ignoredDelegate> (): kotlin.String declared in sample.input.Sample' setter=null type=kotlin.reflect.KProperty1<sample.input.Sample, kotlin.String> origin=PROPERTY_REFERENCE_FOR_DELEGATE
       PROPERTY name:ignoredString visibility:public modality:FINAL [var]
+        annotations:
+          Ignore
         FIELD PROPERTY_BACKING_FIELD name:ignoredString type:kotlin.String visibility:private
-          annotations:
-            Ignore
           EXPRESSION_BODY
             CONST String type=kotlin.String value=""
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-ignoredString> visibility:public modality:FINAL <> ($this:sample.input.Sample) returnType:kotlin.String
