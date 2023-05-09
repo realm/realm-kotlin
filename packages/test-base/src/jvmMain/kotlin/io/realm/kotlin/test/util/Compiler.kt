@@ -24,6 +24,7 @@ import io.realm.kotlin.compiler.Registrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
 object Compiler {
+    @OptIn(ExperimentalCompilerApi::class)
     fun compileFromSource(
         source: SourceFile,
         plugins: List<Registrar> = listOf(Registrar())
@@ -32,7 +33,7 @@ object Compiler {
             sources = listOf(source)
             useIR = true
             messageOutputStream = System.out
-            componentRegistrars = plugins
+            compilerPluginRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf("-Xjvm-default=enable")
         }.compile()

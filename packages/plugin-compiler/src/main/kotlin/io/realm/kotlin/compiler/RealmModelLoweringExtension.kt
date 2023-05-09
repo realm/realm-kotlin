@@ -73,6 +73,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             if (irClass.isAnonymousObject) {
                 error("Anonymous objects are not supported. Only normal classes can inherit from 'RealmObject' or 'EmbeddedRealmObject'.")
             }
+
             // For native we add @ModelObject(irClass.Companion::class) as associated object to be
             // able to resolve the companion object during runtime due to absence of
             // kotlin.reflect.full.companionObjectInstance

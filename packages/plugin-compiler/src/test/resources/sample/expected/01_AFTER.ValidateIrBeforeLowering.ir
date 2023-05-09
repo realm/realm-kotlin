@@ -2,6 +2,8 @@
 MODULE_FRAGMENT name:<main>
   FILE fqName:sample.input fileName:input/Sample.kt
     CLASS CLASS name:Sample modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]
+      annotations:
+        Transient
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample
       CONSTRUCTOR visibility:public <> () returnType:sample.input.Sample [primary]
         BLOCK_BODY
@@ -8521,6 +8523,8 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<set-io_realm_kotlin_objectReference>' type=sample.input.Sample origin=null
               value: GET_VAR '<set-?>: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? declared in sample.input.Sample.<set-io_realm_kotlin_objectReference>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
     CLASS CLASS name:Child modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]
+      annotations:
+        Transient
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child
       CONSTRUCTOR visibility:public <> () returnType:sample.input.Child [primary]
         BLOCK_BODY
@@ -8807,6 +8811,8 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.<set-io_realm_kotlin_objectReference>' type=sample.input.Child origin=null
               value: GET_VAR '<set-?>: io.realm.kotlin.internal.RealmObjectReference<sample.input.Child>? declared in sample.input.Child.<set-io_realm_kotlin_objectReference>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Child>? origin=null
     CLASS CLASS name:EmbeddedParent modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]
+      annotations:
+        Transient
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedParent
       CONSTRUCTOR visibility:public <> () returnType:sample.input.EmbeddedParent [primary]
         BLOCK_BODY
@@ -9027,6 +9033,8 @@ MODULE_FRAGMENT name:<main>
               receiver: GET_VAR '<this>: sample.input.EmbeddedParent declared in sample.input.EmbeddedParent.<set-io_realm_kotlin_objectReference>' type=sample.input.EmbeddedParent origin=null
               value: GET_VAR '<set-?>: io.realm.kotlin.internal.RealmObjectReference<sample.input.EmbeddedParent>? declared in sample.input.EmbeddedParent.<set-io_realm_kotlin_objectReference>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.EmbeddedParent>? origin=null
     CLASS CLASS name:EmbeddedChild modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.EmbeddedRealmObject; io.realm.kotlin.internal.RealmObjectInternal]
+      annotations:
+        Transient
       $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedChild
       CONSTRUCTOR visibility:public <> () returnType:sample.input.EmbeddedChild [primary]
         BLOCK_BODY
