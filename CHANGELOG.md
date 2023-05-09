@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* User exception propagation during the `RealmMigration` and `CompactOnLaunchCallback` instead of the generic *User-provided callback failed* `RuntimeException`. (Issue [#1228](https://github.com/realm/realm-kotlin/issues/1228))
+* User exceptions now propagate correctly out from `RealmMigration` and `CompactOnLaunchCallback` instead of just resulting in a generic *User-provided callback failed* `RuntimeException`. (Issue [#1228](https://github.com/realm/realm-kotlin/issues/1228))
 
 ### Fixed
 * None.
