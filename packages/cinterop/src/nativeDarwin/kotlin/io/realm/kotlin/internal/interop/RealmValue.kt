@@ -16,15 +16,25 @@
 
 package io.realm.kotlin.internal.interop
 
+import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.get
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.ptr
+import kotlinx.cinterop.sizeOf
 import kotlinx.cinterop.usePinned
 import platform.posix.memcpy
 import realm_wrapper.realm_query_arg
 import realm_wrapper.realm_value
+import realm_wrapper.realm_value_t
 
 actual typealias RealmValueT = realm_value
+
+actual class RealmValueList(actual val size: Int, val head: CPointer<realm_value_t>) {
+    actual operator fun set(index: Int, value: RealmValue) {
+        memcpy(head[index].ptr, value.value.ptr, sizeOf<realm_value_t>().toULong())
+    }
+}
 
 actual value class RealmValue actual constructor(
     actual val value: RealmValueT
@@ -90,6 +100,4 @@ actual value class RealmValue actual constructor(
     }
 }
 
-actual typealias RealmQueryArgT = realm_query_arg
-
-actual value class RealmQueryArgsTransport(val value: RealmQueryArgT)
+actual class RealmQueryArgumentList(val size: ULong, val value: realm_query_arg)

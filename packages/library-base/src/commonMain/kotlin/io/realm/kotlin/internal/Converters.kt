@@ -22,8 +22,9 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmObjectInterop
-import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
+import io.realm.kotlin.internal.interop.RealmQueryArgumentList
 import io.realm.kotlin.internal.interop.RealmValue
+import io.realm.kotlin.internal.interop.RealmValueList
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
@@ -331,32 +332,56 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 @Suppress("NestedBlockDepth")
 internal object RealmValueArgumentConverter {
-    fun MemTrackingAllocator.convertArg(value: Any?): RealmValue {
-        return value?.let {
+    fun MemTrackingAllocator.kAnyToRealmValue(value: Any?): RealmValue {
+        return value?.let { value ->
             when (value) {
                 is RealmObject -> {
-                    val objRef = realmObjectToRealmReferenceOrError(value)
-                    realmObjectTransport(objRef)
+                    realmObjectTransport(realmObjectToRealmReferenceOrError(value))
                 }
                 is RealmAny -> realmAnyToRealmValue(value)
                 else -> {
-                    primitiveTypeConverters[it::class]?.let { converter ->
+                    primitiveTypeConverters[value::class]?.let { converter ->
                         with(converter as RealmValueConverter<Any?>) {
                             publicToRealmValue(value)
                         }
-                    } ?: throw IllegalArgumentException("Cannot use object of type ${value::class::simpleName} as query argument")
+                    } ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class}' as query argument")
                 }
             }
         } ?: nullTransport()
     }
 
-    fun MemTrackingAllocator.convertToQueryArgs(
+    fun MemTrackingAllocator.convertQueryArg(value: Any?): RealmValueList =
+        when (value) {
+            is Collection<*> -> {
+                allocRealmValueList(value.size).apply {
+                    value.mapIndexed { index: Int, element: Any? ->
+                        set(index, kAnyToRealmValue(element))
+                    }
+                }
+            }
+            // Try to build a list from an iterator and convert the arguments as above
+            is Iterable<*> -> {
+                val args = value.iterator().asSequence().toList()
+                allocRealmValueList(args.size).apply {
+                    args.mapIndexed { index: Int, element: Any? ->
+                        set(index, kAnyToRealmValue(element))
+                    }
+                }
+            }
+            else -> {
+                allocRealmValueList(1).apply {
+                    set(0, kAnyToRealmValue(value))
+                }
+            }
+        }
+
+    internal fun MemTrackingAllocator.convertToQueryArgs(
         queryArgs: Array<out Any?>
-    ): Pair<Int, RealmQueryArgsTransport> {
+    ): RealmQueryArgumentList {
         return queryArgs.map {
-            convertArg(it)
-        }.toTypedArray().let {
-            Pair(queryArgs.size, queryArgsOf(it))
+            convertQueryArg(it)
+        }.let {
+            queryArgsOf(it)
         }
     }
 }

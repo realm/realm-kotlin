@@ -2213,6 +2213,34 @@ class QueryTests {
             }
     }
 
+    @Test
+    fun query_inListArgument() {
+        realm.writeBlocking {
+            (0..15).forEach { copyToRealm(QuerySample().apply { intField = it }) }
+        }
+        val oddNumbers = mutableSetOf(1, 3, 5, 7, 9, 11, 13, 15)
+        val arg0: List<Int> = listOf(1, 3)
+        val arg1: Int = 5
+        val arg2: Set<Int> = setOf(7, 9)
+        val arg3: Int = 11
+        val arg4: IntProgression = 13..15 step 2
+
+        realm.query<QuerySample>(
+            "intField IN $0 OR intField == $1 OR intField IN $2 or intField == $3 or intField IN $4",
+            arg0,
+            arg1,
+            arg2,
+            arg3,
+            arg4
+        ).find().run {
+            assertEquals(oddNumbers.size, size)
+            forEach {
+                assertTrue { oddNumbers.remove(it.intField) }
+            }
+        }
+        assertTrue { oddNumbers.isEmpty() }
+    }
+
     // ----------------------------------
     // Multithreading with query objects
     // ----------------------------------

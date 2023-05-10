@@ -18,6 +18,11 @@ package io.realm.kotlin.internal.interop
 
 // TODO BENCHMARK: investigate performance between using this as value vs reference type
 actual typealias RealmValueT = realm_value_t
+actual class RealmValueList(actual val size: Int, val head: realm_value_t) {
+    actual operator fun set(index: Int, value: RealmValue) {
+        realmc.valueArray_setitem(head, index, value.value)
+    }
+}
 
 @JvmInline
 actual value class RealmValue actual constructor(
@@ -69,7 +74,4 @@ actual value class RealmValue actual constructor(
     }
 }
 
-actual typealias RealmQueryArgT = realm_query_arg_t
-
-@JvmInline
-actual value class RealmQueryArgsTransport(val value: RealmQueryArgT)
+actual class RealmQueryArgumentList(val size: Long, val value: realm_query_arg_t)

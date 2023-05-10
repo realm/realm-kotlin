@@ -24,7 +24,6 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.get
 import kotlinx.cinterop.pointed
-import kotlinx.cinterop.ptr
 import kotlinx.cinterop.set
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
@@ -43,6 +42,7 @@ class NativeMemAllocator : MemTrackingAllocator {
     val scope = Arena()
 
     override inline fun allocRealmValueT(): RealmValueT = scope.alloc()
+    override inline fun allocRealmValueList(count: Int): RealmValueList = RealmValueList(count, scope.allocArray(count))
 
     override fun nullTransport(): RealmValue =
         createTransport(null, realm_value_type.RLM_TYPE_NULL)
@@ -125,16 +125,16 @@ class NativeMemAllocator : MemTrackingAllocator {
     override fun byteArrayTransport(value: ByteArray?): RealmValue =
         createTransport(value, realm_value_type.RLM_TYPE_BINARY) { binary.set(scope, it) }
 
-    override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {
+    override fun queryArgsOf(queryArgs: List<RealmValueList>): RealmQueryArgumentList {
         val cArgs = scope.allocArray<realm_query_arg_t>(queryArgs.size)
-        queryArgs.mapIndexed { i, arg ->
+        queryArgs.mapIndexed { i, argList ->
             cArgs[i].apply {
-                this.nb_args = 1.toULong()
-                this.is_list = false
-                this.arg = arg.value.ptr
+                this.nb_args = argList.size.toULong()
+                this.is_list = argList.size > 1
+                this.arg = argList.head
             }
         }
-        return RealmQueryArgsTransport(cArgs.pointed)
+        return RealmQueryArgumentList(queryArgs.size.toULong(), cArgs.pointed)
     }
 
     override fun free() {

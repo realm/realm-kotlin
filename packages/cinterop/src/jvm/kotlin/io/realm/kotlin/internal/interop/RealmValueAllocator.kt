@@ -27,6 +27,7 @@ import org.mongodb.kbson.Decimal128
 object JvmMemAllocator : MemAllocator {
 
     override inline fun allocRealmValueT(): RealmValueT = realm_value_t()
+    override inline fun allocRealmValueList(count: Int): RealmValueList = RealmValueList(count, realmc.new_valueArray(count))
 
     override fun nullTransport(): RealmValue =
         createTransport(null, realm_value_type_e.RLM_TYPE_NULL)
@@ -92,18 +93,17 @@ object JvmMemAllocator : MemAllocator {
             link = realmc.realm_object_as_link(it.objectPointer.cptr())
         }
 
-    override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {
+    override fun queryArgsOf(queryArgs: List<RealmValueList>): RealmQueryArgumentList {
         val cArgs = realmc.new_queryArgArray(queryArgs.size)
-        queryArgs.forEachIndexed { index, realmValueTransport ->
-            realm_query_arg_t().apply {
-                this.nb_args = 1
-                this.is_list = false
-                this.arg = realmValueTransport.value
-            }.also { queryArg: realm_query_arg_t ->
-                realmc.queryArgArray_setitem(cArgs, index, queryArg)
+        queryArgs.mapIndexed { index, arg ->
+            val queryArg = realm_query_arg_t().apply {
+                nb_args = arg.size.toLong()
+                is_list = arg.size > 1
+                this.arg = arg.head
             }
+            realmc.queryArgArray_setitem(cArgs, index, queryArg)
         }
-        return RealmQueryArgsTransport(cArgs)
+        return RealmQueryArgumentList(queryArgs.size.toLong(), cArgs)
     }
 
     private inline fun <T> createTransport(

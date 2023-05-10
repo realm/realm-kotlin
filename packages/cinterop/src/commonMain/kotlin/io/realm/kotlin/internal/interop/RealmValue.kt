@@ -22,6 +22,19 @@ package io.realm.kotlin.internal.interop
 expect class RealmValueT
 
 /**
+ *  Representation of a list of contiguous C-API `realm_value_t` structs that can be passed as a
+ *  pointer to the C-API.
+ */
+expect class RealmValueList {
+    val size: Int
+
+    /**
+     * Update the element at the index with a given value.
+     */
+    operator fun set(index: Int, value: RealmValue)
+}
+
+/**
  * Inline class used for handling C-API `realm_value_t` structs. It behaves exactly like the struct.
  */
 expect value class RealmValue(val value: RealmValueT) {
@@ -44,11 +57,6 @@ expect value class RealmValue(val value: RealmValueT) {
 }
 
 /**
- * Representation of a C-API `realm_query_arg_t` struct.
- */
-expect class RealmQueryArgT
-
-/**
  * Inline class used for handling C-API `realm_query_arg_t` structs used when building queries.
  */
-expect value class RealmQueryArgsTransport(val value: RealmQueryArgT)
+expect class RealmQueryArgumentList
