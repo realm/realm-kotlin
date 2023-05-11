@@ -81,9 +81,9 @@ class CompactOnLaunchTests {
             assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.49))
             assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.5))
             assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.51))
-            // File size > 50MB, only reclaims if usage < 0.5
-            assertFalse(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.49))
-            assertFalse(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.5))
+            // File size > 50MB, only reclaims if usage <= 0.5
+            assertTrue(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.49))
+            assertTrue(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.5))
             assertFalse(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.51))
         }
     }
