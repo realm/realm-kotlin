@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* Objects that were renamed using `@PersistedName` couldn't be linked. (Issue [#1377](https://github.com/realm/realm-kotlin/issues/1377))
+* Objects that were renamed using `@PersistedName` couldn't be referenced as a direct link in a model class. (Issue [#1377](https://github.com/realm/realm-kotlin/issues/1377))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
