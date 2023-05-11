@@ -19,6 +19,7 @@ package io.realm.kotlin.test.shared
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
 import io.realm.kotlin.test.util.use
@@ -29,7 +30,6 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -153,8 +153,6 @@ class CompactOnLaunchTests {
             .compactOnLaunch { _, _ -> throw IllegalStateException("Boom") }
             .build()
 
-        // TODO We should find a better way to propagate exceptions
-        // TODO This throws IllegalArgumentException on JVM but RuntimeException on macOS.
-        assertFailsWith<RuntimeException> { Realm.open(config) }
+        assertFailsWithMessage<IllegalStateException>("Boom") { Realm.open(config) }
     }
 }
