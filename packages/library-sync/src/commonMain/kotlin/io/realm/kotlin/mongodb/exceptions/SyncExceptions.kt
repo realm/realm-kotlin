@@ -116,7 +116,7 @@ public class CompensatingWriteException internal constructor(
         public val objectName: String,
 
         /**
-         * Primary key for the object which write was reversed.
+         * Primary key for the object for which a write has been reversed.
          */
         public val primaryKey: RealmAny?
     )
