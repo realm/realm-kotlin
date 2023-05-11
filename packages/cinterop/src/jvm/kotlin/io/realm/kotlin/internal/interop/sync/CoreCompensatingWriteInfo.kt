@@ -16,7 +16,7 @@
 package io.realm.kotlin.internal.interop.sync
 
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.asRealmValueT
+import io.realm.kotlin.internal.interop.wrapPtrAsRealmValueT
 
 actual class CoreCompensatingWriteInfo(
     actual val reason: String,
@@ -24,5 +24,5 @@ actual class CoreCompensatingWriteInfo(
     primaryKeyPtr: Long
 ) {
 
-    actual val primaryKey: RealmValue = RealmValue(primaryKeyPtr.asRealmValueT())
+    actual val primaryKey: RealmValue = RealmValue(primaryKeyPtr.wrapPtrAsRealmValueT())
 }

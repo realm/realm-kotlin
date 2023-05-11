@@ -19,7 +19,7 @@ package io.realm.kotlin.internal.interop
 // TODO BENCHMARK: investigate performance between using this as value vs reference type
 actual typealias RealmValueT = realm_value_t
 
-internal fun Long.asRealmValueT() = realm_value_t(this, false)
+internal fun Long.wrapPtrAsRealmValueT() = realm_value_t(this, false)
 
 @JvmInline
 actual value class RealmValue actual constructor(
