@@ -76,7 +76,7 @@ public class CompensatingWriteException internal constructor(
     compensatingWrites: Array<CoreCompensatingWriteInfo>
 ) : SyncException(message) {
     /**
-     * List of all the writes that has been reversed as part of triggering this exception.
+     * List of all the objects created that has been reversed as part of triggering this exception.
      */
     public val writes: List<CompensatingWriteInfo> = compensatingWrites.map {
         CompensatingWriteInfo(
@@ -111,12 +111,12 @@ public class CompensatingWriteException internal constructor(
         public val reason: String,
 
         /**
-         * Name of the object for which a write has been reversed.
+         * Name of the object class for which a write has been reversed.
          */
         public val objectType: String,
 
         /**
-         * Primary key for the object for which a write has been reversed.
+         * Primary key value for the object for which a write has been reversed.
          */
         public val primaryKey: RealmAny?
     )
