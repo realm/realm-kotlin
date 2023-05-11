@@ -48,7 +48,6 @@ bool throw_as_java_exception(JNIEnv *jenv) {
 
         jstring error_message = (jenv)->NewStringUTF(error.message);
         jstring error_path = (jenv)->NewStringUTF(error.path);
-
         jobject exception = (jenv)->CallStaticObjectMethod(
                 error_type_class,
                 error_type_as_exception,
@@ -56,8 +55,9 @@ bool throw_as_java_exception(JNIEnv *jenv) {
                 jint(error.error),
                 error_message,
                 error_path,
-                nullptr
+                static_cast<jobject>(error.usercode_error)
         );
+        (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
 
         realm_clear_last_error();
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
@@ -67,12 +67,14 @@ bool throw_as_java_exception(JNIEnv *jenv) {
     }
 }
 
-inline void jni_check_exception(JNIEnv *jenv = get_env()) {
+inline jboolean jni_check_exception(JNIEnv *jenv = get_env()) {
     if (jenv->ExceptionCheck()) {
-        jenv->ExceptionDescribe();
+        jthrowable exception = jenv->ExceptionOccurred();
         jenv->ExceptionClear();
-        throw std::runtime_error("An unexpected Error was thrown from Java.");
+        realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
+        return false;
     }
+    return true;
 }
 
 inline std::string get_exception_message(JNIEnv *env) {
@@ -125,16 +127,15 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
     auto env = get_env(true);
     static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/MigrationCallback");
     static JavaMethod java_callback_method(env, java_callback_class, "migrate",
-                                           "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)Z");
+                                           "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)V");
     // These realm/schema pointers are only valid for the duraction of the
     // migration so don't let ownership follow the NativePointer-objects
-    bool result = env->CallBooleanMethod(static_cast<jobject>(userdata), java_callback_method,
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method,
                                         wrap_pointer(env, reinterpret_cast<jlong>(old_realm), false),
                                         wrap_pointer(env, reinterpret_cast<jlong>(new_realm), false),
                                         wrap_pointer(env, reinterpret_cast<jlong>(schema))
     );
-    jni_check_exception(env);
-    return result;
+    return jni_check_exception(env);
 }
 
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
@@ -501,20 +502,18 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
 
     jobject callback = static_cast<jobject>(userdata);
     jboolean result = env->CallBooleanMethod(callback, java_should_compact_method, jlong(total_bytes), jlong(used_bytes));
-    jni_check_exception(env);
-    return result;
+    return jni_check_exception(env) && result;
 }
 
 bool realm_data_initialization_callback(void* userdata, realm_t* realm) {
     auto env = get_env(true);
     static JavaClass java_data_init_class(env, "io/realm/kotlin/internal/interop/DataInitializationCallback");
-    static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()Z");
+    static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()V");
 
     (void)realm; // Ignore Realm as we don't expose the Realm in this callback right now.
     jobject callback = static_cast<jobject>(userdata);
-    jboolean result = env->CallBooleanMethod(callback, java_data_init_method);
-    jni_check_exception(env);
-    return result;
+    env->CallVoidMethod(callback, java_data_init_method);
+    return jni_check_exception(env);
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
