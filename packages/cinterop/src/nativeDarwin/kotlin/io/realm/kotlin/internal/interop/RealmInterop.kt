@@ -2881,6 +2881,7 @@ actual object RealmInterop {
             user.cptr(),
             name,
             serializedEjsonArgs,
+            null,
             staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
                 handleAppCallback(userData, error) {
                     data.safeKString()

@@ -93,32 +93,32 @@ internal object BsonEncoder {
                 try {
                     when (resultClass) {
                         Byte::class -> {
-                            deserializeNumber(bsonValue, Byte::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.intValue().toByte()
                             }
                         }
                         Short::class -> {
-                            deserializeNumber(bsonValue, Short::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.intValue().toShort()
                             }
                         }
                         Int::class -> {
-                            deserializeNumber(bsonValue, Int::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.intValue()
                             }
                         }
                         Long::class -> {
-                            deserializeNumber(bsonValue, Long::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.longValue()
                             }
                         }
                         Float::class -> {
-                            deserializeNumber(bsonValue, Float::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.doubleValue().toFloat()
                             }
                         }
                         Double::class -> {
-                            deserializeNumber(bsonValue, Double::class.simpleName) {
+                            deserializeNumber(bsonValue) {
                                 it.doubleValue()
                             }
                         }
@@ -145,9 +145,9 @@ internal object BsonEncoder {
                         BsonDateTime::class -> bsonValue.asDateTime()
                         BsonDecimal128::class -> bsonValue.asDecimal128()
                         BsonDocument::class -> bsonValue
-                        BsonDouble::class -> bsonValue.asDouble()
-                        BsonInt32::class -> bsonValue.asInt32()
-                        BsonInt64::class -> bsonValue.asInt64()
+                        BsonDouble::class -> BsonDouble(bsonValue.asNumber().doubleValue())
+                        BsonInt32::class -> BsonInt32(bsonValue.asNumber().intValue())
+                        BsonInt64::class -> BsonInt64(bsonValue.asNumber().longValue())
                         BsonJavaScript::class -> bsonValue.asJavaScript()
                         BsonJavaScriptWithScope::class -> bsonValue.asJavaScriptWithScope()
                         BsonMaxKey::class -> bsonValue.asBsonMaxKey()
@@ -161,7 +161,7 @@ internal object BsonEncoder {
                         BsonUndefined::class -> bsonValue.asBsonUndefined()
                         BsonValue::class -> bsonValue
                         MutableRealmInt::class -> {
-                            deserializeNumber(bsonValue, "MutableRealmInt") {
+                            deserializeNumber(bsonValue) {
                                 MutableRealmInt.create(it.longValue())
                             }
                         }
@@ -212,14 +212,9 @@ internal object BsonEncoder {
 
     private inline fun <T : Number> deserializeNumber(
         bsonValue: BsonValue,
-        type: String?,
         block: (BsonNumber) -> T
     ): T {
-        return block(bsonValue.asNumber()).also {
-            if (bsonValue.asNumber().doubleValue() != it.toDouble()) {
-                throw BsonInvalidOperationException("Could not convert ${bsonValue.bsonType} to a $type without losing precision")
-            }
-        }
+        return block(bsonValue.asNumber())
     }
 
     private fun Collection<*>.asBsonArray(): BsonArray = BsonArray(map { toBsonValue(it) })

@@ -1541,7 +1541,7 @@ actual object RealmInterop {
         serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, null, callback)
     }
 
     actual fun realm_app_call_reset_password_function(
