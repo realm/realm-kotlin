@@ -111,7 +111,7 @@ public class CompensatingWriteException internal constructor(
         public val reason: String,
 
         /**
-         * Name of the object for which a write has been reversed.
+         * Name of the object class for which a write has been reversed.
          */
         public val objectType: String,
 
