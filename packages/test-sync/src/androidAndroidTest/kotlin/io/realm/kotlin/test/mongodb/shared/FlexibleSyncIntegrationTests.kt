@@ -298,7 +298,7 @@ class FlexibleSyncIntegrationTests {
     }
 
     @Test
-    fun writeData_WhenOutsideOfSubscriptions_GetsRevertedByServer() {
+    fun compensationWrite_writeOutsideOfSubscriptionsGetsReveredByServer() {
         val user1 = app.createUserAndLogin()
 
         val channel = Channel<CompensatingWriteException>(1)
