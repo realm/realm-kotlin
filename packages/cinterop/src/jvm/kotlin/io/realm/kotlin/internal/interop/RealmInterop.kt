@@ -183,7 +183,6 @@ actual object RealmInterop {
         var fileCreated = false
         val callback = DataInitializationCallback {
             fileCreated = true
-            true
         }
         realm_config_set_data_initialization_function(config, callback)
 

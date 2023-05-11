@@ -68,7 +68,7 @@ fun interface MigrationCallback {
         oldRealm: FrozenRealmPointer,
         newRealm: LiveRealmPointer,
         schema: RealmSchemaPointer
-    ): Boolean
+    )
 }
 
 fun interface SubscriptionSetCallback {
@@ -78,7 +78,7 @@ fun interface SubscriptionSetCallback {
 // The underlying Core implementation can also pass in Realm pointer, but since it is not
 // useful during construction, we omit it from this callback as it is only used as a signal.
 fun interface DataInitializationCallback {
-    fun invoke(): Boolean
+    fun invoke()
 }
 
 fun interface AsyncOpenCallback {
