@@ -101,7 +101,7 @@ class CompactOnLaunchTests {
             usage = 0.51
         )
 
-        // File size > 50MB, only reclaims if usage >= 0.5
+        // File size > 50MB, only reclaims if usage < 0.5
         assert(
             shouldCompact = true,
             fileSize = 50.MB + 1.Bytes,
