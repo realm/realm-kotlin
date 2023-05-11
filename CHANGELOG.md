@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* Realm objects now support ignoring delegated properties . (Issue [#1377](https://github.com/realm/realm-kotlin/pull/1386))
+* Realm objects now support ignoring delegated properties. (Issue [#1377](https://github.com/realm/realm-kotlin/pull/1386))
 
 ### Fixed
 * None.
