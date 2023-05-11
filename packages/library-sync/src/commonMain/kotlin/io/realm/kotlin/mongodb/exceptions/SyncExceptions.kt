@@ -81,7 +81,7 @@ public class CompensatingWriteException internal constructor(
     public val writes: List<CompensatingWriteInfo> = compensatingWrites.map {
         CompensatingWriteInfo(
             reason = it.reason,
-            objectName = it.objectName,
+            objectType = it.objectName,
             primaryKey = it.primaryKey.asRealmAny(),
         )
     }
@@ -113,7 +113,7 @@ public class CompensatingWriteException internal constructor(
         /**
          * Name of the object for which a write has been reversed.
          */
-        public val objectName: String,
+        public val objectType: String,
 
         /**
          * Primary key for the object for which a write has been reversed.

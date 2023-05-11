@@ -30,6 +30,22 @@ data class SyncError constructor(
     val isClientResetRequested: Boolean,
     val compensatingWrites: Array<CoreCompensatingWriteInfo>
 ) {
+    // Constructs an SyncError out from a simple code. There are some situations (SyncSessionTransferCompletionCallback)
+    // where we receive an error code rather than a full SyncErrorCode, wrapping the code
+    // simplifies the error handling logic.
+    constructor(
+        errorCode: SyncErrorCode
+    ) : this(
+        errorCode = errorCode,
+        detailedMessage = null,
+        originalFilePath = null,
+        recoveryFilePath = null,
+        isFatal = false,
+        isUnrecognizedByClient = false,
+        isClientResetRequested = false,
+        compensatingWrites = emptyArray()
+    )
+
     // Constructor used by JNI so we avoid creating too many objects on the JNI side.
     constructor(
         category: Int,

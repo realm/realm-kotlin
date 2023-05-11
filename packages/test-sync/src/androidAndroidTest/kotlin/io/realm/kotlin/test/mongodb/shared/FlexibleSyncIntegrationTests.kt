@@ -332,7 +332,7 @@ class FlexibleSyncIntegrationTests {
 
             exception.writes[0].run {
                 assertContains(reason, "object is outside of the current query view")
-                assertEquals("FlexParentObject", objectName)
+                assertEquals("FlexParentObject", objectType)
                 assertEquals(expectedPrimaryKey, primaryKey?.asObjectId())
             }
         }

@@ -2368,7 +2368,6 @@ actual object RealmInterop {
                             when {
                                 it.key != null && it.value != null ->
                                     Pair(it.key.safeKString(), it.value.safeKString())
-
                                 else -> null
                             }
                         }.toMap()
