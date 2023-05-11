@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
@@ -30,6 +31,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -66,57 +68,24 @@ class CompactOnLaunchTests {
 
     private val Int.MB get() = (this * 1024 * 1024).toLong()
 
-    private val Int.Bytes get() = (this).toLong()
+    private val Int.B get() = (this).toLong()
 
     @Test
     fun defaultCallback_boundaries() {
+        fun CompactOnLaunchCallback.shouldCompact(totalBytes: Long, usage: Double): Boolean =
+            shouldCompact(totalBytes, (totalBytes * usage).toLong())
+
         // This callback will only return [True] if the file is above 50 MB and 50% or more of the space can be reclaimed.
-        val callback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK
-
-        fun assert(shouldCompact: Boolean, fileSize: Long, usage: Double) {
-            assertEquals(
-                expected = shouldCompact,
-                actual = callback.shouldCompact(
-                    totalBytes = fileSize,
-                    usedBytes = (fileSize * usage).toLong()
-                ),
-                message = "fileSize: $fileSize usage: $usage"
-            )
+        Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK.run {
+            // File size <= 50MB, it will never reclaim
+            assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.49))
+            assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.5))
+            assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.51))
+            // File size > 50MB, only reclaims if usage < 0.5
+            assertFalse(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.49))
+            assertFalse(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.5))
+            assertFalse(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.51))
         }
-
-        // File size <= 50MB, it will never reclaim
-        assert(
-            shouldCompact = false,
-            fileSize = 50.MB,
-            usage = 0.49
-        )
-        assert(
-            shouldCompact = false,
-            fileSize = 50.MB,
-            usage = 0.5
-        )
-        assert(
-            shouldCompact = false,
-            fileSize = 50.MB,
-            usage = 0.51
-        )
-
-        // File size > 50MB, only reclaims if usage < 0.5
-        assert(
-            shouldCompact = true,
-            fileSize = 50.MB + 1.Bytes,
-            usage = 0.49
-        )
-        assert(
-            shouldCompact = true,
-            fileSize = 50.MB + 1.Bytes,
-            usage = 0.5
-        )
-        assert(
-            shouldCompact = false,
-            fileSize = 50.MB + 1.Bytes,
-            usage = 0.51
-        )
     }
 
     @Test
