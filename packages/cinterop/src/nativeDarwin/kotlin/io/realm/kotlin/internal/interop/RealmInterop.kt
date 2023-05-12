@@ -1311,7 +1311,7 @@ actual object RealmInterop {
                 classKey.key.toUInt(),
                 query,
                 args.size,
-                args.value.ptr
+                args.head.ptr
             )
         )
     }
@@ -1326,7 +1326,7 @@ actual object RealmInterop {
                 results.cptr(),
                 query,
                 args.size,
-                args.value.ptr
+                args.head.ptr
             )
         )
     }
@@ -1341,7 +1341,7 @@ actual object RealmInterop {
                 list.cptr(),
                 query,
                 args.size,
-                args.value.ptr
+                args.head.ptr
             )
         )
     }
@@ -1356,7 +1356,7 @@ actual object RealmInterop {
                 set.cptr(),
                 query,
                 args.size,
-                args.value.ptr
+                args.head.ptr
             )
         )
     }
@@ -1404,7 +1404,7 @@ actual object RealmInterop {
                 query.cptr(),
                 filter,
                 args.size,
-                args.value.ptr
+                args.head.ptr
             )
         )
     }

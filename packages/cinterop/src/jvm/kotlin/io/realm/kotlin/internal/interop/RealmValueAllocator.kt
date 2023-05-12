@@ -93,13 +93,23 @@ object JvmMemAllocator : MemAllocator {
             link = realmc.realm_object_as_link(it.objectPointer.cptr())
         }
 
-    override fun queryArgsOf(queryArgs: List<RealmValueList>): RealmQueryArgumentList {
+    override fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList {
+//    override fun queryArgsOf(queryArgs: List<RealmValueList>): RealmQueryArgumentList {
         val cArgs = realmc.new_queryArgArray(queryArgs.size)
         queryArgs.mapIndexed { index, arg ->
             val queryArg = realm_query_arg_t().apply {
-                nb_args = arg.size.toLong()
-                is_list = arg.size > 1
-                this.arg = arg.head
+                when (arg) {
+                    is RealmQueryListArgument -> {
+                        nb_args = arg.arguments.size.toLong()
+                        is_list = true
+                        this.arg = arg.arguments.head
+                    }
+                    is RealmQuerySingleArgument -> {
+                        nb_args = 1
+                        is_list = false
+                        this.arg = arg.argument.value
+                    }
+                }
             }
             realmc.queryArgArray_setitem(cArgs, index, queryArg)
         }

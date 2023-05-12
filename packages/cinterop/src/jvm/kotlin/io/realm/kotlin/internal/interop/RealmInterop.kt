@@ -1605,7 +1605,7 @@ actual object RealmInterop {
                 classKey.key,
                 query,
                 args.size,
-                args.value
+                args.head
             )
         )
     }
@@ -1620,7 +1620,7 @@ actual object RealmInterop {
                 results.cptr(),
                 query,
                 args.size,
-                args.value
+                args.head
             )
         )
     }
@@ -1635,7 +1635,7 @@ actual object RealmInterop {
                 list.cptr(),
                 query,
                 args.size,
-                args.value
+                args.head
             )
         )
     }
@@ -1650,7 +1650,7 @@ actual object RealmInterop {
                 set.cptr(),
                 query,
                 args.size,
-                args.value
+                args.head
             )
         )
     }
@@ -1684,7 +1684,7 @@ actual object RealmInterop {
         args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return LongPointerWrapper(
-            realmc.realm_query_append_query(query.cptr(), filter, args.size, args.value)
+            realmc.realm_query_append_query(query.cptr(), filter, args.size, args.head)
         )
     }
 

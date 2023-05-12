@@ -98,7 +98,7 @@ interface MemAllocator {
      * Instantiates a [RealmQueryArgumentList] representing a `realm_query_arg_t` that describe and
      * references the incoming [RealmValueList] arguments.
      */
-    fun queryArgsOf(queryArgs: List<RealmValueList>): RealmQueryArgumentList
+    fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList
 }
 
 /**

@@ -100,4 +100,4 @@ actual value class RealmValue actual constructor(
     }
 }
 
-actual class RealmQueryArgumentList(val size: ULong, val value: realm_query_arg)
+actual class RealmQueryArgumentList(val size: ULong, val head: realm_query_arg)

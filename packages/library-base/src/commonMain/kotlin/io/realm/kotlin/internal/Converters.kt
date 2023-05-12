@@ -22,9 +22,11 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmObjectInterop
+import io.realm.kotlin.internal.interop.RealmQueryArgument
 import io.realm.kotlin.internal.interop.RealmQueryArgumentList
+import io.realm.kotlin.internal.interop.RealmQueryListArgument
+import io.realm.kotlin.internal.interop.RealmQuerySingleArgument
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.RealmValueList
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
@@ -344,34 +346,36 @@ internal object RealmValueArgumentConverter {
                         with(converter as RealmValueConverter<Any?>) {
                             publicToRealmValue(value)
                         }
-                    } ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class}' as query argument")
+                    } ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class.simpleName}' as query argument")
                 }
             }
         } ?: nullTransport()
     }
 
-    fun MemTrackingAllocator.convertQueryArg(value: Any?): RealmValueList =
+    fun MemTrackingAllocator.convertQueryArg(value: Any?): RealmQueryArgument =
         when (value) {
             is Collection<*> -> {
-                allocRealmValueList(value.size).apply {
-                    value.mapIndexed { index: Int, element: Any? ->
-                        set(index, kAnyToRealmValue(element))
+                RealmQueryListArgument(
+                    allocRealmValueList(value.size).apply {
+                        value.mapIndexed { index: Int, element: Any? ->
+                            set(index, kAnyToRealmValue(element))
+                        }
                     }
-                }
+                )
             }
             // Try to build a list from an iterator and convert the arguments as above
             is Iterable<*> -> {
                 val args = value.iterator().asSequence().toList()
-                allocRealmValueList(args.size).apply {
-                    args.mapIndexed { index: Int, element: Any? ->
-                        set(index, kAnyToRealmValue(element))
+                RealmQueryListArgument(
+                    allocRealmValueList(args.size).apply {
+                        args.mapIndexed { index: Int, element: Any? ->
+                            set(index, kAnyToRealmValue(element))
+                        }
                     }
-                }
+                )
             }
             else -> {
-                allocRealmValueList(1).apply {
-                    set(0, kAnyToRealmValue(value))
-                }
+                RealmQuerySingleArgument(kAnyToRealmValue(value))
             }
         }
 

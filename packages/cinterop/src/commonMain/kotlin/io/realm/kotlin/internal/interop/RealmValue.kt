@@ -60,3 +60,6 @@ expect value class RealmValue(val value: RealmValueT) {
  * Inline class used for handling C-API `realm_query_arg_t` structs used when building queries.
  */
 expect class RealmQueryArgumentList
+sealed interface RealmQueryArgument
+class RealmQuerySingleArgument(val argument: RealmValue) : RealmQueryArgument
+class RealmQueryListArgument(val arguments: RealmValueList) : RealmQueryArgument
