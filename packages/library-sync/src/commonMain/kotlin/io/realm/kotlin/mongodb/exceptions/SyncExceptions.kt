@@ -79,6 +79,8 @@ public class CompensatingWriteException internal constructor(
             reason = it.reason,
             objectType = it.objectName,
             primaryKey = it.primaryKey.asPrimitiveRealmAnyOrElse {
+                // We currently don't support objects as primary keys, return a String value to avoid
+                // throwing within an exception.
                 RealmAny.create("Unknown")
             },
         )
