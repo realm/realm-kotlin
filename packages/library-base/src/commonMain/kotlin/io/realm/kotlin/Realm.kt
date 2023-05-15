@@ -64,7 +64,7 @@ public interface Realm : TypedRealm {
         public val DEFAULT_COMPACT_ON_LAUNCH_CALLBACK: CompactOnLaunchCallback =
             CompactOnLaunchCallback { totalBytes, usedBytes ->
                 val thresholdSize = (50 * 1024 * 1024).toLong()
-                totalBytes > thresholdSize && usedBytes.toDouble() / totalBytes.toDouble() >= 0.5
+                totalBytes > thresholdSize && usedBytes.toDouble() / totalBytes.toDouble() <= 0.5
             }
 
         /**
