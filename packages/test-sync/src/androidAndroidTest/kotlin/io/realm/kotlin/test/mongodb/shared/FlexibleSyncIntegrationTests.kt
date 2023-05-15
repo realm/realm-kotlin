@@ -45,6 +45,7 @@ import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.minutes
@@ -315,9 +316,13 @@ class FlexibleSyncIntegrationTests {
             val expectedPrimaryKey = BsonObjectId()
 
             Realm.open(config1).use { realm ->
+                val objectId = BsonObjectId()
+
                 realm.subscriptions.update {
-                    add(realm.query<FlexParentObject>("_id = $0", BsonObjectId()))
+                    add(realm.query<FlexParentObject>("_id = $0", objectId))
                 }.waitForSynchronization(30.seconds)
+
+                assertNotEquals(expectedPrimaryKey, objectId)
 
                 realm.write {
                     copyToRealm(FlexParentObject().apply { _id = expectedPrimaryKey })

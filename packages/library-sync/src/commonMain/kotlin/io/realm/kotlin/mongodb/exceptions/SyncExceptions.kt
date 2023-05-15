@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.mongodb.exceptions
 
-import io.realm.kotlin.internal.RealmInstantImpl
-import io.realm.kotlin.internal.RealmUUIDImpl
-import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.ValueType
+import io.realm.kotlin.internal.asPrimitiveRealmAnyOrElse
 import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
-import io.realm.kotlin.internal.realmValueToDecimal128
 import io.realm.kotlin.types.RealmAny
-import org.mongodb.kbson.BsonObjectId
 
 /**
  * This exception is considered the top-level exception or general "catch-all" for problems related
@@ -82,23 +78,10 @@ public class CompensatingWriteException internal constructor(
         CompensatingWriteInfo(
             reason = it.reason,
             objectType = it.objectName,
-            primaryKey = it.primaryKey.asRealmAny(),
+            primaryKey = it.primaryKey.asPrimitiveRealmAnyOrElse {
+                RealmAny.create("Unknown")
+            },
         )
-    }
-
-    private fun RealmValue.asRealmAny(): RealmAny? = when (getType()) {
-        ValueType.RLM_TYPE_NULL -> null
-        ValueType.RLM_TYPE_INT -> RealmAny.create(getLong())
-        ValueType.RLM_TYPE_BOOL -> RealmAny.create(getBoolean())
-        ValueType.RLM_TYPE_STRING -> RealmAny.create(getString())
-        ValueType.RLM_TYPE_BINARY -> RealmAny.create(getByteArray())
-        ValueType.RLM_TYPE_TIMESTAMP -> RealmAny.create(RealmInstantImpl(getTimestamp()))
-        ValueType.RLM_TYPE_FLOAT -> RealmAny.create(getFloat())
-        ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(getDouble())
-        ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(realmValueToDecimal128(this))
-        ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(BsonObjectId(getObjectIdBytes()))
-        ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(getUUIDBytes()))
-        else -> RealmAny.create("Unknown")
     }
 
     /**
