@@ -591,7 +591,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         when (type) {
                                             objectType -> {
                                                 // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                                val linkTargetType = when (collectionTypeSymbol) {
+                                                when (collectionTypeSymbol) {
                                                     PROPERTY_COLLECTION_TYPE_NONE ->
                                                         backingField.type
                                                     PROPERTY_COLLECTION_TYPE_LIST,
@@ -602,17 +602,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                     else ->
                                                         error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
                                                 }
-                                                irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                             }
-                                            linkingObjectType -> {
-                                                val linkTargetType: IrType = getBacklinksTargetType(backingField)
-                                                val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
-                                                irString(getSchemaClassName(classRef))
-                                            }
-                                            else -> {
-                                                irString("")
-                                            }
-                                        }
+                                            linkingObjectType -> getBacklinksTargetType(backingField)
+                                            else -> null
+                                        }?.let { linkTargetType: IrType ->
+                                            val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
+                                            irString(getSchemaClassName(classRef))
+                                        } ?: irString("")
                                     )
                                     // Link property name
                                     putValueArgument(

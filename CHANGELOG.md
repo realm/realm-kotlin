@@ -9,9 +9,7 @@
 ### Fixed
 * User exceptions now propagate correctly out from `RealmMigration` and `CompactOnLaunchCallback` instead of just resulting in a generic *User-provided callback failed* `RuntimeException`. (Issue [#1228](https://github.com/realm/realm-kotlin/issues/1228))
 * The default compact-on-launch callback trigger 50% or more of the space could be reclaimed was reversed. (Issue [#1380](https://github.com/realm/realm-kotlin/issues/1380))
-
-### Fixed
-* None.
+* Objects that were renamed using `@PersistedName` couldn't be referenced as a direct link in a model class. (Issue [#1377](https://github.com/realm/realm-kotlin/issues/1377))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
