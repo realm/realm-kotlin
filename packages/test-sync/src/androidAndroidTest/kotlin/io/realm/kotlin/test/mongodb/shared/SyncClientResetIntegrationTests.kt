@@ -176,10 +176,12 @@ class SyncClientResetIntegrationTests {
                 },
                 insertElement = { realm: Realm ->
                     realm.writeBlocking {
-                        copyToRealm(FlexParentObject().apply {
-                            this.section = section
-                            this.name = "blue"
-                        })
+                        copyToRealm(
+                            FlexParentObject().apply {
+                                this.section = section
+                                this.name = "blue"
+                            }
+                        )
                     }
                 },
                 recoverData = { before: TypedRealm, after: MutableRealm ->
