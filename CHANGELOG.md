@@ -27,6 +27,7 @@
 ### Internal
 * Updated to Realm Core 13.11.0, commit d8721d7baec39571e7e5373c3f407a50d144307e.
 * Updated to Sync Protocol version 9. 
+* Updated BAAS test server to v2023-05-15.
 
 ## 1.8.0 (2023-05-01)
 
