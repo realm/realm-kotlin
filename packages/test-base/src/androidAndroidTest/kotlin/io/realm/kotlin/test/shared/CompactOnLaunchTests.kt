@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.shared
 
+import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
@@ -65,14 +66,26 @@ class CompactOnLaunchTests {
         assertEquals(Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK, config.compactOnLaunchCallback)
     }
 
+    private val Int.MB get() = (this * 1024 * 1024).toLong()
+
+    private val Int.B get() = (this).toLong()
+
     @Test
     fun defaultCallback_boundaries() {
-        val callback = Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK
-        assertFalse(callback.shouldCompact(50 * 1024 * 1024, 40 * 1024 * 1024))
-        assertFalse(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024))
-        assertFalse(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 3))
-        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 4))
-        assertTrue(callback.shouldCompact(50 * 1024 * 1024 + 8, 25 * 1024 * 1024 + 5))
+        fun CompactOnLaunchCallback.shouldCompact(totalBytes: Long, usage: Double): Boolean =
+            shouldCompact(totalBytes, (totalBytes * usage).toLong())
+
+        // This callback will only return [True] if the file is above 50 MB and 50% or more of the space can be reclaimed.
+        Realm.DEFAULT_COMPACT_ON_LAUNCH_CALLBACK.run {
+            // File size <= 50MB, it will never reclaim
+            assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.49))
+            assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.5))
+            assertFalse(shouldCompact(totalBytes = 50.MB, usage = 0.51))
+            // File size > 50MB, only reclaims if usage <= 0.5
+            assertTrue(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.49))
+            assertTrue(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.5))
+            assertFalse(shouldCompact(totalBytes = 50.MB + 1.B, usage = 0.51))
+        }
     }
 
     @Test
