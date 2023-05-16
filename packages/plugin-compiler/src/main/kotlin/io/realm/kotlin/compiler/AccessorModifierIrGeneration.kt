@@ -242,7 +242,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val propertyType = propertyTypeRaw.makeNotNull()
                 val nullable = propertyTypeRaw.isNullable()
                 val excludeProperty =
-                    declaration.backingField!!.hasAnnotation(IGNORE_ANNOTATION) ||
+                    declaration.hasAnnotation(IGNORE_ANNOTATION) ||
+                        declaration.hasAnnotation(TRANSIENT_ANNOTATION) ||
+                        declaration.backingField!!.hasAnnotation(IGNORE_ANNOTATION) ||
                         declaration.backingField!!.hasAnnotation(TRANSIENT_ANNOTATION)
 
                 // Check for property modifiers:

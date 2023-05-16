@@ -17,7 +17,7 @@
 package io.realm.kotlin.types.annotations
 
 @Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FIELD)
+@Target(AnnotationTarget.FIELD, AnnotationTarget.PROPERTY)
 @MustBeDocumented
 /**
  * Annotation marking a field as ignored inside Realm, meaning that it will not be part of the models' schema.

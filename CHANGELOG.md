@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Realm objects now support ignoring delegated properties. (Issue [#1377](https://github.com/realm/realm-kotlin/pull/1386))
 
 ### Fixed
 * User exceptions now propagate correctly out from `RealmMigration` and `CompactOnLaunchCallback` instead of just resulting in a generic *User-provided callback failed* `RuntimeException`. (Issue [#1228](https://github.com/realm/realm-kotlin/issues/1228))
