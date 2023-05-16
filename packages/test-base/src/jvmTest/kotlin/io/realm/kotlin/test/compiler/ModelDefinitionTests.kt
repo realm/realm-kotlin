@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.compiler.Registrar
 import io.realm.kotlin.test.util.Compiler
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -43,7 +46,7 @@ class ModelDefinitionTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Compilation should fail without a zero arg constructor")
-        assertTrue(result.messages.contains("sources/no_zero_arg_ctor.kt: (4, 1): [Realm] Cannot find primary zero arg constructor"))
+        assertTrue(result.messages.contains("sources/no_zero_arg_ctor.kt:4:1 [Realm] Cannot find primary zero arg constructor"), result.messages)
     }
 
     @Test

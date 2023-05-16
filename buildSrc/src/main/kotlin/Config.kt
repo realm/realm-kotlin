@@ -80,15 +80,15 @@ object Versions {
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
-    const val kotlin = "1.7.20" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
+    const val kotlin = "1.8.21" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
     const val latestKotlin = "1.8.20" // https://kotlinlang.org/docs/eap.html#build-details
-    const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
+    const val kotlinCompileTesting = "1.5.0" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "2.1.2" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.2.0" // https://square.github.io/okio/#releases
     const val relinker = "1.4.5" // https://github.com/KeepSafe/ReLinker
-    const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details
+    const val serialization = "1.5.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
     const val kbson = "0.3.0" // https://github.com/mongodb/kbson

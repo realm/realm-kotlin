@@ -46,7 +46,7 @@ actual object PlatformUtils {
 
     @OptIn(ExperimentalTime::class)
     actual fun sleep(duration: Duration) {
-        Thread.sleep(duration.toLongMilliseconds())
+        Thread.sleep(duration.inWholeMilliseconds)
     }
 
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()

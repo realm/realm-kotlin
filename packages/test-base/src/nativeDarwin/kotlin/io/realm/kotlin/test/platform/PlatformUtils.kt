@@ -49,9 +49,8 @@ actual object PlatformUtils {
         platform.Foundation.NSFileManager.defaultManager.removeItemAtURL(platform.Foundation.NSURL(fileURLWithPath = path), null)
     }
 
-    @OptIn(ExperimentalTime::class)
     actual fun sleep(duration: Duration) {
-        val nanoseconds = duration.toLongNanoseconds()
+        val nanoseconds = duration.inWholeNanoseconds
         val time = cValue<timespec> {
             tv_sec = nanoseconds / 1000000000
             tv_nsec = nanoseconds % 1000000000
