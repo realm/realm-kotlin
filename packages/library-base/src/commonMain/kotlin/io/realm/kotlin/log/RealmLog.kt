@@ -352,6 +352,15 @@ public object RealmLog {
         }
     }
 
+    /**
+     * Reset the current log configuration to its initial default setup
+     */
+    internal fun reset() {
+        removeAll()
+        addDefaultSystemLogger()
+        level = LogLevel.WARN
+    }
+
     private fun LogLevel.toCoreLogLevel(): CoreLogLevel {
         return when (this) {
             LogLevel.ALL -> CoreLogLevel.RLM_LOG_LEVEL_ALL
