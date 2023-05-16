@@ -31,7 +31,6 @@ import platform.posix.pthread_threadid_np
 import platform.posix.timespec
 import kotlin.native.internal.GC
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     actual fun createTempDir(prefix: String, readOnly: Boolean): String {
