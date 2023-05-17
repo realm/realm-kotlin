@@ -27,6 +27,18 @@ Checkout repo:
 git clone --recursive  https://github.com/realm/realm-kotlin.git 
 ```
 
+### Windows support
+
+The repository can be built on Windows, although only for the JVM target. Beware of the following requirements:
+
+- The repository contains symbolic links that needs to be preserved, see e.g.: https://stackoverflow.com/questions/5917249/git-symbolic-links-in-windows
+
+
+### Linux support
+
+This repository does currently not support building on Linux from the source code. 
+
+
 ### Building and running tests
 
 The SDK and tests modules are located in the same Gradle project in the `packages` folder and can 
