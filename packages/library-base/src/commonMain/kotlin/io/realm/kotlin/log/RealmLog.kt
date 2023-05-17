@@ -353,7 +353,7 @@ public object RealmLog {
     }
 
     /**
-     * Reset the current log configuration to its initial default setup
+     * Reset the log configuration to its initial default setup.
      */
     internal fun reset() {
         removeAll()

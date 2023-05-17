@@ -394,7 +394,6 @@ class SyncedRealmTests {
             assertIs<SyncException>(exception)
             exception.message.let { errorMessage ->
                 assertNotNull(errorMessage)
-                println(errorMessage)
                 // Some race on JVM in particular mean that different errors can be reported.
                 if (errorMessage.contains("[Client]")) {
                     assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
