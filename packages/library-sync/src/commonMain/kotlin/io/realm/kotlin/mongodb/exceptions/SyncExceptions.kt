@@ -13,8 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_member", "invisible_reference")
 
 package io.realm.kotlin.mongodb.exceptions
+
+import io.realm.kotlin.internal.asPrimitiveRealmAnyOrElse
+import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
+import io.realm.kotlin.types.RealmAny
 
 /**
  * This exception is considered the top-level exception or general "catch-all" for problems related
@@ -26,9 +31,7 @@ package io.realm.kotlin.mongodb.exceptions
  *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
-public open class SyncException : AppException {
-    internal constructor(message: String) : super(message)
-}
+public open class SyncException internal constructor(message: String) : AppException(message)
 
 /**
  * Thrown when something has gone wrong with Device Sync in a way that is not recoverable.
@@ -44,22 +47,62 @@ public open class SyncException : AppException {
  *
  * @see io.realm.kotlin.mongodb.sync.SyncConfiguration.Builder.errorHandler
  */
-public class UnrecoverableSyncException : SyncException {
-    internal constructor(message: String) : super(message)
-}
+public class UnrecoverableSyncException internal constructor(message: String) :
+    SyncException(message)
 
 /**
  * Thrown when the type of sync used by the server does not match the one used by the client, i.e.
  * the server and client disagrees whether to use Partition-based or Flexible Sync.
  */
-public class WrongSyncTypeException : SyncException {
-    internal constructor(message: String) : super(message)
-}
+public class WrongSyncTypeException internal constructor(message: String) : SyncException(message)
 
 /**
  * Thrown when the server does not support one or more of the queries defined in the
  * [io.realm.kotlin.mongodb.sync.SubscriptionSet].
  */
-public class BadFlexibleSyncQueryException : SyncException {
-    internal constructor(message: String) : super(message)
+public class BadFlexibleSyncQueryException internal constructor(message: String) :
+    SyncException(message)
+
+/**
+ * Thrown when the server undoes one or more client writes. Details on undone writes can be found in
+ * [writes].
+ */
+public class CompensatingWriteException internal constructor(
+    message: String,
+    compensatingWrites: Array<CoreCompensatingWriteInfo>
+) : SyncException(message) {
+    /**
+     * List of all the objects created that has been reversed as part of triggering this exception.
+     */
+    public val writes: List<CompensatingWriteInfo> = compensatingWrites.map {
+        CompensatingWriteInfo(
+            reason = it.reason,
+            objectType = it.objectName,
+            primaryKey = it.primaryKey.asPrimitiveRealmAnyOrElse {
+                // We currently don't support objects as primary keys, return a String value to avoid
+                // throwing within an exception.
+                RealmAny.create("Unknown")
+            },
+        )
+    }
+
+    /**
+     * Class that describes the details for a reversed write.
+     */
+    public inner class CompensatingWriteInfo(
+        /**
+         * Reason for the compensating write.
+         */
+        public val reason: String,
+
+        /**
+         * Name of the object class for which a write has been reversed.
+         */
+        public val objectType: String,
+
+        /**
+         * Primary key value for the object for which a write has been reversed.
+         */
+        public val primaryKey: RealmAny?
+    )
 }

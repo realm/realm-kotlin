@@ -13,6 +13,7 @@ import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
+import io.realm.kotlin.mongodb.exceptions.CompensatingWriteException
 import io.realm.kotlin.mongodb.exceptions.ConnectionException
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
@@ -77,17 +78,12 @@ internal fun <T, R> channelResultCallback(
     }
 }
 
-internal fun convertSyncError(error: SyncError): SyncException {
-    // TODO In a normal environment we only expose the information in the SyncErrorCode.
-    //  In debug mode we could consider using `detailedMessage` instead.
-    return convertSyncErrorCode(error.errorCode)
-}
-
-internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
+internal fun convertSyncError(syncError: SyncError): SyncException {
+    val errorCode = syncError.errorCode
     // FIXME Client Reset errors are just reported as normal Sync Errors for now.
     //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
-    val message = createMessageFromSyncError(syncError)
-    return when (syncError.category) {
+    val message = createMessageFromSyncError(errorCode)
+    return when (errorCode.category) {
         SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/client_base.hpp#L73
             // For now, it is unclear how to categorize these, so for now, just report as generic
@@ -98,7 +94,7 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L200
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Connection type errors.
-            when (syncError.code) {
+            when (errorCode.code) {
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE, // Unknown type of input message
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX, // Bad syntax in input message head
                 ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION, // Wrong protocol version (CLIENT) (obsolete)
@@ -122,7 +118,7 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
             // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L217
             // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
             // as guide for how to categorize Session type errors.
-            when (syncError.code) {
+            when (errorCode.code) {
                 ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_BAD_QUERY -> { // Flexible Sync Query was rejected by the server
                     BadFlexibleSyncQueryException(message)
                 }
@@ -130,6 +126,8 @@ internal fun convertSyncErrorCode(syncError: SyncErrorCode): SyncException {
                     // Permission denied errors should be unrecoverable according to Core, i.e. the
                     // client will disconnect sync and transition to the "inactive" state
                     UnrecoverableSyncException(message)
+                ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE ->
+                    CompensatingWriteException(message, syncError.compensatingWrites)
                 else -> SyncException(message)
             }
         }
