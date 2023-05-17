@@ -89,7 +89,7 @@ object Versions {
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.2.0" // https://square.github.io/okio/#releases
     const val relinker = "1.4.5" // https://github.com/KeepSafe/ReLinker
-    const val serialization = "1.5.0" // https://kotlinlang.org/docs/releases.html#release-details
+    const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
     const val kbson = "0.3.0" // https://github.com/mongodb/kbson
