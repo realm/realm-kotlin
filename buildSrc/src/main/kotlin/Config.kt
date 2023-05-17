@@ -58,6 +58,7 @@ object Versions {
         const val buildToolsVersion = "33.0.0"
         const val buildTools = "7.2.2" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.2.8568313"
+        const val r8 = "4.0.48" // See https://developer.android.com/build/kotlin-support
     }
     const val androidxBenchmarkPlugin = "1.2.0-alpha12" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
     const val androidxStartup = "1.1.1" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
@@ -88,7 +89,7 @@ object Versions {
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.2.0" // https://square.github.io/okio/#releases
     const val relinker = "1.4.5" // https://github.com/KeepSafe/ReLinker
-    const val serialization = "1.5.0" // https://kotlinlang.org/docs/releases.html#release-details
+    const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
     const val kbson = "0.3.0" // https://github.com/mongodb/kbson

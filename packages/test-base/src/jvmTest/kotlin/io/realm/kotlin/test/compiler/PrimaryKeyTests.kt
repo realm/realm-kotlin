@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalCompilerApi::class)
-
 package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
@@ -27,7 +25,6 @@ import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
-import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
