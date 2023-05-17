@@ -325,8 +325,13 @@ android {
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
-                arguments("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
-                arguments("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
+                if (!HOST_OS.isWindows()) {
+                    // CCache is not officially supported on Windows and there are problems
+                    // using it with the Android NDK. So disable for now.
+                    // See https://github.com/ccache/ccache/discussions/447 for more information.
+                    arguments("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
+                    arguments("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
+                }
                 targets.add("realmc")
             }
         }
@@ -387,7 +392,7 @@ val buildJVMSharedLibs by tasks.registering {
         throw IllegalStateException("Building JVM libraries on this platform is not supported: $HOST_OS")
     }
 
-    // Only on CI for Snapshots and Releases. We assume
+    // Only on CI for Snapshots and Releases which will run on MacOS.
     val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
     if (copyJvmABIs) {
         if (!HOST_OS.isMacOs()) {

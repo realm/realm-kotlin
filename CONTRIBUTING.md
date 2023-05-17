@@ -29,10 +29,9 @@ git clone --recursive  https://github.com/realm/realm-kotlin.git
 
 ### Windows support
 
-The repository can be built on Windows, although only for the JVM target. Beware of the following requirements:
+The repository can be built on Windows, although only for the JVM and Android targets. Beware of the following requirements:
 
 - The repository contains symbolic links that needs to be preserved, see e.g.: https://stackoverflow.com/questions/5917249/git-symbolic-links-in-windows
-
 
 ### Linux support
 
