@@ -43,7 +43,7 @@ class ModelDefinitionTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Compilation should fail without a zero arg constructor")
-        assertTrue(result.messages.contains("sources/no_zero_arg_ctor.kt: (4, 1): [Realm] Cannot find primary zero arg constructor"))
+        assertTrue(result.messages.contains("sources/no_zero_arg_ctor.kt:4:1 [Realm] Cannot find primary zero arg constructor"), result.messages)
     }
 
     @Test

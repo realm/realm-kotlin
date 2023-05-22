@@ -380,6 +380,28 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
     }
 }
 
+/**
+ * Tries to convert a [RealmValue] into a [RealmAny], it handles the cases for all primitive types
+ * and leaves the other cases to an else block.
+ */
+@PublishedApi
+internal inline fun RealmValue.asPrimitiveRealmAnyOrElse(
+    elseBlock: RealmValue.() -> RealmAny?
+): RealmAny? = when (getType()) {
+    ValueType.RLM_TYPE_NULL -> null
+    ValueType.RLM_TYPE_INT -> RealmAny.create(getLong())
+    ValueType.RLM_TYPE_BOOL -> RealmAny.create(getBoolean())
+    ValueType.RLM_TYPE_STRING -> RealmAny.create(getString())
+    ValueType.RLM_TYPE_BINARY -> RealmAny.create(getByteArray())
+    ValueType.RLM_TYPE_TIMESTAMP -> RealmAny.create(RealmInstantImpl(getTimestamp()))
+    ValueType.RLM_TYPE_FLOAT -> RealmAny.create(getFloat())
+    ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(getDouble())
+    ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(realmValueToDecimal128(this))
+    ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(BsonObjectId(getObjectIdBytes()))
+    ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(getUUIDBytes()))
+    else -> elseBlock()
+}
+
 @Suppress("OVERRIDE_BY_INLINE", "NestedBlockDepth")
 internal fun realmAnyConverter(
     mediator: Mediator,
@@ -388,26 +410,9 @@ internal fun realmAnyConverter(
     issueDynamicMutableObject: Boolean = false
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
-        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
-            return when (realmValue.isNull()) {
-                true -> null
-                false -> when (val type = realmValue.getType()) {
-                    ValueType.RLM_TYPE_INT -> RealmAny.create(realmValue.getLong())
-                    ValueType.RLM_TYPE_BOOL -> RealmAny.create(realmValue.getBoolean())
-                    ValueType.RLM_TYPE_STRING -> RealmAny.create(realmValue.getString())
-                    ValueType.RLM_TYPE_BINARY -> RealmAny.create(realmValue.getByteArray())
-                    ValueType.RLM_TYPE_TIMESTAMP ->
-                        RealmAny.create(RealmInstantImpl(realmValue.getTimestamp()))
-                    ValueType.RLM_TYPE_FLOAT -> RealmAny.create(realmValue.getFloat())
-                    ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(realmValue.getDouble())
-                    ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(
-                        realmValueToDecimal128(
-                            realmValue
-                        )
-                    )
-                    ValueType.RLM_TYPE_OBJECT_ID ->
-                        RealmAny.create(BsonObjectId(realmValue.getObjectIdBytes()))
-                    ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDBytes()))
+        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? =
+            realmValue.asPrimitiveRealmAnyOrElse {
+                when (val type = realmValue.getType()) {
                     ValueType.RLM_TYPE_LINK -> {
                         val link = realmValue.getLink()
                         val clazz = if (issueDynamicObject) {
@@ -434,16 +439,17 @@ internal fun realmAnyConverter(
                                 true -> RealmAny.create(obj as DynamicMutableRealmObject)
                                 else -> RealmAny.create(obj as DynamicRealmObject)
                             }
+
                             false -> RealmAny.create(
                                 obj as RealmObject,
                                 clazz as KClass<out RealmObject>
                             )
                         }
                     }
+
                     else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
                 }
             }
-        }
 
         override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue {
             return realmAnyToRealmValueWithObjectImport(

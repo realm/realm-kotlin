@@ -274,7 +274,7 @@ kotlin {
     targets.all {
         compilations.all {
             kotlinOptions {
-                freeCompilerArgs += listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
+                freeCompilerArgs += listOf("-opt-in=kotlin.ExperimentalUnsignedTypes")
             }
         }
     }
@@ -362,7 +362,7 @@ val capiIosArm64 by tasks.registering {
     build_C_API_iOS_Arm64(buildType)
 }
 
-val buildJVMSharedLibs by tasks.registering {
+val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     buildSharedLibrariesForJVM()
 }
 

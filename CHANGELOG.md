@@ -1,11 +1,14 @@
 ## 1.9.0-SNAPSHOT (YYYY-MM-DD)
 
+This release bumps the minimum supported version of Kotlin from 1.7.20 to 1.8.0. This also impact the minimum supported version of the Android Gradle Plugin and Gradle. See the Compatibility seection for more information.
+
 ### Breaking Changes
 * None.
 
 ### Enhancements
 * Support for simple token full-text search using `@FullText` on `String` properties. Read the documentation on `@FullText` for more info. (Issue [#1368](https://github.com/realm/realm-kotlin/pull/1368))
 * Support for initialization of a realm file with a bundled realm through `RealmConfiguration.Builder(...).initialRealmFile(...)` and `SyncConfiguration.Builder(...).initialRealmFile(...)`. (Issue [#577](https://github.com/realm/realm-kotlin/issues/577))
+* [Sync] The new sync exception `CompensatingWriteException` will be thrown in the `SyncSession.ErrorHandler` when the server undoes one or more client writes. (Issue [#1372](https://github.com/realm/realm-kotlin/issues/1372))
 * [Sync] Added experimental full document serialization support on Credentials with a Custom Function, App Services Function calls, user profile, and custom data. (Issue [#1355](https://github.com/realm/realm-kotlin/pull/1355))
 
 ### Fixed
@@ -15,18 +18,22 @@
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.7.20 and above.
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
   * Ktor 2.1.2 and above.
   * Coroutines 1.6.4 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Kbson 0.3.0.
-* Minimum Gradle version: 6.7.1.
-* Minimum Android Gradle Plugin version: 4.0.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.10.0, commit 3f32c8e55700864c0d50fdef84dd8ac34bc2262e.
+* None.
+* Updated to Realm Core 13.11.0, commit d8721d7baec39571e7e5373c3f407a50d144307e.
+* Updated to Sync Protocol version 9. 
+* Updated BAAS test server to v2023-05-15.
+* Updated R8 used by tests to 4.0.48.
 
 
 ## 1.8.0 (2023-05-01)
