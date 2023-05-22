@@ -2290,6 +2290,10 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
+    actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
+        realm_wrapper.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
+    }
+
     actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
         realm_wrapper.realm_set_log_callback(
             staticCFunction { userData, logLevel, message ->

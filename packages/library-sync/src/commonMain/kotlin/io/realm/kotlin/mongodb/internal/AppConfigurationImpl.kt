@@ -154,6 +154,9 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                     syncRootDirectory
                 )
 
+                // Disable multiplexing. See https://github.com/realm/realm-core/issues/6656
+                RealmInterop.realm_sync_client_config_set_multiplex_sessions(syncClientConfig, false)
+
                 encryptionKey?.let {
                     RealmInterop.realm_sync_client_config_set_metadata_encryption_key(
                         syncClientConfig,
