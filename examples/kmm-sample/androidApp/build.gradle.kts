@@ -19,7 +19,6 @@
 plugins {
     id("com.android.application")
     kotlin("android")
-    id("kotlin-android-extensions")
     id("realm-lint")
     id("io.realm.kotlin")
 }

@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
@@ -52,6 +53,7 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.kotlin.compiler.Names.SET
+import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -124,6 +126,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val realmObjectCompanionInterface =
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
+
     private val classInfoClass = pluginContext.lookupClassOrThrow(CLASS_INFO)
     val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
 
@@ -222,7 +225,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // RealmObjectReference<T> should use the model class name as the generic argument.
         val type: IrType = objectReferenceClass.typeWith(irClass.defaultType).makeNullable()
         return irClass.apply {
-            addVariableProperty(
+            addInternalVarProperty(
                 realmModelInternalInterface,
                 OBJECT_REFERENCE,
                 type,
@@ -677,15 +680,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
 
     @Suppress("LongMethod")
-    private fun IrClass.addVariableProperty(
+    private fun IrClass.addInternalVarProperty(
         owner: IrClass,
         propertyName: Name,
         propertyType: IrType,
         initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody
     ) {
         // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
+        // Also add @kotlin.
         val property = addProperty {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             name = propertyName
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
@@ -693,7 +697,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
         property.backingField = pluginContext.irFactory.buildField {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
             name = property.name
             visibility = DescriptorVisibilities.PRIVATE
@@ -710,7 +714,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT _PROPERTY_ACCESSOR name:<get-objectPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Foo.$RealmHandler) returnType:kotlin.Long?
         // correspondingProperty: PROPERTY name:objectPointer visibility:public modality:OPEN [var]
         val getter = property.addGetter {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = propertyType
@@ -738,7 +742,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Child, <set-?>:kotlin.Long?) returnType:kotlin.Unit
         //  correspondingProperty: PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val setter = property.addSetter {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = pluginContext.irBuiltIns.unitType

@@ -22,7 +22,6 @@ import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     actual fun createTempDir(prefix: String, readOnly: Boolean): String {
@@ -44,9 +43,8 @@ actual object PlatformUtils {
         File(path).deleteRecursively()
     }
 
-    @OptIn(ExperimentalTime::class)
     actual fun sleep(duration: Duration) {
-        Thread.sleep(duration.toLongMilliseconds())
+        Thread.sleep(duration.inWholeMilliseconds)
     }
 
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()

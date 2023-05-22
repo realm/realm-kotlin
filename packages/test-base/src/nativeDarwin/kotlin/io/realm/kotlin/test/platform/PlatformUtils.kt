@@ -31,7 +31,6 @@ import platform.posix.pthread_threadid_np
 import platform.posix.timespec
 import kotlin.native.internal.GC
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     actual fun createTempDir(prefix: String, readOnly: Boolean): String {
@@ -49,9 +48,8 @@ actual object PlatformUtils {
         platform.Foundation.NSFileManager.defaultManager.removeItemAtURL(platform.Foundation.NSURL(fileURLWithPath = path), null)
     }
 
-    @OptIn(ExperimentalTime::class)
     actual fun sleep(duration: Duration) {
-        val nanoseconds = duration.toLongNanoseconds()
+        val nanoseconds = duration.inWholeNanoseconds
         val time = cValue<timespec> {
             tv_sec = nanoseconds / 1000000000
             tv_nsec = nanoseconds % 1000000000
