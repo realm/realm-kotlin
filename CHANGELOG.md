@@ -27,7 +27,9 @@ This release bumps the minimum supported version of Kotlin from 1.7.20 to 1.8.0.
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.10.1, commit a546bd453eea532fce14dfdeebf14973f3852ad7.
+* Updated to Realm Core 13.11.0, commit d8721d7baec39571e7e5373c3f407a50d144307e.
+* Updated to Sync Protocol version 9. 
+* Updated BAAS test server to v2023-05-15.
 * Updated R8 used by tests to 4.0.48.
 
 
