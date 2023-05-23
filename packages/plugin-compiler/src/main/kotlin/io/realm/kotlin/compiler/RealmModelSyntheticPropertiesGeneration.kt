@@ -117,6 +117,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
  * - Adding the internal properties of [io.realm.kotlin.internal.RealmObjectInternal]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
+@Suppress("LargeClass")
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
 
     private val realmObjectInterface: IrClass =
