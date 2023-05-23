@@ -18,6 +18,7 @@ package io.realm.kotlin.mongodb
 import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -31,11 +32,15 @@ import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.mongodb.ext.customData
+import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -66,6 +71,17 @@ public interface AppConfiguration {
      * @see [AppConfiguration.Builder.appVersion]
      */
     public val appVersion: String?
+
+    /**
+     * The default EJson decoder that would be used to encode and decode arguments and results
+     * when calling remote App [Functions], authenticating with a [customFunction], and retrieving
+     * a user [profile] or [customData].
+     *
+     * It can be set with [Builder.ejson] if a certain configuration, such as contextual classes, is
+     * required.
+     */
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    public val ejson: EJson
 
     /**
      * The configured [HttpLogObfuscator] for this app. If this property returns `null` no
@@ -114,6 +130,8 @@ public interface AppConfiguration {
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        private var ejson: EJson = EJson
         private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
 
         /**
@@ -250,6 +268,17 @@ public interface AppConfiguration {
         }
 
         /**
+         * Sets the default EJson decoder that would be use to encode and decode arguments and results
+         * when calling remote Atlas [Functions], authenticating with a [customFunction], and retrieving
+         * a user [profile] or [customData].
+         */
+        @ExperimentalRealmSerializerApi
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        public fun ejson(ejson: EJson): Builder = apply {
+            this.ejson = ejson
+        }
+
+        /**
          * Allows defining a custom network transport. It is used by some tests that require simulating
          * network responses.
          */
@@ -262,6 +291,7 @@ public interface AppConfiguration {
          *
          * @return the AppConfiguration that can be used to create a [App].
          */
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         public fun build(): AppConfiguration {
             // Configure logging during creation of AppConfiguration to keep old behavior for
             // configuring logging. This should be removed when `LogConfiguration` is removed.
@@ -314,6 +344,7 @@ public interface AppConfiguration {
                 logger = logConfig,
                 appName = appName,
                 appVersion = appVersion,
+                ejson = ejson,
                 httpLogObfuscator = httpLogObfuscator
             )
         }

@@ -90,6 +90,7 @@ actual object PropertyFlags {
     actual val RLM_PROPERTY_NULLABLE: Int = realm_wrapper.RLM_PROPERTY_NULLABLE.toInt()
     actual val RLM_PROPERTY_PRIMARY_KEY: Int = realm_wrapper.RLM_PROPERTY_PRIMARY_KEY.toInt()
     actual val RLM_PROPERTY_INDEXED: Int = realm_wrapper.RLM_PROPERTY_INDEXED.toInt()
+    actual val RLM_PROPERTY_FULLTEXT_INDEXED: Int = realm_wrapper.RLM_PROPERTY_FULLTEXT_INDEXED.toInt()
 }
 
 actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeEnumerated {

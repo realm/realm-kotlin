@@ -211,6 +211,7 @@ class SyncConnectionParams(
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
+    fun realm_value_get(value: RealmValue): Any?
     fun realm_get_version_id(realm: RealmPointer): Long
     fun realm_get_library_version(): String
     fun realm_refresh(realm: RealmPointer)
@@ -601,6 +602,8 @@ expect object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     )
+
+    fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean)
 
     fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
 

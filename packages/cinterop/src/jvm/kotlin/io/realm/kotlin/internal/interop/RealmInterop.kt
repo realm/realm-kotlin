@@ -52,6 +52,8 @@ actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
 
+    actual fun realm_value_get(value: RealmValue): Any? = value.value
+
     actual fun realm_get_version_id(realm: RealmPointer): Long {
         val version = realm_version_id_t()
         val found = BooleanArray(1)
@@ -1203,6 +1205,10 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
+    actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
+        realmc.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
+    }
+
     actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
         realmc.set_log_callback(level.priority, callback)
     }
@@ -1540,7 +1546,7 @@ actual object RealmInterop {
         serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, null, callback)
     }
 
     actual fun realm_app_call_reset_password_function(

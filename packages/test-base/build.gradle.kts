@@ -87,7 +87,6 @@ kotlin {
 
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.jvmTarget = Versions.jvmTarget
-        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
 }
 
@@ -215,5 +214,24 @@ kotlin {
         val macosTest by getting { dependsOn(nativeDarwinTest) }
         val iosMain by getting { dependsOn(nativeDarwin) }
         val iosTest by getting { dependsOn(nativeDarwinTest) }
+    }
+}
+
+// Rules for getting Kotlin Native resource test files in place for locating it with the `assetFile`
+// configuration. For JVM platforms the files are placed in
+// `src/jvmTest/resources`(non-Android JVM) and `src/androidTest/assets` (Android).
+kotlin {
+    targets.filterIsInstance<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithTests<*>>().forEach { simulatorTargets ->
+        val target = simulatorTargets.name
+        val testTaskName = "${target}Test"
+        val testTask = tasks.findByName(testTaskName) ?: error("Cannot locate test task: '$testTaskName")
+        val copyTask = tasks.register<Copy>("${target}TestResources") {
+            from("src/${testTaskName}/resources")
+            val parent = testTask.inputs.files.first().parent
+            into(parent)
+        }
+        testTask.let {
+            it.dependsOn(copyTask)
+        }
     }
 }

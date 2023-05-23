@@ -18,8 +18,6 @@
 plugins {
     `kotlin-dsl`
     `kotlin-dsl-precompiled-script-plugins`
-    // Workaround for https://youtrack.jetbrains.com/issue/KT-54634
-    `embedded-kotlin`
 }
 
 gradlePlugin {
@@ -34,24 +32,13 @@ gradlePlugin {
 repositories {
     google()
     gradlePluginPortal()
-    // Workaround for https://youtrack.jetbrains.com/issue/KT-54634
-    mavenCentral()
 }
 
 
 // Setup dependencies for building the buildScript.
 buildscript {
     dependencies {
-        // Work-around for https://youtrack.jetbrains.com/issue/KT-54634
-        classpath(fileTree("$rootDir/buildSrc/build/libs") {
-            include("*.jar")
-        })
-        // Work-around end
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
-        // See https://github.com/gradle/gradle/issues/22510
-        constraints {
-            this.classpath("org.jetbrains.kotlin:kotlin-sam-with-receiver:${Versions.kotlin}")
-        }
     }
 }
 
@@ -62,13 +49,8 @@ dependencies {
     implementation("io.github.gradle-nexus:publish-plugin:${Versions.nexusPublishPlugin}")
     implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${Versions.detektPlugin}")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
+    implementation("com.android.tools:r8:${Versions.Android.r8}")
     implementation("com.android.tools.build:gradle:${Versions.Android.buildTools}") // TODO LATER Don't know why this has to be here. See if we can remove this
     implementation("com.android.tools.build:gradle-api:${Versions.Android.buildTools}")
     implementation(kotlin("script-runtime"))
-    // Workaround for https://youtrack.jetbrains.com/issue/KT-54634
-    implementation(gradleApi())
-}
-
-kotlinDslPluginOptions {
-    experimentalWarning.set(false)
 }

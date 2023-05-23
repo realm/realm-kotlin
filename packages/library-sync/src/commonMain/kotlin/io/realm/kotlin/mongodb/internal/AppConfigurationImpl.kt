@@ -36,10 +36,13 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to AppImpl
+
 @Suppress("LongParameterList")
-public class AppConfigurationImpl constructor(
+public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
@@ -49,6 +52,7 @@ public class AppConfigurationImpl constructor(
     public val logger: LogConfiguration,
     override val appName: String?,
     override val appVersion: String?,
+    override val ejson: EJson,
     override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
 
@@ -149,6 +153,9 @@ public class AppConfigurationImpl constructor(
                     syncClientConfig,
                     syncRootDirectory
                 )
+
+                // Disable multiplexing. See https://github.com/realm/realm-core/issues/6656
+                RealmInterop.realm_sync_client_config_set_multiplex_sessions(syncClientConfig, false)
 
                 encryptionKey?.let {
                     RealmInterop.realm_sync_client_config_set_metadata_encryption_key(

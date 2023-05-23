@@ -19,9 +19,11 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
@@ -257,6 +259,8 @@ actual object RealmInterop {
         realm_wrapper.realm_register_user_code_callback_error(StableRef.create(e).asCPointer())
         false // indicates the callback failed
     }
+
+    actual fun realm_value_get(value: RealmValue): Any? = value.value
 
     actual fun realm_get_version_id(realm: RealmPointer): Long {
         memScoped {
@@ -2306,6 +2310,10 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
+    actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
+        realm_wrapper.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
+    }
+
     actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
         realm_wrapper.realm_set_log_callback(
             staticCFunction { userData, logLevel, message ->
@@ -2390,14 +2398,26 @@ actual object RealmInterop {
                             }
                         }.toMap()
 
+                    val compensatingWrites =
+                        Array<CoreCompensatingWriteInfo>(compensating_writes_length.toInt()) { index ->
+                            compensating_writes!![index].let { compensatingWriteInfo ->
+                                CoreCompensatingWriteInfo(
+                                    reason = compensatingWriteInfo.reason.safeKString(),
+                                    objectName = compensatingWriteInfo.object_name.safeKString(),
+                                    primaryKey = RealmValue(compensatingWriteInfo.primary_key)
+                                )
+                            }
+                        }
+
                     SyncError(
-                        code,
-                        detailed_message.safeKString(),
-                        userInfoMap[c_original_file_path_key.safeKString()],
-                        userInfoMap[c_recovery_file_path_key.safeKString()],
-                        is_fatal,
-                        is_unrecognized_by_client,
-                        is_client_reset_requested
+                        errorCode = code,
+                        detailedMessage = detailed_message.safeKString(),
+                        originalFilePath = userInfoMap[c_original_file_path_key.safeKString()],
+                        recoveryFilePath = userInfoMap[c_recovery_file_path_key.safeKString()],
+                        isFatal = is_fatal,
+                        isUnrecognizedByClient = is_unrecognized_by_client,
+                        isClientResetRequested = is_client_reset_requested,
+                        compensatingWrites = compensatingWrites
                     )
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
@@ -2887,6 +2907,7 @@ actual object RealmInterop {
             user.cptr(),
             name,
             serializedEjsonArgs,
+            null,
             staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
                 handleAppCallback(userData, error) {
                     data.safeKString()
