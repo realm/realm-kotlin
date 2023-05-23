@@ -553,6 +553,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     )
                                 }
 
+                                if (primaryKey && isFullTextIndexed) {
+                                    logError(
+                                        "@PrimaryKey and @FullText cannot be combined on property ${property.name}",
+                                        property.locationOf()
+                                    )
+                                }
+
                                 val location = property.locationOf()
                                 val persistedName = value.persistedName
                                 val publicName = value.publicName

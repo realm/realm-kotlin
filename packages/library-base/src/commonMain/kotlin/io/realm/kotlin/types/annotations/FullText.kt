@@ -12,7 +12,7 @@ package io.realm.kotlin.types.annotations
  * ```
  *
  * Only [String] properties can be marked with this annotation and it cannot be combined with the
- * [Index] annotation.
+ * [Index] and [PrimaryKey] annotation.
  *
  * The full-text index currently support this set of features:
  *
