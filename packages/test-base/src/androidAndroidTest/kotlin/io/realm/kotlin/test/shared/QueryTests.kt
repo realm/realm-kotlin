@@ -2269,14 +2269,11 @@ class QueryTests {
         assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // token prefix search does not work
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'cafe big'").find().size) // case- and diacritics-insensitive
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'rødgrød'").find().size) // Latin-1 supplement
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT '😊'").find().size) // Searching outside supported chars return nothing
     }
 
     @Test
     fun fullTextSearch_invalidArguments() {
-        assertFailsWith<IllegalArgumentException> {
-            realm.query<QuerySample>("fulltextField TEXT '😊'").find().size
-        }
-
         assertFailsWith<IllegalArgumentException> {
             realm.query<QuerySample>("fulltextField TEXT ''").find().size
         }
