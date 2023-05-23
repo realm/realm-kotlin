@@ -12,7 +12,7 @@ This release bumps the minimum supported version of Kotlin from 1.7.20 to 1.8.0.
 * [Sync] Added experimental full document serialization support on Credentials with a Custom Function, App Services Function calls, user profile, and custom data. (Issue [#1355](https://github.com/realm/realm-kotlin/pull/1355))
 
 ### Fixed
-* [Sync] `BsonEncoder` now allows the conversion of numerical values with precision lose.
+* [Sync] `BsonEncoder` now allows the converting numerical values with with precision loss.
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
