@@ -1,4 +1,4 @@
-## 1.9.0-SNAPSHOT (2023-05-23)
+## 1.9.0 (2023-05-23)
 
 This release bumps the minimum supported version of Kotlin from 1.7.20 to 1.8.0. This also impact the minimum supported version of the Android Gradle Plugin and Gradle. See the Compatibility seection for more information.
 
