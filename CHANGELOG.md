@@ -6,6 +6,7 @@ This release bumps the minimum supported version of Kotlin from 1.7.20 to 1.8.0.
 * None.
 
 ### Enhancements
+* Support for simple token full-text search using `@FullText` on `String` properties. Read the documentation on `@FullText` for more info. (Issue [#1368](https://github.com/realm/realm-kotlin/pull/1368))
 * Support for initialization of a realm file with a bundled realm through `RealmConfiguration.Builder(...).initialRealmFile(...)` and `SyncConfiguration.Builder(...).initialRealmFile(...)`. (Issue [#577](https://github.com/realm/realm-kotlin/issues/577))
 * [Sync] The new sync exception `CompensatingWriteException` will be thrown in the `SyncSession.ErrorHandler` when the server undoes one or more client writes. (Issue [#1372](https://github.com/realm/realm-kotlin/issues/1372))
 * [Sync] Added experimental full document serialization support on Credentials with a Custom Function, App Services Function calls, user profile, and custom data. (Issue [#1355](https://github.com/realm/realm-kotlin/pull/1355))
@@ -28,6 +29,7 @@ This release bumps the minimum supported version of Kotlin from 1.7.20 to 1.8.0.
 * Minimum Android SDK: 16.
 
 ### Internal
+* None.
 * Updated to Realm Core 13.11.0, commit d8721d7baec39571e7e5373c3f407a50d144307e.
 * Updated to Sync Protocol version 9. 
 * Updated BAAS test server to v2023-05-15.

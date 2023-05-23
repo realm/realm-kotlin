@@ -55,6 +55,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.FullText
 import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
@@ -2251,6 +2252,41 @@ class QueryTests {
     }
 
     // --------------------------------------------------
+    // Full-text search smoke tests
+    // --------------------------------------------------
+    @Test
+    fun fullTextSearch() {
+        realm.writeBlocking {
+            copyToRealm(QuerySample(1).apply { fulltextField = "The quick brown fox jumped over the lazy dog." })
+            copyToRealm(QuerySample(2).apply { fulltextField = "I sat at the cafè, drinking a BIG cup of coffee." })
+            copyToRealm(QuerySample(3).apply { fulltextField = "Rødgrød med fløde." })
+            copyToRealm(QuerySample(4).apply { fulltextField = "full-text-search is hard to implement!" })
+            copyToRealm(QuerySample(5).apply { fulltextField = "Trying to search for an emoji, like 😊, inside a text string is not supported." })
+        }
+
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'quick dog'").find().size) // words at different locations
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'brown -fox'").find().size) // exclusion
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // token prefix search does not work
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'cafe big'").find().size) // case- and diacritics-insensitive
+        assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'rødgrød'").find().size) // Latin-1 supplement
+        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT '😊'").find().size) // Searching outside supported chars return nothing
+    }
+
+    @Test
+    fun fullTextSearch_invalidArguments() {
+        assertFailsWith<IllegalArgumentException> {
+            realm.query<QuerySample>("fulltextField TEXT ''").find().size
+        }
+    }
+
+    @Test
+    fun fullTextSearch_onNonFullTextFieldThrows() {
+        assertFailsWithMessage<IllegalStateException>("Column has no fulltext index") {
+            realm.query<QuerySample>("stringField TEXT 'foo'")
+        }
+    }
+
+    // --------------------------------------------------
     // Class instantiation with property setting helpers
     // --------------------------------------------------
 
@@ -3059,6 +3095,9 @@ class QuerySample() : RealmObject {
 
     @PersistedName("persistedNameStringField")
     var publicNameStringField: String = "Realm"
+
+    @FullText
+    var fulltextField: String = "A very long string"
 
     var stringField: String = "Realm"
     var byteField: Byte = 0

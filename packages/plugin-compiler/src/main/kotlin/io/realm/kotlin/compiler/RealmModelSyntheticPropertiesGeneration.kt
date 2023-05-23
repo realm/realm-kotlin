@@ -20,6 +20,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.CLASS_INFO
 import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
@@ -116,6 +117,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
  * - Adding the internal properties of [io.realm.kotlin.internal.RealmObjectInternal]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
+@Suppress("LargeClass")
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
 
     private val realmObjectInterface: IrClass =
@@ -215,6 +217,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmObjectIdType,
             realmUUIDType,
             realmAnyType
+        ).map { it.classifierOrFail }
+    }
+    private val fullTextIndexableTypes = with(pluginContext.irBuiltIns) {
+        setOf(
+            stringType
         ).map { it.classifierOrFail }
     }
 
@@ -532,6 +539,27 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         property.locationOf()
                                     )
                                 }
+                                val isFullTextIndexed = backingField.hasAnnotation(FULLTEXT_ANNOTATION)
+                                if (isFullTextIndexed && backingField.type.classifierOrFail !in fullTextIndexableTypes) {
+                                    logError(
+                                        "Full-text key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${fullTextIndexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        property.locationOf()
+                                    )
+                                }
+
+                                if (isIndexed && isFullTextIndexed) {
+                                    logError(
+                                        "@FullText and @Index cannot be combined on property ${property.name}",
+                                        property.locationOf()
+                                    )
+                                }
+
+                                if (primaryKey && isFullTextIndexed) {
+                                    logError(
+                                        "@PrimaryKey and @FullText cannot be combined on property ${property.name}",
+                                        property.locationOf()
+                                    )
+                                }
 
                                 val location = property.locationOf()
                                 val persistedName = value.persistedName
@@ -551,7 +579,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     type = propertyClass.defaultType,
                                     symbol = propertyCreateMethod.symbol,
                                     typeArgumentsCount = 0,
-                                    valueArgumentsCount = 9
+                                    valueArgumentsCount = 10
                                 ).apply {
                                     dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
@@ -633,6 +661,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(arg++, irBoolean(primaryKey))
                                     // isIndexed
                                     putValueArgument(arg++, irBoolean(isIndexed))
+                                    // IsFullTextIndexed
+                                    putValueArgument(arg++, irBoolean(isFullTextIndexed))
                                 }
                             }
                         )
