@@ -603,6 +603,8 @@ expect object RealmInterop {
         basePath: String
     )
 
+    fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean)
+
     fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
 
     fun realm_set_log_level(level: CoreLogLevel)
