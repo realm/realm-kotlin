@@ -46,7 +46,8 @@ internal data class RealmPropertyImpl(
                         storageType,
                         isNullable,
                         isPrimaryKey,
-                        isIndexed
+                        isIndexed,
+                        isFullTextIndexed
                     )
                     CollectionType.RLM_COLLECTION_TYPE_LIST -> ListPropertyType(
                         storageType,

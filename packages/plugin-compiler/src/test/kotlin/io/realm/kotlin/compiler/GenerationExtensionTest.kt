@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(ExperimentalCompilerApi::class)
 
 package io.realm.kotlin.compiler
 
@@ -36,6 +37,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -137,6 +139,11 @@ class GenerationExtensionTest {
             owner = MockRealmReference(),
             mediator = MockMediator()
         )
+        val companionObject = sampleModel::class.companionObjectInstance
+
+        assertTrue(companionObject is RealmObjectCompanion)
+
+        val (table, properties) = companionObject.`io_realm_kotlin_schema`()
 
         // Accessing getters/setters
         sampleModel.`io_realm_kotlin_objectReference` = realmObjectReference
@@ -373,7 +380,7 @@ class GenerationExtensionTest {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
                 "-Xjvm-default=enable",
@@ -384,13 +391,13 @@ class GenerationExtensionTest {
 
     private fun compileFromSource(
         source: SourceFile,
-        plugins: List<Registrar> = listOf(Registrar())
+        plugins: List<ComponentRegistrar> = listOf(Registrar())
     ): KotlinCompilation.Result =
         KotlinCompilation().apply {
             sources = listOf(source)
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf("-Xjvm-default=enable")
         }.compile()

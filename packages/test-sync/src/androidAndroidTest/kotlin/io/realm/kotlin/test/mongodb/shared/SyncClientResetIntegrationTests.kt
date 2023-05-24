@@ -151,51 +151,59 @@ class SyncClientResetIntegrationTests {
             appName: String,
             openRealmTimeout: Duration,
             recoveryDisabled: Boolean = false
-        ): TestEnvironment<out RealmObject> = TestEnvironment(
-            clazz = FlexParentObject::class,
-            appName = appName,
-            syncMode = SyncMode.FLEXIBLE,
-            recoveryDisabled = recoveryDisabled,
-            configBuilderGenerator = { user ->
-                return@TestEnvironment SyncConfiguration.Builder(
-                    user,
-                    setOf(
-                        FlexParentObject::class,
-                        FlexChildObject::class,
-                        FlexEmbeddedObject::class
-                    )
-                ).initialSubscriptions { realm ->
-                    realm.query<FlexParentObject>(
-                        "section = $0 AND name = $1",
-                        Random.nextInt(),
-                        "blue"
-                    ).also { add(it) }
-                }.waitForInitialRemoteData(openRealmTimeout)
-            },
-            insertElement = { realm: Realm ->
-                realm.writeBlocking {
-                    copyToRealm(FlexParentObject())
-                }
-            },
-            recoverData = { before: TypedRealm, after: MutableRealm ->
-                // Perform manual copy
-                // see https://github.com/realm/realm-kotlin/issues/868
-                after.copyToRealm(
-                    FlexParentObject().apply {
-                        assertNotNull(
-                            before.query<FlexParentObject>().first().find()
-                        ).let {
-                            // Perform manual copy
-                            // see https://github.com/realm/realm-kotlin/issues/868
-                            this._id = it._id
-                            this.section = it.section
-                            this.name = it.name
-                            this.age = it.age
-                        }
+        ): TestEnvironment<out RealmObject> {
+            val section = Random.nextInt()
+            return TestEnvironment(
+                clazz = FlexParentObject::class,
+                appName = appName,
+                syncMode = SyncMode.FLEXIBLE,
+                recoveryDisabled = recoveryDisabled,
+                configBuilderGenerator = { user ->
+                    return@TestEnvironment SyncConfiguration.Builder(
+                        user,
+                        setOf(
+                            FlexParentObject::class,
+                            FlexChildObject::class,
+                            FlexEmbeddedObject::class
+                        )
+                    ).initialSubscriptions { realm ->
+                        realm.query<FlexParentObject>(
+                            "section = $0 AND name = $1",
+                            section,
+                            "blue"
+                        ).also { add(it) }
+                    }.waitForInitialRemoteData(openRealmTimeout)
+                },
+                insertElement = { realm: Realm ->
+                    realm.writeBlocking {
+                        copyToRealm(
+                            FlexParentObject().apply {
+                                this.section = section
+                                this.name = "blue"
+                            }
+                        )
                     }
-                )
-            }
-        )
+                },
+                recoverData = { before: TypedRealm, after: MutableRealm ->
+                    // Perform manual copy
+                    // see https://github.com/realm/realm-kotlin/issues/868
+                    after.copyToRealm(
+                        FlexParentObject().apply {
+                            assertNotNull(
+                                before.query<FlexParentObject>().first().find()
+                            ).let {
+                                // Perform manual copy
+                                // see https://github.com/realm/realm-kotlin/issues/868
+                                this._id = it._id
+                                this.section = it.section
+                                this.name = it.name
+                                this.age = it.age
+                            }
+                        }
+                    )
+                }
+            )
+        }
 
         /**
          * Factory for PBS testing environments.

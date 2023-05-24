@@ -274,7 +274,7 @@ kotlin {
     targets.all {
         compilations.all {
             kotlinOptions {
-                freeCompilerArgs += listOf("-Xopt-in=kotlin.ExperimentalUnsignedTypes")
+                freeCompilerArgs += listOf("-opt-in=kotlin.ExperimentalUnsignedTypes")
             }
         }
     }
@@ -383,7 +383,7 @@ if (HOST_OS.isMacOs()) {
     }
 }
 
-val buildJVMSharedLibs by tasks.registering {
+val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     if (HOST_OS.isMacOs()) {
         buildSharedLibrariesForJVMMacOs()
     } else if (HOST_OS.isWindows()) {
