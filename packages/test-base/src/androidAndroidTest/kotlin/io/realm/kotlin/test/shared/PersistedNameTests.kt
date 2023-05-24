@@ -375,6 +375,30 @@ class PersistedNameTests {
     }
 
     @Test
+    fun persistedName_on_objectLink() {
+        val config = RealmConfiguration
+            .Builder(schema = setOf(Parent::class, Child::class))
+            .directory(tmpDir)
+            .name("objectLinks.realm")
+            .build()
+
+        Realm.open(config).use { realm ->
+            realm.writeBlocking {
+                copyToRealm(
+                    Parent().apply {
+                        this.child = Child()
+                    }
+                )
+            }
+
+            assertEquals(1, realm.query<Parent>().count().find())
+            assertEquals(1, realm.query<Child>().count().find())
+
+            assertEquals("child", realm.query<Parent>().first().find()!!.child!!.name)
+        }
+    }
+
+    @Test
     fun schemaWithOverlappingClassNamesThrow() {
         assertFailsWithMessage<IllegalArgumentException>("The schema has declared the following class names multiple times: PersistedParent") {
             RealmConfiguration.create(schema = setOf(RealmParent::class, PersistedParent::class, RealmChild::class))
@@ -478,4 +502,14 @@ class PersistedParent(var id: Int) : RealmObject {
 class RealmChild(var id: Int) : RealmObject {
     constructor() : this(0)
     val parents by backlinks(RealmParent::child)
+}
+
+class Parent : RealmObject {
+    var name = "parent"
+    var child: Child? = null
+}
+
+@PersistedName(name = "RenamedChild")
+class Child : RealmObject {
+    var name = "child"
 }

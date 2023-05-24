@@ -223,7 +223,7 @@ class RealmMigrationTests {
 
         // TODO Provide better error messages for exception in callbacks
         //  https://github.com/realm/realm-kotlin/issues/665
-        assertFailsWithMessage<RuntimeException>("User-provided callback failed") {
+        assertFailsWithMessage<RuntimeException>("User error") {
             Realm.open(newConfiguration)
         }
     }

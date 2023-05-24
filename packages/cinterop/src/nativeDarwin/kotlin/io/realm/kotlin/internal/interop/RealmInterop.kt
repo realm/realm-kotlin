@@ -149,8 +149,9 @@ private fun throwOnError() {
                 errorCodeNativeValue = error.error.value.toInt(),
                 messageNativeValue = error.message?.toKString(),
                 path = error.path?.toKString(),
-                userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
+                userError = error.usercode_error?.asStableRef<Throwable>()?.get()
             ).also {
+                error.usercode_error?.let { disposeUserData<Throwable>(it) }
                 realm_clear_last_error()
             }
         }
@@ -247,6 +248,19 @@ fun String.toRString(memScope: MemScope) = cValue<realm_string_t> {
 
 @Suppress("LargeClass", "FunctionNaming")
 actual object RealmInterop {
+
+    private inline fun <reified T : Any> stableUserDataWithErrorPropagation(
+        userdata: CPointer<out CPointed>?,
+        block: T.() -> Boolean
+    ): Boolean = try {
+        block(stableUserData<T>(userdata).get())
+    } catch (e: Throwable) {
+        // register the error so it is accessible later
+        realm_wrapper.realm_register_user_code_callback_error(StableRef.create(e).asCPointer())
+        false // indicates the callback failed
+    }
+
+    actual fun realm_value_get(value: RealmValue): Any? = value.value
 
     actual fun realm_get_version_id(realm: RealmPointer): Long {
         memScoped {
@@ -405,10 +419,12 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_should_compact_on_launch_function(
             config.cptr(),
             staticCFunction<COpaquePointer?, uint64_t, uint64_t, Boolean> { userdata, total, used ->
-                stableUserData<CompactOnLaunchCallback>(userdata).get().invoke(
-                    total.toLong(),
-                    used.toLong()
-                )
+                stableUserDataWithErrorPropagation<CompactOnLaunchCallback>(userdata) {
+                    invoke(
+                        total.toLong(),
+                        used.toLong()
+                    )
+                }
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
@@ -424,13 +440,16 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_migration_function(
             config.cptr(),
             staticCFunction { userData, oldRealm, newRealm, schema ->
-                safeUserData<MigrationCallback>(userData).migrate(
-                    // These realm/schema pointers are only valid for the duraction of the
-                    // migration so don't let ownership follow the NativePointer-objects
-                    CPointerWrapper(oldRealm, false),
-                    CPointerWrapper(newRealm, false),
-                    CPointerWrapper(schema, false),
-                )
+                stableUserDataWithErrorPropagation<MigrationCallback>(userData) {
+                    migrate(
+                        // These realm/schema pointers are only valid for the duraction of the
+                        // migration so don't let ownership follow the NativePointer-objects
+                        CPointerWrapper(oldRealm, false),
+                        CPointerWrapper(newRealm, false),
+                        CPointerWrapper(schema, false),
+                    )
+                    true
+                }
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
@@ -446,8 +465,10 @@ actual object RealmInterop {
         realm_wrapper.realm_config_set_data_initialization_function(
             config.cptr(),
             staticCFunction { userData, _ ->
-                safeUserData<DataInitializationCallback>(userData).invoke()
-                true
+                stableUserDataWithErrorPropagation<DataInitializationCallback>(userData) {
+                    invoke()
+                    true
+                }
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userdata ->
@@ -528,8 +549,9 @@ actual object RealmInterop {
                             errorCodeNativeValue = err.error.value.toInt(),
                             messageNativeValue = err.message?.toKString(),
                             path = err.path?.toKString(),
-                            userError = null // TODO https://github.com/realm/realm-kotlin/issues/1228
+                            userError = err.usercode_error?.asStableRef<Throwable>()?.get()
                         )
+                        err.usercode_error?.let { disposeUserData<Throwable>(it) }
                     } else {
                         realm_wrapper.realm_release(realm)
                     }
@@ -2286,6 +2308,10 @@ actual object RealmInterop {
         basePath: String
     ) {
         realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
+    }
+
+    actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
+        realm_wrapper.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
     }
 
     actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
