@@ -208,7 +208,8 @@ kotlin {
             //    package since the symlink put them in a different location than the package name
             //    would imply (This is acceptable).
             //
-            // Improvements to this situation is tracked by XXX (Create YouTrack issue).
+            // Improvements to this situation is tracked here:
+            // https://youtrack.jetbrains.com/issue/KT-46452/Allow-to-run-common-tests-as-Android-Instrumentation-tests
 
             // Copy of `commonTest` dependencies
             dependencies {

@@ -80,17 +80,6 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
             }
         }
-        val androidInstrumentedTest by getting {
-            dependencies {
-                implementation(kotlin("test"))
-                implementation(kotlin("test-junit"))
-                implementation("junit:junit:${Versions.junit}")
-                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
-                implementation("androidx.test:runner:${Versions.androidxTest}")
-                implementation("androidx.test:rules:${Versions.androidxTest}")
-                implementation(kotlin("reflect:${Versions.kotlin}"))
-            }
-        }
         val nativeDarwin by creating {
             dependsOn(commonMain)
         }
@@ -157,9 +146,6 @@ android {
             getByName("main") {
                 manifest.srcFile("src/androidMain/AndroidManifest.xml")
                 jniLibs.srcDir("src/androidMain/jniLibs")
-                getByName("androidTest") {
-                    java.srcDirs("src/androidTest/kotlin")
-                }
             }
         }
         ndk {
