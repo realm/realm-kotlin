@@ -223,19 +223,6 @@ kotlin {
             }
         }
     }
-//
-//        val androidInstrumentedTest by getting {
-//            dependencies {
-//                implementation(kotlin("test"))
-//                implementation(kotlin("test-junit"))
-//                implementation("junit:junit:${Versions.junit}")
-//                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
-//                implementation("androidx.test:runner:${Versions.androidxTest}")
-//                implementation("androidx.test:rules:${Versions.androidxTest}")
-//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
-//            }
-//        }
-//    }
 }
 
 kotlin {
