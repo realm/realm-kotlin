@@ -183,23 +183,24 @@ kotlin {
             }
         }
         val androidInstrumentedTest by getting {
-            // Instrumentation tests do not depend on common by default:
+            // Instrumentation tests do not depend on commonTest by default:
             // https://kotlinlang.org/docs/whatsnew18.html#the-relation-between-android-and-common-tests
-            // But adding support for this only using `dependsOn(commonTest)` will prevent us
-            // from selectively running unit tests on device from the IDE.
+            // But adding support for this using `dependsOn(commonTest)` will prevent us
+            // from selectively running unit tests on device from the IDE as the files do not
+            // become visible in IntelliJ this way.
             //
-            // So in order to work around these limitations the following strategy is used.
+            // In order to work around this limitation, the following strategy is used:
             //
             // 1. A symlink between all commonTest files and androidInstrumentedTest is created.
             //    This symlink is called `common` as we need to include both shared tests as well
             //    as some helper classes.
-            // 2. We need to duplicate all test dependencies in `androidInstrumentedTest` that is
-            //    used in `commonTest`.
+            // 2. We need to duplicate all test dependencies from `commonTest` into
+            //    in `androidInstrumentedTest`.
             //
-            // This approach satisfies both our IDE and CI requirements with minimal changes, with
-            // two downsides:
+            // This approach results in a minimum amount of code changes and satisfies both our
+            // IDE and CI requirements. But it also introduces two downsides:
             //
-            // 1. We need to duplicate test dependencies (which alsmost never changes)
+            // 1. We need to duplicate test dependencies (which almost never changes).
             // 2. We get an IDE warning about tests in `androidInstrumentedTests` having the wrong
             //    package since the symlink put them in a different location than the package name
             //    would imply (This is acceptable).
