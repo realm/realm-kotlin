@@ -227,7 +227,7 @@ kotlin {
                 implementation("com.getkeepsafe.relinker:relinker:${Versions.relinker}")
             }
         }
-        val androidInstrumentedTest by creating {
+        val androidInstrumentedTest by getting {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(kotlin("test"))
