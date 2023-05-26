@@ -50,6 +50,19 @@ configurations.all {
                 )
             }
     }
+
+    // Ensure that androidUnitTest uses the Realm JVM variant rather than Android.
+    // This should cover both "debug" and "release" variants.
+    if (name.endsWith("UnitTestRuntimeClasspath")) {
+        resolutionStrategy.dependencySubstitution {
+            substitute(module("io.realm.kotlin:library-base:${Realm.version}")).using(
+                module("io.realm.kotlin:library-base-jvm:${Realm.version}")
+            )
+            substitute(module("io.realm.kotlin:cinterop:${Realm.version}")).using(
+                module("io.realm.kotlin:cinterop-jvm:${Realm.version}")
+            )
+        }
+    }
 }
 
 // Common Kotlin configuration
@@ -154,12 +167,8 @@ kotlin {
     sourceSets {
         val androidMain by getting {
             dependencies {
-                implementation(kotlin("stdlib"))
+                // implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
-            }
-        }
-        val androidTest by getting {
-            dependencies {
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
                 implementation("junit:junit:${Versions.junit}")
@@ -167,9 +176,64 @@ kotlin {
                 implementation("androidx.test:runner:${Versions.androidxTest}")
                 implementation("androidx.test:rules:${Versions.androidxTest}")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+
+            }
+        }
+        val androidUnitTest by getting {
+            dependencies {
+                // Realm dependencies must be converted to -jvm variants here.
+                // This is currently done using dependency substitution in `build.gradle`.
+                // See https://kotlinlang.slack.com/archives/C19FD9681/p1685089661499199
+            }
+        }
+        val androidInstrumentedTest by getting {
+            // Instrumentation tests do not depend on common by default:
+            // https://kotlinlang.org/docs/whatsnew18.html#the-relation-between-android-and-common-tests
+            // But adding support for this only using `dependsOn(commonTest)` will prevent us
+            // from selectively running unit tests on device from the IDE.
+            //
+            // So in order to work around these limitations the following strategy is used.
+            //
+            // 1. A symlink between all commonTest files and androidInstrumentedTest is created.
+            //    This symlink is called `common` as we need to include both shared tests as well
+            //    as some helper classes.
+            // 2. We need to duplicate all test dependencies in `androidInstrumentedTest` that is
+            //    used in `commonTest`.
+            //
+            // This approach satisfies both our IDE and CI requirements with minimal changes, with
+            // two downsides:
+            //
+            // 1. We need to duplicate test dependencies (which alsmost never changes)
+            // 2. We get an IDE warning about tests in `androidInstrumentedTests` having the wrong
+            //    package since the symlink put them in a different location than the package name
+            //    would imply (This is acceptable).
+            //
+            // Improvements to this situation is tracked by XXX (Create YouTrack issue).
+
+            // Copy of `commonTest` dependencies
+            dependencies {
+                // TODO AtomicFu doesn't work on the test project due to
+                //  https://github.com/Kotlin/kotlinx.atomicfu/issues/90#issuecomment-597872907
+                implementation("co.touchlab:stately-concurrency:1.2.0")
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}")
             }
         }
     }
+//
+//        val androidInstrumentedTest by getting {
+//            dependencies {
+//                implementation(kotlin("test"))
+//                implementation(kotlin("test-junit"))
+//                implementation("junit:junit:${Versions.junit}")
+//                implementation("androidx.test.ext:junit:${Versions.androidxJunit}")
+//                implementation("androidx.test:runner:${Versions.androidxTest}")
+//                implementation("androidx.test:rules:${Versions.androidxTest}")
+//                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${Versions.coroutines}")
+//            }
+//        }
+//    }
 }
 
 kotlin {

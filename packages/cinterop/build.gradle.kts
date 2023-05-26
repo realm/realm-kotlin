@@ -227,7 +227,8 @@ kotlin {
                 implementation("com.getkeepsafe.relinker:relinker:${Versions.relinker}")
             }
         }
-        val androidTest by getting {
+        val androidTest by creating {
+            // Shared setup between Unit and Instrumented tests for Android
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(kotlin("test"))
@@ -237,6 +238,12 @@ kotlin {
                 implementation("androidx.test:runner:${Versions.androidxTest}")
                 implementation("androidx.test:rules:${Versions.androidxTest}")
             }
+        }
+        val androidUnitTest by getting {
+            dependsOn(androidTest)
+        }
+        val androidInstrumentedTest by getting {
+            dependsOn(androidTest)
         }
         val nativeDarwin by creating {
             dependsOn(commonMain)
