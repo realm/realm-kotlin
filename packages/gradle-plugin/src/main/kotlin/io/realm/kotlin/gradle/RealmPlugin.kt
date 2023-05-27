@@ -19,6 +19,9 @@ package io.realm.kotlin.gradle
 import io.realm.kotlin.gradle.analytics.AnalyticsService
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.DependencySubstitutions
+import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyAdderExtensionModule.module
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Provider
@@ -46,6 +49,22 @@ open class RealmPlugin : Plugin<Project> {
             AnalyticsService::class.java
         ) { /* Do nothing */ }
         getBuildEventsRegistry().onTaskCompletion(serviceProvider)
+
+        project.configurations.all { conf: Configuration ->
+            // Ensure that android unit tests uses the Realm JVM variant rather than Android.
+            if (conf.name.endsWith("UnitTestRuntimeClasspath")) {
+                conf.resolutionStrategy.dependencySubstitution { ds: DependencySubstitutions ->
+                    with(ds) {
+                        substitute(module("io.realm.kotlin:library-base:$PLUGIN_VERSION")).using(
+                            module("io.realm.kotlin:library-base-jvm:$PLUGIN_VERSION")
+                        )
+                        substitute(module("io.realm.kotlin:cinterop:$PLUGIN_VERSION")).using(
+                            module("io.realm.kotlin:cinterop-jvm:$PLUGIN_VERSION")
+                        )
+                    }
+                }
+            }
+        }
 
         // Stand alone Android projects have not initialized kotlin plugin when applying this, so
         // postpone dependency injection till after evaluation.

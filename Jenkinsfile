@@ -255,6 +255,7 @@ pipeline {
                         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                             runMonkey()
                         }
+                        runAndroidUnitTestsOnJvm()
                     }
                 }
                 stage('Build Android on minimum versions') {
@@ -605,6 +606,19 @@ def runMonkey() {
         currentBuild.stageResult = 'FAILURE'
     }
 }
+
+def runAndroidUnitTestsOnJvm() {
+    try {
+        sh """
+            cd examples/kmm-sample/androidApp
+            ./gradlew testDebugUnitTest --stacktrace --no-daemon
+        """
+    } catch (err) {
+        currentBuild.result = 'FAILURE'
+        currentBuild.stageResult = 'FAILURE'
+    }
+}
+
 
 def runBuildMinAndroidApp() {
     try {
