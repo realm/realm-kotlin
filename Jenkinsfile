@@ -610,8 +610,8 @@ def runMonkey() {
 def runAndroidUnitTestsOnJvm() {
     try {
         sh """
-            cd examples/kmm-sample/androidApp
-            ./gradlew testDebugUnitTest --stacktrace --no-daemon
+            cd examples/kmm-sample
+            ./gradlew androidApp:testDebugUnitTest --stacktrace --no-daemon
         """
     } catch (err) {
         currentBuild.result = 'FAILURE'
