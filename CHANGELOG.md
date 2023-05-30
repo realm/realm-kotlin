@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None
+* [Sync] Support for `RealmQuery.subscribe()` and `RealmResults.subscribe()` as an easy way to create subscriptions in the background while continuing to use the query result. This API is experimental. (Issue [#1363](https://github.com/realm/realm-kotlin/issues/1363))
 
 ### Fixed
 * None
