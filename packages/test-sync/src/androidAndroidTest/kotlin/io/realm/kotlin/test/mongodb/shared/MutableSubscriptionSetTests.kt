@@ -23,7 +23,6 @@ import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.ext.subscribe
-import io.realm.kotlin.mongodb.ext.unsubscribe
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSet
@@ -542,25 +541,6 @@ class MutableSubscriptionSetTests {
                 }
             }
         }
-    }
-
-    @Test
-    fun unsubscribe_realmResults() = runBlocking {
-
-        // Fluent interface, no way to capture the initial RealmResult
-        realm.query<FlexParentObject>().subscribe().asFlow().first().let { change ->
-            val result: RealmResults<FlexParentObject> = change.list
-            assertFalse(result.unsubscribe())
-        }
-
-        // Only the initial RealmResult can be unsubscribed
-        val results: RealmResults<FlexParentObject> = realm.query<FlexParentObject>().subscribe()
-        results.asFlow().first().let { _ ->
-            assertTrue(results.unsubscribe())
-        }
-
-        // Normal query results cannot be unsubscribed either.
-        assertFalse(realm.query<FlexParentObject>().find().unsubscribe())
     }
 
     @Test
