@@ -57,9 +57,6 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val mode: Mode = Mode.RESULTS,
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreNotifiable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
 
-    // Field allowing the RealmResult to track the subscription it corresponds to.
-    internal var backingSubscriptionId: ObjectId? = null
-
     @Suppress("UNCHECKED_CAST")
     private val converter = realmObjectConverter(
         clazz as KClass<out RealmObject>,
@@ -84,14 +81,19 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     }
 
     override fun query(query: String, vararg args: Any?): RealmQuery<E> = inputScope {
-        val queryPointer = try {
-            RealmInterop.realm_query_parse_for_results(
-                nativePointer,
-                query,
-                convertToQueryArgs(args)
-            )
-        } catch (e: IndexOutOfBoundsException) {
-            throw IllegalArgumentException(e.message, e.cause)
+        // If an empty query is passed in, reconstruct the original query backing this RealmResults
+        val queryPointer = if (query.isEmpty() && args.isEmpty()) {
+            RealmInterop.realm_results_get_query(nativePointer)
+        } else {
+            try {
+                RealmInterop.realm_query_parse_for_results(
+                    nativePointer,
+                    query,
+                    convertToQueryArgs(args)
+                )
+            } catch (e: IndexOutOfBoundsException) {
+                throw IllegalArgumentException(e.message, e.cause)
+            }
         }
         ObjectQuery(
             realm,

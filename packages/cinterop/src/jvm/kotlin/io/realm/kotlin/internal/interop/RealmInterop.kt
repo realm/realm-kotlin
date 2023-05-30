@@ -1705,6 +1705,10 @@ actual object RealmInterop {
         return realmc.realm_query_get_description(query.cptr())
     }
 
+    actual fun realm_results_get_query(results: RealmResultsPointer): RealmQueryPointer {
+        return LongPointerWrapper(realmc.realm_results_get_query(results.cptr()))
+    }
+
     actual fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer {
         return LongPointerWrapper(realmc.realm_results_resolve_in(results.cptr(), realm.cptr()))
     }

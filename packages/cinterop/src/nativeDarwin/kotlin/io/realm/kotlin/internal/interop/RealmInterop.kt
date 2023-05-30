@@ -1440,6 +1440,10 @@ actual object RealmInterop {
         return realm_wrapper.realm_query_get_description(query.cptr()).safeKString()
     }
 
+    actual fun realm_results_get_query(results: RealmResultsPointer): RealmQueryPointer {
+        return CPointerWrapper(realm_wrapper.realm_results_get_query(results.cptr()))
+    }
+
     actual fun realm_results_resolve_in(
         results: RealmResultsPointer,
         realm: RealmPointer

@@ -21,6 +21,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import kotlin.test.AfterTest
@@ -66,6 +67,21 @@ class RealmResultsTests {
         assertEquals(2, realm.query<Parent>("name CONTAINS '1'").find().size)
         assertEquals(2, realm.query<Parent>("name CONTAINS '2'").find().size)
         assertEquals(1, realm.query<Parent>("name CONTAINS '1'").find().query("name CONTAINS '2'").count().find())
+    }
+
+    @Test
+    fun query_returnBackingQuery() {
+        val query = realm.query<Parent>("name CONTAINS '1'")
+        val backingQuery = query.find().query("")
+        assertEquals(query.description(), backingQuery.description())
+    }
+
+    @Test
+    fun query_throwsIfOnlyArgs() {
+        val results: RealmResults<Parent> = realm.query<Parent>("name CONTAINS '1'").find()
+        assertFailsWith<IllegalArgumentException> {
+            results.query("", args = arrayOf("foo"))
+        }
     }
 
     @Test
