@@ -15,9 +15,54 @@
  * limitations under the License.
  */
 
+
+/**
+ * Enum describing operating systems we can build on.
+ *
+ * We need to track this in order to control which Kotlin Multiplatform tasks we can safely
+ * create on the given Host OS.
+ */
+enum class OperatingSystem {
+    LINUX,
+    MACOS_ARM64,
+    MACOS_X64,
+    WINDOWS;
+
+    fun isWindows(): Boolean {
+        return this == WINDOWS
+    }
+
+    fun isMacOs(): Boolean{
+        return this == MACOS_X64 || this == MACOS_ARM64
+    }
+}
+
+private fun findHostOs(): OperatingSystem {
+    val hostOs = System.getProperty("os.name")
+    return if (hostOs.contains("windows", ignoreCase = true)) {
+        OperatingSystem.WINDOWS
+    } else if (hostOs.contains("linux", ignoreCase = true)) {
+        OperatingSystem.LINUX
+    } else {
+        // Assume MacOS by default
+        when(val osArch = System.getProperty("os.arch")) {
+            "aarch64" -> OperatingSystem.MACOS_ARM64
+            "x86_64" -> OperatingSystem.MACOS_X64
+            else -> {
+                throw IllegalStateException("Unknown architecture: $osArch")
+            }
+        }
+    }
+}
+
+/**
+ * Define which Host OS the build is running on.
+ */
+val HOST_OS: OperatingSystem = findHostOs()
+
 object Realm {
     val ciBuild = (System.getenv("JENKINS_HOME") != null)
-    const val version = "1.9.0-SNAPSHOT"
+    const val version = "1.10.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -58,6 +103,7 @@ object Versions {
         const val buildToolsVersion = "33.0.0"
         const val buildTools = "7.2.2" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.2.8568313"
+        const val r8 = "4.0.48" // See https://developer.android.com/build/kotlin-support
     }
     const val androidxBenchmarkPlugin = "1.2.0-alpha12" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
     const val androidxStartup = "1.1.1" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
@@ -80,9 +126,9 @@ object Versions {
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
-    const val kotlin = "1.7.20" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
-    const val latestKotlin = "1.8.20" // https://kotlinlang.org/docs/eap.html#build-details
-    const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
+    const val kotlin = "1.8.21" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
+    const val latestKotlin = "1.9.0-Beta" // https://kotlinlang.org/docs/eap.html#build-details
+    const val kotlinCompileTesting = "1.5.0" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "2.1.2" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin

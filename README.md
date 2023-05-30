@@ -2,7 +2,7 @@
 
 [![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/io/realm/kotlin/io.realm.kotlin.gradle.plugin/maven-metadata.xml.svg?colorB=ff6b00&label=Gradle%20Plugin%20Portal)](https://plugins.gradle.org/plugin/io.realm.kotlin)
 [![Maven Central](https://img.shields.io/maven-central/v/io.realm.kotlin/gradle-plugin?colorB=4dc427&label=Maven%20Central)](https://search.maven.org/artifact/io.realm.kotlin/gradle-plugin)
-[![Kotlin](https://img.shields.io/badge/kotlin-1.7.20-blue.svg?logo=kotlin)](http://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/kotlin-1.8.0-blue.svg?logo=kotlin)](http://kotlinlang.org)
 [![License](https://img.shields.io/badge/License-Apache-blue.svg)](https://github.com/realm/realm-kotlin/blob/master/LICENSE)
 
 
@@ -325,6 +325,8 @@ SDK supports. In the matrix below, you will find the minimum supported version f
 
 | Realm Version | Requirements                                                                                                                                                                                             |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.10.0-SNAPSHOT         | <ul><li>Kotlin 1.8.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.8.3 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
+| 1.9.0         | <ul><li>Kotlin 1.8.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.8.3 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
 | 1.8.0         | <ul><li>Kotlin 1.7.20+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
 | 1.7.1         | <ul><li>Kotlin 1.7.20+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
 | 1.7.0         | <ul><li>Kotlin 1.7.20 - 1.8.10</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul>         |

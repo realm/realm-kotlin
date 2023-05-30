@@ -52,6 +52,7 @@ object TypeDescriptor {
         val dictionarySupport: Boolean,
         val primaryKeySupport: Boolean,
         val indexSupport: Boolean,
+        val fullTextSupport: Boolean,
         val canBeNull: Set<CollectionType>, // favor using this over "nullable"
         val canBeNotNull: Set<CollectionType>, // favor using this over "nonNullable"
         val aggregatorSupport: Set<AggregatorSupport>,
@@ -66,6 +67,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -80,6 +82,7 @@ object TypeDescriptor {
             dictionarySupport = false,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
@@ -102,6 +105,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -116,6 +120,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -130,6 +135,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
@@ -149,6 +155,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -163,6 +170,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -177,6 +185,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -191,6 +200,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = setOf(AggregatorSupport.MIN, AggregatorSupport.MAX),
@@ -205,6 +215,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -219,6 +230,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -233,6 +245,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -247,6 +260,7 @@ object TypeDescriptor {
             dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = emptySet(),
             aggregatorSupport = AggregatorSupport.NONE,
@@ -360,6 +374,8 @@ object TypeDescriptor {
             collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
         val isIndexingSupported: Boolean =
             collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.indexSupport
+        val isFullTextSupported: Boolean =
+            collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.fullTextSupport
 
         // Utility method to generate Kotlin code for the specific field
         fun toKotlinLiteral(): String {
