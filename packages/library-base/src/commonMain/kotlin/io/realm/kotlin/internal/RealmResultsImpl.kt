@@ -37,7 +37,6 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
-import org.mongodb.kbson.ObjectId
 import kotlin.reflect.KClass
 
 /**

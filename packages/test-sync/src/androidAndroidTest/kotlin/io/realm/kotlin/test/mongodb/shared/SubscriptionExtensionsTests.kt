@@ -7,7 +7,6 @@ import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.ext.subscribe
-import io.realm.kotlin.mongodb.ext.unsubscribe
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
@@ -268,7 +267,8 @@ class SubscriptionExtensionsTests {
         assertEquals(2, updatedSubs.size)
         // Updating the subscription will happen in the background, but
         // hopefully hasn't reached COMPLETE yet.
-        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)    }
+        assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
+    }
 
     @Test
     fun realmResults_subscribe_waitAlways() = runBlocking {

@@ -1,8 +1,8 @@
 package io.realm.kotlin.mongodb.sync
 
+import io.realm.kotlin.mongodb.ext.subscribe
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
-import io.realm.kotlin.mongodb.ext.subscribe
 
 /**
  * Enum defining the behaviour of when [RealmQuery.subscribe] and [RealmResults.subscribe] will

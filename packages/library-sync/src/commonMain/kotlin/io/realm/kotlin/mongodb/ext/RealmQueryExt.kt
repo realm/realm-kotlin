@@ -8,6 +8,7 @@ import io.realm.kotlin.mongodb.annotations.ExperimentalFlexibleSyncApi
 import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
+import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.WaitForSync
 import io.realm.kotlin.mongodb.syncSession
@@ -18,7 +19,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
-import io.realm.kotlin.mongodb.sync.SubscriptionSet
 
 /**
  * Automatically create an anonymous [Subscription] from a query in the background and return the
