@@ -167,7 +167,6 @@ kotlin {
     sourceSets {
         val androidMain by getting {
             dependencies {
-                // implementation(kotlin("stdlib"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:${Versions.coroutines}")
                 implementation(kotlin("test"))
                 implementation(kotlin("test-junit"))
