@@ -224,11 +224,6 @@ class SubscriptionExtensionsTests {
     }
 
     @Test
-    fun realmQuery_subscribe_throwsForNonFlxRealm() {
-        TODO()
-    }
-
-    @Test
     fun realmResults_subscribe_waitFirstTime() = runBlocking {
         // Unnamed
         realm.query<FlexParentObject>().find().subscribe() // Default value is WaitForSync.FIRST_TIME
@@ -325,11 +320,6 @@ class SubscriptionExtensionsTests {
                 }
             }
         }
-    }
-
-    @Test
-    fun realmResults_subscribe_throwsForNonFlxRealm() {
-        TODO()
     }
 
     private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
