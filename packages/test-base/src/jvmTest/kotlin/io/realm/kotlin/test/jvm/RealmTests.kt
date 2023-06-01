@@ -52,7 +52,7 @@ class RealmTests {
 
         // Finalizer might be running if a another Realm has been opened first. Once started it will
         // for as long as the process is alive.
-        val finalizerRunning = Thread.getAllStackTraces().filter { it.key.name == "RealmFinalizerThread" }.isNotEmpty()
+        val finalizerRunning = Thread.getAllStackTraces().filter { it.key.name == "RealmFinalizingDaemon" }.isNotEmpty()
         val configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .build()
