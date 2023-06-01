@@ -52,6 +52,8 @@ open class RealmPlugin : Plugin<Project> {
 
         project.configurations.all { conf: Configuration ->
             // Ensure that android unit tests uses the Realm JVM variant rather than Android.
+            // This is a bit britle. See https://github.com/realm/realm-kotlin/issues/1404 for
+            // a potential improvement.
             if (conf.name.endsWith("UnitTestRuntimeClasspath")) {
                 conf.resolutionStrategy.dependencySubstitution { ds: DependencySubstitutions ->
                     with(ds) {
