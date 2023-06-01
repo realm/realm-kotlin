@@ -291,12 +291,12 @@ class SubscriptionExtensionsTests {
         subQueryResult.subscribe()
         val subs = realm.subscriptions
         assertEquals(1, subs.size)
-        assertEquals("section == 42 and name == \"Jane\" and TRUEPREDICATE ", subs.first().queryDescription)
+        assertEquals("section == 42 and name == \"Jane\" ", subs.first().queryDescription)
         subQueryResult.subscribe("my-name")
         assertEquals(2, subs.size)
         val lastSub = subs.last()
         assertEquals("my-name", lastSub.name)
-        assertEquals("section == 42 and name == \"Jane\" and TRUEPREDICATE ", lastSub.queryDescription)
+        assertEquals("section == 42 and name == \"Jane\" ", lastSub.queryDescription)
     }
 
     @Test
