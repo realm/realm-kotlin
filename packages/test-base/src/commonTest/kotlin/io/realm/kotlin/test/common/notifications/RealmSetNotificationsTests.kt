@@ -23,11 +23,11 @@ import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedSet
-import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.common.SET_OBJECT_VALUES
 import io.realm.kotlin.test.common.SET_OBJECT_VALUES2
 import io.realm.kotlin.test.common.SET_OBJECT_VALUES3
+import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel

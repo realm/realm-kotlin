@@ -28,12 +28,12 @@ import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.find
-import io.realm.kotlin.test.common.utils.FlowableTests
-import io.realm.kotlin.test.common.utils.assertIsChangeSet
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.common.OBJECT_VALUES
 import io.realm.kotlin.test.common.OBJECT_VALUES2
 import io.realm.kotlin.test.common.OBJECT_VALUES3
+import io.realm.kotlin.test.common.utils.FlowableTests
+import io.realm.kotlin.test.common.utils.assertIsChangeSet
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel

@@ -25,12 +25,12 @@ import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.UpdatedList
-import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
-import io.realm.kotlin.test.common.utils.assertIsChangeSet
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.common.OBJECT_VALUES
 import io.realm.kotlin.test.common.OBJECT_VALUES2
 import io.realm.kotlin.test.common.OBJECT_VALUES3
+import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
+import io.realm.kotlin.test.common.utils.assertIsChangeSet
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.async

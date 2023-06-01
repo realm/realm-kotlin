@@ -50,6 +50,12 @@ configurations.all {
 
     // Ensure that androidUnitTest uses the Realm JVM variant rather than Android.
     // This should cover both "debug" and "release" variants.
+    //
+    // WARNING: This does not work unless jvm artifacts has been published which also means
+    // that Android JVM tests will not pickup changes to the library unless they are manually
+    // published using `publishAllPublicationsToTestRepository`.
+    //
+    // See https://github.com/realm/realm-kotlin/issues/1404 for more details.
     if (name.endsWith("UnitTestRuntimeClasspath")) {
         resolutionStrategy.dependencySubstitution {
             substitute(module("io.realm.kotlin:library-base:${Realm.version}")).using(
@@ -192,18 +198,13 @@ kotlin {
             // In order to work around this limitation, the following strategy is used:
             //
             // 1. A symlink between all commonTest files and androidInstrumentedTest is created.
-            //    This symlink is called `common` as we need to include both shared tests as well
-            //    as some helper classes.
+            //    This symlink is called `common` to mirror the package structure in commonTest.
             // 2. We need to duplicate all test dependencies from `commonTest` into
-            //    in `androidInstrumentedTest`.
+            //    `androidInstrumentedTest`.
             //
             // This approach results in a minimum amount of code changes and satisfies both our
-            // IDE and CI requirements. But it also introduces two downsides:
-            //
-            // 1. We need to duplicate test dependencies (which almost never changes).
-            // 2. We get an IDE warning about tests in `androidInstrumentedTests` having the wrong
-            //    package since the symlink put them in a different location than the package name
-            //    would imply (This is acceptable).
+            // IDE and CI requirements. But it also introduces the downside that we need to
+            // duplicate dependencies between `androidInstrumentedTest` and `commonTest`
             //
             // Improvements to this situation is tracked here:
             // https://youtrack.jetbrains.com/issue/KT-46452/Allow-to-run-common-tests-as-Android-Instrumentation-tests

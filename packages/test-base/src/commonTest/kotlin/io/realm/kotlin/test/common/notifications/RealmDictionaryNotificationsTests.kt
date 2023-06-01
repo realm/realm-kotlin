@@ -24,10 +24,10 @@ import io.realm.kotlin.notifications.DeletedMap
 import io.realm.kotlin.notifications.InitialMap
 import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.notifications.UpdatedMap
-import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
-import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.common.DICTIONARY_KEYS_FOR_NULLABLE
 import io.realm.kotlin.test.common.NULLABLE_DICTIONARY_OBJECT_VALUES
+import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
