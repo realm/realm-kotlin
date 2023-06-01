@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None
+* Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.
 
 ### Fixed
 * None
