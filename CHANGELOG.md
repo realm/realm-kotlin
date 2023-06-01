@@ -15,7 +15,7 @@
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
   * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above.
+  * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Kbson 0.3.0.
