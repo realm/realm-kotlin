@@ -2259,7 +2259,6 @@ class QueryTests {
         }
     }
 
-    // Awaiting https://github.com/realm/realm-core/issues/6614
     @Test
     fun query_inListArgument_string() {
         realm.writeBlocking {
@@ -2271,7 +2270,6 @@ class QueryTests {
         }
     }
 
-    // Awaiting https://github.com/realm/realm-core/issues/6614
     @Test
     fun query_inListArgument_escapedString() {
         val values = mutableSetOf("\"Realm\"", "'Realm'", "Realms'", "😀")
@@ -2293,7 +2291,6 @@ class QueryTests {
         assertTrue { values.isEmpty() }
     }
 
-    // Awaiting https://github.com/realm/realm-core/issues/6614
     @Test
     fun query_inListArgument_links() {
         val (even, odd) = realm.writeBlocking {
