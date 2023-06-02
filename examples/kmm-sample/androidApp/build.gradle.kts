@@ -30,7 +30,9 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.0.4")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
     // TODO AUTO-SETUP
-    compileOnly("io.realm.kotlin:library-base:${Realm.version}")
+    implementation("io.realm.kotlin:library-base:${Realm.version}")
+    testImplementation(kotlin("test-junit"))
+    testImplementation("junit:junit:4.12")
 }
 
 android {
