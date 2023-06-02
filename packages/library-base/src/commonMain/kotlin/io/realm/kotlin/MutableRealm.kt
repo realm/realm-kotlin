@@ -17,6 +17,7 @@ package io.realm.kotlin
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
@@ -103,7 +104,7 @@ public interface MutableRealm : TypedRealm {
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
-    ): RealmQuery<T>
+    ): RealmQuery<T> where T : RealmObject, T: EmbeddedRealmObject
 
     /**
      * Delete objects from the underlying Realm.
@@ -138,7 +139,7 @@ public interface MutableRealm : TypedRealm {
      * @param schemaClass the class whose objects should be removed.
      * @throws IllegalArgumentException if the class does not exist within the schema.
      */
-    public fun delete(schemaClass: KClass<out BaseRealmObject>)
+    public fun <T: BaseRealmObject> delete(schemaClass: KClass<T>) where T: RealmObject, T: EmbeddedRealmObject
 }
 
 /**
@@ -146,6 +147,6 @@ public interface MutableRealm : TypedRealm {
  *
  * Reified convenience wrapper of [MutableRealm.delete].
  */
-public inline fun <reified T : BaseRealmObject> MutableRealm.delete() {
+public inline fun <reified T : BaseRealmObject> MutableRealm.delete() where T: RealmObject, T: EmbeddedRealmObject {
     delete(T::class)
 }

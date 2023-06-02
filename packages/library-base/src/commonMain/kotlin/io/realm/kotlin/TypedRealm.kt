@@ -4,8 +4,10 @@ import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -30,7 +32,7 @@ public interface TypedRealm : BaseRealm {
         clazz: KClass<T>,
         query: String = TRUE_PREDICATE,
         vararg args: Any?
-    ): RealmQuery<T>
+    ): RealmQuery<T> where T : RealmObject, T: EmbeddedRealmObject
 
     /**
      * Makes an unmanaged in-memory copy of an already persisted

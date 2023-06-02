@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -144,7 +145,7 @@ public interface Realm : TypedRealm {
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
-    ): RealmQuery<T>
+    ): RealmQuery<T> where T : RealmObject, T: EmbeddedRealmObject
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write

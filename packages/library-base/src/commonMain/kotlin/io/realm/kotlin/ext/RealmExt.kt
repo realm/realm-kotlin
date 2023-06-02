@@ -19,6 +19,8 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmObject
 
 /**
  * Returns a [RealmQuery] matching the predicate represented by [query].
@@ -28,4 +30,4 @@ import io.realm.kotlin.types.BaseRealmObject
 public inline fun <reified T : BaseRealmObject> Realm.query(
     query: String = TRUE_PREDICATE,
     vararg args: Any?
-): RealmQuery<T> = query(T::class, query, *args)
+): RealmQuery<T> where T : RealmObject, T: EmbeddedRealmObject = query(T::class, query, *args)

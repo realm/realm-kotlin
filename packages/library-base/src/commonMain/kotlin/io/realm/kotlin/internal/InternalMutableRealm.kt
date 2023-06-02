@@ -20,6 +20,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlin.reflect.KClass
 
@@ -63,7 +64,7 @@ internal interface InternalMutableRealm : MutableRealm {
         deleteable.asInternalDeleteable().delete()
     }
 
-    override fun delete(schemaClass: KClass<out BaseRealmObject>) {
+    override fun <T: BaseRealmObject> delete(schemaClass: KClass<T>) where T: RealmObject, T: EmbeddedRealmObject {
         try {
             delete(query(schemaClass).find())
         } catch (err: IllegalStateException) {
@@ -77,6 +78,14 @@ internal interface InternalMutableRealm : MutableRealm {
 
     override fun deleteAll() {
         for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
+            // TODO This breaks the idea about exposing AsymmetricRealmObjects as a subclass
+            //  of BaseRealmObject. The problem is that BaseRealmObject is marked Deletable.
+            //  I guess we have 2 options: A) Either move the Deletable interface to all object
+            //  relevant subclasses B) Decouple AsymmetricRealmObject completely from BaseRealmObject
+            //  B) has some merit since you are only allowed to insert these objects, not query or
+            //  modify them after creation. I do however suspect it will make inserting the objects
+            //  much more difficult since it would change our compiler infrastructure quite a bit.
+            //  This needs to be discussed.
             delete(schemaClass)
         }
     }
