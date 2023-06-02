@@ -2291,6 +2291,7 @@ class QueryTests {
         assertTrue { values.isEmpty() }
     }
 
+    // Awaiting https://github.com/realm/realm-core/issues/6688
     @Test
     fun query_inListArgument_links() {
         val (even, odd) = realm.writeBlocking {

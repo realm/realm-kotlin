@@ -94,7 +94,6 @@ object JvmMemAllocator : MemAllocator {
         }
 
     override fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList {
-//    override fun queryArgsOf(queryArgs: List<RealmValueList>): RealmQueryArgumentList {
         val cArgs = realmc.new_queryArgArray(queryArgs.size)
         queryArgs.mapIndexed { index, arg ->
             val queryArg = realm_query_arg_t().apply {
