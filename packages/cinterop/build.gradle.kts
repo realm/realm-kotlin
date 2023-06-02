@@ -227,7 +227,7 @@ kotlin {
                 implementation("com.getkeepsafe.relinker:relinker:${Versions.relinker}")
             }
         }
-        val androidTest by getting {
+        val androidInstrumentedTest by getting {
             dependencies {
                 implementation(kotlin("reflect"))
                 implementation(kotlin("test"))
@@ -325,8 +325,13 @@ android {
         // Out externalNativeBuild (outside defaultConfig) does not seem to have correct type for setting cmake arguments
         externalNativeBuild {
             cmake {
-                arguments("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
-                arguments("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
+                if (!HOST_OS.isWindows()) {
+                    // CCache is not officially supported on Windows and there are problems
+                    // using it with the Android NDK. So disable for now.
+                    // See https://github.com/ccache/ccache/discussions/447 for more information.
+                    arguments("-DCMAKE_CXX_COMPILER_LAUNCHER=ccache")
+                    arguments("-DCMAKE_C_COMPILER_LAUNCHER=ccache")
+                }
                 targets.add("realmc")
             }
         }
@@ -349,21 +354,68 @@ android {
 }
 
 // Building Mach-O universal binary with 2 architectures: [x86_64] [arm64] (Apple M1) for macOS
-val capiMacosUniversal by tasks.registering {
-    build_C_API_Macos_Universal(buildVariant = buildType)
-}
-// Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
-val capiSimulator by tasks.registering {
-    build_C_API_Simulator("x86_64", buildType)
-    build_C_API_Simulator("arm64", buildType)
-}
-// Building for ios device (arm64 only)
-val capiIosArm64 by tasks.registering {
-    build_C_API_iOS_Arm64(buildType)
+if (HOST_OS.isMacOs()) {
+    val capiMacosUniversal by tasks.registering {
+        build_C_API_Macos_Universal(buildVariant = buildType)
+    }
+    // Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
+    val capiSimulator by tasks.registering {
+        build_C_API_Simulator("x86_64", buildType)
+        build_C_API_Simulator("arm64", buildType)
+    }
+    // Building for ios device (arm64 only)
+    val capiIosArm64 by tasks.registering {
+        build_C_API_iOS_Arm64(buildType)
+    }
+
+    tasks.named("cinteropRealm_wrapperIosArm64") {
+        dependsOn(capiIosArm64)
+    }
+    tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
+        dependsOn(capiSimulator)
+    }
+
+    tasks.named("cinteropRealm_wrapperMacosX64") {
+        dependsOn(capiMacosUniversal)
+    }
+    tasks.named("cinteropRealm_wrapperMacosArm64") {
+        dependsOn(capiMacosUniversal)
+    }
 }
 
 val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
-    buildSharedLibrariesForJVM()
+    if (HOST_OS.isMacOs()) {
+        buildSharedLibrariesForJVMMacOs()
+    } else if (HOST_OS.isWindows()) {
+         buildSharedLibrariesForJVMWindows()
+    } else {
+        throw IllegalStateException("Building JVM libraries on this platform is not supported: $HOST_OS")
+    }
+
+    // Only on CI for Snapshots and Releases which will run on MacOS.
+    val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
+    if (copyJvmABIs) {
+        if (!HOST_OS.isMacOs()) {
+            throw IllegalStateException("Creating a full JVM bundle with all architectures is " +
+                    "currently only supported on MacOs. This was: $HOST_OS")
+        }
+
+        // copy Linux pre-built binaries
+        project.file("src/jvmMain/linux-build-dir/librealmc.so")
+            .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
+        genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
+
+        // copy Window pre-built binaries
+        project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
+            .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
+        genHashFile(platform = "windows", prefix = "", suffix = ".dll")
+
+        // Register copied libraries as output
+        outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
+        outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
+        outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
+        outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
+    }
 }
 
 /**
@@ -392,11 +444,10 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
 }
 
 // JVM native libs are currently always built in Release mode.
-fun Task.buildSharedLibrariesForJVM() {
+fun Task.buildSharedLibrariesForJVMMacOs() {
     group = "Build"
     description = "Compile dynamic libraries loaded by the JVM fat jar for supported platforms."
     val directory = "$buildDir/jvm_fat_jar_libs"
-    val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
 
     doLast {
         exec {
@@ -427,31 +478,48 @@ fun Task.buildSharedLibrariesForJVM() {
         // build hash file
         genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
 
-        // Only on CI for Snapshots and Releases
-        if (copyJvmABIs) {
-            // copy files (Linux)
-            project.file("src/jvmMain/linux-build-dir/librealmc.so")
-                .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
-            genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
-
-            // copy files (Windows)
-            project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
-                .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
-            genHashFile(platform = "windows", prefix = "", suffix = ".dll")
-        }
     }
 
     inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
     outputs.file(project.file("$jvmJniPath/macos/dynamic_libraries.properties"))
+}
 
-    if (copyJvmABIs) {
-        outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
-        outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
+fun Task.buildSharedLibrariesForJVMWindows() {
+    group = "Build"
+    description = "Compile dynamic libraries loaded by the JVM fat jar for supported platforms."
+    val directory = "$buildDir/realmWindowsBuild"
 
-        outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
-        outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
+    doLast {
+        file(directory).mkdirs()
+        exec {
+            workingDir(project.file(directory))
+            commandLine(
+                "cmake",
+                *getSharedCMakeFlags(BuildType.RELEASE, ccache = false),
+                "-DCMAKE_GENERATOR_PLATFORM=x64",
+                "-DCMAKE_SYSTEM_VERSION=8.1",
+                "-DVCPKG_TARGET_TRIPLET=x64-windows-static",
+                project.file("src/jvm/")
+            )
+        }
+        exec {
+            workingDir(project.file(directory))
+            commandLine("cmake", "--build", ".", "--config", "Release")
+        }
+
+        // copy files (Windows)
+        project.file("$jvmJniPath/windows").mkdirs()
+        File("$directory/Release/realmc.dll")
+            .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
+
+        // build hash file
+        genHashFile(platform = "windows", prefix = "", suffix = ".dll")
     }
+
+    inputs.dir(project.file("$absoluteCorePath/src"))
+    outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
+    outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
 }
 
 fun genHashFile(platform: String, prefix: String, suffix: String) {
@@ -625,20 +693,6 @@ afterEvaluate {
     }
 }
 
-tasks.named("cinteropRealm_wrapperIosArm64") {
-    dependsOn(capiIosArm64)
-}
-tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
-    dependsOn(capiSimulator)
-}
-
-tasks.named("cinteropRealm_wrapperMacosX64") {
-    dependsOn(capiMacosUniversal)
-}
-tasks.named("cinteropRealm_wrapperMacosArm64") {
-    dependsOn(capiMacosUniversal)
-}
-
 tasks.named("jvmMainClasses") {
     dependsOn(buildJVMSharedLibs)
 }
@@ -648,13 +702,15 @@ tasks.named("jvmProcessResources") {
 }
 
 // Add generic macosTest task that execute macos tests according to the current host architecture
-tasks.register("macosTest") {
-    val arch = when (System.getProperty("os.arch")) {
-        "aarch64" -> "Arm64"
-        "x86_64" -> "X64"
-        else -> "Unsupported macOS architecture"
+if (HOST_OS.isMacOs()) {
+    tasks.register("macosTest") {
+        val arch = when (HOST_OS) {
+            OperatingSystem.MACOS_ARM64 -> "Arm64"
+            OperatingSystem.MACOS_X64 -> "X64"
+            else -> throw IllegalStateException("Unsupported macOS architecture: $HOST_OS")
+        }
+        dependsOn(tasks.named("macos${arch}Test"))
     }
-    dependsOn(tasks.named("macos${arch}Test"))
 }
 
 // Maven Central requires JavaDoc so add empty javadoc artifacts

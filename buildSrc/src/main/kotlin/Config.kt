@@ -15,6 +15,51 @@
  * limitations under the License.
  */
 
+
+/**
+ * Enum describing operating systems we can build on.
+ *
+ * We need to track this in order to control which Kotlin Multiplatform tasks we can safely
+ * create on the given Host OS.
+ */
+enum class OperatingSystem {
+    LINUX,
+    MACOS_ARM64,
+    MACOS_X64,
+    WINDOWS;
+
+    fun isWindows(): Boolean {
+        return this == WINDOWS
+    }
+
+    fun isMacOs(): Boolean{
+        return this == MACOS_X64 || this == MACOS_ARM64
+    }
+}
+
+private fun findHostOs(): OperatingSystem {
+    val hostOs = System.getProperty("os.name")
+    return if (hostOs.contains("windows", ignoreCase = true)) {
+        OperatingSystem.WINDOWS
+    } else if (hostOs.contains("linux", ignoreCase = true)) {
+        OperatingSystem.LINUX
+    } else {
+        // Assume MacOS by default
+        when(val osArch = System.getProperty("os.arch")) {
+            "aarch64" -> OperatingSystem.MACOS_ARM64
+            "x86_64" -> OperatingSystem.MACOS_X64
+            else -> {
+                throw IllegalStateException("Unknown architecture: $osArch")
+            }
+        }
+    }
+}
+
+/**
+ * Define which Host OS the build is running on.
+ */
+val HOST_OS: OperatingSystem = findHostOs()
+
 object Realm {
     val ciBuild = (System.getenv("JENKINS_HOME") != null)
     const val version = "1.10.0-SNAPSHOT"
