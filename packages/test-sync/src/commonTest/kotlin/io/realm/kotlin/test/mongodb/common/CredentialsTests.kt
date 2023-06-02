@@ -31,9 +31,9 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.internal.AppImpl
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
 import io.realm.kotlin.mongodb.internal.CustomEJsonCredentialsImpl
-import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
+import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.serialization.Serializable

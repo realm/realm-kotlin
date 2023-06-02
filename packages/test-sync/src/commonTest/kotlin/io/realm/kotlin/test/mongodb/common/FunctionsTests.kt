@@ -36,8 +36,8 @@ import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.serializers.RealmDictionaryKSerializer
 import io.realm.kotlin.serializers.RealmListKSerializer
 import io.realm.kotlin.serializers.RealmSetKSerializer
-import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.syncServerAppName
 import io.realm.kotlin.test.mongodb.util.BaasApp
