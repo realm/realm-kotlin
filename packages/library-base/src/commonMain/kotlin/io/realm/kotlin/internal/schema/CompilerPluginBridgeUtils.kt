@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
  * references rather than Strings. This needs to be placed in library-base, since the cinterop
  * module do not know about the public API classes.
  */
-@Suppress("unused")
+@Suppress("unused", "LongParameterList")
 internal fun createPropertyInfo(
     name: String,
     publicName: String?,
