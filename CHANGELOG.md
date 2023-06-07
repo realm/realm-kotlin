@@ -7,6 +7,7 @@
 * None.
 
 ### Fixed
+* Incremental compilation in combination with `@PersistedName` on model class names could result in schema errors when opening the Realm (Issue [#1401](https://github.com/realm/realm-kotlin/issues/1401)).
 * [Sync] Native crash if a server error was reported while using `SyncConfiguration.waitForInitialRemoteData()`. (Issue [#1401](https://github.com/realm/realm-kotlin/issues/1401))
 
 ### Compatibility

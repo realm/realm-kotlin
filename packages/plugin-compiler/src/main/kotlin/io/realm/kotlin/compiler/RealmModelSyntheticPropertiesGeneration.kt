@@ -29,6 +29,7 @@ import io.realm.kotlin.compiler.FqNames.KOTLIN_PAIR
 import io.realm.kotlin.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.kotlin.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
+import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
 import io.realm.kotlin.compiler.FqNames.REALM_ANY
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
@@ -37,13 +38,13 @@ import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
+import io.realm.kotlin.compiler.FqNames.TYPED_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_DICTIONARY
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
-import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_MEMBER
@@ -72,6 +73,7 @@ import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irLong
+import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -122,6 +124,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val realmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
+    private val typedRealmObjectInterface: IrClass =
+        pluginContext.lookupClassOrThrow(TYPED_REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
@@ -133,7 +137,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
 
     private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY_INFO)
-    val propertyCreateMethod = propertyClass.lookupCompanionDeclaration<IrSimpleFunction>(PROPERTY_INFO_CREATE)
+    val propertyCreateMethod = pluginContext.referenceFunctions(PROPERTY_INFO_CREATE).first()
 
     private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
     private val propertyTypes =
@@ -242,17 +246,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
 
     /**
-     * Add RealmObjectCompanion.io_realm_kotlin_fields: Map<String, KProperty1<BaseRealmObject, Any?>>
+     * Add all "simple" fields required to satisfy the `io.realm.kotlin.internal.RealmObjectCompanion`
+     * interface.
      *
-     * ```
-     * companion object : RealmObjectCompanion {                    // <--- TODO Double check
-     *      override val io_realm_kotlin_fields: Map<String, KProperty1<BaseRealmObject, Any?>> =
-     *          mapOf<String, KProperty1<BaseRealmObject, Any?>>(
-     *              Pair("propertyName", ClassName::property),      // same as: "propertyName" to ClassName::property
-     *              ...
-     *          )
-     * }
-     * ```
+     * The following two fields must be added by using other methods:
+     * - `public fun `io_realm_kotlin_schema`(): RealmClassImpl` is added by calling [addSchemaMethodBody].
+     * - `public fun `io_realm_kotlin_newInstance`(): Any` is added by calling [addNewInstanceMethodBody].
      */
     @Suppress("LongMethod")
     fun addCompanionFields(
@@ -260,11 +259,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
-        val className = getSchemaClassName(clazz)
         val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
+
+        // Add `public val `io_realm_kotlin_class`: KClass<out TypedRealmObject>` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -279,6 +279,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 classType = clazz.defaultType
             )
         }
+
+        // Add `public val `io_realm_kotlin_className`: String` property.
+        val className = getSchemaClassName(clazz)
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -287,7 +290,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         ) { startOffset, endOffset ->
             IrConstImpl.string(startOffset, endOffset, pluginContext.irBuiltIns.stringType, className)
         }
-        // Add io_realm_kotlin_fields
+
+        // Add `public val `io_realm_kotlin_fields`: Map<String, KProperty1<BaseRealmObject, Any?>>` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -355,10 +359,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             }
         }
 
+        // Add `public val `io_realm_kotlin_primaryKey`: KMutableProperty1<*, *>?` property.
         val primaryKeyFields = properties!!.filter {
             it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION)
         }
-
         val primaryKey: IrProperty? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().value.declaration
@@ -367,7 +371,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 null
             }
         }
-
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -391,6 +394,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 pluginContext.irBuiltIns.nothingNType
             )
         }
+
+        // Add `public val `io_realm_kotlin_isEmbedded`: Boolean` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -577,11 +582,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     startOffset,
                                     endOffset,
                                     type = propertyClass.defaultType,
-                                    symbol = propertyCreateMethod.symbol,
+                                    symbol = propertyCreateMethod,
                                     typeArgumentsCount = 0,
                                     valueArgumentsCount = 10
                                 ).apply {
-                                    dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
                                     // Persisted name
                                     putValueArgument(arg++, irString(persistedName))
@@ -638,8 +642,14 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                             else -> null
                                         }?.let { linkTargetType: IrType ->
                                             val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
-                                            irString(getSchemaClassName(classRef))
-                                        } ?: irString("")
+                                            IrClassReferenceImpl(
+                                                startOffset = UNDEFINED_OFFSET,
+                                                endOffset = UNDEFINED_OFFSET,
+                                                type = classRef.symbol.starProjectedType,
+                                                symbol = classRef.symbol,
+                                                classType = classRef.defaultType
+                                            )
+                                        } ?: irNull(pluginContext.irBuiltIns.kClassClass.typeWith(typedRealmObjectInterface.defaultType).makeNullable())
                                     )
                                     // Link property name
                                     putValueArgument(
