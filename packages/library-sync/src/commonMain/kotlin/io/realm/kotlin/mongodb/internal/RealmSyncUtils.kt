@@ -224,10 +224,13 @@ internal fun convertAppError(appError: AppError): Throwable {
                         ServiceException(msg)
                     }
                 }
-                // During testing i saw this mapping being applied in the wrong context.
-                // I wasn't able to reproduce though, but disabling this until we understand
-                // how this can happen.
-                // ErrorCode.RLM_ERR_INVALID_SESSION -> CredentialsCannotBeLinkedException(msg)
+                ErrorCode.RLM_ERR_INVALID_SESSION -> {
+                    if (msg.contains("a user already exists with the specified provider")) {
+                        CredentialsCannotBeLinkedException(msg)
+                    } else {
+                        ServiceException(msg)
+                    }
+                }
                 ErrorCode.RLM_ERR_USER_DISABLED,
                 ErrorCode.RLM_ERR_AUTH_ERROR -> {
                     // Some auth providers return a generic AuthError when
