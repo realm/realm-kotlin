@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.ext
 
+import io.realm.kotlin.Queryable
 import io.realm.kotlin.Realm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
@@ -30,4 +31,4 @@ import io.realm.kotlin.types.RealmObject
 public inline fun <reified T : BaseRealmObject> Realm.query(
     query: String = TRUE_PREDICATE,
     vararg args: Any?
-): RealmQuery<T> where T : RealmObject, T: EmbeddedRealmObject = query(T::class, query, *args)
+): RealmQuery<T> where T: Queryable = query(T::class, query, *args)

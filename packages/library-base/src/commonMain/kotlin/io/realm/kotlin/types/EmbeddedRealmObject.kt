@@ -16,6 +16,9 @@
 
 package io.realm.kotlin.types
 
+import io.realm.kotlin.Deleteable
+import io.realm.kotlin.Queryable
+
 /**
  * Marker interface to define an embedded model.
  *
@@ -26,4 +29,4 @@ package io.realm.kotlin.types
  * - They cannot have fields annotated with `@PrimaryKey`.
  * - When a parent object is deleted, all embedded objects are also deleted.
  */
-public interface EmbeddedRealmObject : TypedRealmObject
+public interface EmbeddedRealmObject : TypedRealmObject, Deleteable, Queryable

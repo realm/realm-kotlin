@@ -145,7 +145,7 @@ public interface Realm : TypedRealm {
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
-    ): RealmQuery<T> where T : RealmObject, T: EmbeddedRealmObject
+    ): RealmQuery<T> where T: Queryable
 
     /**
      * Modify the underlying Realm file in a suspendable transaction on the default Realm Write

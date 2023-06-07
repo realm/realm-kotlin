@@ -32,7 +32,7 @@ public interface TypedRealm : BaseRealm {
         clazz: KClass<T>,
         query: String = TRUE_PREDICATE,
         vararg args: Any?
-    ): RealmQuery<T> where T : RealmObject, T: EmbeddedRealmObject
+    ): RealmQuery<T> where T: Queryable
 
     /**
      * Makes an unmanaged in-memory copy of an already persisted

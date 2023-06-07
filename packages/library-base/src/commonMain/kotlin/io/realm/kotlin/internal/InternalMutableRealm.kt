@@ -17,6 +17,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
+import io.realm.kotlin.Queryable
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.types.BaseRealmObject
@@ -64,7 +65,7 @@ internal interface InternalMutableRealm : MutableRealm {
         deleteable.asInternalDeleteable().delete()
     }
 
-    override fun <T: BaseRealmObject> delete(schemaClass: KClass<T>) where T: RealmObject, T: EmbeddedRealmObject {
+    override fun <T: BaseRealmObject> delete(schemaClass: KClass<T>) where T: Deleteable, T: Queryable {
         try {
             delete(query(schemaClass).find())
         } catch (err: IllegalStateException) {
@@ -86,7 +87,9 @@ internal interface InternalMutableRealm : MutableRealm {
             //  modify them after creation. I do however suspect it will make inserting the objects
             //  much more difficult since it would change our compiler infrastructure quite a bit.
             //  This needs to be discussed.
-            delete(schemaClass)
+            if (schemaClass.isInstance(Deleteable::class)) {
+                delete(schemaClass as Deleteable)
+            }
         }
     }
 }

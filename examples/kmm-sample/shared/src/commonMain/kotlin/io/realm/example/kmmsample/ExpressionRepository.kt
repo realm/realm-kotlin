@@ -35,7 +35,7 @@ class ExpressionRepository {
         copyToRealm(Expression().apply { expressionString = expression })
     }
 
-    fun expressions(): List<Expression> = realm.query<Expression>().find()
+    fun expressions(): List<Expression> = realm.query(Expression::class).find()
 
     fun observeChanges(): Flow<List<Expression>> =
         realm.query<Expression>().asFlow().map { resultsChange: ResultsChange<Expression> ->

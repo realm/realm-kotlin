@@ -33,6 +33,7 @@ import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.AsymmetricRealmObject
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -601,12 +602,17 @@ class MutableRealmTests {
         }
     }
 
+    class Foo: AsymmetricRealmObject {
+        var name: String = "foo"
+    }
+
     @Test
     fun delete_realmQuery() {
         realm.writeBlocking {
             for (i in 0..9) {
                 copyToRealm(Sample().apply { intField = i % 2 })
             }
+//            query(Foo::class, "")
             assertEquals(10, query<Sample>().count().find())
             val deleteable: RealmQuery<Sample> = query<Sample>("intField = 1")
             delete(deleteable)
