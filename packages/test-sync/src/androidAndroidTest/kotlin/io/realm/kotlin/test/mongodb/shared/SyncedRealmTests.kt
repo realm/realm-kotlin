@@ -430,6 +430,20 @@ class SyncedRealmTests {
         Unit
     }
 
+    // Test for https://github.com/realm/realm-kotlin/issues/1401
+    // Make sure that server errors are correctly passed to the user if `waitForInitialRemoteData`
+    // fails.
+    @Test
+    fun waitForInitialRemoteData_propagateServerErrors(): Unit {
+        val user = app.asTestApp.createUserAndLogin()
+        val config = SyncConfiguration.Builder(user, 0L, setOf())
+            .waitForInitialRemoteData()
+            .build()
+        assertFailsWithMessage<IllegalStateException>("Illegal Realm path (BIND): expected partition of type \"string\" but found \"long\"") {
+            Realm.open(config)
+        }
+    }
+
     @Test
     fun waitForInitialRemoteData() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
