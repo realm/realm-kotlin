@@ -2670,13 +2670,12 @@ actual object RealmInterop {
         }
         realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
         realm_wrapper.realm_app_config_set_sdk_version(appConfig, connectionParams.sdkVersion)
-        realm_wrapper.realm_app_config_set_platform(appConfig, connectionParams.platform)
         realm_wrapper.realm_app_config_set_platform_version(appConfig, connectionParams.platformVersion)
-        realm_wrapper.realm_app_config_set_cpu_arch(appConfig, connectionParams.cpuArch)
         realm_wrapper.realm_app_config_set_device_name(appConfig, connectionParams.device)
         realm_wrapper.realm_app_config_set_device_version(appConfig, connectionParams.deviceVersion)
         realm_wrapper.realm_app_config_set_framework_name(appConfig, connectionParams.framework)
         realm_wrapper.realm_app_config_set_framework_version(appConfig, connectionParams.frameworkVersion)
+        realm_wrapper.realm_app_config_set_bundle_id(config, connectionParams.bundleId)
 
         return CPointerWrapper(appConfig)
     }

@@ -37,6 +37,7 @@ dependencies {
     testImplementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
     // Have to be mentioned explicitly as it is not an api dependency of library
     implementation(project(":cinterop"))
+    testCompileOnly(project(":library-sync"))
     testImplementation(project(":library-base"))
     testImplementation(project(":library-sync"))
 }

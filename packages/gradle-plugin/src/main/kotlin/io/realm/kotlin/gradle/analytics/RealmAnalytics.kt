@@ -32,8 +32,9 @@ import java.net.URL
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.Scanner
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.ThreadFactory
 import javax.xml.bind.DatatypeConverter
 import kotlin.experimental.and
 
@@ -62,8 +63,6 @@ import kotlin.experimental.and
 // - What OS you are running on
 // - An anonymized MAC address and bundle ID to aggregate the other information on.
 
-private const val CONNECT_TIMEOUT = 4000L
-private const val READ_TIMEOUT = 2000L
 private const val TOKEN = "ce0fac19508f6c8f20066d345d360fd0"
 private const val EVENT_NAME = "Run"
 private const val URL_PREFIX = "https://data.mongodb-api.com/app/realmsdkmetrics-zmhtm/endpoint/metric_webhook/metric?data="
@@ -113,7 +112,8 @@ internal class RealmAnalytics {
         val osType = System.getProperty("os.name")
         val osVersion = System.getProperty("os.version")
 
-        val projectAndroidExtension: BaseExtension? = project.extensions.findByName("android") as BaseExtension?
+        val projectAndroidExtension: BaseExtension? =
+            project.extensions.findByName("android") as BaseExtension?
         val minSDK = projectAndroidExtension?.defaultConfig?.minSdkVersion?.apiString
         val targetSDK = projectAndroidExtension?.defaultConfig?.targetSdkVersion?.apiString
 
@@ -176,13 +176,22 @@ internal class RealmAnalytics {
     private fun sendAnalytics(json: String, logger: Logger) {
         try {
             logger.debug("Sending analytics payload\n$json")
-            // TODO Consider turning this into a daemon thread so we don't block the build for
-            //  6 seconds when there is no network.
-            val pool = Executors.newSingleThreadExecutor()
+            val pool: ExecutorService = Executors.newFixedThreadPool(
+                1,
+                object : ThreadFactory {
+                    override fun newThread(r: Runnable?): Thread? {
+                        val t = Executors.defaultThreadFactory().newThread(r)
+                        t.isDaemon = true
+                        return t
+                    }
+                }
+            )
             try {
-                pool.execute { networkQuery(json) }
-                pool.awaitTermination(CONNECT_TIMEOUT + READ_TIMEOUT, TimeUnit.MILLISECONDS)
-                logger.debug("Analytics sent.")
+                pool.submit {
+                    val response = networkQuery(json)
+                    logger.debug("Analytics sent: $response")
+                }
+                pool.shutdown()
             } catch (e: InterruptedException) {
                 logger.debug("Sending analytics was interrupted.")
                 pool.shutdownNow()
@@ -193,14 +202,15 @@ internal class RealmAnalytics {
         }
     }
 
-    private fun networkQuery(jsonPayload: String) {
+    private fun networkQuery(jsonPayload: String): Int {
         try {
             val url = URL(URL_PREFIX + base64Encode(jsonPayload))
             val connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
             connection.connect()
-            connection.responseCode
+            return connection.responseCode
         } catch (ignored: java.lang.Exception) {
+            return -1
         }
     }
 }
@@ -299,7 +309,7 @@ internal object ComputerIdentifierGenerator {
  * @throws UnsupportedEncodingException
  */
 @Throws(UnsupportedEncodingException::class)
-private fun base64Encode(data: String): String? {
+internal fun base64Encode(data: String): String? {
     return DatatypeConverter.printBase64Binary(data.toByteArray(charset("UTF-8")))
 }
 
@@ -310,7 +320,7 @@ private fun base64Encode(data: String): String? {
  * @throws NoSuchAlgorithmException
  */
 @Throws(NoSuchAlgorithmException::class)
-private fun sha256Hash(data: ByteArray?): ByteArray {
+internal fun sha256Hash(data: ByteArray?): ByteArray {
     val messageDigest = MessageDigest.getInstance("SHA-256")
     return messageDigest.digest(data)
 }
@@ -321,7 +331,7 @@ private fun sha256Hash(data: ByteArray?): ByteArray {
  * @return the hex-string of the byte array
  */
 @Suppress("MagicNumber")
-private fun hexStringify(data: ByteArray): String {
+internal fun hexStringify(data: ByteArray): String {
     val stringBuilder = java.lang.StringBuilder()
     for (singleByte: Byte in data) {
         stringBuilder.append(((singleByte and 0xff.toByte()) + 0x100).toString(16).substring(1))

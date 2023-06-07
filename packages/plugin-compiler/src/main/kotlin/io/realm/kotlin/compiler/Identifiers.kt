@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.compiler
 
+import io.realm.kotlin.compiler.FqNames.CLASS_APP_CONFIGURATION
+import io.realm.kotlin.compiler.FqNames.PACKAGE_MONGODB
+import io.realm.kotlin.compiler.FqNames.PACKAGE_MONGODB_INTERNAL
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -76,6 +80,9 @@ internal object Names {
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
     val PROPERTY_COLLECTION_TYPE_SET = Name.identifier("RLM_COLLECTION_TYPE_SET")
     val PROPERTY_COLLECTION_TYPE_DICTIONARY = Name.identifier("RLM_COLLECTION_TYPE_DICTIONARY")
+
+    val APP_CREATE = Name.identifier("create")
+    val APP_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
 }
 
 internal object FqNames {
@@ -128,4 +135,14 @@ internal object FqNames {
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
     val REALM_ANY = FqName("io.realm.kotlin.types.RealmAny")
+
+    val PACKAGE_MONGODB = FqName("io.realm.kotlin.mongodb")
+    val PACKAGE_MONGODB_INTERNAL = FqName("io.realm.kotlin.mongodb.internal")
+    val CLASS_APP_CONFIGURATION = FqName("io.realm.kotlin.mongodb.AppConfiguration")
+}
+
+object ClassIds {
+    val APP = ClassId(PACKAGE_MONGODB, Name.identifier("App"))
+    val APP_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppImpl"))
+    val APP_CONFIGURATION_BUILDER = ClassId(CLASS_APP_CONFIGURATION, Name.identifier("Builder"))
 }

@@ -95,6 +95,7 @@ import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
@@ -217,6 +218,11 @@ internal fun IrPluginContext.lookupFunctionInClass(
     return lookupClassOrThrow(fqName).functions.first {
         it.name == Name.identifier(function)
     }
+}
+
+internal fun IrPluginContext.lookupClassOrThrow(name: ClassId): IrClass {
+    return referenceClass(name)?.owner
+        ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
 }
 
 internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {

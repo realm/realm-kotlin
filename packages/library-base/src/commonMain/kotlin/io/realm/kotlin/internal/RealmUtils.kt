@@ -71,7 +71,7 @@ public val MISSING_PLUGIN: Throwable = IllegalStateException(MISSING_PLUGIN_MESS
  * replaced by the Compiler Plugin.
  */
 @Suppress("FunctionNaming", "NOTHING_TO_INLINE")
-internal inline fun REPLACED_BY_IR(
+public inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
