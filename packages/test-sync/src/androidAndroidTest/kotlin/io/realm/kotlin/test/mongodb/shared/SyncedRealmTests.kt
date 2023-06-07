@@ -434,7 +434,7 @@ class SyncedRealmTests {
     // Make sure that server errors are correctly passed to the user if `waitForInitialRemoteData`
     // fails.
     @Test
-    fun waitForInitialRemoteData_propagateServerErrors(): Unit {
+    fun waitForInitialRemoteData_propagateServerErrors() {
         val user = app.asTestApp.createUserAndLogin()
         val config = SyncConfiguration.Builder(user, 0L, setOf())
             .waitForInitialRemoteData()

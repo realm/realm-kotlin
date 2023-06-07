@@ -26,9 +26,6 @@
 ### Internal
 * None.
 
-### Contributors
-*  [Tim Klingeleers](https://github.com/Mardaneus86) for fixing the default `compactOnLaunch` logic. 
-
 
 ## 1.9.0 (2023-05-23)
 
