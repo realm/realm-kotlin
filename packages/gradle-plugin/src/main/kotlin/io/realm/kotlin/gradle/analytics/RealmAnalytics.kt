@@ -32,9 +32,6 @@ import java.net.URL
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.Scanner
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
 import javax.xml.bind.DatatypeConverter
 import kotlin.experimental.and
 
@@ -176,14 +173,16 @@ internal class RealmAnalytics {
     private fun sendAnalytics(json: String, logger: Logger) {
         try {
             logger.debug("Sending analytics payload\n$json")
-            Thread(Runnable {
-                try {
-                    val response = networkQuery(json)
-                    logger.debug("Analytics sent: $response")
-                } catch (e: InterruptedException) {
-                    logger.debug("Sending analytics was interrupted.")
+            Thread(
+                Runnable {
+                    try {
+                        val response = networkQuery(json)
+                        logger.debug("Analytics sent: $response")
+                    } catch (e: InterruptedException) {
+                        logger.debug("Sending analytics was interrupted.")
+                    }
                 }
-            }).apply {
+            ).apply {
                 setDaemon(true)
             }.start()
         } catch (e: Exception) {
