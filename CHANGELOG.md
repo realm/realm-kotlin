@@ -7,6 +7,7 @@
 * None.
 
 ### Fixed
+* Deleting `RealmResults` created by `by backlinks()` would crash with `Cannot delete custom Deleteable objects: ObjectBoundRealmResults`. (Issue [#1413](https://github.com/realm/realm-kotlin/issues/1413)) 
 * Incremental compilation in combination with `@PersistedName` on model class names could result in schema errors when opening the Realm (Issue [#1401](https://github.com/realm/realm-kotlin/issues/1401)).
 * [Sync] Native crash if a server error was reported while using `SyncConfiguration.waitForInitialRemoteData()`. (Issue [#1401](https://github.com/realm/realm-kotlin/issues/1401))
 
