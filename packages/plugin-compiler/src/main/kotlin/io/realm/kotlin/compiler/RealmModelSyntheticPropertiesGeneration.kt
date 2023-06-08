@@ -134,10 +134,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
 
     private val classInfoClass = pluginContext.lookupClassOrThrow(CLASS_INFO)
-    val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
+    private val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
 
     private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY_INFO)
-    val propertyCreateMethod = pluginContext.referenceFunctions(PROPERTY_INFO_CREATE).first()
+    private val propertyCreateMethod = pluginContext.referenceFunctions(PROPERTY_INFO_CREATE).first()
 
     private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
     private val propertyTypes =
