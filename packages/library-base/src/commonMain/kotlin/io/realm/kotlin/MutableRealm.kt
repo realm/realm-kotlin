@@ -16,9 +16,10 @@ package io.realm.kotlin
 
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmSingleQuery
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.AsymmetricRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -52,7 +53,7 @@ public interface MutableRealm : TypedRealm {
      */
     // TODO Should actually be BaseRealm.find/TypedRealm.find as we should be able to resolve any
     //  object in any other version also for non-mutable realms ... maybe 'resolve' instead
-    public fun <T : BaseRealmObject> findLatest(obj: T): T?
+    public fun <T : TypedRealmObject> findLatest(obj: T): T?
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
@@ -87,6 +88,11 @@ public interface MutableRealm : TypedRealm {
     public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
 
     /**
+     * TODO
+     */
+    public fun <T : AsymmetricRealmObject> copyToRealm(instance: T)
+
+    /**
      * Returns a [RealmQuery] matching the predicate represented by [query].
      *
      * The results yielded by the query are live and thus also reflect any update to the
@@ -100,11 +106,11 @@ public interface MutableRealm : TypedRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    override fun <T : BaseRealmObject> query(
+    override fun <T : TypedRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
-    ): RealmQuery<T> where T: Queryable
+    ): RealmQuery<T>
 
     /**
      * Delete objects from the underlying Realm.
@@ -139,7 +145,7 @@ public interface MutableRealm : TypedRealm {
      * @param schemaClass the class whose objects should be removed.
      * @throws IllegalArgumentException if the class does not exist within the schema.
      */
-    public fun <T: BaseRealmObject> delete(schemaClass: KClass<T>) where T: Deleteable, T: Queryable
+    public fun <T : TypedRealmObject> delete(schemaClass: KClass<T>)
 }
 
 /**
@@ -147,6 +153,6 @@ public interface MutableRealm : TypedRealm {
  *
  * Reified convenience wrapper of [MutableRealm.delete].
  */
-public inline fun <reified T : BaseRealmObject> MutableRealm.delete() where T: Deleteable, T: Queryable {
+public inline fun <reified T : TypedRealmObject> MutableRealm.delete() {
     delete(T::class)
 }

@@ -602,7 +602,7 @@ class MutableRealmTests {
         }
     }
 
-    class Foo: AsymmetricRealmObject {
+    class Foo : AsymmetricRealmObject {
         var name: String = "foo"
     }
 
@@ -613,6 +613,7 @@ class MutableRealmTests {
                 copyToRealm(Sample().apply { intField = i % 2 })
             }
 //            query(Foo::class, "")
+//            delete(Foo::class)
             assertEquals(10, query<Sample>().count().find())
             val deleteable: RealmQuery<Sample> = query<Sample>("intField = 1")
             delete(deleteable)

@@ -18,7 +18,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.Queryable
 import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
@@ -35,9 +34,7 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -178,11 +175,11 @@ public class RealmImpl private constructor(
 
     // Required as Kotlin otherwise gets confused about the visibility and reports
     // "Cannot infer visibility for '...'. Please specify it explicitly"
-    override fun <T : BaseRealmObject> query(
+    override fun <T : TypedRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
-    ): RealmQuery<T> where T: Queryable {
+    ): RealmQuery<T> {
         return super.query(clazz, query, *args)
     }
 

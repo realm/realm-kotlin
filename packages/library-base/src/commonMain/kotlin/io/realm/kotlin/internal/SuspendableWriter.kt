@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.MutableRealm
-import io.realm.kotlin.Queryable
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -27,8 +26,7 @@ import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
@@ -56,11 +54,11 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         override val realmReference: LiveRealmReference
             get() = super.realmReference
 
-        override fun <T : BaseRealmObject> query(
+        override fun <T : TypedRealmObject> query(
             clazz: KClass<T>,
             query: String,
             vararg args: Any?
-        ): RealmQuery<T> where T: Queryable {
+        ): RealmQuery<T> {
             return super.query(clazz, query, *args)
         }
 
