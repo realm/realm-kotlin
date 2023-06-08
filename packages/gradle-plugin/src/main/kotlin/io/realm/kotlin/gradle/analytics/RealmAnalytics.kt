@@ -176,26 +176,16 @@ internal class RealmAnalytics {
     private fun sendAnalytics(json: String, logger: Logger) {
         try {
             logger.debug("Sending analytics payload\n$json")
-            val pool: ExecutorService = Executors.newFixedThreadPool(
-                1,
-                object : ThreadFactory {
-                    override fun newThread(r: Runnable?): Thread? {
-                        val t = Executors.defaultThreadFactory().newThread(r)
-                        t.isDaemon = true
-                        return t
-                    }
-                }
-            )
-            try {
-                pool.submit {
+            Thread(Runnable {
+                try {
                     val response = networkQuery(json)
                     logger.debug("Analytics sent: $response")
+                } catch (e: InterruptedException) {
+                    logger.debug("Sending analytics was interrupted.")
                 }
-                pool.shutdown()
-            } catch (e: InterruptedException) {
-                logger.debug("Sending analytics was interrupted.")
-                pool.shutdownNow()
-            }
+            }).apply {
+                setDaemon(true)
+            }.start()
         } catch (e: Exception) {
             // Analytics failing for any reason should not crash the build
             logger.debug("Error when sending: $e")

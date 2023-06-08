@@ -37,8 +37,6 @@ import io.realm.kotlin.mongodb.HttpLogObfuscator
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
-internal const val MISSING_BUNDLE_ID = "UNKNOWN_BUNDLE_ID"
-
 // TODO Public due to being a transitive dependency to AppImpl
 @Suppress("LongParameterList")
 public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) constructor(

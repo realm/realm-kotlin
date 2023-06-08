@@ -37,7 +37,6 @@ import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
-import io.realm.kotlin.mongodb.internal.MISSING_BUNDLE_ID
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
@@ -297,7 +296,7 @@ public interface AppConfiguration {
             // as these calls might be in a module where the compiler plugin hasn't been applied.
             // In that case we don't setup the correct bundle ID. If this is an issue we could maybe
             // just force users to apply our plugin.
-            return build(MISSING_BUNDLE_ID)
+            return build("UNKNOWN_BUNDLE_ID")
         }
 
         // This method is used to inject bundleId to the sync configuration. The
