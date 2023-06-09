@@ -54,8 +54,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
 
     override fun applyToCompilation(kotlinCompilation: KotlinCompilation<*>): Provider<List<SubpluginOption>> {
         val project = kotlinCompilation.target.project
-        val realmPlugin =
-            kotlinCompilation.project.plugins.getPlugin("io.realm.kotlin") as RealmPlugin
+        val realmPlugin = project.plugins.getPlugin("io.realm.kotlin") as RealmPlugin
         val anonymizedBundleId = realmPlugin.anonymizedBundleId
         return project.provider {
             listOf(SubpluginOption(key = "bundleId", anonymizedBundleId))
