@@ -91,6 +91,7 @@ internal object FqNames {
     val REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.RealmObject")
     val TYPED_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.TypedRealmObject")
     val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.EmbeddedRealmObject")
+    val ASYMMETRIC_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.AsymmetricRealmObject")
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")

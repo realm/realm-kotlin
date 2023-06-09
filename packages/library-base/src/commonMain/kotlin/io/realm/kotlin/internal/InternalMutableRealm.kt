@@ -30,7 +30,7 @@ internal interface InternalMutableRealm : MutableRealm {
     override val configuration: InternalConfiguration
     val realmReference: LiveRealmReference
 
-    override fun <T : TypedRealmObject> findLatest(obj: T): T? {
+    override fun <T : BaseRealmObject> findLatest(obj: T): T? {
         return if (!obj.isValid()) {
             null
         } else {
@@ -86,15 +86,8 @@ internal interface InternalMutableRealm : MutableRealm {
 
     override fun deleteAll() {
         for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
-            // TODO This breaks the idea about exposing AsymmetricRealmObjects as a subclass
-            //  of BaseRealmObject. The problem is that BaseRealmObject is marked Deletable.
-            //  I guess we have 2 options: A) Either move the Deletable interface to all object
-            //  relevant subclasses B) Decouple AsymmetricRealmObject completely from BaseRealmObject
-            //  B) has some merit since you are only allowed to insert these objects, not query or
-            //  modify them after creation. I do however suspect it will make inserting the objects
-            //  much more difficult since it would change our compiler infrastructure quite a bit.
-            //  This needs to be discussed.
-            if (schemaClass.isInstance(Deleteable::class)) {
+            // TODO This code is impossible to create if AsymmetricRealmObject is moved to library-sync
+            if (schemaClass !is AsymmetricRealmObject) {
                 delete(schemaClass as Deleteable)
             }
         }

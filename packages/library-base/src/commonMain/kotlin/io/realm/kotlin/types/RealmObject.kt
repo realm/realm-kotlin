@@ -16,10 +16,7 @@
 
 package io.realm.kotlin.types
 
-import io.realm.kotlin.Deleteable
-import io.realm.kotlin.Queryable
-
 /**
  * Marker interface to define a model (managed by Realm).
  */
-public interface RealmObject : TypedRealmObject, Deleteable, Queryable
+public interface RealmObject : TypedRealmObject

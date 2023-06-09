@@ -29,11 +29,17 @@ data class ClassInfo(
 ) {
 
     val isEmbedded = flags and ClassFlags.RLM_CLASS_EMBEDDED != 0
-    val isAsymmetric = flags and ClassFlags.RLM_CLASS_EMBEDDED != 0
+    val isAsymmetric = flags and ClassFlags.RLM_CLASS_ASYMMETRIC != 0
 
     companion object {
         // Convenience wrapper to ease maintaining compiler plugin
-        fun create(name: String, primaryKey: String?, numProperties: Long, isEmbedded: Boolean = false, isAsymmetric: Boolean = false): ClassInfo {
+        fun create(
+            name: String,
+            primaryKey: String?,
+            numProperties: Long,
+            isEmbedded: Boolean = false,
+            isAsymmetric: Boolean = false
+        ): ClassInfo {
             val flags: Int = if (isEmbedded) {
                 ClassFlags.RLM_CLASS_EMBEDDED
             } else if (isAsymmetric) {

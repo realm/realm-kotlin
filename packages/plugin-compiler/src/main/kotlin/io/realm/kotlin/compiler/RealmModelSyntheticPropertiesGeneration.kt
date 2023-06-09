@@ -80,8 +80,11 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
@@ -434,6 +437,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         if (embedded && primaryKeyFields.isNotEmpty()) {
             logError("Embedded object is not allowed to have a primary key", irClass.locationOf())
         }
+
+        val asymmetric = irClass.isAsymmetricRealmObject
+
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().value.persistedName
@@ -462,7 +468,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             type = classInfoClass.defaultType,
                             symbol = classInfoCreateMethod.symbol,
                             typeArgumentsCount = 0,
-                            valueArgumentsCount = 4
+                            valueArgumentsCount = 5
                         ).apply {
                             dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
@@ -482,6 +488,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             // num properties
                             putValueArgument(arg++, irLong(fields.size.toLong()))
                             putValueArgument(arg++, irBoolean(embedded))
+                            putValueArgument(arg++, irBoolean(asymmetric))
                         }
                     )
                     putValueArgument(
@@ -495,7 +502,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 // 1 - primitive type, in which case it is extracted as is
                                 // 2 - collection type, in which case the collection type(s)
                                 //     specified in value.genericTypes should be used as type
-                                val type = when (val primitiveType = getType(value.propertyType)) {
+                                val type: IrEnumEntry = when (val primitiveType = getType(value.propertyType)) {
                                     null -> // Primitive type is null for collections
                                         when (value.collectionType) {
                                             CollectionType.LIST,
@@ -512,16 +519,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         primitiveType
                                 }
 
-                                val objectType = propertyTypes.firstOrNull {
+                                val objectType: IrEnumEntry = propertyTypes.firstOrNull {
                                     it.name == PROPERTY_TYPE_OBJECT
                                 } ?: error("Unknown type ${value.propertyType}")
 
-                                val linkingObjectType = propertyTypes.firstOrNull {
+                                val linkingObjectType: IrEnumEntry = propertyTypes.firstOrNull {
                                     it.name == PROPERTY_TYPE_LINKING_OBJECTS
                                 } ?: error("Unknown type ${value.propertyType}")
 
-                                val property = value.declaration
-                                val backingField = property.backingField
+                                val property: IrProperty = value.declaration
+                                val backingField: IrField = property.backingField
                                     ?: fatalError("Property without backing field or type.")
                                 // Nullability applies to the generic type in collections
                                 val nullable = if (value.collectionType == CollectionType.NONE) {
@@ -530,6 +537,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     value.coreGenericTypes?.get(0)?.nullable
                                         ?: fatalError("Missing generic type while processing a collection field.")
                                 }
+
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
                                 if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
                                     logError(
@@ -578,6 +586,103 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     persistedAndPublicNameToLocation[publicName] = location
                                 }
 
+                                // Validate asymmetric object constraints:
+                                // - Asymmetric objects can only contain embedded objects.
+                                // - RealmObject and EmbeddedObject cannot contain a Asymmetric object.
+                                // I.e. Asymmetric objects are only allowed as top-level objects.
+                                when (type) {
+                                    objectType -> {
+                                        // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                        when (value.collectionType) {
+                                            CollectionType.NONE -> {
+                                                backingField.type
+                                            }
+                                            CollectionType.LIST,
+                                            CollectionType.SET,
+                                            CollectionType.DICTIONARY -> {
+                                                getCollectionElementType(backingField.type)
+                                                    ?: error("Could not get collection type from ${backingField.type}")
+                                            }
+                                        }
+                                    }
+                                    else -> null
+                                }?.let { linkedType: IrType ->
+                                    if (asymmetric) {
+                                        if (!linkedType.isEmbeddedRealmObject) {
+                                            logError("AsymmetricObjects can only reference EmbeddedRealmObject classes.", property.locationOf())
+                                        }
+                                    } else {
+                                        if (linkedType.isAsymmetricRealmObject) {
+                                            logError("RealmObject and EmbeddedRealmObject are not allowed to reference ASymmetricRealmObjects.", property.locationOf())
+                                        }
+                                    }
+                                }
+
+                                // Define the Realm `PropertyType` enum value for this kind of
+                                // property.
+                                val realmPropertyType = IrGetEnumValueImpl(
+                                    startOffset = UNDEFINED_OFFSET,
+                                    endOffset = UNDEFINED_OFFSET,
+                                    type = propertyType.defaultType,
+                                    symbol = type.symbol
+                                )
+
+                                // Collection type: remember to specify it correctly here - the
+                                // type of the contents itself is specified as "type" above!
+                                val collectionTypeSymbol = when (value.collectionType) {
+                                    CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
+                                    CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
+                                    CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
+                                    CollectionType.DICTIONARY -> PROPERTY_COLLECTION_TYPE_DICTIONARY
+                                }
+                                val collectionType = IrGetEnumValueImpl(
+                                    startOffset = UNDEFINED_OFFSET,
+                                    endOffset = UNDEFINED_OFFSET,
+                                    type = collectionType.defaultType,
+                                    symbol = collectionTypes.first {
+                                        it.name == collectionTypeSymbol
+                                    }.symbol
+                                )
+
+                                // Find the link target if any. This is a `KClass<out TypedRealmObject>?`
+                                // reference, that is `null` if this property is not a object link
+                                // or a collection.
+                                val linkTarget: IrExpression = when (type) {
+                                    objectType -> {
+                                        // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                        when (collectionTypeSymbol) {
+                                            PROPERTY_COLLECTION_TYPE_NONE ->
+                                                backingField.type
+                                            PROPERTY_COLLECTION_TYPE_LIST,
+                                            PROPERTY_COLLECTION_TYPE_SET,
+                                            PROPERTY_COLLECTION_TYPE_DICTIONARY ->
+                                                getCollectionElementType(backingField.type)
+                                                    ?: error("Could not get collection type from ${backingField.type}")
+                                            else ->
+                                                error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                        }
+                                    }
+                                    linkingObjectType -> getBacklinksTargetType(backingField)
+                                    else -> null
+                                }?.let { linkTargetType: IrType ->
+                                    val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
+                                    IrClassReferenceImpl(
+                                        startOffset = UNDEFINED_OFFSET,
+                                        endOffset = UNDEFINED_OFFSET,
+                                        type = classRef.symbol.starProjectedType,
+                                        symbol = classRef.symbol,
+                                        classType = classRef.defaultType
+                                    )
+                                } ?: irNull(pluginContext.irBuiltIns.kClassClass.typeWith(typedRealmObjectInterface.defaultType).makeNullable())
+
+                                // Define the link target. Empty string if there is none.
+                                val linkPropertyName: IrConst<String> = if (type == linkingObjectType) {
+                                    val targetPropertyName = getLinkingObjectPropertyName(backingField)
+                                    irString(targetPropertyName)
+                                } else {
+                                    irString("")
+                                }
+
                                 IrCallImpl(
                                     startOffset,
                                     endOffset,
@@ -592,75 +697,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // Public name
                                     putValueArgument(arg++, irString(publicName))
                                     // Type
-                                    putValueArgument(
-                                        arg++,
-                                        IrGetEnumValueImpl(
-                                            startOffset = UNDEFINED_OFFSET,
-                                            endOffset = UNDEFINED_OFFSET,
-                                            type = propertyType.defaultType,
-                                            symbol = type.symbol
-                                        )
-                                    )
-                                    // Collection type: remember to specify it correctly here - the
-                                    // type of the contents itself is specified as "type" above!
-                                    val collectionTypeSymbol = when (value.collectionType) {
-                                        CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
-                                        CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
-                                        CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
-                                        CollectionType.DICTIONARY -> PROPERTY_COLLECTION_TYPE_DICTIONARY
-                                    }
-                                    putValueArgument(
-                                        arg++,
-                                        IrGetEnumValueImpl(
-                                            startOffset = UNDEFINED_OFFSET,
-                                            endOffset = UNDEFINED_OFFSET,
-                                            type = collectionType.defaultType,
-                                            symbol = collectionTypes.first {
-                                                it.name == collectionTypeSymbol
-                                            }.symbol
-                                        )
-                                    )
+                                    putValueArgument(arg++, realmPropertyType)
+                                    // Collection Type
+                                    putValueArgument(arg++, collectionType)
                                     // Link target
-                                    putValueArgument(
-                                        arg++,
-                                        when (type) {
-                                            objectType -> {
-                                                // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                                when (collectionTypeSymbol) {
-                                                    PROPERTY_COLLECTION_TYPE_NONE ->
-                                                        backingField.type
-                                                    PROPERTY_COLLECTION_TYPE_LIST,
-                                                    PROPERTY_COLLECTION_TYPE_SET,
-                                                    PROPERTY_COLLECTION_TYPE_DICTIONARY ->
-                                                        getCollectionElementType(backingField.type)
-                                                            ?: error("Could not get collection type from ${backingField.type}")
-                                                    else ->
-                                                        error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
-                                                }
-                                            }
-                                            linkingObjectType -> getBacklinksTargetType(backingField)
-                                            else -> null
-                                        }?.let { linkTargetType: IrType ->
-                                            val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
-                                            IrClassReferenceImpl(
-                                                startOffset = UNDEFINED_OFFSET,
-                                                endOffset = UNDEFINED_OFFSET,
-                                                type = classRef.symbol.starProjectedType,
-                                                symbol = classRef.symbol,
-                                                classType = classRef.defaultType
-                                            )
-                                        } ?: irNull(pluginContext.irBuiltIns.kClassClass.typeWith(typedRealmObjectInterface.defaultType).makeNullable())
-                                    )
+                                    putValueArgument(arg++, linkTarget)
                                     // Link property name
-                                    putValueArgument(
-                                        arg++,
-                                        if (type == linkingObjectType) {
-                                            val targetPropertyName = getLinkingObjectPropertyName(backingField)
-                                            irString(targetPropertyName)
-                                        } else {
-                                            irString("")
-                                        }
-                                    )
+                                    putValueArgument(arg++, linkPropertyName)
                                     // isNullable
                                     putValueArgument(arg++, irBoolean(nullable))
                                     // isPrimaryKey

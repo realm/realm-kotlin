@@ -17,6 +17,7 @@
 
 package io.realm.kotlin.compiler
 
+import io.realm.kotlin.compiler.FqNames.ASYMMETRIC_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
@@ -83,8 +84,10 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
+import org.jetbrains.kotlin.ir.types.impl.IrErrorClassImpl.superTypes
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.superTypes
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.copyTo
@@ -94,6 +97,7 @@ import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -126,7 +130,8 @@ val ClassDescriptor.isRealmObjectCompanion
 
 val realmObjectInterfaceFqNames = setOf(FqNames.REALM_OBJECT_INTERFACE)
 val realmEmbeddedObjectInterfaceFqNames = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
-val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames
+val realmAsymmetricObjectInterfaceFqNames = setOf(FqNames.ASYMMETRIC_OBJECT_INTERFACE)
+val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames + realmAsymmetricObjectInterfaceFqNames
 
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
@@ -184,6 +189,15 @@ val IrClass.isRealmObject
 
 val IrClass.isEmbeddedRealmObject: Boolean
     get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
+
+val IrClass.isAsymmetricRealmObject: Boolean
+    get() = superTypes.any { it.classFqName == ASYMMETRIC_OBJECT_INTERFACE }
+
+val IrType.isEmbeddedRealmObject: Boolean
+    get() = superTypes().any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
+
+val IrType.isAsymmetricRealmObject: Boolean
+    get() = superTypes().any { it.classFqName == ASYMMETRIC_OBJECT_INTERFACE }
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset

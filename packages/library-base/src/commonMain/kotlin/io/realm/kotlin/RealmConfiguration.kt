@@ -23,7 +23,7 @@ import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.RealmMigration
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -48,7 +48,7 @@ public interface RealmConfiguration : Configuration {
      * created using the [RealmConfiguration.create] function.
      */
     public class Builder(
-        schema: Set<KClass<out BaseRealmObject>>
+        schema: Set<KClass<out TypedRealmObject>>
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
 
         protected override var name: String? = Realm.DEFAULT_FILE_NAME
@@ -177,7 +177,7 @@ public interface RealmConfiguration : Configuration {
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        public fun create(schema: Set<KClass<out BaseRealmObject>>): RealmConfiguration =
+        public fun create(schema: Set<KClass<out TypedRealmObject>>): RealmConfiguration =
             Builder(schema).build()
     }
 }

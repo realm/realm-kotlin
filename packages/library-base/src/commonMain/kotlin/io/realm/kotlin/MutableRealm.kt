@@ -17,6 +17,7 @@ package io.realm.kotlin
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.types.AsymmetricRealmObject
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
@@ -53,7 +54,7 @@ public interface MutableRealm : TypedRealm {
      */
     // TODO Should actually be BaseRealm.find/TypedRealm.find as we should be able to resolve any
     //  object in any other version also for non-mutable realms ... maybe 'resolve' instead
-    public fun <T : TypedRealmObject> findLatest(obj: T): T?
+    public fun <T : BaseRealmObject> findLatest(obj: T): T?
 
     /**
      * Cancel the write. Any changes will not be persisted to disk.
