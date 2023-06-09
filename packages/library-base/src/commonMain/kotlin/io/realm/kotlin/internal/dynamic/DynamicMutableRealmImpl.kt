@@ -84,8 +84,12 @@ public open class DynamicMutableRealmImpl(
         return io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
     }
 
-    override fun insert(obj: DynamicRealmObject) {
-        io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, UpdatePolicy.ALL, mutableMapOf()) as DynamicMutableRealmObject
+    override fun insert(obj: DynamicRealmObject, updatePolicy: UpdatePolicy) {
+        // Embedded objects cannot be used directly, but will be caught inside the `copyToRealm` method.
+        if (updatePolicy != UpdatePolicy.ERROR && realmReference.owner.schema()[obj.type]?.kind == RealmClassKind.ASYMMETRIC) {
+            throw IllegalArgumentException("Asymmetric objects only support UpdatePolicy.ERROR. This was used: $updatePolicy")
+        }
+        io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
     }
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same

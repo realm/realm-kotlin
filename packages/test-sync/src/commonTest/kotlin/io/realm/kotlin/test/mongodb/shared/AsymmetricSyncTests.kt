@@ -1,27 +1,36 @@
+@file:Suppress("invisible_member", "invisible_reference")
 package io.realm.kotlin.test.mongodb.shared
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.dynamic.DynamicMutableRealm
+import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.ext.insert
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
 import io.realm.kotlin.schema.RealmClassKind
+import io.realm.kotlin.test.StandaloneDynamicMutableRealm
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
-import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.coroutines.delay
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
-import io.realm.kotlin.mongodb.ext.copyToRealm
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class DeviceParent : RealmObject {
     @PersistedName("_id")
@@ -94,10 +103,11 @@ class AsymmetricSyncTests {
     }
 
     @Test
-    fun copyToRealm() {
-        realm.writeBlocking {
-            repeat(10) { no ->
-                copyToRealm(
+    fun insert() = runBlocking {
+        val noDocuments = 10
+        realm.write {
+            repeat(noDocuments) { no ->
+                insert(
                     Measurement().apply {
                         value = 42.0f + no.toFloat()
                         device = Device(name = "living room", serialNumber = "TMP432142")
@@ -105,20 +115,32 @@ class AsymmetricSyncTests {
                 )
             }
         }
-        // TOD How to verify this?
+        var found = false
+        var documents = 0
+        var attempt = 5
+        while (!found && attempt > 0) {
+            documents = app.countDocuments("Measurement")
+            if (documents == noDocuments) {
+                found = true
+            } else {
+                attempt -= 1
+                delay(1.seconds)
+            }
+        }
+        assertTrue(found, "Number of documents was: $documents")
     }
 
     @Test
     fun copyToRealm_samePrimaryKey_throws() {
         val generatedId = ObjectId()
         realm.writeBlocking {
-            copyToRealm(
+            insert(
                 Measurement().apply {
                     id = generatedId
                 }
             )
             assertFailsWith<IllegalArgumentException>() {
-                copyToRealm(
+                insert(
                     Measurement().apply {
                         id = generatedId
                     }
@@ -150,7 +172,7 @@ class AsymmetricSyncTests {
         realm.syncSession.pause()
         realm.write {
             repeat(10) { no ->
-                copyToRealm(
+                insert(
                     Measurement().apply {
                         value = 42.0f + no.toFloat()
                         device = Device(name = "living room", serialNumber = "TMP432142").apply {
@@ -177,5 +199,45 @@ class AsymmetricSyncTests {
     @Test
     fun deleteAll_doNotDeleteAsymmetricObjects() {
         // TODO Figure out how to test this
+    }
+
+    @Test
+    fun mutableDynamicRealm_insert_unsupportedUpdatePolicy_throws() {
+        useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
+            assertFailsWith<IllegalArgumentException> {
+                val obj = DynamicMutableRealmObject.create(Measurement::class.simpleName!!)
+                assertFailsWith<IllegalArgumentException> {
+                    dynamicRealm.insert(obj, updatePolicy = UpdatePolicy.ALL)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun mutableDynamicRealm_query_throws() {
+        useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
+            assertFailsWith<IllegalArgumentException> {
+                dynamicRealm.query(Measurement::class.simpleName!!)
+            }
+        }
+    }
+
+    @Test
+    fun mutableDynamicRealm_delete_throws() {
+        useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
+            assertFailsWith<IllegalArgumentException> {
+                dynamicRealm.delete(Measurement::class.simpleName!!)
+            }
+        }
+    }
+
+    private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {
+        val dynamicMutableRealm = StandaloneDynamicMutableRealm(realm.configuration as InternalConfiguration)
+        dynamicMutableRealm.beginTransaction()
+        try {
+            function(dynamicMutableRealm)
+        } finally {
+            dynamicMutableRealm.close()
+        }
     }
 }

@@ -1,4 +1,4 @@
-package io.realm.kotlin.mongodb.types;
+package io.realm.kotlin.mongodb.types
 
 import io.realm.kotlin.types.BaseRealmObject
 

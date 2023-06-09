@@ -60,7 +60,7 @@ public interface DynamicMutableRealm : DynamicRealm {
     /**
      * TODO
      */
-    public fun insert(obj: DynamicRealmObject)
+    public fun insert(obj: DynamicRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR)
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.

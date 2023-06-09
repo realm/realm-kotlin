@@ -91,6 +91,11 @@ interface AppAdmin {
      */
     suspend fun queryDocument(clazz: String, query: String): JsonObject?
 
+    /**
+     * Count the number of documents of a given type
+     */
+    suspend fun countDocuments(clazz: String): Int
+
     fun closeClient()
 }
 
@@ -179,6 +184,11 @@ class AppAdminImpl(
     override suspend fun queryDocument(clazz: String, query: String): JsonObject? =
         baasClient.run {
             app.queryDocument(clazz, query)
+        }
+
+    override suspend fun countDocuments(clazz: String): Int =
+        baasClient.run {
+            app.countDocuments(clazz)
         }
 
     override fun closeClient() {

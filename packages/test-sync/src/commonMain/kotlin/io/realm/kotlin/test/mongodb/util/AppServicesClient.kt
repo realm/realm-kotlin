@@ -57,6 +57,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -605,6 +606,23 @@ class AppServicesClient(
                 }
             )
         }
+
+    suspend fun BaasApp.countDocuments(clazz: String): Int {
+        val result: JsonObject? = withContext(dispatcher) {
+            functionCall(
+                name = "countDocuments",
+                arguments = buildJsonArray {
+                    add(mongodbService.name)
+                    add(clientAppId)
+                    add(clazz)
+                }
+            )
+        }
+        return result?.let {
+            println(it)
+            it["value"]?.jsonObject?.get("\$numberLong")?.jsonPrimitive?.int
+        } ?: throw IllegalStateException("Unexpected result: $result")
+    }
 
     private suspend fun BaasApp.deleteDocument(
         db: String,
