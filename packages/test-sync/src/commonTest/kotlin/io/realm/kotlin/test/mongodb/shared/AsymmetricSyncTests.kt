@@ -172,4 +172,9 @@ class AsymmetricSyncTests {
         // Nested embedded objects are not searchable either if the top-level is asymmetric.
         assertEquals(0, realm.query<BackupDevice>().count().find())
     }
+
+    @Test
+    fun deleteAll_doNotDeleteAsymmetricObjects() {
+        // TODO Figure out how to test this
+    }
 }
