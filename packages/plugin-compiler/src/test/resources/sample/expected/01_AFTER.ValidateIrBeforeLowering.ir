@@ -6455,12 +6455,13 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_schema (): kotlin.Any declared in sample.input.Sample.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="Sample"
                   primaryKey: CONST String type=kotlin.String value="id"
                   numProperties: CONST Long type=kotlin.Long value=123
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=false
+                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
@@ -8661,12 +8662,13 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_schema (): kotlin.Any declared in sample.input.Child.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="Child"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
                   numProperties: CONST Long type=kotlin.Long value=3
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=false
+                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
@@ -8913,12 +8915,13 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_schema (): kotlin.Any declared in sample.input.EmbeddedParent.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="EmbeddedParent"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
                   numProperties: CONST Long type=kotlin.Long value=1
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=false
+                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
@@ -9131,12 +9134,13 @@ MODULE_FRAGMENT name:<main>
           BLOCK_BODY
             RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_schema (): kotlin.Any declared in sample.input.EmbeddedChild.Companion'
               CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
                   $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
                   name: CONST String type=kotlin.String value="EmbeddedChild"
                   primaryKey: CONST Null type=kotlin.Nothing? value=null
                   numProperties: CONST Long type=kotlin.Long value=1
                   isEmbedded: CONST Boolean type=kotlin.Boolean value=true
+                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
                 cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
                   <T>: io.realm.kotlin.internal.interop.PropertyInfo
                   elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
