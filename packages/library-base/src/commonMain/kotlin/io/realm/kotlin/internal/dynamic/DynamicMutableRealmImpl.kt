@@ -34,6 +34,7 @@ import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.toRealmObject
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.schema.RealmClass
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmSchema
 
 // Public due to tests needing to access `close` and trying to make the class visible through
@@ -57,8 +58,11 @@ public open class DynamicMutableRealmImpl(
         className: String,
         query: String,
         vararg args: Any?
-    ): RealmQuery<DynamicMutableRealmObject> =
-        ObjectQuery(
+    ): RealmQuery<DynamicMutableRealmObject> {
+        checkAsymmetric(className) {
+            throw IllegalArgumentException("Queries on asymmetric objects are not allowed: $className")
+        }
+        return ObjectQuery(
             realmReference,
             realmReference.schemaMetadata.getOrThrow(className).classKey,
             DynamicMutableRealmObject::class,
@@ -66,6 +70,7 @@ public open class DynamicMutableRealmImpl(
             query,
             args
         )
+    }
 
     // Type system doesn't prevent copying embedded objects, but theres not really a good way to
     // differentiate the dynamic objects without bloating the type space
@@ -73,7 +78,14 @@ public open class DynamicMutableRealmImpl(
         obj: DynamicRealmObject,
         updatePolicy: UpdatePolicy
     ): DynamicMutableRealmObject {
+        checkAsymmetric(obj.type) {
+            throw IllegalArgumentException("Asymmetric Realm objects can only be added using the `insert()` method.")
+        }
         return io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
+    }
+
+    override fun insert(obj: DynamicRealmObject) {
+        io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, UpdatePolicy.ALL, mutableMapOf()) as DynamicMutableRealmObject
     }
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same
@@ -98,12 +110,24 @@ public open class DynamicMutableRealmImpl(
     }
 
     override fun delete(className: String) {
+        checkAsymmetric(className) {
+            throw IllegalArgumentException("Asymmetric Realm objects cannot be deleted manually: $className")
+        }
         delete(query(className).find())
     }
 
+    private fun checkAsymmetric(className: String, errorMessage: () -> Unit) {
+        if (realmReference.owner.schema()[className]?.kind == RealmClassKind.ASYMMETRIC) {
+            errorMessage()
+        }
+    }
+
     override fun deleteAll() {
-        for (schemaClass: RealmClass in schema().classes) {
-            delete(schemaClass.name)
+        val schema = schema()
+        for (schemaClass: RealmClass in schema.classes) {
+            if (schema[schemaClass.name]?.kind != RealmClassKind.ASYMMETRIC) {
+                delete(schemaClass.name)
+            }
         }
     }
 

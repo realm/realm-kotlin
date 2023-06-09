@@ -16,7 +16,6 @@ package io.realm.kotlin
 
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmSingleQuery
-import io.realm.kotlin.types.AsymmetricRealmObject
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
@@ -87,11 +86,6 @@ public interface MutableRealm : TypedRealm {
      * if the object graph contains an object from a previous version.
      */
     public fun <T : RealmObject> copyToRealm(instance: T, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): T
-
-    /**
-     * TODO
-     */
-    public fun <T : AsymmetricRealmObject> copyToRealm(instance: T)
 
     /**
      * Returns a [RealmQuery] matching the predicate represented by [query].

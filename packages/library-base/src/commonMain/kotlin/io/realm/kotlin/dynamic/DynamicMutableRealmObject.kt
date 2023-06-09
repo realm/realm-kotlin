@@ -47,7 +47,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      * Sets the value for the given field.
      *
      * If value is an unmanaged [RealmObject] it will copied into the realm, just as for normal
-     * assignments through the object setters of the typed API and [MutableRealm.copyToRealm].
+     * assignments through the object setters of the typed API and [MutableRealm.insert].
      *
      * @param propertyName the name of the property to update.
      * @param value the new value of the property.
@@ -67,7 +67,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
          * Create an unmanaged dynamic object.
          *
          * The type and properties are only checked when the object is imported through
-         * [DynamicMutableRealm.copyToRealm].
+         * [DynamicMutableRealm.copyToRealm] or [DynamicMutableRealm.insert].
          *
          * @param type the class name of the object.
          * @param properties properties of the object.
@@ -83,7 +83,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
          * Create an unmanaged dynamic object.
          *
          * The type and properties are only checked when the object is imported through
-         * [DynamicMutableRealm.copyToRealm].
+         * [DynamicMutableRealm.copyToRealm] or [DynamicMutableRealm.insert].
          *
          * @param type the class name of the object.
          * @param properties properties of the object.

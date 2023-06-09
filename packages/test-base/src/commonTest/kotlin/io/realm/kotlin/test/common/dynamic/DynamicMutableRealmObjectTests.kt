@@ -1771,4 +1771,11 @@ class DynamicMutableRealmObjectTests {
             assertEquals(4, size)
         }
     }
+
+    @Test
+    fun copyToRealm_embeddedObject_throws() {
+        assertFailsWith<IllegalArgumentException> {
+            dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedChild"))
+        }
+    }
 }

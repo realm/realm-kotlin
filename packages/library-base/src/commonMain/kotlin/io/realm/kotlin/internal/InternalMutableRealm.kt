@@ -19,7 +19,6 @@ import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.isValid
-import io.realm.kotlin.types.AsymmetricRealmObject
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
@@ -57,17 +56,6 @@ internal interface InternalMutableRealm : MutableRealm {
         return copyToRealm(configuration.mediator, realmReference, instance, updatePolicy)
     }
 
-    override fun <T : AsymmetricRealmObject> copyToRealm(
-        instance: T,
-    ) {
-        // TODO What happens on primary key conflicts?
-        copyToRealm(configuration.mediator, realmReference, instance, UpdatePolicy.ERROR)
-    }
-
-    // FIXME Consider adding a delete-all along with query support
-    //  https://github.com/realm/realm-kotlin/issues/64
-    // fun <T : RealmModel> delete(clazz: KClass<T>)
-
     override fun delete(deleteable: Deleteable) {
         deleteable.asInternalDeleteable().delete()
     }
@@ -86,9 +74,9 @@ internal interface InternalMutableRealm : MutableRealm {
 
     override fun deleteAll() {
         for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
-            // TODO This code is impossible to create if AsymmetricRealmObject is moved to library-sync
-            if (schemaClass !is AsymmetricRealmObject) {
-                delete(schemaClass as Deleteable)
+            // Don't delete AsymmetricObjects
+            if (schemaClass is TypedRealmObject) {
+                delete(schemaClass)
             }
         }
     }

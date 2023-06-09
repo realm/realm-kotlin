@@ -10,7 +10,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
-import io.realm.kotlin.types.AsymmetricRealmObject
+import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
@@ -21,6 +21,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import io.realm.kotlin.mongodb.ext.copyToRealm
 
 class DeviceParent : RealmObject {
     @PersistedName("_id")

@@ -19,12 +19,12 @@ public enum class RealmClassKind {
      */
     EMBEDDED,
     /**
-     * Asymmetric Realm objects extend the [io.realm.kotlin.types.AsymmetricRealmObject] interface.
+     * Asymmetric Realm objects extend the [io.realm.kotlin.types.mongodb.AsymmetricRealmObject] interface.
      *
      * These kind of classes can only be used in a synced Realm and are "write-only", i.e. once
      * you written an asymmetric object to a Realm, it is no longer possible access or query them.
      *
-     * See [io.realm.kotlin.types.AsymmetricRealmObject] for more details.
+     * See [io.realm.kotlin.types.mongodb.AsymmetricRealmObject] for more details.
      */
     ASYMMETRIC
 }

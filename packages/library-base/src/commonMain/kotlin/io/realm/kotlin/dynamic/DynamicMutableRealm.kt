@@ -46,7 +46,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * itself. Trying to copy outdated objects will throw an exception. To get hold of an updated
      * reference for an object use [findLatest].
      *
-     * @param instance the object to create a copy from.
+     * @param obj the object to create a copy from.
      * @param updatePolicy update policy when importing objects.
      * @return the managed version of the `instance`.
      *
@@ -56,6 +56,11 @@ public interface DynamicMutableRealm : DynamicRealm {
      * match the underlying schema.
      */
     public fun copyToRealm(obj: DynamicRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
+
+    /**
+     * TODO
+     */
+    public fun insert(obj: DynamicRealmObject)
 
     /**
      * Returns a query for dynamic mutable realm objects of the specified class.
