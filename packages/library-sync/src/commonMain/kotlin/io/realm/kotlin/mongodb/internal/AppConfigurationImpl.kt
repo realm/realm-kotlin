@@ -49,7 +49,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     public val logger: LogConfiguration,
     override val appName: String?,
     override val appVersion: String?,
-    private val bundleId: String,
+    internal val bundleId: String,
     override val ejson: EJson,
     override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
@@ -176,4 +176,9 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                     )
                 }
             }
+
+    internal companion object {
+        internal fun create(appId: String, bundleId: String): AppConfiguration =
+            AppConfiguration.Builder(appId).build(bundleId)
+    }
 }

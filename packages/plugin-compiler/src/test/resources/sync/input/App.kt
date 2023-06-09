@@ -20,9 +20,11 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.User
 
 val app1 = App.create("app1")
-val app2 = AppConfiguration.Builder("app2").build()
+val app2 = AppConfiguration.create("app2")
+val app3 = AppConfiguration.Builder("app3").build()
 
 class A {
-    val app3 = App.create("app3")
-    val app4 = AppConfiguration.Builder("app4").build()
+    val app4 = App.create("app4")
+    val app5 = AppConfiguration.create("app5")
+    val app6 = AppConfiguration.Builder("app6").build()
 }

@@ -58,7 +58,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
             kotlinCompilation.project.plugins.getPlugin("io.realm.kotlin") as RealmPlugin
         val anonymizedBundleId = realmPlugin.anonymizedBundleId
         return project.provider {
-            listOf(SubpluginOption(key = "bundleId", lazy { anonymizedBundleId }))
+            listOf(SubpluginOption(key = "bundleId", anonymizedBundleId))
         }
     }
 }

@@ -119,6 +119,7 @@ kotlin {
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.jvmTarget = Versions.jvmTarget
         kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+        kotlinOptions.freeCompilerArgs += listOf( "-P", "plugin:io.realm.kotlin:bundleId=TEST_BUNDLE_ID", )
     }
 }
 

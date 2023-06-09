@@ -19,7 +19,9 @@ package io.realm.kotlin.test.mongodb.shared
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.TestApp
@@ -411,6 +413,25 @@ class AppConfigurationTests {
 //        assertTrue(headerSet.get())
 //        looperThread.testComplete()
 //    }
+
+    @Test
+    fun injectedBundleId() {
+        val app = App.create(APP_ID)
+        val config1 = app.configuration
+        assertIs<AppConfigurationImpl>(config1)
+        @Suppress("invisible_member")
+        assertEquals("TEST_BUNDLE_ID", config1.bundleId)
+
+        val config2 = AppConfiguration.create(APP_ID)
+        assertIs<AppConfigurationImpl>(config2)
+        @Suppress("invisible_member")
+        assertEquals("TEST_BUNDLE_ID", config2.bundleId)
+
+        val config3 = AppConfiguration.Builder(APP_ID).build()
+        assertIs<AppConfigurationImpl>(config3)
+        @Suppress("invisible_member")
+        assertEquals("TEST_BUNDLE_ID", config3.bundleId)
+    }
 
     fun equals_same() {
         val appId = "foo"

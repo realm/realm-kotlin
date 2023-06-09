@@ -25,7 +25,7 @@
 
 ### Internal
 * Updated to Realm Core 13.13.0, commit 541190d4f55d535f2cd554180235888bf6656481.
-* Add bundle ID sync connection parameter
+* Add bundle ID sync connection parameter.
 
 
 ## 1.9.0 (2023-05-23)

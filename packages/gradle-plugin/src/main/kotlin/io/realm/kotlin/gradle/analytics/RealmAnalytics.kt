@@ -198,7 +198,7 @@ internal class RealmAnalytics {
             connection.requestMethod = "GET"
             connection.connect()
             return connection.responseCode
-        } catch (ignored: java.lang.Exception) {
+        } catch (ignored: Throwable) {
             return -1
         }
     }

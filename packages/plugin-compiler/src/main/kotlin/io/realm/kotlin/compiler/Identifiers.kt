@@ -82,6 +82,7 @@ internal object Names {
     val PROPERTY_COLLECTION_TYPE_DICTIONARY = Name.identifier("RLM_COLLECTION_TYPE_DICTIONARY")
 
     val APP_CREATE = Name.identifier("create")
+    val APP_CONFIGURATION_CREATE = Name.identifier("create")
     val APP_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
 }
 
@@ -144,5 +145,7 @@ internal object FqNames {
 object ClassIds {
     val APP = ClassId(PACKAGE_MONGODB, Name.identifier("App"))
     val APP_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppImpl"))
+    val APP_CONFIGURATION = ClassId(PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
+    val APP_CONFIGURATION_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppConfigurationImpl"))
     val APP_CONFIGURATION_BUILDER = ClassId(CLASS_APP_CONFIGURATION, Name.identifier("Builder"))
 }
