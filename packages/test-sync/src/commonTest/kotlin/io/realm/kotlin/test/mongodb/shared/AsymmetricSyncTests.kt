@@ -116,19 +116,7 @@ class AsymmetricSyncTests {
                 )
             }
         }
-        var found = false
-        var documents = 0
-        var attempt = 5
-        while (!found && attempt > 0) {
-            documents = app.countDocuments("Measurement") - initialServerDocuments
-            if (documents == newDocuments) {
-                found = true
-            } else {
-                attempt -= 1
-                delay(1.seconds)
-            }
-        }
-        assertTrue(found, "Number of documents was: $documents")
+        verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
     @Test
@@ -198,8 +186,29 @@ class AsymmetricSyncTests {
     }
 
     @Test
-    fun deleteAll_doNotDeleteAsymmetricObjects() {
-        // TODO Figure out how to test this
+    fun deleteAll_doNotDeleteAsymmetricObjects() = runBlocking {
+        val initialServerDocuments = app.countDocuments("Measurement")
+        val newDocuments = 10
+        realm.syncSession.pause()
+        realm.write {
+            repeat(newDocuments) { no ->
+                insert(
+                    Measurement().apply {
+                        value = 42.0f + no.toFloat()
+                        device = Device(name = "living room", serialNumber = "TMP432142")
+                    }
+                )
+            }
+        }
+
+        // Deleting everything should not delete the asymmetric objects
+        realm.write {
+            deleteAll()
+        }
+
+        // Re-enable the sync session and verify that all objects made it to the server.
+        realm.syncSession.resume()
+        verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
     @Test
@@ -233,6 +242,22 @@ class AsymmetricSyncTests {
     @Test
     fun asymmetricSchemaCannot_throwsWhenTransitivelyLinkingToRealmObject() {
         // Add test for this.
+    }
+
+    private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {
+        var found = false
+        var documents = 0
+        var attempt = 5
+        while (!found && attempt > 0) {
+            documents = app.countDocuments(clazz) - initialCount
+            if (documents == expectedCount) {
+                found = true
+            } else {
+                attempt -= 1
+                delay(1.seconds)
+            }
+        }
+        assertTrue(found, "Number of documents was: $documents")
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {
