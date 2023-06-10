@@ -28,6 +28,7 @@ import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.RealmSingleQuery
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
@@ -597,6 +598,23 @@ class MutableRealmTests {
             assertEquals(0, liveObject.objectListField.size)
             assertEquals(0, liveObject.stringListField.size)
             assertEquals(1, query<Sample>().count().find())
+        }
+    }
+
+    @Test
+    fun delete_realmQuery() {
+        realm.writeBlocking {
+            for (i in 0..9) {
+                copyToRealm(Sample().apply { intField = i % 2 })
+            }
+            assertEquals(10, query<Sample>().count().find())
+            val deleteable: RealmQuery<Sample> = query<Sample>("intField = 1")
+            delete(deleteable)
+            val samples: RealmResults<Sample> = query<Sample>().find()
+            assertEquals(5, samples.size)
+            for (sample in samples) {
+                assertEquals(0, sample.intField)
+            }
         }
     }
 

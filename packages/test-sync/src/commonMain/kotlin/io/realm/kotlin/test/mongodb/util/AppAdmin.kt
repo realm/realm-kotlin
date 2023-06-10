@@ -87,12 +87,12 @@ interface AppAdmin {
     suspend fun insertDocument(clazz: String, json: String): JsonObject?
 
     /**
-     * Query the specified database and collection
+     * Query the specified database and collection.
      */
     suspend fun queryDocument(clazz: String, query: String): JsonObject?
 
     /**
-     * Count the number of documents of a given type
+     * Count the number of documents of a given type.
      */
     suspend fun countDocuments(clazz: String): Int
 

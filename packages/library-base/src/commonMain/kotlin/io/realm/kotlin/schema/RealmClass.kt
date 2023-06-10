@@ -43,7 +43,7 @@ public interface RealmClass {
     public val isEmbedded: Boolean
 
     /**
-     * Returns what type of Realm class this is.
+     * Returns what type of Realm model class this is.
      */
     public val kind: RealmClassKind
 

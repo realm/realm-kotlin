@@ -47,7 +47,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      * Sets the value for the given field.
      *
      * If value is an unmanaged [RealmObject] it will copied into the realm, just as for normal
-     * assignments through the object setters of the typed API and [MutableRealm.insert].
+     * assignments through the object setters of the typed API and [MutableRealm.copyToRealm].
      *
      * @param propertyName the name of the property to update.
      * @param value the new value of the property.
@@ -58,7 +58,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      */
     public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
     public fun set(vararg pairs: Pair<String, Any?>): DynamicMutableRealmObject {
-        pairs.forEach { set(it.first, it.second) }
+        pairs.forEach { s.et(it.first, it.second) }
         return this
     }
 

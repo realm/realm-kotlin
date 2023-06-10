@@ -104,9 +104,10 @@ class AsymmetricSyncTests {
 
     @Test
     fun insert() = runBlocking {
-        val noDocuments = 10
+        val initialServerDocuments = app.countDocuments("Measurement")
+        val newDocuments = 10
         realm.write {
-            repeat(noDocuments) { no ->
+            repeat(newDocuments) { no ->
                 insert(
                     Measurement().apply {
                         value = 42.0f + no.toFloat()
@@ -119,8 +120,8 @@ class AsymmetricSyncTests {
         var documents = 0
         var attempt = 5
         while (!found && attempt > 0) {
-            documents = app.countDocuments("Measurement")
-            if (documents == noDocuments) {
+            documents = app.countDocuments("Measurement") - initialServerDocuments
+            if (documents == newDocuments) {
                 found = true
             } else {
                 attempt -= 1
@@ -204,11 +205,9 @@ class AsymmetricSyncTests {
     @Test
     fun mutableDynamicRealm_insert_unsupportedUpdatePolicy_throws() {
         useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
+            val obj = DynamicMutableRealmObject.create(Measurement::class.simpleName!!)
             assertFailsWith<IllegalArgumentException> {
-                val obj = DynamicMutableRealmObject.create(Measurement::class.simpleName!!)
-                assertFailsWith<IllegalArgumentException> {
-                    dynamicRealm.insert(obj, updatePolicy = UpdatePolicy.ALL)
-                }
+                dynamicRealm.insert(obj, updatePolicy = UpdatePolicy.ALL)
             }
         }
     }
@@ -229,6 +228,11 @@ class AsymmetricSyncTests {
                 dynamicRealm.delete(Measurement::class.simpleName!!)
             }
         }
+    }
+
+    @Test
+    fun asymmetricSchemaCannot_throwsWhenTransitivelyLinkingToRealmObject() {
+        // Add test for this.
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {

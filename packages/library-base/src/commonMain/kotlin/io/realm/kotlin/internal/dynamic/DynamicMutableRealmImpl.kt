@@ -89,7 +89,8 @@ public open class DynamicMutableRealmImpl(
         if (updatePolicy != UpdatePolicy.ERROR && realmReference.owner.schema()[obj.type]?.kind == RealmClassKind.ASYMMETRIC) {
             throw IllegalArgumentException("Asymmetric objects only support UpdatePolicy.ERROR. This was used: $updatePolicy")
         }
-        io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
+        val obj = io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
+        // FIXME release object here
     }
 
     // This implementation should be aligned with InternalMutableRealm to ensure that we have same
