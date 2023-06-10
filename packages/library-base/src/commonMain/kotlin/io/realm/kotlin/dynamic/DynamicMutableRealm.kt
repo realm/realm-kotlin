@@ -57,7 +57,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * match the underlying schema.
      */
     public fun copyToRealm(obj: DynamicRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
-    
+
     /**
      * Copy new objects into the realm or update existing objects without returning the managed
      * objects afterwards
