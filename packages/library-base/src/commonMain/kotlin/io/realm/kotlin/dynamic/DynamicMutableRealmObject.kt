@@ -58,7 +58,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
      */
     public fun <T> set(propertyName: String, value: T): DynamicMutableRealmObject
     public fun set(vararg pairs: Pair<String, Any?>): DynamicMutableRealmObject {
-        pairs.forEach { s.et(it.first, it.second) }
+        pairs.forEach { set(it.first, it.second) }
         return this
     }
 

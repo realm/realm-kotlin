@@ -57,30 +57,7 @@ public interface DynamicMutableRealm : DynamicRealm {
      * match the underlying schema.
      */
     public fun copyToRealm(obj: DynamicRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
-
-    /**
-     * Inserts a list of an unmanaged RealmObjects. This is generally faster than {@link #copyToRealm(Iterable, ImportFlag...)} since it
-     * doesn't return the inserted elements, and performs minimum allocations and checks.
-     * After being inserted any changes to the original objects will not be persisted.
-     * <p>
-     * Please note:
-     * <ul>
-     * <li>
-     * We don't check if the provided objects are already managed or not, so inserting a managed object might duplicate it.
-     * Duplication will only happen if the object doesn't have a primary key. Objects with primary keys will never get duplicated.
-     * </li>
-     * <li>We don't create (nor return) a managed {@link RealmObject} for each element</li>
-     * <li>Copying an object will copy all field values. Any unset field in the object and child objects will be set to their default value if not provided</li>
-     * </ul>
-     * <p>
-     * If you want the managed {@link RealmObject} returned, use {@link #copyToRealm(Iterable, ImportFlag...)}, otherwise if
-     * you have a large number of object this method is generally faster.
-     *
-     * @param objects RealmObjects to insert.
-     * @throws IllegalStateException if the corresponding Realm is closed, called from an incorrect thread or not in a
-     * transaction.
-     */
-
+    
     /**
      * Copy new objects into the realm or update existing objects without returning the managed
      * objects afterwards
