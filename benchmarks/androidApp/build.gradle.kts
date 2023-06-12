@@ -27,10 +27,6 @@ android {
         testInstrumentationRunnerArguments["androidx.benchmark.profiling.mode"] = "None"
     }
 
-    buildFeatures {
-        buildConfig = false
-    }
-
     testBuildType = "release"
     buildTypes {
         debug {
