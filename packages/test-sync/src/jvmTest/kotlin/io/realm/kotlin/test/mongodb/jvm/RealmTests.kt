@@ -58,7 +58,7 @@ class RealmTests {
             }
             .filterNot {
                 // Test thread
-                it.name == "Test worker @coroutine#1"
+                it.name.startsWith("Test worker")
             }
             .size
 

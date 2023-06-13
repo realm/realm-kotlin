@@ -381,22 +381,18 @@ class SyncSessionTests {
      * - Wait for Sync to fetch the document as a valid RealmObject with the matching ObjectId as a PK
      */
     @Test
-    fun syncingObjectIdFromMongoDB() {
+    fun syncingObjectIdFromMongoDB() = runBlocking {
         val adminApi = app.asTestApp
-        runBlocking {
-            val config =
-                SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
-                    .build()
-            val realm = Realm.open(config)
-
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class)).build()
+        Realm.open(config).use { realm ->
             val json: JsonObject = adminApi.insertDocument(
                 ObjectIdPk::class.simpleName!!,
                 """
-                    {
-                        "name": "$partitionValue",
-                        "realm_id" : "$partitionValue"
-                    }
-                """.trimIndent()
+                {
+                    "name": "$partitionValue",
+                    "realm_id" : "$partitionValue"
+                }
+            """.trimIndent()
             )!!
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
@@ -414,7 +410,6 @@ class SyncSessionTests {
             val insertedObject = channel.receiveOrFail()
             assertEquals(oid, insertedObject._id.toHexString())
             assertEquals(partitionValue, insertedObject.name)
-            realm.close()
             job.cancel()
         }
     }
@@ -424,21 +419,19 @@ class SyncSessionTests {
      * - Query the MongoDB database to make sure the document was inserted with the correct ObjectID
      */
     @Test
-    fun syncingObjectIdFromRealm() {
+    fun syncingObjectIdFromRealm() = runBlocking {
         val adminApi = app.asTestApp
         val objectId = BsonObjectId()
         val oid = objectId.toHexString()
 
-        runBlocking {
-            val job = async {
-                val config = SyncConfiguration.Builder(
-                    user,
-                    partitionValue,
-                    schema = setOf(ObjectIdPk::class)
-                )
-                    .build()
-                val realm = Realm.open(config)
-
+        val job = async {
+            val config = SyncConfiguration.Builder(
+                user,
+                partitionValue,
+                schema = setOf(ObjectIdPk::class)
+            )
+                .build()
+            Realm.open(config).use { realm ->
                 val objWithPK = ObjectIdPk().apply {
                     name = partitionValue
                     _id = objectId
@@ -449,29 +442,28 @@ class SyncSessionTests {
                 }
 
                 realm.syncSession.uploadAllLocalChanges()
-                realm.close()
             }
-
-            var oidAsString: String? = null
-            var attempts = 150 // waiting a max of 30s
-            do {
-                delay(200) // let Sync integrate the changes
-                @Suppress("EmptyCatchBlock") // retrying
-                try {
-                    val syncedDocumentJson =
-                        adminApi.queryDocument(
-                            clazz = ObjectIdPk::class.simpleName!!,
-                            query = """{"_id":{"${'$'}oid":"$oid"}}"""
-                        )
-                    oidAsString =
-                        syncedDocumentJson?.get("_id")?.jsonObject?.get("${'$'}oid")?.jsonPrimitive?.content
-                } catch (e: ClientRequestException) {
-                }
-            } while (oidAsString == null && attempts-- > 0)
-
-            assertEquals(oid, oidAsString)
-            job.cancel()
         }
+
+        var oidAsString: String? = null
+        var attempts = 150 // waiting a max of 30s
+        do {
+            delay(200) // let Sync integrate the changes
+            @Suppress("EmptyCatchBlock") // retrying
+            try {
+                val syncedDocumentJson =
+                    adminApi.queryDocument(
+                        clazz = ObjectIdPk::class.simpleName!!,
+                        query = """{"_id":{"${'$'}oid":"$oid"}}"""
+                    )
+                oidAsString =
+                    syncedDocumentJson?.get("_id")?.jsonObject?.get("${'$'}oid")?.jsonPrimitive?.content
+            } catch (e: ClientRequestException) {
+            }
+        } while (oidAsString == null && attempts-- > 0)
+
+        assertEquals(oid, oidAsString)
+        job.cancel()
     }
 
     @Test
@@ -483,45 +475,34 @@ class SyncSessionTests {
     }
 
     @Test
-    fun getConfiguration_inErrorHandlerThrows() {
+    fun getConfiguration_inErrorHandlerThrows() = runBlocking {
         // Open and close a realm with a schema.
         val channel = Channel<SyncSession>(1)
         val (email, password) = TestHelper.randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
+        val user = app.createUserAndLogIn(email, password)
         val config1 = SyncConfiguration.Builder(
             schema = setOf(ChildPk::class),
             user = user,
             partitionValue = partitionValue
-        )
-            .name("test1.realm")
-            .build()
-        val realm1 = Realm.open(config1)
-        assertNotNull(realm1)
-        runBlocking {
+        ).name("test1.realm").build()
+        Realm.open(config1).use { realm1 ->
             realm1.syncSession.uploadAllLocalChanges()
-        }
-
-        // Make sure to sync the realm with the server before opening the second instance
-        runBlocking {
+            // Make sure to sync the realm with the server before opening the second instance
             assertTrue(realm1.syncSession.uploadAllLocalChanges(1.minutes))
         }
 
+
         // Open another realm with the same entity but change the type of a field
         // in the schema to trigger a sync error to be caught by the error handler.
-        runBlocking {
-            val config2 = SyncConfiguration.Builder(
-                schema = setOf(io.realm.kotlin.entities.sync.bogus.ChildPk::class),
-                user = user,
-                partitionValue = partitionValue
-            )
-                .name("test2.realm")
-                .errorHandler { session, _ -> channel.trySend(session) }
-                .build()
-            val realm2 = Realm.open(config2)
-            assertNotNull(realm2)
-
+        val config2 = SyncConfiguration.Builder(
+            schema = setOf(io.realm.kotlin.entities.sync.bogus.ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        )
+            .name("test2.realm")
+            .errorHandler { session, _ -> channel.trySend(session) }
+            .build()
+        Realm.open(config2).use { realm2 ->
             // Await the sync session sent.
             val session = channel.receiveOrFail()
 
@@ -532,8 +513,6 @@ class SyncSessionTests {
             }
 
             channel.close()
-            realm1.close()
-            realm2.close()
         }
     }
 

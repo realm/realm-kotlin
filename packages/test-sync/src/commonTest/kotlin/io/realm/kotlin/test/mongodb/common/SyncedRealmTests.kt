@@ -140,14 +140,11 @@ class SyncedRealmTests {
     }
 
     @Test
-    fun canSync() {
+    fun canSync() = runBlocking {
         // A user has two realms in different files, 1 stores an object locally and 2 receives the
         // update from the server after the object is synchronized.
         val (email, password) = randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
-
+        val user = app.createUserAndLogIn(email, password)
         val partitionValue = Random.nextULong().toString()
 
         val config1 = createSyncConfig(
@@ -158,62 +155,55 @@ class SyncedRealmTests {
                 }
             }
         )
-        val realm1 = Realm.open(config1)
-        assertNotNull(realm1)
-
-        val config2 = createSyncConfig(
-            user = user, partitionValue = partitionValue, name = "db2",
-            errorHandler = object : SyncSession.ErrorHandler {
-                override fun onError(session: SyncSession, error: SyncException) {
-                    fail("Realm 2: $error")
-                }
-            }
-        )
-        val realm2 = Realm.open(config2)
-        assertNotNull(realm2)
-
-        val child = ChildPk().apply {
-            _id = "CHILD_A"
-            name = "A"
-        }
-
-        val channel = Channel<ResultsChange<ChildPk>>(1)
-
-        // There was a race condition where construction of a query against the user facing frozen
-        // version could throw, due to the underlying version being deleted when the live realm was
-        // advanced on remote changes.
-        // Haven't been able to make a reproducible recipe for triggering this, so just keeping the
-        // query around to monitor that we don't reintroduce the issue:
-        // https://github.com/realm/realm-kotlin/issues/683
-        // For the record, we seemed to hit the race more often when syncing existing data, which
-        // can be achieved by just reusing the same partition value and running this test multiple
-        // times.
-        assertEquals(0, realm1.query<ChildPk>().find().size, realm1.toString())
-
-        runBlocking {
-            val observer = async {
-                realm2.query<ChildPk>()
-                    .asFlow()
-                    .collect { childResults: ResultsChange<ChildPk> ->
-                        channel.send(childResults)
+        Realm.open(config1).use { realm1 ->
+            val config2 = createSyncConfig(
+                user = user, partitionValue = partitionValue, name = "db2",
+                errorHandler = object : SyncSession.ErrorHandler {
+                    override fun onError(session: SyncSession, error: SyncException) {
+                        fail("Realm 2: $error")
                     }
+                }
+            )
+            Realm.open(config2).use { realm2 ->
+                val child = ChildPk().apply {
+                    _id = "CHILD_A"
+                    name = "A"
+                }
+
+                val channel = Channel<ResultsChange<ChildPk>>(1)
+
+                // There was a race condition where construction of a query against the user facing frozen
+                // version could throw, due to the underlying version being deleted when the live realm was
+                // advanced on remote changes.
+                // Haven't been able to make a reproducible recipe for triggering this, so just keeping the
+                // query around to monitor that we don't reintroduce the issue:
+                // https://github.com/realm/realm-kotlin/issues/683
+                // For the record, we seemed to hit the race more often when syncing existing data, which
+                // can be achieved by just reusing the same partition value and running this test multiple
+                // times.
+                assertEquals(0, realm1.query<ChildPk>().find().size, realm1.toString())
+
+                val observer = async {
+                    realm2.query<ChildPk>()
+                        .asFlow()
+                        .collect { childResults: ResultsChange<ChildPk> ->
+                            channel.send(childResults)
+                        }
+                }
+
+                assertEquals(0, channel.receiveOrFail().list.size)
+
+                realm1.write {
+                    copyToRealm(child)
+                }
+
+                val childResults = channel.receiveOrFail()
+                val childPk = childResults.list[0]
+                assertEquals("CHILD_A", childPk._id)
+                observer.cancel()
+                channel.close()
             }
-
-            assertEquals(0, channel.receiveOrFail().list.size)
-
-            realm1.write {
-                copyToRealm(child)
-            }
-
-            val childResults = channel.receiveOrFail()
-            val childPk = childResults.list[0]
-            assertEquals("CHILD_A", childPk._id)
-            observer.cancel()
-            channel.close()
         }
-
-        realm1.close()
-        realm2.close()
     }
 
     // Test for https://github.com/realm/realm-kotlin/issues/1070
@@ -333,11 +323,12 @@ class SyncedRealmTests {
 
         runBlocking {
             val deferred = async {
-                Realm.open(config)
-                // Make sure that the test eventually fail. Coroutines can cancel a delay
-                // so this doesn't always block the test for 10 seconds.
-                delay(10 * 1000)
-                channel.trySend(AssertionError("Realm was successfully opened"))
+                Realm.open(config).use {
+                    // Make sure that the test eventually fail. Coroutines can cancel a delay
+                    // so this doesn't always block the test for 10 seconds.
+                    delay(10 * 1000)
+                    channel.trySend(AssertionError("Realm was successfully opened"))
+                }
             }
 
             val error = channel.receiveOrFail()
