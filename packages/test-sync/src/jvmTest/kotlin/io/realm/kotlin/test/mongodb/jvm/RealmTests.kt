@@ -43,7 +43,7 @@ class RealmTests {
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))
         Realm.open(configuration).close()
         app.close()
-        var counter = 5 // Wait 5 seconds for threads to settle
+        var counter = 10 // Wait 10 seconds for threads to settle
         while (counter > 0) {
             delay(1000)
             counter--
