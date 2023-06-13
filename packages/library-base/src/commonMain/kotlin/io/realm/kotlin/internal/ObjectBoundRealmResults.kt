@@ -33,8 +33,7 @@ import kotlinx.coroutines.flow.Flow
 internal class ObjectBoundRealmResults<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
     val realmResults: RealmResults<E>,
-) : RealmResults<E> by realmResults,
-    Flowable<ResultsChange<E>> {
+) : RealmResults<E> by realmResults, InternalDeleteable, Flowable<ResultsChange<E>> {
 
     override val size: Int by realmResults::size
 
@@ -63,6 +62,15 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
 
     override fun asFlow(): Flow<ResultsChange<E>> {
         return realmResults.asFlow().bind(targetObject)
+    }
+
+    override fun delete() {
+        if (realmResults is InternalDeleteable) {
+            realmResults.delete()
+        } else {
+            // Should never happen, so fail with some debug information
+            throw IllegalStateException("This class cannot be deleted: $this. It was holding a $realmResults")
+        }
     }
 }
 
