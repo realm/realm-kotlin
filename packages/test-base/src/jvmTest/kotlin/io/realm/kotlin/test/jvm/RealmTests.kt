@@ -33,6 +33,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
@@ -69,6 +70,11 @@ class RealmTests {
 
             val realmThreads = 2 + if (finalizerRunning) 0 else 1
             newThreads().let {
+                assertNotNull(it.firstOrNull { it.name == "notifier-default.realm" }, "Could not find notifier")
+                assertNotNull(it.firstOrNull { it.name == "writer-default.realm" }, "Could not find notifier")
+                if (!finalizerRunning) {
+                    assertNotNull(it.firstOrNull { it.name == "RealmFinalizingDaemon" }, "Could not find finalizer thread")
+                }
                 assertEquals(realmThreads, it.size, "Unexpected thread count after Realm.open: Newly created threads are $it")
             }
 
