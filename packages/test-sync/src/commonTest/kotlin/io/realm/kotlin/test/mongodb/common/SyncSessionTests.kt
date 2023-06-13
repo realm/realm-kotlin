@@ -173,14 +173,16 @@ class SyncSessionTests {
     fun session_sharedStateBetweenRealms() {
         val config1 = createSyncConfig(user, "realm1.realm")
         val config2 = createSyncConfig(user, "realm2.realm")
-        val realm1 = Realm.open(config1)
-        val realm2 = Realm.open(config2)
-        assertNotEquals(realm1.configuration.path, realm2.configuration.path)
-        assertNotSame(realm1.syncSession, realm2.syncSession)
-        RealmInterop.realm_equals(
-            (realm1.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).nativePointer,
-            (realm2.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).nativePointer
-        )
+        Realm.open(config1).use { realm1: Realm ->
+            Realm.open(config2).use { realm2: Realm ->
+                assertNotEquals(realm1.configuration.path, realm2.configuration.path)
+                assertNotSame(realm1.syncSession, realm2.syncSession)
+                RealmInterop.realm_equals(
+                    (realm1.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).nativePointer,
+                    (realm2.syncSession as io.realm.kotlin.mongodb.internal.SyncSessionImpl).nativePointer
+                )
+            }
+        }
     }
 
     @Test
