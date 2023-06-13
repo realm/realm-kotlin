@@ -33,6 +33,8 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
         const val version = PLUGIN_VERSION
         // The id used for passing compiler options from command line
         const val compilerPluginId = "io.realm.kotlin"
+        // Must match io.realm.kotlin.compiler.bundleIdKey
+        const val bundleIdKey = "bundleId"
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
@@ -57,7 +59,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
         val realmPlugin = project.plugins.getPlugin("io.realm.kotlin") as RealmPlugin
         val anonymizedBundleId = realmPlugin.anonymizedBundleId
         return project.provider {
-            listOf(SubpluginOption(key = "bundleId", anonymizedBundleId))
+            listOf(SubpluginOption(key = bundleIdKey, anonymizedBundleId))
         }
     }
 }

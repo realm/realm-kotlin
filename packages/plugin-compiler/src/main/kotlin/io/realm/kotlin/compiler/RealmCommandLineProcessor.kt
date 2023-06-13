@@ -24,6 +24,8 @@ import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
 
+// Must match io.realm.kotlin.gradle.RealmCompilerSubplugin.bundleId
+const val BUNDLE_ID_KEY = "bundleId"
 val bundleIdConfigurationKey: CompilerConfigurationKey<String> = CompilerConfigurationKey<String>("io.realm.kotlin.bundleId")
 
 @OptIn(ExperimentalCompilerApi::class)
@@ -45,6 +47,10 @@ class RealmCommandLineProcessor : CommandLineProcessor {
         value: String,
         configuration: CompilerConfiguration
     ) {
-        configuration.put(bundleIdConfigurationKey, value)
+        when {
+            option.optionName == BUNDLE_ID_KEY ->
+                configuration.put(bundleIdConfigurationKey, value)
+            else -> super.processOption(option, value, configuration)
+        }
     }
 }
