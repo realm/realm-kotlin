@@ -197,7 +197,7 @@ class PersistedNameTests {
             .name("backlinks.realm")
             .directory("$tmpDir/foo")
             .build()
-        Realm.open(config).use {
+        Realm.open(config).use { realm ->
             realm.writeBlocking {
                 // Add a child with 5 parents
                 val child = copyToRealm(PersistedNameChildSample())
@@ -226,7 +226,7 @@ class PersistedNameTests {
             .name("backlinks.realm")
             .directory("$tmpDir/foo")
             .build()
-        Realm.open(config).use {
+        Realm.open(config).use { realm ->
             realm.writeBlocking {
                 // Add a child with 5 parents
                 val childA = copyToRealm(PersistedNameChildSample())
