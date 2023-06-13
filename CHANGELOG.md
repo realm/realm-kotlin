@@ -24,7 +24,8 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None
+* Bumped Android Gradle Version to 7.3.1.
+* Enabled profiling for unit test modules.
 
 
 ## 1.9.1 (2023-06-08)
