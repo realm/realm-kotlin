@@ -1381,10 +1381,11 @@ class SyncedRealmTests {
                 assertEquals(4, query<ParentPk>().find().size)
             }
         }
-        val realm1 = Realm.open(config1)
-        runBlocking {
-            assertEquals(4, realm1.query<ParentPk>().find().size)
-            realm1.syncSession.uploadAllLocalChanges(30.seconds)
+        Realm.open(config1).use { realm1 ->
+            runBlocking {
+                assertEquals(4, realm1.query<ParentPk>().find().size)
+                realm1.syncSession.uploadAllLocalChanges(30.seconds)
+            }
         }
 
         val config2 = createSyncConfig(

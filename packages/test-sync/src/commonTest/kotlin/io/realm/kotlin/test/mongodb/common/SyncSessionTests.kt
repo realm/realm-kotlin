@@ -268,48 +268,44 @@ class SyncSessionTests {
         ).name("user2.realm")
             .build()
 
-        val realm1 = Realm.open(config1)
-        val realm2 = Realm.open(config2)
-
-        try {
-            realm1.write {
-                for (i in 0 until 10) {
-                    copyToRealm(
-                        ParentPk().apply {
-                            _id = i.toString()
-                        }
-                    )
-                }
-            }
-            assertEquals(10, realm1.query<ParentPk>().count().find())
-            assertEquals(0, realm2.query<ParentPk>().count().find())
-            assertTrue(realm1.syncSession.uploadAllLocalChanges())
-
-            // Due to the Server Translator, there is a small delay between data
-            // being uploaded and it not being immediately ready for download
-            // on another Realm. In order to reduce the flakyness, we are
-            // re-evaluating the assertion multiple times.
-            for (i in 1200 downTo 0) { // Wait for max 2 minutes.
-                assertTrue(realm2.syncSession.downloadAllServerChanges())
-                when (val size = realm2.query<ParentPk>().count().find()) {
-                    10L -> break // Test succeeded
-                    0L -> {
-                        // Race condition: Server has not yet propagated data to user 2.
-                        if (i == 0) {
-                            throw kotlin.AssertionError("Realm failed to receive download data. Size: $size")
-                        }
-                        delay(100)
-                    }
-                    else -> {
-                        // The server might not send all data at once, so just print intermediate
-                        // steps here for debugging purposes
-                        println("Received size: $size")
+        Realm.open(config1).use { realm1 ->
+            Realm.open(config2).use { realm2 ->
+                realm1.write {
+                    for (i in 0 until 10) {
+                        copyToRealm(
+                            ParentPk().apply {
+                                _id = i.toString()
+                            }
+                        )
                     }
                 }
+                assertEquals(10, realm1.query<ParentPk>().count().find())
+                assertEquals(0, realm2.query<ParentPk>().count().find())
+                assertTrue(realm1.syncSession.uploadAllLocalChanges())
+
+                // Due to the Server Translator, there is a small delay between data
+                // being uploaded and it not being immediately ready for download
+                // on another Realm. In order to reduce the flakyness, we are
+                // re-evaluating the assertion multiple times.
+                for (i in 1200 downTo 0) { // Wait for max 2 minutes.
+                    assertTrue(realm2.syncSession.downloadAllServerChanges())
+                    when (val size = realm2.query<ParentPk>().count().find()) {
+                        10L -> break // Test succeeded
+                        0L -> {
+                            // Race condition: Server has not yet propagated data to user 2.
+                            if (i == 0) {
+                                throw kotlin.AssertionError("Realm failed to receive download data. Size: $size")
+                            }
+                            delay(100)
+                        }
+                        else -> {
+                            // The server might not send all data at once, so just print intermediate
+                            // steps here for debugging purposes
+                            println("Received size: $size")
+                        }
+                    }
+                }
             }
-        } finally {
-            realm1.close()
-            realm2.close()
         }
     }
 

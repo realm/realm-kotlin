@@ -11,6 +11,7 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.JsonObject
@@ -51,22 +52,18 @@ class NonLatinTests {
      * - Insert a string with the null character in MongoDB using the command server
      */
     @Test
-    fun readNullCharacterFromMongoDB() {
+    fun readNullCharacterFromMongoDB() = runBlocking {
         val adminApi = app.asTestApp
-        runBlocking {
-            val config =
-                SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class))
-                    .build()
-            val realm = Realm.open(config)
-
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class)).build()
+        Realm.open(config).use { realm ->
             val json: JsonObject = adminApi.insertDocument(
                 ObjectIdPk::class.simpleName!!,
                 """
-                    {
-                        "name": "foo\u0000bar",
-                        "realm_id" : "$partitionValue"
-                    }
-                """.trimIndent()
+                {
+                    "name": "foo\u0000bar",
+                    "realm_id" : "$partitionValue"
+                }
+            """.trimIndent()
             )!!
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
@@ -87,7 +84,6 @@ class NonLatinTests {
             val char2 = insertedObject.name.toCharArray()
             assertEquals("foo\u0000bar", insertedObject.name)
             assertContentEquals(char1, char2)
-            realm.close()
             job.cancel()
         }
     }
