@@ -392,7 +392,7 @@ class SyncSessionTests {
                     "name": "$partitionValue",
                     "realm_id" : "$partitionValue"
                 }
-            """.trimIndent()
+                """.trimIndent()
             )!!
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
@@ -490,7 +490,6 @@ class SyncSessionTests {
             // Make sure to sync the realm with the server before opening the second instance
             assertTrue(realm1.syncSession.uploadAllLocalChanges(1.minutes))
         }
-
 
         // Open another realm with the same entity but change the type of a field
         // in the schema to trigger a sync error to be caught by the error handler.
