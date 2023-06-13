@@ -619,7 +619,6 @@ class AppServicesClient(
             )
         }
         return result?.let {
-            println(it)
             it["value"]?.jsonObject?.get("\$numberLong")?.jsonPrimitive?.int
         } ?: throw IllegalStateException("Unexpected result: $result")
     }

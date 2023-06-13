@@ -8,6 +8,7 @@ import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.ext.insert
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
@@ -18,6 +19,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
@@ -239,9 +241,41 @@ class AsymmetricSyncTests {
         }
     }
 
+    class AsymmetricA : AsymmetricRealmObject {
+        @PrimaryKey
+        var _id: ObjectId = ObjectId()
+        var child: EmbeddedB? = null
+    }
+
+    class EmbeddedB : EmbeddedRealmObject {
+        var child: StandardC? = null
+    }
+
+    class StandardC : RealmObject {
+        @PrimaryKey
+        var _id: ObjectId = ObjectId()
+        var name: String = ""
+    }
+
+    // Verify that a schema of Asymmetric -> Embedded -> RealmObject work.
     @Test
-    fun asymmetricSchemaCannot_throwsWhenTransitivelyLinkingToRealmObject() {
-        // Add test for this.
+    fun asymmetricSchema() = runBlocking {
+        config = SyncConfiguration.Builder(
+            app.login(Credentials.anonymous()),
+            schema = setOf(
+                AsymmetricA::class,
+                EmbeddedB::class,
+                StandardC::class,
+            )
+        ).build()
+        Realm.open(config).use {
+            AsymmetricA().apply {
+                child = EmbeddedB().apply {
+                    StandardC()
+                }
+            }
+            it.syncSession.uploadAllLocalChanges()
+        }
     }
 
     private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {

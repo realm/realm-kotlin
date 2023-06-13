@@ -613,7 +613,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         }
                                     } else {
                                         if (linkedType.isAsymmetricRealmObject) {
-                                            logError("RealmObject and EmbeddedRealmObject are not allowed to reference ASymmetricRealmObjects.", property.locationOf())
+                                            logError("RealmObjects and EmbeddedRealmObjects cannot reference AsymmetricRealmObjects.", property.locationOf())
                                         }
                                     }
                                 }
