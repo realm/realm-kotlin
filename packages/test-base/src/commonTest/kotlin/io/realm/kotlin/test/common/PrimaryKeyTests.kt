@@ -42,6 +42,7 @@ import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor.allPrimaryKeyFieldTypes
 import io.realm.kotlin.test.util.TypeDescriptor.rType
+import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -82,6 +83,9 @@ class PrimaryKeyTests {
 
     @AfterTest
     fun tearDown() {
+        if (this::realm.isInitialized && !realm.isClosed()) {
+            realm.close()
+        }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
@@ -236,18 +240,18 @@ class PrimaryKeyTests {
 //        @Suppress("invisible_reference", "invisible_member")
         val mediator = (configuration as io.realm.kotlin.internal.RealmConfigurationImpl).mediator
 
-        val realm = Realm.open(configuration)
-
-        realm.writeBlocking {
-            val types = allPrimaryKeyFieldTypes.toMutableSet()
-            for (c in classes) {
-                // We could expose this through the test model definitions instead if that is better to avoid the internals
-                val realmObjectCompanion = mediator.companionOf(c)
-                copyToRealm(realmObjectCompanion.`io_realm_kotlin_newInstance`() as RealmObject)
-                val type = realmObjectCompanion.`io_realm_kotlin_primaryKey`!!.rType()
-                assertTrue(types.remove(type), type.toString())
+        Realm.open(configuration).use { realm ->
+            realm.writeBlocking {
+                val types = allPrimaryKeyFieldTypes.toMutableSet()
+                for (c in classes) {
+                    // We could expose this through the test model definitions instead if that is better to avoid the internals
+                    val realmObjectCompanion = mediator.companionOf(c)
+                    copyToRealm(realmObjectCompanion.`io_realm_kotlin_newInstance`() as RealmObject)
+                    val type = realmObjectCompanion.`io_realm_kotlin_primaryKey`!!.rType()
+                    assertTrue(types.remove(type), type.toString())
+                }
+                assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
             }
-            assertTrue(types.toTypedArray().isEmpty(), "Untested primary keys: $types")
         }
     }
 }

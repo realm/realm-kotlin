@@ -197,26 +197,26 @@ class PersistedNameTests {
             .name("backlinks.realm")
             .directory("$tmpDir/foo")
             .build()
-        val realm = Realm.open(config)
+        Realm.open(config).use {
+            realm.writeBlocking {
+                // Add a child with 5 parents
+                val child = copyToRealm(PersistedNameChildSample())
+                val parents = Array(5) {
+                    this.copyToRealm(PersistedNameParentSample(it))
+                }
+                assertEquals(0, child.publicNameParents.size)
+                parents.forEach { parent ->
+                    parent.publicNameChildField = child
+                }
+            }
 
-        realm.writeBlocking {
-            // Add a child with 5 parents
-            val child = copyToRealm(PersistedNameChildSample())
-            val parents = Array(5) {
-                this.copyToRealm(PersistedNameParentSample(it))
-            }
-            assertEquals(0, child.publicNameParents.size)
-            parents.forEach { parent ->
-                parent.publicNameChildField = child
-            }
+            val queriedChild = realm.query<PersistedNameChildSample>()
+                .find()
+                .single()
+
+            assertEquals(5, queriedChild.publicNameParents.size)
+            assertEquals(1, queriedChild.publicNameParents.query("id = 3").find().size)
         }
-
-        val queriedChild = realm.query<PersistedNameChildSample>()
-            .find()
-            .single()
-
-        assertEquals(5, queriedChild.publicNameParents.size)
-        assertEquals(1, queriedChild.publicNameParents.query("id = 3").find().size)
     }
 
     @Test
@@ -226,29 +226,29 @@ class PersistedNameTests {
             .name("backlinks.realm")
             .directory("$tmpDir/foo")
             .build()
-        val realm = Realm.open(config)
+        Realm.open(config).use {
+            realm.writeBlocking {
+                // Add a child with 5 parents
+                val childA = copyToRealm(PersistedNameChildSample())
+                val childB = copyToRealm(PersistedNameChildSample())
 
-        realm.writeBlocking {
-            // Add a child with 5 parents
-            val childA = copyToRealm(PersistedNameChildSample())
-            val childB = copyToRealm(PersistedNameChildSample())
-
-            val parentsA = Array(5) {
-                this.copyToRealm(PersistedNameParentSample(it))
+                val parentsA = Array(5) {
+                    this.copyToRealm(PersistedNameParentSample(it))
+                }
+                val parentsB = Array(5) {
+                    this.copyToRealm(PersistedNameParentSample(5))
+                }
+                parentsA.forEach { parent ->
+                    parent.publicNameChildField = childA
+                }
+                parentsB.forEach { parent ->
+                    parent.publicNameChildField = childB
+                }
             }
-            val parentsB = Array(5) {
-                this.copyToRealm(PersistedNameParentSample(5))
-            }
-            parentsA.forEach { parent ->
-                parent.publicNameChildField = childA
-            }
-            parentsB.forEach { parent ->
-                parent.publicNameChildField = childB
-            }
+            assertEquals(1, realm.query<PersistedNameChildSample>("ANY persistedNameParents.id < 3").find().size)
+            assertEquals(1, realm.query<PersistedNameChildSample>("ALL persistedNameParents.id == 5").find().size)
+            assertEquals(2, realm.query<PersistedNameChildSample>("ALL persistedNameParents.id < 10").find().size)
         }
-        assertEquals(1, realm.query<PersistedNameChildSample>("ANY persistedNameParents.id < 3").find().size)
-        assertEquals(1, realm.query<PersistedNameChildSample>("ALL persistedNameParents.id == 5").find().size)
-        assertEquals(2, realm.query<PersistedNameChildSample>("ALL persistedNameParents.id < 10").find().size)
     }
 
     // --------------------------------------------------
