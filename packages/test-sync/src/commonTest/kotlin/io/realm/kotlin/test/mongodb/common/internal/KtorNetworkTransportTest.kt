@@ -46,6 +46,8 @@ internal class KtorNetworkTransportTest {
     // Delete method must have an empty body or the server app fails to process it.
     private val emptyBodyMethods = setOf(HttpMethod.Get, HttpMethod.Delete)
     private lateinit var dispatcher: CloseableCoroutineDispatcher
+    private lateinit var appClient: AppServicesClient
+
     @BeforeTest
     fun setUp() {
         dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
@@ -57,11 +59,12 @@ internal class KtorNetworkTransportTest {
         )
 
         val app = runBlocking(dispatcher) {
-            AppServicesClient.build(
+            appClient = AppServicesClient.build(
                 baseUrl = TEST_SERVER_BASE_URL,
                 debug = false,
                 dispatcher = dispatcher
-            ).run {
+            )
+            appClient.run {
                 getOrCreateApp(syncServerAppName("ktor")) { app: BaasApp, service: Service ->
                     initialize(app, TEST_METHODS)
                 }
