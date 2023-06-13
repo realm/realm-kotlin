@@ -63,7 +63,7 @@ class NonLatinTests {
                     "name": "foo\u0000bar",
                     "realm_id" : "$partitionValue"
                 }
-            """.trimIndent()
+                """.trimIndent()
             )!!
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
