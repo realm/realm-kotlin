@@ -66,7 +66,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
      * Thus this method should only be called from [AppImpl] and will create both a native
      * AppConfiguration and App at the same time.
      */
-    public fun createNativeApp(): Triple<DispatcherHolder, NetworkTransport, RealmAppPointer> {
+    public fun createNativeApp(): AppResources {
         // Create a new network transport for each App instance. This which allow the App to control
         // the lifecycle of any threadpools created by the network transport. Also, there should
         // be no reason for people to have multiple app instances for the same app, so the net

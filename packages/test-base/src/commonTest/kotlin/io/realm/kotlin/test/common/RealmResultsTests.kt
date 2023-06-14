@@ -72,7 +72,7 @@ class RealmResultsTests {
     @Test
     fun query_returnBackingQuery() {
         val query = realm.query<Parent>("name CONTAINS '1'")
-        val backingQuery = query.find().query("")
+        val backingQuery = query.find().query()
         assertEquals(query.description(), backingQuery.description())
     }
 

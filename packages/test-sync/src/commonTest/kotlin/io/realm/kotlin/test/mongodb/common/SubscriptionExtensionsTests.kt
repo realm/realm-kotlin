@@ -28,6 +28,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import kotlin.text.Typography.section
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -141,25 +143,39 @@ class SubscriptionExtensionsTests {
 
     @Test
     fun realmQuery_subscribe_waitFirstTime() = runBlocking<Unit> {
+        val section = Random.nextInt()
+
         // Unnamed
-        realm.query<FlexParentObject>().subscribe() // Default value is WaitForSync.FIRST_TIME
+        realm.query<FlexParentObject>("section = $0", section).subscribe() // Default value is WaitForSync.FIRST_TIME
         var updatedSubs = realm.subscriptions
         assertEquals(1, updatedSubs.size)
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         var sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("section == $section ", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
 
+        // Checking that we don't hit the network the 2nd time around
+        realm.syncSession.pause()
+        val resultsAnonymous = realm.query<FlexParentObject>("section = $0", section).subscribe()
+        assertTrue(resultsAnonymous.isEmpty())
+        realm.syncSession.resume()
+
         // Named
-        realm.query<FlexParentObject>().subscribe("my-name") // Default value is WaitForSync.FIRST_TIME
+        realm.query<FlexParentObject>("section = $0", section).subscribe("my-name") // Default value is WaitForSync.FIRST_TIME
         updatedSubs = realm.subscriptions
         assertEquals(2, updatedSubs.size)
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         sub = updatedSubs.last()
         assertEquals("my-name", sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("section == $section ", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
+
+        // Checking that we don't hit the network the 2nd time around
+        realm.syncSession.pause()
+        val resultsNamed = realm.query<FlexParentObject>("section = $0", section).subscribe("my-name")
+        assertTrue(resultsNamed.isEmpty())
+        realm.syncSession.resume()
     }
 
     @Test
@@ -228,25 +244,39 @@ class SubscriptionExtensionsTests {
 
     @Test
     fun realmResults_subscribe_waitFirstTime() = runBlocking {
+        val section = Random.nextInt()
+
         // Unnamed
-        realm.query<FlexParentObject>().find().subscribe() // Default value is WaitForSync.FIRST_TIME
+        realm.query<FlexParentObject>("section == $0", section).find().subscribe() // Default value is WaitForSync.FIRST_TIME
         var updatedSubs = realm.subscriptions
         assertEquals(1, updatedSubs.size)
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         var sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("section == $section ", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
 
+        // Checking that we don't hit the network the 2nd time around
+        realm.syncSession.pause()
+        val resultsAnonymous = realm.query<FlexParentObject>("section = $0", section).subscribe()
+        assertTrue(resultsAnonymous.isEmpty())
+        realm.syncSession.resume()
+
         // Named
-        realm.query<FlexParentObject>().find().subscribe("my-name") // Default value is WaitForSync.FIRST_TIME
+        realm.query<FlexParentObject>("section == $section").find().subscribe("my-name") // Default value is WaitForSync.FIRST_TIME
         updatedSubs = realm.subscriptions
         assertEquals(2, updatedSubs.size)
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         sub = updatedSubs.last()
         assertEquals("my-name", sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("section == $section ", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
+
+        // Checking that we don't hit the network the 2nd time around
+        realm.syncSession.pause()
+        val resultsNamed = realm.query<FlexParentObject>("section = $0", section).find().subscribe("my-name")
+        assertTrue(resultsNamed.isEmpty())
+        realm.syncSession.resume()
     }
 
     @Test

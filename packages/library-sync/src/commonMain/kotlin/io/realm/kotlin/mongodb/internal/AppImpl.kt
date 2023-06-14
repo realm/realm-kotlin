@@ -34,6 +34,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
+internal typealias AppResources = Triple<DispatcherHolder, NetworkTransport, RealmAppPointer>
+
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
     override val configuration: AppConfigurationImpl,
@@ -55,7 +57,7 @@ public class AppImpl(
     )
 
     init {
-        val appResources: Triple<DispatcherHolder, NetworkTransport, NativePointer<RealmAppT>> = configuration.createNativeApp()
+        val appResources: AppResources = configuration.createNativeApp()
         appNetworkDispatcher = appResources.first
         networkTransport = appResources.second
         nativePointer = appResources.third

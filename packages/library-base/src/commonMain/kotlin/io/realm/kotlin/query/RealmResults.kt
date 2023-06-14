@@ -53,7 +53,7 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      *
      * @throws IllegalArgumentException on invalid queries.
      */
-    public fun query(query: String, vararg args: Any?): RealmQuery<T>
+    public fun query(query: String = TRUE_PREDICATE, vararg args: Any?): RealmQuery<T>
 
     // TODO list subqueries would stop once the object gets deleted see https://github.com/realm/realm-kotlin/pull/1061
     /**

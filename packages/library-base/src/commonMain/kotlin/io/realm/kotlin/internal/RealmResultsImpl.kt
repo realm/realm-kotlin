@@ -33,6 +33,7 @@ import io.realm.kotlin.notifications.internal.InitialResultsImpl
 import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.ProducerScope
@@ -81,7 +82,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
 
     override fun query(query: String, vararg args: Any?): RealmQuery<E> = inputScope {
         // If an empty query is passed in, reconstruct the original query backing this RealmResults
-        val queryPointer = if (query.isEmpty() && args.isEmpty()) {
+        val queryPointer = if (query.trim().compareTo(TRUE_PREDICATE, ignoreCase = true) == 0 && args.isEmpty()) {
             RealmInterop.realm_results_get_query(nativePointer)
         } else {
             try {
