@@ -25,10 +25,8 @@ import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
-import io.realm.kotlin.internal.platform.CPU_ARCH
 import io.realm.kotlin.internal.platform.DEVICE_MANUFACTURER
 import io.realm.kotlin.internal.platform.DEVICE_MODEL
-import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
@@ -40,7 +38,6 @@ import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to AppImpl
-
 @Suppress("LongParameterList")
 public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) constructor(
     override val appId: String,
@@ -52,6 +49,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     public val logger: LogConfiguration,
     override val appName: String?,
     override val appVersion: String?,
+    internal val bundleId: String,
     override val ejson: EJson,
     override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
@@ -70,7 +68,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         // effect should be the same
         val networkTransport = networkTransportFactory()
         val appConfigPointer: RealmAppConfigurationPointer =
-            initializeRealmAppConfig(appName, appVersion, networkTransport)
+            initializeRealmAppConfig(appName, appVersion, bundleId, networkTransport)
         var applicationInfo: String? = null
         // Define user agent strings sent when making the WebSocket connection to Device Sync
         if (appName != null || appVersion == null) {
@@ -119,6 +117,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     private fun initializeRealmAppConfig(
         localAppName: String?,
         localAppVersion: String?,
+        bundleId: String,
         networkTransport: NetworkTransport
     ): RealmAppConfigurationPointer {
         return RealmInterop.realm_app_config_new(
@@ -127,11 +126,10 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
             connectionParams = SyncConnectionParams(
                 sdkVersion = SDK_VERSION,
+                bundleId = bundleId,
                 localAppName = localAppName,
                 localAppVersion = localAppVersion,
-                platform = OS_NAME,
                 platformVersion = OS_VERSION,
-                cpuArch = CPU_ARCH,
                 device = DEVICE_MANUFACTURER,
                 deviceVersion = DEVICE_MODEL,
                 framework = RUNTIME,
@@ -178,4 +176,9 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                     )
                 }
             }
+
+    internal companion object {
+        internal fun create(appId: String, bundleId: String): AppConfiguration =
+            AppConfiguration.Builder(appId).build(bundleId)
+    }
 }

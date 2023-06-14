@@ -116,6 +116,11 @@ kotlin {
         }
     }
 
+    // All kotlin compilation tasks
+    tasks.withType(org.jetbrains.kotlin.gradle.dsl.KotlinCompile::class.java).all {
+        kotlinOptions.freeCompilerArgs += listOf( "-P", "plugin:io.realm.kotlin:bundleId=TEST_BUNDLE_ID", )
+    }
+    // JVM specific KotlinCompilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.jvmTarget = Versions.jvmTarget
         kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
