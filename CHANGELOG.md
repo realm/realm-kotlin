@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.
+* [Sync] Support for "write-only" objects which can be written to MongoDB time-series collections. This can be useful for e.g. telemetry data. Use this by creating a model classes that inherit from the new `AsymmetricRealmObject` base class. See this class for more information. (Issue [#1420](https://github.com/realm/realm-kotlin/pull/1420))
 
 ### Fixed
 * None
