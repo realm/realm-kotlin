@@ -313,13 +313,11 @@ class SyncSessionTests {
     // Realm instance and some APIs could have a difficult time understanding semantics. For now, we
     // just disallow calling these APIs from these instances.
     @Test
-    fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking {
+    fun syncSessionFromErrorHandlerCannotUploadAndDownloadChanges() = runBlocking<Unit> {
         // Open Realm with a user that has no read nor write permissions
         // See 'canWritePartition' in TestAppInitializer.kt.
         val (email, password) = "test_nowrite_noread_${TestHelper.randomEmail()}" to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
+        val user = app.createUserAndLogIn(email, password)
         val channel = Channel<SyncSession>(1)
         val config = SyncConfiguration.Builder(
             schema = setOf(ParentPk::class, ChildPk::class),
@@ -329,26 +327,27 @@ class SyncSessionTests {
             channel.trySend(session)
         }.build()
 
-        runBlocking {
-            val deferred = async { Realm.open(config) }
-            val session = channel.receiveOrFail()
-            try {
-                assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
-                    runBlocking {
-                        session.uploadAllLocalChanges()
-                    }
-                }
-                assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
-                    runBlocking {
-                        session.downloadAllServerChanges()
-                    }
-                }
-            } finally {
-                channel.close()
-                deferred.cancel()
-            }
+        var realm: Realm? = null
+        val deferred = async {
+            realm = Realm.open(config)
         }
-        Unit
+        val session = channel.receiveOrFail()
+        try {
+            assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
+                runBlocking {
+                    session.uploadAllLocalChanges()
+                }
+            }
+            assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
+                runBlocking {
+                    session.downloadAllServerChanges()
+                }
+            }
+        } finally {
+            channel.close()
+            deferred.cancel()
+            realm?.let { it.close() }
+        }
     }
 
     // TODO https://github.com/realm/realm-core/issues/5365.

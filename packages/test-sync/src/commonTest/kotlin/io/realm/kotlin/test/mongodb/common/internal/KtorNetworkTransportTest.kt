@@ -78,6 +78,7 @@ internal class KtorNetworkTransportTest {
     fun tearDown() {
         transport.close()
         dispatcher.close()
+        appClient.closeClient()
     }
 
     @Test

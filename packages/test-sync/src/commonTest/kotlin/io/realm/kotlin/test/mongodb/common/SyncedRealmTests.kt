@@ -410,7 +410,7 @@ class SyncedRealmTests {
     // disabled. See https://github.com/realm/realm-kotlin/issues/847
     @Test
     @Ignore
-    fun waitForInitialRemoteData_mainThreadThrows() = runBlocking(Dispatchers.Main) {
+    fun waitForInitialRemoteData_mainThreadThrows() = runBlocking<Unit>(Dispatchers.Main) {
         val user = app.asTestApp.createUserAndLogin()
         val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
             .waitForInitialRemoteData()
@@ -418,7 +418,6 @@ class SyncedRealmTests {
         assertFailsWith<IllegalStateException> {
             Realm.open(config)
         }
-        Unit
     }
 
     // Test for https://github.com/realm/realm-kotlin/issues/1401
