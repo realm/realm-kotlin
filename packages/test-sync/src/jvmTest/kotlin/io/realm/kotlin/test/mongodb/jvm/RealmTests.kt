@@ -27,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
 
 class RealmTests {
 
@@ -43,25 +44,31 @@ class RealmTests {
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))
         Realm.open(configuration).close()
         app.close()
-        var counter = 10 // Wait 10 seconds for threads to settle
-        while (counter > 0) {
-            delay(1000)
-            counter--
+
+        // Wait max 10 seconds for threads to settle
+        var activeThreads = 0
+        var fullyClosed = false
+        var count = 10
+        while (!fullyClosed && count > 0) {
+            delay(1.seconds)
+            // Ensure we only have daemon threads after closing Realms and Apps
+            activeThreads = Thread.getAllStackTraces().keys
+                .filter { !it.isDaemon }
+                .filterNot {
+                    // Android Studio or Gradle worker threads
+                    it.name.startsWith("/127.0.0.1")
+                }
+                .filterNot {
+                    // Test thread
+                    it.name.startsWith("Test worker")
+                }
+                .size
+            if (activeThreads == 0) {
+                fullyClosed = true
+            } else {
+                count -= 1
+            }
         }
-
-        // Ensure we only have daemon threads after closing Realms and Apps
-        val activeThreads = Thread.getAllStackTraces().keys
-            .filter { !it.isDaemon }
-            .filterNot {
-                // Android Studio or Gradle worker threads
-                it.name.startsWith("/127.0.0.1")
-            }
-            .filterNot {
-                // Test thread
-                it.name.startsWith("Test worker")
-            }
-            .size
-
         assertEquals(0, activeThreads, "Active threads where found: ${threadTrace()}")
     }
 
