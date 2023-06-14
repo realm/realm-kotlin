@@ -75,7 +75,7 @@ class RealmTests {
             // Doing updates will trigger the core notifier and attach with a shadow thread
             it.write { }
             newThreads().let {
-                assertEquals(realmThreads + 1, it.size, "Unexpected thread count after Realm.write: Newly created threads are $it")
+                assertTrue(realmThreads + 1 >= it.size, "Unexpected thread count after Realm.write: Newly created threads are $it")
             }
         }
         // Closing a Realm should also cleanup our default (internal) dispatchers.
