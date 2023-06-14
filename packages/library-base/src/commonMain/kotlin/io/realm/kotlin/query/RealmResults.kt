@@ -46,7 +46,8 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      * Ex.:
      *  `'color = "tan" AND name BEGINSWITH "B" SORT(name DESC) LIMIT(5)`
      *
-     * @param query The query string to use for filtering and sort.
+     * @param query The query string to use for filtering and sort. If the empty string is used,
+     * the original query used to create this [RealmResults] is returned.
      * @param args The query parameters.
      * @return new result according to the query and query arguments.
      *

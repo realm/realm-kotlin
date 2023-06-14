@@ -234,18 +234,18 @@ class MutableSubscriptionSetTests {
         Unit
     }
 
-    @Ignore
     @Test
     fun removeAllStringTyped() = runBlocking {
         var updatedSubs: SubscriptionSet<Realm> = realm.subscriptions.update { realmRef: Realm ->
             add(realmRef.query<FlexParentObject>())
-            realmRef.query<FlexParentObject>().subscribe(name = "foo", updateExisting = true)
+            realmRef.query<FlexParentObject>().subscribe(name = "parents")
+            add(realmRef.query<FlexChildObject>())
+            realmRef.query<FlexChildObject>().subscribe(name = "children")
             removeAll("FlexParentObject")
         }
-        assertEquals(1, updatedSubs.size)
+        assertEquals(2, updatedSubs.size)
         updatedSubs = updatedSubs.update {
-            assertTrue(removeAll("FlexParentObject"))
-            assertEquals(0, size)
+            assertTrue(removeAll("FlexChildObject"))
         }
         assertEquals(0, updatedSubs.size)
     }
@@ -310,6 +310,20 @@ class MutableSubscriptionSetTests {
     }
 
     @Test
+    fun removeAll_anonymouslyOnly() = runBlocking {
+        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            realmRef.query<FlexParentObject>().subscribe("test")
+            realmRef.query<FlexParentObject>().subscribe()
+        }
+        assertEquals(2, updatedSubs.size)
+        updatedSubs = updatedSubs.update {
+            assertTrue(removeAll(anonymousOnly = true))
+            assertEquals(1, size)
+        }
+        assertEquals(1, updatedSubs.size)
+    }
+
+    @Test
     fun removeAll_fails() = runBlocking {
         realm.subscriptions.update {
             assertFalse(removeAll())
@@ -319,7 +333,7 @@ class MutableSubscriptionSetTests {
 
     // Ensure that all resources are correctly torn down when an error happens inside a
     // MutableSubscriptionSet
-    @Ignore // Require support for deleting synchronized Realms
+    @Ignore // Require support for deleting synchronized Realms. See https://github.com/realm/realm-kotlin/issues/1425
     @Test
     @Suppress("TooGenericExceptionThrown")
     fun deleteFile_exceptionInsideMutableRealm() = runBlocking {

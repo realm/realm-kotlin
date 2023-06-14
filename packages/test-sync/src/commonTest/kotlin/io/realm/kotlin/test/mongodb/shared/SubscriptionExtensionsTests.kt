@@ -93,7 +93,7 @@ class SubscriptionExtensionsTests {
         assertEquals(FlexParentObject::class.simpleName, sub.objectType)
     }
 
-    // Check that anonymous RealmQuery and RealmResults .subscribe calls result in the same sub.
+    // Check that anonymous RealmQuery and RealmResults `subscribe` calls result in the same sub.
     @Test
     fun anonymousSubscriptionsOverlap() = runBlocking {
         val subs = realm.subscriptions
@@ -108,7 +108,7 @@ class SubscriptionExtensionsTests {
         assertEquals(FlexParentObject::class.simpleName, sub.objectType)
     }
 
-    // Verify that the realm query doesn't run against a frozen version previous to the Realm
+    // Verify that the realm query doesn't run against a frozen version prior to the Realm
     // being updated from `waitForSynchronization`.
     @Test
     fun realmQuery_subscribe_queryResultIsLatestVersion() = runBlocking {
@@ -204,6 +204,9 @@ class SubscriptionExtensionsTests {
     fun realmQuery_subscribe_timeOut_fails() = runBlocking<Unit> {
         assertFailsWith<TimeoutCancellationException> {
             realm.query<FlexParentObject>().subscribe(timeout = 1.nanoseconds)
+        }
+        assertFailsWith<TimeoutCancellationException> {
+            realm.query<FlexParentObject>().subscribe(name = "foo", timeout = 1.nanoseconds)
         }
     }
 
@@ -303,6 +306,9 @@ class SubscriptionExtensionsTests {
     fun realmResults_subscribe_timeOut_fails() = runBlocking<Unit> {
         assertFailsWith<TimeoutCancellationException> {
             realm.query<FlexParentObject>().find().subscribe(timeout = 1.nanoseconds)
+        }
+        assertFailsWith<TimeoutCancellationException> {
+            realm.query<FlexParentObject>().find().subscribe(name = "foo", timeout = 1.nanoseconds)
         }
     }
 
