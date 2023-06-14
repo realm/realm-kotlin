@@ -69,7 +69,6 @@ internal object Names {
 
     // Schema related names
     val CLASS_INFO_CREATE = Name.identifier("create")
-    val PROPERTY_INFO_CREATE = Name.identifier("create")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_TYPE_LINKING_OBJECTS = Name.identifier("RLM_PROPERTY_TYPE_LINKING_OBJECTS")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
@@ -90,6 +89,7 @@ internal object FqNames {
 
     val BASE_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.BaseRealmObject")
     val REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.RealmObject")
+    val TYPED_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.TypedRealmObject")
     val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.EmbeddedRealmObject")
 
     // External visible interface of Realm objects
@@ -114,6 +114,7 @@ internal object FqNames {
     val PERSISTED_NAME_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PersistedName")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
+    val PROPERTY_INFO_CREATE = FqName("io.realm.kotlin.internal.schema.createPropertyInfo")
 
     // Realm data types
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
