@@ -35,6 +35,7 @@ import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.use
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -235,40 +236,38 @@ class RealmSchemaTests {
         val config = RealmConfiguration
             .Builder(schema = setOf(MultipleConstructors::class))
             .directory(tmpDir).build()
-        val realm = Realm.open(config)
+        Realm.open(config).use { realm ->
+            val firstCtor = MultipleConstructors() // this uses all defaults: "John", "Doe", 42
+            val secondCtor = MultipleConstructors(foreName = "Thanos") // Thanos, Doe, 42
+            val thirdCtor = MultipleConstructors(firstName = "Jack", lastName = "Reacher")
+            val fourthCtor = MultipleConstructors("Lee", "Child", 67)
 
-        val firstCtor = MultipleConstructors() // this uses all defaults: "John", "Doe", 42
-        val secondCtor = MultipleConstructors(foreName = "Thanos") // Thanos, Doe, 42
-        val thirdCtor = MultipleConstructors(firstName = "Jack", lastName = "Reacher")
-        val fourthCtor = MultipleConstructors("Lee", "Child", 67)
+            realm.writeBlocking {
+                this.copyToRealm(firstCtor)
+                this.copyToRealm(secondCtor)
+                this.copyToRealm(thirdCtor)
+                this.copyToRealm(fourthCtor)
+            }
 
-        realm.writeBlocking {
-            this.copyToRealm(firstCtor)
-            this.copyToRealm(secondCtor)
-            this.copyToRealm(thirdCtor)
-            this.copyToRealm(fourthCtor)
+            val people: RealmResults<MultipleConstructors> = realm.query<MultipleConstructors>().sort("firstName").find()
+            assertEquals(4, people.size)
+
+            assertEquals("Jack", people[0].firstName)
+            assertEquals("Reacher", people[0].lastName)
+            assertEquals(42, people[0].age)
+
+            assertEquals("John", people[1].firstName)
+            assertEquals("Doe", people[1].lastName)
+            assertEquals(42, people[1].age)
+
+            assertEquals("Lee", people[2].firstName)
+            assertEquals("Child", people[2].lastName)
+            assertEquals(67, people[2].age)
+
+            assertEquals("Thanos", people[3].firstName)
+            assertEquals("Doe", people[3].lastName)
+            assertEquals(42, people[3].age)
         }
-
-        val people: RealmResults<MultipleConstructors> = realm.query<MultipleConstructors>().sort("firstName").find()
-        assertEquals(4, people.size)
-
-        assertEquals("Jack", people[0].firstName)
-        assertEquals("Reacher", people[0].lastName)
-        assertEquals(42, people[0].age)
-
-        assertEquals("John", people[1].firstName)
-        assertEquals("Doe", people[1].lastName)
-        assertEquals(42, people[1].age)
-
-        assertEquals("Lee", people[2].firstName)
-        assertEquals("Child", people[2].lastName)
-        assertEquals(67, people[2].age)
-
-        assertEquals("Thanos", people[3].firstName)
-        assertEquals("Doe", people[3].lastName)
-        assertEquals(42, people[3].age)
-
-        realm.close()
     }
 
     @Test
