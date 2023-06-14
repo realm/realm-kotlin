@@ -71,7 +71,7 @@ class RealmTests {
             val realmThreads = 2 + if (finalizerRunning) 0 else 1
             newThreads().let {
                 assertNotNull(it.firstOrNull { it.name == "notifier-default.realm" }, "Could not find notifier")
-                assertNotNull(it.firstOrNull { it.name == "writer-default.realm" }, "Could not find notifier")
+                assertNotNull(it.firstOrNull { it.name == "writer-default.realm" }, "Could not find writer")
                 if (!finalizerRunning) {
                     assertNotNull(it.firstOrNull { it.name == "RealmFinalizingDaemon" }, "Could not find finalizer thread")
                 }
