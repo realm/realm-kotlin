@@ -34,31 +34,33 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
                            managed);
 }
 
-bool throw_as_java_exception(JNIEnv *jenv) {
+inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
+    // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
+    // maps to the core error.
+    static const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
+    static JavaMethod error_type_as_exception(jenv,
+                                              error_type_class,
+                                              "asThrowable",
+                                              "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
+    jstring error_message = (jenv)->NewStringUTF(error.message);
+    jstring error_path = (jenv)->NewStringUTF(error.path);
+    jobject exception = (jenv)->CallStaticObjectMethod(
+            error_type_class,
+            error_type_as_exception,
+            jint(error.categories),
+            jint(error.error),
+            error_message,
+            error_path,
+            static_cast<jobject>(error.usercode_error)
+    );
+    (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    return exception;
+}
+
+bool throw_last_error_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
-
-        // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
-        // maps to the core error.
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
-        static JavaMethod error_type_as_exception(jenv,
-                                                  error_type_class,
-                                                  "asThrowable",
-                                                  "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
-
-        jstring error_message = (jenv)->NewStringUTF(error.message);
-        jstring error_path = (jenv)->NewStringUTF(error.path);
-        jobject exception = (jenv)->CallStaticObjectMethod(
-                error_type_class,
-                error_type_as_exception,
-                jint(error.categories),
-                jint(error.error),
-                error_message,
-                error_path,
-                static_cast<jobject>(error.usercode_error)
-        );
-        (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
-
+        jobject exception = create_java_exception(jenv, error);
         realm_clear_last_error();
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
         return true;
@@ -867,18 +869,7 @@ void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_
     if (error) {
         realm_error_t err;
         realm_get_async_error(error, &err);
-        std::string message("[" + std::to_string(err.error) + "]: " + err.message);
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
-        static JavaMethod error_type_as_exception(env,
-                                                  error_type_class,
-                                                  "asThrowable",
-                                                  "(Lio/realm/kotlin/internal/interop/RealmCoreException;)Ljava/lang/Throwable;", true);
-        jstring error_message = (env)->NewStringUTF(message.c_str());
-        exception = (env)->CallStaticObjectMethod(
-                error_type_class,
-                error_type_as_exception,
-                jint(err.error),
-                error_message);
+        exception = create_java_exception(env, err);
     } else {
         realm_release(realm);
     }
@@ -998,7 +989,7 @@ realm_sync_session_register_progress_notifier_wrapper(
             }
     );
     if (!result) {
-        bool exception_thrown = throw_as_java_exception(jenv);
+        bool exception_thrown = throw_last_error_as_java_exception(jenv);
         if (exception_thrown) {
             // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return 0;

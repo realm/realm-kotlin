@@ -606,4 +606,21 @@ class BacklinksTests {
             realm.query<EmbeddedChild>("parent2ViaBacklinks.id == $0", parent1.id).count().find()
         )
     }
+
+    @Test
+    fun deleteBacklinkResults() {
+        realm.writeBlocking {
+            copyToRealm(
+                Recursive().also { parent ->
+                    parent.recursiveField = parent
+                }
+            )
+        }
+        realm.writeBlocking {
+            val backlinks = query<Recursive>().first().find()!!.references
+            delete(backlinks)
+        }
+
+        assertEquals(0, realm.query<Recursive>().count().find())
+    }
 }
