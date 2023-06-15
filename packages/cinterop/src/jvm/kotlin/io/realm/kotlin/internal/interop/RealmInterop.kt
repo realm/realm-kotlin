@@ -1400,13 +1400,12 @@ actual object RealmInterop {
         }
         realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
         realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
-        realmc.realm_app_config_set_platform(config, connectionParams.platform)
         realmc.realm_app_config_set_platform_version(config, connectionParams.platformVersion)
-        realmc.realm_app_config_set_cpu_arch(config, connectionParams.cpuArch)
         realmc.realm_app_config_set_device_name(config, connectionParams.device)
         realmc.realm_app_config_set_device_version(config, connectionParams.deviceVersion)
         realmc.realm_app_config_set_framework_name(config, connectionParams.framework)
         realmc.realm_app_config_set_framework_version(config, connectionParams.frameworkVersion)
+        realmc.realm_app_config_set_bundle_id(config, connectionParams.bundleId)
 
         return LongPointerWrapper(config)
     }

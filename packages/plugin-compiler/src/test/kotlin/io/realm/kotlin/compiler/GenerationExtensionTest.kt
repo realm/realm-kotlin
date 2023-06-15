@@ -18,6 +18,7 @@
 package io.realm.kotlin.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
+import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.BaseRealmImpl
 import io.realm.kotlin.internal.Mediator
@@ -372,11 +373,29 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
     }
 
+    @Test
+    fun testBundleIdRewiring() {
+        val inputs = Files("/sync")
+        val result = compile(
+            inputs,
+            options = listOf(
+                PluginOption(
+                    pluginId = "io.realm.kotlin",
+                    optionName = "bundleId",
+                    optionValue = "BUNDLE_ID"
+                ),
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        inputs.assertGeneratedIR()
+    }
+
     private fun compile(
         inputs: Files,
-        plugins: List<ComponentRegistrar> = listOf(Registrar())
-    ): KotlinCompilation.Result =
-        KotlinCompilation().apply {
+        plugins: List<ComponentRegistrar> = listOf(Registrar()),
+        options: List<PluginOption> = emptyList(),
+    ): KotlinCompilation.Result {
+        return KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
@@ -387,20 +406,10 @@ class GenerationExtensionTest {
                 "-Xdump-directory=${inputs.outputDir()}",
                 "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )
+            commandLineProcessors = listOf(RealmCommandLineProcessor())
+            pluginOptions = options
         }.compile()
-
-    private fun compileFromSource(
-        source: SourceFile,
-        plugins: List<ComponentRegistrar> = listOf(Registrar())
-    ): KotlinCompilation.Result =
-        KotlinCompilation().apply {
-            sources = listOf(source)
-            useIR = true
-            messageOutputStream = System.out
-            componentRegistrars = plugins
-            inheritClassPath = true
-            kotlincArguments = listOf("-Xjvm-default=enable")
-        }.compile()
+    }
 
     companion object {
         private fun stripInputPath(file: File, map: Map<String, File>) {

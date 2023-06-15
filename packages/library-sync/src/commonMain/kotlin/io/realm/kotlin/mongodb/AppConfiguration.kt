@@ -292,8 +292,19 @@ public interface AppConfiguration {
          *
          * @return the AppConfiguration that can be used to create a [App].
          */
-        @OptIn(ExperimentalKBsonSerializerApi::class)
         public fun build(): AppConfiguration {
+            // We cannot rewire this to build(bundleId) and just have REPLACED_BY_IR here,
+            // as these calls might be in a module where the compiler plugin hasn't been applied.
+            // In that case we don't setup the correct bundle ID. If this is an issue we could maybe
+            // just force users to apply our plugin.
+            return build("UNKNOWN_BUNDLE_ID")
+        }
+
+        // This method is used to inject bundleId to the sync configuration. The
+        // SyncLoweringExtension is replacing calls to SyncConfiguration.Builder.build() with calls
+        // to this method.
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        public fun build(bundleId: String): AppConfiguration {
             // Configure logging during creation of AppConfiguration to keep old behavior for
             // configuring logging. This should be removed when `LogConfiguration` is removed.
             val allLoggers = mutableListOf<RealmLogger>()
@@ -346,6 +357,7 @@ public interface AppConfiguration {
                 logger = logConfig,
                 appName = appName,
                 appVersion = appVersion,
+                bundleId = bundleId,
                 ejson = ejson,
                 httpLogObfuscator = httpLogObfuscator
             )

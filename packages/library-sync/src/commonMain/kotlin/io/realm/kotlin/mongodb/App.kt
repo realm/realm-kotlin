@@ -128,6 +128,10 @@ public interface App {
          */
         public fun create(appId: String): App {
             Validation.checkEmpty(appId, "appId")
+            // We cannot rewire this to create(appId, bundleId) and just have REPLACED_BY_IR here,
+            // as these calls might be in a module where the compiler plugin hasn't been applied.
+            // In that case we don't setup the correct bundle ID. If this is an issue we could maybe
+            // just force users to apply our plugin.
             return create(AppConfiguration.Builder(appId).build())
         }
 
