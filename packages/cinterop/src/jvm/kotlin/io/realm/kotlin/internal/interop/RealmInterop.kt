@@ -1423,7 +1423,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_user_api_key(key))
+        return LongPointerWrapper(realmc.realm_app_credentials_new_api_key(key))
     }
 
     actual fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer {

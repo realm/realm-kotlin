@@ -2702,7 +2702,7 @@ actual object RealmInterop {
 
     actual fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer {
         memScoped {
-            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_user_api_key(key))
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_api_key(key))
         }
     }
 
