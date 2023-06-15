@@ -129,9 +129,8 @@ class SyncConnectionParams(
     sdkVersion: String,
     localAppName: String?,
     localAppVersion: String?,
-    platform: String,
+    bundleId: String,
     platformVersion: String,
-    cpuArch: String,
     device: String,
     deviceVersion: String,
     framework: Runtime,
@@ -140,10 +139,9 @@ class SyncConnectionParams(
     val sdkName = "Kotlin"
     val localAppName: String?
     val localAppVersion: String?
+    val bundleId: String
     val sdkVersion: String
-    val platform: String
     val platformVersion: String
-    val cpuArch: String
     val device: String
     val deviceVersion: String
     val framework: String
@@ -157,60 +155,20 @@ class SyncConnectionParams(
 
     init {
         this.sdkVersion = sdkVersion
+        this.bundleId = bundleId
         this.localAppName = localAppName
         this.localAppVersion = localAppVersion
-        this.platform = normalizePlatformValue(platform)
         this.platformVersion = platformVersion
-        this.cpuArch = normalizeCpuArch(cpuArch)
         this.device = device
         this.deviceVersion = deviceVersion
         this.framework = framework.description
         this.frameworkVersion = frameworkVersion
     }
-
-    private fun normalizeCpuArch(cpuArch: String): String {
-        return if (cpuArch.isEmpty()) {
-            return ""
-        } else if (Regex("x86.64", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
-            "x86_64"
-        } else if (cpuArch.contains("x86", ignoreCase = true)) {
-            "x86"
-        } else if (Regex("v7a", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
-            "armeabi-v7a"
-        } else if (
-            Regex("arm64", RegexOption.IGNORE_CASE).find(cpuArch) != null ||
-            cpuArch.equals("aarch64", ignoreCase = true)
-        ) {
-            "arm64"
-        } else {
-            "Unknown ($cpuArch)"
-        }
-    }
-
-    private fun normalizePlatformValue(platform: String): String {
-        return if (platform.isEmpty()) {
-            return ""
-        } else if (platform.contains("windows", ignoreCase = true)) {
-            "Windows"
-        } else if (platform.contains("linux", ignoreCase = true)) {
-            "Linux"
-        } else if (
-            Regex("mac( )?os", setOf(RegexOption.IGNORE_CASE)).find(platform) != null ||
-            platform.equals("NSMACHOperatingSystem", ignoreCase = true)
-        ) {
-            "MacOS"
-        } else if (platform.contains("ios", ignoreCase = true)) {
-            "iOS"
-        } else if (platform.contains("android", ignoreCase = true)) {
-            "Android"
-        } else {
-            "Unknown ($platform)"
-        }
-    }
 }
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
+    fun realm_value_get(value: RealmValue): Any?
     fun realm_get_version_id(realm: RealmPointer): Long
     fun realm_get_library_version(): String
     fun realm_refresh(realm: RealmPointer)
@@ -418,22 +376,22 @@ expect object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
@@ -441,7 +399,7 @@ expect object RealmInterop {
     fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport> // Sending the size inside a pair avoids a roundtrip to C just to get the size of the arguments in the struct
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_get_description(query: RealmQueryPointer): String
     // Not implemented in C-API yet
@@ -601,6 +559,8 @@ expect object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     )
+
+    fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean)
 
     fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
 

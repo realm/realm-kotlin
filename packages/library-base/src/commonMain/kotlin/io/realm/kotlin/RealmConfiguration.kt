@@ -114,7 +114,17 @@ public interface RealmConfiguration : Configuration {
             this.name = name
         }
 
+        override fun verifyConfig() {
+            super.verifyConfig()
+            initialRealmFileConfiguration?.let {
+                if (deleteRealmIfMigrationNeeded) {
+                    throw IllegalStateException("Cannot combine `initialRealmFile` and `deleteRealmIfMigrationNeeded` configuration options")
+                }
+            }
+        }
+
         override fun build(): RealmConfiguration {
+            verifyConfig()
             val realmLogger = ContextLogger("Sdk")
 
             // Sync configs might not set 'name' but local configs always do, therefore it will
@@ -155,6 +165,7 @@ public interface RealmConfiguration : Configuration {
                 migration,
                 initialDataCallback,
                 inMemory,
+                initialRealmFileConfiguration,
                 realmLogger
             )
         }

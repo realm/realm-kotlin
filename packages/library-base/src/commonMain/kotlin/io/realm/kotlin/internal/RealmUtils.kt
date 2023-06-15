@@ -23,7 +23,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
-import io.realm.kotlin.internal.RealmValueArgumentConverter.convertArg
+import io.realm.kotlin.internal.RealmValueArgumentConverter.kAnyToRealmValue
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.ObjectKey
@@ -71,7 +71,7 @@ public val MISSING_PLUGIN: Throwable = IllegalStateException(MISSING_PLUGIN_MESS
  * replaced by the Compiler Plugin.
  */
 @Suppress("FunctionNaming", "NOTHING_TO_INLINE")
-internal inline fun REPLACED_BY_IR(
+public inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
@@ -195,7 +195,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
                         realmReference,
                         element::class,
                         className,
-                        convertArg(primaryKey),
+                        kAnyToRealmValue(primaryKey),
                         updatePolicy
                     )
                 } catch (e: IllegalStateException) {

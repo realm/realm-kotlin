@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
@@ -20,6 +21,7 @@ import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
 import io.realm.kotlin.compiler.FqNames.PERSISTED_NAME_ANNOTATION
+import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -49,6 +51,7 @@ import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -90,9 +93,9 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
-import org.jetbrains.kotlin.ir.util.nameForIrSerialization
 import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
@@ -217,6 +220,11 @@ internal fun IrPluginContext.lookupFunctionInClass(
     }
 }
 
+internal fun IrPluginContext.lookupClassOrThrow(name: ClassId): IrClass {
+    return referenceClass(name)?.owner
+        ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
+}
+
 internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
     return referenceClass(name)?.owner
         ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
@@ -234,7 +242,9 @@ internal fun IrPluginContext.lookupConstructorInClass(
 internal fun <T> IrClass.lookupCompanionDeclaration(
     name: Name
 ): T {
-    return this.companionObject()?.declarations?.first { it.nameForIrSerialization == name } as T
+    return this.companionObject()?.declarations?.first {
+        it is IrDeclarationWithName && it.name == name
+    } as T
         ?: fatalError("Cannot find companion method ${name.asString()} on ${this.name}")
 }
 

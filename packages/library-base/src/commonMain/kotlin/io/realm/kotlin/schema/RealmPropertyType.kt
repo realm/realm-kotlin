@@ -65,7 +65,11 @@ public data class ValuePropertyType(
     /**
      * Indicates whether there is an index associated with this property.
      */
-    public val isIndexed: Boolean
+    public val isIndexed: Boolean,
+    /**
+     * Indicates whether there is a full-text index associated with this property.
+     */
+    public val isFullTextIndexed: Boolean
 ) : RealmPropertyType
 
 /**

@@ -16,8 +16,18 @@
 
 package io.realm.kotlin.mongodb
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
+import io.realm.kotlin.mongodb.internal.AppImpl
+import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.mongodb.internal.CredentialsImpl
+import io.realm.kotlin.mongodb.internal.CustomEJsonCredentialsImpl
+import io.realm.kotlin.mongodb.internal.serializerOrRealmBuiltInSerializer
+import kotlinx.serialization.KSerializer
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonType
+import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.Bson
 
 /**
  * This enum contains the list of Google authentication types supported by App Services.
@@ -142,9 +152,8 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: BsonDocument): Credentials {
-            return CredentialsImpl(CredentialsImpl.customFunction(payload))
-        }
+        public fun customFunction(payload: BsonDocument): Credentials =
+            customFunctionInternal(payload)
 
         /**
          * Creates credentials representing a login using an App Services Function. The payload would
@@ -155,8 +164,61 @@ public interface Credentials {
          * @return a set of credentials that can be used to log into an App Services Application
          * using [App.login].
          */
-        public fun customFunction(payload: Map<String, *>): Credentials {
-            return CredentialsImpl(CredentialsImpl.customFunction(payload))
-        }
+        public fun customFunction(payload: Map<String, *>): Credentials =
+            customFunctionInternal(payload)
+
+        private fun customFunctionInternal(payload: Any): Credentials =
+            BsonEncoder.encodeToBsonValue(payload).let { bsonValue: BsonValue ->
+                require(bsonValue.bsonType == BsonType.DOCUMENT) {
+                    "Invalid payload type '${payload::class.simpleName}', only BsonDocument and maps are supported."
+                }
+
+                CredentialsImpl(CredentialsImpl.customFunction(Bson.toJson(bsonValue)))
+            }
+
+        /**
+         * Creates credentials representing a login using an App Services Function. The payload would
+         * be serialized and parsed as an argument to the remote function. The payload keys must
+         * match the format and names the function expects.
+         *
+         * **Note** This method supports full document serialization. The payload will be serialized
+         * with [serializer] and encoded with [AppConfiguration.ejson].
+         *
+         * @param T the payload type.
+         * @param payload The payload that will be passed as an argument to the server function.
+         * @param serializer serialization strategy for [T].
+         * @return a set of credentials that can be used to log into an App Services Application
+         * using [App.login].
+         */
+        @ExperimentalRealmSerializerApi
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        public fun <T> customFunction(payload: T, serializer: KSerializer<T>): Credentials =
+            CustomEJsonCredentialsImpl { app: AppImpl ->
+                app.configuration.ejson.encodeToString(serializer, payload)
+            }
+
+        /**
+         * Creates credentials representing a login using an App Services Function. The payload would
+         * be serialized and parsed as an argument to the remote function. The payload keys must
+         * match the format and names the function expects.
+         *
+         * **Note** This method supports full document serialization. The payload will be serialized
+         * with the built-in serializer for [T] and encoded with [AppConfiguration.ejson].
+         *
+         * @param payload The payload that will be passed as an argument to the server function.
+         * @return a set of credentials that can be used to log into an App Services Application
+         * using [App.login].
+         */
+        @ExperimentalRealmSerializerApi
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        public inline fun <reified T> customFunction(payload: T): Credentials =
+            CustomEJsonCredentialsImpl { app: AppImpl ->
+                app.configuration.ejson.run {
+                    app.configuration.ejson.encodeToString(
+                        serializer = serializersModule.serializerOrRealmBuiltInSerializer<T>(),
+                        value = payload
+                    )
+                }
+            }
     }
 }
