@@ -1423,7 +1423,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_user_api_key(key))
+        return LongPointerWrapper(realmc.realm_app_credentials_new_api_key(key))
     }
 
     actual fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer {
@@ -1601,15 +1601,15 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return LongPointerWrapper(
             realmc.realm_query_parse(
                 realm.cptr(),
                 classKey.key,
                 query,
-                args.first.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1617,15 +1617,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(
                 results.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1633,15 +1632,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_list(
                 list.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1649,15 +1647,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_set(
                 set.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1688,15 +1685,10 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return LongPointerWrapper(
-            realmc.realm_query_append_query(
-                query.cptr(),
-                filter,
-                args.first.toLong(),
-                args.second.value
-            )
+            realmc.realm_query_append_query(query.cptr(), filter, args.size, args.head)
         )
     }
 

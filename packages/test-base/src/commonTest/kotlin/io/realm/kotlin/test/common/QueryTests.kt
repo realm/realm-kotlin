@@ -2214,6 +2214,101 @@ class QueryTests {
             }
     }
 
+    @Test
+    fun query_inListArgument_mixedCollectionTypes() {
+        realm.writeBlocking {
+            (0..15).forEach { copyToRealm(QuerySample().apply { intField = it }) }
+        }
+        val oddNumbers = mutableSetOf(1, 3, 5, 7, 9, 11, 13, 15)
+        val arg0: List<Int> = listOf(1, 3)
+        val arg1: Int = 5
+        val arg2: Set<Int> = setOf(7, 9)
+        val arg3: List<Int> = listOf(11) // Single element list should still be passed as list for IN
+        val arg4: IntProgression = 13..15 step 2
+
+        realm.query<QuerySample>(
+            "intField IN $0 OR intField == $1 OR intField IN $2 or intField IN $3 or intField IN $4",
+            arg0,
+            arg1,
+            arg2,
+            arg3,
+            arg4
+        ).find().run {
+            assertEquals(oddNumbers.size, size)
+            forEach {
+                assertTrue { oddNumbers.remove(it.intField) }
+            }
+        }
+        assertTrue { oddNumbers.isEmpty() }
+    }
+
+    @Test
+    fun query_inListArgument_boolean() {
+        realm.writeBlocking {
+            (0 until 15).forEach {
+                copyToRealm(
+                    QuerySample().apply {
+                        intField = it
+                        booleanField = it % 2 == 0
+                    }
+                )
+            }
+        }
+        realm.query<QuerySample>("booleanField IN $0", listOf(true, false)).find().run {
+            assertEquals(15, size)
+        }
+    }
+
+    @Test
+    fun query_inListArgument_string() {
+        realm.writeBlocking {
+            copyToRealm(QuerySample().apply { stringField = "1" })
+            copyToRealm(QuerySample().apply { stringField = "2" })
+        }
+        realm.query<QuerySample>("stringField IN $0", listOf("1", "2")).find().run {
+            assertEquals(2, size)
+        }
+    }
+
+    @Test
+    fun query_inListArgument_escapedString() {
+        val values = mutableSetOf("\"Realm\"", "'Realm'", "Realms'", "😀")
+        realm.writeBlocking {
+            values.forEach {
+                copyToRealm(QuerySample().apply { stringField = it })
+            }
+        }
+        assertEquals(values.size, realm.query<QuerySample>().find().size)
+        realm.query<QuerySample>(
+            "stringField IN $0",
+            values
+        ).find().run {
+            assertEquals(values.size, size)
+            forEach {
+                assertTrue { values.remove(it.stringField) }
+            }
+        }
+        assertTrue { values.isEmpty() }
+    }
+
+    @Test
+    fun query_inListArgument_links() {
+        val (even, odd) = realm.writeBlocking {
+            val even = copyToRealm(QuerySample().apply { stringField = "EVEN" })
+            copyToRealm(QuerySample().apply { nullableRealmObject = even })
+            val odd = copyToRealm(QuerySample().apply { stringField = "ODD" })
+            copyToRealm(QuerySample().apply { nullableRealmObject = odd })
+            even to odd
+        }
+        assertEquals(4, realm.query<QuerySample>().find().size)
+        realm.query<QuerySample>("nullableRealmObject IN $0", listOf(even, odd)).find().run {
+            assertEquals(2, size)
+            forEach {
+                assertTrue { it.stringField !in setOf("EVEN", "ODD") }
+            }
+        }
+    }
+
     // ----------------------------------
     // Multithreading with query objects
     // ----------------------------------
