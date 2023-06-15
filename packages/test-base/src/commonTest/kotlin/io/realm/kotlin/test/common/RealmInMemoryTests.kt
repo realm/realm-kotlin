@@ -58,7 +58,6 @@ class RealmInMemoryTests {
         realm.close()
         realm = Realm.open(inMemConf)
         assertEquals(0, realm.query(Sample::class).count().find())
-        realm.close()
     }
 
     @Test
@@ -96,7 +95,6 @@ class RealmInMemoryTests {
             realm2.close()
             PlatformUtils.deleteTempDir(tmpDir2)
         }
-        realm.close()
     }
 
     @Test
@@ -151,7 +149,6 @@ class RealmInMemoryTests {
                     Realm.open(conf)
                 }
             }
-        realm.close()
     }
 
     // Tests writeCopyTo result when called in a transaction.
@@ -172,7 +169,6 @@ class RealmInMemoryTests {
         }
         assertEquals(0, onDiskRealm.query<Sample>().count().find())
         onDiskRealm.close()
-        realm.close()
     }
 
     // Test below scenario:
@@ -252,6 +248,5 @@ class RealmInMemoryTests {
         }
         realm = Realm.open(inMemConf)
         assertEquals(0, realm.query<Sample>().count().find())
-        realm.close()
     }
 }

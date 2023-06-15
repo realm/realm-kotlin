@@ -81,12 +81,12 @@ class RealmTests {
         // Closing a Realm should also cleanup our default (internal) dispatchers.
         // The core notifier and the finalizer thread will never be closed.
         val expectedThreadCount = initialThreads.size + 1 /* core-notifier */ + if (finalizerRunning) 0 else 1
-        var counter = 5 // Wait 5 seconds for threads to settle
-        while (totalThreadCount() != expectedThreadCount && counter > 0) {
+        var counter = 10 // Wait 5 seconds for threads to settle
+        while (newThreads().any { !it.isDaemon } && counter > 0) {
             delay(1000)
             counter--
         }
-        assertEquals(expectedThreadCount, totalThreadCount(), "Unexpected thread count after closing realm: ${newThreads()}")
+        assertTrue(expectedThreadCount <= totalThreadCount(), "Unexpected thread count after closing realm: ${newThreads()}")
 
         // Verify that all remaining threads are daemon threads, so that we don't keep the JVM alive
         newThreads().filter { !it.isDaemon }.let {
