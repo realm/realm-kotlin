@@ -320,7 +320,7 @@ class RealmTests {
 
     @Test
     @Suppress("invisible_member")
-    fun writeAfterCloseThrows() = runBlocking {
+    fun writeAfterCloseThrows() = runBlocking<Unit> {
         realm.close()
         assertTrue(realm.isClosed())
         assertFailsWith<IllegalStateException> {
@@ -328,7 +328,6 @@ class RealmTests {
                 copyToRealm(Child())
             }
         }
-        Unit
     }
 
     @Test

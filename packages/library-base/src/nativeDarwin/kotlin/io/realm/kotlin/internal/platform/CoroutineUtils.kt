@@ -2,7 +2,7 @@ package io.realm.kotlin.internal.platform
 
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.newFixedThreadPoolContext
 import kotlin.coroutines.CoroutineContext
 
 // Expose platform runBlocking through common interface
@@ -17,7 +17,8 @@ public actual fun <T> runBlocking(
  * The default dispatcher for Darwin platforms spawns a new thread with a run loop.
  */
 public actual fun singleThreadDispatcher(id: String): CloseableCoroutineDispatcher {
-    return newSingleThreadContext(id)
+    // Work-around for https://github.com/Kotlin/kotlinx.coroutines/issues/3768
+    return newFixedThreadPoolContext(1, id)
 }
 
 public actual fun multiThreadDispatcher(size: Int): CloseableCoroutineDispatcher {

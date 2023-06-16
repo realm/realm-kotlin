@@ -75,15 +75,15 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
     }
 
     override fun removeAll(objectType: String): Boolean {
-        if (realm.schema().get(objectType) == null) {
+        if (realm.schema()[objectType] == null) {
             throw IllegalArgumentException("'$objectType' is not part of the schema for this Realm: ${realm.configuration.path}")
         }
-        var result = false
-        forEach { sub: Subscription ->
-            if (sub.objectType == objectType) {
-                result = remove(sub) || result
+        val result: Boolean
+        filter { it.objectType == objectType }
+            .also { result = it.isNotEmpty() }
+            .forEach { sub: Subscription ->
+                remove(sub)
             }
-        }
         return result
     }
 
@@ -102,7 +102,17 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
         return result
     }
 
-    override fun removeAll(): Boolean {
-        return RealmInterop.realm_sync_subscriptionset_clear(nativePointer)
+    override fun removeAll(anonymousOnly: Boolean): Boolean {
+        if (anonymousOnly) {
+            var result: Boolean = false
+            filter { it.name == null }
+                .also { result = it.isNotEmpty() }
+                .forEach {
+                    remove(it)
+                }
+            return result
+        } else {
+            return RealmInterop.realm_sync_subscriptionset_clear(nativePointer)
+        }
     }
 }

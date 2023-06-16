@@ -33,6 +33,7 @@ import io.realm.kotlin.notifications.internal.InitialResultsImpl
 import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.ProducerScope
@@ -53,7 +54,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     @Suppress("UnusedPrivateMember")
-    private val mode: Mode = Mode.RESULTS
+    private val mode: Mode = Mode.RESULTS,
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreNotifiable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
 
     @Suppress("UNCHECKED_CAST")
@@ -80,14 +81,19 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     }
 
     override fun query(query: String, vararg args: Any?): RealmQuery<E> = inputScope {
-        val queryPointer = try {
-            RealmInterop.realm_query_parse_for_results(
-                nativePointer,
-                query,
-                convertToQueryArgs(args)
-            )
-        } catch (e: IndexOutOfBoundsException) {
-            throw IllegalArgumentException(e.message, e.cause)
+        // If an empty query is passed in, reconstruct the original query backing this RealmResults
+        val queryPointer = if (query.trim().compareTo(TRUE_PREDICATE, ignoreCase = true) == 0 && args.isEmpty()) {
+            RealmInterop.realm_results_get_query(nativePointer)
+        } else {
+            try {
+                RealmInterop.realm_query_parse_for_results(
+                    nativePointer,
+                    query,
+                    convertToQueryArgs(args)
+                )
+            } catch (e: IndexOutOfBoundsException) {
+                throw IllegalArgumentException(e.message, e.cause)
+            }
         }
         ObjectQuery(
             realm,

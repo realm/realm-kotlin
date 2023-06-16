@@ -19,7 +19,6 @@ package io.realm.kotlin.mongodb.internal
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.internal.SDK_VERSION
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
-import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
@@ -31,6 +30,8 @@ import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
@@ -43,7 +44,8 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
-    internal val networkTransportFactory: () -> NetworkTransport,
+    private val appNetworkDispatcherFactory: CoroutineDispatcherFactory,
+    internal val networkTransportFactory: (dispatcher: DispatcherHolder) -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
     public val logger: LogConfiguration,
@@ -61,12 +63,13 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
      * Thus this method should only be called from [AppImpl] and will create both a native
      * AppConfiguration and App at the same time.
      */
-    public fun createNativeApp(): Pair<NetworkTransport, RealmAppPointer> {
+    public fun createNativeApp(): AppResources {
         // Create a new network transport for each App instance. This which allow the App to control
         // the lifecycle of any threadpools created by the network transport. Also, there should
         // be no reason for people to have multiple app instances for the same app, so the net
         // effect should be the same
-        val networkTransport = networkTransportFactory()
+        val appDispatcher = appNetworkDispatcherFactory.create()
+        val networkTransport = networkTransportFactory(appDispatcher)
         val appConfigPointer: RealmAppConfigurationPointer =
             initializeRealmAppConfig(appName, appVersion, bundleId, networkTransport)
         var applicationInfo: String? = null
@@ -83,7 +86,8 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             sdkInfo,
             applicationInfo.toString()
         )
-        return Pair(
+        return Triple(
+            appDispatcher,
             networkTransport,
             RealmInterop.realm_app_get(
                 appConfigPointer,

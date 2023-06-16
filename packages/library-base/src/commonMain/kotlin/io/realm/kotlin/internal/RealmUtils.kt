@@ -32,6 +32,8 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
+import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
@@ -278,5 +280,13 @@ public fun <T : BaseRealm> RealmResults<*>.getRealm(): T {
         return this.realm.owner as T
     } else {
         throw IllegalStateException("Unsupported results type: $this::class")
+    }
+}
+
+public fun <T : BaseRealm> RealmQuery<*>.getRealm(): T {
+    if (this is ObjectQuery) {
+        return this.realmReference.owner as T
+    } else {
+        throw IllegalStateException("Unsupported query type: $this::class")
     }
 }

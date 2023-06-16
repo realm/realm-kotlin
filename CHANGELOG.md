@@ -6,6 +6,7 @@
 ### Enhancements
 * Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.
 * Support for passing list, sets or iterable arguments to queries with `IN`-operators, e.g. `query<TYPE>("<field> IN $0", listOf(1,2,3))`. (Issue [#929](https://github.com/realm/realm-kotlin/issues/929))
+* [Sync] Support for `RealmQuery.subscribe()` and `RealmResults.subscribe()` as an easy way to create subscriptions in the background while continuing to use the query result. This API is experimental. (Issue [#1363](https://github.com/realm/realm-kotlin/issues/1363))
 
 ### Fixed
 * None
@@ -16,7 +17,7 @@
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
   * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above.
+  * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Kbson 0.3.0.

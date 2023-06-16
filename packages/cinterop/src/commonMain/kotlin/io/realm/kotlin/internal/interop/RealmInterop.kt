@@ -405,6 +405,7 @@ expect object RealmInterop {
     // Not implemented in C-API yet
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
 
+    fun realm_results_get_query(results: RealmResultsPointer): RealmQueryPointer
     fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer
     fun realm_results_count(results: RealmResultsPointer): Long
     fun MemAllocator.realm_results_average(
