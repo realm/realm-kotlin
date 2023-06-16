@@ -34,31 +34,33 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
                            managed);
 }
 
-bool throw_as_java_exception(JNIEnv *jenv) {
+inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
+    // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
+    // maps to the core error.
+    static const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
+    static JavaMethod error_type_as_exception(jenv,
+                                              error_type_class,
+                                              "asThrowable",
+                                              "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
+    jstring error_message = (jenv)->NewStringUTF(error.message);
+    jstring error_path = (jenv)->NewStringUTF(error.path);
+    jobject exception = (jenv)->CallStaticObjectMethod(
+            error_type_class,
+            error_type_as_exception,
+            jint(error.categories),
+            jint(error.error),
+            error_message,
+            error_path,
+            static_cast<jobject>(error.usercode_error)
+    );
+    (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    return exception;
+}
+
+bool throw_last_error_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
-
-        // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
-        // maps to the core error.
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
-        static JavaMethod error_type_as_exception(jenv,
-                                                  error_type_class,
-                                                  "asThrowable",
-                                                  "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
-
-        jstring error_message = (jenv)->NewStringUTF(error.message);
-        jstring error_path = (jenv)->NewStringUTF(error.path);
-
-        jobject exception = (jenv)->CallStaticObjectMethod(
-                error_type_class,
-                error_type_as_exception,
-                jint(error.categories),
-                jint(error.error),
-                error_message,
-                error_path,
-                nullptr
-        );
-
+        jobject exception = create_java_exception(jenv, error);
         realm_clear_last_error();
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
         return true;
@@ -67,12 +69,14 @@ bool throw_as_java_exception(JNIEnv *jenv) {
     }
 }
 
-inline void jni_check_exception(JNIEnv *jenv = get_env()) {
+inline jboolean jni_check_exception(JNIEnv *jenv = get_env()) {
     if (jenv->ExceptionCheck()) {
-        jenv->ExceptionDescribe();
+        jthrowable exception = jenv->ExceptionOccurred();
         jenv->ExceptionClear();
-        throw std::runtime_error("An unexpected Error was thrown from Java.");
+        realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
+        return false;
     }
+    return true;
 }
 
 inline std::string get_exception_message(JNIEnv *env) {
@@ -125,16 +129,15 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
     auto env = get_env(true);
     static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/MigrationCallback");
     static JavaMethod java_callback_method(env, java_callback_class, "migrate",
-                                           "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)Z");
+                                           "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)V");
     // These realm/schema pointers are only valid for the duraction of the
     // migration so don't let ownership follow the NativePointer-objects
-    bool result = env->CallBooleanMethod(static_cast<jobject>(userdata), java_callback_method,
+    env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method,
                                         wrap_pointer(env, reinterpret_cast<jlong>(old_realm), false),
                                         wrap_pointer(env, reinterpret_cast<jlong>(new_realm), false),
                                         wrap_pointer(env, reinterpret_cast<jlong>(schema))
     );
-    jni_check_exception(env);
-    return result;
+    return jni_check_exception(env);
 }
 
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
@@ -501,20 +504,18 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
 
     jobject callback = static_cast<jobject>(userdata);
     jboolean result = env->CallBooleanMethod(callback, java_should_compact_method, jlong(total_bytes), jlong(used_bytes));
-    jni_check_exception(env);
-    return result;
+    return jni_check_exception(env) && result;
 }
 
 bool realm_data_initialization_callback(void* userdata, realm_t* realm) {
     auto env = get_env(true);
     static JavaClass java_data_init_class(env, "io/realm/kotlin/internal/interop/DataInitializationCallback");
-    static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()Z");
+    static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()V");
 
     (void)realm; // Ignore Realm as we don't expose the Realm in this callback right now.
     jobject callback = static_cast<jobject>(userdata);
-    jboolean result = env->CallBooleanMethod(callback, java_data_init_method);
-    jni_check_exception(env);
-    return result;
+    env->CallVoidMethod(callback, java_data_init_method);
+    return jni_check_exception(env);
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
@@ -713,7 +714,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-                                             "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ)V");
+    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
 
     jint category = static_cast<jint>(error.error_code.category);
     jint value = error.error_code.value;
@@ -729,6 +730,40 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     for (int i = 0; i < error.user_info_length; i++) {
         realm_sync_error_user_info_t user_info = error.user_info_map[i];
         user_info_map->insert(std::make_pair(user_info.key, user_info.value));
+    }
+
+    static JavaMethod core_compensating_write_info_constructor(
+            jenv,
+            JavaClassGlobalDef::core_compensating_write_info(),
+            "<init>",
+            "(Ljava/lang/String;Ljava/lang/String;J)V"
+    );
+
+    auto j_compensating_write_info_array = jenv->NewObjectArray(
+            error.compensating_writes_length,
+            JavaClassGlobalDef::core_compensating_write_info(),
+            NULL
+    );
+
+    for (int index = 0; index < error.compensating_writes_length; index++) {
+        realm_sync_error_compensating_write_info_t& compensating_write_info = error.compensating_writes[index];
+
+        auto reason = to_jstring(jenv, compensating_write_info.reason);
+        auto object_name = to_jstring(jenv, compensating_write_info.object_name);
+
+        jobject j_compensating_write_info = jenv->NewObject(
+                JavaClassGlobalDef::core_compensating_write_info(),
+                core_compensating_write_info_constructor,
+                reason,
+                object_name,
+                &compensating_write_info.primary_key
+        );
+
+        jenv->SetObjectArrayElement(
+                j_compensating_write_info_array,
+                index,
+                j_compensating_write_info
+        );
     }
 
     // We can't only rely on 'error.is_client_reset_requested' (even though we should) to extract
@@ -752,17 +787,20 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         }
     }
 
-    return jenv->NewObject(JavaClassGlobalDef::sync_error(),
-                           sync_error_constructor,
-                           category,
-                           value,
-                           msg,
-                           detailed_msg,
-                           joriginal_file_path,
-                           jrecovery_file_path,
-                           is_fatal,
-                           is_unrecognized_by_client,
-                           is_client_reset_requested);
+    return jenv->NewObject(
+            JavaClassGlobalDef::sync_error(),
+            sync_error_constructor,
+            category,
+            value,
+            msg,
+            detailed_msg,
+            joriginal_file_path,
+            jrecovery_file_path,
+            is_fatal,
+            is_unrecognized_by_client,
+            is_client_reset_requested,
+            j_compensating_write_info_array
+    );
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
@@ -831,18 +869,7 @@ void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_
     if (error) {
         realm_error_t err;
         realm_get_async_error(error, &err);
-        std::string message("[" + std::to_string(err.error) + "]: " + err.message);
-        const JavaClass& error_type_class = realm::_impl::JavaClassGlobalDef::core_error_converter();
-        static JavaMethod error_type_as_exception(env,
-                                                  error_type_class,
-                                                  "asThrowable",
-                                                  "(Lio/realm/kotlin/internal/interop/RealmCoreException;)Ljava/lang/Throwable;", true);
-        jstring error_message = (env)->NewStringUTF(message.c_str());
-        exception = (env)->CallStaticObjectMethod(
-                error_type_class,
-                error_type_as_exception,
-                jint(err.error),
-                error_message);
+        exception = create_java_exception(env, err);
     } else {
         realm_release(realm);
     }
@@ -962,7 +989,7 @@ realm_sync_session_register_progress_notifier_wrapper(
             }
     );
     if (!result) {
-        bool exception_thrown = throw_as_java_exception(jenv);
+        bool exception_thrown = throw_last_error_as_java_exception(jenv);
         if (exception_thrown) {
             // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return 0;

@@ -35,14 +35,14 @@ object CoreErrorConverter {
         val errorCode: ErrorCode? = ErrorCode.of(errorCodeNativeValue)
         val message: String = "[$errorCode]: $messageNativeValue"
 
-        return when {
+        return userError ?: when {
             ErrorCode.RLM_ERR_INDEX_OUT_OF_BOUNDS == errorCode ->
                 IndexOutOfBoundsException(message)
             ErrorCategory.RLM_ERR_CAT_INVALID_ARG in categories ->
                 IllegalArgumentException(message)
             ErrorCategory.RLM_ERR_CAT_LOGIC in categories || ErrorCategory.RLM_ERR_CAT_RUNTIME in categories ->
                 IllegalStateException(message)
-            else -> RuntimeException(message) // This can happen when propagating user level exceptions.
+            else -> Error(message) // This can happen when propagating user level exceptions.
         }
     }
 

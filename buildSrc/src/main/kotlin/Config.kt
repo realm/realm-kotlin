@@ -15,9 +15,54 @@
  * limitations under the License.
  */
 
+
+/**
+ * Enum describing operating systems we can build on.
+ *
+ * We need to track this in order to control which Kotlin Multiplatform tasks we can safely
+ * create on the given Host OS.
+ */
+enum class OperatingSystem {
+    LINUX,
+    MACOS_ARM64,
+    MACOS_X64,
+    WINDOWS;
+
+    fun isWindows(): Boolean {
+        return this == WINDOWS
+    }
+
+    fun isMacOs(): Boolean{
+        return this == MACOS_X64 || this == MACOS_ARM64
+    }
+}
+
+private fun findHostOs(): OperatingSystem {
+    val hostOs = System.getProperty("os.name")
+    return if (hostOs.contains("windows", ignoreCase = true)) {
+        OperatingSystem.WINDOWS
+    } else if (hostOs.contains("linux", ignoreCase = true)) {
+        OperatingSystem.LINUX
+    } else {
+        // Assume MacOS by default
+        when(val osArch = System.getProperty("os.arch")) {
+            "aarch64" -> OperatingSystem.MACOS_ARM64
+            "x86_64" -> OperatingSystem.MACOS_X64
+            else -> {
+                throw IllegalStateException("Unknown architecture: $osArch")
+            }
+        }
+    }
+}
+
+/**
+ * Define which Host OS the build is running on.
+ */
+val HOST_OS: OperatingSystem = findHostOs()
+
 object Realm {
     val ciBuild = (System.getenv("CI") != null)
-    const val version = "1.8.0-gha-SNAPSHOT"
+    const val version = "1.10.0-gha-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"
@@ -56,8 +101,9 @@ object Versions {
         const val targetSdk = 33
         const val compileSdkVersion = 33
         const val buildToolsVersion = "33.0.0"
-        const val buildTools = "7.2.2" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
+        const val buildTools = "7.3.1" // https://maven.google.com/web/index.html?q=gradle#com.android.tools.build:gradle
         const val ndkVersion = "23.2.8568313"
+        const val r8 = "4.0.48" // See https://developer.android.com/build/kotlin-support
     }
     const val androidxBenchmarkPlugin = "1.2.0-alpha12" // https://maven.google.com/web/index.html#androidx.benchmark:androidx.benchmark.gradle.plugin
     const val androidxStartup = "1.1.1" // https://maven.google.com/web/index.html?q=startup#androidx.startup:startup-runtime
@@ -67,7 +113,8 @@ object Versions {
     const val atomicfu = "0.18.5" // https://github.com/Kotlin/kotlinx.atomicfu
     const val autoService = "1.0" // https://mvnrepository.com/artifact/com.google.auto.service/auto-service
     const val buildkonfig = "0.13.3" // https://github.com/yshrsmz/BuildKonfig
-    // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.22.1 is available through the Android SDK.
+    // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.18.1 is available through the Android SDK.
+    // Build also tested successfully with 3.21.4 (latest release).
     const val cmake = "3.22.1"
     const val coroutines = "1.6.4" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val datetime = "0.4.0" // https://github.com/Kotlin/kotlinx-datetime
@@ -79,9 +126,9 @@ object Versions {
     const val junit = "4.13.2" // https://mvnrepository.com/artifact/junit/junit
     const val jvmTarget = "1.8"
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
-    const val kotlin = "1.7.20" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
-    const val latestKotlin = "1.8.20" // https://kotlinlang.org/docs/eap.html#build-details
-    const val kotlinCompileTesting = "1.4.9" // https://github.com/tschuchortdev/kotlin-compile-testing
+    const val kotlin = "1.8.21" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
+    const val latestKotlin = "1.9.0-Beta" // https://kotlinlang.org/docs/eap.html#build-details
+    const val kotlinCompileTesting = "1.5.0" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "2.1.2" // https://github.com/ktorio/ktor
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
@@ -90,7 +137,7 @@ object Versions {
     const val serialization = "1.4.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
-    const val kbson = "0.2.0" // https://github.com/mongodb/kbson
+    const val kbson = "0.3.0" // https://github.com/mongodb/kbson
 }
 
 // Could be actual Dependency objects

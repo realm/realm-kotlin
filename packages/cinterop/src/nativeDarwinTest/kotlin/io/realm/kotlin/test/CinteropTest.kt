@@ -82,7 +82,7 @@ import kotlin.test.assertTrue
 class CinteropTest {
     @Test
     fun version() {
-        assertEquals("13.9.3", realm_get_library_version()!!.toKString())
+        assertEquals("13.15.0", realm_get_library_version()!!.toKString())
     }
 
     @Test

@@ -1,4 +1,112 @@
-## 1.8.0-SNAPSHOT (YYYY-MM-DD)
+## 1.10.0 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.
+* Support for passing list, sets or iterable arguments to queries with `IN`-operators, e.g. `query<TYPE>("<field> IN $0", listOf(1,2,3))`. (Issue [#929](https://github.com/realm/realm-kotlin/issues/929))
+
+### Fixed
+* None
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.15.0, commit d86103556a139686836dd565862e1a8b36917c76.
+* Bumped Android Gradle Version to 7.3.1.
+* Add bundle ID sync connection parameter.
+* Enabled profiling for unit test modules.
+
+
+## 1.9.1 (2023-06-08)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Deleting `RealmResults` created by `by backlinks()` would crash with `Cannot delete custom Deleteable objects: ObjectBoundRealmResults`. (Issue [#1413](https://github.com/realm/realm-kotlin/issues/1413)) 
+* Incremental compilation in combination with `@PersistedName` on model class names could result in schema errors when opening the Realm (Issue [#1401](https://github.com/realm/realm-kotlin/issues/1401)).
+* [Sync] Native crash if a server error was reported while using `SyncConfiguration.waitForInitialRemoteData()`. (Issue [#1401](https://github.com/realm/realm-kotlin/issues/1401))
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.9.0 (2023-05-23)
+
+This release bumps the minimum supported version of Kotlin from 1.7.20 to 1.8.0. This also impact the minimum supported version of the Android Gradle Plugin and Gradle. See the Compatibility seection for more information.
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Realm objects now support ignoring delegated properties. (Issue [#1377](https://github.com/realm/realm-kotlin/pull/1386))
+* Support for simple token full-text search using `@FullText` on `String` properties. Read the documentation on `@FullText` for more info. (Issue [#1368](https://github.com/realm/realm-kotlin/pull/1368))
+* Support for initialization of a realm file with a bundled realm through `RealmConfiguration.Builder(...).initialRealmFile(...)` and `SyncConfiguration.Builder(...).initialRealmFile(...)`. (Issue [#577](https://github.com/realm/realm-kotlin/issues/577))
+* [Sync] The new sync exception `CompensatingWriteException` will be thrown in the `SyncSession.ErrorHandler` when the server undoes one or more client writes. (Issue [#1372](https://github.com/realm/realm-kotlin/issues/1372))
+* [Sync] Added experimental full document serialization support on Credentials with a Custom Function, App Services Function calls, user profile, and custom data. (Issue [#1355](https://github.com/realm/realm-kotlin/pull/1355))
+
+### Fixed
+* User exceptions now propagate correctly out from `RealmMigration` and `CompactOnLaunchCallback` instead of just resulting in a generic *User-provided callback failed* `RuntimeException`. (Issue [#1228](https://github.com/realm/realm-kotlin/issues/1228))
+* The default compact-on-launch callback trigger 50% or more of the space could be reclaimed was reversed. (Issue [#1380](https://github.com/realm/realm-kotlin/issues/1380))
+* Objects that were renamed using `@PersistedName` couldn't be referenced as a direct link in a model class. (Issue [#1377](https://github.com/realm/realm-kotlin/issues/1377))
+* [Sync] `BsonEncoder` now allows converting numerical values with precision loss.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.6.4 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.11.0, commit d8721d7baec39571e7e5373c3f407a50d144307e.
+* Updated to Sync Protocol version 9. 
+* Updated BAAS test server to v2023-05-15.
+* Updated R8 used by tests to 4.0.48.
+
+### Contributors
+*  [Tim Klingeleers](https://github.com/Mardaneus86) for fixing the default `compactOnLaunch` logic. 
+
+
+## 1.8.0 (2023-05-01)
 
 ### Breaking Changes
 * `RealmLog` is now a global singleton shared between all Realm API's. Previously log configuration happened using the `log` builder method on `AppConfiguration`, `SyncConfiguration` or `RealmConfiguration`. These API's are still present and for apps only using a single Atlas App ID, the behaviour is the same. For apps that have configured multiple Atlas App ID's, it will no longer be possible to configure different log levels and loggers for each app. Instead, the last `AppConfiguration` created will override the logger configuration from other `AppConfiguration`s.
@@ -12,6 +120,7 @@
 * `@PersistedName` is now also supported on model classes. (Issue [#1138](https://github.com/realm/realm-kotlin/issues/1138))
 * [Sync] All tokens, passwords and custom function arguments are now obfuscated by default, even if `LogLevel` is set to DEBUG, TRACE or ALL. (Issue [#410](https://github.com/realm/realm-kotlin/issues/410))
 * [Sync] Add support for `App.authenticationChangeAsFlow()` which make it possible to listen to authentication changes like "LoggedIn", "LoggedOut" and "Removed" across all users of the app. (Issue [#749](https://github.com/realm/realm-kotlin/issues/749)).
+* [Sync] Support for migrating from Partition-based to Flexible Sync automatically on the device if the server has migrated to Flexible Sync. ([Core Issue #6554](https://github.com/realm/realm-core/issues/6554))
 
 ### Fixed
 * Querying a `RealmList` or `RealmSet` with more than eight entries with a list of values could result in a SIGABRT. (Issue [#1183](https://github.com/realm/realm-kotlin/issues/1183))
@@ -30,35 +139,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.9.3, commit 1edcd929894d120694e19b892cbd9edcb2adc73c.
-
-
-## 1.7.2-SNAPSHOT (YYYY-MM-DD)
-
-### Breaking Changes
-* None.
-
-### Enhancements
-* None.
-
-### Fixed
-* None.
-
-### Compatibility
-* File format: Generates Realms with file format v23.
-* Realm Studio 13.0.0 or above is required to open Realms created by this version.
-* This release is compatible with the following Kotlin releases:
-  * Kotlin 1.7.20 and above.
-  * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above.
-  * AtomicFu 0.18.3 and above.
-  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-* Minimum Gradle version: 6.7.1.
-* Minimum Android Gradle Plugin version: 4.0.0.
-* Minimum Android SDK: 16.
-
-### Internal
-* None.
+* Updated to Realm Core 13.10.0, commit 7b9ab24d631437364dbe955ac3ea1f550b26cf10.
 
 
 ## 1.7.1 (2023-04-19)

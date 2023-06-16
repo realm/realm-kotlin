@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.compiler
 
+import io.realm.kotlin.compiler.FqNames.CLASS_APP_CONFIGURATION
+import io.realm.kotlin.compiler.FqNames.PACKAGE_MONGODB
+import io.realm.kotlin.compiler.FqNames.PACKAGE_MONGODB_INTERNAL
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
@@ -69,13 +73,16 @@ internal object Names {
 
     // Schema related names
     val CLASS_INFO_CREATE = Name.identifier("create")
-    val PROPERTY_INFO_CREATE = Name.identifier("create")
     val PROPERTY_TYPE_OBJECT = Name.identifier("RLM_PROPERTY_TYPE_OBJECT")
     val PROPERTY_TYPE_LINKING_OBJECTS = Name.identifier("RLM_PROPERTY_TYPE_LINKING_OBJECTS")
     val PROPERTY_COLLECTION_TYPE_NONE = Name.identifier("RLM_COLLECTION_TYPE_NONE")
     val PROPERTY_COLLECTION_TYPE_LIST = Name.identifier("RLM_COLLECTION_TYPE_LIST")
     val PROPERTY_COLLECTION_TYPE_SET = Name.identifier("RLM_COLLECTION_TYPE_SET")
     val PROPERTY_COLLECTION_TYPE_DICTIONARY = Name.identifier("RLM_COLLECTION_TYPE_DICTIONARY")
+
+    val APP_CREATE = Name.identifier("create")
+    val APP_CONFIGURATION_CREATE = Name.identifier("create")
+    val APP_CONFIGURATION_BUILDER_BUILD = Name.identifier("build")
 }
 
 internal object FqNames {
@@ -90,6 +97,7 @@ internal object FqNames {
 
     val BASE_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.BaseRealmObject")
     val REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.RealmObject")
+    val TYPED_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.TypedRealmObject")
     val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.EmbeddedRealmObject")
 
     // External visible interface of Realm objects
@@ -109,10 +117,12 @@ internal object FqNames {
     val COLLECTION_TYPE = FqName("io.realm.kotlin.internal.interop.CollectionType")
     val PRIMARY_KEY_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PrimaryKey")
     val INDEX_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Index")
+    val FULLTEXT_ANNOTATION = FqName("io.realm.kotlin.types.annotations.FullText")
     val IGNORE_ANNOTATION = FqName("io.realm.kotlin.types.annotations.Ignore")
     val PERSISTED_NAME_ANNOTATION = FqName("io.realm.kotlin.types.annotations.PersistedName")
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
+    val PROPERTY_INFO_CREATE = FqName("io.realm.kotlin.internal.schema.createPropertyInfo")
 
     // Realm data types
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")
@@ -127,4 +137,16 @@ internal object FqNames {
     val REALM_UUID = FqName("io.realm.kotlin.types.RealmUUID")
     val REALM_MUTABLE_INTEGER = FqName("io.realm.kotlin.types.MutableRealmInt")
     val REALM_ANY = FqName("io.realm.kotlin.types.RealmAny")
+
+    val PACKAGE_MONGODB = FqName("io.realm.kotlin.mongodb")
+    val PACKAGE_MONGODB_INTERNAL = FqName("io.realm.kotlin.mongodb.internal")
+    val CLASS_APP_CONFIGURATION = FqName("io.realm.kotlin.mongodb.AppConfiguration")
+}
+
+object ClassIds {
+    val APP = ClassId(PACKAGE_MONGODB, Name.identifier("App"))
+    val APP_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppImpl"))
+    val APP_CONFIGURATION = ClassId(PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
+    val APP_CONFIGURATION_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppConfigurationImpl"))
+    val APP_CONFIGURATION_BUILDER = ClassId(CLASS_APP_CONFIGURATION, Name.identifier("Builder"))
 }

@@ -22,7 +22,10 @@ import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmObjectInterop
-import io.realm.kotlin.internal.interop.RealmQueryArgsTransport
+import io.realm.kotlin.internal.interop.RealmQueryArgument
+import io.realm.kotlin.internal.interop.RealmQueryArgumentList
+import io.realm.kotlin.internal.interop.RealmQueryListArgument
+import io.realm.kotlin.internal.interop.RealmQuerySingleArgument
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.ValueType
@@ -331,32 +334,58 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 @Suppress("NestedBlockDepth")
 internal object RealmValueArgumentConverter {
-    fun MemTrackingAllocator.convertArg(value: Any?): RealmValue {
-        return value?.let {
+    fun MemTrackingAllocator.kAnyToRealmValue(value: Any?): RealmValue {
+        return value?.let { value ->
             when (value) {
                 is RealmObject -> {
-                    val objRef = realmObjectToRealmReferenceOrError(value)
-                    realmObjectTransport(objRef)
+                    realmObjectTransport(realmObjectToRealmReferenceOrError(value))
                 }
                 is RealmAny -> realmAnyToRealmValue(value)
                 else -> {
-                    primitiveTypeConverters[it::class]?.let { converter ->
+                    primitiveTypeConverters[value::class]?.let { converter ->
                         with(converter as RealmValueConverter<Any?>) {
                             publicToRealmValue(value)
                         }
-                    } ?: throw IllegalArgumentException("Cannot use object of type ${value::class::simpleName} as query argument")
+                    } ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class.simpleName}' as query argument")
                 }
             }
         } ?: nullTransport()
     }
 
-    fun MemTrackingAllocator.convertToQueryArgs(
+    fun MemTrackingAllocator.convertQueryArg(value: Any?): RealmQueryArgument =
+        when (value) {
+            is Collection<*> -> {
+                RealmQueryListArgument(
+                    allocRealmValueList(value.size).apply {
+                        value.mapIndexed { index: Int, element: Any? ->
+                            set(index, kAnyToRealmValue(element))
+                        }
+                    }
+                )
+            }
+            // Try to build a list from an iterator and convert the arguments as above
+            is Iterable<*> -> {
+                val args = value.iterator().asSequence().toList()
+                RealmQueryListArgument(
+                    allocRealmValueList(args.size).apply {
+                        args.mapIndexed { index: Int, element: Any? ->
+                            set(index, kAnyToRealmValue(element))
+                        }
+                    }
+                )
+            }
+            else -> {
+                RealmQuerySingleArgument(kAnyToRealmValue(value))
+            }
+        }
+
+    internal fun MemTrackingAllocator.convertToQueryArgs(
         queryArgs: Array<out Any?>
-    ): Pair<Int, RealmQueryArgsTransport> {
+    ): RealmQueryArgumentList {
         return queryArgs.map {
-            convertArg(it)
-        }.toTypedArray().let {
-            Pair(queryArgs.size, queryArgsOf(it))
+            convertQueryArg(it)
+        }.let {
+            queryArgsOf(it)
         }
     }
 }
@@ -380,6 +409,28 @@ internal fun <T : BaseRealmObject> realmObjectConverter(
     }
 }
 
+/**
+ * Tries to convert a [RealmValue] into a [RealmAny], it handles the cases for all primitive types
+ * and leaves the other cases to an else block.
+ */
+@PublishedApi
+internal inline fun RealmValue.asPrimitiveRealmAnyOrElse(
+    elseBlock: RealmValue.() -> RealmAny?
+): RealmAny? = when (getType()) {
+    ValueType.RLM_TYPE_NULL -> null
+    ValueType.RLM_TYPE_INT -> RealmAny.create(getLong())
+    ValueType.RLM_TYPE_BOOL -> RealmAny.create(getBoolean())
+    ValueType.RLM_TYPE_STRING -> RealmAny.create(getString())
+    ValueType.RLM_TYPE_BINARY -> RealmAny.create(getByteArray())
+    ValueType.RLM_TYPE_TIMESTAMP -> RealmAny.create(RealmInstantImpl(getTimestamp()))
+    ValueType.RLM_TYPE_FLOAT -> RealmAny.create(getFloat())
+    ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(getDouble())
+    ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(realmValueToDecimal128(this))
+    ValueType.RLM_TYPE_OBJECT_ID -> RealmAny.create(BsonObjectId(getObjectIdBytes()))
+    ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(getUUIDBytes()))
+    else -> elseBlock()
+}
+
 @Suppress("OVERRIDE_BY_INLINE", "NestedBlockDepth")
 internal fun realmAnyConverter(
     mediator: Mediator,
@@ -388,26 +439,9 @@ internal fun realmAnyConverter(
     issueDynamicMutableObject: Boolean = false
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
-        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? {
-            return when (realmValue.isNull()) {
-                true -> null
-                false -> when (val type = realmValue.getType()) {
-                    ValueType.RLM_TYPE_INT -> RealmAny.create(realmValue.getLong())
-                    ValueType.RLM_TYPE_BOOL -> RealmAny.create(realmValue.getBoolean())
-                    ValueType.RLM_TYPE_STRING -> RealmAny.create(realmValue.getString())
-                    ValueType.RLM_TYPE_BINARY -> RealmAny.create(realmValue.getByteArray())
-                    ValueType.RLM_TYPE_TIMESTAMP ->
-                        RealmAny.create(RealmInstantImpl(realmValue.getTimestamp()))
-                    ValueType.RLM_TYPE_FLOAT -> RealmAny.create(realmValue.getFloat())
-                    ValueType.RLM_TYPE_DOUBLE -> RealmAny.create(realmValue.getDouble())
-                    ValueType.RLM_TYPE_DECIMAL128 -> RealmAny.create(
-                        realmValueToDecimal128(
-                            realmValue
-                        )
-                    )
-                    ValueType.RLM_TYPE_OBJECT_ID ->
-                        RealmAny.create(BsonObjectId(realmValue.getObjectIdBytes()))
-                    ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(realmValue.getUUIDBytes()))
+        override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? =
+            realmValue.asPrimitiveRealmAnyOrElse {
+                when (val type = realmValue.getType()) {
                     ValueType.RLM_TYPE_LINK -> {
                         val link = realmValue.getLink()
                         val clazz = if (issueDynamicObject) {
@@ -434,16 +468,17 @@ internal fun realmAnyConverter(
                                 true -> RealmAny.create(obj as DynamicMutableRealmObject)
                                 else -> RealmAny.create(obj as DynamicRealmObject)
                             }
+
                             false -> RealmAny.create(
                                 obj as RealmObject,
                                 clazz as KClass<out RealmObject>
                             )
                         }
                     }
+
                     else -> throw IllegalArgumentException("Invalid type '$type' for RealmValue.")
                 }
             }
-        }
 
         override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue {
             return realmAnyToRealmValueWithObjectImport(

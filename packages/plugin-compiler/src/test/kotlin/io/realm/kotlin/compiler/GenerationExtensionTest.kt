@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(ExperimentalCompilerApi::class)
 
 package io.realm.kotlin.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
+import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.BaseRealmImpl
 import io.realm.kotlin.internal.Mediator
@@ -36,6 +38,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -137,6 +140,11 @@ class GenerationExtensionTest {
             owner = MockRealmReference(),
             mediator = MockMediator()
         )
+        val companionObject = sampleModel::class.companionObjectInstance
+
+        assertTrue(companionObject is RealmObjectCompanion)
+
+        val (table, properties) = companionObject.`io_realm_kotlin_schema`()
 
         // Accessing getters/setters
         sampleModel.`io_realm_kotlin_objectReference` = realmObjectReference
@@ -365,35 +373,43 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
     }
 
+    @Test
+    fun testBundleIdRewiring() {
+        val inputs = Files("/sync")
+        val result = compile(
+            inputs,
+            options = listOf(
+                PluginOption(
+                    pluginId = "io.realm.kotlin",
+                    optionName = "bundleId",
+                    optionValue = "BUNDLE_ID"
+                ),
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        inputs.assertGeneratedIR()
+    }
+
     private fun compile(
         inputs: Files,
-        plugins: List<ComponentRegistrar> = listOf(Registrar())
-    ): KotlinCompilation.Result =
-        KotlinCompilation().apply {
+        plugins: List<ComponentRegistrar> = listOf(Registrar()),
+        options: List<PluginOption> = emptyList(),
+    ): KotlinCompilation.Result {
+        return KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
                 "-Xjvm-default=enable",
                 "-Xdump-directory=${inputs.outputDir()}",
                 "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )
+            commandLineProcessors = listOf(RealmCommandLineProcessor())
+            pluginOptions = options
         }.compile()
-
-    private fun compileFromSource(
-        source: SourceFile,
-        plugins: List<Registrar> = listOf(Registrar())
-    ): KotlinCompilation.Result =
-        KotlinCompilation().apply {
-            sources = listOf(source)
-            useIR = true
-            messageOutputStream = System.out
-            compilerPlugins = plugins
-            inheritClassPath = true
-            kotlincArguments = listOf("-Xjvm-default=enable")
-        }.compile()
+    }
 
     companion object {
         private fun stripInputPath(file: File, map: Map<String, File>) {

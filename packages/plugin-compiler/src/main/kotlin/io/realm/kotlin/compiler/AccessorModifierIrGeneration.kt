@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
@@ -57,6 +58,7 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
+import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
@@ -242,7 +244,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val propertyType = propertyTypeRaw.makeNotNull()
                 val nullable = propertyTypeRaw.isNullable()
                 val excludeProperty =
-                    declaration.backingField!!.hasAnnotation(IGNORE_ANNOTATION) ||
+                    declaration.hasAnnotation(IGNORE_ANNOTATION) ||
+                        declaration.hasAnnotation(TRANSIENT_ANNOTATION) ||
+                        declaration.backingField!!.hasAnnotation(IGNORE_ANNOTATION) ||
                         declaration.backingField!!.hasAnnotation(TRANSIENT_ANNOTATION)
 
                 // Check for property modifiers:

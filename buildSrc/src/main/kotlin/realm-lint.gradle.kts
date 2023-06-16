@@ -57,7 +57,7 @@ allprojects {
 
         description = "Check Kotlin code style."
         classpath = ktlint
-        main = "com.pinterest.ktlint.Main"
+        mainClass.set("com.pinterest.ktlint.Main")
         args = listOf(
             "src/**/*.kt",
             "!src/**/generated/**",
@@ -74,7 +74,7 @@ allprojects {
 
         description = "Fix Kotlin code style deviations."
         classpath = ktlint
-        main = "com.pinterest.ktlint.Main"
+        mainClass.set("com.pinterest.ktlint.Main")
         args = listOf(
             "-F",
             "src/**/*.kt",
