@@ -87,7 +87,7 @@ class RealmTests {
             counter--
         }
         val totalThreadCount = totalThreadCount()
-        assertTrue(expectedThreadCount <= totalThreadCount, "Unexpected thread count after closing realm: $expectedThreadCount <= $totalThreadCount. New threads: ${newThreads()}. Threads: ${threadTrace()}")
+        assertTrue(totalThreadCount <= expectedThreadCount, "Unexpected thread count after closing realm: $expectedThreadCount <= $totalThreadCount. New threads: ${newThreads()}. Threads: ${threadTrace()}")
 
         // Verify that all remaining threads are daemon threads, so that we don't keep the JVM alive
         newThreads().filter { !it.isDaemon }.let {
