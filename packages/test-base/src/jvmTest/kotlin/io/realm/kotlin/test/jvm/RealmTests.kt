@@ -87,7 +87,7 @@ class RealmTests {
             counter--
         }
         val totalThreadCount = totalThreadCount()
-        assertTrue(expectedThreadCount <= totalThreadCount, "Unexpected thread count after closing realm: $expectedThreadCount <= $totalThreadCount. New threads: ${newThreads()}")
+        assertTrue(expectedThreadCount <= totalThreadCount, "Unexpected thread count after closing realm: $expectedThreadCount <= $totalThreadCount. New threads: ${newThreads()}. Threads: ${threadTrace()}")
 
         // Verify that all remaining threads are daemon threads, so that we don't keep the JVM alive
         newThreads().filter { !it.isDaemon }.let {
@@ -122,5 +122,19 @@ class RealmTests {
             channel.close()
             Unit
         }
+    }
+
+    private fun threadTrace(): String {
+        val sb = StringBuilder()
+        sb.appendLine("--------------------------------")
+        val stack = Thread.getAllStackTraces()
+        stack.keys
+            .sortedBy { it.name }
+            .forEach { t: Thread ->
+                sb.appendLine("${t.name} - Is Daemon ${t.isDaemon} - Is Alive ${t.isAlive}")
+            }
+        sb.appendLine("All threads: ${stack.keys.size}")
+        sb.appendLine("Active threads: ${Thread.activeCount()}")
+        return sb.toString()
     }
 }
