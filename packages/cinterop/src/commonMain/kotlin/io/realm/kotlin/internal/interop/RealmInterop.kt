@@ -376,22 +376,22 @@ expect object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
@@ -399,7 +399,7 @@ expect object RealmInterop {
     fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport> // Sending the size inside a pair avoids a roundtrip to C just to get the size of the arguments in the struct
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_get_description(query: RealmQueryPointer): String
     // Not implemented in C-API yet

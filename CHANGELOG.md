@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.
+* Support for passing list, sets or iterable arguments to queries with `IN`-operators, e.g. `query<TYPE>("<field> IN $0", listOf(1,2,3))`. (Issue [#929](https://github.com/realm/realm-kotlin/issues/929))
 * [Sync] Support for `RealmQuery.subscribe()` and `RealmResults.subscribe()` as an easy way to create subscriptions in the background while continuing to use the query result. This API is experimental. (Issue [#1363](https://github.com/realm/realm-kotlin/issues/1363))
 
 ### Fixed
@@ -25,7 +26,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.13.0, commit 541190d4f55d535f2cd554180235888bf6656481.
+* Updated to Realm Core 13.15.0, commit d86103556a139686836dd565862e1a8b36917c76.
 * Bumped Android Gradle Version to 7.3.1.
 * Add bundle ID sync connection parameter.
 * Enabled profiling for unit test modules.
