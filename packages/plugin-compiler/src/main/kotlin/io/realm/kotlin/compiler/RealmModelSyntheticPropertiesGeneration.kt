@@ -18,6 +18,7 @@
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.FqNames.CLASS_INFO
+import io.realm.kotlin.compiler.FqNames.CLASS_KIND_TYPE
 import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
@@ -47,10 +48,10 @@ import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_KIND
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_IS_EMBEDDED
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
@@ -99,7 +100,6 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.isNullable
-import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
@@ -148,6 +148,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val collectionType: IrClass = pluginContext.lookupClassOrThrow(COLLECTION_TYPE)
     private val collectionTypes =
         collectionType.declarations.filterIsInstance<IrEnumEntry>()
+    private val classKindType: IrClass = pluginContext.lookupClassOrThrow(CLASS_KIND_TYPE)
+    private val classKindTypes = classKindType.declarations.filterIsInstance<IrEnumEntry>()
 
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
@@ -398,18 +400,27 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
         }
 
-        // Add `public val `io_realm_kotlin_isEmbedded`: Boolean` property.
+        // Add `public val `io_realm_kotlin_classKind`: RealmClassKind` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
-            REALM_OBJECT_COMPANION_IS_EMBEDDED,
-            pluginContext.irBuiltIns.booleanType
+            REALM_OBJECT_COMPANION_CLASS_KIND,
+            classKindType.defaultType
         ) { startOffset, endOffset ->
-            IrConstImpl.boolean(
-                startOffset,
-                endOffset,
-                pluginContext.irBuiltIns.booleanType,
-                companion.parentAsClass.defaultType.isSubtypeOfClass(embeddedRealmObjectInterface.symbol)
+            val isEmbedded = clazz.isEmbeddedRealmObject
+            val isAsymmetric = clazz.isAsymmetricRealmObject
+            IrGetEnumValueImpl(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                type = classKindType.defaultType,
+                symbol = classKindTypes.first {
+                    // These names must match the values in io.realm.kotlin.schema.RealmClassKind
+                    it.name == when {
+                        isEmbedded -> Name.identifier("EMBEDDED")
+                        isAsymmetric -> Name.identifier("ASYMMETRIC")
+                        else -> Name.identifier("STANDARD")
+                    }
+                }.symbol
             )
         }
     }

@@ -1,7 +1,8 @@
 ## 1.10.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Generic arguments have been cleaned up. In a lot of places, `BaseRealmObject` was accepted as input. This was too broad and could result in runtime exceptions. In those places the argument has been restricted to the correct `TypedRealmObject`.
+
 
 ### Enhancements
 * Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.

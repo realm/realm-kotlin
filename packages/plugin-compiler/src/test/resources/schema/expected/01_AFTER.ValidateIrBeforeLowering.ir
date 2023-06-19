@@ -105,19 +105,19 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> declared in schema.input.A.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.A, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_primaryKey>' type=schema.input.A.Companion origin=null
-        PROPERTY name:io_realm_kotlin_isEmbedded visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_isEmbedded type:kotlin.Boolean visibility:private
+        PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private
             EXPRESSION_BODY
-              CONST Boolean type=kotlin.Boolean value=false
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_isEmbedded> visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:kotlin.Boolean
-            correspondingProperty: PROPERTY name:io_realm_kotlin_isEmbedded visibility:public modality:FINAL [var]
+              GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:STANDARD' type=io.realm.kotlin.schema.RealmClassKind
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_classKind> visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:io.realm.kotlin.schema.RealmClassKind
+            correspondingProperty: PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_isEmbedded> (): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in io.realm.kotlin.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_isEmbedded> (): kotlin.Boolean declared in schema.input.A.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_isEmbedded type:kotlin.Boolean visibility:private' type=kotlin.Boolean origin=null
-                  receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_isEmbedded>' type=schema.input.A.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.A.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
+                  receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.A.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
@@ -258,19 +258,19 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> declared in schema.input.B.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.B, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_primaryKey>' type=schema.input.B.Companion origin=null
-        PROPERTY name:io_realm_kotlin_isEmbedded visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_isEmbedded type:kotlin.Boolean visibility:private
+        PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private
             EXPRESSION_BODY
-              CONST Boolean type=kotlin.Boolean value=false
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_isEmbedded> visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:kotlin.Boolean
-            correspondingProperty: PROPERTY name:io_realm_kotlin_isEmbedded visibility:public modality:FINAL [var]
+              GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:STANDARD' type=io.realm.kotlin.schema.RealmClassKind
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_classKind> visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:io.realm.kotlin.schema.RealmClassKind
+            correspondingProperty: PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_isEmbedded> (): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in io.realm.kotlin.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_isEmbedded> (): kotlin.Boolean declared in schema.input.B.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_isEmbedded type:kotlin.Boolean visibility:private' type=kotlin.Boolean origin=null
-                  receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_isEmbedded>' type=schema.input.B.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.B.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
+                  receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.B.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
@@ -411,19 +411,19 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_primaryKey> (): kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> declared in schema.input.C.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_primaryKey type:kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> visibility:private' type=kotlin.reflect.KMutableProperty1<schema.input.C, kotlin.Any?> origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_primaryKey>' type=schema.input.C.Companion origin=null
-        PROPERTY name:io_realm_kotlin_isEmbedded visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_isEmbedded type:kotlin.Boolean visibility:private
+        PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
+          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private
             EXPRESSION_BODY
-              CONST Boolean type=kotlin.Boolean value=false
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_isEmbedded> visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:kotlin.Boolean
-            correspondingProperty: PROPERTY name:io_realm_kotlin_isEmbedded visibility:public modality:FINAL [var]
+              GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:STANDARD' type=io.realm.kotlin.schema.RealmClassKind
+          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_classKind> visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:io.realm.kotlin.schema.RealmClassKind
+            correspondingProperty: PROPERTY name:io_realm_kotlin_classKind visibility:public modality:FINAL [var]
             overridden:
-              public abstract fun <get-io_realm_kotlin_isEmbedded> (): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectCompanion
+              public abstract fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in io.realm.kotlin.internal.RealmObjectCompanion
             $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
             BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_isEmbedded> (): kotlin.Boolean declared in schema.input.C.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_isEmbedded type:kotlin.Boolean visibility:private' type=kotlin.Boolean origin=null
-                  receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_isEmbedded>' type=schema.input.C.Companion origin=null
+              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.C.Companion'
+                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
+                  receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.C.Companion origin=null
       FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
         overridden:
           public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject

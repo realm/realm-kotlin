@@ -20,6 +20,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.schema.RealmClassKind
+import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
@@ -74,12 +75,13 @@ internal interface InternalMutableRealm : MutableRealm {
     }
 
     override fun deleteAll() {
-        val schema = schema()
-        for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
-            // Deleting asymmetric objects are not supported.
-            val name = schemaClass.realmObjectCompanionOrNull()!!.io_realm_kotlin_schema().name
-            if (schema[name]?.kind != RealmClassKind.ASYMMETRIC) {
-                delete(schemaClass as KClass<out TypedRealmObject>)
+        schema().let { schema: RealmSchema ->
+            for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
+                // Deleting asymmetric objects are not supported.
+                val name = schemaClass.realmObjectCompanionOrNull()!!.io_realm_kotlin_schema().name
+                if (schema[name]?.kind != RealmClassKind.ASYMMETRIC) {
+                    delete(schemaClass as KClass<out TypedRealmObject>)
+                }
             }
         }
     }

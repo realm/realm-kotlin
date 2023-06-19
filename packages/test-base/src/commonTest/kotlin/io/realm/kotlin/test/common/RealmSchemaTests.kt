@@ -96,7 +96,8 @@ class RealmSchemaTests {
         val schemaVariationsDescriptor = schema[SCHEMA_VARIATION_CLASS_NAME]
             ?: fail("Couldn't find class")
         assertEquals(SCHEMA_VARIATION_CLASS_NAME, schemaVariationsDescriptor.name)
-        assertNotEquals(schemaVariationsDescriptor.kind, RealmClassKind.EMBEDDED)
+        assertFalse(schemaVariationsDescriptor.isEmbedded)
+        assertEquals(schemaVariationsDescriptor.kind, RealmClassKind.STANDARD)
         assertEquals("string", schemaVariationsDescriptor.primaryKey?.name)
 
         val sampleName = "Sample"

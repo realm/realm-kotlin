@@ -40,12 +40,10 @@ data class ClassInfo(
             isEmbedded: Boolean = false,
             isAsymmetric: Boolean = false
         ): ClassInfo {
-            val flags: Int = if (isEmbedded) {
-                ClassFlags.RLM_CLASS_EMBEDDED
-            } else if (isAsymmetric) {
-                ClassFlags.RLM_CLASS_ASYMMETRIC
-            } else {
-                ClassFlags.RLM_CLASS_NORMAL
+            val flags: Int = when {
+                isEmbedded -> ClassFlags.RLM_CLASS_EMBEDDED
+                isAsymmetric -> ClassFlags.RLM_CLASS_ASYMMETRIC
+                else -> ClassFlags.RLM_CLASS_NORMAL
             }
             return ClassInfo(name, primaryKey ?: SCHEMA_NO_VALUE, numProperties, 0, flags = flags)
         }

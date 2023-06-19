@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 @file:Suppress("invisible_member", "invisible_reference")
 package io.realm.kotlin.test.mongodb.common
 
@@ -12,7 +28,6 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.ext.insert
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
-import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
 import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.test.StandaloneDynamicMutableRealm
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
@@ -20,6 +35,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.AsymmetricRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
@@ -122,7 +138,7 @@ class AsymmetricSyncTests {
     }
 
     @Test
-    fun copyToRealm_samePrimaryKey_throws() {
+    fun insert_samePrimaryKey_throws() {
         val generatedId = ObjectId()
         realm.writeBlocking {
             insert(
@@ -130,7 +146,7 @@ class AsymmetricSyncTests {
                     id = generatedId
                 }
             )
-            assertFailsWith<IllegalArgumentException>() {
+            assertFailsWith<IllegalArgumentException>("foo") {
                 insert(
                     Measurement().apply {
                         id = generatedId
@@ -209,7 +225,10 @@ class AsymmetricSyncTests {
         }
 
         // Re-enable the sync session and verify that all objects made it to the server.
-        realm.syncSession.resume()
+        realm.syncSession.run {
+            resume()
+            uploadAllLocalChanges(30.seconds)
+        }
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
@@ -281,7 +300,9 @@ class AsymmetricSyncTests {
     private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {
         var found = false
         var documents = 0
-        var attempt = 5
+        var attempt = 10
+        // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
+        // before giving up.
         while (!found && attempt > 0) {
             documents = app.countDocuments(clazz) - initialCount
             if (documents == expectedCount) {

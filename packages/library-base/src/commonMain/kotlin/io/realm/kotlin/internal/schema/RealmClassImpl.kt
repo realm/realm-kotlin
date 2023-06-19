@@ -42,12 +42,10 @@ public data class RealmClassImpl(
     override val isEmbedded: Boolean = cinteropClass.isEmbedded
 
     override val kind: RealmClassKind
-        get() = if (cinteropClass.isEmbedded) {
-            RealmClassKind.EMBEDDED
-        } else if (cinteropClass.isAsymmetric) {
-            RealmClassKind.ASYMMETRIC
-        } else {
-            RealmClassKind.STANDARD
+        get() = when {
+            cinteropClass.isEmbedded -> RealmClassKind.EMBEDDED
+            cinteropClass.isAsymmetric -> RealmClassKind.ASYMMETRIC
+            else -> RealmClassKind.STANDARD
         }
 
     override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }

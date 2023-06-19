@@ -31,7 +31,7 @@ class AsymmetricObjectTests {
             source = SourceFile.kotlin(
                 "referenceAsymmetricObjects.kt",
                 """
-                    import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
+                    import io.realm.kotlin.types.AsymmetricRealmObject
                     import io.realm.kotlin.types.EmbeddedRealmObject
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.annotations.PrimaryKey
@@ -54,7 +54,7 @@ class AsymmetricObjectTests {
             source = SourceFile.kotlin(
                 "referenceRealmObjects.kt",
                 """
-                    import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
+                    import io.realm.kotlin.types.AsymmetricRealmObject
                     import io.realm.kotlin.types.EmbeddedRealmObject
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.annotations.PrimaryKey
@@ -81,7 +81,7 @@ class AsymmetricObjectTests {
             source = SourceFile.kotlin(
                 "embeddedCannotReferenceAsymmetric.kt",
                 """
-                    import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
+                    import io.realm.kotlin.types.AsymmetricRealmObject
                     import io.realm.kotlin.types.EmbeddedRealmObject
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.annotations.PrimaryKey
@@ -107,7 +107,7 @@ class AsymmetricObjectTests {
             source = SourceFile.kotlin(
                 "embeddedCannotReferenceAsymmetric.kt",
                 """
-                    import io.realm.kotlin.mongodb.types.AsymmetricRealmObject
+                    import io.realm.kotlin.types.AsymmetricRealmObject
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.annotations.PrimaryKey
 

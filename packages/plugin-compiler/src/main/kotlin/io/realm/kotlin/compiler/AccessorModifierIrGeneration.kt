@@ -225,7 +225,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         objectReferenceProperty = irClass.lookupProperty(OBJECT_REFERENCE)
         objectReferenceType = objectReferenceProperty.backingField!!.type
 
-        // Attempt to find the interface for asymmetric objects, the class might not be on the classpath.
+        // Attempt to find the interface for asymmetric objects.
+        // The class will normally only be on the classpath for library-sync builds, not
+        // library-base builds.
         val asymmetricRealmObjectInterface: IrClass? = pluginContext.referenceClass(ASYMMETRIC_OBJECT_INTERFACE)?.owner
 
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {

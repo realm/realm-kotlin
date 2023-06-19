@@ -128,10 +128,11 @@ public open class DynamicMutableRealmImpl(
     }
 
     override fun deleteAll() {
-        val schema = schema()
-        for (schemaClass: RealmClass in schema.classes) {
-            if (schema[schemaClass.name]?.kind != RealmClassKind.ASYMMETRIC) {
-                delete(schemaClass.name)
+        schema().let { schema: RealmSchema ->
+            for (schemaClass: RealmClass in schema.classes) {
+                if (schema[schemaClass.name]?.kind != RealmClassKind.ASYMMETRIC) {
+                    delete(schemaClass.name)
+                }
             }
         }
     }
