@@ -20,7 +20,6 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.FqNames.CLASS_INFO
 import io.realm.kotlin.compiler.FqNames.CLASS_KIND_TYPE
 import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
-import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
