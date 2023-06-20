@@ -129,8 +129,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
     private val typedRealmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(TYPED_REALM_OBJECT_INTERFACE)
-    private val embeddedRealmObjectInterface: IrClass =
-        pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val realmObjectCompanionInterface =
