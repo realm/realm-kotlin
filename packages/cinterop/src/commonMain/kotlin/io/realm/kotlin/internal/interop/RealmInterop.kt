@@ -292,6 +292,7 @@ expect object RealmInterop {
         isDefault: Boolean
     )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
+    fun realm_set_collection(obj: RealmObjectPointer, key: PropertyKey, collectionType: CollectionType)
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
     fun <T> realm_object_get_parent(
         obj: RealmObjectPointer,

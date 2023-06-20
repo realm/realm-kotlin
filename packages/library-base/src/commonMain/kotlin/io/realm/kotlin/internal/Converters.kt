@@ -103,18 +103,16 @@ public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
 
 internal inline fun realmValueToRealmAny(
     transport: RealmValue,
-    mediator: Mediator,
-    owner: RealmReference,
+    container: RealmAnyContainer,
     issueDynamicObject: Boolean = false
 ): RealmAny? {
-    return realmValueToRealmAny(transport, mediator, owner, issueDynamicObject, false)
+    return realmValueToRealmAny(transport, container, issueDynamicObject, false)
 }
 
 @Suppress("ComplexMethod", "NestedBlockDepth")
 internal inline fun realmValueToRealmAny(
     transport: RealmValue,
-    mediator: Mediator,
-    owner: RealmReference,
+    container: RealmAnyContainer,
     issueDynamicObject: Boolean,
     issueDynamicMutableObject: Boolean,
 ): RealmAny? {
@@ -134,6 +132,8 @@ internal inline fun realmValueToRealmAny(
                 RealmAny.create(BsonObjectId(transport.getObjectIdBytes()))
             ValueType.RLM_TYPE_UUID -> RealmAny.create(RealmUUIDImpl(transport.getUUIDBytes()))
             ValueType.RLM_TYPE_LINK -> {
+                val mediator = container.mediator
+                val owner = container.realm
                 if (issueDynamicObject) {
                     val clazz = when (issueDynamicMutableObject) {
                         true -> DynamicMutableRealmObject::class
@@ -150,6 +150,9 @@ internal inline fun realmValueToRealmAny(
                     RealmAny.create(realmObject!! as RealmObject, clazz as KClass<out RealmObject>)
                 }
             }
+            ValueType.RLM_TYPE_LIST -> { RealmAny.create(container.getList()) }
+            ValueType.RLM_TYPE_SET -> { RealmAny.create(container.getSet()) }
+            ValueType.RLM_TYPE_DICTIONARY -> { RealmAny.create(container.getDictionary()) }
             else -> throw IllegalArgumentException("Unsupported type: ${type.name}")
         }
     }
@@ -346,7 +349,9 @@ internal object RealmValueArgumentConverter {
                         with(converter as RealmValueConverter<Any?>) {
                             publicToRealmValue(value)
                         }
-                    } ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class.simpleName}' as query argument")
+                    }
+                        // This is also hit from primary key
+                        ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class.simpleName}' as query argument")
                 }
             }
         } ?: nullTransport()
@@ -492,7 +497,7 @@ internal fun realmAnyConverter(
 }
 
 /**
- * Used for converting values to query arguments. Importing objects isn't allowed here.
+ * Used for converting values to query arguments.
  */
 internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithObjectImport(
     value: RealmAny?,
@@ -511,13 +516,16 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithObjectImport(
                 val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference)
                 realmObjectTransport(objRef as RealmObjectInterop)
             }
+            RealmAny.Type.SET -> TODO()
+            RealmAny.Type.LIST -> { TODO() }
+            RealmAny.Type.DICTIONARY -> TODO()
             else -> realmAnyPrimitiveToRealmValue(value)
         }
     }
 }
 
 /**
- * Used for converting RealmAny values to RealmValues suitable for query arguments.
+ * Used for converting RealmAny values to RealmValues suitable for query arguments and primary keys.
  * Importing objects isn't allowed here.
  */
 internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?): RealmValue {
@@ -528,6 +536,10 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?):
                 val objRef = realmObjectToRealmReferenceOrError(value.asRealmObject())
                 realmObjectTransport(objRef)
             }
+            RealmAny.Type.SET,
+            RealmAny.Type.LIST,
+            RealmAny.Type.DICTIONARY ->
+                throw IllegalArgumentException("Cannot use nested collections as primary keys or query arguments")
             else -> realmAnyPrimitiveToRealmValue(value)
         }
     }

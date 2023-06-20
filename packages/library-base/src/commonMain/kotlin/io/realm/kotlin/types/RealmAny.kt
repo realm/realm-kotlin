@@ -112,7 +112,7 @@ public interface RealmAny {
      * Supported Realm data types that can be stored in a `RealmAny` instance.
      */
     public enum class Type {
-        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT
+        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, SET, LIST, DICTIONARY
     }
 
     /**
@@ -233,6 +233,13 @@ public interface RealmAny {
      */
     public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
 
+    // FIXME Docs
+    public fun asSet(): RealmSet<RealmAny?>
+    // FIXME Docs
+    public fun asList(): RealmList<RealmAny?>
+    // FIXME Docs
+    public fun asDictionary(): RealmDictionary<RealmAny?>
+
     /**
      * Two [RealmAny] instances are equal if and only if their types and contents are the equal.
      */
@@ -343,5 +350,20 @@ public interface RealmAny {
          */
         public fun create(realmObject: DynamicRealmObject): RealmAny =
             RealmAnyImpl(Type.OBJECT, DynamicRealmObject::class, realmObject)
+
+        // FIXME Docs
+        // Directly from Set?
+        public fun create(value: RealmSet<RealmAny?>): RealmAny =
+            RealmAnyImpl(Type.SET, RealmAny::class, value)
+
+        // FIXME Docs
+        // Directly from Collection?
+        public fun create(value: RealmList<RealmAny?>): RealmAny =
+            RealmAnyImpl(Type.LIST, RealmAny::class, value)
+
+        // FIXME Docs
+        // Directly from map?
+        public fun create(value: RealmDictionary<RealmAny?>): RealmAny =
+            RealmAnyImpl(Type.DICTIONARY, RealmAny::class, value)
     }
 }

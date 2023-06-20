@@ -16,15 +16,157 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.Realm
+import io.realm.kotlin.dynamic.DynamicMutableRealmObject
+import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.internal.RealmObjectHelper.setValueTransportByKey
+import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.internal.interop.MemTrackingAllocator
+import io.realm.kotlin.internal.interop.PropertyKey
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmListPointer
+import io.realm.kotlin.internal.interop.RealmMapPointer
+import io.realm.kotlin.internal.interop.RealmPointer
+import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmMap
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
 import kotlin.reflect.cast
+
+internal sealed interface RealmAnyContainer {
+
+    val mediator: Mediator
+    val realm: RealmReference
+    val obj: RealmObjectReference<*>
+    fun set(allocator: MemTrackingAllocator, value: RealmAny) {
+        with(allocator) {
+            when (value.type) {
+                RealmAny.Type.INT,
+                RealmAny.Type.BOOL,
+                RealmAny.Type.STRING,
+                RealmAny.Type.BINARY,
+                RealmAny.Type.TIMESTAMP,
+                RealmAny.Type.FLOAT,
+                RealmAny.Type.DOUBLE,
+                RealmAny.Type.DECIMAL128,
+                RealmAny.Type.OBJECT_ID,
+                RealmAny.Type.UUID,
+                RealmAny.Type.OBJECT ->
+                    setPrimitive(value)
+                RealmAny.Type.SET -> {
+                    createCollection(CollectionType.RLM_COLLECTION_TYPE_SET)
+                    getSet().addAll(value.asSet())
+                }
+
+                RealmAny.Type.LIST -> {
+                    createCollection(CollectionType.RLM_COLLECTION_TYPE_LIST)
+                    getList().addAll(value.asList())
+                }
+                RealmAny.Type.DICTIONARY -> {
+                    createCollection(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
+                    getDictionary().putAll(value.asDictionary())
+                }
+            }
+        }
+    }
+
+    fun MemTrackingAllocator.setPrimitive(value: RealmAny)
+    fun createCollection(collectionType: CollectionType)
+    fun getSet(): RealmSet<RealmAny?>
+    fun getList(): RealmList<RealmAny?>
+    fun getDictionary(): RealmDictionary<RealmAny?>
+}
+
+internal class RealmAnyProperty(
+    override val obj: RealmObjectReference<*>,
+    val key: PropertyKey
+) : RealmAnyContainer {
+
+    override val mediator = obj.mediator
+    override val realm: RealmReference = obj.owner
+
+    override fun createCollection(collectionType: CollectionType) {
+        RealmInterop.realm_set_collection(obj.objectPointer, key, collectionType)
+    }
+
+    override fun MemTrackingAllocator.setPrimitive(value: RealmAny) {
+        val converter = if (value.type == RealmAny.Type.OBJECT) {
+            when ((value as RealmAnyImpl<*>).clazz) {
+                DynamicRealmObject::class ->
+                    realmAnyConverter(obj.mediator, obj.owner, true)
+                DynamicMutableRealmObject::class ->
+                    realmAnyConverter(
+                        obj.mediator,
+                        obj.owner,
+                        issueDynamicObject = true,
+                        issueDynamicMutableObject = true
+                    )
+                else ->
+                    realmAnyConverter(obj.mediator, obj.owner)
+            }
+        } else {
+            realmAnyConverter(obj.mediator, obj.owner)
+        }
+        with(converter) {
+            setValueTransportByKey(obj, key, publicToRealmValue(value))
+        }
+    }
+
+    override fun getSet(): RealmSet<RealmAny?> {
+        val nativePointer = RealmInterop.realm_get_set(obj.objectPointer, key)
+        val operator: PrimitiveSetOperator<RealmAny?> = PrimitiveSetOperator(
+            mediator,
+            realm,
+            realmAnyConverter(
+                mediator,
+                realm,
+                false,
+                false
+            ), //issueDynamicObject, issueDynamicMutableObject),
+            nativePointer
+        )
+        return ManagedRealmSet(obj, nativePointer, operator)
+    }
+
+    override fun getList(): RealmList<RealmAny?> {
+        val nativePointer = RealmInterop.realm_get_list(obj.objectPointer, key)
+        val operator = PrimitiveListOperator(
+            mediator,
+            realm,
+            realmAnyConverter(
+                mediator,
+                realm,
+                false,
+                false
+            ),//  issueDynamicObject, issueDynamicMutableObject)
+            nativePointer
+        )
+        val realmAnyList = ManagedRealmList(obj, nativePointer, operator)
+        return realmAnyList
+    }
+
+    override fun getDictionary(): RealmDictionary<RealmAny?> {
+        val nativePointer = RealmInterop.realm_get_dictionary(obj.objectPointer, key)
+        val operator = RealmAnyMapOperator(
+            mediator,
+            realm,
+            realmAnyConverter(mediator, realm, false, false), // issueDynamicObject, issueDynamicMutableObject),
+            converter(String::class, mediator, realm),
+            nativePointer
+        )
+        val realmAnyDictionary = ManagedRealmDictionary(obj, nativePointer, operator)
+        return realmAnyDictionary
+    }
+}
 
 internal class RealmAnyImpl<T : Any> constructor(
     override val type: RealmAny.Type,
@@ -89,6 +231,14 @@ internal class RealmAnyImpl<T : Any> constructor(
         val getValue = getValue(RealmAny.Type.OBJECT)
         return clazz.cast(getValue)
     }
+
+    override fun asSet(): RealmSet<RealmAny?> = getValue(RealmAny.Type.SET) as RealmSet<RealmAny?>
+
+    override fun asList(): RealmList<RealmAny?> =
+        getValue(RealmAny.Type.LIST) as RealmList<RealmAny?>
+
+    override fun asDictionary(): RealmDictionary<RealmAny?> =
+        getValue(RealmAny.Type.DICTIONARY) as RealmDictionary<RealmAny?>
 
     private fun getValue(type: RealmAny.Type): Any {
         if (this.type != type) {

@@ -25,6 +25,9 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
@@ -61,6 +64,15 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.fail
 
+class JsonStyleRealmObject : RealmObject {
+    var value: RealmAny? = null
+
+}
+
+class JsonParent : RealmObject {
+    var child: JsonStyleRealmObject? = null
+}
+
 @Suppress("LargeClass")
 class RealmAnyTests {
 
@@ -76,7 +88,9 @@ class RealmAnyTests {
             embeddedSchema +
                 IndexedRealmAnyContainer::class +
                 RealmAnyContainer::class +
-                Sample::class
+                Sample::class +
+                JsonParent::class +
+                JsonStyleRealmObject::class
         ).directory(tmpDir)
         configuration = configBuilder.build()
         realm = Realm.open(configuration)
@@ -88,6 +102,171 @@ class RealmAnyTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+    @Test
+    fun setInMixed() = runBlocking {
+        val o = realm.write {
+            val instance = JsonParent().apply {
+                // Normal realm link/object reference
+                child = JsonStyleRealmObject().apply {
+                    // Assigning set
+                    // - How to prevent adding a set containing non-any elements?
+                    //   - Can we do this on the fly!?
+                    value = RealmAny.create(
+                        realmSetOf(
+                            RealmAny.create(5),
+                            RealmAny.create(4),
+                            RealmAny.create(6)
+                        )
+                    )
+                }
+            }
+            copyToRealm(instance)
+        }
+        val jsonStyleRealmObject: JsonStyleRealmObject = o.child!!
+        val anyValue: RealmAny = jsonStyleRealmObject.value!!
+        assertEquals(RealmAny.Type.SET, anyValue.type)
+        TabbedStringBuilder().dumpRealmAny(anyValue)
+    }
+
+    @Test
+    fun listInMixed() = runBlocking {
+        val o = realm.write {
+            val instance = JsonParent().apply {
+                // Normal realm link/object reference
+                child = JsonStyleRealmObject().apply {
+                    // Assigning list
+                    // - Quite verbose!?
+                    // - How to prevent/support adding a set containing non-any elements?
+                    //   - Can we do this on the fly!?
+                    //   - Type system to allow only `RealmAny.create(list: RealmList<RealmAny>)`
+                    value = RealmAny.create(
+                        realmListOf(
+                            RealmAny.create(5),
+                            RealmAny.create(4),
+                            RealmAny.create(6)
+                        )
+                    )
+                    //     - Could add:
+                    //         fun realmAnyListOf(vararg: Any): RealmList<RealmAny>
+                    //       or
+                    //         fun Iterable.toRealmAnyList(): RealmList<RealmAny>
+                    //       to allow convenience like
+                    //         realmAnyListOf(5, "Realm", realmAnyListOf())
+                    //         listOf(3, "Realm", realmAnyListOf()).toRealmAnyList()
+                    // Assigning dictornary with nested lists and dictionaries
+//                    value = RealmAny.create(
+//                        realmDictionaryOf(
+//                            "key1" to RealmAny.create(5),
+//                            "key2" to RealmAny.create(
+//                                realmListOf(
+//                                    RealmAny.create(6),
+//                                    RealmAny.create("Realm"),
+//                                    RealmAny.create(
+//                                        realmListOf(
+//                                            RealmAny.create(5)
+//                                        )
+//                                    )
+//                                )
+//                            ),
+//                            "key3" to RealmAny.create(
+//                                realmDictionaryOf(
+//                                    "key31" to RealmAny.create(6),
+//                                    "key32" to RealmAny.create("Realm"),
+//                                )
+//                            ),
+//                        )
+//                    )
+                }
+            }
+            copyToRealm(instance)
+        }
+        val jsonStyleRealmObject: JsonStyleRealmObject = o.child!!
+        val anyValue: RealmAny = jsonStyleRealmObject.value!!
+        assertEquals(RealmAny.Type.LIST, anyValue.type)
+        TabbedStringBuilder().dumpRealmAny(anyValue)
+    }
+
+    @Test
+    fun dictionaryInMixed() = runBlocking {
+        val o = realm.write {
+            val instance = JsonParent().apply {
+                // Normal realm link/object reference
+                child = JsonStyleRealmObject().apply {
+                    // Assigning dictornary with nested lists and dictionaries
+                    value = RealmAny.create(
+                        realmDictionaryOf(
+                            "key1" to RealmAny.create(5),
+//                            "key2" to RealmAny.create(
+//                                realmListOf(
+//                                    RealmAny.create(6),
+//                                    RealmAny.create("Realm"),
+//                                    RealmAny.create(
+//                                        realmListOf(
+//                                            RealmAny.create(5)
+//                                        )
+//                                    )
+//                                )
+//                            ),
+//                            "key3" to RealmAny.create(
+//                                realmDictionaryOf(
+//                                    "key31" to RealmAny.create(6),
+//                                    "key32" to RealmAny.create("Realm"),
+//                                )
+//                            ),
+                        )
+                    )
+                }
+            }
+            copyToRealm(instance)
+        }
+        val jsonStyleRealmObject: JsonStyleRealmObject = o.child!!
+        val anyValue: RealmAny = jsonStyleRealmObject.value!!
+        assertEquals(RealmAny.Type.DICTIONARY, anyValue.type)
+        val tabbedStringBuilder = TabbedStringBuilder()
+        tabbedStringBuilder.dumpRealmAny(anyValue)
+        println(tabbedStringBuilder)
+    }
+
+    // Importing objects with cache through a setter for nested collections
+
+    class TabbedStringBuilder() {
+        private val builder = StringBuilder()
+        internal var indentation = 0
+        internal fun append(s: String) = builder.append("\t".repeat(indentation) + s + "\n")
+        override fun toString(): String {
+            return builder.toString()
+        }
+    }
+
+    fun TabbedStringBuilder.dumpRealmAny(value: RealmAny?) {
+        if (value == null) {
+            append("null")
+            return
+        }
+        when (value.type) {
+            RealmAny.Type.SET, RealmAny.Type.LIST -> {
+                val collection: Collection<RealmAny?> = if (value.type == RealmAny.Type.SET) value.asSet() else value.asList()
+                append("[")
+                indentation += 1
+                collection.map { dumpRealmAny(it) }
+                indentation -= 1
+                append("]")
+            }
+            RealmAny.Type.DICTIONARY -> value.asDictionary().let { dictionary ->
+                append("{")
+                indentation += 1
+                dictionary.map { (key, element) ->
+                    append("$key:")
+                    indentation += 1
+                    dumpRealmAny(element)
+                    indentation -= 1
+                }
+                indentation -= 1
+                append("}")
+            }
+            else -> append(value.toString())
+        }
     }
 
     @Test

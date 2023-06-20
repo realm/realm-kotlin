@@ -60,6 +60,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
  * Implementation for managed sets, backed by Realm.
  */
 internal class ManagedRealmSet<E> constructor(
+    // Rework to allow RealmAny
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>

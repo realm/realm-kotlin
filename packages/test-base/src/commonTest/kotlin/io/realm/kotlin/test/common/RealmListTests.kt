@@ -1278,6 +1278,10 @@ internal class RealmAnyListTester constructor(
                     expected.asRealmObject<RealmListContainer>().stringField,
                     actual.asRealmObject<RealmListContainer>().stringField
                 )
+                // FIXME Should we rather test nested collections somewhere else?
+                RealmAny.Type.SET -> TODO()
+                RealmAny.Type.LIST -> TODO()
+                RealmAny.Type.DICTIONARY -> TODO()
             }
         } else if (expected != null || actual != null) {
             fail("One of the RealmAny values is null, expected = $expected, actual = $actual")

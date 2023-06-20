@@ -458,6 +458,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
     }
 
+    actual fun realm_set_collection(obj: RealmObjectPointer, key: PropertyKey, collectionType: CollectionType) {
+        realmc.realm_set_collection(obj.cptr(), key.key, collectionType.nativeValue)
+    }
+
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
         realmc.realm_object_add_int(obj.cptr(), key.key, value)
     }
@@ -983,6 +987,8 @@ actual object RealmInterop {
         val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
         val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
         val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
+        // FIXME New in core ... what does it do?
+        val collection_was_cleared = booleanArrayOf(false)
         realmc.realm_dictionary_get_changed_keys(
             change.cptr(),
             deletionStructs,
@@ -990,7 +996,8 @@ actual object RealmInterop {
             insertionStructs,
             insertions,
             modificationStructs,
-            modifications
+            modifications,
+            collection_was_cleared
         )
 
         // TODO optimize - integrate within mem allocator?
