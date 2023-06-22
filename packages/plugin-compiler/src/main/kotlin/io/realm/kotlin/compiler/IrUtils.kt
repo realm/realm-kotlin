@@ -169,13 +169,14 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
 // `RealmObject` (Kotlin, interface).
 val realmObjectPsiNames = setOf("RealmObject", "io.realm.kotlin.types.RealmObject")
 val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.kotlin.types.EmbeddedRealmObject")
+val asymmetricRealmObjectPsiNames = setOf("AsymmetricRealmObject", "io.realm.kotlin.types.AsymmetricRealmObject")
 val realmJavaObjectPsiNames = setOf("io.realm.RealmObject()", "RealmObject()")
 val ClassDescriptor.isRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
 val ClassDescriptor.isBaseRealmObject: Boolean
-    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
