@@ -110,7 +110,7 @@ class RealmSchemaTests {
         val embeddedChildName = "EmbeddedChild"
         val embeddedChildDescriptor = schema[embeddedChildName] ?: fail("Couldn't find class")
         assertEquals(embeddedChildName, embeddedChildDescriptor.name)
-        assertTrue(sampleDescriptor.isEmbedded)
+        assertTrue(embeddedChildDescriptor.isEmbedded)
         assertEquals(embeddedChildDescriptor.kind, RealmClassKind.EMBEDDED)
         assertNull(embeddedChildDescriptor.primaryKey)
     }
