@@ -18,13 +18,13 @@
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
-import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.Credentials
+import io.realm.kotlin.mongodb.annotations.ExperimentalAsymmetricSyncApi
 import io.realm.kotlin.mongodb.ext.insert
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
@@ -120,6 +120,7 @@ class AsymmetricSyncTests {
         }
     }
 
+    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun insert() = runBlocking {
         val initialServerDocuments = app.countDocuments("Measurement")
@@ -137,6 +138,7 @@ class AsymmetricSyncTests {
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
+    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun insert_samePrimaryKey_throws() {
         val generatedId = ObjectId()
@@ -174,6 +176,7 @@ class AsymmetricSyncTests {
 
     // If you have A -> B, where A is an asymmetric object and B is embedded it is still possible
     // to query for B. However, no objects belong to asymmetric objects will be found.
+    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun nestedEmbeddedHierarchyIsQueryable() = runBlocking {
         realm.syncSession.pause()
@@ -203,6 +206,7 @@ class AsymmetricSyncTests {
         assertEquals(0, realm.query<BackupDevice>().count().find())
     }
 
+    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun deleteAll_doNotDeleteAsymmetricObjects() = runBlocking {
         val initialServerDocuments = app.countDocuments("Measurement")
@@ -232,12 +236,28 @@ class AsymmetricSyncTests {
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
+    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
-    fun mutableDynamicRealm_insert_unsupportedUpdatePolicy_throws() {
+    fun mutableDynamicRealm_insert_unsuportedType() {
         useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
-            val obj = DynamicMutableRealmObject.create(Measurement::class.simpleName!!)
+            val realmObject = DynamicMutableRealmObject.create(DeviceParent::class.simpleName!!)
             assertFailsWith<IllegalArgumentException> {
-                dynamicRealm.insert(obj, updatePolicy = UpdatePolicy.ALL)
+                dynamicRealm.insert(realmObject)
+            }
+            val embeddedRealmObject = DynamicMutableRealmObject.create(BackupDevice::class.simpleName!!)
+            assertFailsWith<IllegalArgumentException> {
+                dynamicRealm.insert(embeddedRealmObject)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalAsymmetricSyncApi::class)
+    @Test
+    fun mutableDynamicRealm_copyToRealm_throws() {
+        useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
+            val asymmetricObject = DynamicMutableRealmObject.create(Measurement::class.simpleName!!)
+            assertFailsWith<IllegalArgumentException> {
+                dynamicRealm.copyToRealm(asymmetricObject)
             }
         }
     }

@@ -59,27 +59,6 @@ public interface DynamicMutableRealm : DynamicRealm {
     public fun copyToRealm(obj: DynamicRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR): DynamicMutableRealmObject
 
     /**
-     * Copy new objects into the realm or update existing objects without returning the managed
-     * objects afterwards
-     *
-     * If you do not want to use the returned object, this method is generally faster than using
-     * [copyToRealm] since it is possible to optimize memory allocations. For bulk inserting data,
-     * this method is thus preferred to using [copyToRealm].
-     *
-     * Otherwise the behaviour is similar to [copyToRealm].
-     *
-     * @param obj the object to create a copy from.
-     * @param updatePolicy update policy when importing objects. Asymmetric Realm objects
-     * only support [UpdatePolicy.ERROR]. If the wrong update policy is used an [IllegalArgumentException]
-     * is thrown.
-     * @throws IllegalArgumentException if the object graph of [obj] either contains an object
-     * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR],
-     * if the object graph contains an object from a previous version or if a property does not
-     * match the underlying schema.
-     */
-    public fun insert(obj: DynamicRealmObject, updatePolicy: UpdatePolicy = UpdatePolicy.ERROR)
-
-    /**
      * Returns a query for dynamic mutable realm objects of the specified class.
      *
      * @param className the name of the class of which to query for.
