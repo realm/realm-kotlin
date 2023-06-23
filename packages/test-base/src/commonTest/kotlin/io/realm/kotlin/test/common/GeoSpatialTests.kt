@@ -8,7 +8,7 @@ import io.realm.kotlin.types.Distance
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.GeoBox
 import io.realm.kotlin.types.GeoPoint
-import io.realm.kotlin.types.GeoSphere
+import io.realm.kotlin.types.GeoCircle
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.Ignore
@@ -130,18 +130,18 @@ class GeoSpatialTests {
     }
 
     @Test
-    fun geoSphere_toString() {
-        val sphere = GeoSphere(center = GeoPoint(0.0, 0.0), radius = Distance.fromKilometers(10.0))
+    fun geoCircle_toString() {
+        val sphere = GeoCircle(center = GeoPoint(0.0, 0.0), radius = Distance.fromKilometers(10.0))
         assertEquals(0, realm.query<Restaurant>("location GEOWITHIN $sphere").count().find())
     }
 
     @Test
-    fun geoSphere_within() {
+    fun geoCircle_within() {
     }
 
     @Test
     fun geoBox_toString() {
-        val box = GeoBox(bottomLeftCorner = GeoPoint(0.0, 0.0), topRightCorner = GeoPoint(0.0, 0.0))
+        val box = GeoBox(bottomLeft = GeoPoint(0.0, 0.0), topRight = GeoPoint(0.0, 0.0))
         assertEquals(0, realm.query<Restaurant>("location GEOWITHIN $box").count().find())
     }
 
