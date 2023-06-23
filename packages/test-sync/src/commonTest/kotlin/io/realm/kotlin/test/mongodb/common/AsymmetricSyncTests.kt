@@ -310,11 +310,13 @@ class AsymmetricSyncTests {
         ).build()
         Realm.open(config).use {
             it.write {
-                insert(AsymmetricA().apply {
-                    child = EmbeddedB().apply {
-                        StandardC()
+                insert(
+                    AsymmetricA().apply {
+                        child = EmbeddedB().apply {
+                            StandardC()
+                        }
                     }
-                })
+                )
             }
             it.syncSession.uploadAllLocalChanges()
         }
