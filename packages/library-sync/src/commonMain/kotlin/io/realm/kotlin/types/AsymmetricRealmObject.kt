@@ -20,7 +20,7 @@ package io.realm.kotlin.types
  * Asymmetric Realm objects are "write-only" objects that are only supported in synchronized realms
  * configured for [Flexible Sync](https://www.mongodb.com/docs/realm/sdk/kotlin/sync/#flexible-sync).
  *
- * They are useful in write-heavy scenarios like sending sending telemetry data. Once the data is
+ * They are useful in write-heavy scenarios like sending telemetry data. Once the data is
  * sent to the server, it is also automatically deleted on the device.
  *
  * The benefit of using [AsymmetricRealmObject] is that the performance of each sync operation

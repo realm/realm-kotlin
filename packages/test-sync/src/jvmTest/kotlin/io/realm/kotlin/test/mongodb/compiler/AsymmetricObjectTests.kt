@@ -49,13 +49,48 @@ class AsymmetricObjectTests {
     }
 
     @Test
+    fun `cannot reference asymmetric objects in collections`() {
+        val result = Compiler.compileFromSource(
+            source = SourceFile.kotlin(
+                "referenceAsymmetricObjects.kt",
+                """
+                    import io.realm.kotlin.ext.realmDictionaryOf
+                    import io.realm.kotlin.ext.realmListOf
+                    import io.realm.kotlin.ext.realmSetOf
+                    import io.realm.kotlin.types.AsymmetricRealmObject
+                    import io.realm.kotlin.types.EmbeddedRealmObject
+                    import io.realm.kotlin.types.RealmDictionary
+                    import io.realm.kotlin.types.RealmList
+                    import io.realm.kotlin.types.RealmObject
+                    import io.realm.kotlin.types.RealmSet
+                    import io.realm.kotlin.types.annotations.PrimaryKey
+
+                    class A : AsymmetricRealmObject {
+                        @PrimaryKey
+                        var _id: String = ""
+                        var children1: RealmList<A> = realmListOf()
+                        var children2: RealmSet<A> = realmSetOf()
+                        var children3: RealmDictionary<A> = realmDictionaryOf()
+                    }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
+        assertTrue(result.messages.contains("Unsupported type for RealmList: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for RealmSet: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for RealmDictionary: 'A'"))
+    }
+
+    @Test
     fun `cannot reference standard realmobjects`() {
         val result = Compiler.compileFromSource(
             source = SourceFile.kotlin(
                 "referenceRealmObjects.kt",
                 """
+                    import io.realm.kotlin.ext.realmListOf
                     import io.realm.kotlin.types.AsymmetricRealmObject
                     import io.realm.kotlin.types.EmbeddedRealmObject
+                    import io.realm.kotlin.types.RealmList
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.annotations.PrimaryKey
 
@@ -67,6 +102,7 @@ class AsymmetricObjectTests {
                         @PrimaryKey
                         var _id: String = ""
                         var child: B? = null
+                        var children: RealmList<B> = realmListOf()
                     }
                 """.trimIndent()
             )
@@ -81,8 +117,10 @@ class AsymmetricObjectTests {
             source = SourceFile.kotlin(
                 "embeddedCannotReferenceAsymmetric.kt",
                 """
+                    import io.realm.kotlin.ext.realmListOf
                     import io.realm.kotlin.types.AsymmetricRealmObject
                     import io.realm.kotlin.types.EmbeddedRealmObject
+                    import io.realm.kotlin.types.RealmList
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.annotations.PrimaryKey
 
@@ -93,12 +131,14 @@ class AsymmetricObjectTests {
 
                     class A : EmbeddedRealmObject {
                         var child: B? = null
+                        var children: RealmList<B> = realmListOf()
                     }
                 """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("RealmObjects and EmbeddedRealmObjects cannot reference AsymmetricRealmObjects"))
+        assertTrue(result.messages.contains("Unsupported type for RealmList: 'B'"))
     }
 
     @Test
@@ -107,7 +147,9 @@ class AsymmetricObjectTests {
             source = SourceFile.kotlin(
                 "embeddedCannotReferenceAsymmetric.kt",
                 """
+                    import io.realm.kotlin.ext.realmListOf
                     import io.realm.kotlin.types.AsymmetricRealmObject
+                    import io.realm.kotlin.types.RealmList
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.annotations.PrimaryKey
 
@@ -118,11 +160,13 @@ class AsymmetricObjectTests {
 
                     class A : RealmObject {
                         var child: B? = null
+                        var children: RealmList<B> = realmListOf()
                     }
                 """.trimIndent()
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
         assertTrue(result.messages.contains("RealmObjects and EmbeddedRealmObjects cannot reference AsymmetricRealmObjects"))
+        assertTrue(result.messages.contains("Unsupported type for RealmList: 'B'"))
     }
 }

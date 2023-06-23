@@ -10,14 +10,13 @@ import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.AsymmetricRealmObject
 
 /**
- * Insert a dynamic version of a [AsymmetricRealmObject] into Realm. Since asymmetric objects are
+ * Insert a dynamic version of a [AsymmetricRealmObject] into a realm. Since asymmetric objects are
  * "write-only", it is not possible to access the managed data after it has been inserted.
  *
  * @param obj the asymmetric object to insert.
- * @throws IllegalArgumentException if the object is not an asymmetric object, or the object graph
- * of [obj] either contains an object with a primary key value that already exists, if the object
- * graph contains an object from a previous version or if a property does not match the underlying
- * schema.
+ * @throws IllegalArgumentException if the object is not an asymmetric object, the object graph
+ * of [obj] either contains an object with a primary key value that already exists or an object from
+ * a previous version, or if a property does not match the underlying schema.
  */
 @ExperimentalAsymmetricSyncApi
 public fun DynamicMutableRealm.insert(obj: DynamicRealmObject) {

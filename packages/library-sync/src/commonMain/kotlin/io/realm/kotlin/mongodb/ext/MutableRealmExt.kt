@@ -23,13 +23,12 @@ import io.realm.kotlin.mongodb.annotations.ExperimentalAsymmetricSyncApi
 import io.realm.kotlin.types.AsymmetricRealmObject
 
 /**
- * Insert a [AsymmetricRealmObject] into Realm. Since asymmetric objects are "write-only", it is
+ * Insert an [AsymmetricRealmObject] into Realm. Since asymmetric objects are "write-only", it is
  * not possible to access the managed data after it has been inserted.
  *
  * @param obj the object to insert.
  * @throws IllegalArgumentException if the object graph of [obj] either contains an object
- * with a primary key value that already exists, if the object graph contains an object from a
- * previous version or if a property does not match the underlying schema.
+ * with a primary key value that already exists or an object from a previous version.
  */
 @ExperimentalAsymmetricSyncApi
 public fun <T : AsymmetricRealmObject> MutableRealm.insert(obj: T) {

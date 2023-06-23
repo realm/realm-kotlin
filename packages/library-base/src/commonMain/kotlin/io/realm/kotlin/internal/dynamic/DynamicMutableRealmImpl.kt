@@ -59,9 +59,7 @@ public open class DynamicMutableRealmImpl(
         query: String,
         vararg args: Any?
     ): RealmQuery<DynamicMutableRealmObject> {
-        checkAsymmetric(className) {
-            throw IllegalArgumentException("Queries on asymmetric objects are not allowed: $className")
-        }
+        checkAsymmetric(className, "Queries on asymmetric objects are not allowed: $className")
         return ObjectQuery(
             realmReference,
             realmReference.schemaMetadata.getOrThrow(className).classKey,
@@ -78,9 +76,7 @@ public open class DynamicMutableRealmImpl(
         obj: DynamicRealmObject,
         updatePolicy: UpdatePolicy
     ): DynamicMutableRealmObject {
-        checkAsymmetric(obj.type) {
-            throw IllegalArgumentException("Asymmetric Realm objects can only be added using the `insert()` method.")
-        }
+        checkAsymmetric(obj.type, "Asymmetric Realm objects can only be added using the `insert()` method.")
         return io.realm.kotlin.internal.copyToRealm(configuration.mediator, realmReference, obj, updatePolicy, mutableMapOf()) as DynamicMutableRealmObject
     }
 
@@ -106,15 +102,13 @@ public open class DynamicMutableRealmImpl(
     }
 
     override fun delete(className: String) {
-        checkAsymmetric(className) {
-            throw IllegalArgumentException("Asymmetric Realm objects cannot be deleted manually: $className")
-        }
+        checkAsymmetric(className, "Asymmetric Realm objects cannot be deleted manually: $className")
         delete(query(className).find())
     }
 
-    private fun checkAsymmetric(className: String, errorMessage: () -> Unit) {
+    private fun checkAsymmetric(className: String, errorMessage: String) {
         if (realmReference.owner.schema()[className]?.kind == RealmClassKind.ASYMMETRIC) {
-            errorMessage()
+            throw IllegalArgumentException(errorMessage)
         }
     }
 

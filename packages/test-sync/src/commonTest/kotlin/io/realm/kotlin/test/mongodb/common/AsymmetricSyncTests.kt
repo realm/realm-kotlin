@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.Credentials
@@ -37,6 +38,7 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.AsymmetricRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.PrimaryKey
@@ -64,6 +66,7 @@ class Measurement : AsymmetricRealmObject {
     var type: String = "temperature"
     var value: Float = 0.0f
     var device: Device? = null
+    var backups: RealmList<BackupDevice> = realmListOf()
 }
 
 class BackupDevice() : EmbeddedRealmObject {
@@ -85,6 +88,7 @@ class Device() : EmbeddedRealmObject {
     var backupDevice: BackupDevice? = null
 }
 
+@OptIn(ExperimentalAsymmetricSyncApi::class)
 class AsymmetricSyncTests {
 
     private lateinit var app: TestApp
@@ -120,7 +124,6 @@ class AsymmetricSyncTests {
         }
     }
 
-    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun insert() = runBlocking {
         val initialServerDocuments = app.countDocuments("Measurement")
@@ -138,7 +141,6 @@ class AsymmetricSyncTests {
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
-    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun insert_samePrimaryKey_throws() {
         val generatedId = ObjectId()
@@ -176,7 +178,6 @@ class AsymmetricSyncTests {
 
     // If you have A -> B, where A is an asymmetric object and B is embedded it is still possible
     // to query for B. However, no objects belong to asymmetric objects will be found.
-    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun nestedEmbeddedHierarchyIsQueryable() = runBlocking {
         realm.syncSession.pause()
@@ -206,7 +207,6 @@ class AsymmetricSyncTests {
         assertEquals(0, realm.query<BackupDevice>().count().find())
     }
 
-    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun deleteAll_doNotDeleteAsymmetricObjects() = runBlocking {
         val initialServerDocuments = app.countDocuments("Measurement")
@@ -236,7 +236,6 @@ class AsymmetricSyncTests {
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
-    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun mutableDynamicRealm_insert_unsuportedType() {
         useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
@@ -251,7 +250,6 @@ class AsymmetricSyncTests {
         }
     }
 
-    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun mutableDynamicRealm_copyToRealm_throws() {
         useDynamicRealm { dynamicRealm: DynamicMutableRealm ->
@@ -297,7 +295,6 @@ class AsymmetricSyncTests {
     }
 
     // Verify that a schema of Asymmetric -> Embedded -> RealmObject work.
-    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun asymmetricSchema() = runBlocking {
         config = SyncConfiguration.Builder(

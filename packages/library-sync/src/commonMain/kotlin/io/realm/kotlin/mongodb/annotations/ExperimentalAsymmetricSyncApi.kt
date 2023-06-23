@@ -14,14 +14,6 @@
  */
 package io.realm.kotlin.mongodb.annotations
 
-@MustBeDocumented
-@Target(
-    AnnotationTarget.CLASS,
-    AnnotationTarget.PROPERTY,
-    AnnotationTarget.FUNCTION,
-    AnnotationTarget.TYPEALIAS
-)
-@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 /**
  * This annotation mark Realm APIs for Asymmetric Sync that are considered **experimental**, i.e.
  * there are no guarantees given that these APIs cannot change without warning between minor and
@@ -32,4 +24,12 @@ package io.realm.kotlin.mongodb.annotations
  * marked as experimental because we are unsure if these APIs provide value and solve the use
  * cases that people have. If not, they will be changed or removed altogether.
  */
+@MustBeDocumented
+@Target(
+    AnnotationTarget.CLASS,
+    AnnotationTarget.PROPERTY,
+    AnnotationTarget.FUNCTION,
+    AnnotationTarget.TYPEALIAS
+)
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
 public annotation class ExperimentalAsymmetricSyncApi
