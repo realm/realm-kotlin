@@ -23,7 +23,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
-import io.realm.kotlin.internal.RealmValueArgumentConverter.convertArg
+import io.realm.kotlin.internal.RealmValueArgumentConverter.kAnyToRealmValue
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.ObjectKey
@@ -32,6 +32,8 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
+import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
@@ -71,7 +73,7 @@ public val MISSING_PLUGIN: Throwable = IllegalStateException(MISSING_PLUGIN_MESS
  * replaced by the Compiler Plugin.
  */
 @Suppress("FunctionNaming", "NOTHING_TO_INLINE")
-internal inline fun REPLACED_BY_IR(
+public inline fun REPLACED_BY_IR(
     message: String = "This code should have been replaced by the Realm Compiler Plugin. " +
         "Has the `realm-kotlin` Gradle plugin been applied to the project?"
 ): Nothing = throw AssertionError(message)
@@ -195,7 +197,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
                         realmReference,
                         element::class,
                         className,
-                        convertArg(primaryKey),
+                        kAnyToRealmValue(primaryKey),
                         updatePolicy
                     )
                 } catch (e: IllegalStateException) {
@@ -278,5 +280,13 @@ public fun <T : BaseRealm> RealmResults<*>.getRealm(): T {
         return this.realm.owner as T
     } else {
         throw IllegalStateException("Unsupported results type: $this::class")
+    }
+}
+
+public fun <T : BaseRealm> RealmQuery<*>.getRealm(): T {
+    if (this is ObjectQuery) {
+        return this.realmReference.owner as T
+    } else {
+        throw IllegalStateException("Unsupported query type: $this::class")
     }
 }

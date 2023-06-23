@@ -52,6 +52,8 @@ actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
 
+    actual fun realm_value_get(value: RealmValue): Any? = value.value
+
     actual fun realm_get_version_id(realm: RealmPointer): Long {
         val version = realm_version_id_t()
         val found = BooleanArray(1)
@@ -183,7 +185,6 @@ actual object RealmInterop {
         var fileCreated = false
         val callback = DataInitializationCallback {
             fileCreated = true
-            true
         }
         realm_config_set_data_initialization_function(config, callback)
 
@@ -1204,6 +1205,10 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
+    actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
+        realmc.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
+    }
+
     actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
         realmc.set_log_callback(level.priority, callback)
     }
@@ -1395,13 +1400,12 @@ actual object RealmInterop {
         }
         realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
         realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
-        realmc.realm_app_config_set_platform(config, connectionParams.platform)
         realmc.realm_app_config_set_platform_version(config, connectionParams.platformVersion)
-        realmc.realm_app_config_set_cpu_arch(config, connectionParams.cpuArch)
         realmc.realm_app_config_set_device_name(config, connectionParams.device)
         realmc.realm_app_config_set_device_version(config, connectionParams.deviceVersion)
         realmc.realm_app_config_set_framework_name(config, connectionParams.framework)
         realmc.realm_app_config_set_framework_version(config, connectionParams.frameworkVersion)
+        realmc.realm_app_config_set_bundle_id(config, connectionParams.bundleId)
 
         return LongPointerWrapper(config)
     }
@@ -1419,7 +1423,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_user_api_key(key))
+        return LongPointerWrapper(realmc.realm_app_credentials_new_api_key(key))
     }
 
     actual fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer {
@@ -1597,15 +1601,15 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return LongPointerWrapper(
             realmc.realm_query_parse(
                 realm.cptr(),
                 classKey.key,
                 query,
-                args.first.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1613,15 +1617,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(
                 results.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1629,15 +1632,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_list(
                 list.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1645,15 +1647,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_set(
                 set.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1684,20 +1685,19 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return LongPointerWrapper(
-            realmc.realm_query_append_query(
-                query.cptr(),
-                filter,
-                args.first.toLong(),
-                args.second.value
-            )
+            realmc.realm_query_append_query(query.cptr(), filter, args.size, args.head)
         )
     }
 
     actual fun realm_query_get_description(query: RealmQueryPointer): String {
         return realmc.realm_query_get_description(query.cptr())
+    }
+
+    actual fun realm_results_get_query(results: RealmResultsPointer): RealmQueryPointer {
+        return LongPointerWrapper(realmc.realm_results_get_query(results.cptr()))
     }
 
     actual fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer {

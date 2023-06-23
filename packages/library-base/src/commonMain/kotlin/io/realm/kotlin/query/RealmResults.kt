@@ -46,13 +46,14 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      * Ex.:
      *  `'color = "tan" AND name BEGINSWITH "B" SORT(name DESC) LIMIT(5)`
      *
-     * @param query The query string to use for filtering and sort.
+     * @param query The query string to use for filtering and sort. If the empty string is used,
+     * the original query used to create this [RealmResults] is returned.
      * @param args The query parameters.
      * @return new result according to the query and query arguments.
      *
      * @throws IllegalArgumentException on invalid queries.
      */
-    public fun query(query: String, vararg args: Any?): RealmQuery<T>
+    public fun query(query: String = TRUE_PREDICATE, vararg args: Any?): RealmQuery<T>
 
     // TODO list subqueries would stop once the object gets deleted see https://github.com/realm/realm-kotlin/pull/1061
     /**

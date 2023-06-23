@@ -16,14 +16,15 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmAppPointer
-import io.realm.kotlin.internal.interop.RealmAppT
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.App
+import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
@@ -33,12 +34,15 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
+internal typealias AppResources = Triple<DispatcherHolder, NetworkTransport, RealmAppPointer>
+
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
     override val configuration: AppConfigurationImpl,
 ) : App {
 
     internal val nativePointer: RealmAppPointer
+    internal val appNetworkDispatcher: DispatcherHolder
     private val networkTransport: NetworkTransport
 
     // Allow some delay between events being reported and them being consumed.
@@ -53,10 +57,10 @@ public class AppImpl(
     )
 
     init {
-        val appResources: Pair<NetworkTransport, NativePointer<RealmAppT>> =
-            configuration.createNativeApp()
-        networkTransport = appResources.first
-        nativePointer = appResources.second
+        val appResources: AppResources = configuration.createNativeApp()
+        appNetworkDispatcher = appResources.first
+        networkTransport = appResources.second
+        nativePointer = appResources.third
     }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
@@ -126,5 +130,14 @@ public class AppImpl(
         // be beneficial in order to reason about the lifecycle of the Sync thread and dispatchers.
         networkTransport.close()
         nativePointer.release()
+    }
+
+    internal companion object {
+        // This method is used to inject bundleId to the sync configuration. The
+        // SyncLoweringExtension is replacing calls to App.create(appId) with calls to this method.
+        internal fun create(appId: String, bundleId: String): App {
+            Validation.checkEmpty(appId, "appId")
+            return App.create(AppConfiguration.Builder(appId).build(bundleId))
+        }
     }
 }

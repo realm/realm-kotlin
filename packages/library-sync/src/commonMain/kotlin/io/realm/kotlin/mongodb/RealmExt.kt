@@ -48,7 +48,7 @@ public val Realm.subscriptions: SubscriptionSet<Realm>
             if (context.config.syncMode != SyncMode.FLEXIBLE) {
                 throw IllegalStateException(
                     "Subscriptions are only available on Realms configured " +
-                        "for Flexible Sync. This Realm was configured for Partion-based Sync: " +
+                        "for Flexible Sync. This Realm was configured for Partition-based Sync: " +
                         "${context.config.path}"
                 )
             }

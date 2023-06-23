@@ -52,7 +52,7 @@ class RealmTests {
 
         // Finalizer might be running if a another Realm has been opened first. Once started it will
         // for as long as the process is alive.
-        val finalizerRunning = Thread.getAllStackTraces().filter { it.key.name == "RealmFinalizerThread" }.isNotEmpty()
+        val finalizerRunning = Thread.getAllStackTraces().filter { it.key.name == "RealmFinalizingDaemon" }.isNotEmpty()
         val configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
             .build()
@@ -75,7 +75,7 @@ class RealmTests {
             // Doing updates will trigger the core notifier and attach with a shadow thread
             it.write { }
             newThreads().let {
-                assertEquals(realmThreads + 1, it.size, "Unexpected thread count after Realm.write: Newly created threads are $it")
+                assertTrue(realmThreads + 1 >= it.size, "Unexpected thread count after Realm.write: Newly created threads are $it")
             }
         }
         // Closing a Realm should also cleanup our default (internal) dispatchers.

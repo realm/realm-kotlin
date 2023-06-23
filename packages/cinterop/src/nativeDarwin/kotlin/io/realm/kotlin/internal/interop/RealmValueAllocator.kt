@@ -43,6 +43,7 @@ class NativeMemAllocator : MemTrackingAllocator {
     val scope = Arena()
 
     override inline fun allocRealmValueT(): RealmValueT = scope.alloc()
+    override inline fun allocRealmValueList(count: Int): RealmValueList = RealmValueList(count, scope.allocArray(count))
 
     override fun nullTransport(): RealmValue =
         createTransport(null, realm_value_type.RLM_TYPE_NULL)
@@ -125,16 +126,25 @@ class NativeMemAllocator : MemTrackingAllocator {
     override fun byteArrayTransport(value: ByteArray?): RealmValue =
         createTransport(value, realm_value_type.RLM_TYPE_BINARY) { binary.set(scope, it) }
 
-    override fun queryArgsOf(queryArgs: Array<RealmValue>): RealmQueryArgsTransport {
+    override fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList {
         val cArgs = scope.allocArray<realm_query_arg_t>(queryArgs.size)
         queryArgs.mapIndexed { i, arg ->
             cArgs[i].apply {
-                this.nb_args = 1.toULong()
-                this.is_list = false
-                this.arg = arg.value.ptr
+                when (arg) {
+                    is RealmQueryListArgument -> {
+                        nb_args = arg.arguments.size.toULong()
+                        is_list = true
+                        this.arg = arg.arguments.head
+                    }
+                    is RealmQuerySingleArgument -> {
+                        nb_args = 1U
+                        is_list = false
+                        this.arg = arg.argument.value.ptr
+                    }
+                }
             }
         }
-        return RealmQueryArgsTransport(cArgs.pointed)
+        return RealmQueryArgumentList(queryArgs.size.toULong(), cArgs.pointed)
     }
 
     override fun free() {

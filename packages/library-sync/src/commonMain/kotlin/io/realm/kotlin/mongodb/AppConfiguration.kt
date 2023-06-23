@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
@@ -291,8 +292,19 @@ public interface AppConfiguration {
          *
          * @return the AppConfiguration that can be used to create a [App].
          */
-        @OptIn(ExperimentalKBsonSerializerApi::class)
         public fun build(): AppConfiguration {
+            // We cannot rewire this to build(bundleId) and just have REPLACED_BY_IR here,
+            // as these calls might be in a module where the compiler plugin hasn't been applied.
+            // In that case we don't setup the correct bundle ID. If this is an issue we could maybe
+            // just force users to apply our plugin.
+            return build("UNKNOWN_BUNDLE_ID")
+        }
+
+        // This method is used to inject bundleId to the sync configuration. The
+        // SyncLoweringExtension is replacing calls to SyncConfiguration.Builder.build() with calls
+        // to this method.
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        public fun build(bundleId: String): AppConfiguration {
             // Configure logging during creation of AppConfiguration to keep old behavior for
             // configuring logging. This should be removed when `LogConfiguration` is removed.
             val allLoggers = mutableListOf<RealmLogger>()
@@ -311,7 +323,7 @@ public interface AppConfiguration {
             }
 
             val appLogger = ContextLogger("Sdk")
-            val networkTransport: () -> NetworkTransport = {
+            val networkTransport: (dispatcher: DispatcherHolder) -> NetworkTransport = { dispatcherHolder ->
                 val logger: Logger? = if (logLevel <= LogLevel.DEBUG) {
                     object : Logger {
                         override fun log(message: String) {
@@ -327,7 +339,7 @@ public interface AppConfiguration {
                     //  constant in AppConfiguration.Companion
                     //  https://github.com/realm/realm-kotlin/issues/408
                     timeoutMs = 60000,
-                    dispatcherFactory = appNetworkDispatcherFactory,
+                    dispatcherHolder = dispatcherHolder,
                     logger = logger
                 )
             }
@@ -339,11 +351,13 @@ public interface AppConfiguration {
                 metadataMode = if (encryptionKey == null)
                     MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
+                appNetworkDispatcherFactory = appNetworkDispatcherFactory,
                 networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
                 logger = logConfig,
                 appName = appName,
                 appVersion = appVersion,
+                bundleId = bundleId,
                 ejson = ejson,
                 httpLogObfuscator = httpLogObfuscator
             )

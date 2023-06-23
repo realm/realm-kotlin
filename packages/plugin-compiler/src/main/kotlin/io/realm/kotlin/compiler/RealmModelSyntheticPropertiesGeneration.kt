@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.FqNames.CLASS_INFO
 import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
@@ -27,6 +29,7 @@ import io.realm.kotlin.compiler.FqNames.KOTLIN_PAIR
 import io.realm.kotlin.compiler.FqNames.OBJECT_REFERENCE_CLASS
 import io.realm.kotlin.compiler.FqNames.PRIMARY_KEY_ANNOTATION
 import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
+import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
 import io.realm.kotlin.compiler.FqNames.REALM_ANY
 import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
@@ -35,13 +38,13 @@ import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.kotlin.compiler.FqNames.REALM_UUID
+import io.realm.kotlin.compiler.FqNames.TYPED_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_DICTIONARY
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_LIST
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
-import io.realm.kotlin.compiler.Names.PROPERTY_INFO_CREATE
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_MEMBER
@@ -52,6 +55,7 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.kotlin.compiler.Names.SET
+import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -69,6 +73,7 @@ import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irLong
+import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -114,21 +119,25 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
  * - Adding the internal properties of [io.realm.kotlin.internal.RealmObjectInternal]
  * - Adding the internal properties and methods of [RealmObjectCompanion] to the associated companion.
  */
+@Suppress("LargeClass")
 class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPluginContext) {
 
     private val realmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
+    private val typedRealmObjectInterface: IrClass =
+        pluginContext.lookupClassOrThrow(TYPED_REALM_OBJECT_INTERFACE)
     private val embeddedRealmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val realmObjectCompanionInterface =
         pluginContext.lookupClassOrThrow(REALM_MODEL_COMPANION)
+
     private val classInfoClass = pluginContext.lookupClassOrThrow(CLASS_INFO)
-    val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
+    private val classInfoCreateMethod = classInfoClass.lookupCompanionDeclaration<IrSimpleFunction>(CLASS_INFO_CREATE)
 
     private val propertyClass = pluginContext.lookupClassOrThrow(PROPERTY_INFO)
-    val propertyCreateMethod = propertyClass.lookupCompanionDeclaration<IrSimpleFunction>(PROPERTY_INFO_CREATE)
+    private val propertyCreateMethod = pluginContext.referenceFunctions(PROPERTY_INFO_CREATE).first()
 
     private val propertyType: IrClass = pluginContext.lookupClassOrThrow(PROPERTY_TYPE)
     private val propertyTypes =
@@ -214,6 +223,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmAnyType
         ).map { it.classifierOrFail }
     }
+    private val fullTextIndexableTypes = with(pluginContext.irBuiltIns) {
+        setOf(
+            stringType
+        ).map { it.classifierOrFail }
+    }
 
     /**
      * Add fields required to satisfy the `RealmObjectInternal` contract.
@@ -222,7 +236,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // RealmObjectReference<T> should use the model class name as the generic argument.
         val type: IrType = objectReferenceClass.typeWith(irClass.defaultType).makeNullable()
         return irClass.apply {
-            addVariableProperty(
+            addInternalVarProperty(
                 realmModelInternalInterface,
                 OBJECT_REFERENCE,
                 type,
@@ -232,17 +246,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
 
     /**
-     * Add RealmObjectCompanion.io_realm_kotlin_fields: Map<String, KProperty1<BaseRealmObject, Any?>>
+     * Add all "simple" fields required to satisfy the `io.realm.kotlin.internal.RealmObjectCompanion`
+     * interface.
      *
-     * ```
-     * companion object : RealmObjectCompanion {                    // <--- TODO Double check
-     *      override val io_realm_kotlin_fields: Map<String, KProperty1<BaseRealmObject, Any?>> =
-     *          mapOf<String, KProperty1<BaseRealmObject, Any?>>(
-     *              Pair("propertyName", ClassName::property),      // same as: "propertyName" to ClassName::property
-     *              ...
-     *          )
-     * }
-     * ```
+     * The following two fields must be added by using other methods:
+     * - `public fun `io_realm_kotlin_schema`(): RealmClassImpl` is added by calling [addSchemaMethodBody].
+     * - `public fun `io_realm_kotlin_newInstance`(): Any` is added by calling [addNewInstanceMethodBody].
      */
     @Suppress("LongMethod")
     fun addCompanionFields(
@@ -250,11 +259,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         companion: IrClass,
         properties: MutableMap<String, SchemaProperty>?,
     ) {
-        val className = getSchemaClassName(clazz)
         val kPropertyType = kMutableProperty1Class.typeWith(
             companion.parentAsClass.defaultType,
             pluginContext.irBuiltIns.anyNType.makeNullable()
         )
+
+        // Add `public val `io_realm_kotlin_class`: KClass<out TypedRealmObject>` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -269,6 +279,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 classType = clazz.defaultType
             )
         }
+
+        // Add `public val `io_realm_kotlin_className`: String` property.
+        val className = getSchemaClassName(clazz)
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -277,7 +290,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         ) { startOffset, endOffset ->
             IrConstImpl.string(startOffset, endOffset, pluginContext.irBuiltIns.stringType, className)
         }
-        // Add io_realm_kotlin_fields
+
+        // Add `public val `io_realm_kotlin_fields`: Map<String, KProperty1<BaseRealmObject, Any?>>` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -345,10 +359,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             }
         }
 
+        // Add `public val `io_realm_kotlin_primaryKey`: KMutableProperty1<*, *>?` property.
         val primaryKeyFields = properties!!.filter {
             it.value.declaration.backingField!!.hasAnnotation(PRIMARY_KEY_ANNOTATION)
         }
-
         val primaryKey: IrProperty? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().value.declaration
@@ -357,7 +371,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 null
             }
         }
-
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -381,6 +394,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                 pluginContext.irBuiltIns.nothingNType
             )
         }
+
+        // Add `public val `io_realm_kotlin_isEmbedded`: Boolean` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
@@ -529,6 +544,27 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         property.locationOf()
                                     )
                                 }
+                                val isFullTextIndexed = backingField.hasAnnotation(FULLTEXT_ANNOTATION)
+                                if (isFullTextIndexed && backingField.type.classifierOrFail !in fullTextIndexableTypes) {
+                                    logError(
+                                        "Full-text key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${fullTextIndexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        property.locationOf()
+                                    )
+                                }
+
+                                if (isIndexed && isFullTextIndexed) {
+                                    logError(
+                                        "@FullText and @Index cannot be combined on property ${property.name}",
+                                        property.locationOf()
+                                    )
+                                }
+
+                                if (primaryKey && isFullTextIndexed) {
+                                    logError(
+                                        "@PrimaryKey and @FullText cannot be combined on property ${property.name}",
+                                        property.locationOf()
+                                    )
+                                }
 
                                 val location = property.locationOf()
                                 val persistedName = value.persistedName
@@ -546,11 +582,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     startOffset,
                                     endOffset,
                                     type = propertyClass.defaultType,
-                                    symbol = propertyCreateMethod.symbol,
+                                    symbol = propertyCreateMethod,
                                     typeArgumentsCount = 0,
-                                    valueArgumentsCount = 9
+                                    valueArgumentsCount = 10
                                 ).apply {
-                                    dispatchReceiver = irGetObject(propertyClass.companionObject()!!.symbol)
                                     var arg = 0
                                     // Persisted name
                                     putValueArgument(arg++, irString(persistedName))
@@ -591,7 +626,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         when (type) {
                                             objectType -> {
                                                 // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                                val linkTargetType = when (collectionTypeSymbol) {
+                                                when (collectionTypeSymbol) {
                                                     PROPERTY_COLLECTION_TYPE_NONE ->
                                                         backingField.type
                                                     PROPERTY_COLLECTION_TYPE_LIST,
@@ -602,17 +637,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                                     else ->
                                                         error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
                                                 }
-                                                irString(linkTargetType.classifierOrFail.descriptor.name.identifier)
                                             }
-                                            linkingObjectType -> {
-                                                val linkTargetType: IrType = getBacklinksTargetType(backingField)
-                                                val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
-                                                irString(getSchemaClassName(classRef))
-                                            }
-                                            else -> {
-                                                irString("")
-                                            }
-                                        }
+                                            linkingObjectType -> getBacklinksTargetType(backingField)
+                                            else -> null
+                                        }?.let { linkTargetType: IrType ->
+                                            val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
+                                            IrClassReferenceImpl(
+                                                startOffset = UNDEFINED_OFFSET,
+                                                endOffset = UNDEFINED_OFFSET,
+                                                type = classRef.symbol.starProjectedType,
+                                                symbol = classRef.symbol,
+                                                classType = classRef.defaultType
+                                            )
+                                        } ?: irNull(pluginContext.irBuiltIns.kClassClass.typeWith(typedRealmObjectInterface.defaultType).makeNullable())
                                     )
                                     // Link property name
                                     putValueArgument(
@@ -630,6 +667,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     putValueArgument(arg++, irBoolean(primaryKey))
                                     // isIndexed
                                     putValueArgument(arg++, irBoolean(isIndexed))
+                                    // IsFullTextIndexed
+                                    putValueArgument(arg++, irBoolean(isFullTextIndexed))
                                 }
                             }
                         )
@@ -677,15 +716,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
 
     @Suppress("LongMethod")
-    private fun IrClass.addVariableProperty(
+    private fun IrClass.addInternalVarProperty(
         owner: IrClass,
         propertyName: Name,
         propertyType: IrType,
         initExpression: (startOffset: Int, endOffset: Int) -> IrExpressionBody
     ) {
         // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
+        // Also add @kotlin.
         val property = addProperty {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             name = propertyName
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
@@ -693,7 +733,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
         property.backingField = pluginContext.irFactory.buildField {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
             name = property.name
             visibility = DescriptorVisibilities.PRIVATE
@@ -710,7 +750,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT _PROPERTY_ACCESSOR name:<get-objectPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Foo.$RealmHandler) returnType:kotlin.Long?
         // correspondingProperty: PROPERTY name:objectPointer visibility:public modality:OPEN [var]
         val getter = property.addGetter {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = propertyType
@@ -738,7 +778,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FUN DEFAULT_PROPERTY_ACCESSOR name:<set-realmPointer> visibility:public modality:OPEN <> ($this:dev.nhachicha.Child, <set-?>:kotlin.Long?) returnType:kotlin.Unit
         //  correspondingProperty: PROPERTY name:realmPointer visibility:public modality:OPEN [var]
         val setter = property.addSetter {
-            at(this@addVariableProperty.startOffset, this@addVariableProperty.endOffset)
+            at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = pluginContext.irBuiltIns.unitType

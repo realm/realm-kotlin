@@ -311,7 +311,7 @@ bool realm_object_is_valid(const realm_object_t*);
 
 %typemap(out) SWIGTYPE* {
     if (!result) {
-        bool exception_thrown = throw_as_java_exception(jenv);
+        bool exception_thrown = throw_last_error_as_java_exception(jenv);
         if (exception_thrown) {
             // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return $null;
@@ -322,7 +322,7 @@ bool realm_object_is_valid(const realm_object_t*);
 
 %typemap(out) bool {
     if (!result) {
-        bool exception_thrown = throw_as_java_exception(jenv);
+        bool exception_thrown = throw_last_error_as_java_exception(jenv);
         if (exception_thrown) {
             // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return $null;

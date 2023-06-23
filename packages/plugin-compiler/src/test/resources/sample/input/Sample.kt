@@ -44,6 +44,9 @@ class Sample : RealmObject {
     var id: Long = Random().nextLong()
 
     @Ignore
+    val ignoredDelegate by lazy { "" }
+
+    @Ignore
     var ignoredString: String = ""
 
     @Transient

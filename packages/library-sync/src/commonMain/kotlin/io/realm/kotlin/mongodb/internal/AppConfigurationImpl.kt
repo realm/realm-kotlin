@@ -19,20 +19,19 @@ package io.realm.kotlin.mongodb.internal
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.internal.SDK_VERSION
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
-import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
-import io.realm.kotlin.internal.platform.CPU_ARCH
 import io.realm.kotlin.internal.platform.DEVICE_MANUFACTURER
 import io.realm.kotlin.internal.platform.DEVICE_MODEL
-import io.realm.kotlin.internal.platform.OS_NAME
 import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
@@ -40,18 +39,19 @@ import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to AppImpl
-
 @Suppress("LongParameterList")
 public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) constructor(
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
-    internal val networkTransportFactory: () -> NetworkTransport,
+    private val appNetworkDispatcherFactory: CoroutineDispatcherFactory,
+    internal val networkTransportFactory: (dispatcher: DispatcherHolder) -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
     public val logger: LogConfiguration,
     override val appName: String?,
     override val appVersion: String?,
+    internal val bundleId: String,
     override val ejson: EJson,
     override val httpLogObfuscator: HttpLogObfuscator?
 ) : AppConfiguration {
@@ -63,14 +63,15 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
      * Thus this method should only be called from [AppImpl] and will create both a native
      * AppConfiguration and App at the same time.
      */
-    public fun createNativeApp(): Pair<NetworkTransport, RealmAppPointer> {
+    public fun createNativeApp(): AppResources {
         // Create a new network transport for each App instance. This which allow the App to control
         // the lifecycle of any threadpools created by the network transport. Also, there should
         // be no reason for people to have multiple app instances for the same app, so the net
         // effect should be the same
-        val networkTransport = networkTransportFactory()
+        val appDispatcher = appNetworkDispatcherFactory.create()
+        val networkTransport = networkTransportFactory(appDispatcher)
         val appConfigPointer: RealmAppConfigurationPointer =
-            initializeRealmAppConfig(appName, appVersion, networkTransport)
+            initializeRealmAppConfig(appName, appVersion, bundleId, networkTransport)
         var applicationInfo: String? = null
         // Define user agent strings sent when making the WebSocket connection to Device Sync
         if (appName != null || appVersion == null) {
@@ -85,7 +86,8 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             sdkInfo,
             applicationInfo.toString()
         )
-        return Pair(
+        return Triple(
+            appDispatcher,
             networkTransport,
             RealmInterop.realm_app_get(
                 appConfigPointer,
@@ -119,6 +121,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     private fun initializeRealmAppConfig(
         localAppName: String?,
         localAppVersion: String?,
+        bundleId: String,
         networkTransport: NetworkTransport
     ): RealmAppConfigurationPointer {
         return RealmInterop.realm_app_config_new(
@@ -127,11 +130,10 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
             connectionParams = SyncConnectionParams(
                 sdkVersion = SDK_VERSION,
+                bundleId = bundleId,
                 localAppName = localAppName,
                 localAppVersion = localAppVersion,
-                platform = OS_NAME,
                 platformVersion = OS_VERSION,
-                cpuArch = CPU_ARCH,
                 device = DEVICE_MANUFACTURER,
                 deviceVersion = DEVICE_MODEL,
                 framework = RUNTIME,
@@ -154,6 +156,9 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                     syncRootDirectory
                 )
 
+                // Disable multiplexing. See https://github.com/realm/realm-core/issues/6656
+                RealmInterop.realm_sync_client_config_set_multiplex_sessions(syncClientConfig, false)
+
                 encryptionKey?.let {
                     RealmInterop.realm_sync_client_config_set_metadata_encryption_key(
                         syncClientConfig,
@@ -175,4 +180,9 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                     )
                 }
             }
+
+    internal companion object {
+        internal fun create(appId: String, bundleId: String): AppConfiguration =
+            AppConfiguration.Builder(appId).build(bundleId)
+    }
 }
