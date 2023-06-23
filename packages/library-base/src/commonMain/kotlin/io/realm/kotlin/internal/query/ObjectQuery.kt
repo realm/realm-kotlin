@@ -43,9 +43,9 @@ import kotlin.reflect.KClass
 
 @Suppress("SpreadOperator", "LongParameterList")
 internal class ObjectQuery<E : BaseRealmObject> constructor(
-    private val realmReference: RealmReference,
+    internal val realmReference: RealmReference,
     private val classKey: ClassKey,
-    private val clazz: KClass<E>,
+    internal val clazz: KClass<E>,
     private val mediator: Mediator,
     internal val queryPointer: RealmQueryPointer,
 ) : RealmQuery<E>, InternalDeleteable, Observable<RealmResultsImpl<E>, ResultsChange<E>> {

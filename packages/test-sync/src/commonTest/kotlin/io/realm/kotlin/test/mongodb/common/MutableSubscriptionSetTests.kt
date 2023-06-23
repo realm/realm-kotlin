@@ -24,13 +24,16 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
+import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SubscriptionSetState
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.toRealmInstant
+import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import kotlin.test.AfterTest
@@ -233,13 +236,16 @@ class MutableSubscriptionSetTests {
 
     @Test
     fun removeAllStringTyped() = runBlocking {
-        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+        var updatedSubs: SubscriptionSet<Realm> = realm.subscriptions.update { realmRef: Realm ->
             add(realmRef.query<FlexParentObject>())
+            realmRef.query<FlexParentObject>().subscribe(name = "parents")
+            add(realmRef.query<FlexChildObject>())
+            realmRef.query<FlexChildObject>().subscribe(name = "children")
+            removeAll("FlexParentObject")
         }
-        assertEquals(1, updatedSubs.size)
+        assertEquals(2, updatedSubs.size)
         updatedSubs = updatedSubs.update {
-            assertTrue(removeAll("FlexParentObject"))
-            assertEquals(0, size)
+            assertTrue(removeAll("FlexChildObject"))
         }
         assertEquals(0, updatedSubs.size)
     }
@@ -304,6 +310,20 @@ class MutableSubscriptionSetTests {
     }
 
     @Test
+    fun removeAll_anonymouslyOnly() = runBlocking {
+        var updatedSubs = realm.subscriptions.update { realmRef: Realm ->
+            realmRef.query<FlexParentObject>().subscribe("test")
+            realmRef.query<FlexParentObject>().subscribe()
+        }
+        assertEquals(2, updatedSubs.size)
+        updatedSubs = updatedSubs.update {
+            assertTrue(removeAll(anonymousOnly = true))
+            assertEquals(1, size)
+        }
+        assertEquals(1, updatedSubs.size)
+    }
+
+    @Test
     fun removeAll_fails() = runBlocking {
         realm.subscriptions.update {
             assertFalse(removeAll())
@@ -313,7 +333,7 @@ class MutableSubscriptionSetTests {
 
     // Ensure that all resources are correctly torn down when an error happens inside a
     // MutableSubscriptionSet
-    @Ignore // Require support for deleting synchronized Realms
+    @Ignore // Require support for deleting synchronized Realms. See https://github.com/realm/realm-kotlin/issues/1425
     @Test
     @Suppress("TooGenericExceptionThrown")
     fun deleteFile_exceptionInsideMutableRealm() = runBlocking {
@@ -324,7 +344,7 @@ class MutableSubscriptionSetTests {
         } catch (ex: RuntimeException) {
             if (ex.message == "Boom!") {
                 realm.close()
-                // Realm.deleteRealm(config)
+                Realm.deleteRealm(config)
             }
         }
         Unit
@@ -345,5 +365,24 @@ class MutableSubscriptionSetTests {
             assertFalse(iterator.hasNext())
         }
         Unit
+    }
+
+    private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
+        val user = app.createUserAndLogin()
+        val config = SyncConfiguration.Builder(user, setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class))
+            .initialSubscriptions {
+                it.query<FlexParentObject>().subscribe()
+            }
+            .waitForInitialRemoteData()
+            .build()
+
+        Realm.open(config).use { realm ->
+            realm.writeBlocking {
+                repeat(noOfObjects) {
+                    copyToRealm(FlexParentObject(sectionId))
+                }
+            }
+            realm.syncSession.uploadAllLocalChanges()
+        }
     }
 }

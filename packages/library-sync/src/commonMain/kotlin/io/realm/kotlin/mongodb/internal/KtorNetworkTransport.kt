@@ -36,7 +36,6 @@ import io.ktor.utils.io.errors.IOException
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback
-import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
@@ -50,11 +49,10 @@ public class KtorNetworkTransport(
     // FIXME Rework timeout to take a Duration instead
     //  https://github.com/realm/realm-kotlin/issues/408
     timeoutMs: Long,
-    dispatcherFactory: CoroutineDispatcherFactory,
+    private val dispatcherHolder: DispatcherHolder,
     logger: Logger? = null,
 ) : NetworkTransport {
 
-    private val dispatcherHolder: DispatcherHolder = dispatcherFactory.create()
     private val clientCache: HttpClientCache = HttpClientCache(timeoutMs, logger)
 
     @Suppress("ComplexMethod", "TooGenericExceptionCaught")

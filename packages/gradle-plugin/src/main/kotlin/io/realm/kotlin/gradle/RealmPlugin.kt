@@ -17,11 +17,12 @@
 package io.realm.kotlin.gradle
 
 import io.realm.kotlin.gradle.analytics.AnalyticsService
+import io.realm.kotlin.gradle.analytics.hexStringify
+import io.realm.kotlin.gradle.analytics.sha256Hash
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.DependencySubstitutions
-import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyAdderExtensionModule.module
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Provider
@@ -37,11 +38,18 @@ open class RealmPlugin : Plugin<Project> {
 
     private val logger: Logger = Logging.getLogger("realm-plugin")
 
+    internal lateinit var anonymizedBundleId: String
+
     @Inject
     public open fun getBuildEventsRegistry(): BuildEventsListenerRegistry { TODO("Should have been replaced by Gradle.") }
 
     override fun apply(project: Project) {
         project.pluginManager.apply(RealmCompilerSubplugin::class.java)
+
+        // We build the anonymized bundle id here and pass it to the compiler plugin to ensure
+        // that the metrics and sync connection parameters are aligned.
+        val bundleId = project.rootProject.name + ":" + project.name
+        anonymizedBundleId = hexStringify(sha256Hash(bundleId.toByteArray()))
 
         // Run analytics as a Build Service to support Gradle Configuration Cache
         val serviceProvider: Provider<AnalyticsService> = project.gradle.sharedServices.registerIfAbsent(

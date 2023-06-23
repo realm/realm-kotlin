@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal.interop.sync
+import io.realm.kotlin.mongodb.App
+import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.User
 
-/**
- * Wrapper for C-API `realm_auth_provider`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2615
- */
-expect enum class AuthProvider {
-    RLM_AUTH_PROVIDER_ANONYMOUS,
-    RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE,
-    RLM_AUTH_PROVIDER_FACEBOOK,
-    RLM_AUTH_PROVIDER_GOOGLE,
-    RLM_AUTH_PROVIDER_APPLE,
-    RLM_AUTH_PROVIDER_CUSTOM,
-    RLM_AUTH_PROVIDER_EMAIL_PASSWORD,
-    RLM_AUTH_PROVIDER_FUNCTION,
-    RLM_AUTH_PROVIDER_API_KEY,
+val app1 = App.create("app1")
+val app2 = AppConfiguration.create("app2")
+val app3 = AppConfiguration.Builder("app3").build()
+
+class A {
+    val app4 = App.create("app4")
+    val app5 = AppConfiguration.create("app5")
+    val app6 = AppConfiguration.Builder("app6").build()
 }

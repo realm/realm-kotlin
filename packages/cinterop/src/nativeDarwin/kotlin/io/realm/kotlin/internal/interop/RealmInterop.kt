@@ -1327,15 +1327,15 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return CPointerWrapper(
             realm_wrapper.realm_query_parse(
                 realm.cptr(),
                 classKey.key.toUInt(),
                 query,
-                args.first.toULong(),
-                args.second.value.ptr
+                args.size,
+                args.head.ptr
             )
         )
     }
@@ -1343,15 +1343,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return CPointerWrapper(
             realm_wrapper.realm_query_parse_for_results(
                 results.cptr(),
                 query,
-                count.toULong(),
-                args.second.value.ptr
+                args.size,
+                args.head.ptr
             )
         )
     }
@@ -1359,15 +1358,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return CPointerWrapper(
             realm_wrapper.realm_query_parse_for_list(
                 list.cptr(),
                 query,
-                count.toULong(),
-                args.second.value.ptr
+                args.size,
+                args.head.ptr
             )
         )
     }
@@ -1375,15 +1373,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return CPointerWrapper(
             realm_wrapper.realm_query_parse_for_set(
                 set.cptr(),
                 query,
-                count.toULong(),
-                args.second.value.ptr
+                args.size,
+                args.head.ptr
             )
         )
     }
@@ -1424,20 +1421,24 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return CPointerWrapper(
             realm_wrapper.realm_query_append_query(
                 query.cptr(),
                 filter,
-                args.first.toULong(),
-                args.second.value.ptr
+                args.size,
+                args.head.ptr
             )
         )
     }
 
     actual fun realm_query_get_description(query: RealmQueryPointer): String {
         return realm_wrapper.realm_query_get_description(query.cptr()).safeKString()
+    }
+
+    actual fun realm_results_get_query(results: RealmResultsPointer): RealmQueryPointer {
+        return CPointerWrapper(realm_wrapper.realm_results_get_query(results.cptr()))
     }
 
     actual fun realm_results_resolve_in(
@@ -2670,13 +2671,12 @@ actual object RealmInterop {
         }
         realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
         realm_wrapper.realm_app_config_set_sdk_version(appConfig, connectionParams.sdkVersion)
-        realm_wrapper.realm_app_config_set_platform(appConfig, connectionParams.platform)
         realm_wrapper.realm_app_config_set_platform_version(appConfig, connectionParams.platformVersion)
-        realm_wrapper.realm_app_config_set_cpu_arch(appConfig, connectionParams.cpuArch)
         realm_wrapper.realm_app_config_set_device_name(appConfig, connectionParams.device)
         realm_wrapper.realm_app_config_set_device_version(appConfig, connectionParams.deviceVersion)
         realm_wrapper.realm_app_config_set_framework_name(appConfig, connectionParams.framework)
         realm_wrapper.realm_app_config_set_framework_version(appConfig, connectionParams.frameworkVersion)
+        realm_wrapper.realm_app_config_set_bundle_id(appConfig, connectionParams.bundleId)
 
         return CPointerWrapper(appConfig)
     }
@@ -2706,7 +2706,7 @@ actual object RealmInterop {
 
     actual fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer {
         memScoped {
-            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_user_api_key(key))
+            return CPointerWrapper(realm_wrapper.realm_app_credentials_new_api_key(key))
         }
     }
 
@@ -3180,8 +3180,8 @@ actual object RealmInterop {
      */
     private fun Array<RealmValue>.toQueryArgs(memScope: MemScope): CPointer<realm_query_arg_t> {
         with(memScope) {
-            val cArgs = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
-            this@toQueryArgs.mapIndexed { i, arg ->
+            val cArgs: CPointer<realm_query_arg_t> = allocArray<realm_query_arg_t>(this@toQueryArgs.size)
+            this@toQueryArgs.mapIndexed { i, arg: RealmValue ->
                 cArgs[i].apply {
                     this.nb_args = 1.toULong()
                     this.is_list = false
