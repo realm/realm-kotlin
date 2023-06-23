@@ -1,12 +1,13 @@
 ## 1.10.0 (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* Generic arguments have been cleaned up. In a lot of places, `BaseRealmObject` was accepted as input. This was too broad and could result in runtime exceptions. In those places the argument has been restricted to the correct `TypedRealmObject`.
 
 ### Enhancements
 * Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.
 * Support for passing list, sets or iterable arguments to queries with `IN`-operators, e.g. `query<TYPE>("<field> IN $0", listOf(1,2,3))`. (Issue [#929](https://github.com/realm/realm-kotlin/issues/929))
 * [Sync] Support for `RealmQuery.subscribe()` and `RealmResults.subscribe()` as an easy way to create subscriptions in the background while continuing to use the query result. This API is experimental. (Issue [#1363](https://github.com/realm/realm-kotlin/issues/1363))
+* [Sync] Support for "write-only" objects which can be written to MongoDB time-series collections. This can be useful for e.g. telemetry data. Use this by creating a model classes that inherit from the new `AsymmetricRealmObject` base class. See this class for more information. (Issue [#1420](https://github.com/realm/realm-kotlin/pull/1420))
 
 ### Fixed
 * None

@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
@@ -181,7 +182,7 @@ internal fun <T : BaseRealmObject> copyToRealm(
         } else {
             val companion = realmObjectCompanionOrThrow(element::class)
             className = companion.io_realm_kotlin_className
-            if (companion.io_realm_kotlin_isEmbedded) {
+            if (companion.io_realm_kotlin_classKind == RealmClassKind.EMBEDDED) {
                 throw IllegalArgumentException("Cannot create embedded object without a parent")
             }
             companion.`io_realm_kotlin_primaryKey`?.let {

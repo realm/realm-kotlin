@@ -46,6 +46,7 @@ import io.realm.kotlin.internal.schema.RealmStorageTypeImpl
 import io.realm.kotlin.internal.schema.realmStorageType
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
@@ -370,10 +371,10 @@ internal object RealmObjectHelper {
             } else {
                 CollectionOperatorType.PRIMITIVE
             }
-        } else if (!realmObjectCompanion.io_realm_kotlin_isEmbedded) {
-            CollectionOperatorType.REALM_OBJECT
-        } else {
+        } else if (realmObjectCompanion.io_realm_kotlin_classKind == RealmClassKind.EMBEDDED) {
             CollectionOperatorType.EMBEDDED_OBJECT
+        } else {
+            CollectionOperatorType.REALM_OBJECT
         }
         val propertyMetadata = obj.propertyInfoOrThrow(propertyName)
         return getListByKey(obj, propertyMetadata, elementType, operatorType)

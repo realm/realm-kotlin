@@ -18,7 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -36,7 +36,7 @@ public class MutableLiveRealmImpl(
         super.cancelWrite()
     }
 
-    override fun <T : BaseRealmObject> query(
+    override fun <T : TypedRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
