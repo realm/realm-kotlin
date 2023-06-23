@@ -322,7 +322,7 @@ class AsymmetricSyncTests {
     private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {
         var found = false
         var documents = 0
-        var attempt = 10
+        var attempt = 30
         // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
         // before giving up.
         while (!found && attempt > 0) {
