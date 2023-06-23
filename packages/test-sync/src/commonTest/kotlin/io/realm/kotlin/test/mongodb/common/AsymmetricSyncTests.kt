@@ -297,6 +297,7 @@ class AsymmetricSyncTests {
     }
 
     // Verify that a schema of Asymmetric -> Embedded -> RealmObject work.
+    @OptIn(ExperimentalAsymmetricSyncApi::class)
     @Test
     fun asymmetricSchema() = runBlocking {
         config = SyncConfiguration.Builder(
@@ -308,10 +309,12 @@ class AsymmetricSyncTests {
             )
         ).build()
         Realm.open(config).use {
-            AsymmetricA().apply {
-                child = EmbeddedB().apply {
-                    StandardC()
-                }
+            it.write {
+                insert(AsymmetricA().apply {
+                    child = EmbeddedB().apply {
+                        StandardC()
+                    }
+                })
             }
             it.syncSession.uploadAllLocalChanges()
         }
