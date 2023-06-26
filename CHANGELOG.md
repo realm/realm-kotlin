@@ -27,7 +27,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.15.0, commit d86103556a139686836dd565862e1a8b36917c76.
+* Updated to Realm Core 13.15.2, commit b8f3244a316f512ad48c761e11e4a135f729ad23.
 * Bumped Android Gradle Version to 7.3.1.
 * Add bundle ID sync connection parameter.
 * Enabled profiling for unit test modules.
