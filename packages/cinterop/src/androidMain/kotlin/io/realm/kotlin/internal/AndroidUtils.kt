@@ -13,7 +13,7 @@ import com.getkeepsafe.relinker.ReLinker
 fun loadAndroidNativeLibs(context: Context, version: String) {
     // Only use Relinker below API 23, since all bugs it fixes are only present there.
     // Also, see if this might fix https://github.com/realm/realm-kotlin/issues/1202
-    if (android.os.Build.VERSION.SDK_INT < 23 ) {
+    if (android.os.Build.VERSION.SDK_INT < 23) {
         ReLinker.loadLibrary(context, "realmc", version)
     } else {
         System.loadLibrary("realmc")
