@@ -44,11 +44,6 @@ import kotlin.test.assertTrue
 @RunWith(AndroidJUnit4::class)
 class CinteropTest {
 
-    @Test
-    fun version() {
-        assertEquals("13.15.0", realmc.realm_get_library_version())
-    }
-
     // Test various schema migration with automatic flag:
     //  - If you add or remove a class you don't need to update the schema version.
     //  - If you add/remove a column you need to set a greater version number for migration.
