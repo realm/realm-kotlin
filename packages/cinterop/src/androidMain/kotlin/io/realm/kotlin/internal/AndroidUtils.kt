@@ -10,6 +10,7 @@ import com.getkeepsafe.relinker.ReLinker
  *
  * On JVM and Native, this will happen automatically when first loading the RealmInterop class.
  */
+@Suppress("MagicNumber")
 fun loadAndroidNativeLibs(context: Context, version: String) {
     // Only use Relinker below API 23, since all bugs it fixes are only present there.
     // Also, see if this might fix https://github.com/realm/realm-kotlin/issues/1202
