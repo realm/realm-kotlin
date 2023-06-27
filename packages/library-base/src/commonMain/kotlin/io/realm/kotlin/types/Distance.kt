@@ -15,6 +15,9 @@
  */
 package io.realm.kotlin.types
 
+import io.realm.kotlin.types.Distance.Companion.EARTH_RADIUS_KM
+import io.realm.kotlin.types.Distance.Companion.KM_PR_MILE
+
 /**
  * This class represents an equatorial distance that can be used in geospatial queries like those
  * represented by a [GeoCircle].
@@ -75,29 +78,32 @@ public data class Distance private constructor(
     /**
      * Returns the distance in radians.
      */
-    public fun inRadians(): Double = radians
+    public val inRadians: Double
+        get() = radians
 
     /**
      * Returns the distance in kilometers.
      */
-    public fun inKilometers(): Double {
-        val result = radians * EARTH_RADIUS_KM
-        return when {
-            radians == 0.0 -> 0.0
-            result < radians -> Double.POSITIVE_INFINITY
-            else -> result
+    public val inKilometers: Double
+        get() {
+            val result = radians * EARTH_RADIUS_KM
+            return when {
+                radians == 0.0 -> 0.0
+                result < radians -> Double.POSITIVE_INFINITY
+                else -> result
+            }
         }
-    }
 
     /**
      * Returns the distance in miles.
      */
-    public fun inMiles(): Double {
-        val result = radians * EARTH_RADIUS_KM / KM_PR_MILE
-        return when {
-            radians == 0.0 -> 0.0
-            result < radians -> Double.POSITIVE_INFINITY
-            else -> result
+    public val inMiles: Double
+        get() {
+            val result = radians * EARTH_RADIUS_KM / KM_PR_MILE
+            return when {
+                radians == 0.0 -> 0.0
+                result < radians -> Double.POSITIVE_INFINITY
+                else -> result
+            }
         }
-    }
 }

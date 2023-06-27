@@ -354,8 +354,8 @@ class GeoSpatialTests {
         validDists.forEach { d: Double ->
             val dist1 = Distance.fromRadians(d)
             val dist2 = d.radians
-            assertEquals(d, dist1.inRadians())
-            assertEquals(d, dist2.inRadians())
+            assertEquals(d, dist1.inRadians)
+            assertEquals(d, dist2.inRadians)
         }
     }
 
@@ -371,8 +371,8 @@ class GeoSpatialTests {
         validDists.forEach { (input, output) ->
             val dist1 = Distance.fromKilometers(input)
             val dist2 = input.km
-            assertEquals(output, dist1.inKilometers(), "$input failed.")
-            assertEquals(output, dist2.inKilometers(), "$input failed.")
+            assertEquals(output, dist1.inKilometers, "$input failed.")
+            assertEquals(output, dist2.inKilometers, "$input failed.")
         }
     }
 
@@ -388,8 +388,8 @@ class GeoSpatialTests {
         validDists.forEach { (input, output) ->
             val dist1 = Distance.fromMiles(input)
             val dist2 = input.miles
-            assertEquals(output, dist1.inMiles(), "$input failed.")
-            assertEquals(output, dist2.inMiles(), "$input failed.")
+            assertEquals(output, dist1.inMiles, "$input failed.")
+            assertEquals(output, dist2.inMiles, "$input failed.")
         }
     }
 
