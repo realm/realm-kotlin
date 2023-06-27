@@ -24,7 +24,7 @@ import io.realm.kotlin.types.Distance.Companion.KM_PR_MILE
  */
 public data class Distance private constructor(
     /**
-     * The distance in radians.
+     * The equatorial distance in radians.
      */
     private val radians: Double
 ) {
@@ -42,7 +42,7 @@ public data class Distance private constructor(
          *
          * See https://en.wikipedia.org/wiki/Earth_radius for further information.
          */
-        public const val EARTH_RADIUS_KM: Double = 6.371
+        public const val EARTH_RADIUS_KM: Double = 6371
 
         /**
          * The constant used convert between kilometers and the internationale (or statute) mile.

@@ -32,7 +32,7 @@ public data class GeoCircle(
      */
     public val center: GeoPoint,
     /**
-     * Radius of the circle. Distance cannot be a negative number
+     * Radius of the circle as an equatorial distance. Distance cannot be a negative number.
      */
     public val radius: Distance
 ) {
