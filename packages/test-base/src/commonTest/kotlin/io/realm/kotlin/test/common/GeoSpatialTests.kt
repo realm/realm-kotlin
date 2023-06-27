@@ -240,11 +240,12 @@ class GeoSpatialTests {
                 }
             )
         }
-        var box = GeoBox(bottomLeft = GeoPoint(0.0, 0.0), topRight = GeoPoint(0.0, 0.0))
+        var box = GeoBox(bottomLeft = GeoPoint(-1.0, -1.0), topRight = GeoPoint(1.0, 1.0))
         assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $box").count().find())
 
+        // (-5.0, -5.0) is not included due to how the geospatial library in Core works.
         box = GeoBox(bottomLeft = GeoPoint(-5.0, -5.0), topRight = GeoPoint(5.0, 5.0))
-        assertEquals(3, realm.query<Restaurant>("location GEOWITHIN $box").count().find())
+        assertEquals(2, realm.query<Restaurant>("location GEOWITHIN $box").count().find())
     }
 
     @Test
