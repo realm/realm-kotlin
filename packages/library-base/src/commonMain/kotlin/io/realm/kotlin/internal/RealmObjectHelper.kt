@@ -156,7 +156,7 @@ internal object RealmObjectHelper {
     // Primitives
     // ---------------------------------------------------------------------
 
-    internal inline fun setValue(
+    internal fun setValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: Any?
@@ -181,7 +181,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("ComplexMethod", "LongMethod")
-    internal inline fun setValueByKey(
+    internal fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
         value: Any?
@@ -418,10 +418,9 @@ internal object RealmObjectHelper {
                 converter<R>(clazz, mediator, realm) as CompositeConverter<R, *>,
                 listPtr
             )
-            CollectionOperatorType.REALM_ANY -> PrimitiveListOperator(
+            CollectionOperatorType.REALM_ANY -> RealmAnyListOperator(
                 mediator,
                 realm,
-                realmAnyConverter(mediator, realm, issueDynamicObject, issueDynamicMutableObject),
                 listPtr
             ) as ListOperator<R>
             CollectionOperatorType.REALM_OBJECT -> {
@@ -509,10 +508,9 @@ internal object RealmObjectHelper {
                 converter(clazz, mediator, realm),
                 setPtr
             )
-            CollectionOperatorType.REALM_ANY -> PrimitiveSetOperator(
+            CollectionOperatorType.REALM_ANY -> RealmAnySetOperator(
                 mediator,
                 realm,
-                realmAnyConverter(mediator, realm, issueDynamicObject, issueDynamicMutableObject),
                 setPtr
             ) as SetOperator<R>
             CollectionOperatorType.REALM_OBJECT -> {
@@ -1074,7 +1072,8 @@ internal object RealmObjectHelper {
                         }
                         else -> inputScope {
                             val transport =
-                                realmAnyToRealmValueWithObjectImport(value, obj.mediator, obj.owner)
+                                // FIXME Lacks tests
+                                realmAnyToRealmValueWithImport(value, obj.mediator, obj.owner, true,  updatePolicy, cache)
                             setValueTransportByKey(obj, propertyMetadata.key, transport)
                         }
                     }

@@ -112,8 +112,15 @@ public interface RealmAny {
      * Supported Realm data types that can be stored in a `RealmAny` instance.
      */
     public enum class Type {
-        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, SET, LIST, DICTIONARY
+        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, SET, LIST, DICTIONARY;
+
+        // FIXME Should this be public!?
+        public companion object {
+            public val COLLECTION_TYPES: Set<Type> = setOf(SET, LIST, DICTIONARY)
+        }
     }
+
+
 
     /**
      * Returns the [Type] of the `RealmAny` instance.

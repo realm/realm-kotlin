@@ -38,6 +38,7 @@ import io.realm.kotlin.notifications.internal.InitialSetImpl
 import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmSet
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
@@ -61,7 +62,7 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
  */
 internal class ManagedRealmSet<E> constructor(
     // Rework to allow RealmAny
-    internal val parent: RealmObjectReference<*>,
+    internal val parent: RealmObjectReference<*>?,
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
 ) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, CoreNotifiable<ManagedRealmSet<E>, SetChange<E>>, Versioned by operator.realmReference {
@@ -199,6 +200,7 @@ internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
             queryArgs
         )
     }
+    if (parent == null) TODO()
     return ObjectBoundQuery(
         parent,
         ObjectQuery(
@@ -287,6 +289,59 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
     fun get(index: Int): E
     fun contains(element: E): Boolean
     fun copy(realmReference: RealmReference, nativePointer: RealmSetPointer): SetOperator<E>
+}
+
+internal class RealmAnySetOperator(
+    override val mediator: Mediator,
+    override val realmReference: RealmReference,
+    override val nativePointer: RealmSetPointer
+) : SetOperator<RealmAny?> {
+
+    override val valueConverter: RealmValueConverter<RealmAny?> = realmAnyConverter(mediator, realmReference, false, false)
+    override var modCount: Int = 0
+
+    @Suppress("UNCHECKED_CAST")
+    override fun get(index: Int): RealmAny? {
+        return getterScope {
+            with(valueConverter) {
+                val transport = realm_set_get(nativePointer, index.toLong())
+                // Primitive + objects
+                realmValueToPublic(transport)
+            }
+        }
+    }
+
+    override fun addInternal(
+        element: RealmAny?,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ): Boolean {
+        if (element?.type in RealmAny.Type.COLLECTION_TYPES) {
+            throw IllegalArgumentException("Cannot add collections to RealmSets")
+        }
+        return inputScope {
+            with(valueConverter) {
+                // Primitive + objects with Import
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_set_insert(nativePointer, transport)
+            }
+        }
+    }
+
+    override fun contains(element: RealmAny?): Boolean {
+        return inputScope {
+            with(valueConverter) {
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_set_find(nativePointer, transport)
+            }
+        }
+    }
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmSetPointer
+    ): SetOperator<RealmAny?> =
+        PrimitiveSetOperator(mediator, realmReference, valueConverter, nativePointer)
 }
 
 internal class PrimitiveSetOperator<E>(

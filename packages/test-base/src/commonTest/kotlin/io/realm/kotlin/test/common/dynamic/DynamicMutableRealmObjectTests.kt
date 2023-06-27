@@ -1771,4 +1771,15 @@ class DynamicMutableRealmObjectTests {
             assertEquals(4, size)
         }
     }
+
+    @Test
+    fun throwsOnRealmAnyPrimaryKey() {
+        val instance = DynamicMutableRealmObject.create(
+            "PrimaryKeyString",
+            "primaryKey" to RealmAny.create("PRIMARY_KEY"),
+        )
+        assertFailsWithMessage<IllegalArgumentException>("Cannot use object 'RealmAny{type=STRING, value=PRIMARY_KEY}' of type 'RealmAnyImpl' as primary key argument") {
+            dynamicMutableRealm.copyToRealm(instance)
+        }
+    }
 }

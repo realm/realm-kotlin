@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -518,6 +519,14 @@ actual object RealmInterop {
         realmc.realm_list_get(list.cptr(), index, struct)
         return RealmValue(struct)
     }
+    actual fun realm_list_get_set(list: RealmListPointer, index: Long): RealmSetPointer =
+        LongPointerWrapper(realmc.realm_list_get_set(list.cptr(), index))
+    actual fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer =
+        LongPointerWrapper(realmc.realm_list_get_list(list.cptr(), index))
+
+    actual fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer =
+        LongPointerWrapper(realmc.realm_list_get_dictionary(list.cptr(), index))
+
 
     actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
         realmc.realm_list_insert(list.cptr(), index, transport.value)
@@ -525,6 +534,12 @@ actual object RealmInterop {
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
+    }
+    actual fun realm_list_insert_collection(list: RealmListPointer, index: Long, collectionType: CollectionType) {
+        realmc.realm_list_insert_collection(list.cptr(), index, collectionType.nativeValue)
+    }
+    actual fun realm_list_set_collection(list: RealmListPointer, index: Long, collectionType: CollectionType) {
+        realmc.realm_list_set_collection(list.cptr(), index, collectionType.nativeValue)
     }
 
     actual fun realm_list_set(
@@ -682,6 +697,25 @@ actual object RealmInterop {
         realmc.realm_dictionary_find(dictionary.cptr(), mapKey.value, struct, found)
         return RealmValue(struct)
     }
+    actual fun realm_dictionary_find_set(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_get_set(dictionary.cptr(), mapKey.value))
+    }
+
+    actual fun realm_dictionary_find_list(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_get_list(dictionary.cptr(), mapKey.value))
+    }
+    actual fun realm_dictionary_find_dictionary(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_get_dictionary(dictionary.cptr(), mapKey.value))
+    }
 
     actual fun MemAllocator.realm_dictionary_get(
         dictionary: RealmMapPointer,
@@ -749,6 +783,9 @@ actual object RealmInterop {
                 this.link = link
             }
         )
+    }
+    actual fun realm_dictionary_insert_collection(dictionary: RealmMapPointer, mapKey: RealmValue, collectionType: CollectionType) {
+        realmc.realm_dictionary_insert_collection(dictionary.cptr(), mapKey.value, collectionType.nativeValue)
     }
 
     actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {

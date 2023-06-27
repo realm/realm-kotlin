@@ -20,7 +20,9 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
+import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgument
 import io.realm.kotlin.internal.interop.RealmQueryArgumentList
@@ -337,6 +339,24 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
 // Dynamic default primitive value converter to translate primary keys and query arguments to RealmValues
 @Suppress("NestedBlockDepth")
 internal object RealmValueArgumentConverter {
+    fun MemTrackingAllocator.kAnyToPrimaryKeyRealmValue(value: Any?): RealmValue {
+        return value?.let { value ->
+            when (value) {
+                is RealmObject -> {
+                    realmObjectTransport(realmObjectToRealmReferenceOrError(value))
+                }
+                else -> {
+                    primitiveTypeConverters[value::class]?.let { converter ->
+                        with(converter as RealmValueConverter<Any?>) {
+                            publicToRealmValue(value)
+                        }
+                    }
+                    // This is also hit from primary key
+                        ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class.simpleName}' as primary key argument")
+                }
+            }
+        } ?: nullTransport()
+    }
     fun MemTrackingAllocator.kAnyToRealmValue(value: Any?): RealmValue {
         return value?.let { value ->
             when (value) {
@@ -441,7 +461,9 @@ internal fun realmAnyConverter(
     mediator: Mediator,
     realmReference: RealmReference,
     issueDynamicObject: Boolean = false,
-    issueDynamicMutableObject: Boolean = false
+    issueDynamicMutableObject: Boolean = false,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+    cache: UnmanagedToManagedObjectCache = mutableMapOf()
 ): RealmValueConverter<RealmAny?> {
     return object : PassThroughPublicConverter<RealmAny?>() {
         override inline fun fromRealmValue(realmValue: RealmValue): RealmAny? =
@@ -486,11 +508,12 @@ internal fun realmAnyConverter(
             }
 
         override inline fun MemTrackingAllocator.toRealmValue(value: RealmAny?): RealmValue {
-            return realmAnyToRealmValueWithObjectImport(
+            return realmAnyToRealmValueWithImport(
                 value,
                 mediator,
                 realmReference,
                 issueDynamicObject,
+                updatePolicy, cache
             )
         }
     }
@@ -499,11 +522,13 @@ internal fun realmAnyConverter(
 /**
  * Used for converting values to query arguments.
  */
-internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithObjectImport(
+internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithImport(
     value: RealmAny?,
     mediator: Mediator,
     realmReference: RealmReference,
-    issueDynamicObject: Boolean = false
+    issueDynamicObject: Boolean = false,
+    updatePolicy: UpdatePolicy = UpdatePolicy.ERROR,
+    cache: UnmanagedToManagedObjectCache = mutableMapOf()
 ): RealmValue {
     return when (value) {
         null -> nullTransport()
@@ -513,7 +538,7 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithObjectImport(
                     true -> value.asRealmObject<DynamicRealmObject>()
                     false -> value.asRealmObject<RealmObject>()
                 }
-                val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference)
+                val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
                 realmObjectTransport(objRef as RealmObjectInterop)
             }
             RealmAny.Type.SET -> TODO()
