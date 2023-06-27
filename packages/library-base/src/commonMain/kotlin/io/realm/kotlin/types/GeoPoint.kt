@@ -25,6 +25,62 @@ package io.realm.kotlin.types
  * This class cannot be persisted - i.e you can't declare a Realm property that is of type
  * [GeoPoint]. It is only used as a building block for other geospatial shapes such as [GeoBox],
  * [GeoPolygon] and [GeoCircle].
+ *
+ * Storing geo points in a model class is currently done using duck-typing, which means that any
+ * model class with a specific "shape" can be queried as though it contained a geographical
+ * location.
+ *
+ * The following is required:
+ * - A String property with the value of "Point", i.e `var type: String = "Point"`
+ * - A List containing a Longitude/Latitude pair: `var coordinates: RealmList<Double> = realmListOf()`
+ *
+ * The recommended approach is encapsulating this inside its own [EmbeddedRealmObject], like this
+ *
+ * ```
+ * public class Location: EmbeddedRealmObject {
+ *    public constructor() // Empty constructor required by Realm. Should not be used.
+ *    public constructor(latitude: Double, longitude: Double) {
+ *        coordinates.apply {
+ *            add(longitude)
+ *            add(latitude)
+ *        }
+ *    }
+ *
+ *    // Name and type required by Realm
+ *    private var coordinates: RealmList<Double> = realmListOf()
+ *
+ *    // Name and type required by Realm
+ *    private var type: String = "Point"
+ *
+ *    @Ignore
+ *    public val latitude: Double = coordinates[1]
+ *
+ *    @Ignore
+ *    public val longitude: Double = coordinates[0]
+ * }
+ * ```
+ *
+ * This can then be used like this:
+ *
+ * ```
+ * class Restaurant: RealmObject {
+ *   var name: String = ""
+ *   var location: Location? = null
+ * }
+ *
+ * realm.write {
+ *   copyToRealm(Restaurant().apply {
+ *       name = "McBurger"
+ *       location = Location(latitude = 40.730625, longitude = -73.93609)
+ *   }
+ * }
+ *
+ * val newYork = GeoPoint(latitude = 40.730610, longitude = -73.935242)
+ * val searchArea = GeoCircle(center = newYork, radius = Distance.fromMiles(2.0))
+ * val restaurants = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
+ * ```
+ *
+ * A proper persistable GeoPoint class will be implemented in an upcoming release.
  */
 public data class GeoPoint(
     /**
@@ -37,10 +93,12 @@ public data class GeoPoint(
     public val longitude: Double
 ) {
     init {
-        if (latitude < -90 || latitude > 90) {
+        @Suppress("MagicNumber")
+        if (latitude < -90.0 || latitude > 90.0) {
             throw IllegalArgumentException("Latitude is outside the valid range -90 <= lat <= 90: $latitude")
         }
-        if (longitude < -180 || longitude > 180) {
+        @Suppress("MagicNumber")
+        if (longitude < -180.0 || longitude > 180.0) {
             throw IllegalArgumentException("Longitude is outside the valid range -180 <= lat <= 180: $longitude")
         }
     }

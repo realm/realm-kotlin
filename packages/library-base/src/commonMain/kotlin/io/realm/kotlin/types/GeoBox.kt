@@ -34,6 +34,4 @@ public data class GeoBox(
     public override fun toString(): String {
         return "geoBox([${bottomLeft.longitude}, ${bottomLeft.latitude}], [${topRight.longitude}, ${topRight.latitude}])"
     }
-
 }
-
