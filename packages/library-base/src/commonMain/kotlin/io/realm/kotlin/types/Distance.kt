@@ -58,7 +58,7 @@ public data class Distance private constructor(
         }
 
         /**
-         * Create a [Distance] object from kilometers.
+         * Create a [Distance] object from miles.
          */
         public fun fromMiles(miles: Double): Distance {
             return when (miles) {

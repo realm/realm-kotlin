@@ -94,11 +94,15 @@ public data class GeoPolygon(
      * that makes it usable in queries, e.g.:
      *
      * ```
-     * val outerRing = listOf(GeoPoint(0.0, 0.0), GeoPoint(1.0, 0.0), GeoPoint(1.0, 1.0), GeoPoint(0.0, 1.0))
-     * val hole = listOf
-     *
-     * val sphere = GeoPolygon(outerRing = listOf(GeoPoint(0.0, 0.0), radius = Distance.fromKilometers(10.0))
-     * val results = realm.query<Restaurant>("location GEOWITHIN $sphere").find()
+     * val outerRing = listOf(
+     *     GeoPoint(0.0, 0.0),
+     *     GeoPoint(10.0, 0.0),
+     *     GeoPoint(10.0, 10.0),
+     *     GeoPoint(0.0, 10.0),
+     *     GeoPoint(0.0, 0.0)
+     * )
+     * val searchArea = GeoPolygon(outerRing)
+     * val results = realm.query<Restaurant>("location GEOWITHIN searchArea").find()
      */
     public override fun toString(): String {
         val outerRingString = polygonToQueryString(outerRing)

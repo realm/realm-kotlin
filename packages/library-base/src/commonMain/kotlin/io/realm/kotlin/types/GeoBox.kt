@@ -6,7 +6,7 @@ package io.realm.kotlin.types
  * for a geospatial query like this:
  *
  * ```
- * val bottomleft = GeoPoint(latitude = 0.0, longitude = 0.0)
+ * val bottomLeft = GeoPoint(latitude = 0.0, longitude = 0.0)
  * val topRight = GeoPoint(latitude = 0.0, longitude = 0.0)
  * val searchArea = GeoBox(bottomLeft, topRight)
  * val restaurants = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
@@ -27,7 +27,7 @@ public data class GeoBox(
      * that makes it usable in queries, e.g.:
      *
      * ```
-     * val box = GeoBox(bottomLeftCorner = GeoPoint(0.0, 0.0), topRightCorner = GeoPoint(10.0, 10.0))
+     * val box = GeoBox(bottomLeft = GeoPoint(0.0, 0.0), topRight = GeoPoint(10.0, 10.0))
      * val results = realm.query<Restaurant>("location GEOWITHIN $box").find()
      * ```
      */
