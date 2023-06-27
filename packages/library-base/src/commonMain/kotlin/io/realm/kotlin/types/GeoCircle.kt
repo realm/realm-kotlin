@@ -37,7 +37,7 @@ public data class GeoCircle(
     public val radius: Distance
 ) {
     init {
-        if (radius.inRadians() < 0) {
+        if (radius.inRadians < 0) {
             throw IllegalArgumentException("A negative radius is not allowed: $radius")
         }
     }
@@ -51,6 +51,6 @@ public data class GeoCircle(
      * val results = realm.query<Restaurant>("location GEOWITHIN $circle").find()
      */
     public override fun toString(): String {
-        return "geoCircle([${center.longitude}, ${center.latitude}], ${radius.inRadians()})"
+        return "geoCircle([${center.longitude}, ${center.latitude}], ${radius.inRadians})"
     }
 }
