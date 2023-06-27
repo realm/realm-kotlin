@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.types
 
 /**
@@ -24,7 +23,7 @@ public data class Distance private constructor(
     /**
      * The distance in radians.
      */
-    public val radians: Double
+    private val radians: Double
 ) {
 
     init {
@@ -74,9 +73,14 @@ public data class Distance private constructor(
     }
 
     /**
+     * Returns the distance in radians.
+     */
+    public fun inRadians(): Double = radians
+
+    /**
      * Returns the distance in kilometers.
      */
-    public fun asKilometers(): Double {
+    public fun inKilometers(): Double {
         val result = radians * EARTH_RADIUS_KM
         return when {
             radians == 0.0 -> 0.0
@@ -88,7 +92,7 @@ public data class Distance private constructor(
     /**
      * Returns the distance in miles.
      */
-    public fun asMiles(): Double {
+    public fun inMiles(): Double {
         val result = radians * EARTH_RADIUS_KM / KM_PR_MILE
         return when {
             radians == 0.0 -> 0.0

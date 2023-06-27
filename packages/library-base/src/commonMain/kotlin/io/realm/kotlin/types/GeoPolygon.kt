@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.types
 
 /**
@@ -74,23 +73,25 @@ public data class GeoPolygon(
      */
     public constructor(outerRing: List<GeoPoint>, hole: List<GeoPoint>) : this(outerRing, listOf(hole))
 
+    private companion object {
+        private const val MIN_RING_SIZE = 3
+    }
+
     init {
         // Do basic input validation. Core will validate the rest when the query is run.
         // Better input validation will be available later.
-        @Suppress("MagicNumber")
-        val minSize = 3
-        if (outerRing.size < minSize) {
+        if (outerRing.size < MIN_RING_SIZE) {
             throw IllegalArgumentException("The outer ring requires at least 3 points: ${outerRing.size}")
         }
         holes.forEachIndexed { i, ring ->
-            if (ring.size < minSize) {
+            if (ring.size < MIN_RING_SIZE) {
                 throw IllegalArgumentException("The inner at index $i requires at least 3 points: ${ring.size}")
             }
         }
     }
 
     /**
-     * Returns the textual representation of a [GeoPolygon], this is also formatting in a a way
+     * Returns the textual representation of the [GeoPolygon], this is also formatting it in a way
      * that makes it usable in queries, e.g.:
      *
      * ```

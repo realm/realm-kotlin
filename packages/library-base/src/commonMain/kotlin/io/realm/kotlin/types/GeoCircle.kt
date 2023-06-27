@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.types
 
 /**
@@ -38,13 +37,13 @@ public data class GeoCircle(
     public val radius: Distance
 ) {
     init {
-        if (radius.radians < 0) {
+        if (radius.inRadians() < 0) {
             throw IllegalArgumentException("A negative radius is not allowed: $radius")
         }
     }
 
     /**
-     * Returns the textual representation of a [GeoCircle], this is also formatting in a a way
+     * Returns the textual representation of the [GeoCircle], this is also formatting it in a way
      * that makes it usable in queries, e.g.:
      *
      * ```
@@ -52,6 +51,6 @@ public data class GeoCircle(
      * val results = realm.query<Restaurant>("location GEOWITHIN $circle").find()
      */
     public override fun toString(): String {
-        return "geoCircle([${center.longitude}, ${center.latitude}], ${radius.radians})"
+        return "geoCircle([${center.longitude}, ${center.latitude}], ${radius.inRadians()})"
     }
 }

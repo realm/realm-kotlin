@@ -92,13 +92,19 @@ public data class GeoPoint(
      */
     public val longitude: Double
 ) {
+
+    private companion object {
+        const val MIN_LATITUDE = -90.0
+        const val MAX_LATITUDE = 90.0
+        const val MIN_LONGITUDE = -180.0
+        const val MAX_LONGITUDE = 180.0
+    }
+
     init {
-        @Suppress("MagicNumber")
-        if (latitude < -90.0 || latitude > 90.0) {
+        if (latitude < MIN_LATITUDE || latitude > MAX_LATITUDE) {
             throw IllegalArgumentException("Latitude is outside the valid range -90 <= lat <= 90: $latitude")
         }
-        @Suppress("MagicNumber")
-        if (longitude < -180.0 || longitude > 180.0) {
+        if (longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE) {
             throw IllegalArgumentException("Longitude is outside the valid range -180 <= lat <= 180: $longitude")
         }
     }

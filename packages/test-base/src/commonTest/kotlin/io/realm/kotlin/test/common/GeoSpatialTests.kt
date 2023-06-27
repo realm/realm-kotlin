@@ -1,8 +1,28 @@
+/*
+ * Copyright 2023 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.kotlin.test.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.ext.km
+import io.realm.kotlin.ext.miles
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.radians
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -331,8 +351,10 @@ class GeoSpatialTests {
     fun distance_radians() {
         val validDists = listOf(0.0, 0.1, Double.MIN_VALUE, Double.MAX_VALUE, Double.POSITIVE_INFINITY)
         validDists.forEach { d: Double ->
-            val dist = Distance.fromRadians(d)
-            assertEquals(d, dist.radians)
+            val dist1 = Distance.fromRadians(d)
+            val dist2 = d.radians
+            assertEquals(d, dist1.inRadians())
+            assertEquals(d, dist2.inRadians())
         }
     }
 
@@ -346,8 +368,10 @@ class GeoSpatialTests {
             Double.POSITIVE_INFINITY to Double.POSITIVE_INFINITY
         )
         validDists.forEach { (input, output) ->
-            val dist = Distance.fromKilometers(input)
-            assertEquals(output, dist.asKilometers(), "$input failed.")
+            val dist1 = Distance.fromKilometers(input)
+            val dist2 = input.km
+            assertEquals(output, dist1.inKilometers(), "$input failed.")
+            assertEquals(output, dist2.inKilometers(), "$input failed.")
         }
     }
 
@@ -361,8 +385,10 @@ class GeoSpatialTests {
             Double.POSITIVE_INFINITY to Double.POSITIVE_INFINITY
         )
         validDists.forEach { (input, output) ->
-            val dist = Distance.fromMiles(input)
-            assertEquals(output, dist.asMiles(), "$input failed.")
+            val dist1 = Distance.fromMiles(input)
+            val dist2 = input.miles
+            assertEquals(output, dist1.inMiles(), "$input failed.")
+            assertEquals(output, dist2.inMiles(), "$input failed.")
         }
     }
 
