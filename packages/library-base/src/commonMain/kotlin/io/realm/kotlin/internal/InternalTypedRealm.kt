@@ -48,7 +48,7 @@ internal interface InternalTypedRealm : TypedRealm {
         )
     }
 
-    override fun <T : BaseRealmObject> query(
+    override fun <T : TypedRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?

@@ -3,9 +3,9 @@ package io.realm.kotlin
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
-import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -26,7 +26,7 @@ public interface TypedRealm : BaseRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    public fun <T : BaseRealmObject> query(
+    public fun <T : TypedRealmObject> query(
         clazz: KClass<T>,
         query: String = TRUE_PREDICATE,
         vararg args: Any?
