@@ -1,4 +1,4 @@
-## 1.10.0-SNAPSHOT (YYYY-MM-DD)
+## 1.10.0 (2023-06-28)
 
 ### Breaking Changes
 * Generic arguments have been cleaned up. In a lot of places, `BaseRealmObject` was accepted as input. This was too broad and could result in runtime exceptions. In those places the argument has been restricted to the correct `TypedRealmObject`.
