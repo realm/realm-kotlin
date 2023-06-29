@@ -20,9 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
-import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
-import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmQueryArgument
 import io.realm.kotlin.internal.interop.RealmQueryArgumentList
@@ -351,7 +349,7 @@ internal object RealmValueArgumentConverter {
                             publicToRealmValue(value)
                         }
                     }
-                    // This is also hit from primary key
+                        // This is also hit from primary key
                         ?: throw IllegalArgumentException("Cannot use object '$value' of type '${value::class.simpleName}' as primary key argument")
                 }
             }
@@ -456,7 +454,7 @@ internal inline fun RealmValue.asPrimitiveRealmAnyOrElse(
     else -> elseBlock()
 }
 
-@Suppress("OVERRIDE_BY_INLINE", "NestedBlockDepth")
+@Suppress("OVERRIDE_BY_INLINE", "NestedBlockDepth", "LongParameterList")
 internal fun realmAnyConverter(
     mediator: Mediator,
     realmReference: RealmReference,
@@ -520,8 +518,10 @@ internal fun realmAnyConverter(
 }
 
 /**
+ * // FIXME
  * Used for converting values to query arguments.
  */
+@Suppress("LongParameterList")
 internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithImport(
     value: RealmAny?,
     mediator: Mediator,
@@ -557,6 +557,7 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValue(value: RealmAny?):
     return when (value) {
         null -> nullTransport()
         else -> when (value.type) {
+            // We shouldn't be able to land here for primary key arguments!
             RealmAny.Type.OBJECT -> {
                 val objRef = realmObjectToRealmReferenceOrError(value.asRealmObject())
                 realmObjectTransport(objRef)

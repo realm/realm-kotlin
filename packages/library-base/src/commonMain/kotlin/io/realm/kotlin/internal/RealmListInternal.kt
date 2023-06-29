@@ -293,15 +293,18 @@ internal class PrimitiveListOperator<E>(
         PrimitiveListOperator(mediator, realmReference, valueConverter, nativePointer)
 }
 
+@Suppress("LongParameterList")
 internal class RealmAnyListOperator(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val nativePointer: RealmListPointer,
-    updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-    cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    val updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+    val cache: UnmanagedToManagedObjectCache = mutableMapOf(),
+    val issueDynamicObject: Boolean,
+    val issueDynamicMutableObject: Boolean
 ) : ListOperator<RealmAny?> {
 
-    override val valueConverter: RealmValueConverter<RealmAny?> = realmAnyConverter(mediator, realmReference, false, false)
+    override val valueConverter: RealmValueConverter<RealmAny?> = realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject)
 
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): RealmAny? {
@@ -310,20 +313,28 @@ internal class RealmAnyListOperator(
             val element: ValueType = transport.getType()
             if (element == ValueType.RLM_TYPE_SET) {
                 val newNativePointer = RealmInterop.realm_list_get_set(nativePointer, index.toLong())
-                val operator = RealmAnySetOperator( mediator, realmReference, newNativePointer )
+                val operator = RealmAnySetOperator(
+                    mediator,
+                    realmReference,
+                    newNativePointer,
+                    issueDynamicObject,
+                    issueDynamicMutableObject
+                )
                 val realmAnySet = ManagedRealmSet(null, newNativePointer, operator)
                 RealmAny.Companion.create(realmAnySet)
             } else if (element == ValueType.RLM_TYPE_LIST) {
                 val newNativePointer = RealmInterop.realm_list_get_list(nativePointer, index.toLong())
-                val operator = RealmAnyListOperator( mediator, realmReference, newNativePointer )
+                val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, updatePolicy, cache, issueDynamicObject, issueDynamicMutableObject)
                 val realmAnyList = ManagedRealmList(null, newNativePointer, operator)
                 RealmAny.Companion.create(realmAnyList)
             } else if (element == ValueType.RLM_TYPE_DICTIONARY) {
                 val newNativePointer = RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong())
-                val operator = RealmAnyMapOperator( mediator, realmReference,
-                    realmAnyConverter(mediator, realmReference, false, false),
+                val operator = RealmAnyMapOperator(
+                    mediator, realmReference,
+                    realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject),
                     converter(String::class, mediator, realmReference),
-                    newNativePointer )
+                    newNativePointer, issueDynamicObject, issueDynamicMutableObject
+                )
                 val realmDict = ManagedRealmDictionary(
                     null,
                     newNativePointer,
@@ -346,26 +357,34 @@ internal class RealmAnyListOperator(
     ) {
         inputScope {
             if (element != null && element.type in RealmAny.Type.COLLECTION_TYPES) {
-                when(element.type) {
+                when (element.type) {
                     RealmAny.Type.SET -> {
                         RealmInterop.realm_list_insert_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_SET)
                         val newNativePointer = RealmInterop.realm_list_get_set(nativePointer, index.toLong())
-                        val operator = RealmAnySetOperator( mediator, realmReference, newNativePointer)// , updatePolicy, cache)
+                        val operator = RealmAnySetOperator(
+                            mediator,
+                            realmReference,
+                            newNativePointer,
+                            issueDynamicObject,
+                            issueDynamicMutableObject
+                        ) // , updatePolicy, cache)
                         operator.addAllInternal(element.asSet(), updatePolicy, cache)
                     }
                     RealmAny.Type.LIST -> {
                         RealmInterop.realm_list_insert_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_LIST)
                         val newNativePointer = RealmInterop.realm_list_get_list(nativePointer, index.toLong())
-                        val operator = RealmAnyListOperator( mediator, realmReference, newNativePointer, updatePolicy, cache)
+                        val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, updatePolicy, cache, issueDynamicObject, issueDynamicMutableObject)
                         operator.insertAll(0, element.asList(), updatePolicy, cache)
                     }
                     RealmAny.Type.DICTIONARY -> {
                         RealmInterop.realm_list_insert_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
                         val newNativePointer = RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong())
-                        val operator = RealmAnyMapOperator( mediator, realmReference,
-                                realmAnyConverter(mediator, realmReference, false, false),
-                                converter(String::class, mediator, realmReference),
-                            newNativePointer )
+                        val operator = RealmAnyMapOperator(
+                            mediator, realmReference,
+                            realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject),
+                            converter(String::class, mediator, realmReference),
+                            newNativePointer, issueDynamicObject, issueDynamicMutableObject
+                        )
                         operator.putAll(element.asDictionary(), updatePolicy, cache)
                     }
                     else -> TODO()
@@ -389,26 +408,34 @@ internal class RealmAnyListOperator(
         return get(index).also {
             inputScope {
                 if (element != null && element.type in RealmAny.Type.COLLECTION_TYPES) {
-                    when(element.type) {
+                    when (element.type) {
                         RealmAny.Type.SET -> {
                             RealmInterop.realm_list_set_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_SET)
                             val newNativePointer = RealmInterop.realm_list_get_set(nativePointer, index.toLong())
-                            val operator = RealmAnySetOperator( mediator, realmReference, newNativePointer)// , updatePolicy, cache)
+                            val operator = RealmAnySetOperator(
+                                mediator,
+                                realmReference,
+                                newNativePointer,
+                                issueDynamicObject,
+                                issueDynamicMutableObject
+                            ) // , updatePolicy, cache)
                             operator.addAllInternal(element.asSet(), updatePolicy, cache)
                         }
                         RealmAny.Type.LIST -> {
                             RealmInterop.realm_list_set_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_LIST)
                             val newNativePointer = RealmInterop.realm_list_get_list(nativePointer, index.toLong())
-                            val operator = RealmAnyListOperator( mediator, realmReference, newNativePointer, updatePolicy, cache)
+                            val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, updatePolicy, cache, issueDynamicObject, issueDynamicMutableObject)
                             operator.insertAll(0, element.asList(), updatePolicy, cache)
                         }
                         RealmAny.Type.DICTIONARY -> {
                             RealmInterop.realm_list_set_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
                             val newNativePointer = RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong())
-                            val operator = RealmAnyMapOperator( mediator, realmReference,
-                                realmAnyConverter(mediator, realmReference, false, false),
+                            val operator = RealmAnyMapOperator(
+                                mediator, realmReference,
+                                realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject),
                                 converter(String::class, mediator, realmReference),
-                                newNativePointer )
+                                newNativePointer, issueDynamicObject, issueDynamicMutableObject
+                            )
                             operator.putAll(element.asDictionary(), updatePolicy, cache)
                         }
                         else -> TODO()
@@ -427,7 +454,7 @@ internal class RealmAnyListOperator(
         realmReference: RealmReference,
         nativePointer: RealmListPointer
     ): ListOperator<RealmAny?> =
-        RealmAnyListOperator(mediator, realmReference, nativePointer)
+        RealmAnyListOperator(mediator, realmReference, nativePointer, issueDynamicObject = issueDynamicObject, issueDynamicMutableObject = issueDynamicMutableObject)
 }
 
 internal abstract class BaseRealmObjectListOperator<E>(

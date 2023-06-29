@@ -75,9 +75,9 @@ class RealmAnyTests {
         tmpDir = PlatformUtils.createTempDir()
         configBuilder = RealmConfiguration.Builder(
             embeddedSchema +
-                    IndexedRealmAnyContainer::class +
-                    RealmAnyContainer::class +
-                    Sample::class
+                IndexedRealmAnyContainer::class +
+                RealmAnyContainer::class +
+                Sample::class
         ).directory(tmpDir)
         configuration = configBuilder.build()
         realm = Realm.open(configuration)

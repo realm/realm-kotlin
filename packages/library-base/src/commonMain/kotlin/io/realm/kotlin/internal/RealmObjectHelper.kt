@@ -217,7 +217,7 @@ internal object RealmObjectHelper {
                 )
                 is MutableRealmInt -> setValueTransportByKey(obj, key, longTransport(value.get()))
                 is RealmAny -> {
-                    RealmAnyProperty(obj, key).set(this, value)
+                    RealmAnyProperty(obj, key, false, false).set(this, value)
                 }
                 else -> throw IllegalArgumentException("Unsupported value for transport: $value")
             }
@@ -284,7 +284,7 @@ internal object RealmObjectHelper {
     ): RealmAny? = getterScope {
         val key = obj.propertyInfoOrThrow(propertyName).key
         getRealmValueFromKey(obj, key)
-            ?.let { realmValueToRealmAny(it, RealmAnyProperty(obj, key)) }
+            ?.let { realmValueToRealmAny(it, RealmAnyProperty(obj, key, false, false)) }
     }
 
     internal inline fun MemAllocator.getRealmValue(
@@ -421,7 +421,9 @@ internal object RealmObjectHelper {
             CollectionOperatorType.REALM_ANY -> RealmAnyListOperator(
                 mediator,
                 realm,
-                listPtr
+                listPtr,
+                issueDynamicObject = issueDynamicObject,
+                issueDynamicMutableObject = issueDynamicMutableObject
             ) as ListOperator<R>
             CollectionOperatorType.REALM_OBJECT -> {
                 val classKey: ClassKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
@@ -511,7 +513,9 @@ internal object RealmObjectHelper {
             CollectionOperatorType.REALM_ANY -> RealmAnySetOperator(
                 mediator,
                 realm,
-                setPtr
+                setPtr,
+                issueDynamicObject,
+                issueDynamicMutableObject
             ) as SetOperator<R>
             CollectionOperatorType.REALM_OBJECT -> {
                 val classKey: ClassKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
@@ -598,7 +602,8 @@ internal object RealmObjectHelper {
                 realm,
                 realmAnyConverter(mediator, realm, issueDynamicObject, issueDynamicMutableObject),
                 converter(String::class, mediator, realm),
-                dictionaryPtr
+                dictionaryPtr,
+                issueDynamicObject, issueDynamicMutableObject
             ) as MapOperator<String, R>
             CollectionOperatorType.REALM_OBJECT -> {
                 val classKey = realm.schemaMetadata.getOrThrow(propertyMetadata.linkTarget).classKey
@@ -878,7 +883,7 @@ internal object RealmObjectHelper {
                 )
                 RealmAny::class -> realmValueToRealmAny(
                     transport,
-                    RealmAnyProperty(obj, propertyInfo.key),
+                    RealmAnyProperty(obj, propertyInfo.key, true, issueDynamicMutableObject),
                     true,
                     issueDynamicMutableObject
                 )
@@ -1071,10 +1076,18 @@ internal object RealmObjectHelper {
                             )
                         }
                         else -> inputScope {
-                            val transport =
-                                // FIXME Lacks tests
-                                realmAnyToRealmValueWithImport(value, obj.mediator, obj.owner, true,  updatePolicy, cache)
-                            setValueTransportByKey(obj, propertyMetadata.key, transport)
+                            if (value == null) {
+                                setValueTransportByKey(obj, propertyMetadata.key, nullTransport())
+                            } else {
+                                val transport =
+                                    // FIXME Lacks tests
+                                    RealmAnyProperty(
+                                        obj,
+                                        propertyMetadata.key,
+                                        true,
+                                        true
+                                    ).set(this, value)
+                            }
                         }
                     }
                 }

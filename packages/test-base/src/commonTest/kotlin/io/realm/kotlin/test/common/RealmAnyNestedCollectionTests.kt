@@ -115,7 +115,6 @@ class RealmAnyNestedCollectionTests {
         assertEquals(RealmAny.Type.SET, anyValue.type)
     }
 
-
     @Test
     fun setInRealmAny_throwsOnNestedCollections_copyToRealm() = runBlocking<Unit> {
         realm.write {
@@ -144,9 +143,9 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun setInRealmAny_throwsOnNestedCollections_add() = runBlocking<Unit> {
         realm.write {
-            val instance = copyToRealm(JsonStyleRealmObject().apply {
-                value = RealmAny.create(realmSetOf())
-            })
+            val instance = copyToRealm(
+                JsonStyleRealmObject().apply { value = RealmAny.create(realmSetOf()) }
+            )
             val set = instance.value!!.asSet()
 
             assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
@@ -307,7 +306,6 @@ class RealmAnyNestedCollectionTests {
                     ),
                 )
             }
-
         }
         val anyList: RealmAny = realm.query<JsonStyleRealmObject>().find().single().value!!
         anyList.asList().let {
@@ -340,17 +338,19 @@ class RealmAnyNestedCollectionTests {
         realm.write {
             val sample = copyToRealm(Sample().apply { stringField = "SAMPLE" })
             val instance =
-                copyToRealm(JsonStyleRealmObject().apply {
-                    value = RealmAny.create(
-                        realmListOf(
-                            RealmAny.create(1),
-                            RealmAny.create(1),
-                            RealmAny.create(1),
-                            RealmAny.create(1),
+                copyToRealm(
+                    JsonStyleRealmObject().apply {
+                        value = RealmAny.create(
+                            realmListOf(
+                                RealmAny.create(1),
+                                RealmAny.create(1),
+                                RealmAny.create(1),
+                                RealmAny.create(1),
+                            )
                         )
-                    )
-                })
-            instance!!.value!!.asList().run {
+                    }
+                )
+            instance.value!!.asList().run {
                 // Embedded list
                 set(
                     0,
@@ -411,17 +411,12 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun nestedCollectionsInList_set_invalidatesOldElement() = runBlocking {
         realm.write {
-            val instance = copyToRealm(JsonStyleRealmObject().apply {
-                value = RealmAny.create(
-                    realmListOf(
-                        RealmAny.create(
-                            realmListOf(
-                                RealmAny.create(5),
-                            )
-                        )
+            val instance = copyToRealm(
+                JsonStyleRealmObject().apply {
+                    value = RealmAny.create(
+                        realmListOf(RealmAny.create(realmListOf(RealmAny.create(5))))
                     )
-                )
-            }
+                }
             )
             val nestedList = instance.value!!.asList()[0]!!.asList()
             assertEquals(5, nestedList[0]!!.asInt())
@@ -541,16 +536,17 @@ class RealmAnyNestedCollectionTests {
         val sample = Sample().apply { stringField = "SAMPLE" }
         // Import
         realm.write {
-            copyToRealm(JsonStyleRealmObject().apply {
-                // Assigning dictornary with nested lists and dictionaries
-                value = RealmAny.create(
-                    realmDictionaryOf()
-                )
-            })
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    // Assigning dictionary with nested lists and dictionaries
+                    value = RealmAny.create(realmDictionaryOf())
+                }
+            )
             query<JsonStyleRealmObject>().find().single().value!!.asDictionary().run {
                 put("keyInt", RealmAny.create(5))
                 put(
-                    "keySet", RealmAny.create(
+                    "keySet",
+                    RealmAny.create(
                         realmSetOf(
                             RealmAny.create(5),
                             RealmAny.create("Realm"),
@@ -559,7 +555,8 @@ class RealmAnyNestedCollectionTests {
                     )
                 )
                 put(
-                    "keyList", RealmAny.create(
+                    "keyList",
+                    RealmAny.create(
                         realmListOf(
                             RealmAny.create(5),
                             RealmAny.create("Realm"),
@@ -620,17 +617,12 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun nestedCollectionsInDictionary_put_invalidatesOldElement() = runBlocking {
         realm.write {
-            val instance = copyToRealm(JsonStyleRealmObject().apply {
-                value = RealmAny.create(
-                    realmDictionaryOf(
-                        "key" to RealmAny.create(
-                            realmListOf(
-                                RealmAny.create(5),
-                            )
-                        )
+            val instance = copyToRealm(
+                JsonStyleRealmObject().apply {
+                    value = RealmAny.create(
+                        realmDictionaryOf("key" to RealmAny.create(realmListOf(RealmAny.create(5))))
                     )
-                )
-            }
+                }
             )
             val nestedList = instance.value!!.asDictionary()!!.get("key")!!.asList()
             assertEquals(5, nestedList[0]!!.asInt())
@@ -663,8 +655,7 @@ class RealmAnyNestedCollectionTests {
     }
 }
 
-
-class TabbedStringBuilder() {
+class TabbedStringBuilder {
     private val builder = StringBuilder()
     internal var indentation = 0
     internal fun append(s: String) = builder.append("\t".repeat(indentation) + s + "\n")

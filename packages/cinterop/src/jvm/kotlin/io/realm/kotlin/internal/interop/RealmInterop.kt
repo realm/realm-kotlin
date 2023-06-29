@@ -527,7 +527,6 @@ actual object RealmInterop {
     actual fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer =
         LongPointerWrapper(realmc.realm_list_get_dictionary(list.cptr(), index))
 
-
     actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
         realmc.realm_list_insert(list.cptr(), index, transport.value)
     }

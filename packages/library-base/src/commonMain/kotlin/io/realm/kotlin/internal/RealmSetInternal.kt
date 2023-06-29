@@ -294,10 +294,12 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
 internal class RealmAnySetOperator(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val nativePointer: RealmSetPointer
+    override val nativePointer: RealmSetPointer,
+    val issueDynamicObject: Boolean,
+    val issueDynamicMutableObject: Boolean
 ) : SetOperator<RealmAny?> {
 
-    override val valueConverter: RealmValueConverter<RealmAny?> = realmAnyConverter(mediator, realmReference, false, false)
+    override val valueConverter: RealmValueConverter<RealmAny?> = realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject)
     override var modCount: Int = 0
 
     @Suppress("UNCHECKED_CAST")
@@ -341,7 +343,7 @@ internal class RealmAnySetOperator(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<RealmAny?> =
-        PrimitiveSetOperator(mediator, realmReference, valueConverter, nativePointer)
+        RealmAnySetOperator(mediator, realmReference, nativePointer, issueDynamicObject, issueDynamicMutableObject)
 }
 
 internal class PrimitiveSetOperator<E>(

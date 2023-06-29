@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal
 
-import io.realm.kotlin.Realm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
@@ -25,16 +24,11 @@ import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmListPointer
-import io.realm.kotlin.internal.interop.RealmMapPointer
-import io.realm.kotlin.internal.interop.RealmPointer
-import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmMap
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
@@ -48,9 +42,11 @@ internal sealed interface RealmAnyContainer {
     val mediator: Mediator
     val realm: RealmReference
     val obj: RealmObjectReference<*>
-    fun set(allocator: MemTrackingAllocator, value: RealmAny,
-            updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-            cache: UnmanagedToManagedObjectCache = mutableMapOf()
+    fun set(
+        allocator: MemTrackingAllocator,
+        value: RealmAny,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         with(allocator) {
             when (value.type) {
@@ -68,16 +64,29 @@ internal sealed interface RealmAnyContainer {
                     setPrimitive(value)
                 RealmAny.Type.SET -> {
                     createCollection(CollectionType.RLM_COLLECTION_TYPE_SET)
-                    (getSet() as ManagedRealmSet).operator.addAll(value.asSet(), updatePolicy, cache)
+                    (getSet() as ManagedRealmSet).operator.addAll(
+                        value.asSet(),
+                        updatePolicy,
+                        cache
+                    )
                 }
 
                 RealmAny.Type.LIST -> {
                     createCollection(CollectionType.RLM_COLLECTION_TYPE_LIST)
-                    (getList() as ManagedRealmList).operator.insertAll(0, value.asList(), updatePolicy, cache)
+                    (getList() as ManagedRealmList).operator.insertAll(
+                        0,
+                        value.asList(),
+                        updatePolicy,
+                        cache
+                    )
                 }
                 RealmAny.Type.DICTIONARY -> {
                     createCollection(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
-                    (getDictionary() as ManagedRealmDictionary).operator.putAll(value.asDictionary(), updatePolicy, cache)
+                    (getDictionary() as ManagedRealmDictionary).operator.putAll(
+                        value.asDictionary(),
+                        updatePolicy,
+                        cache
+                    )
                 }
             }
         }
@@ -92,7 +101,9 @@ internal sealed interface RealmAnyContainer {
 
 internal class RealmAnyProperty(
     override val obj: RealmObjectReference<*>,
-    val key: PropertyKey
+    val key: PropertyKey,
+    val issueDynamicObject: Boolean,
+    val issueDynamicMutableObject: Boolean,
 ) : RealmAnyContainer {
 
     override val mediator = obj.mediator
@@ -127,13 +138,19 @@ internal class RealmAnyProperty(
 
     override fun getSet(): RealmSet<RealmAny?> {
         val nativePointer = RealmInterop.realm_get_set(obj.objectPointer, key)
-        val operator = RealmAnySetOperator( mediator, realm, nativePointer )
+        val operator = RealmAnySetOperator(
+            mediator,
+            realm,
+            nativePointer,
+            issueDynamicObject,
+            issueDynamicMutableObject
+        )
         return ManagedRealmSet(obj, nativePointer, operator)
     }
 
     override fun getList(): RealmList<RealmAny?> {
         val nativePointer = RealmInterop.realm_get_list(obj.objectPointer, key)
-        val operator = RealmAnyListOperator( mediator, realm, nativePointer )
+        val operator = RealmAnyListOperator(mediator, realm, nativePointer, issueDynamicObject = issueDynamicObject, issueDynamicMutableObject = issueDynamicMutableObject)
         val realmAnyList = ManagedRealmList(obj, nativePointer, operator)
         return realmAnyList
     }
@@ -143,9 +160,10 @@ internal class RealmAnyProperty(
         val operator = RealmAnyMapOperator(
             mediator,
             realm,
-            realmAnyConverter(mediator, realm, false, false), // issueDynamicObject, issueDynamicMutableObject),
+            realmAnyConverter(mediator, realm, issueDynamicObject, issueDynamicMutableObject),
             converter(String::class, mediator, realm),
-            nativePointer
+            nativePointer,
+            issueDynamicObject, issueDynamicMutableObject
         )
         val realmAnyDictionary = ManagedRealmDictionary(obj, nativePointer, operator)
         return realmAnyDictionary

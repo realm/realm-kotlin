@@ -120,8 +120,6 @@ public interface RealmAny {
         }
     }
 
-
-
     /**
      * Returns the [Type] of the `RealmAny` instance.
      */

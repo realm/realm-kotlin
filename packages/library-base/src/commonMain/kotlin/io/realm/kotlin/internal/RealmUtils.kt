@@ -24,7 +24,6 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.internal.RealmObjectHelper.assign
 import io.realm.kotlin.internal.RealmValueArgumentConverter.kAnyToPrimaryKeyRealmValue
-import io.realm.kotlin.internal.RealmValueArgumentConverter.kAnyToRealmValue
 import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.ObjectKey

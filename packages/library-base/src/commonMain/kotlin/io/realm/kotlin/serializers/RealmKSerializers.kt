@@ -356,6 +356,7 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
     private val serializer = SerializableRealmAny.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
 
+    @Suppress("ComplexMethod")
     override fun deserialize(decoder: Decoder): RealmAny {
         return decoder.decodeSerializableValue(serializer).let {
             when (Type.valueOf(it.type)) {
@@ -377,6 +378,7 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
         }
     }
 
+    @Suppress("ComplexMethod")
     override fun serialize(encoder: Encoder, value: RealmAny) {
         encoder.encodeSerializableValue(
             serializer,
