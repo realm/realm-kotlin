@@ -24,9 +24,6 @@ import kotlin.math.PI
  */
 @ExperimentalGeoSpatialApi
 public data class Distance private constructor(
-    /**
-     * The angular distance.
-     */
     private val radians: Double
 ) {
 
@@ -100,7 +97,7 @@ public data class Distance private constructor(
         get() = radians * RADIAN_TO_DEGREE
 
     /**
-     * Returns the distance in kilometers.
+     * Returns the distance in kilometers on the face of the earth.
      */
     public val inKilometers: Double
         get() {
@@ -113,7 +110,7 @@ public data class Distance private constructor(
         }
 
     /**
-     * Returns the distance in miles.
+     * Returns the distance in miles on the face of the earth.
      */
     public val inMiles: Double
         get() {

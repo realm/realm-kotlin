@@ -104,6 +104,8 @@ public interface GeoPolygon {
          * @param holes A list of "inner" rings. Each of these rings has the same requirements as
          * the [outerRing]. A point is considered "inside" the polygon if it is contained by an odd
          * number of rings and "outside" if it's contained by an even number of rings.
+         * @throws IllegalArgumentException if the input polygon break some of the rules outlined
+         * above.
          */
         public fun create(outerRing: List<GeoPoint>, vararg holes: List<GeoPoint>): GeoPolygon =
             create(outerRing, holes.toList())
@@ -118,6 +120,8 @@ public interface GeoPolygon {
          * @param holes A list of "inner" rings. Each of these rings has the same requirements as
          * the [outerRing]. A point is considered "inside" the polygon if it is contained by an odd
          * number of rings and "outside" if it's contained by an even number of rings.
+         * @throws IllegalArgumentException if the input polygon break some of the rules outlined
+         * above.
          */
         public fun create(outerRing: List<GeoPoint>, holes: List<List<GeoPoint>>): GeoPolygon {
             return UnmanagedGeoPolygon(outerRing, holes)
