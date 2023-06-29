@@ -1,3 +1,32 @@
+## 1.10.1-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* [Sync] Optimized the opening of Flexible Sync Realms when  `waitForInitialRemoteData` is used. (Issue [#1438](https://github.com/realm/realm-kotlin/issues/1438))
+
+### Fixed
+* None
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
 ## 1.10.0 (2023-06-28)
 
 ### Breaking Changes

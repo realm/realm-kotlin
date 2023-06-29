@@ -72,7 +72,12 @@ internal class SyncConfigurationImpl(
         // async open first do download the server side Realm. This is much much faster than
         // creating the Realm locally first and then downloading (and integrating) changes into
         // that.
-        if (partitionValue != null && initialRemoteData != null) {
+        //
+        // Flexible Sync Realms with `waitForInitialRemoteData` enabled will use async open
+        // in order to prevent overloading the server with schema updates. By itself, it isn't
+        // a big problem, but if many thousands or millions of devices all connect at the same
+        // time it puts unnecessary pressure on the server.
+        if (initialRemoteData != null) {
             // Channel to work around not being able to use `suspendCoroutine` to wrap the callback, as
             // that results in the `Continuation` being frozen, which breaks it.
             val channel = Channel<Any>(1)
