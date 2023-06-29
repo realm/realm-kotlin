@@ -19,6 +19,7 @@ package io.realm.kotlin.test.common
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.embedded.EmbeddedChild
 import io.realm.kotlin.entities.embedded.EmbeddedParent
@@ -298,6 +299,29 @@ class RealmAnyTests {
         val managedRealmAny = assertNotNull(managedContainer.anyField)
         assertFailsWith<ClassCastException> {
             managedRealmAny.asRealmObject<RealmAnyContainer>()
+        }
+    }
+
+    // Currently we don't allow casting a typed Realm object to a DynamicRealmObject when
+    // read as part of a typed Realm. See https://github.com/realm/realm-kotlin/issues/1423
+    // for why we might want to allow that. For now, capture the behaviour.
+    @Test
+    fun managed_asRealmObjectThrowsForDynamicRealmObject() {
+        realm.writeBlocking {
+            val liveObject = copyToRealm(
+                Sample().apply {
+                    this.stringField = "parentObject"
+                    this.nullableRealmAnyField = RealmAny.create(
+                        Sample().apply {
+                            this.stringField = "realmAnyObject"
+                        }
+                    )
+                }
+            )
+            assertEquals(2, query<Sample>().count().find())
+            assertFailsWith<ClassCastException> {
+                val dynamicObject = liveObject.nullableRealmAnyField!!.asRealmObject<DynamicRealmObject>()
+            }
         }
     }
 

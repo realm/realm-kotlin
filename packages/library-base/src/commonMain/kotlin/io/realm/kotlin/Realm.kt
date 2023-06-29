@@ -23,8 +23,8 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -140,7 +140,7 @@ public interface Realm : TypedRealm {
      * @param query the Realm Query Language predicate to append.
      * @param args Realm values for the predicate.
      */
-    public override fun <T : BaseRealmObject> query(
+    public override fun <T : TypedRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?

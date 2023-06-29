@@ -19,8 +19,10 @@ import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.ext.isValid
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 internal interface InternalMutableRealm : MutableRealm {
@@ -55,15 +57,11 @@ internal interface InternalMutableRealm : MutableRealm {
         return copyToRealm(configuration.mediator, realmReference, instance, updatePolicy)
     }
 
-    // FIXME Consider adding a delete-all along with query support
-    //  https://github.com/realm/realm-kotlin/issues/64
-    // fun <T : RealmModel> delete(clazz: KClass<T>)
-
     override fun delete(deleteable: Deleteable) {
         deleteable.asInternalDeleteable().delete()
     }
 
-    override fun delete(schemaClass: KClass<out BaseRealmObject>) {
+    override fun <T : TypedRealmObject> delete(schemaClass: KClass<T>) {
         try {
             delete(query(schemaClass).find())
         } catch (err: IllegalStateException) {
@@ -76,8 +74,15 @@ internal interface InternalMutableRealm : MutableRealm {
     }
 
     override fun deleteAll() {
-        for (schemaClass: KClass<out BaseRealmObject> in configuration.schema) {
-            delete(schemaClass)
+        schema().classes.filter {
+            it.kind != RealmClassKind.ASYMMETRIC
+        }.forEach {
+            val clazz: KClass<out TypedRealmObject>? = realmReference.schemaMetadata[it.name]?.clazz
+            if (clazz != null) {
+                delete(clazz)
+            } else {
+                throw IllegalStateException("Could not delete: ${it.name}")
+            }
         }
     }
 }

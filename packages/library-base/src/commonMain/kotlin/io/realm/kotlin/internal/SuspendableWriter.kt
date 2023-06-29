@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
@@ -53,7 +54,11 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         override val realmReference: LiveRealmReference
             get() = super.realmReference
 
-        override fun <T : BaseRealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
+        override fun <T : TypedRealmObject> query(
+            clazz: KClass<T>,
+            query: String,
+            vararg args: Any?
+        ): RealmQuery<T> {
             return super.query(clazz, query, *args)
         }
 

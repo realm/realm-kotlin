@@ -1996,6 +1996,13 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
+    fun copyToRealm_embeddedObject_throws() {
+        assertFailsWith<IllegalArgumentException> {
+            dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("EmbeddedChild"))
+        }
+    }
+
+    @Test
     fun throwsOnRealmAnyPrimaryKey() {
         val instance = DynamicMutableRealmObject.create(
             "PrimaryKeyString",

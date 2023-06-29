@@ -34,8 +34,8 @@ internal object Names {
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
-    val REALM_OBJECT_COMPANION_IS_EMBEDDED: Name =
-        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}isEmbedded")
+    val REALM_OBJECT_COMPANION_CLASS_KIND: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}classKind")
     val REALM_OBJECT_COMPANION_SCHEMA_METHOD: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD =
@@ -99,6 +99,7 @@ internal object FqNames {
     val REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.RealmObject")
     val TYPED_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.TypedRealmObject")
     val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.EmbeddedRealmObject")
+    val ASYMMETRIC_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.AsymmetricRealmObject")
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
@@ -123,6 +124,7 @@ internal object FqNames {
     val TRANSIENT_ANNOTATION = FqName("kotlin.jvm.Transient")
     val MODEL_OBJECT_ANNOTATION = FqName("io.realm.kotlin.internal.platform.ModelObject")
     val PROPERTY_INFO_CREATE = FqName("io.realm.kotlin.internal.schema.createPropertyInfo")
+    val CLASS_KIND_TYPE = FqName("io.realm.kotlin.schema.RealmClassKind")
 
     // Realm data types
     val REALM_LIST = FqName("io.realm.kotlin.types.RealmList")

@@ -67,7 +67,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
          * Create an unmanaged dynamic object.
          *
          * The type and properties are only checked when the object is imported through
-         * [DynamicMutableRealm.copyToRealm].
+         * [DynamicMutableRealm.copyToRealm] or [DynamicMutableRealm.insert].
          *
          * @param type the class name of the object.
          * @param properties properties of the object.
@@ -83,7 +83,7 @@ public interface DynamicMutableRealmObject : DynamicRealmObject {
          * Create an unmanaged dynamic object.
          *
          * The type and properties are only checked when the object is imported through
-         * [DynamicMutableRealm.copyToRealm].
+         * [DynamicMutableRealm.copyToRealm] or [DynamicMutableRealm.insert].
          *
          * @param type the class name of the object.
          * @param properties properties of the object.

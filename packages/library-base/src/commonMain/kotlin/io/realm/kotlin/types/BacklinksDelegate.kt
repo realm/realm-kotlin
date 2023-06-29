@@ -26,7 +26,7 @@ import kotlin.reflect.KProperty
  *
  * See [RealmObject.backlinks] on how to define inverse relationships in your model.
  */
-public interface BacklinksDelegate<T : TypedRealmObject> {
+public interface BacklinksDelegate<T : BaseRealmObject> {
     public operator fun getValue(
         reference: RealmObject,
         targetProperty: KProperty<*>
@@ -39,7 +39,7 @@ public interface BacklinksDelegate<T : TypedRealmObject> {
  *
  * See [EmbeddedRealmObject.backlinks] on how to define inverse relationships in your model.
  */
-public interface EmbeddedBacklinksDelegate<T : TypedRealmObject> {
+public interface EmbeddedBacklinksDelegate<T : BaseRealmObject> {
     public operator fun getValue(
         reference: EmbeddedRealmObject,
         targetProperty: KProperty<*>
