@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.types
+package io.realm.kotlin.types.geo
 
-import io.realm.kotlin.types.Distance.Companion.EARTH_RADIUS_KM
-import io.realm.kotlin.types.Distance.Companion.KM_PR_MILE
+import io.realm.kotlin.annotations.ExperimentalGeoSpatialApi
+import kotlin.math.PI
 
 /**
- * This class represents an equatorial distance that can be used in geospatial queries like those
- * represented by a [GeoCircle].
+ * This class represents a distance following the surface of the earth. It can be used in geospatial
+ * queries like those represented by a [GeoCircle].
  */
+@ExperimentalGeoSpatialApi
 public data class Distance private constructor(
     /**
-     * The equatorial distance in radians.
+     * The angular distance.
      */
     private val radians: Double
 ) {
@@ -36,13 +37,17 @@ public data class Distance private constructor(
     }
 
     public companion object {
+
+        private const val DEGREE_TO_RADIAN: Double = PI / 180.0
+        private const val RADIAN_TO_DEGREE: Double = 180.0 / PI
+
         /**
          * An approximation of the radius of the earth. This is used to convert between radians
          * and kilometers or miles.
          *
          * See https://en.wikipedia.org/wiki/Earth_radius for further information.
          */
-        public const val EARTH_RADIUS_KM: Double = 6371
+        public const val EARTH_RADIUS_KM: Double = 6371.0
 
         /**
          * The constant used convert between kilometers and the internationale (or statute) mile.
@@ -73,6 +78,13 @@ public data class Distance private constructor(
          * Create a [Distance] object from radians.
          */
         public fun fromRadians(radians: Double): Distance { return Distance(radians) }
+
+        /**
+         * Create a [Distance] object from degrees.
+         */
+        public fun fromDegrees(degrees: Double): Distance {
+            return Distance(degrees * DEGREE_TO_RADIAN)
+        }
     }
 
     /**
@@ -80,6 +92,12 @@ public data class Distance private constructor(
      */
     public val inRadians: Double
         get() = radians
+
+    /**
+     * Returns the distance in degrees.
+     */
+    public val inDegrees: Double
+        get() = radians * RADIAN_TO_DEGREE
 
     /**
      * Returns the distance in kilometers.

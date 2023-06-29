@@ -15,22 +15,33 @@
  */
 package io.realm.kotlin.ext
 
-import io.realm.kotlin.types.Distance
+import io.realm.kotlin.annotations.ExperimentalGeoSpatialApi
+import io.realm.kotlin.types.geo.Distance
 
 /**
- * Create a [Distance] object from kilometers.
+ * Create a [Distance] object from kilometers. (mention equatorial distance)
  */
+@ExperimentalGeoSpatialApi
 public inline val Double.km: Distance
     get() = Distance.fromKilometers(this)
 
 /**
- * Create a [Distance] object from miles.
+ * Create a [Distance] object from miles. (mention equatorial distance)
  */
+@ExperimentalGeoSpatialApi
 public inline val Double.miles: Distance
     get() = Distance.fromMiles(this)
 
 /**
  * Create a [Distance] object from radians.
  */
+@ExperimentalGeoSpatialApi
 public inline val Double.radians: Distance
     get() = Distance.fromRadians(this)
+
+/**
+ * Create a [Distance] object from degrees.
+ */
+@ExperimentalGeoSpatialApi
+public inline val Double.degrees: Distance
+    get() = Distance.fromDegrees(this)

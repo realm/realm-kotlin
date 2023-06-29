@@ -19,6 +19,8 @@ package io.realm.kotlin.test.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.annotations.ExperimentalGeoSpatialApi
+import io.realm.kotlin.ext.degrees
 import io.realm.kotlin.ext.km
 import io.realm.kotlin.ext.miles
 import io.realm.kotlin.ext.query
@@ -26,15 +28,15 @@ import io.realm.kotlin.ext.radians
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.types.Distance
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.GeoBox
-import io.realm.kotlin.types.GeoCircle
-import io.realm.kotlin.types.GeoPoint
-import io.realm.kotlin.types.GeoPolygon
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.Ignore
+import io.realm.kotlin.types.geo.Distance
+import io.realm.kotlin.types.geo.GeoBox
+import io.realm.kotlin.types.geo.GeoCircle
+import io.realm.kotlin.types.geo.GeoPoint
+import io.realm.kotlin.types.geo.GeoPolygon
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -48,29 +50,30 @@ class Restaurant : RealmObject {
 
 // Custom embedded model class for storing GeoPoints in Realm.
 class Location : EmbeddedRealmObject {
-    public constructor(latitude: Double, longitude: Double) {
-        this.latitude = latitude
-        this.longitude = longitude
+    constructor(latitude: Double, longitude: Double) {
         coordinates.apply {
             add(longitude)
             add(latitude)
         }
     }
-    public constructor() : this(0.0, 0.0) // Empty constructor required by Realm. Should not be used.
+    constructor() : this(0.0, 0.0) // Empty constructor required by Realm. Should not be used.
 
     // Name and type required by Realm
-    public var coordinates: RealmList<Double> = realmListOf()
+    var coordinates: RealmList<Double> = realmListOf()
 
     // Name and type by Realm
     private var type: String = "Point"
 
     @Ignore
-    public val latitude: Double
+    var latitude: Double = 0.0
+        get() = coordinates[1]
 
     @Ignore
-    public val longitude: Double
+    var longitude: Double = 0.0
+        get() = coordinates[0]
 }
 
+@OptIn(ExperimentalGeoSpatialApi::class)
 class GeoSpatialTests {
 
     private lateinit var tmpDir: String
@@ -116,7 +119,7 @@ class GeoSpatialTests {
             0.0 to -179.999
         )
         validPoints.forEach {
-            val p = GeoPoint(latitude = it.key, longitude = it.value)
+            val p = GeoPoint.create(latitude = it.key, longitude = it.value)
             assertEquals(it.key, p.latitude)
             assertEquals(it.value, p.longitude)
         }
@@ -139,7 +142,7 @@ class GeoSpatialTests {
         )
         invalidPoints.forEach {
             try {
-                GeoPoint(latitude = it.key, longitude = it.value)
+                GeoPoint.create(latitude = it.key, longitude = it.value)
                 fail("${it.key}, ${it.value} failed")
             } catch (ex: IllegalArgumentException) {
                 // Ignore
@@ -150,12 +153,12 @@ class GeoSpatialTests {
     @Test
     fun geoCircle() {
         val validCircles = mapOf(
-            GeoPoint(0.0, 0.0) to Distance.fromRadians(0.0),
-            GeoPoint(0.0, 0.0) to Distance.fromRadians(0.1),
-            GeoPoint(0.0, 0.0) to Distance.fromRadians(Double.MAX_VALUE)
+            GeoPoint.create(0.0, 0.0) to Distance.fromRadians(0.0),
+            GeoPoint.create(0.0, 0.0) to Distance.fromRadians(0.1),
+            GeoPoint.create(0.0, 0.0) to Distance.fromRadians(Double.MAX_VALUE)
         )
         validCircles.forEach {
-            GeoCircle(center = it.key, radius = it.value)
+            GeoCircle.create(center = it.key, radius = it.value)
         }
     }
 
@@ -163,13 +166,16 @@ class GeoSpatialTests {
     fun geoCircle_invalidArgsThrows() {
         // Currently it isn't possible to provide invalid args to a GeoCircle since both GeoPoint
         // and Distance will throw.
-        // GeoCircle(center = p1, distance = dist)
+        // GeoCircle.create(center = p1, distance = dist)
     }
 
     @Test
     fun geoCircle_toString() {
-        val sphere = GeoCircle(center = GeoPoint(0.12, 0.23), radius = Distance.fromKilometers(10.0))
-        assertEquals("geoCircle([0.23, 0.12], 1.569612305760477)", sphere.toString())
+        val sphere = GeoCircle.create(
+            center = GeoPoint.create(0.12, 0.23),
+            radius = Distance.fromKilometers(10.0)
+        )
+        assertEquals("geoCircle([0.23, 0.12], 0.0015696123057604772)", sphere.toString())
     }
 
     @Test
@@ -196,23 +202,32 @@ class GeoSpatialTests {
                 }
             )
         }
-        var sphere = GeoCircle(center = GeoPoint(0.0, 0.0), radius = Distance.fromKilometers(0.0))
+        var sphere = GeoCircle.create(
+            center = GeoPoint.create(0.0, 0.0),
+            radius = Distance.fromKilometers(0.0)
+        )
         assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $sphere").count().find())
 
-        sphere = GeoCircle(center = GeoPoint(0.0, 0.0), radius = Distance.fromKilometers(3.0))
+        sphere = GeoCircle.create(
+            center = GeoPoint.create(0.0, 0.0),
+            radius = Distance.fromKilometers(1000.0)
+        )
         assertEquals(3, realm.query<Restaurant>("location GEOWITHIN $sphere").count().find())
     }
 
     @Test
     fun geoBox() {
-        val bottomLeft = GeoPoint(0.0, 0.0)
-        val topRight = GeoPoint(5.0, 5.0)
-        GeoBox(bottomLeft, topRight)
+        val bottomLeft = GeoPoint.create(0.0, 0.0)
+        val topRight = GeoPoint.create(5.0, 5.0)
+        GeoBox.create(bottomLeft, topRight)
     }
 
     @Test
     fun geoBox_toString() {
-        val box = GeoBox(bottomLeft = GeoPoint(1.1, 2.2), topRight = GeoPoint(3.3, 4.4))
+        val box = GeoBox.create(
+            bottomLeft = GeoPoint.create(1.1, 2.2),
+            topRight = GeoPoint.create(3.3, 4.4)
+        )
         assertEquals("geoBox([2.2, 1.1], [4.4, 3.3])", box.toString())
     }
 
@@ -240,43 +255,52 @@ class GeoSpatialTests {
                 }
             )
         }
-        var box = GeoBox(bottomLeft = GeoPoint(-1.0, -1.0), topRight = GeoPoint(1.0, 1.0))
+        var box = GeoBox.create(
+            bottomLeft = GeoPoint.create(-1.0, -1.0),
+            topRight = GeoPoint.create(1.0, 1.0)
+        )
         assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $box").count().find())
 
         // (-5.0, -5.0) is not included due to how the geospatial library in Core works.
-        box = GeoBox(bottomLeft = GeoPoint(-5.0, -5.0), topRight = GeoPoint(5.0, 5.0))
+        box = GeoBox.create(
+            bottomLeft = GeoPoint.create(-5.0, -5.0),
+            topRight = GeoPoint.create(5.0, 5.0)
+        )
         assertEquals(2, realm.query<Restaurant>("location GEOWITHIN $box").count().find())
     }
 
     @Test
     fun geoPolygon_toString() {
         val outer = listOf(
-            GeoPoint(0.0, 0.0),
-            GeoPoint(5.0, 0.0),
-            GeoPoint(5.0, 5.0),
-            GeoPoint(0.0, 5.0)
+            GeoPoint.create(0.0, 0.0),
+            GeoPoint.create(5.0, 0.0),
+            GeoPoint.create(5.0, 5.0),
+            GeoPoint.create(0.0, 5.0),
+            GeoPoint.create(0.0, 0.0),
         )
         val firstInner = listOf(
-            GeoPoint(1.0, 1.0),
-            GeoPoint(4.0, 1.0),
-            GeoPoint(4.0, 4.0),
-            GeoPoint(1.0, 4.0)
+            GeoPoint.create(1.0, 1.0),
+            GeoPoint.create(4.0, 1.0),
+            GeoPoint.create(4.0, 4.0),
+            GeoPoint.create(1.0, 4.0),
+            GeoPoint.create(1.0, 1.0),
         )
         val secondInner = listOf(
-            GeoPoint(2.0, 2.0),
-            GeoPoint(3.0, 2.0),
-            GeoPoint(3.0, 3.0),
-            GeoPoint(2.0, 3.0)
+            GeoPoint.create(2.0, 2.0),
+            GeoPoint.create(3.0, 2.0),
+            GeoPoint.create(3.0, 3.0),
+            GeoPoint.create(2.0, 3.0),
+            GeoPoint.create(2.0, 2.0),
         )
 
-        val simplePolygon = GeoPolygon(outer)
-        assertEquals("geoPolygon({[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0]})", simplePolygon.toString())
+        val simplePolygon = GeoPolygon.create(outer)
+        assertEquals("geoPolygon({[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0], [0.0, 0.0]})", simplePolygon.toString())
 
-        val polygonWithOneInnerRing = GeoPolygon(outer, firstInner)
-        assertEquals("geoPolygon({[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0]}, {[1.0, 1.0], [1.0, 4.0], [4.0, 4.0], [4.0, 1.0]})", polygonWithOneInnerRing.toString())
+        val polygonWithOneInnerRing = GeoPolygon.create(outer, firstInner)
+        assertEquals("geoPolygon({[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0], [0.0, 0.0]}, {[1.0, 1.0], [1.0, 4.0], [4.0, 4.0], [4.0, 1.0], [1.0, 1.0]})", polygonWithOneInnerRing.toString())
 
-        val polygonWithTwoInnerRings = GeoPolygon(outer, listOf(firstInner, secondInner))
-        assertEquals("geoPolygon({[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0]}, {[1.0, 1.0], [1.0, 4.0], [4.0, 4.0], [4.0, 1.0]}, {[2.0, 2.0], [2.0, 3.0], [3.0, 3.0], [3.0, 2.0]})", polygonWithTwoInnerRings.toString())
+        val polygonWithTwoInnerRings = GeoPolygon.create(outer, listOf(firstInner, secondInner))
+        assertEquals("geoPolygon({[0.0, 0.0], [0.0, 5.0], [5.0, 5.0], [5.0, 0.0], [0.0, 0.0]}, {[1.0, 1.0], [1.0, 4.0], [4.0, 4.0], [4.0, 1.0], [1.0, 1.0]}, {[2.0, 2.0], [2.0, 3.0], [3.0, 3.0], [3.0, 2.0], [2.0, 2.0]})", polygonWithTwoInnerRings.toString())
     }
 
     @Test
@@ -304,47 +328,100 @@ class GeoSpatialTests {
             )
         }
 
-        val onlyOuterRing = GeoPolygon(
+        val onlyOuterRing = GeoPolygon.create(
             outerRing = listOf(
-                GeoPoint(-5.0, -5.0),
-                GeoPoint(5.0, -5.0),
-                GeoPoint(5.0, 5.0),
-                GeoPoint(-5.0, 5.0),
-                GeoPoint(-5.0, -5.0)
+                GeoPoint.create(-5.0, -5.0),
+                GeoPoint.create(5.0, -5.0),
+                GeoPoint.create(5.0, 5.0),
+                GeoPoint.create(-5.0, 5.0),
+                GeoPoint.create(-5.0, -5.0)
             )
         )
         assertEquals(2, realm.query<Restaurant>("location GEOWITHIN $onlyOuterRing").count().find())
 
-        val polygonWithHole = GeoPolygon(
+        val polygonWithHole = GeoPolygon.create(
             outerRing = listOf(
-                GeoPoint(-5.0, -5.0),
-                GeoPoint(5.0, -5.0),
-                GeoPoint(5.0, 5.0),
-                GeoPoint(-5.0, 5.0),
-                GeoPoint(-5.0, -5.0)
+                GeoPoint.create(-5.0, -5.0),
+                GeoPoint.create(5.0, -5.0),
+                GeoPoint.create(5.0, 5.0),
+                GeoPoint.create(-5.0, 5.0),
+                GeoPoint.create(-5.0, -5.0)
             ),
-            hole = listOf(
-                GeoPoint(-4.0, -4.0),
-                GeoPoint(4.0, -4.0),
-                GeoPoint(4.0, 4.0),
-                GeoPoint(-4.0, 4.0),
-                GeoPoint(-4.0, -4.0)
+            holes = arrayOf(
+                listOf(
+                    GeoPoint.create(-4.0, -4.0),
+                    GeoPoint.create(4.0, -4.0),
+                    GeoPoint.create(4.0, 4.0),
+                    GeoPoint.create(-4.0, 4.0),
+                    GeoPoint.create(-4.0, -4.0)
+                )
             )
         )
         assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $polygonWithHole").count().find())
     }
 
     @Test
-    fun geoPolygon_within_throwsOnNonClosedPolygon() {
-        val polygon1 = GeoPolygon(
-            outerRing = listOf(
-                GeoPoint(-5.0, -5.0),
-                GeoPoint(5.0, -5.0),
-                GeoPoint(5.0, 5.0)
+    fun geoPolygon_invalidShapesThrows() {
+        // First and last point is not the same
+        assertFailsWith<IllegalArgumentException>("First and last point in the outer ring must be the same") {
+            val shape = GeoPolygon.create(
+                outerRing = listOf(
+                    GeoPoint.create(0.0, 0.0),
+                    GeoPoint.create(0.0, 5.0),
+                    GeoPoint.create(5.0, 5.0),
+                    GeoPoint.create(5.0, 0.0)
+                )
             )
-        )
-        assertFailsWithMessage<IllegalArgumentException>("Invalid region in GEOWITHIN query") {
-            realm.query<Restaurant>("location GEOWITHIN $polygon1").count()
+        }
+
+        // Same rules for inner holes
+        assertFailsWith<IllegalArgumentException>("First and last point in the outer ring must be the same") {
+            GeoPolygon.create(
+                listOf(
+                    GeoPoint.create(0.0, 0.0),
+                    GeoPoint.create(0.0, 5.0),
+                    GeoPoint.create(5.0, 5.0),
+                    GeoPoint.create(5.0, 0.0),
+                    GeoPoint.create(0.0, 0.0),
+                ),
+                listOf(
+                    GeoPoint.create(0.0, 0.0),
+                    GeoPoint.create(0.0, 5.0),
+                    GeoPoint.create(5.0, 5.0),
+                    GeoPoint.create(5.0, 0.0)
+                )
+            )
+        }
+
+        // We need 3 vertices, which requires 4 geo points. 3 geo points will throw.
+        // First and last point is not the same
+        assertFailsWithMessage<IllegalArgumentException>("") {
+            val triangle = GeoPolygon.create(
+                outerRing = listOf(
+                    GeoPoint.create(0.0, 0.0),
+                    GeoPoint.create(2.5, 5.0),
+                    GeoPoint.create(5.0, 0.0),
+                )
+            )
+        }
+
+        // Holes also require 3 vertices
+        assertFailsWithMessage<IllegalArgumentException>("") {
+            val triangle = GeoPolygon.create(
+                outerRing = listOf(
+                    GeoPoint.create(0.0, 0.0),
+                    GeoPoint.create(2.5, 5.0),
+                    GeoPoint.create(5.0, 0.0),
+                    GeoPoint.create(0.0, 0.0)
+                ),
+                holes = arrayOf(
+                    listOf(
+                        GeoPoint.create(1.0, 1.0),
+                        GeoPoint.create(2.5, 4.0),
+                        GeoPoint.create(4.0, 1.0)
+                    )
+                )
+            )
         }
     }
 
@@ -356,6 +433,23 @@ class GeoSpatialTests {
             val dist2 = d.radians
             assertEquals(d, dist1.inRadians)
             assertEquals(d, dist2.inRadians)
+        }
+    }
+
+    @Test
+    fun distance_degrees() {
+        val validDists = mapOf(
+            0.0 to 0.0,
+            0.1 to 0.1,
+            Double.MIN_VALUE to 0.0,
+            Double.MAX_VALUE to Double.POSITIVE_INFINITY,
+            Double.POSITIVE_INFINITY to Double.POSITIVE_INFINITY
+        )
+        validDists.forEach { (input, output) ->
+            val dist1 = Distance.fromDegrees(input)
+            val dist2 = input.degrees
+            assertEquals(output, dist1.inDegrees, "$input failed.")
+            assertEquals(output, dist2.inDegrees, "$input failed.")
         }
     }
 
@@ -391,6 +485,18 @@ class GeoSpatialTests {
             assertEquals(output, dist1.inMiles, "$input failed.")
             assertEquals(output, dist2.inMiles, "$input failed.")
         }
+    }
+
+    @Test
+    fun distance_conversions() {
+        val d1 = Distance.fromKilometers(100.0)
+        assertEquals(62.13711922373339, d1.inMiles)
+        assertEquals(100.0, d1.inKilometers)
+        assertEquals(0.01569612305760477, d1.inRadians)
+        assertEquals(0.8993216059187306, d1.inDegrees)
+
+        val d2 = Distance.fromRadians(1.0)
+        assertEquals(57.29577951308232, d2.inDegrees)
     }
 
     @Test

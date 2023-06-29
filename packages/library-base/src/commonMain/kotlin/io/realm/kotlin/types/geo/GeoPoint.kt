@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.types
+package io.realm.kotlin.types.geo
+
+import io.realm.kotlin.annotations.ExperimentalGeoSpatialApi
+import io.realm.kotlin.internal.geo.UnmanagedGeoPoint
 
 /**
- * This class represent a point on the globe in geographical coordinates: latitude and longitude.
+ * This class represent a point on earth in geographical coordinates: latitude and longitude.
  * - Latitude ranges between -90 and 90 degrees, inclusive. Values above or below this range will
  *   throw an [IllegalArgumentException].
  * - Longitude ranges between -180 and 180 degrees, inclusive. Values above or below this range
@@ -53,10 +56,10 @@ package io.realm.kotlin.types
  *    private var type: String = "Point"
  *
  *    @Ignore
- *    public val latitude: Double = coordinates[1]
+ *    public var latitude: Double = coordinates[1]
  *
  *    @Ignore
- *    public val longitude: Double = coordinates[0]
+ *    public var longitude: Double = coordinates[0]
  * }
  * ```
  *
@@ -75,37 +78,38 @@ package io.realm.kotlin.types
  *   }
  * }
  *
- * val newYork = GeoPoint(latitude = 40.730610, longitude = -73.935242)
- * val searchArea = GeoCircle(center = newYork, radius = Distance.fromMiles(2.0))
+ * val newYork = GeoPoint.create(latitude = 40.730610, longitude = -73.935242)
+ * val searchArea = GeoCircle.create(center = newYork, radius = Distance.fromMiles(2.0))
  * val restaurants = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
  * ```
  *
  * A proper persistable GeoPoint class will be implemented in an upcoming release.
  */
-public data class GeoPoint(
+@ExperimentalGeoSpatialApi
+public interface GeoPoint {
+
     /**
-     * Latitude in degrees. Must be between -90.0 and 90.0.
+     * Latitude in degrees.
      */
-    public val latitude: Double,
+    public val latitude: Double
+
     /**
-     * Longitude in degrees. Must be between -180.0 and 180.0.
+     * Longitude in degrees.
      */
     public val longitude: Double
-) {
 
-    private companion object {
-        const val MIN_LATITUDE = -90.0
-        const val MAX_LATITUDE = 90.0
-        const val MIN_LONGITUDE = -180.0
-        const val MAX_LONGITUDE = 180.0
-    }
+    public companion object {
 
-    init {
-        if (latitude < MIN_LATITUDE || latitude > MAX_LATITUDE) {
-            throw IllegalArgumentException("Latitude is outside the valid range -90 <= lat <= 90: $latitude")
-        }
-        if (longitude < MIN_LONGITUDE || longitude > MAX_LONGITUDE) {
-            throw IllegalArgumentException("Longitude is outside the valid range -180 <= lat <= 180: $longitude")
+        /**
+         * Creates a point on the earths surface.
+         *
+         * @param latitude Latitude in degrees. Must be between -90.0 and 90.0.
+         * @param longitude Longitude in degrees. Must be between -180.0 and 180.0.
+         * @throws IllegalArgumentException if [latitude] or [longitude] falls outside the allowed
+         * values.
+         */
+        public fun create(latitude: Double, longitude: Double): GeoPoint {
+            return UnmanagedGeoPoint(latitude, longitude)
         }
     }
 }
