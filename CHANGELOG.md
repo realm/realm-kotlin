@@ -1,4 +1,4 @@
-## 1.10.1-SNAPSHOT (YYYY-MM-DD)
+## 1.10.1 (2023-06-30)
 
 ### Breaking Changes
 * None.
