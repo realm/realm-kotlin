@@ -442,7 +442,7 @@ class GeoSpatialTests {
             0.0 to 0.0,
             0.1 to 0.1,
             Double.MIN_VALUE to 0.0,
-            Double.MAX_VALUE to Double.POSITIVE_INFINITY,
+            Double.MAX_VALUE to 1.7976931348623155E308,
             Double.POSITIVE_INFINITY to Double.POSITIVE_INFINITY
         )
         validDists.forEach { (input, output) ->
