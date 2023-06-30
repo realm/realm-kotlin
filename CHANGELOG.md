@@ -4,10 +4,10 @@
 * None.
 
 ### Enhancements
-* [Sync] Optimized the opening of Flexible Sync Realms when  `waitForInitialRemoteData` is used. (Issue [#1438](https://github.com/realm/realm-kotlin/issues/1438))
+* [Sync] Optimized the opening of Flexible Sync Realms when `waitForInitialRemoteData` is used. (Issue [#1438](https://github.com/realm/realm-kotlin/issues/1438))
 
 ### Fixed
-* None
+* [Sync] Using `SyncConfiguration.waitForInitialRemoteData()` would require a network connection, even after opening the realm file for the first time. (Issue [#1439](https://github.com/realm/realm-kotlin/pull/1439)) 
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
