@@ -56,10 +56,18 @@ import io.realm.kotlin.internal.geo.UnmanagedGeoPoint
  *    private var type: String = "Point"
  *
  *    @Ignore
- *    public var latitude: Double = coordinates[1]
+ *    public var latitude: Double
+ *        get() = coordinates[1]
+ *        set(value) {
+ *            coordinates[1] = value
+ *        }
  *
  *    @Ignore
- *    public var longitude: Double = coordinates[0]
+ *    public var longitude: Double
+ *        get() = coordinates[0]
+ *        set(value) {
+ *            coordinates[0] = value
+ *        }
  * }
  * ```
  *

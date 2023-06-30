@@ -26,8 +26,8 @@ import io.realm.kotlin.internal.geo.UnmanagedGeoPolygon
  * A [GeoPolygon] describes a shape represented by 3 or more line segments. It comprises of one
  * outer ring and 0 or more rings representing holes with the following restrictions:
  *
- * - Each ring must consist of at least 3 vertices. The first and the last point must be the same
- *   to indicate a closed ring (meaning you need at least 4 points to define the
+ * - Each ring must consist of at least 3 line segments. The first and the last point must be the
+ *   same to indicate a closed ring (meaning you need at least 4 points to define the
  *   polygon).
  * - Rings may not cross, i.e. the boundary of a ring may not intersect both the interior and
  *   exterior of any other ring.
@@ -98,9 +98,9 @@ public interface GeoPolygon {
          * Create a [GeoPolygon] instance.
          *
          * @param outerRing A list of [GeoPoint]s representing the outer ring of the polygon. The
-         * outer ring must contain at least 3 unique points. The first and the last point may
+         * outer ring must contain at least 4 unique points. The first and the last point must
          * be identical, but no other duplicates are allowed. Each subsequent pair of points represents
-         * an edge in the polygon with the first and the last point being implicitly connected.
+         * an edge in the polygon.
          * @param holes A list of "inner" rings. Each of these rings has the same requirements as
          * the [outerRing]. A point is considered "inside" the polygon if it is contained by an odd
          * number of rings and "outside" if it's contained by an even number of rings.
@@ -114,9 +114,9 @@ public interface GeoPolygon {
          * Create a [GeoPolygon] instance.
          *
          * @param outerRing A list of [GeoPoint]s representing the outer ring of the polygon. The
-         * outer ring must contain at least 3 unique points. The first and the last point may
+         * outer ring must contain at least 4 unique points. The first and the last point must
          * be identical, but no other duplicates are allowed. Each subsequent pair of points represents
-         * an edge in the polygon with the first and the last point being implicitly connected.
+         * an edge in the polygon.
          * @param holes A list of "inner" rings. Each of these rings has the same requirements as
          * the [outerRing]. A point is considered "inside" the polygon if it is contained by an odd
          * number of rings and "outside" if it's contained by an even number of rings.

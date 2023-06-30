@@ -25,8 +25,8 @@ import io.realm.kotlin.internal.geo.UnmanagedGeoBox
  * for a geospatial query like this:
  *
  * ```
- * val bottomLeft = GeoPoint.create(latitude = 0.0, longitude = 0.0)
- * val topRight = GeoPoint.create(latitude = 0.0, longitude = 0.0)
+ * val bottomLeft = GeoPoint.create(latitude = 5.0, longitude = 5.0)
+ * val topRight = GeoPoint.create(latitude = 10.0, longitude = 10.0)
  * val searchArea = GeoBox.create(bottomLeft, topRight)
  * val restaurants = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
  * ```

@@ -65,12 +65,18 @@ class Location : EmbeddedRealmObject {
     private var type: String = "Point"
 
     @Ignore
-    var latitude: Double = 0.0
+    var latitude: Double
         get() = coordinates[1]
+        set(value) {
+            coordinates[1] = value
+        }
 
     @Ignore
-    var longitude: Double = 0.0
+    var longitude: Double
         get() = coordinates[0]
+        set(value) {
+            coordinates[0] = value
+        }
 }
 
 @OptIn(ExperimentalGeoSpatialApi::class)
