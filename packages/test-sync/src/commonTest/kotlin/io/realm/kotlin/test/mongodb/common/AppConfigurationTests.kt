@@ -70,53 +70,44 @@ class AppConfigurationTests {
 //            .build()
 //        assertEquals("CustomAuth", config2.authorizationHeaderName)
 //    }
-//
-//    @Test
-//    fun addCustomRequestHeader_illegalArgumentThrows() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-//        assertFailsWith<IllegalArgumentException> { builder.addCustomRequestHeader("", "val") }
-//        assertFailsWith<IllegalArgumentException> { builder.addCustomRequestHeader(TestHelper.getNull(), "val") }
-//        assertFailsWith<IllegalArgumentException> { builder.addCustomRequestHeader("header", TestHelper.getNull()) }
-//    }
-//
-//    @Test
-//    fun addCustomRequestHeader() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .addCustomRequestHeader("header1", "val1")
-//            .addCustomRequestHeader("header2", "val2")
-//            .build()
-//        val headers: Map<String, String> = config.customRequestHeaders
-//        assertEquals(2, headers.size.toLong())
-//        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
-//        assertTrue(headers.any { it.key == "header2" && it.value == "val2" })
-//    }
-//
-//    @Test
-//    fun addCustomRequestHeaders() {
-//        val inputHeaders: MutableMap<String, String> = LinkedHashMap()
-//        inputHeaders["header1"] = "value1"
-//        inputHeaders["header2"] = "value2"
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .addCustomRequestHeaders(TestHelper.getNull())
-//            .addCustomRequestHeaders(inputHeaders)
-//            .build()
-//        val outputHeaders: Map<String, String> = config.customRequestHeaders
-//        assertEquals(2, outputHeaders.size.toLong())
-//        assertTrue(outputHeaders.any { it.key == "header1" && it.value == "value1" })
-//        assertTrue(outputHeaders.any { it.key == "header2" && it.value == "value2" })
-//    }
-//
-//    @Test
-//    fun addCustomHeader_combinesSingleAndMultiple() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .addCustomRequestHeader("header3", "val3")
-//            .addCustomRequestHeaders(mapOf(Pair("header1", "val1")))
-//            .build()
-//        val headers: Map<String, String> = config.customRequestHeaders
-//        assertEquals(2, headers.size)
-//        assertTrue(headers.any { it.key == "header3" && it.value == "val3" })
-//        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
-//    }
+
+    @Test
+    fun addCustomRequestHeader() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .addCustomRequestHeader("header1", "val1")
+            .addCustomRequestHeader("header2", "val2")
+            .build()
+        val headers: Map<String, String> = config.customRequestHeaders
+        assertEquals(2, headers.size.toLong())
+        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
+        assertTrue(headers.any { it.key == "header2" && it.value == "val2" })
+    }
+
+    @Test
+    fun addCustomRequestHeaders() {
+        val inputHeaders: MutableMap<String, String> = LinkedHashMap()
+        inputHeaders["header1"] = "value1"
+        inputHeaders["header2"] = "value2"
+        val config = AppConfiguration.Builder(APP_ID)
+            .addCustomRequestHeaders(inputHeaders)
+            .build()
+        val outputHeaders: Map<String, String> = config.customRequestHeaders
+        assertEquals(2, outputHeaders.size.toLong())
+        assertTrue(outputHeaders.any { it.key == "header1" && it.value == "value1" })
+        assertTrue(outputHeaders.any { it.key == "header2" && it.value == "value2" })
+    }
+
+    @Test
+    fun addCustomHeader_combinesSingleAndMultiple() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .addCustomRequestHeader("header3", "val3")
+            .addCustomRequestHeaders(mapOf(Pair("header1", "val1")))
+            .build()
+        val headers: Map<String, String> = config.customRequestHeaders
+        assertEquals(2, headers.size)
+        assertTrue(headers.any { it.key == "header3" && it.value == "val3" })
+        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
+    }
 
     @Test
     fun create() {
