@@ -351,15 +351,11 @@ public interface AppConfiguration {
             val appLogger = ContextLogger("Sdk")
             val networkTransport: (dispatcher: DispatcherHolder) -> NetworkTransport =
                 { dispatcherHolder ->
-                    val logger: Logger? = if (logLevel <= LogLevel.DEBUG) {
-                        object : Logger {
-                            override fun log(message: String) {
-                                val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
-                                appLogger.debug(obfuscatedMessage ?: message)
-                            }
+                    val logger: Logger = object : Logger {
+                        override fun log(message: String) {
+                            val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
+                            appLogger.debug(obfuscatedMessage ?: message)
                         }
-                    } else {
-                        null
                     }
                     networkTransport ?: KtorNetworkTransport(
                         // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
