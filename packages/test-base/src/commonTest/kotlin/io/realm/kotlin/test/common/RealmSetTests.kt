@@ -24,6 +24,7 @@ import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.set.RealmSetContainer
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.query.RealmQuery
@@ -150,6 +151,17 @@ class RealmSetTests : CollectionQueryTests {
 
         val realmSetFromArgs: RealmSet<String> = realmSetOf("1", "2")
         assertContentEquals(listOf("1", "2"), realmSetFromArgs)
+    }
+
+    @Test
+    fun unmanagedRealmSet_equalsHash() {
+        assertEquals(realmSetOf("1", "2"), realmSetOf("1", "2"))
+        assertEquals(realmSetOf("1", "2").hashCode(), realmSetOf("1", "2").hashCode())
+    }
+
+    @Test
+    fun unmanagedRealmSet_toString() {
+        assertEquals("""UnmanagedRealmSet{1, 2}""", realmSetOf("1", "2").toString())
     }
 
     @Test

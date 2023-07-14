@@ -95,6 +95,21 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
         realm = Realm.open(configuration)
     }
 
+    @Test
+    fun testing() {
+        val a = mutableListOf<Int>().apply {
+            add(1)
+        }
+
+        val b = mutableListOf<Int>().apply {
+            add(1)
+        }
+
+        assertEquals(a.hashCode(), b.hashCode())
+
+        assertEquals(realmListOf(1), realmListOf(1))
+    }
+
     @AfterTest
     fun tearDown() {
         if (this::realm.isInitialized && !realm.isClosed()) {
@@ -110,6 +125,17 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
 
         val realmListFromArgs: RealmList<String> = realmListOf("1", "2")
         assertContentEquals(listOf("1", "2"), realmListFromArgs)
+    }
+
+    @Test
+    fun unmanagedRealmList_equalsHash() {
+        assertEquals(realmListOf("1", "2"), realmListOf("1", "2"))
+        assertEquals(realmListOf("1", "2").hashCode(), realmListOf("1", "2").hashCode())
+    }
+
+    @Test
+    fun unmanagedRealmList_toString() {
+        assertEquals("""UnmanagedRealmList{1, 2}""", realmListOf("1", "2").toString())
     }
 
     @Test

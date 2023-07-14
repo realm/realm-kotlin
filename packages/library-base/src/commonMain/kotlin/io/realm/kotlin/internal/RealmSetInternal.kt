@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
@@ -46,7 +47,9 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged sets, backed by a [MutableSet].
  */
-internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSet<E> by mutableSetOf() {
+internal class UnmanagedRealmSet<E>(
+    private val backingSet: MutableSet<E> = mutableSetOf()
+) : RealmSet<E>, InternalDeleteable, MutableSet<E> by backingSet {
     override fun asFlow(): Flow<SetChange<E>> {
         throw UnsupportedOperationException("Unmanaged sets cannot be observed.")
     }
@@ -54,6 +57,12 @@ internal class UnmanagedRealmSet<E> : RealmSet<E>, InternalDeleteable, MutableSe
     override fun delete() {
         throw UnsupportedOperationException("Unmanaged sets cannot be deleted.")
     }
+
+    override fun toString(): String = "UnmanagedRealmSet{${joinToString()}}"
+
+    override fun equals(other: Any?): Boolean = backingSet == other
+
+    override fun hashCode(): Int = backingSet.hashCode()
 }
 
 /**
