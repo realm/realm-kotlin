@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* [Sync] Http requests where not logged when log level was set in `RealmLog.level`. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1456)) 
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
