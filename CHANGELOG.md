@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* `RealmInstant` could be instantiated with invalid arguments. (Issue [#1443](https://github.com/realm/realm-kotlin/issues/1443))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
