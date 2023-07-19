@@ -95,21 +95,6 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
         realm = Realm.open(configuration)
     }
 
-    @Test
-    fun testing() {
-        val a = mutableListOf<Int>().apply {
-            add(1)
-        }
-
-        val b = mutableListOf<Int>().apply {
-            add(1)
-        }
-
-        assertEquals(a.hashCode(), b.hashCode())
-
-        assertEquals(realmListOf(1), realmListOf(1))
-    }
-
     @AfterTest
     fun tearDown() {
         if (this::realm.isInitialized && !realm.isClosed()) {
