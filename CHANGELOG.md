@@ -7,6 +7,7 @@
 * None.
 
 ### Fixed
+* `RealmInstant` could be instantiated with invalid arguments. (Issue [#1443](https://github.com/realm/realm-kotlin/issues/1443))
 * `equals` and `hashCode` on unmanaged `RealmList` and `RealmSet` resulted in incorrect values. (Issue [#1454](https://github.com/realm/realm-kotlin/pull/1454))
 
 ### Compatibility
@@ -24,7 +25,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None
+* Updated to Realm Core 13.17.0, commit f1e962cd447f8b69f8f7cf46a188b1c6246923c5.
 
 
 ## 1.10.1 (2023-06-30)
