@@ -65,6 +65,7 @@ public interface RealmInstant : Comparable<RealmInstant> {
          * to either [MIN] or [MAX].
          */
         public fun from(epochSeconds: Long, nanosecondAdjustment: Int): RealmInstant {
+            @Suppress("ComplexCondition")
             if ((epochSeconds > 0 && nanosecondAdjustment < 0) || (epochSeconds < 0 && nanosecondAdjustment > 0)) {
                 throw IllegalArgumentException("Arguments must be both positive or negative.")
             }
