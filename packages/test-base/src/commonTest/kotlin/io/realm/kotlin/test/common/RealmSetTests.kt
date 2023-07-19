@@ -24,7 +24,6 @@ import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.set.RealmSetContainer
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.query.RealmQuery
