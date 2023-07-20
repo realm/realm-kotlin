@@ -25,6 +25,7 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -474,6 +475,22 @@ class RealmConfigurationTests {
             .inMemory()
         assertFailsWithMessage<IllegalStateException>("Cannot combine `initialRealmFile` and `inMemory` configuration options") {
             builder.build()
+        }
+    }
+
+    @Test
+    fun logLevelDoesNotGetOverwrittenByConfig() {
+        val originalLogLevel = RealmLog.level
+        try {
+            val expectedLogLevel = LogLevel.ALL
+            RealmLog.level = expectedLogLevel
+
+            RealmConfiguration.Builder(setOf(Sample::class))
+                .build()
+
+            assertEquals(expectedLogLevel, RealmLog.level)
+        } finally {
+            RealmLog.level = originalLogLevel
         }
     }
 

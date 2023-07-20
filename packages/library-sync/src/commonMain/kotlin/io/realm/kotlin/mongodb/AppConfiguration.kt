@@ -125,7 +125,7 @@ public interface AppConfiguration {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
         private var encryptionKey: ByteArray? = null
-        private var logLevel: LogLevel = RealmLog.level
+        private var logLevel: LogLevel? = null
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
@@ -309,8 +309,12 @@ public interface AppConfiguration {
             // configuring logging. This should be removed when `LogConfiguration` is removed.
             val allLoggers = mutableListOf<RealmLogger>()
             allLoggers.addAll(userLoggers)
-            val logConfig = LogConfiguration(this.logLevel, allLoggers)
-            RealmLog.level = logLevel
+
+            val logConfig = this.logLevel?.let {
+                RealmLog.level = it
+                LogConfiguration(it, allLoggers)
+            }
+
             userLoggers.forEach { RealmLog.add(it) }
 
             val appNetworkDispatcherFactory = if (dispatcher != null) {

@@ -77,7 +77,7 @@ open class TestApp private constructor(
     constructor(
         appName: String = TEST_APP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-        logLevel: LogLevel = LogLevel.WARN,
+        logLevel: LogLevel? = null,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
@@ -147,7 +147,7 @@ open class TestApp private constructor(
         fun build(
             debug: Boolean,
             appName: String,
-            logLevel: LogLevel,
+            logLevel: LogLevel?,
             customLogger: RealmLogger?,
             dispatcher: CoroutineDispatcher,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
@@ -166,16 +166,21 @@ open class TestApp private constructor(
                     AppAdminImpl(this, baasApp)
                 }
             }
+
             @Suppress("invisible_member", "invisible_reference")
             var config = AppConfiguration.Builder(appAdmin.clientAppId)
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .networkTransport(networkTransport)
                 .ejson(ejson)
-                .log(
-                    logLevel,
-                    if (customLogger == null) emptyList<RealmLogger>()
-                    else listOf<RealmLogger>(customLogger)
-                )
+                .apply {
+                    if (logLevel != null) {
+                        log(
+                            logLevel,
+                            if (customLogger == null) emptyList<RealmLogger>()
+                            else listOf<RealmLogger>(customLogger)
+                        )
+                    }
+                }
 
             val app = App.create(
                 builder(config)
