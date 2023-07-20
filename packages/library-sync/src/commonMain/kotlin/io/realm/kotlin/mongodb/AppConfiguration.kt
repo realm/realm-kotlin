@@ -125,7 +125,7 @@ public interface AppConfiguration {
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
         private var encryptionKey: ByteArray? = null
-        private var logLevel: LogLevel = LogLevel.WARN
+        private var logLevel: LogLevel = RealmLog.level
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
