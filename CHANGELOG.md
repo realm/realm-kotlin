@@ -11,7 +11,6 @@
 * `equals` and `hashCode` on unmanaged `RealmList` and `RealmSet` resulted in incorrect values. (Issue [#1454](https://github.com/realm/realm-kotlin/pull/1454))
 * [Sync] Http requests where not logged when log level was set in `RealmLog.level`. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1456)) 
 
-
 ### Compatibility
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
