@@ -10,7 +10,7 @@
 * `RealmInstant` could be instantiated with invalid arguments. (Issue [#1443](https://github.com/realm/realm-kotlin/issues/1443))
 * `equals` and `hashCode` on unmanaged `RealmList` and `RealmSet` resulted in incorrect values. (Issue [#1454](https://github.com/realm/realm-kotlin/pull/1454))
 * [Sync] HTTP requests were not logged when the log level was set in `RealmLog.level`. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1456))
-* [Sync] `RealmLog.level` was set to `WARN` after creating an `App` or instantiating a `Realm`
+* [Sync] `RealmLog.level` is set to `WARN` after creating an `App` or `Realm` configuration. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1459))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
