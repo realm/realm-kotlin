@@ -547,7 +547,7 @@ class SyncConfigTests {
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
     }
 
-//    @Test
+    //    @Test
 //    fun initialData() {
 //        val user: User = createTestUser(app)
 //        val config = configFactory.createSyncConfigurationBuilder(user)
@@ -600,7 +600,7 @@ class SyncConfigTests {
         }
     }
 
-//
+    //
 //    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
 //    @Test
@@ -1228,26 +1228,26 @@ class SyncConfigTests {
 
     @Test
     fun logLevelDoesNotGetOverwrittenByConfig() {
-        val originalLogLevel = RealmLog.level
-        try {
-            val expectedLogLevel = LogLevel.ALL
-            RealmLog.level = expectedLogLevel
+        app.asTestApp.close()
+        // Prevent AppConfiguration to set a log level
+        app = TestApp(logLevel = null)
 
-            val (email, password) = randomEmail() to "password1234"
-            val user = runBlocking {
-                app.createUserAndLogIn(email, password)
-            }
+        val expectedLogLevel = LogLevel.ALL
 
-            SyncConfiguration.Builder(
-                schema = setOf(ParentPk::class, ChildPk::class),
-                user = user,
-                partitionValue = partitionValue
-            ).build()
+        RealmLog.level = expectedLogLevel
 
-            assertEquals(expectedLogLevel, RealmLog.level)
-        } finally {
-            RealmLog.level = originalLogLevel
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
         }
+
+        SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).build()
+
+        assertEquals(expectedLogLevel, RealmLog.level)
     }
 
     private fun createTestUser(): User = runBlocking {

@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -174,7 +175,7 @@ class AppConfigurationTests {
         }
     }
 
-//    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
+    //    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
 //    fun syncRootDirectory_dirIsAFile() {
 //        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
 //        val file = File(tempFolder.newFolder(), "dummyfile")
@@ -418,17 +419,14 @@ class AppConfigurationTests {
 
     @Test
     fun logLevelDoesNotGetOverwrittenByConfig() {
-        val originalLogLevel = RealmLog.level
-        try {
-            val expectedLogLevel = LogLevel.ALL
-            RealmLog.level = expectedLogLevel
+        val expectedLogLevel = LogLevel.ALL
+        RealmLog.level = expectedLogLevel
 
-            AppConfiguration.create("")
+        AppConfiguration.create("")
 
-            assertEquals(expectedLogLevel, RealmLog.level)
-        } finally {
-            RealmLog.level = originalLogLevel
-        }
+        assertEquals(expectedLogLevel, RealmLog.level)
+
+        RealmLog.reset()
     }
 
     @Test

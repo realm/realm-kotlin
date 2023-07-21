@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member", "invisible_reference")
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -480,18 +481,15 @@ class RealmConfigurationTests {
 
     @Test
     fun logLevelDoesNotGetOverwrittenByConfig() {
-        val originalLogLevel = RealmLog.level
-        try {
-            val expectedLogLevel = LogLevel.ALL
-            RealmLog.level = expectedLogLevel
+        val expectedLogLevel = LogLevel.ALL
+        RealmLog.level = expectedLogLevel
 
-            RealmConfiguration.Builder(setOf(Sample::class))
-                .build()
+        RealmConfiguration.Builder(setOf(Sample::class))
+            .build()
 
-            assertEquals(expectedLogLevel, RealmLog.level)
-        } finally {
-            RealmLog.level = originalLogLevel
-        }
+        assertEquals(expectedLogLevel, RealmLog.level)
+
+        RealmLog.reset()
     }
 
     private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {
