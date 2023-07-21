@@ -30,7 +30,7 @@ internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
         customLogger?.let {
             install(Logging) {
                 logger = customLogger
-                level = LogLevel.BODY
+                level = LogLevel.ALL
             }
         }
 

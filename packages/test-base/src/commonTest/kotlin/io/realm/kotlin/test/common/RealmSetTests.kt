@@ -153,6 +153,17 @@ class RealmSetTests : CollectionQueryTests {
     }
 
     @Test
+    fun unmanagedRealmSet_equalsHash() {
+        assertEquals(realmSetOf("1", "2"), realmSetOf("1", "2"))
+        assertEquals(realmSetOf("1", "2").hashCode(), realmSetOf("1", "2").hashCode())
+    }
+
+    @Test
+    fun unmanagedRealmSet_toString() {
+        assertEquals("""UnmanagedRealmSet{1, 2}""", realmSetOf("1", "2").toString())
+    }
+
+    @Test
     fun realmSetInitializer_toRealmSet() {
         // No need to be exhaustive here
         val realmSetFromEmptyCollection = emptyList<String>().toRealmSet()

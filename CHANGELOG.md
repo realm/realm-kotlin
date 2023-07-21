@@ -27,6 +27,38 @@
 * None.
 
 
+## 1.10.2 (2023-07-21)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* `RealmInstant` could be instantiated with invalid arguments. (Issue [#1443](https://github.com/realm/realm-kotlin/issues/1443))
+* `equals` and `hashCode` on unmanaged `RealmList` and `RealmSet` resulted in incorrect values. (Issue [#1454](https://github.com/realm/realm-kotlin/pull/1454))
+* [Sync] HTTP requests were not logged when the log level was set in `RealmLog.level`. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1456))
+* [Sync] `RealmLog.level` is set to `WARN` after creating an `App` or `Realm` configuration. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1459))
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.17.0, commit f1e962cd447f8b69f8f7cf46a188b1c6246923c5.
+
+
 ## 1.10.1 (2023-06-30)
 
 ### Breaking Changes

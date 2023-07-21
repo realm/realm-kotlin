@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.realmObjectCompanionOrNull
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -225,7 +226,7 @@ public interface Configuration {
 
         // 'name' must be nullable as it is optional when getting SyncClient's default path!
         protected abstract var name: String?
-        protected var logLevel: LogLevel = LogLevel.WARN
+        protected var logLevel: LogLevel = RealmLog.level
         protected var appConfigLoggers: List<RealmLogger> = listOf()
         protected var realmConfigLoggers: List<RealmLogger> = listOf()
         protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE

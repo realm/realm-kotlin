@@ -65,10 +65,14 @@ public interface RealmInstant : Comparable<RealmInstant> {
          * to either [MIN] or [MAX].
          */
         public fun from(epochSeconds: Long, nanosecondAdjustment: Int): RealmInstant {
+            @Suppress("ComplexCondition")
+            if ((epochSeconds > 0 && nanosecondAdjustment < 0) || (epochSeconds < 0 && nanosecondAdjustment > 0)) {
+                throw IllegalArgumentException("Arguments must be both positive or negative.")
+            }
             val secAdjustment: Long = (nanosecondAdjustment / SEC_AS_NANOSECOND).toLong()
             val nsAdjustment: Int = nanosecondAdjustment % SEC_AS_NANOSECOND
-            var s: Long = epochSeconds + secAdjustment
-            var ns: Int = nsAdjustment
+            val s: Long = epochSeconds + secAdjustment
+            val ns: Int = nsAdjustment
             if (((epochSeconds.xor(s)).and(secAdjustment.xor(s))) < 0) {
                 return if (epochSeconds < 0) MIN else MAX
             }
