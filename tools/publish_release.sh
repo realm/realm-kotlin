@@ -108,6 +108,7 @@ create_javadoc() {
   echo "Creating JavaDoc/KDoc..."
   cd $REALM_KOTLIN_PATH/packages
   ./gradlew dokkaHtmlMultiModule --info --stacktrace --no-daemon
+  ../tools/fix-h1s.sh
   cd $HERE
 }
 
