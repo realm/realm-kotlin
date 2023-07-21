@@ -48,7 +48,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     internal val networkTransportFactory: (dispatcher: DispatcherHolder) -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
-    public val logger: LogConfiguration,
+    public val logger: LogConfiguration?,
     override val appName: String?,
     override val appVersion: String?,
     internal val bundleId: String,

@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -19,6 +20,8 @@ package io.realm.kotlin.test.mongodb.common
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
@@ -172,7 +175,7 @@ class AppConfigurationTests {
         }
     }
 
-//    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
+    //    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
 //    fun syncRootDirectory_dirIsAFile() {
 //        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
 //        val file = File(tempFolder.newFolder(), "dummyfile")
@@ -413,6 +416,18 @@ class AppConfigurationTests {
 //        assertTrue(headerSet.get())
 //        looperThread.testComplete()
 //    }
+
+    @Test
+    fun logLevelDoesNotGetOverwrittenByConfig() {
+        val expectedLogLevel = LogLevel.ALL
+        RealmLog.level = expectedLogLevel
+
+        AppConfiguration.create("")
+
+        assertEquals(expectedLogLevel, RealmLog.level)
+
+        RealmLog.reset()
+    }
 
     @Test
     fun injectedBundleId() {
