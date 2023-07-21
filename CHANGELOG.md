@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
+* [Sync] Add proxy support with the new App configuration builders methods `authorizationHeaderName()` and `addCustomRequestHeader()`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
 
 ### Fixed
 * None.
