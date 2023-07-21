@@ -49,7 +49,7 @@ import kotlin.test.assertTrue
 
 private const val CUSTOM_HEADER_NAME = "Foo"
 private const val CUSTOM_HEADER_VALUE = "bar"
-//private const val AUTH_HEADER_NAME = "RealmAuth"
+// private const val AUTH_HEADER_NAME = "RealmAuth"
 
 private const val APP_ID = "app-id"
 
@@ -404,9 +404,7 @@ class AppConfigurationTests {
                 message: String?,
                 vararg args: Any?,
             ) {
-                if (level == LogLevel.DEBUG
-                    && message!!.contains("-> $CUSTOM_HEADER_NAME: $CUSTOM_HEADER_VALUE")
-                ) {
+                if (level == LogLevel.DEBUG && message!!.contains("-> $CUSTOM_HEADER_NAME: $CUSTOM_HEADER_VALUE")) {
                     channel.trySend(true)
                 }
             }
