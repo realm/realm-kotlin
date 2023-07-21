@@ -12,10 +12,10 @@
  * limitations under the License.
  *
  */
-package io.realm.kotlin.mongodb.annotations
+package io.realm.kotlin.annotations
 
 /**
- * This annotation mark Realm APIs for Flexible Sync that are considered **experimental**, i.e.
+ * This annotation mark Realm APIs for geo spatial queries that are considered **experimental**, i.e.
  * there are no guarantees given that these APIs cannot change without warning between minor and
  * major versions. They will not change between patch versions.
  *
@@ -31,5 +31,5 @@ package io.realm.kotlin.mongodb.annotations
     AnnotationTarget.FUNCTION,
     AnnotationTarget.TYPEALIAS
 )
-@RequiresOptIn(level = RequiresOptIn.Level.WARNING)
-public annotation class ExperimentalFlexibleSyncApi
+@RequiresOptIn(level = RequiresOptIn.Level.ERROR)
+public annotation class ExperimentalGeoSpatialApi

@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
 
 ### Fixed
 * None.
