@@ -24,6 +24,7 @@ import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
@@ -33,7 +34,6 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.channels.Channel
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -49,7 +49,7 @@ import kotlin.test.assertTrue
 
 private const val CUSTOM_HEADER_NAME = "Foo"
 private const val CUSTOM_HEADER_VALUE = "bar"
-// private const val AUTH_HEADER_NAME = "RealmAuth"
+private const val AUTH_HEADER_NAME = "RealmAuth"
 
 private const val APP_ID = "app-id"
 
@@ -60,23 +60,16 @@ class AppConfigurationTests {
 //    @get:Rule
 //    val tempFolder = TemporaryFolder()
 
-//    @Test
-//    fun authorizationHeaderName_illegalArgumentsThrows() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-//        assertFailsWith<IllegalArgumentException> { builder.authorizationHeaderName(TestHelper.getNull()) }
-//        assertFailsWith<IllegalArgumentException> { builder.authorizationHeaderName("") }
-//    }
-//
-//    @Test
-//    fun authorizationHeaderName() {
-//        val config1 = AppConfiguration.Builder(APP_ID).build()
-//        assertEquals("Authorization", config1.authorizationHeaderName)
-//
-//        val config2 = AppConfiguration.Builder(APP_ID)
-//            .authorizationHeaderName("CustomAuth")
-//            .build()
-//        assertEquals("CustomAuth", config2.authorizationHeaderName)
-//    }
+    @Test
+    fun authorizationHeaderName() {
+        val config1 = AppConfiguration.Builder(APP_ID).build()
+        assertEquals("Authorization", config1.authorizationHeaderName)
+
+        val config2 = AppConfiguration.Builder(APP_ID)
+            .authorizationHeaderName("CustomAuth")
+            .build()
+        assertEquals("CustomAuth", config2.authorizationHeaderName)
+    }
 
     @Test
     fun addCustomRequestHeader() {
@@ -380,12 +373,13 @@ class AppConfigurationTests {
                 app = TestApp(
                     builder = { builder ->
                         builder.addCustomRequestHeader(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)
+                        builder.authorizationHeaderName(AUTH_HEADER_NAME)
                     }
                 )
                 doCustomHeaderTest(app!!)
             }
         } finally {
-            app?.close()
+            assertFailsWith<ServiceException> { app?.close() }
         }
     }
 
@@ -404,7 +398,10 @@ class AppConfigurationTests {
                 message: String?,
                 vararg args: Any?,
             ) {
-                if (level == LogLevel.DEBUG && message!!.contains("-> $CUSTOM_HEADER_NAME: $CUSTOM_HEADER_VALUE")) {
+                if (level == LogLevel.DEBUG && message!!.contains("-> $CUSTOM_HEADER_NAME: $CUSTOM_HEADER_VALUE") && message.contains(
+                        "$AUTH_HEADER_NAME: "
+                    )
+                ) {
                     channel.trySend(true)
                 }
             }
@@ -415,10 +412,10 @@ class AppConfigurationTests {
             RealmLog.add(logger)
 
             // Perform a network related operation
-            app.emailPasswordAuth.registerUser(
-                email = RealmUUID.random().toString(),
-                password = "password",
-            )
+            // It will fail because the server does not expect the modified auth header name
+            assertFailsWith<ServiceException> {
+                app.createUserAndLogIn()
+            }
 
             // Receive the results.
             assertTrue(channel.receiveOrFail())

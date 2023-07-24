@@ -59,7 +59,18 @@ public interface AppConfiguration {
     public val encryptionKey: ByteArray?
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
+
+    /**
+     * Custom configured headers that will be sent alongside other headers when
+     * making network requests towards Atlas App services.
+     */
     public val customRequestHeaders: Map<String, String>
+
+    /**
+     * Header name of used to carry authentication data when making network requests towards Atlas
+     * App services.
+     */
+    public val authorizationHeaderName: String
 
     /**
      * The name of app. This is only used for debugging.
@@ -138,6 +149,7 @@ public interface AppConfiguration {
         private var ejson: EJson = EJson
         private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
         private val customRequestHeaders = mutableMapOf<String, String>()
+        private var authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -276,6 +288,18 @@ public interface AppConfiguration {
         }
 
         /**
+         * Sets the name of the HTTP header used to send authorization data in when making requests to
+         * Atlas App Services. The App or firewall must have been configured to expect a
+         * custom authorization header.
+         *
+         * The default authorization header is named [DEFAULT_AUTHORIZATION_HEADER_NAME].
+         *
+         * @param name name of the header.
+         */
+        public fun authorizationHeaderName(name: String): Builder = apply {
+            authorizationHeaderName = name
+        }
+        /**
          * Adds an extra HTTP header to append to every request to an Atlas App Services Application.
          *
          * @param name the name of the header.
@@ -364,7 +388,8 @@ public interface AppConfiguration {
                         timeoutMs = 60000,
                         dispatcherHolder = dispatcherHolder,
                         logger = logger,
-                        customHeaders = customRequestHeaders
+                        customHeaders = customRequestHeaders,
+                        authorizationHeaderName = authorizationHeaderName
                     )
                 }
 
@@ -384,7 +409,8 @@ public interface AppConfiguration {
                 bundleId = bundleId,
                 ejson = ejson,
                 httpLogObfuscator = httpLogObfuscator,
-                customRequestHeaders = customRequestHeaders
+                customRequestHeaders = customRequestHeaders,
+                authorizationHeaderName = authorizationHeaderName,
             )
         }
     }

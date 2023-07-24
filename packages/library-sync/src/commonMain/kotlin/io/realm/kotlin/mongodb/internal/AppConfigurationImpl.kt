@@ -55,6 +55,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val ejson: EJson,
     override val httpLogObfuscator: HttpLogObfuscator?,
     override val customRequestHeaders: Map<String, String>,
+    override val authorizationHeaderName: String,
 ) : AppConfiguration {
 
     /**
