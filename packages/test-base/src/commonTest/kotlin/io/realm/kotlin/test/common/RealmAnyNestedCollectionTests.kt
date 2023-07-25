@@ -21,6 +21,9 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmAnyDictionaryOf
+import io.realm.kotlin.ext.realmAnyListOf
+import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -544,34 +547,14 @@ class RealmAnyNestedCollectionTests {
             )
             query<JsonStyleRealmObject>().find().single().value!!.asDictionary().run {
                 put("keyInt", RealmAny.create(5))
-                put(
-                    "keySet",
-                    RealmAny.create(
-                        realmSetOf(
-                            RealmAny.create(5),
-                            RealmAny.create("Realm"),
-                            RealmAny.create(sample),
-                        )
-                    )
-                )
-                put(
-                    "keyList",
-                    RealmAny.create(
-                        realmListOf(
-                            RealmAny.create(5),
-                            RealmAny.create("Realm"),
-                            RealmAny.create(sample)
-                        )
-                    )
-                )
+                put("keySet", realmAnySetOf(5, "Realm", sample))
+                put("keyList", realmAnyListOf(5, "Realm", sample))
                 put(
                     "keyDictionary",
-                    RealmAny.create(
-                        realmDictionaryOf(
-                            "keyInt" to RealmAny.create(5),
-                            "keyString" to RealmAny.create("Realm"),
-                            "keyObject" to RealmAny.create(sample)
-                        )
+                    realmAnyDictionaryOf(
+                        "keyInt" to 5,
+                        "keyString" to "Realm",
+                        "keyObject" to sample,
                     ),
                 )
             }
