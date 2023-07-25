@@ -23,7 +23,6 @@ import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlin.jvm.JvmInline
 
 /**
  * Factory wrapper for passing around dispatchers without needing to create them. This makes it
@@ -85,7 +84,7 @@ public sealed interface DispatcherHolder {
     public val dispatcher: CoroutineDispatcher
 
     /**
-     * Realm scheduler
+     * Realm scheduler, we need to hold a reference to prevent being GC'ed
      */
     public val realmScheduler: RealmSchedulerPointer
 

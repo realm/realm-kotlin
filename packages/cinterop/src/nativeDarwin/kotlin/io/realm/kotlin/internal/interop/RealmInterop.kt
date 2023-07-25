@@ -494,7 +494,6 @@ actual object RealmInterop {
         )
     }
 
-
     actual fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer): Pair<LiveRealmPointer, Boolean> {
         val fileCreated = atomic(false)
         val callback = DataInitializationCallback {
@@ -584,7 +583,6 @@ actual object RealmInterop {
 
         return CPointerWrapper<RealmSchedulerT>(capi_scheduler)
     }
-
 
     actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
         return CPointerWrapper(realm_wrapper.realm_open_synchronized(config.cptr()))
