@@ -386,15 +386,17 @@ class PersistedNameTests {
             realm.writeBlocking {
                 copyToRealm(
                     Parent().apply {
-                        this.child = Child()
+                        this.child = Child().apply { name = "child1" }
+                        this.children.add(Child().apply { children.add(Child()) })
                     }
                 )
             }
 
             assertEquals(1, realm.query<Parent>().count().find())
-            assertEquals(1, realm.query<Child>().count().find())
+            assertEquals(3, realm.query<Child>().count().find())
 
-            assertEquals("child", realm.query<Parent>().first().find()!!.child!!.name)
+            assertEquals("child1", realm.query<Parent>().first().find()!!.child!!.name)
+
         }
     }
 
@@ -507,9 +509,14 @@ class RealmChild(var id: Int) : RealmObject {
 class Parent : RealmObject {
     var name = "parent"
     var child: Child? = null
+
+    @PersistedName("renamedChildren")
+    var children: RealmList<Child> = realmListOf()
 }
 
 @PersistedName(name = "RenamedChild")
 class Child : RealmObject {
     var name = "child"
+    @PersistedName("renamedChildren")
+    var children: RealmList<Child> = realmListOf()
 }
