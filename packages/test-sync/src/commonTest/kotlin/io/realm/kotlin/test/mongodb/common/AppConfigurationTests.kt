@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -424,6 +425,18 @@ class AppConfigurationTests {
             RealmLog.remove(logger)
             RealmLog.level = originalLevel
         }
+    }
+
+    @Test
+    fun logLevelDoesNotGetOverwrittenByConfig() {
+        val expectedLogLevel = LogLevel.ALL
+        RealmLog.level = expectedLogLevel
+
+        AppConfiguration.create("")
+
+        assertEquals(expectedLogLevel, RealmLog.level)
+
+        RealmLog.reset()
     }
 
     @Test

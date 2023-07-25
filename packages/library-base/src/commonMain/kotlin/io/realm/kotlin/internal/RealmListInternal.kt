@@ -46,13 +46,21 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged lists, backed by a [MutableList].
  */
-internal class UnmanagedRealmList<E> : RealmList<E>, InternalDeleteable, MutableList<E> by mutableListOf() {
+internal class UnmanagedRealmList<E>(
+    private val backingList: MutableList<E> = mutableListOf()
+) : RealmList<E>, InternalDeleteable, MutableList<E> by backingList {
     override fun asFlow(): Flow<ListChange<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 
     override fun delete() {
         throw UnsupportedOperationException("Unmanaged lists cannot be deleted.")
     }
+
+    override fun toString(): String = "UnmanagedRealmList{${joinToString()}}"
+
+    override fun equals(other: Any?): Boolean = backingList == other
+
+    override fun hashCode(): Int = backingList.hashCode()
 }
 
 /**
