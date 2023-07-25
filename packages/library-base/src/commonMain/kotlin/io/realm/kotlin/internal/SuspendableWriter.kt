@@ -24,10 +24,10 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -43,13 +43,13 @@ import kotlin.reflect.KClass
  *   it's thread.
  *
  * @param owner The Realm instance needed for emitting updates.
- * @param dispatcher The dispatcher on which to execute all the writers operations on.
+ * @param dispatcherHolder The dispatcher on which to execute all the writers operations on.
  */
-internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) :
+internal class SuspendableWriter(private val owner: RealmImpl, val dispatcherHolder: DispatcherHolder) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
 
-    internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcher), InternalMutableRealm, InternalTypedRealm, WriteTransactionManager {
+    internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcherHolder), InternalMutableRealm, InternalTypedRealm, WriteTransactionManager {
 
         override val realmReference: LiveRealmReference
             get() = super.realmReference
@@ -73,6 +73,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
     override val realm: WriterRealm by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
+    private val dispatcher = dispatcherHolder.dispatcher
 
     init {
         tid = runBlocking(dispatcher) { threadId() }

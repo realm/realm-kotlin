@@ -32,7 +32,7 @@ import io.realm.kotlin.internal.interop.RealmInterop
 internal class StandaloneDynamicMutableRealm(configuration: InternalConfiguration) :
     DynamicMutableRealmImpl(
         configuration,
-        RealmInterop.realm_open(configuration.createNativeConfiguration(), null)
+        RealmInterop.realm_open(configuration.createNativeConfiguration())
     ) {
 
     override fun close() {

@@ -66,10 +66,9 @@ public class RealmImpl private constructor(
         CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
     private val notifierFlow: MutableSharedFlow<RealmChange<Realm>> =
         MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val notifier =
-        SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
-    private val writer =
-        SuspendableWriter(this, writeDispatcherHolder.dispatcher)
+
+    private val notifier = SuspendableNotifier(this, notificationDispatcherHolder)
+    private val writer = SuspendableWriter(this, writeDispatcherHolder)
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
     // closed.

@@ -180,7 +180,16 @@ actual object RealmInterop {
         realmc.realm_config_set_in_memory(config.cptr(), inMemory)
     }
 
-    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
+    actual fun realm_create_scheduler(): RealmSchedulerPointer =
+        LongPointerWrapper(realmc.realm_scheduler_make_default())
+
+    actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer =
+        LongPointerWrapper(realmc.realm_create_scheduler(dispatcher))
+
+    actual fun realm_open(
+        config: RealmConfigurationPointer,
+        scheduler: RealmSchedulerPointer,
+    ): Pair<LiveRealmPointer, Boolean> {
         // Configure callback to track if the file was created as part of opening
         var fileCreated = false
         val callback = DataInitializationCallback {
@@ -188,14 +197,9 @@ actual object RealmInterop {
         }
         realm_config_set_data_initialization_function(config, callback)
 
-        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise
-        // pass null to use the generic one
-        val realmPtr = LongPointerWrapper<LiveRealmT>(
-            realmc.open_realm_with_scheduler(
-                (config as LongPointerWrapper).ptr,
-                if (dispatcher != null) JVMScheduler(dispatcher) else null
-            )
-        )
+        realmc.realm_config_set_scheduler(config.cptr(), scheduler.cptr())
+        val realmPtr = LongPointerWrapper<LiveRealmT>(realmc.realm_open(config.cptr()))
+
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return Pair(realmPtr, fileCreated)

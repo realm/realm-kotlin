@@ -22,9 +22,9 @@ import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.WeakReference
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.internal.util.DispatcherHolder
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 /**
@@ -37,13 +37,13 @@ import kotlinx.coroutines.withContext
  *
  * @param owner The owner of the snapshot references of this realm.
  * @param configuration The configuration of the realm.
- * @param dispatcher The single thread dispatcher backing the realm scheduler of this realm. The
+ * @param dispatcherHolder The single thread dispatcher backing the realm scheduler of this realm. The
  * realm itself must only be access on the same thread.
  */
 internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
-    val dispatcher: CoroutineDispatcher
+    dispatcherHolder: DispatcherHolder
 ) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
@@ -51,8 +51,10 @@ internal abstract class LiveRealm(
 
     internal val versionTracker = VersionTracker(this, owner.log)
 
+    private val dispatcher = dispatcherHolder.dispatcher
+
     override val realmReference: LiveRealmReference by lazy {
-        val (dbPointer, _) = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcher)
+        val (dbPointer, _) = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcherHolder.realmScheduler)
         LiveRealmReference(this, dbPointer)
     }
 

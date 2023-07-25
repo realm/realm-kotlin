@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.internal.util
 
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.platform.multiThreadDispatcher
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import kotlinx.coroutines.CloseableCoroutineDispatcher
@@ -35,6 +37,7 @@ public fun interface CoroutineDispatcherFactory {
          * Let Realm create and control the dispatcher. Managed dispatchers will be closed
          * when their owner Realm/App is closed as well.
          */
+        @OptIn(ExperimentalCoroutinesApi::class)
         public fun managed(name: String, threads: Int = 1): CoroutineDispatcherFactory {
             return CoroutineDispatcherFactory {
                 ManagedDispatcherHolder(
@@ -82,23 +85,30 @@ public sealed interface DispatcherHolder {
     public val dispatcher: CoroutineDispatcher
 
     /**
+     * Realm scheduler
+     */
+    public val realmScheduler: RealmSchedulerPointer
+
+    /**
      * Mark the dispatcher as no longer being used. For internal dispatchers, this will also
      * close them.
      */
     public fun close()
 }
 
-@JvmInline
 @OptIn(ExperimentalCoroutinesApi::class)
-private value class ManagedDispatcherHolder(
+private class ManagedDispatcherHolder(
     override val dispatcher: CloseableCoroutineDispatcher
 ) : DispatcherHolder {
+    override val realmScheduler: RealmSchedulerPointer by lazy { RealmInterop.realm_create_scheduler(dispatcher) }
+
     override fun close(): Unit = dispatcher.close()
 }
 
-@JvmInline
-private value class UnmanagedDispatcherHolder(
+private class UnmanagedDispatcherHolder(
     override val dispatcher: CoroutineDispatcher
 ) : DispatcherHolder {
+    override val realmScheduler: RealmSchedulerPointer by lazy { RealmInterop.realm_create_scheduler(dispatcher) }
+
     override fun close(): Unit = Unit
 }
