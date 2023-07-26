@@ -288,7 +288,7 @@ public interface AppConfiguration {
 
         /**
          * Sets the name of the HTTP header used to send authorization data in when making requests to
-         * Atlas App Services. The App or firewall must have been configured to expect a
+         * Atlas App Services. The Atlas App or firewall must have been configured to expect a
          * custom authorization header.
          *
          * The default authorization header is named [DEFAULT_AUTHORIZATION_HEADER_NAME].
