@@ -364,8 +364,7 @@ class AppConfigurationTests {
 //        assertEquals(configCodecRegistry, config.defaultCodecRegistry)
 //    }
 //
-    // Check that custom headers and auth header renames are correctly used for HTTP requests
-    // performed from Java.
+    // Check that custom headers and auth header renames are correctly used for HTTP requests.
     @Test
     fun customHeadersTest() {
         var app: App? = null
