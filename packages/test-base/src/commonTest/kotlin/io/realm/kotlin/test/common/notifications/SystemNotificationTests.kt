@@ -19,15 +19,14 @@ package io.realm.kotlin.test.common.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
-import io.realm.kotlin.internal.platform.singleThreadDispatcher
+import io.realm.kotlin.internal.SuspendableWriter
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.Utils
 import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import io.realm.kotlin.internal.SuspendableWriter
-import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 
 /**
  * System wide tests that do not fit elsewhere.
@@ -61,7 +60,7 @@ class SystemNotificationTests {
         Utils.printlntid("main")
         val baseRealm = Realm.open(configuration) as io.realm.kotlin.internal.RealmImpl
 
-        val dispatcher  =CoroutineDispatcherFactory.managed("background").create()
+        val dispatcher = CoroutineDispatcherFactory.managed("background").create()
 
         val writer1 = SuspendableWriter(baseRealm, dispatcher)
         val writer2 = SuspendableWriter(baseRealm, dispatcher)
