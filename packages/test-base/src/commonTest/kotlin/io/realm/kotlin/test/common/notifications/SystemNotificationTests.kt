@@ -26,6 +26,8 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import io.realm.kotlin.internal.SuspendableWriter
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 
 /**
  * System wide tests that do not fit elsewhere.
@@ -58,9 +60,11 @@ class SystemNotificationTests {
     fun multipleSchedulersOnSameThread() {
         Utils.printlntid("main")
         val baseRealm = Realm.open(configuration) as io.realm.kotlin.internal.RealmImpl
-        val dispatcher = singleThreadDispatcher("background")
-        val writer1 = io.realm.kotlin.internal.SuspendableWriter(baseRealm, dispatcher)
-        val writer2 = io.realm.kotlin.internal.SuspendableWriter(baseRealm, dispatcher)
+
+        val dispatcher  =CoroutineDispatcherFactory.managed("background").create()
+
+        val writer1 = SuspendableWriter(baseRealm, dispatcher)
+        val writer2 = SuspendableWriter(baseRealm, dispatcher)
         runBlocking {
             baseRealm.write { copyToRealm(Sample()) }
             writer1.write { copyToRealm(Sample()) }
