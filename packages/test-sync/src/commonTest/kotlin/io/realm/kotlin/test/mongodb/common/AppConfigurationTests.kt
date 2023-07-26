@@ -324,7 +324,7 @@ class AppConfigurationTests {
         assertTrue(config.httpLogObfuscator is io.realm.kotlin.mongodb.internal.LogObfuscatorImpl)
     }
 
-    //
+//
 //    @Test
 //    fun requestTimeout() {
 //        val config = AppConfiguration.Builder(APP_ID)
