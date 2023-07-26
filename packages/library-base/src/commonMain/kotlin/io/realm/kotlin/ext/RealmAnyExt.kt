@@ -37,7 +37,7 @@ public fun realmAnyOf(value: Any?): RealmAny? {
         is RealmUUID -> RealmAny.create(value)
         is RealmObject -> RealmAny.create(value)
         is DynamicRealmObject -> RealmAny.create(value)
-        is Set<*> -> RealmAny.create(value.map { realmAnyOf(it) }.toRealmList())
+        is Set<*> -> RealmAny.create(value.map { realmAnyOf(it) }.toRealmSet())
         is List<*> -> RealmAny.create(value.map { realmAnyOf(it) }.toRealmList())
         is Map<*, *> -> RealmAny.create(value.map { (key, value) -> key as String to realmAnyOf(value) }.toRealmDictionary())
         is RealmAny -> value

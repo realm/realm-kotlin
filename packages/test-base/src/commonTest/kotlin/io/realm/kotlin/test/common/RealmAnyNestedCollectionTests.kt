@@ -78,7 +78,7 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun setInRealmAny_copyToRealm() = runBlocking {
         val sample = Sample().apply { stringField = "SAMPLE" }
-        val o = realm.write {
+        realm.write {
             val instance = JsonStyleRealmObject().apply {
                 // Assigning set
                 // - How to prevent adding a set containing non-any elements?
@@ -99,8 +99,8 @@ class RealmAnyNestedCollectionTests {
 
     @Test
     fun setInRealmAny_assignment() = runBlocking {
-        val o = realm.write {
-            val sample = copyToRealm(Sample().apply { stringField = "SAMPLE" })
+        realm.write {
+            copyToRealm(Sample().apply { stringField = "SAMPLE" })
             val instance = copyToRealm(JsonStyleRealmObject())
             // Assigning set
             // - How to prevent adding a set containing non-any elements?
@@ -198,7 +198,7 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun nestedCollectionsInList_copyToRealm() = runBlocking<Unit> {
         val sample = Sample().apply { stringField = "SAMPLE" }
-        val o = realm.write {
+        realm.write {
             JsonStyleRealmObject().apply {
                 value = RealmAny.create(
                     realmListOf(
@@ -462,7 +462,7 @@ class RealmAnyNestedCollectionTests {
     fun dictionaryInRealmAny_copyToRealm() = runBlocking {
         val sample = Sample().apply { stringField = "SAMPLE" }
         // Import
-        val o = realm.write {
+        realm.write {
             // Normal realm link/object reference
             JsonStyleRealmObject().apply {
                 // Assigning dictornary with nested lists and dictionaries
@@ -503,9 +503,7 @@ class RealmAnyNestedCollectionTests {
         assertEquals(RealmAny.Type.DICTIONARY, anyValue.type)
         anyValue.asDictionary().run {
             assertEquals(4, size)
-            get("keyInt")!!.let {
-                assertEquals(5, it.asInt())
-            }
+            assertEquals(5, get("keyInt")!!.asInt())
             get("keySet")!!.asSet().toMutableSet().let { embeddedSet ->
                 assertEquals(3, embeddedSet.size)
                 assertTrue { embeddedSet.remove(RealmAny.create(5)) }
@@ -566,9 +564,7 @@ class RealmAnyNestedCollectionTests {
         assertEquals(RealmAny.Type.DICTIONARY, anyValue.type)
         anyValue.asDictionary().run {
             assertEquals(4, size)
-            get("keyInt")!!.let {
-                assertEquals(5, it.asInt())
-            }
+            assertEquals(5, get("keyInt")!!.asInt())
             get("keySet")!!.asSet().toMutableSet().let { embeddedSet ->
                 assertEquals(3, embeddedSet.size)
                 assertTrue { embeddedSet.remove(RealmAny.create(5)) }
@@ -607,14 +603,14 @@ class RealmAnyNestedCollectionTests {
                     )
                 }
             )
-            val nestedList = instance.value!!.asDictionary()!!.get("key")!!.asList()
+            val nestedList = instance.value!!.asDictionary()["key"]!!.asList()
             assertEquals(5, nestedList[0]!!.asInt())
             // Overwrite nested list element with new list
-            instance.value!!.asDictionary()!!["key"] = RealmAny.create(realmListOf(RealmAny.create(7)))
+            instance.value!!.asDictionary()["key"] = RealmAny.create(realmListOf(RealmAny.create(7)))
             // FIXME This shouldn't be true. We shouldn't have overwrite the old list
 //            assertEquals(5, nestedList[0]!!.asInt())
             // Overwrite nested list element with new collection of different type
-            instance.value!!.asDictionary()!!["key"] = RealmAny.create(realmSetOf(RealmAny.create(8)))
+            instance.value!!.asDictionary()["key"] = RealmAny.create(realmSetOf(RealmAny.create(8)))
             // Access the old list
             // FIXME Seems like we don't throw a nice error when accessing a delete collection
             //  Overwriting with different collection type seems to ruin original item without
@@ -634,6 +630,92 @@ class RealmAnyNestedCollectionTests {
         }
         assertFailsWithMessage<IllegalArgumentException>("Cannot use nested collections as primary keys or query arguments") {
             realm.query<JsonStyleRealmObject>("value == $0", RealmAny.create(realmDictionaryOf()))
+        }
+    }
+
+    @Test
+    fun query() = runBlocking<Unit> {
+        realm.write {
+            copyToRealm(JsonStyleRealmObject().apply {
+                id = "SET"
+//                value = RealmAny.create(realmSetOf(RealmAny.create(1), RealmAny.create(2), RealmAny.create(3)))
+                value = realmAnySetOf(1, 2, 3)
+            })
+            copyToRealm(JsonStyleRealmObject().apply {
+                id = "LIST"
+                value = realmAnyListOf(4, 5, 6)
+            })
+            copyToRealm(JsonStyleRealmObject().apply {
+                id = "DICT"
+                value = realmAnyDictionaryOf(
+                        "key1" to 7,
+                        "key2" to 8,
+                        "key3" to 9,
+                    )
+            })
+            copyToRealm(JsonStyleRealmObject().apply {
+                id = "EMBEDDED"
+                value = realmAnyListOf(
+                    setOf(1, 2, 3),
+                    listOf(4, 5, 6),
+                    mapOf(
+                        "key1" to 7,
+                        "key2" to 8,
+                        "key3" to listOf(9),
+                    )
+                )
+            })
+        }
+
+        assertEquals(4, realm.query<JsonStyleRealmObject>().find().size)
+
+        // Matching sets
+//        realm.query<JsonStyleRealmObject>("value[0] == 1").find().single().run {
+//            assertEquals("SET", id)
+//        }
+//        realm.query<JsonStyleRealmObject>("value[*] == 1").find().single().run {
+//            assertEquals("SET", id)
+//        }
+        // Size
+        // [RLM_ERR_INVALID_QUERY]: Operation '@size' is not supported on property of type 'mixed'
+        // assertEquals(1, realm.query<JsonStyleRealmObject>("value[*].@size == 3").find().size)
+
+        // Matching lists
+        realm.query<JsonStyleRealmObject>("value[0] == 4").find().single().run {
+            assertEquals("LIST", id)
+        }
+        realm.query<JsonStyleRealmObject>("value[*] == 4").find().single().run {
+            assertEquals("LIST", id)
+        }
+        // Size
+        // [RLM_ERR_INVALID_QUERY]: Operation '@size' is not supported on property of type 'mixed'
+        // assertEquals(1, realm.query<JsonStyleRealmObject>("value[1].@size == 3").find().size)
+
+        // Matching dictionaries
+        assertEquals(1, realm.query<JsonStyleRealmObject>("value.key1 == 7").find().size)
+        assertEquals(1, realm.query<JsonStyleRealmObject>("value['key1'] == 7").find().size)
+        assertEquals(0, realm.query<JsonStyleRealmObject>("value.unknown == 3").find().size)
+        assertEquals(1, realm.query<JsonStyleRealmObject>("value.@keys == 'key1'").find().size)
+        assertEquals(0, realm.query<JsonStyleRealmObject>("value.@keys == 'unknown'").find().size)
+
+        // None
+        assertTrue { realm.query<JsonStyleRealmObject>("value[*] == 10").find().isEmpty() }
+
+        // Matching across all elements and in nested structures
+//        realm.query<JsonStyleRealmObject>("value[*][*] == 1").find().single().run {
+//            assertEquals("EMBEDDED", id)
+//        }
+        realm.query<JsonStyleRealmObject>("value[*][*] == 4").find().single().run {
+            assertEquals("EMBEDDED", id)
+        }
+        realm.query<JsonStyleRealmObject>("value[*][*] == 7").find().single().run {
+            assertEquals("EMBEDDED", id)
+        }
+        realm.query<JsonStyleRealmObject>("value[*].@keys == 'key1'").find().single().run {
+            assertEquals("EMBEDDED", id)
+        }
+        realm.query<JsonStyleRealmObject>("value[*].key3[0] == 9").find().single().run {
+            assertEquals("EMBEDDED", id)
         }
     }
 }

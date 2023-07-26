@@ -419,12 +419,16 @@ internal class RealmAnyListOperator(
                                 issueDynamicObject,
                                 issueDynamicMutableObject
                             ) // , updatePolicy, cache)
+                            // FIXME
+                            operator.clear()
                             operator.addAllInternal(element.asSet(), updatePolicy, cache)
                         }
                         RealmAny.Type.LIST -> {
                             RealmInterop.realm_list_set_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_LIST)
                             val newNativePointer = RealmInterop.realm_list_get_list(nativePointer, index.toLong())
                             val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, updatePolicy, cache, issueDynamicObject, issueDynamicMutableObject)
+                            // FIXME
+                            RealmInterop.realm_list_clear(newNativePointer)
                             operator.insertAll(0, element.asList(), updatePolicy, cache)
                         }
                         RealmAny.Type.DICTIONARY -> {
@@ -436,6 +440,8 @@ internal class RealmAnyListOperator(
                                 converter(String::class, mediator, realmReference),
                                 newNativePointer, issueDynamicObject, issueDynamicMutableObject
                             )
+                            // FIXME
+                            operator.clear()
                             operator.putAll(element.asDictionary(), updatePolicy, cache)
                         }
                         else -> TODO()
