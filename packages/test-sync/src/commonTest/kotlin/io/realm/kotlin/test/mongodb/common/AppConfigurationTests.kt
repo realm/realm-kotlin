@@ -70,44 +70,34 @@ class AppConfigurationTests {
             .authorizationHeaderName("CustomAuth")
             .build()
         assertEquals("CustomAuth", config2.authorizationHeaderName)
+
+        val builder = AppConfiguration.Builder(APP_ID)
+
+        assertFailsWithMessage<IllegalArgumentException>("Non-empty 'name' required.") {
+            builder.authorizationHeaderName("")
+        }
     }
 
     @Test
     fun addCustomRequestHeader() {
         val config = AppConfiguration.Builder(APP_ID)
-            .addCustomRequestHeader("header1", "val1")
-            .addCustomRequestHeader("header2", "val2")
+            .customRequestHeaders {
+                putAll(
+                    mapOf(
+                        "h0" to "v0",
+                        "h1" to "v1",
+                    )
+                )
+                put("h2", "v2")
+            }
             .build()
-        val headers: Map<String, String> = config.customRequestHeaders
-        assertEquals(2, headers.size.toLong())
-        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
-        assertTrue(headers.any { it.key == "header2" && it.value == "val2" })
-    }
 
-    @Test
-    fun addCustomRequestHeaders() {
-        val inputHeaders: MutableMap<String, String> = LinkedHashMap()
-        inputHeaders["header1"] = "value1"
-        inputHeaders["header2"] = "value2"
-        val config = AppConfiguration.Builder(APP_ID)
-            .addCustomRequestHeaders(inputHeaders)
-            .build()
-        val outputHeaders: Map<String, String> = config.customRequestHeaders
-        assertEquals(2, outputHeaders.size.toLong())
-        assertTrue(outputHeaders.any { it.key == "header1" && it.value == "value1" })
-        assertTrue(outputHeaders.any { it.key == "header2" && it.value == "value2" })
-    }
-
-    @Test
-    fun addCustomHeader_combinesSingleAndMultiple() {
-        val config = AppConfiguration.Builder(APP_ID)
-            .addCustomRequestHeader("header3", "val3")
-            .addCustomRequestHeaders(mapOf(Pair("header1", "val1")))
-            .build()
-        val headers: Map<String, String> = config.customRequestHeaders
-        assertEquals(2, headers.size)
-        assertTrue(headers.any { it.key == "header3" && it.value == "val3" })
-        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
+        config.customRequestHeaders.let { headers ->
+            assertEquals(3, headers.size)
+            repeat(3) { index ->
+                assertTrue(headers.any { it.key == "h$index" && it.value == "v$index" })
+            }
+        }
     }
 
     @Test
@@ -324,7 +314,7 @@ class AppConfigurationTests {
         assertTrue(config.httpLogObfuscator is io.realm.kotlin.mongodb.internal.LogObfuscatorImpl)
     }
 
-//
+    //
 //    @Test
 //    fun requestTimeout() {
 //        val config = AppConfiguration.Builder(APP_ID)
@@ -372,8 +362,9 @@ class AppConfigurationTests {
             runBlocking {
                 app = TestApp(
                     builder = { builder ->
-                        builder.addCustomRequestHeader(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)
-                        builder.authorizationHeaderName(AUTH_HEADER_NAME)
+                        builder.customRequestHeaders {
+                            put(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)
+                        }.authorizationHeaderName(AUTH_HEADER_NAME)
                     }
                 )
                 doCustomHeaderTest(app!!)

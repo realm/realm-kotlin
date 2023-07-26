@@ -61,15 +61,15 @@ public interface AppConfiguration {
     public val syncRootDirectory: String
 
     /**
+     * Authorization header name used for Atlas App services requests.
+     */
+    public val authorizationHeaderName: String
+
+    /**
      * Custom configured headers that will be sent alongside other headers when
      * making network requests towards Atlas App services.
      */
     public val customRequestHeaders: Map<String, String>
-
-    /**
-     * Authorization header name used for Atlas App services requests.
-     */
-    public val authorizationHeaderName: String
 
     /**
      * The name of app. This is only used for debugging.
@@ -294,28 +294,22 @@ public interface AppConfiguration {
          * The default authorization header is named [DEFAULT_AUTHORIZATION_HEADER_NAME].
          *
          * @param name name of the header.
+         * @throws IllegalArgumentException if an empty [name] is provided.
          */
         public fun authorizationHeaderName(name: String): Builder = apply {
+            require(name.isNotEmpty()) { "Non-empty 'name' required." }
             authorizationHeaderName = name
         }
 
         /**
-         * Adds an extra HTTP header to append to every request to an Atlas App Services Application.
+         * Update the custom headers that would be appended to every request to an Atlas App Services Application.
          *
-         * @param name the name of the header.
-         * @param value the value of header.
+         * @param block lambda with the the custom header map update instructions.
          */
-        public fun addCustomRequestHeader(name: String, value: String): Builder = apply {
-            customRequestHeaders[name] = value
-        }
-
-        /**
-         * Adds extra HTTP headers to append to every request to an Atlas App Services Application.
-         *
-         * @param headers map with the headers to add.
-         */
-        public fun addCustomRequestHeaders(headers: Map<String, String>): Builder = apply {
-            customRequestHeaders.putAll(headers)
+        public fun customRequestHeaders(
+            block: MutableMap<String, String>.() -> Unit,
+        ): Builder = apply {
+            customRequestHeaders.block()
         }
 
         /**
