@@ -67,8 +67,7 @@ public interface AppConfiguration {
     public val customRequestHeaders: Map<String, String>
 
     /**
-     * Header name of used to carry authentication data when making network requests towards Atlas
-     * App services.
+     * Authorization header name used for Atlas App services requests.
      */
     public val authorizationHeaderName: String
 
