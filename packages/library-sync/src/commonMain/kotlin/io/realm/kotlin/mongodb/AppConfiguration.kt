@@ -298,6 +298,7 @@ public interface AppConfiguration {
         public fun authorizationHeaderName(name: String): Builder = apply {
             authorizationHeaderName = name
         }
+
         /**
          * Adds an extra HTTP header to append to every request to an Atlas App Services Application.
          *
