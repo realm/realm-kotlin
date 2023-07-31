@@ -19,7 +19,7 @@ package io.realm.kotlin
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.RealmMigration
@@ -133,14 +133,14 @@ public interface RealmConfiguration : Configuration {
 
             // Configure the dispatchers
             val notificationDispatcherFactory = if (notificationDispatcher != null) {
-                CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
+                CoroutineRealmSchedulerFactory.unmanaged(notificationDispatcher!!)
             } else {
-                CoroutineDispatcherFactory.managed("notifier-$fileName")
+                CoroutineRealmSchedulerFactory.managed("notifier-$fileName")
             }
             val writerDispatcherFactory = if (writeDispatcher != null) {
-                CoroutineDispatcherFactory.unmanaged(writeDispatcher!!)
+                CoroutineRealmSchedulerFactory.unmanaged(writeDispatcher!!)
             } else {
-                CoroutineDispatcherFactory.managed("writer-$fileName")
+                CoroutineRealmSchedulerFactory.managed("writer-$fileName")
             }
 
             // Configure logging during creation of a (Realm/Sync)Configuration to keep old behavior

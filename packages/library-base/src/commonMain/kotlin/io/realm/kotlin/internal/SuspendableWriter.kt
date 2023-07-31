@@ -24,7 +24,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.CoroutineRealmScheduler
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
@@ -45,7 +45,7 @@ import kotlin.reflect.KClass
  * @param owner The Realm instance needed for emitting updates.
  * @param dispatcherHolder The dispatcher on which to execute all the writers operations on.
  */
-internal class SuspendableWriter(private val owner: RealmImpl, val dispatcherHolder: DispatcherHolder) :
+internal class SuspendableWriter(private val owner: RealmImpl, val dispatcherHolder: CoroutineRealmScheduler) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
 

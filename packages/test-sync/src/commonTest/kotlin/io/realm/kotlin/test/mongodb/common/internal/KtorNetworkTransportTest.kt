@@ -20,7 +20,7 @@ import io.ktor.http.HttpMethod
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
-import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.test.mongodb.TEST_SERVER_BASE_URL
@@ -51,7 +51,7 @@ internal class KtorNetworkTransportTest {
     @BeforeTest
     fun setUp() {
         dispatcher = singleThreadDispatcher("test-ktor-dispatcher")
-        val dispatcherFactory = CoroutineDispatcherFactory.unmanaged(dispatcher)
+        val dispatcherFactory = CoroutineRealmSchedulerFactory.unmanaged(dispatcher)
 
         transport = KtorNetworkTransport(
             timeoutMs = 60000,

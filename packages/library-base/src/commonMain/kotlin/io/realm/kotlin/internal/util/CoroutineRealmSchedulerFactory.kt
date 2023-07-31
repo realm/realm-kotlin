@@ -29,7 +29,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
  * possible to configure dispatchers in Configuration objects, but allow Realm instances to control
  * their lifecycle.
  */
-public fun interface CoroutineDispatcherFactory {
+public fun interface CoroutineRealmSchedulerFactory {
     public companion object {
 
         /**
@@ -37,9 +37,9 @@ public fun interface CoroutineDispatcherFactory {
          * when their owner Realm/App is closed as well.
          */
         @OptIn(ExperimentalCoroutinesApi::class)
-        public fun managed(name: String, threads: Int = 1): CoroutineDispatcherFactory {
-            return CoroutineDispatcherFactory {
-                ManagedDispatcherHolder(
+        public fun managed(name: String, threads: Int = 1): CoroutineRealmSchedulerFactory {
+            return CoroutineRealmSchedulerFactory {
+                ManagedCoroutineRealmScheduler(
                     when (threads) {
                         1 -> singleThreadDispatcher(name)
                         else -> multiThreadDispatcher(threads)
@@ -52,9 +52,9 @@ public fun interface CoroutineDispatcherFactory {
          * Unmanaged dispatchers are dispatchers that are passed into Realm from the outside.
          * Realm should not determine when they are closed and leave that to the owner of them.
          */
-        public fun unmanaged(dispatcher: CoroutineDispatcher): CoroutineDispatcherFactory {
-            return CoroutineDispatcherFactory {
-                UnmanagedDispatcherHolder(dispatcher)
+        public fun unmanaged(dispatcher: CoroutineDispatcher): CoroutineRealmSchedulerFactory {
+            return CoroutineRealmSchedulerFactory {
+                UnmanagedCoroutineRealmScheduler(dispatcher)
             }
         }
     }
@@ -64,19 +64,19 @@ public fun interface CoroutineDispatcherFactory {
      * If a dispatcher is created, calling this method multiple times wille create a
      * new dispatcher for each call.
      */
-    public fun create(): DispatcherHolder
+    public fun create(): CoroutineRealmScheduler
 }
 
 /**
- * This interface wraps any dispatcher used by Realm and is used so we can track whether a
+ * This interface wraps any dispatcher and its associated Realm scheduler. It is used so we can track whether a
  * dispatcher has been created internally by us or has been passed in from the outside.
  *
- * This pattern is a bit awkward. But since CoroutineDispatcher is an abstract class it is
+ * This pattern is a bit awkward. But since [CoroutineDispatcher] is an abstract class it is
  * not feasible to wrap them as they hold a lot of internal state.
  *
  * Instead we just expose a reference to the underlying dispatcher.
  */
-public sealed interface DispatcherHolder {
+public sealed interface CoroutineRealmScheduler {
 
     /**
      * Reference to dispatcher that should be used.
@@ -89,25 +89,36 @@ public sealed interface DispatcherHolder {
     public val realmScheduler: RealmSchedulerPointer
 
     /**
-     * Mark the dispatcher as no longer being used. For internal dispatchers, this will also
-     * close them.
+     * Mark the dispatcher as no longer being used and release the associated Realm scheduler. For
+     * internal dispatchers, this will also close them.
      */
-    public fun close()
+    public fun close() {
+        realmScheduler.release()
+    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
-private class ManagedDispatcherHolder(
-    override val dispatcher: CloseableCoroutineDispatcher
-) : DispatcherHolder {
-    override val realmScheduler: RealmSchedulerPointer by lazy { RealmInterop.realm_create_scheduler(dispatcher) }
+private class ManagedCoroutineRealmScheduler(
+    override val dispatcher: CloseableCoroutineDispatcher,
+) : CoroutineRealmScheduler {
+    override val realmScheduler: RealmSchedulerPointer by lazy {
+        RealmInterop.realm_create_scheduler(
+            dispatcher
+        )
+    }
 
-    override fun close(): Unit = dispatcher.close()
+    override fun close() {
+        super.close()
+        dispatcher.close()
+    }
 }
 
-private class UnmanagedDispatcherHolder(
-    override val dispatcher: CoroutineDispatcher
-) : DispatcherHolder {
-    override val realmScheduler: RealmSchedulerPointer by lazy { RealmInterop.realm_create_scheduler(dispatcher) }
-
-    override fun close(): Unit = Unit
+private class UnmanagedCoroutineRealmScheduler(
+    override val dispatcher: CoroutineDispatcher,
+) : CoroutineRealmScheduler {
+    override val realmScheduler: RealmSchedulerPointer by lazy {
+        RealmInterop.realm_create_scheduler(
+            dispatcher
+        )
+    }
 }

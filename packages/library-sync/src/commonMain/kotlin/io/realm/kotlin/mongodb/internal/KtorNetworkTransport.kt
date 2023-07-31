@@ -36,7 +36,7 @@ import io.ktor.utils.io.errors.IOException
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.ResponseCallback
-import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.CoroutineRealmScheduler
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_AUTHORIZATION_HEADER_NAME
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -49,7 +49,7 @@ public class KtorNetworkTransport(
     // FIXME Rework timeout to take a Duration instead
     //  https://github.com/realm/realm-kotlin/issues/408
     timeoutMs: Long,
-    private val dispatcherHolder: DispatcherHolder,
+    private val dispatcherHolder: CoroutineRealmScheduler,
     logger: Logger? = null,
 ) : NetworkTransport {
 

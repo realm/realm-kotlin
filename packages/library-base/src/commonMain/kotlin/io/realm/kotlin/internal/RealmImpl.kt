@@ -27,7 +27,7 @@ import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.CoroutineRealmScheduler
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.RealmChange
@@ -57,9 +57,9 @@ public class RealmImpl private constructor(
 
     private val realmPointerMutex = Mutex()
 
-    public val notificationDispatcherHolder: DispatcherHolder =
+    public val notificationDispatcherHolder: CoroutineRealmScheduler =
         configuration.notificationDispatcherFactory.create()
-    public val writeDispatcherHolder: DispatcherHolder =
+    public val writeDispatcherHolder: CoroutineRealmScheduler =
         configuration.writeDispatcherFactory.create()
 
     internal val realmScope =

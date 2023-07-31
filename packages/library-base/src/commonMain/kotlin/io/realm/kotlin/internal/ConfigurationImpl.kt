@@ -39,7 +39,7 @@ import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
-import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
@@ -53,8 +53,8 @@ public open class ConfigurationImpl constructor(
     schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
-    notificationDispatcher: CoroutineDispatcherFactory,
-    writeDispatcher: CoroutineDispatcherFactory,
+    notificationDispatcher: CoroutineRealmSchedulerFactory,
+    writeDispatcher: CoroutineRealmSchedulerFactory,
     schemaVersion: Long,
     schemaMode: SchemaMode,
     private val userEncryptionKey: ByteArray?,
@@ -90,9 +90,9 @@ public open class ConfigurationImpl constructor(
 
     override val mediator: Mediator
 
-    override val notificationDispatcherFactory: CoroutineDispatcherFactory
+    override val notificationDispatcherFactory: CoroutineRealmSchedulerFactory
 
-    override val writeDispatcherFactory: CoroutineDispatcherFactory
+    override val writeDispatcherFactory: CoroutineRealmSchedulerFactory
 
     override val compactOnLaunchCallback: CompactOnLaunchCallback?
 

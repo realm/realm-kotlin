@@ -20,7 +20,7 @@ import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
-import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.CoroutineRealmScheduler
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.App
@@ -34,7 +34,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
-internal typealias AppResources = Triple<DispatcherHolder, NetworkTransport, RealmAppPointer>
+internal typealias AppResources = Triple<CoroutineRealmScheduler, NetworkTransport, RealmAppPointer>
 
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
@@ -42,7 +42,7 @@ public class AppImpl(
 ) : App {
 
     internal val nativePointer: RealmAppPointer
-    internal val appNetworkDispatcher: DispatcherHolder
+    internal val appNetworkDispatcher: CoroutineRealmScheduler
     private val networkTransport: NetworkTransport
 
     // Allow some delay between events being reported and them being consumed.

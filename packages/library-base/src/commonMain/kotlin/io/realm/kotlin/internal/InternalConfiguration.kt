@@ -19,7 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.SchemaMode
-import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
 
@@ -32,8 +32,8 @@ import kotlin.reflect.KClass
 public interface InternalConfiguration : Configuration {
     public val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
     public val mediator: Mediator
-    public val notificationDispatcherFactory: CoroutineDispatcherFactory
-    public val writeDispatcherFactory: CoroutineDispatcherFactory
+    public val notificationDispatcherFactory: CoroutineRealmSchedulerFactory
+    public val writeDispatcherFactory: CoroutineRealmSchedulerFactory
     public val schemaMode: SchemaMode
     public val logger: ContextLogger
 
