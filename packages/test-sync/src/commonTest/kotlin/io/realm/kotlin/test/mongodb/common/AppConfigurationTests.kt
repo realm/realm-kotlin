@@ -98,6 +98,31 @@ class AppConfigurationTests {
                 assertTrue(headers.any { it.key == "h$index" && it.value == "v$index" })
             }
         }
+
+        // Accept empty values
+        AppConfiguration.Builder(APP_ID).apply {
+            customRequestHeaders {
+                put("header1", "")
+                putAll(mapOf("header1" to ""))
+            }
+        }
+
+        // Fail if empty header name
+        AppConfiguration.Builder(APP_ID).apply {
+            assertFailsWithMessage<IllegalArgumentException>("Non-empty custom header name required.") {
+                customRequestHeaders {
+                    put("", "value")
+                }
+            }
+        }
+
+        AppConfiguration.Builder(APP_ID).apply {
+            assertFailsWithMessage<IllegalArgumentException>("Non-empty custom header name required.") {
+                customRequestHeaders {
+                    putAll(mapOf("" to "value"))
+                }
+            }
+        }
     }
 
     @Test

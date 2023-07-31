@@ -310,6 +310,7 @@ public interface AppConfiguration {
             block: MutableMap<String, String>.() -> Unit,
         ): Builder = apply {
             customRequestHeaders.block()
+            require(!customRequestHeaders.containsKey("")) { "Non-empty custom header name required." }
         }
 
         /**
