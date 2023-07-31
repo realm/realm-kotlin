@@ -305,6 +305,7 @@ public interface AppConfiguration {
          * Update the custom headers that would be appended to every request to an Atlas App Services Application.
          *
          * @param block lambda with the the custom header map update instructions.
+         * @throws IllegalArgumentException if an empty header name is provided.
          */
         public fun customRequestHeaders(
             block: MutableMap<String, String>.() -> Unit,
