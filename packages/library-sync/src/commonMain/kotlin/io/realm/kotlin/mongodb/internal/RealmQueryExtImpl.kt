@@ -84,16 +84,16 @@ private fun <T : RealmObject> findExistingQueryInSubscriptions(
     query: ObjectQuery<T>,
     subscriptions: SubscriptionSet<Realm>
 ): Subscription? {
-    if (name != null) {
+    return if (name != null) {
         val sub: Subscription? = subscriptions.findByName(name)
         val companion = io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(query.clazz)
         val userTypeName = companion.io_realm_kotlin_className
         if (sub?.queryDescription == query.description() && sub.objectType == userTypeName) {
-            return sub
+            sub
         } else {
-            return null
+            null
         }
     } else {
-        return subscriptions.findByQuery(query)
+        subscriptions.findByQuery(query)
     }
 }
