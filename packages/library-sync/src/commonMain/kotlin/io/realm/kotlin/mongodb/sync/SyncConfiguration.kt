@@ -27,7 +27,7 @@ import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
-import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -554,14 +554,14 @@ public interface SyncConfiguration : Configuration {
                 LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
                 if (notificationDispatcher != null) {
-                    CoroutineRealmSchedulerFactory.unmanaged(notificationDispatcher!!)
+                    CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)
                 } else {
-                    CoroutineRealmSchedulerFactory.managed("notifier-$fileName")
+                    CoroutineDispatcherFactory.managed("notifier-$fileName")
                 },
                 if (writeDispatcher != null) {
-                    CoroutineRealmSchedulerFactory.unmanaged(writeDispatcher!!)
+                    CoroutineDispatcherFactory.unmanaged(writeDispatcher!!)
                 } else {
-                    CoroutineRealmSchedulerFactory.managed("writer-$fileName")
+                    CoroutineDispatcherFactory.managed("writer-$fileName")
                 },
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,

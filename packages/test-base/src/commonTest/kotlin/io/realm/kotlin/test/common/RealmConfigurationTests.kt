@@ -24,7 +24,7 @@ import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.migration.AutomaticSchemaMigration
@@ -297,13 +297,13 @@ class RealmConfigurationTests {
     @Test
     fun notificationDispatcherRealmConfigurationDefault() {
         val configuration = RealmConfiguration.create(schema = setOf(Sample::class))
-        assertTrue((configuration as InternalConfiguration).notificationDispatcherFactory is CoroutineRealmSchedulerFactory)
+        assertTrue((configuration as InternalConfiguration).notificationDispatcherFactory is CoroutineDispatcherFactory)
     }
 
     @Test
     fun notificationDispatcherRealmConfigurationBuilderDefault() {
         val configuration = RealmConfiguration.Builder(schema = setOf(Sample::class)).build()
-        assertTrue((configuration as InternalConfiguration).notificationDispatcherFactory is CoroutineRealmSchedulerFactory)
+        assertTrue((configuration as InternalConfiguration).notificationDispatcherFactory is CoroutineDispatcherFactory)
     }
 
     @Test

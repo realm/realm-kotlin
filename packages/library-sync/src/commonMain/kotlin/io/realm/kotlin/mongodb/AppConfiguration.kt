@@ -27,8 +27,8 @@ import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
-import io.realm.kotlin.internal.util.CoroutineRealmScheduler
-import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
@@ -318,16 +318,16 @@ public interface AppConfiguration {
             userLoggers.forEach { RealmLog.add(it) }
 
             val appNetworkDispatcherFactory = if (dispatcher != null) {
-                CoroutineRealmSchedulerFactory.unmanaged(dispatcher!!)
+                CoroutineDispatcherFactory.unmanaged(dispatcher!!)
             } else {
                 // TODO We should consider using a multi threaded dispatcher. Ktor already does
                 //  this under the hood though, so it is unclear exactly what benefit there is.
                 //  https://github.com/realm/realm-kotlin/issues/501
-                CoroutineRealmSchedulerFactory.managed("app-dispatcher-$appId")
+                CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
             val appLogger = ContextLogger("Sdk")
-            val networkTransport: (dispatcher: CoroutineRealmScheduler) -> NetworkTransport = { dispatcherHolder ->
+            val networkTransport: (dispatcher: DispatcherHolder) -> NetworkTransport = { dispatcherHolder ->
                 val logger: Logger = object : Logger {
                     override fun log(message: String) {
                         val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)

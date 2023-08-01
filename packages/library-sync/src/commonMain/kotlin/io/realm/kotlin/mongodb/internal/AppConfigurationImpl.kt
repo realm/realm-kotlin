@@ -30,8 +30,8 @@ import io.realm.kotlin.internal.platform.OS_VERSION
 import io.realm.kotlin.internal.platform.RUNTIME
 import io.realm.kotlin.internal.platform.RUNTIME_VERSION
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.util.CoroutineRealmScheduler
-import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
@@ -44,8 +44,8 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val appId: String,
     override val baseUrl: String = DEFAULT_BASE_URL,
     override val encryptionKey: ByteArray?,
-    private val appNetworkDispatcherFactory: CoroutineRealmSchedulerFactory,
-    internal val networkTransportFactory: (dispatcher: CoroutineRealmScheduler) -> NetworkTransport,
+    private val appNetworkDispatcherFactory: CoroutineDispatcherFactory,
+    internal val networkTransportFactory: (dispatcher: DispatcherHolder) -> NetworkTransport,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
     public val logger: LogConfiguration?,

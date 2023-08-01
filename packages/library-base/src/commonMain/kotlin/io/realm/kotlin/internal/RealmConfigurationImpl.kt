@@ -22,7 +22,7 @@ import io.realm.kotlin.InitialRealmFileConfiguration
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.interop.SchemaMode
-import io.realm.kotlin.internal.util.CoroutineRealmSchedulerFactory
+import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
 import kotlin.reflect.KClass
@@ -36,8 +36,8 @@ internal class RealmConfigurationImpl constructor(
     schema: Set<KClass<out BaseRealmObject>>,
     logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
-    notificationDispatcherFactory: CoroutineRealmSchedulerFactory,
-    writeDispatcherFactory: CoroutineRealmSchedulerFactory,
+    notificationDispatcherFactory: CoroutineDispatcherFactory,
+    writeDispatcherFactory: CoroutineDispatcherFactory,
     schemaVersion: Long,
     encryptionKey: ByteArray?,
     override val deleteRealmIfMigrationNeeded: Boolean,
