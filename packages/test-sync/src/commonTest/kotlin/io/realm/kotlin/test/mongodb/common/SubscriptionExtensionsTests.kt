@@ -92,7 +92,7 @@ class SubscriptionExtensionsTests {
         assertEquals(1, subs.size)
         val sub: Subscription = subs.first()
         assertNull(sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
         assertEquals(FlexParentObject::class.simpleName, sub.objectType)
     }
 
@@ -107,7 +107,7 @@ class SubscriptionExtensionsTests {
         assertEquals(1, subs.size)
         val sub: Subscription = subs.first()
         assertNull(sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
         assertEquals(FlexParentObject::class.simpleName, sub.objectType)
     }
 
@@ -122,7 +122,7 @@ class SubscriptionExtensionsTests {
         assertEquals(1, subs.size)
         val sub: Subscription = subs.first()
         assertNull(sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
         assertEquals(FlexParentObject::class.simpleName, sub.objectType)
     }
 
@@ -168,7 +168,7 @@ class SubscriptionExtensionsTests {
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         var sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
-        assertEquals("section == $section ", sub.queryDescription)
+        assertEquals("section == $section", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
 
         // Checking that we don't hit the network the 2nd time around
@@ -184,7 +184,7 @@ class SubscriptionExtensionsTests {
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         sub = updatedSubs.last()
         assertEquals("my-name", sub.name)
-        assertEquals("section == $section ", sub.queryDescription)
+        assertEquals("section == $section", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
 
         // Checking that we don't hit the network the 2nd time around
@@ -269,7 +269,7 @@ class SubscriptionExtensionsTests {
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         var sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
-        assertEquals("section == $section ", sub.queryDescription)
+        assertEquals("section == $section", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
 
         // Checking that we don't hit the network the 2nd time around
@@ -285,7 +285,7 @@ class SubscriptionExtensionsTests {
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
         sub = updatedSubs.last()
         assertEquals("my-name", sub.name)
-        assertEquals("section == $section ", sub.queryDescription)
+        assertEquals("section == $section", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
 
         // Checking that we don't hit the network the 2nd time around
@@ -340,12 +340,12 @@ class SubscriptionExtensionsTests {
         subQueryResult.subscribe()
         val subs = realm.subscriptions
         assertEquals(1, subs.size)
-        assertEquals("section == 42 and name == \"Jane\" ", subs.first().queryDescription)
+        assertEquals("section == 42 and name == \"Jane\"", subs.first().queryDescription)
         subQueryResult.subscribe("my-name")
         assertEquals(2, subs.size)
         val lastSub = subs.last()
         assertEquals("my-name", lastSub.name)
-        assertEquals("section == 42 and name == \"Jane\" ", lastSub.queryDescription)
+        assertEquals("section == 42 and name == \"Jane\"", lastSub.queryDescription)
     }
 
     @Test
