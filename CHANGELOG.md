@@ -1,4 +1,4 @@
-## 1.10.3 (YYYY-MM-DD)
+## 1.10.3-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -7,6 +7,7 @@
 * None.
 
 ### Fixed
+* Rare corruption causing 'Invalid streaming format cookie'-exception. Typically following compact, convert or copying to a new file. (Issue [#1440](https://github.com/realm/realm-kotlin/issues/1440))
 * Compiler error when using Kotlin 1.9.0 and backlinks. (Issue [#1469](https://github.com/realm/realm-kotlin/issues/1469))
 
 ### Compatibility
@@ -24,7 +25,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.17.1, commit fb5bdccba1daad0bd6e65757a6a1596dc98cebf4.
 
 
 ## 1.10.2 (2023-07-21)
