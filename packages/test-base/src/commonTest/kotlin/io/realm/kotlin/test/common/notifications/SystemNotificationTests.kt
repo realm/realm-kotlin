@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.internal.SuspendableWriter
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.createRealmScheduler
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.Utils
 import kotlinx.coroutines.runBlocking
@@ -61,9 +62,10 @@ class SystemNotificationTests {
         val baseRealm = Realm.open(configuration) as io.realm.kotlin.internal.RealmImpl
 
         val dispatcher = CoroutineDispatcherFactory.managed("background").create()
+        val scheduler = dispatcher.createRealmScheduler()
 
-        val writer1 = SuspendableWriter(baseRealm, dispatcher)
-        val writer2 = SuspendableWriter(baseRealm, dispatcher)
+        val writer1 = SuspendableWriter(baseRealm, dispatcher, scheduler)
+        val writer2 = SuspendableWriter(baseRealm, dispatcher, scheduler)
         runBlocking {
             baseRealm.write { copyToRealm(Sample()) }
             writer1.write { copyToRealm(Sample()) }

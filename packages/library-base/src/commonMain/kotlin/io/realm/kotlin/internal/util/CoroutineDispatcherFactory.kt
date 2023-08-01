@@ -19,10 +19,12 @@ package io.realm.kotlin.internal.util
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.platform.multiThreadDispatcher
+import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.withContext
 
 /**
  * Factory wrapper for passing around dispatchers without needing to create them. This makes it
@@ -84,11 +86,6 @@ public sealed interface DispatcherHolder {
     public val dispatcher: CoroutineDispatcher
 
     /**
-     * Realm scheduler, we need to hold a reference to prevent being GC'ed
-     */
-    public val realmScheduler: RealmSchedulerPointer
-
-    /**
      * Mark the dispatcher as no longer being used. For internal dispatchers, this will also
      * close them.
      */
@@ -99,15 +96,19 @@ public sealed interface DispatcherHolder {
 private class ManagedDispatcherHolder(
     override val dispatcher: CloseableCoroutineDispatcher
 ) : DispatcherHolder {
-    override val realmScheduler: RealmSchedulerPointer by lazy { RealmInterop.realm_create_scheduler(dispatcher) }
-
     override fun close(): Unit = dispatcher.close()
 }
 
 private class UnmanagedDispatcherHolder(
     override val dispatcher: CoroutineDispatcher
 ) : DispatcherHolder {
-    override val realmScheduler: RealmSchedulerPointer by lazy { RealmInterop.realm_create_scheduler(dispatcher) }
-
     override fun close(): Unit = Unit
+}
+
+internal fun DispatcherHolder.createRealmScheduler(): RealmSchedulerPointer = runBlocking {
+    // We need to run this in the dispatcher context to grab the correct thread id.
+    // See realm_scheduler_t::is_on_thread
+    withContext(dispatcher) {
+        RealmInterop.realm_create_scheduler(dispatcher)
+    }
 }

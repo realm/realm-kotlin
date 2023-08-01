@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.WeakReference
@@ -43,7 +44,8 @@ import kotlinx.coroutines.withContext
 internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
-    dispatcherHolder: DispatcherHolder
+    dispatcherHolder: DispatcherHolder,
+    scheduler: RealmSchedulerPointer,
 ) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
@@ -54,7 +56,10 @@ internal abstract class LiveRealm(
     private val dispatcher = dispatcherHolder.dispatcher
 
     override val realmReference: LiveRealmReference by lazy {
-        val (dbPointer, _) = RealmInterop.realm_open(configuration.createNativeConfiguration(), dispatcherHolder.realmScheduler)
+        val (dbPointer, _) = RealmInterop.realm_open(
+            configuration.createNativeConfiguration(),
+            scheduler
+        )
         LiveRealmReference(this, dbPointer)
     }
 

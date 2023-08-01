@@ -107,10 +107,12 @@ public open class ConfigurationImpl constructor(
 
     override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         val configPtr = realm.configuration.createNativeConfiguration()
-        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr)
+        val scheduler = RealmInterop.realm_create_scheduler()
+        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
         val liveRealmReference = LiveRealmReference(realm, dbPointer)
         val frozenReference = liveRealmReference.snapshot(realm)
         liveRealmReference.close()
+        scheduler.release()
         return frozenReference to fileCreated
     }
 

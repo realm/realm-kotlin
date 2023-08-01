@@ -4,6 +4,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.DispatcherHolder
@@ -35,7 +36,8 @@ import kotlinx.coroutines.withContext
  */
 internal class SuspendableNotifier(
     private val owner: RealmImpl,
-    private val dispatcherHolder: DispatcherHolder
+    private val dispatcherHolder: DispatcherHolder,
+    private val scheduler: RealmSchedulerPointer,
 ) : LiveRealmHolder<LiveRealm>() {
     // Flow used to emit events when the version of the live realm is updated
     // Adding extra buffer capacity as we are otherwise never able to emit anything
@@ -49,7 +51,7 @@ internal class SuspendableNotifier(
 
     // Could just be anonymous class, but easiest way to get BaseRealmImpl.toString to display the
     // right type with this
-    private inner class NotifierRealm : LiveRealm(owner, owner.configuration, dispatcherHolder) {
+    private inner class NotifierRealm : LiveRealm(owner, owner.configuration, dispatcherHolder, scheduler) {
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
         override fun onRealmChanged() {

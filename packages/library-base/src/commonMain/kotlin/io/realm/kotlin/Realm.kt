@@ -118,9 +118,11 @@ public interface Realm : TypedRealm {
             }
             if (!fileExists(configuration.path)) return false
             val config = (configuration as InternalConfiguration)
-            val (dbPointer, _) = RealmInterop.realm_open(config.createNativeConfiguration())
+            val scheduler = RealmInterop.realm_create_scheduler()
+            val (dbPointer, _) = RealmInterop.realm_open(config.createNativeConfiguration(), scheduler)
             return RealmInterop.realm_compact(dbPointer).also {
                 RealmInterop.realm_close(dbPointer)
+                scheduler.release()
             }
         }
     }
