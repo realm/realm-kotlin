@@ -30,7 +30,7 @@ import kotlin.reflect.KClass
 public const val REALM_FILE_EXTENSION: String = ".realm"
 
 @Suppress("LongParameterList")
-internal class RealmConfigurationImpl constructor(
+internal class RealmConfigurationImpl(
     directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,
@@ -43,6 +43,7 @@ internal class RealmConfigurationImpl constructor(
     override val deleteRealmIfMigrationNeeded: Boolean,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     migration: RealmMigration?,
+    automaticBacklinkHandling: Boolean,
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
     override val initialRealmFileConfiguration: InitialRealmFileConfiguration?,
@@ -63,6 +64,7 @@ internal class RealmConfigurationImpl constructor(
     encryptionKey,
     compactOnLaunchCallback,
     migration,
+    automaticBacklinkHandling,
     initialDataCallback,
     false,
     inMemory,

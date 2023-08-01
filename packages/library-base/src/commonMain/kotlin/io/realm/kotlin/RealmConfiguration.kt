@@ -55,6 +55,7 @@ public interface RealmConfiguration : Configuration {
         private var directory: String = appFilesDirectory()
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var migration: RealmMigration? = null
+        private var automaticBacklinkHandling = false
 
         /**
          * Sets the path to the directory that contains the realm file. If the directory does not
@@ -108,6 +109,52 @@ public interface RealmConfiguration : Configuration {
          */
         public fun migration(migration: RealmMigration): Builder =
             apply { this.migration = migration }
+
+        // FIXME Rephrase docs from Realm Java
+        // FIXME Should this rather be an option on AutomaticSchemaMigration :thinking:
+        /**
+         * Converts the class to be embedded or not, while also providing automatic handling of objects
+         * that break some of the constraints for making the class embedded.
+         * <p>
+         * A class can only be marked as embedded if the following invariants are satisfied:
+         * <ul>
+         *     <li>
+         *         The class is not allowed to have a primary key defined.
+         *     </li>
+         *     <li>
+         *         All existing objects of this type, must have one and exactly one parent object
+         *         already pointing to it. If 0 or more than 1 object has a reference to an object
+         *         about to be marked embedded an {@link IllegalStateException} will be thrown.
+         *     </li>
+         * </ul>
+         * If some of these constraints are broken you can ask Realm to resolve them automatically using
+         * the @{code resolveEmbeddedClassConstraints} parameter. Setting this to @{code true} will
+         * do the following:
+         * <ul>
+         *     <li>
+         *         An object with 0 parents, i.e. no other objects have a reference to it, will be
+         *         deleted.
+         *     </li>
+         *     <li>
+         *         An object with more than 1 parent, i.e. 2 or more objects have a reference to it,
+         *         will be copied so each copy have exactly one parent.
+         *     </li>
+         *     <li>
+         *         Objects with a primary key defined will still throw an IllegalStateException and
+         *         cannot be converted.
+         *     </li>
+         * </ul>
+         * @param embedded If @{code true}, the class type will be turned into an embedded class, and
+         * must satisfy the constraints defined above. If @{code false}, the class will be turn into
+         * a normal class. An embeded class can always be turned into a non-embedded one.
+         * @param resolveEmbeddedClassConstraints whether or not to automatically fix broken constraints
+         * if @{code embedded} was set to true. See above for a full description of what that entails.
+         * @throws IllegalStateException if the class could not be converted because it broke some of
+         * the Embedded Objects invariants and these could not be resolved automatically.
+         * @see RealmClass#embedded()
+         */
+        public fun resolveEmbeddedObjectConstraintsOnMigration(enabled: Boolean): Builder =
+            apply { this.automaticBacklinkHandling = enabled }
 
         override fun name(name: String): Builder = apply {
             checkName(name)
@@ -163,6 +210,7 @@ public interface RealmConfiguration : Configuration {
                 deleteRealmIfMigrationNeeded,
                 compactOnLaunchCallback,
                 migration,
+                automaticBacklinkHandling,
                 initialDataCallback,
                 inMemory,
                 initialRealmFileConfiguration,
