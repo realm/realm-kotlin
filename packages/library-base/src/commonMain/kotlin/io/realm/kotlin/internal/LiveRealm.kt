@@ -23,9 +23,9 @@ import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.WeakReference
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.internal.util.DispatcherHolder
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 
 /**
@@ -44,7 +44,7 @@ import kotlinx.coroutines.withContext
 internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
-    dispatcherHolder: DispatcherHolder,
+    val dispatcher: CoroutineDispatcher,
     scheduler: RealmSchedulerPointer,
 ) : BaseRealmImpl(configuration) {
 
@@ -52,8 +52,6 @@ internal abstract class LiveRealm(
     private val schemaChangeRegistration: NotificationToken
 
     internal val versionTracker = VersionTracker(this, owner.log)
-
-    private val dispatcher = dispatcherHolder.dispatcher
 
     override val realmReference: LiveRealmReference by lazy {
         val (dbPointer, _) = RealmInterop.realm_open(

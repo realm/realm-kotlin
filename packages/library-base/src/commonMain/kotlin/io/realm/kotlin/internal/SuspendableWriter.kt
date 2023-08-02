@@ -25,10 +25,10 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -48,14 +48,19 @@ import kotlin.reflect.KClass
  */
 internal class SuspendableWriter(
     private val owner: RealmImpl,
-    val dispatcherHolder: DispatcherHolder,
+    val dispatcher: CoroutineDispatcher,
     private val scheduler: RealmSchedulerPointer,
 ) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
 
     internal inner class WriterRealm :
-        LiveRealm(owner, owner.configuration, dispatcherHolder, scheduler),
+        LiveRealm(
+            owner = owner,
+            configuration = owner.configuration,
+            dispatcher = dispatcher,
+            scheduler = scheduler
+        ),
         InternalMutableRealm,
         InternalTypedRealm,
         WriteTransactionManager {
@@ -82,7 +87,6 @@ internal class SuspendableWriter(
     override val realm: WriterRealm by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
-    private val dispatcher = dispatcherHolder.dispatcher
 
     init {
         tid = runBlocking(dispatcher) { threadId() }

@@ -77,14 +77,14 @@ public class RealmImpl private constructor(
         MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val notifier = SuspendableNotifier(
-        this,
-        notificationDispatcherHolder,
-        notificationRealmScheduler,
+        owner = this,
+        dispatcher = notificationDispatcherHolder.dispatcher,
+        scheduler = notificationRealmScheduler,
     )
     private val writer = SuspendableWriter(
-        this,
-        writeDispatcherHolder,
-        writeRealmScheduler,
+        owner = this,
+        dispatcher = writeDispatcherHolder.dispatcher,
+        scheduler = writeRealmScheduler,
     )
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is

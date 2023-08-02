@@ -7,12 +7,12 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.notifications.internal.Cancellable
 import io.realm.kotlin.notifications.internal.Cancellable.Companion.NO_OP_NOTIFICATION_TOKEN
 import io.realm.kotlin.schema.RealmSchema
 import kotlinx.atomicfu.AtomicRef
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.ensureActive
@@ -36,7 +36,7 @@ import kotlinx.coroutines.withContext
  */
 internal class SuspendableNotifier(
     private val owner: RealmImpl,
-    private val dispatcherHolder: DispatcherHolder,
+    private val dispatcher: CoroutineDispatcher,
     private val scheduler: RealmSchedulerPointer,
 ) : LiveRealmHolder<LiveRealm>() {
     // Flow used to emit events when the version of the live realm is updated
@@ -47,11 +47,14 @@ internal class SuspendableNotifier(
         extraBufferCapacity = 1
     )
 
-    private val dispatcher = dispatcherHolder.dispatcher
-
     // Could just be anonymous class, but easiest way to get BaseRealmImpl.toString to display the
     // right type with this
-    private inner class NotifierRealm : LiveRealm(owner, owner.configuration, dispatcherHolder, scheduler) {
+    private inner class NotifierRealm : LiveRealm(
+        owner = owner,
+        configuration = owner.configuration,
+        dispatcher = dispatcher,
+        scheduler = scheduler
+    ) {
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
         override fun onRealmChanged() {
