@@ -44,7 +44,8 @@ import kotlin.reflect.KClass
  *   it's thread.
  *
  * @param owner The Realm instance needed for emitting updates.
- * @param dispatcherHolder The dispatcher on which to execute all the writers operations on.
+ * @param dispatcher The dispatcher on which to execute all the writers operations on.
+ * @param scheduler The realm scheduler that would be used to run core events.
  */
 internal class SuspendableWriter(
     private val owner: RealmImpl,

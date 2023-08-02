@@ -38,8 +38,9 @@ import kotlinx.coroutines.withContext
  *
  * @param owner The owner of the snapshot references of this realm.
  * @param configuration The configuration of the realm.
- * @param dispatcherHolder The single thread dispatcher backing the realm scheduler of this realm. The
+ * @param dispatcher The single thread dispatcher backing the realm scheduler of this realm. The
  * realm itself must only be access on the same thread.
+ * @param scheduler The realm scheduler that would be used to run core events.
  */
 internal abstract class LiveRealm(
     val owner: RealmImpl,
