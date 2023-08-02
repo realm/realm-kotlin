@@ -181,6 +181,8 @@ class CinteropTest {
             val scheduler = RealmInterop.realm_create_scheduler()
             val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig, scheduler)
             assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
+            RealmInterop.realm_close(realm)
+            scheduler.release()
         }
     }
 

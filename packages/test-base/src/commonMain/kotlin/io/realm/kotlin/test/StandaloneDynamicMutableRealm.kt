@@ -32,7 +32,7 @@ import io.realm.kotlin.internal.interop.RealmSchedulerPointer
  */
 internal class StandaloneDynamicMutableRealm(
     configuration: InternalConfiguration,
-    scheduler: RealmSchedulerPointer = RealmInterop.realm_create_scheduler(),
+    private val scheduler: RealmSchedulerPointer = RealmInterop.realm_create_scheduler(),
 ) :
     DynamicMutableRealmImpl(
         configuration,
@@ -41,5 +41,6 @@ internal class StandaloneDynamicMutableRealm(
 
     override fun close() {
         realmReference.close()
+        scheduler.release()
     }
 }

@@ -181,10 +181,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_create_scheduler(): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_scheduler_make_default())
+        LongPointerWrapper(realmc.realm_scheduler_make_default(), false)
 
     actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)))
+        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)), false)
 
     actual fun realm_open(
         config: RealmConfigurationPointer,
