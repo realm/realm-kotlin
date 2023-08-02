@@ -17,6 +17,7 @@
 
 package io.realm.example.kmmsample
 
+import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
@@ -83,4 +84,7 @@ class AllTypes : RealmObject {
     var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
     var objectIdRealmListNullable: RealmList<ObjectId?> = realmListOf(null)
     var objectRealmList: RealmList<AllTypes> = realmListOf()
+
+    // Special types
+    val parent by backlinks(AllTypes::objectField)
 }

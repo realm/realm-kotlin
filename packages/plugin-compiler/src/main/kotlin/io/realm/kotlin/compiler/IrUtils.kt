@@ -587,11 +587,11 @@ fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
 fun getLinkingObjectPropertyName(backingField: IrField): String {
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
-        val targetProperty = propertyReference.symbol.owner
+        val targetProperty: IrProperty = propertyReference.symbol.owner
         return if (targetProperty.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
             SchemaProperty.getPersistedName(targetProperty)
         } else {
-            propertyReference.referencedName.identifier
+            targetProperty.name.identifier
         }
     }
 }
