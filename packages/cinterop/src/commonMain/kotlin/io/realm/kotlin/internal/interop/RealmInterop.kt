@@ -215,7 +215,7 @@ expect object RealmInterop {
      */
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
-    fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer = realm_create_scheduler()): Pair<LiveRealmPointer, Boolean>
+    fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer): Pair<LiveRealmPointer, Boolean>
 
     // Opening a Realm asynchronously. Only supported for synchronized realms.
     fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer

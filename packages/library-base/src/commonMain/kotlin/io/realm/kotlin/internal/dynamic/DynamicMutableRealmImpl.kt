@@ -41,9 +41,8 @@ import io.realm.kotlin.schema.RealmSchema
 // annotations didn't work for some reason.
 public open class DynamicMutableRealmImpl(
     configuration: InternalConfiguration,
-    dbPointer: LiveRealmPointer
-) :
-    BaseRealmImpl(configuration),
+    dbPointer: LiveRealmPointer,
+) : BaseRealmImpl(configuration),
     DynamicMutableRealm,
     WriteTransactionManager {
 
