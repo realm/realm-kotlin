@@ -132,7 +132,7 @@ class SubscriptionSetTests {
         val sub: Subscription = subscriptions.findByQuery(query)!!
         assertNotNull(sub)
         assertEquals("FlexParentObject", sub.objectType)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
     }
 
     @Test

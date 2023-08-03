@@ -10,6 +10,7 @@
 * Rare corruption causing 'Invalid streaming format cookie'-exception. Typically following compact, convert or copying to a new file. (Issue [#1440](https://github.com/realm/realm-kotlin/issues/1440))
 * Compiler error when using Kotlin 1.9.0 and backlinks. (Issue [#1469](https://github.com/realm/realm-kotlin/issues/1469))
 * Leaking `JVMScheduler` instances. In certain circumstances, it could lead to a JNI crash. (Issue [#1463](https://github.com/realm/realm-kotlin/pull/1463))
+* [Sync] Changing a subscriptions query type or query itself will now trigger the `WaitForSync.FIRST_TIME` behaviour, rather than only checking changes to the name. (Issues [#1466](https://github.com/realm/realm-kotlin/issues/1466))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
