@@ -29,5 +29,5 @@ interface RealmEntityNotificationTests : FlowableTests {
 
     // Verify that we emit deletion events and close the flow when registering for notifications on
     // an outdated entity.
-    fun asFlowOnDeleteEntity()
+    fun asFlowOnDeletedEntity()
 }

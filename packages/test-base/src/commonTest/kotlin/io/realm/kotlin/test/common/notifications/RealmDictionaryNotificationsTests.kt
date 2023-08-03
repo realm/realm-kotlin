@@ -125,7 +125,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
         }
     }
 
-    override fun asFlowOnDeleteEntity() {
+    override fun asFlowOnDeletedEntity() {
         runBlocking {
             val container = realm.write { copyToRealm(RealmDictionaryContainer()) }
             val mutex = Mutex(true)
