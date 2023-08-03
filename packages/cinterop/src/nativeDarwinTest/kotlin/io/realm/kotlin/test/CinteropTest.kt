@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SchemaValidationMode
+import io.realm.kotlin.internal.interop.releaseAfter
 import io.realm.kotlin.internal.interop.set
 import io.realm.kotlin.internal.interop.toKotlinString
 import kotlinx.cinterop.BooleanVar
@@ -178,11 +179,12 @@ class CinteropTest {
                 SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
             )
             RealmInterop.realm_config_set_schema_version(nativeConfig, 1)
-            val scheduler = RealmInterop.realm_create_scheduler()
-            val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig, scheduler)
-            assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
-            RealmInterop.realm_close(realm)
-            scheduler.release()
+            RealmInterop.realm_create_scheduler()
+                .releaseAfter { scheduler ->
+                    val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig, scheduler)
+                    assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
+                    RealmInterop.realm_close(realm)
+                }
         }
     }
 
