@@ -94,7 +94,7 @@ public sealed interface DispatcherHolder {
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private class ManagedDispatcherHolder(
-    override val dispatcher: CloseableCoroutineDispatcher
+    override val dispatcher: CloseableCoroutineDispatcher,
 ) : DispatcherHolder {
     override fun close(): Unit = dispatcher.close()
 }
@@ -105,10 +105,21 @@ private class UnmanagedDispatcherHolder(
     override fun close(): Unit = Unit
 }
 
-internal fun DispatcherHolder.createRealmScheduler(): RealmSchedulerPointer = runBlocking {
-    // We need to run this in the dispatcher context to grab the correct thread id.
-    // See realm_scheduler_t::is_on_thread
-    withContext(dispatcher) {
-        RealmInterop.realm_create_scheduler(dispatcher)
+public class CoroutineRealmScheduler(
+    private val dispatcherHolder: DispatcherHolder,
+) : DispatcherHolder by dispatcherHolder {
+
+    public val scheduler: RealmSchedulerPointer = runBlocking {
+        withContext(dispatcherHolder.dispatcher) {
+            RealmInterop.realm_create_scheduler(dispatcher)
+        }
+    }
+
+    override fun close() {
+        scheduler.release()
+        dispatcherHolder.close()
     }
 }
+
+internal fun CoroutineDispatcherFactory.createCoroutineRealmScheduler(): CoroutineRealmScheduler =
+    CoroutineRealmScheduler(create())

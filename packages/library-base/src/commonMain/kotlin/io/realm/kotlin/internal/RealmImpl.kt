@@ -22,15 +22,14 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.CoroutineRealmScheduler
 import io.realm.kotlin.internal.util.Validation.sdkError
-import io.realm.kotlin.internal.util.createRealmScheduler
+import io.realm.kotlin.internal.util.createCoroutineRealmScheduler
 import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
@@ -59,32 +58,24 @@ public class RealmImpl private constructor(
 
     private val realmPointerMutex = Mutex()
 
-    public val notificationDispatcherHolder: DispatcherHolder =
-        configuration.notificationDispatcherFactory.create()
+    public val notificationScheduler: CoroutineRealmScheduler =
+        configuration.notificationDispatcherFactory.createCoroutineRealmScheduler()
 
-    public val writeDispatcherHolder: DispatcherHolder =
-        configuration.writeDispatcherFactory.create()
-
-    private val notificationRealmScheduler: RealmSchedulerPointer =
-        notificationDispatcherHolder.createRealmScheduler()
-
-    private val writeRealmScheduler: RealmSchedulerPointer =
-        writeDispatcherHolder.createRealmScheduler()
+    public val writeScheduler: CoroutineRealmScheduler =
+        configuration.writeDispatcherFactory.createCoroutineRealmScheduler()
 
     internal val realmScope =
-        CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
+        CoroutineScope(SupervisorJob() + notificationScheduler.dispatcher)
     private val notifierFlow: MutableSharedFlow<RealmChange<Realm>> =
         MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private val notifier = SuspendableNotifier(
         owner = this,
-        dispatcher = notificationDispatcherHolder.dispatcher,
-        scheduler = notificationRealmScheduler,
+        scheduler = notificationScheduler,
     )
     private val writer = SuspendableWriter(
         owner = this,
-        dispatcher = writeDispatcherHolder.dispatcher,
-        scheduler = writeRealmScheduler,
+        scheduler = writeScheduler,
     )
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
@@ -289,11 +280,8 @@ public class RealmImpl private constructor(
             log.warn("Cannot signal internal close")
         }
 
-        notificationRealmScheduler.release()
-        writeRealmScheduler.release()
-
-        notificationDispatcherHolder.close()
-        writeDispatcherHolder.close()
+        notificationScheduler.close()
+        writeScheduler.close()
     }
 
     internal companion object {
