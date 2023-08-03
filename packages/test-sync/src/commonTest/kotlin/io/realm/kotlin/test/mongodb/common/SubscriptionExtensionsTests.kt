@@ -374,6 +374,24 @@ class SubscriptionExtensionsTests {
         }
     }
 
+    @Test
+    fun updatingOnlyQueryWillTriggerFirstTimeBehavior() = runBlocking<Unit> {
+        val section = Random.nextInt()
+
+        // 1. Create a named subscription
+        realm.query<FlexParentObject>("section = $0", section).subscribe("my-name", mode = WaitForSync.FIRST_TIME)
+
+        // 2. Pause the connection in order to go offline
+        realm.syncSession.pause()
+
+        // 3. Update the query of the named subscription. This should trigger FIRST_TIME behavior again.
+        // and because we are offline, the subscribe call should throw.
+        val query = realm.query<FlexParentObject>("section = $0 AND TRUEPREDICATE", section)
+        assertFailsWith<TimeoutCancellationException> {
+            query.subscribe("my-name", updateExisting = true, mode = WaitForSync.FIRST_TIME, timeout = 1.seconds)
+        }
+    }
+
     private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
         val user = app.createUserAndLogin()
         val config = SyncConfiguration.Builder(user, setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class))
