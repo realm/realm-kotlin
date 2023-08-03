@@ -19,6 +19,7 @@ package io.realm.kotlin.test.common.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.SuspendableWriter
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.internal.util.createCoroutineRealmScheduler
@@ -59,13 +60,14 @@ class SystemNotificationTests {
     @Test
     fun multipleSchedulersOnSameThread() {
         Utils.printlntid("main")
-        val baseRealm = Realm.open(configuration) as io.realm.kotlin.internal.RealmImpl
+        val baseRealm = Realm.open(configuration) as RealmImpl
 
-        val dispatcherHolder =
-            CoroutineDispatcherFactory.managed("multipleSchedulersOnSameThread").createCoroutineRealmScheduler()
+        val coroutineRealmScheduler = CoroutineDispatcherFactory
+            .managed("multipleSchedulersOnSameThread")
+            .createCoroutineRealmScheduler()
 
-        val writer1 = SuspendableWriter(baseRealm, dispatcherHolder)
-        val writer2 = SuspendableWriter(baseRealm, dispatcherHolder)
+        val writer1 = SuspendableWriter(baseRealm, coroutineRealmScheduler)
+        val writer2 = SuspendableWriter(baseRealm, coroutineRealmScheduler)
         runBlocking {
             baseRealm.write { copyToRealm(Sample()) }
             writer1.write { copyToRealm(Sample()) }
