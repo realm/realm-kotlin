@@ -1,3 +1,4 @@
+@file:Suppress("invisible_member", "invisible_reference") // Needed to call session.simulateError()
 /*
  * Copyright 2021 Realm Inc.
  *
@@ -19,8 +20,12 @@ package io.realm.kotlin.test.mongodb.common
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
+import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
@@ -29,6 +34,8 @@ import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.receiveOrFail
+import kotlinx.coroutines.channels.Channel
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -41,9 +48,10 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-// private const val CUSTOM_HEADER_NAME = "Foo"
-// private const val CUSTOM_HEADER_VALUE = "bar"
-// private const val AUTH_HEADER_NAME = "RealmAuth"
+private const val CUSTOM_HEADER_NAME = "Foo"
+private const val CUSTOM_HEADER_VALUE = "bar"
+private const val AUTH_HEADER_NAME = "RealmAuth"
+
 private const val APP_ID = "app-id"
 
 class AppConfigurationTests {
@@ -53,70 +61,69 @@ class AppConfigurationTests {
 //    @get:Rule
 //    val tempFolder = TemporaryFolder()
 
-//    @Test
-//    fun authorizationHeaderName_illegalArgumentsThrows() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-//        assertFailsWith<IllegalArgumentException> { builder.authorizationHeaderName(TestHelper.getNull()) }
-//        assertFailsWith<IllegalArgumentException> { builder.authorizationHeaderName("") }
-//    }
-//
-//    @Test
-//    fun authorizationHeaderName() {
-//        val config1 = AppConfiguration.Builder(APP_ID).build()
-//        assertEquals("Authorization", config1.authorizationHeaderName)
-//
-//        val config2 = AppConfiguration.Builder(APP_ID)
-//            .authorizationHeaderName("CustomAuth")
-//            .build()
-//        assertEquals("CustomAuth", config2.authorizationHeaderName)
-//    }
-//
-//    @Test
-//    fun addCustomRequestHeader_illegalArgumentThrows() {
-//        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-//        assertFailsWith<IllegalArgumentException> { builder.addCustomRequestHeader("", "val") }
-//        assertFailsWith<IllegalArgumentException> { builder.addCustomRequestHeader(TestHelper.getNull(), "val") }
-//        assertFailsWith<IllegalArgumentException> { builder.addCustomRequestHeader("header", TestHelper.getNull()) }
-//    }
-//
-//    @Test
-//    fun addCustomRequestHeader() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .addCustomRequestHeader("header1", "val1")
-//            .addCustomRequestHeader("header2", "val2")
-//            .build()
-//        val headers: Map<String, String> = config.customRequestHeaders
-//        assertEquals(2, headers.size.toLong())
-//        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
-//        assertTrue(headers.any { it.key == "header2" && it.value == "val2" })
-//    }
-//
-//    @Test
-//    fun addCustomRequestHeaders() {
-//        val inputHeaders: MutableMap<String, String> = LinkedHashMap()
-//        inputHeaders["header1"] = "value1"
-//        inputHeaders["header2"] = "value2"
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .addCustomRequestHeaders(TestHelper.getNull())
-//            .addCustomRequestHeaders(inputHeaders)
-//            .build()
-//        val outputHeaders: Map<String, String> = config.customRequestHeaders
-//        assertEquals(2, outputHeaders.size.toLong())
-//        assertTrue(outputHeaders.any { it.key == "header1" && it.value == "value1" })
-//        assertTrue(outputHeaders.any { it.key == "header2" && it.value == "value2" })
-//    }
-//
-//    @Test
-//    fun addCustomHeader_combinesSingleAndMultiple() {
-//        val config = AppConfiguration.Builder(APP_ID)
-//            .addCustomRequestHeader("header3", "val3")
-//            .addCustomRequestHeaders(mapOf(Pair("header1", "val1")))
-//            .build()
-//        val headers: Map<String, String> = config.customRequestHeaders
-//        assertEquals(2, headers.size)
-//        assertTrue(headers.any { it.key == "header3" && it.value == "val3" })
-//        assertTrue(headers.any { it.key == "header1" && it.value == "val1" })
-//    }
+    @Test
+    fun authorizationHeaderName() {
+        val config1 = AppConfiguration.Builder(APP_ID).build()
+        assertEquals("Authorization", config1.authorizationHeaderName)
+
+        val config2 = AppConfiguration.Builder(APP_ID)
+            .authorizationHeaderName("CustomAuth")
+            .build()
+        assertEquals("CustomAuth", config2.authorizationHeaderName)
+
+        val builder = AppConfiguration.Builder(APP_ID)
+
+        assertFailsWithMessage<IllegalArgumentException>("Non-empty 'name' required.") {
+            builder.authorizationHeaderName("")
+        }
+    }
+
+    @Test
+    fun addCustomRequestHeader() {
+        val config = AppConfiguration.Builder(APP_ID)
+            .customRequestHeaders {
+                putAll(
+                    mapOf(
+                        "h0" to "v0",
+                        "h1" to "v1",
+                    )
+                )
+                put("h2", "v2")
+            }
+            .build()
+
+        config.customRequestHeaders.let { headers ->
+            assertEquals(3, headers.size)
+            repeat(3) { index ->
+                assertTrue(headers.any { it.key == "h$index" && it.value == "v$index" })
+            }
+        }
+
+        // Accept empty values
+        AppConfiguration.Builder(APP_ID).apply {
+            customRequestHeaders {
+                put("header1", "")
+                putAll(mapOf("header1" to ""))
+            }
+        }
+
+        // Fail if empty header name
+        AppConfiguration.Builder(APP_ID).apply {
+            assertFailsWithMessage<IllegalArgumentException>("Non-empty custom header name required.") {
+                customRequestHeaders {
+                    put("", "value")
+                }
+            }
+        }
+
+        AppConfiguration.Builder(APP_ID).apply {
+            assertFailsWithMessage<IllegalArgumentException>("Non-empty custom header name required.") {
+                customRequestHeaders {
+                    putAll(mapOf("" to "value"))
+                }
+            }
+        }
+    }
 
     @Test
     fun create() {
@@ -164,7 +171,8 @@ class AppConfigurationTests {
             // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
             // the configured `AppConfiguration.syncRootDir`
             val partitionValue = TestHelper.randomPartitionValue()
-            val suffix = "${PATH_SEPARATOR}myCustomDir${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}s_$partitionValue.realm"
+            val suffix =
+                "${PATH_SEPARATOR}myCustomDir${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}s_$partitionValue.realm"
             val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf()).build()
             assertTrue(config.path.endsWith(suffix), "Failed: ${config.path} vs. $suffix")
         } finally {
@@ -172,7 +180,7 @@ class AppConfigurationTests {
         }
     }
 
-//    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
+    //    @Test // TODO we need an IO framework to test this properly, see https://github.com/realm/realm-kotlin/issues/699
 //    fun syncRootDirectory_dirIsAFile() {
 //        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
 //        val file = File(tempFolder.newFolder(), "dummyfile")
@@ -331,7 +339,7 @@ class AppConfigurationTests {
         assertTrue(config.httpLogObfuscator is io.realm.kotlin.mongodb.internal.LogObfuscatorImpl)
     }
 
-//
+    //
 //    @Test
 //    fun requestTimeout() {
 //        val config = AppConfiguration.Builder(APP_ID)
@@ -371,48 +379,80 @@ class AppConfigurationTests {
 //        assertEquals(configCodecRegistry, config.defaultCodecRegistry)
 //    }
 //
-//    // Check that custom headers and auth header renames are correctly used for HTTP requests
-//    // performed from Java.
-//    @Test
-//    fun javaRequestCustomHeaders() {
-//        var app: App? = null
-//        try {
-//            looperThread.runBlocking {
-//                app = TestApp(builder = { builder ->
-//                    builder.addCustomRequestHeader(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)
-//                    builder.authorizationHeaderName(AUTH_HEADER_NAME)
-//                })
-//                runJavaRequestCustomHeadersTest(app!!)
-//            }
-//        } finally {
-//            app?.close()
-//        }
-//    }
-//
-//    private fun runJavaRequestCustomHeadersTest(app: App) {
-//        val username = UUID.randomUUID().toString()
-//        val password = "password"
-//        val headerSet = AtomicBoolean(false)
-//
-//        // Setup logger to inspect that we get a log message with the custom headers
-//        val level = RealmLog.getLevel()
-//        RealmLog.setLevel(LogLevel.ALL)
-//        val logger = RealmLogger { level: Int, tag: String?, throwable: Throwable?, message: String? ->
-//            if (level > LogLevel.TRACE && message!!.contains(CUSTOM_HEADER_NAME) && message.contains(CUSTOM_HEADER_VALUE)
-//                && message.contains("RealmAuth: ")) {
-//                headerSet.set(true)
-//            }
-//        }
-//        RealmLog.add(logger)
-//        assertFailsWithErrorCode(ErrorCode.SERVICE_UNKNOWN) {
-//            app.registerUserAndLogin(username, password)
-//        }
-//        RealmLog.remove(logger)
-//        RealmLog.setLevel(level)
-//
-//        assertTrue(headerSet.get())
-//        looperThread.testComplete()
-//    }
+    // Check that custom headers and auth header renames are correctly used for HTTP requests.
+    @Test
+    fun customHeadersTest() {
+        var app: App? = null
+        try {
+            runBlocking {
+                app = TestApp(
+                    builder = { builder ->
+                        builder.customRequestHeaders {
+                            put(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)
+                        }.authorizationHeaderName(AUTH_HEADER_NAME)
+                    }
+                )
+                doCustomHeaderTest(app!!)
+            }
+        } finally {
+            assertFailsWith<ServiceException> { app?.close() }
+        }
+    }
+
+    private suspend fun doCustomHeaderTest(app: App) {
+        val originalLevel = RealmLog.level
+        RealmLog.level = LogLevel.ALL
+        val channel = Channel<Boolean>(1)
+
+        val logger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.DEBUG
+            override val tag: String = "LOGGER"
+
+            override fun log(
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?,
+            ) {
+                if (level == LogLevel.DEBUG && message!!.contains("-> $CUSTOM_HEADER_NAME: $CUSTOM_HEADER_VALUE") && message.contains(
+                        "$AUTH_HEADER_NAME: "
+                    )
+                ) {
+                    channel.trySend(true)
+                }
+            }
+        }
+
+        try {
+            // Setup custom logger
+            RealmLog.add(logger)
+
+            // Perform a network related operation
+            // It will fail because the server does not expect the modified auth header name
+            assertFailsWith<ServiceException> {
+                app.createUserAndLogIn()
+            }
+
+            // Receive the results.
+            assertTrue(channel.receiveOrFail())
+        } finally {
+            // Restore log status
+            RealmLog.remove(logger)
+            RealmLog.level = originalLevel
+        }
+    }
+
+    @Test
+    fun logLevelDoesNotGetOverwrittenByConfig() {
+        val expectedLogLevel = LogLevel.ALL
+        RealmLog.level = expectedLogLevel
+
+        AppConfiguration.create("")
+
+        assertEquals(expectedLogLevel, RealmLog.level)
+
+        RealmLog.reset()
+    }
 
     @Test
     fun injectedBundleId() {
@@ -456,5 +496,6 @@ class AppConfigurationTests {
     }
 
     @Ignore // TODO
-    fun dispatcher() { }
+    fun dispatcher() {
+    }
 }

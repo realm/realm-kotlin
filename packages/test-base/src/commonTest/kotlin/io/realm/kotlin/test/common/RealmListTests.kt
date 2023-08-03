@@ -113,6 +113,17 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
+    fun unmanagedRealmList_equalsHash() {
+        assertEquals(realmListOf("1", "2"), realmListOf("1", "2"))
+        assertEquals(realmListOf("1", "2").hashCode(), realmListOf("1", "2").hashCode())
+    }
+
+    @Test
+    fun unmanagedRealmList_toString() {
+        assertEquals("""UnmanagedRealmList{1, 2}""", realmListOf("1", "2").toString())
+    }
+
+    @Test
     fun realmListInitializer_toRealmList() {
         val realmListFromEmptyCollection = emptyList<String>().toRealmList()
         assertTrue(realmListFromEmptyCollection.isEmpty())
