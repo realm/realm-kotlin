@@ -412,29 +412,31 @@ class RealmAnyNestedCollectionTests {
     }
 
     @Test
-    fun nestedCollectionsInList_set_invalidatesOldElement() = runBlocking {
+    fun nestedCollectionsInList_set_invalidatesOldElement() = runBlocking<Unit> {
         realm.write {
-            val instance = copyToRealm(
-                JsonStyleRealmObject().apply {
-                    value = RealmAny.create(
-                        realmListOf(RealmAny.create(realmListOf(RealmAny.create(5))))
-                    )
-                }
-            )
-            val nestedList = instance.value!!.asList()[0]!!.asList()
+            val instance = copyToRealm(JsonStyleRealmObject())
+            instance.value = RealmAny.create(realmListOf(RealmAny.create(5)))
+
+            val nestedList = instance.value!!.asList()
             assertEquals(5, nestedList[0]!!.asInt())
-            // Overwrite nested list element with new list
-            instance.value!!.asList()[0] = RealmAny.create(realmListOf(RealmAny.create(7)))
-            // FIXME This should be true. We shouldn't have overwrite the old list
-//            assertEquals(5, nestedList[0]!!.asInt())
+
+            // FIXME Overwrite nested list element with new list just updates existing list
+            instance.value = realmAnyListOf(7)
+            assertFailsWithMessage<IllegalStateException>("This is an ex-list") {
+                assertEquals(5, nestedList[0]!!.asInt())
+            }
+
             // Overwrite nested list element with new collection of different type
-            instance.value!!.asList()[0] = RealmAny.create(realmSetOf(RealmAny.create(8)))
-            // Access the old list
-            // FIXME Seems like we don't throw a nice error when accessing a delete collection
-            //  Overwriting with different collection type seems to ruin original item without
-            //  throwing proper fix
-//            val realmAny = nestedList[0]
-//            assertEquals(7, realmAny!!.asInt())
+            instance.value = realmAnySetOf(8)
+
+            // Update old list
+            assertFailsWithMessage<IllegalStateException>("This is an ex-list") {
+                nestedList.add(RealmAny.create(1))
+            }
+            // FIXME Throws RLM_ERR_INDEX_OUT_OF_BOUNDS instead of RLM_ERR_ILLEGAL_OPERATION
+            assertFailsWithMessage<IllegalStateException>("This is an ex-list") {
+                val realmAny = nestedList[0]
+            }
         }
     }
 
