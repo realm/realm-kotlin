@@ -27,9 +27,9 @@ import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.CoroutineRealmScheduler
+import io.realm.kotlin.internal.util.LiveRealmContext
 import io.realm.kotlin.internal.util.Validation.sdkError
-import io.realm.kotlin.internal.util.createCoroutineRealmScheduler
+import io.realm.kotlin.internal.util.createLiveRealmContext
 import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
@@ -58,11 +58,11 @@ public class RealmImpl private constructor(
 
     private val realmPointerMutex = Mutex()
 
-    public val notificationScheduler: CoroutineRealmScheduler =
-        configuration.notificationDispatcherFactory.createCoroutineRealmScheduler()
+    public val notificationScheduler: LiveRealmContext =
+        configuration.notificationDispatcherFactory.createLiveRealmContext()
 
-    public val writeScheduler: CoroutineRealmScheduler =
-        configuration.writeDispatcherFactory.createCoroutineRealmScheduler()
+    public val writeScheduler: LiveRealmContext =
+        configuration.writeDispatcherFactory.createLiveRealmContext()
 
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationScheduler.dispatcher)

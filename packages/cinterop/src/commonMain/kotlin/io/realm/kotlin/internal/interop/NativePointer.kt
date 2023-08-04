@@ -47,7 +47,7 @@ public interface NativePointer<T : CapiT> {
 /**
  * Deletes the underlying pointer after executing the lambda block.
  */
-fun <T : CapiT, R> NativePointer<T>.releaseAfter(
+fun <T : CapiT, R> NativePointer<T>.use(
     block: (NativePointer<T>) -> R,
 ): R = try {
     block(this)

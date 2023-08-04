@@ -105,7 +105,11 @@ private class UnmanagedDispatcherHolder(
     override fun close(): Unit = Unit
 }
 
-public class CoroutineRealmScheduler(
+/**
+ * Object that creates a Realm scheduler based and a coroutine dispatcher, and binds their resource
+ * lifecycle.
+ */
+public class LiveRealmContext(
     private val dispatcherHolder: DispatcherHolder,
 ) : DispatcherHolder by dispatcherHolder {
 
@@ -121,5 +125,5 @@ public class CoroutineRealmScheduler(
     }
 }
 
-internal fun CoroutineDispatcherFactory.createCoroutineRealmScheduler(): CoroutineRealmScheduler =
-    CoroutineRealmScheduler(create())
+internal fun CoroutineDispatcherFactory.createLiveRealmContext(): LiveRealmContext =
+    LiveRealmContext(create())

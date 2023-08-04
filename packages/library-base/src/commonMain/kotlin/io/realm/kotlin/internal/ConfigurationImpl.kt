@@ -36,7 +36,7 @@ import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
-import io.realm.kotlin.internal.interop.releaseAfter
+import io.realm.kotlin.internal.interop.use
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
@@ -109,7 +109,7 @@ public open class ConfigurationImpl constructor(
     override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         val configPtr = realm.configuration.createNativeConfiguration()
         return RealmInterop.realm_create_scheduler()
-            .releaseAfter { scheduler ->
+            .use { scheduler ->
                 val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
                 val liveRealmReference = LiveRealmReference(realm, dbPointer)
                 val frozenReference = liveRealmReference.snapshot(realm)

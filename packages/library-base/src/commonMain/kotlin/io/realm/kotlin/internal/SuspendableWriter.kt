@@ -24,7 +24,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.CoroutineRealmScheduler
+import io.realm.kotlin.internal.util.LiveRealmContext
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
@@ -48,7 +48,7 @@ import kotlin.reflect.KClass
  */
 internal class SuspendableWriter(
     private val owner: RealmImpl,
-    private val scheduler: CoroutineRealmScheduler,
+    private val scheduler: LiveRealmContext,
 ) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong

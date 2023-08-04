@@ -30,14 +30,23 @@ import io.realm.kotlin.internal.interop.RealmSchedulerPointer
  * on it's own shared realm with the ability to manage the write transaction, which allows us to
  * test the [DynamicMutableRealm] API outside of a migration.
  */
-internal class StandaloneDynamicMutableRealm(
+internal class StandaloneDynamicMutableRealm private constructor(
     configuration: InternalConfiguration,
-    private val scheduler: RealmSchedulerPointer = RealmInterop.realm_create_scheduler(),
+    private val scheduler: RealmSchedulerPointer,
 ) :
     DynamicMutableRealmImpl(
         configuration,
-        RealmInterop.realm_open(configuration.createNativeConfiguration(), scheduler)
+        try {
+            RealmInterop.realm_open(configuration.createNativeConfiguration(), scheduler)
+        } catch (exception: Exception) {
+            scheduler.release()
+            throw exception
+        }
     ) {
+    constructor(configuration: InternalConfiguration) : this(
+        configuration,
+        RealmInterop.realm_create_scheduler()
+    )
 
     override fun close() {
         realmReference.close()

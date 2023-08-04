@@ -19,7 +19,7 @@ import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.Constants
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.releaseAfter
+import io.realm.kotlin.internal.interop.use
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.notifications.RealmChange
@@ -121,12 +121,14 @@ public interface Realm : TypedRealm {
             val config = (configuration as InternalConfiguration)
 
             return RealmInterop.realm_create_scheduler()
-                .releaseAfter { scheduler ->
+                .use { scheduler ->
                     val (dbPointer, _) = RealmInterop.realm_open(
                         config = config.createNativeConfiguration(),
                         scheduler = scheduler
                     )
-                    RealmInterop.realm_compact(dbPointer).also {
+                    try {
+                        RealmInterop.realm_compact(dbPointer)
+                    } finally {
                         RealmInterop.realm_close(dbPointer)
                     }
                 }

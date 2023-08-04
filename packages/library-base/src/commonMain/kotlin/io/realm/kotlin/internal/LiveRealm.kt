@@ -22,7 +22,7 @@ import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.WeakReference
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.internal.util.CoroutineRealmScheduler
+import io.realm.kotlin.internal.util.LiveRealmContext
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.withContext
@@ -43,7 +43,7 @@ import kotlinx.coroutines.withContext
 internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
-    private val scheduler: CoroutineRealmScheduler,
+    private val scheduler: LiveRealmContext,
 ) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
