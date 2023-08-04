@@ -2097,10 +2097,7 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
 
     fun notifyCore(schedulerPointer: Long) {
-        scope.launch(
-            context = scope.coroutineContext, // FIXME REQUIRED? this is something additional
-            start = CoroutineStart.DEFAULT // FIXME ATOMIC?
-        ) {
+        scope.launch {
             realmc.invoke_core_notify_callback(schedulerPointer)
         }
     }

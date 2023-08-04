@@ -3399,7 +3399,7 @@ actual object RealmInterop {
         }
 
         override fun notify() {
-            val function: suspend CoroutineScope.() -> Unit = {
+            scope.launch {
                 try {
                     printlntid("on dispatcher")
                     realm_wrapper.realm_scheduler_perform_work(scheduler)
@@ -3409,11 +3409,6 @@ actual object RealmInterop {
                     e.printStackTrace()
                 }
             }
-            scope.launch(
-                scope.coroutineContext,
-                CoroutineStart.DEFAULT,
-                function
-            )
         }
     }
 }
