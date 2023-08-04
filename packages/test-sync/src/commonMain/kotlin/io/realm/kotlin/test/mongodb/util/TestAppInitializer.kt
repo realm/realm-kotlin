@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.test.mongodb.util
 
+import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import kotlinx.serialization.decodeFromString
@@ -316,6 +317,7 @@ object TestAppInitializer {
         addFunction(insertDocument)
         addFunction(queryDocument)
         addFunction(deleteDocument)
+        addFunction(countDocuments)
 
         val testAuthFuncId = addFunction(testAuthFunc)._id
         addAuthProvider(
@@ -337,12 +339,17 @@ object TestAppInitializer {
             enable(true)
         }
 
+        val (type: String, config: String) = if (TEST_APP_CLUSTER_NAME.isEmpty()) {
+            "mongodb" to """{ "uri": "mongodb://localhost:26000" }"""
+        } else {
+            "mongodb-atlas" to """{ "clusterName": "$TEST_APP_CLUSTER_NAME" }"""
+        }
         addService(
             """
             {
                 "name": "BackingDB",
-                "type": "mongodb",
-                "config": { "uri": "mongodb://localhost:26000" }
+                "type": "$type",
+                "config": $config
             }
             """.trimIndent()
         ).let { service: Service ->
@@ -430,6 +437,22 @@ object TestAppInitializer {
                 .findOne(EJSON.parse(query));
         
             return result;
+        }
+        
+        """.trimIndent()
+    )
+
+    private val countDocuments = Function(
+        name = "countDocuments",
+        source =
+        """
+        exports = function (service, db, collection) {
+            const mongodb = context.services.get(service);
+            const result = mongodb
+                .db(db)
+                .collection(collection)
+                .count();
+            return { value: result };
         }
         
         """.trimIndent()

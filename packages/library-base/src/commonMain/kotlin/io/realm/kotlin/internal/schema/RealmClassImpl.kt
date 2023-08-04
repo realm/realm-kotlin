@@ -19,6 +19,7 @@ package io.realm.kotlin.internal.schema
 import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.schema.RealmClass
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.ValuePropertyType
 
@@ -39,6 +40,13 @@ public data class RealmClassImpl(
     }
 
     override val isEmbedded: Boolean = cinteropClass.isEmbedded
+
+    override val kind: RealmClassKind
+        get() = when {
+            cinteropClass.isEmbedded -> RealmClassKind.EMBEDDED
+            cinteropClass.isAsymmetric -> RealmClassKind.ASYMMETRIC
+            else -> RealmClassKind.STANDARD
+        }
 
     override fun get(key: String): RealmProperty? = properties.firstOrNull { it.name == key }
 }

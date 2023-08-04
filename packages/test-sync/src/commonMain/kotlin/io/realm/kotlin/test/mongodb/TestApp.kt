@@ -15,9 +15,11 @@
  */
 
 @file:Suppress("invisible_member", "invisible_reference")
+@file:OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.runBlocking
@@ -38,12 +40,14 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
-const val TEST_APP_PARTITION = "test-app-partition" // With Partion-based Sync
-const val TEST_APP_FLEX = "test-app-flex" // With Flexible Sync
+val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partion-based Sync
+val TEST_APP_FLEX = syncServerAppName("flx") // With Flexible Sync
+val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 
-const val TEST_SERVER_BASE_URL = "http://127.0.0.1:9090"
-
+val TEST_SERVER_BASE_URL = SyncServerConfig.url
 const val DEFAULT_PASSWORD = "password1234"
 
 /**
@@ -73,11 +77,12 @@ open class TestApp private constructor(
     constructor(
         appName: String = TEST_APP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
-        logLevel: LogLevel = LogLevel.WARN,
+        logLevel: LogLevel? = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
         networkTransport: NetworkTransport? = null,
+        ejson: EJson = EJson,
         initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->
             initializeDefault(app, service)
         }
@@ -91,6 +96,7 @@ open class TestApp private constructor(
             dispatcher = dispatcher,
             builder = builder,
             networkTransport = networkTransport,
+            ejson = ejson,
             initialSetup = initialSetup
         )
     )
@@ -128,15 +134,25 @@ open class TestApp private constructor(
     }
 
     companion object {
+        // Expose a try-with-resource pattern for Apps
+        inline fun TestApp.use(action: (TestApp) -> Unit) {
+            try {
+                action(this)
+            } finally {
+                this.close()
+            }
+        }
+
         @Suppress("LongParameterList")
         fun build(
             debug: Boolean,
             appName: String,
-            logLevel: LogLevel,
+            logLevel: LogLevel?,
             customLogger: RealmLogger?,
             dispatcher: CoroutineDispatcher,
             builder: (AppConfiguration.Builder) -> AppConfiguration.Builder,
             networkTransport: NetworkTransport?,
+            ejson: EJson,
             initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit
         ): Pair<App, AppAdmin> {
             val appAdmin: AppAdmin = runBlocking(dispatcher) {
@@ -150,15 +166,21 @@ open class TestApp private constructor(
                     AppAdminImpl(this, baasApp)
                 }
             }
+
             @Suppress("invisible_member", "invisible_reference")
             var config = AppConfiguration.Builder(appAdmin.clientAppId)
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .networkTransport(networkTransport)
-                .log(
-                    logLevel,
-                    if (customLogger == null) emptyList<RealmLogger>()
-                    else listOf<RealmLogger>(customLogger)
-                )
+                .ejson(ejson)
+                .apply {
+                    if (logLevel != null) {
+                        log(
+                            logLevel,
+                            if (customLogger == null) emptyList<RealmLogger>()
+                            else listOf<RealmLogger>(customLogger)
+                        )
+                    }
+                }
 
             val app = App.create(
                 builder(config)
@@ -185,3 +207,7 @@ suspend fun App.createUserAndLogIn(
 
 suspend fun App.logIn(email: String, password: String): User =
     this.login(Credentials.emailPassword(email, password))
+
+fun syncServerAppName(appNameSuffix: String): String {
+    return "${SyncServerConfig.appPrefix}-$appNameSuffix"
+}

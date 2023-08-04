@@ -32,5 +32,7 @@ import org.mongodb.kbson.BsonObjectId
  * This annotation applies to the following primitive types: [String], [Boolean], [Byte], [Char],
  * [Short], [Int], [Long], [RealmInstant], [ObjectId], [BsonObjectId], [RealmUUID] as well as their
  * nullable variants.
+ *
+ * This annotation cannot be combined with [FullText].
  */
 public annotation class Index

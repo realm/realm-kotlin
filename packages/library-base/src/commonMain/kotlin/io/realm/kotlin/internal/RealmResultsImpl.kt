@@ -21,8 +21,10 @@ import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
+import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.util.Validation.sdkError
@@ -31,7 +33,9 @@ import io.realm.kotlin.notifications.internal.InitialResultsImpl
 import io.realm.kotlin.notifications.internal.UpdatedResultsImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -50,8 +54,15 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val clazz: KClass<E>,
     private val mediator: Mediator,
     @Suppress("UnusedPrivateMember")
-    private val mode: Mode = Mode.RESULTS
+    private val mode: Mode = Mode.RESULTS,
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreNotifiable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
+
+    @Suppress("UNCHECKED_CAST")
+    private val converter = realmObjectConverter(
+        clazz as KClass<out RealmObject>,
+        mediator,
+        realm
+    ) as RealmValueConverter<E>
 
     internal enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
@@ -62,22 +73,27 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     override val size: Int
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
-    override fun get(index: Int): E =
-        RealmInterop.realm_results_get(nativePointer, index.toLong()).toRealmObject(
-            clazz = clazz,
-            mediator = mediator,
-            realm = realm
-        )
+    override fun get(index: Int): E = getterScope {
+        with(converter) {
+            val transport = realm_results_get(nativePointer, index.toLong())
+            realmValueToPublic(transport)
+        } as E
+    }
 
     override fun query(query: String, vararg args: Any?): RealmQuery<E> = inputScope {
-        val queryPointer = try {
-            RealmInterop.realm_query_parse_for_results(
-                nativePointer,
-                query,
-                convertToQueryArgs(args)
-            )
-        } catch (e: IndexOutOfBoundsException) {
-            throw IllegalArgumentException(e.message, e.cause)
+        // If an empty query is passed in, reconstruct the original query backing this RealmResults
+        val queryPointer = if (query.trim().compareTo(TRUE_PREDICATE, ignoreCase = true) == 0 && args.isEmpty()) {
+            RealmInterop.realm_results_get_query(nativePointer)
+        } else {
+            try {
+                RealmInterop.realm_query_parse_for_results(
+                    nativePointer,
+                    query,
+                    convertToQueryArgs(args)
+                )
+            } catch (e: IndexOutOfBoundsException) {
+                throw IllegalArgumentException(e.message, e.cause)
+            }
         }
         ObjectQuery(
             realm,

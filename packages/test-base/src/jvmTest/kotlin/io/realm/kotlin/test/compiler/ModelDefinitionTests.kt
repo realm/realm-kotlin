@@ -43,7 +43,7 @@ class ModelDefinitionTests {
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Compilation should fail without a zero arg constructor")
-        assertTrue(result.messages.contains("sources/no_zero_arg_ctor.kt: (4, 1): [Realm] Cannot find primary zero arg constructor"))
+        assertTrue(result.messages.contains("sources/no_zero_arg_ctor.kt:4:1 [Realm] Cannot find primary zero arg constructor"), result.messages)
     }
 
     @Test
@@ -128,6 +128,45 @@ class ModelDefinitionTests {
         )
         assertEquals(KotlinCompilation.ExitCode.INTERNAL_ERROR, result.exitCode, "Compilation should fail when using anonymous objects")
         assertTrue(result.messages.contains("Anonymous objects are not supported."))
+    }
+
+    @Test
+    fun `model_class_with_unsupported_type`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "object_declaration.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        class Foo : RealmObject {
+                            var unknownType = mutableListOf<String>()
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, "Compilation should fail when using unsupported types")
+        assertTrue(result.messages.contains("Realm does not support persisting properties of this type."), "Error was: ${result.messages}")
+    }
+
+    @Test
+    fun `model_class_with_unsupported_type_is_ignored`() {
+        val result = Compiler.compileFromSource(
+            plugins = listOf(Registrar()),
+            source = SourceFile.kotlin(
+                "object_declaration.kt",
+                """
+                        import io.realm.kotlin.types.RealmObject
+                        import io.realm.kotlin.types.annotations.Ignore
+                        
+                        class Foo : RealmObject {
+                            var name: String = "HelloWorld"
+                            @Ignore
+                            var unknownType = mutableListOf<String>()
+                        }
+                """.trimIndent()
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
     }
 
     @Test

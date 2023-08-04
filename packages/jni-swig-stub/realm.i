@@ -299,8 +299,9 @@ return $jnicall;
                realm_collection_changes_t*, realm_callback_token_t*,
                realm_flx_sync_subscription_t*, realm_flx_sync_subscription_set_t*,
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
-               realm_set_t*, realm_async_open_task_t*,
-               realm_sync_session_connection_state_notification_token_t* };
+               realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
+               realm_sync_session_connection_state_notification_token_t*,
+               realm_dictionary_changes_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -310,7 +311,7 @@ bool realm_object_is_valid(const realm_object_t*);
 
 %typemap(out) SWIGTYPE* {
     if (!result) {
-        bool exception_thrown = throw_as_java_exception(jenv);
+        bool exception_thrown = throw_last_error_as_java_exception(jenv);
         if (exception_thrown) {
             // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return $null;
@@ -321,7 +322,7 @@ bool realm_object_is_valid(const realm_object_t*);
 
 %typemap(out) bool {
     if (!result) {
-        bool exception_thrown = throw_as_java_exception(jenv);
+        bool exception_thrown = throw_last_error_as_java_exception(jenv);
         if (exception_thrown) {
             // Return immediately if there was an error in which case the exception will be raised when returning to JVM
             return $null;
@@ -355,7 +356,7 @@ bool realm_object_is_valid(const realm_object_t*);
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
                       bool* erased, bool* out_erased, bool* did_refresh, bool* did_run,
-                      bool* out_collection_was_cleared};
+                      bool* found, bool* out_collection_was_cleared, bool* did_compact };
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
@@ -383,7 +384,7 @@ bool realm_object_is_valid(const realm_object_t*);
 // Enable passing output argument pointers as long[]
 %apply int64_t[] {void **};
 %apply void** {realm_object_t**, realm_list_t**, size_t*, realm_class_key_t*,
-               realm_property_key_t*, realm_user_t**, realm_set_t**};
+               realm_property_key_t*, realm_user_t**, realm_set_t**, realm_results_t**};
 
 %apply uint32_t[] {realm_class_key_t*};
 
@@ -408,16 +409,9 @@ bool realm_object_is_valid(const realm_object_t*);
 %ignore "_realm_set_from_native_copy"; // Not implemented in the C-API
 %ignore "_realm_set_from_native_move"; // Not implemented in the C-API
 %ignore "realm_set_assign"; // Not implemented in the C-API
+%ignore "realm_dictionary_assign"; // Not implemented in the C-API
 %ignore "_realm_dictionary_from_native_copy";
 %ignore "_realm_dictionary_from_native_move";
-%ignore "realm_get_dictionary";
-%ignore "realm_dictionary_size";
-%ignore "realm_dictionary_get";
-%ignore "realm_dictionary_insert";
-%ignore "realm_dictionary_erase";
-%ignore "realm_dictionary_clear";
-%ignore "realm_dictionary_assign";
-%ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_query_delete_all";
 %ignore "realm_results_snapshot";
 // FIXME Has this moved? Maybe a merge error in the core master/sync merge

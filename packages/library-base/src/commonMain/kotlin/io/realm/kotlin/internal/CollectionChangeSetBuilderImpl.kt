@@ -18,11 +18,17 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.ArrayAccessor
 import io.realm.kotlin.internal.interop.CollectionChangeSetBuilder
+import io.realm.kotlin.internal.interop.MapChangeSetBuilder
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.notifications.DictionaryChangeSet
 import io.realm.kotlin.notifications.ListChangeSet
 import io.realm.kotlin.notifications.ListChangeSet.Range
 import io.realm.kotlin.notifications.SetChangeSet
+
+// --------------------------------------------------------
+// Collections: List and Set
+// --------------------------------------------------------
 
 internal abstract class CollectionChangeSetBuilderImpl<T>(
     change: RealmChangesPointer
@@ -82,5 +88,41 @@ internal class SetChangeSetBuilderImpl(
             get() = this@SetChangeSetBuilderImpl.insertionIndices.size
         override val deletions: Int
             get() = this@SetChangeSetBuilderImpl.deletionIndices.size
+    }
+}
+
+// --------------------------------------------------------
+// Dictionary: uses a different changeset internally
+// --------------------------------------------------------
+
+internal class DictionaryChangeSetBuilderImpl(
+    change: RealmChangesPointer
+) : MapChangeSetBuilder<DictionaryChangeSet, String>() {
+
+    init {
+        RealmInterop.realm_dictionary_get_changes(change, this)
+    }
+
+    override fun initDeletions(keys: Array<String>) {
+        this.deletedKeys = keys
+    }
+
+    override fun initInsertions(keys: Array<String>) {
+        this.insertedKeys = keys
+    }
+
+    override fun initModifications(keys: Array<String>) {
+        this.modifiedKeys = keys
+    }
+
+    override fun build(): DictionaryChangeSet {
+        return object : DictionaryChangeSet {
+            override val deletions: Array<String>
+                get() = this@DictionaryChangeSetBuilderImpl.deletedKeys
+            override val insertions: Array<String>
+                get() = this@DictionaryChangeSetBuilderImpl.insertedKeys
+            override val changes: Array<String>
+                get() = this@DictionaryChangeSetBuilderImpl.modifiedKeys
+        }
     }
 }

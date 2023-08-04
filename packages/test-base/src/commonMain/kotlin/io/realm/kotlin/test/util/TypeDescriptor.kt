@@ -49,8 +49,10 @@ object TypeDescriptor {
         val nonNullable: Boolean, // TODO this doesn't contain enough info for lists
         val listSupport: Boolean,
         val setSupport: Boolean,
+        val dictionarySupport: Boolean,
         val primaryKeySupport: Boolean,
         val indexSupport: Boolean,
+        val fullTextSupport: Boolean,
         val canBeNull: Set<CollectionType>, // favor using this over "nullable"
         val canBeNotNull: Set<CollectionType>, // favor using this over "nonNullable"
         val aggregatorSupport: Set<AggregatorSupport>,
@@ -62,8 +64,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -75,15 +79,19 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = false,
             setSupport = false,
+            dictionarySupport = false,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+                remove(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
             },
             canBeNotNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
+                remove(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
             },
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = false,
@@ -94,8 +102,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -107,8 +117,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = true,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -120,13 +132,17 @@ object TypeDescriptor {
             nonNullable = false,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes.toMutableSet().apply {
                 remove(CollectionType.RLM_COLLECTION_TYPE_LIST)
                 remove(CollectionType.RLM_COLLECTION_TYPE_SET)
             },
-            canBeNotNull = allCollectionTypes,
+            canBeNotNull = allCollectionTypes.toMutableSet().apply {
+                remove(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
+            },
             aggregatorSupport = AggregatorSupport.NONE,
             anySupport = true,
         ),
@@ -136,8 +152,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -149,8 +167,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -162,8 +182,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.ALL,
@@ -175,8 +197,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = setOf(AggregatorSupport.MIN, AggregatorSupport.MAX),
@@ -188,8 +212,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -201,8 +227,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = true,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -214,8 +242,10 @@ object TypeDescriptor {
             nonNullable = true,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = false,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = allCollectionTypes,
             aggregatorSupport = AggregatorSupport.NONE,
@@ -227,8 +257,10 @@ object TypeDescriptor {
             nonNullable = false,
             listSupport = true,
             setSupport = true,
+            dictionarySupport = true,
             primaryKeySupport = false,
             indexSupport = true,
+            fullTextSupport = false,
             canBeNull = allCollectionTypes,
             canBeNotNull = emptySet(),
             aggregatorSupport = AggregatorSupport.NONE,
@@ -280,7 +312,7 @@ object TypeDescriptor {
 
     // Utility method to generate cartesian product of classifiers and nullability values according
     // to the support level of the underlying core field type specified in CoreFieldType.
-    fun elementTypes(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
+    private fun elementTypes(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
         classifiers.fold(mutableSetOf()) { acc, classifier ->
             val realmFieldType = TypeDescriptor.classifiers[classifier]
                 ?: error("Unmapped classifier $classifier")
@@ -294,38 +326,30 @@ object TypeDescriptor {
         }
 
     // TODO add supported types for collections based on nullability since RealmAny can only be nullable
-    fun elementTypesForList(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
-        classifiers.fold(mutableSetOf()) { acc, classifier ->
-            val realmFieldType = TypeDescriptor.classifiers[classifier]
-                ?: error("Unmapped classifier $classifier")
-            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                acc.add(ElementType(classifier, true))
-            }
-            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_LIST)) {
-                acc.add(ElementType(classifier, false))
-            }
-            acc
+    private fun elementTypesForCollection(
+        classifiers: Collection<KClassifier>,
+        collectionType: CollectionType
+    ): MutableSet<ElementType> = classifiers.fold(mutableSetOf()) { acc, classifier ->
+        val realmFieldType = TypeDescriptor.classifiers[classifier]
+            ?: error("Unmapped classifier $classifier")
+        if (realmFieldType.canBeNull.contains(collectionType)) {
+            acc.add(ElementType(classifier, true))
         }
-
-    // TODO add supported types for collections based on nullability since RealmAny can only be nullable
-    fun elementTypesForSet(classifiers: Collection<KClassifier>): MutableSet<ElementType> =
-        classifiers.fold(mutableSetOf()) { acc, classifier ->
-            val realmFieldType = TypeDescriptor.classifiers[classifier]
-                ?: error("Unmapped classifier $classifier")
-            if (realmFieldType.canBeNull.contains(CollectionType.RLM_COLLECTION_TYPE_SET)) {
-                acc.add(ElementType(classifier, true))
-            }
-            if (realmFieldType.canBeNotNull.contains(CollectionType.RLM_COLLECTION_TYPE_SET)) {
-                acc.add(ElementType(classifier, false))
-            }
-            acc
+        if (realmFieldType.canBeNotNull.contains(collectionType)) {
+            acc.add(ElementType(classifier, false))
         }
+        acc
+    }
 
     // Convenience variables holding collections of the various supported types
     val elementClassifiers: Set<KClassifier> = classifiers.keys
     val elementTypes = elementTypes(elementClassifiers)
-    val elementTypesForList = elementTypesForList(elementClassifiers)
-    val elementTypesForSet = elementTypesForSet(elementClassifiers)
+    val elementTypesForList =
+        elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_LIST)
+    val elementTypesForSet =
+        elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_SET)
+    val elementTypesForDictionary =
+        elementTypesForCollection(elementClassifiers, CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
 
     // Convenience variables holding collection of various groups of Realm field types
     val allSingularFieldTypes = elementTypes.map {
@@ -335,8 +359,10 @@ object TypeDescriptor {
         .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_LIST, it) }
     val allSetFieldTypes = elementTypesForSet.filter { it.realmFieldType.setSupport }
         .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_SET, it) }
-    // TODO Dict
-    val allFieldTypes: List<RealmFieldType> = allSingularFieldTypes + allListFieldTypes
+    val allDictionaryFieldTypes = elementTypesForDictionary.filter { it.realmFieldType.dictionarySupport }
+        .map { RealmFieldType(CollectionType.RLM_COLLECTION_TYPE_DICTIONARY, it) }
+    val allFieldTypes: List<RealmFieldType> =
+        allSingularFieldTypes + allListFieldTypes + allSetFieldTypes + allDictionaryFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
     // Realm field type represents the type of a given user specified field in the RealmObject
@@ -348,6 +374,8 @@ object TypeDescriptor {
             collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.primaryKeySupport
         val isIndexingSupported: Boolean =
             collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.indexSupport
+        val isFullTextSupported: Boolean =
+            collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE && elementType.realmFieldType.fullTextSupport
 
         // Utility method to generate Kotlin code for the specific field
         fun toKotlinLiteral(): String {

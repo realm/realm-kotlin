@@ -26,5 +26,5 @@ public class TypedFrozenRealmImpl(
     configuration: InternalConfiguration,
 ) : InternalTypedRealm, BaseRealmImpl(configuration) {
 
-    override val realmReference: RealmReference = FrozenRealmReference(this, dbPointer)
+    override val realmReference: RealmReference = FrozenRealmReferenceImpl(this, dbPointer)
 }

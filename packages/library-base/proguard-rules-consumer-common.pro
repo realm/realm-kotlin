@@ -60,7 +60,7 @@
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
--keep class io.realm.kotlin.internal.interop.SyncLogCallback {
+-keep class io.realm.kotlin.internal.interop.LogCallback {
     # TODO OPTIMIZE Only keep actually required symbols
     *;
 }
@@ -116,7 +116,9 @@
 -keep class io.realm.kotlin.internal.interop.SyncThreadObserver {
     *;
 }
-
+-keep class io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo {
+    *;
+}
 # Preserve Function<X> methods as they back various functional interfaces called from JNI
 -keep class kotlin.jvm.functions.Function* {
     *;

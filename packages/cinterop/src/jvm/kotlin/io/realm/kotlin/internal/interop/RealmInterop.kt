@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -52,6 +51,8 @@ actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM
  */
 @Suppress("LargeClass", "FunctionNaming", "TooGenericExceptionCaught")
 actual object RealmInterop {
+
+    actual fun realm_value_get(value: RealmValue): Any? = value.value
 
     actual fun realm_get_version_id(realm: RealmPointer): Long {
         val version = realm_version_id_t()
@@ -184,7 +185,6 @@ actual object RealmInterop {
         var fileCreated = false
         val callback = DataInitializationCallback {
             fileCreated = true
-            true
         }
         realm_config_set_data_initialization_function(config, callback)
 
@@ -246,6 +246,12 @@ actual object RealmInterop {
         if (!deleted[0]) {
             throw IllegalStateException("It's not allowed to delete the file associated with an open Realm. Remember to call 'close()' on the instances of the realm before deleting its file: $path")
         }
+    }
+
+    actual fun realm_compact(realm: RealmPointer): Boolean {
+        val compacted = booleanArrayOf(false)
+        realmc.realm_compact(realm.cptr(), compacted)
+        return compacted.first()
     }
 
     actual fun realm_convert_with_config(
@@ -573,7 +579,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_get_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
-        return LongPointerWrapper(realmc.realm_get_set((obj as LongPointerWrapper).ptr, key.key))
+        return LongPointerWrapper(realmc.realm_get_set(obj.cptr(), key.key))
     }
 
     actual fun realm_set_size(set: RealmSetPointer): Long {
@@ -633,6 +639,140 @@ actual object RealmInterop {
 
     actual fun realm_set_is_valid(set: RealmSetPointer): Boolean {
         return realmc.realm_set_is_valid(set.cptr())
+    }
+
+    actual fun realm_get_dictionary(
+        obj: RealmObjectPointer,
+        key: PropertyKey
+    ): RealmMapPointer {
+        val ptr = realmc.realm_get_dictionary(obj.cptr(), key.key)
+        return LongPointerWrapper(ptr)
+    }
+
+    actual fun realm_dictionary_clear(dictionary: RealmMapPointer) {
+        realmc.realm_dictionary_clear(dictionary.cptr())
+    }
+
+    actual fun realm_dictionary_size(dictionary: RealmMapPointer): Long {
+        val size = LongArray(1)
+        realmc.realm_dictionary_size(dictionary.cptr(), size)
+        return size[0]
+    }
+
+    actual fun realm_dictionary_to_results(
+        dictionary: RealmMapPointer
+    ): RealmResultsPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_to_results(dictionary.cptr()))
+    }
+
+    actual fun MemAllocator.realm_dictionary_find(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue {
+        val found = BooleanArray(1)
+        val struct = allocRealmValueT()
+        // Core will always return a realm_value_t, even if the value was not found, in which case
+        // the type of the struct will be RLM_TYPE_NULL. This way we signal our converters not to
+        // worry about nullability and just translate the struct types to their corresponding Kotlin
+        // types.
+        realmc.realm_dictionary_find(dictionary.cptr(), mapKey.value, struct, found)
+        return RealmValue(struct)
+    }
+
+    actual fun MemAllocator.realm_dictionary_get(
+        dictionary: RealmMapPointer,
+        pos: Int
+    ): Pair<RealmValue, RealmValue> {
+        val keyTransport = allocRealmValueT()
+        val valueTransport = allocRealmValueT()
+        realmc.realm_dictionary_get(dictionary.cptr(), pos.toLong(), keyTransport, valueTransport)
+        return Pair(RealmValue(keyTransport), RealmValue(valueTransport))
+    }
+
+    actual fun MemAllocator.realm_dictionary_insert(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue,
+        value: RealmValue
+    ): Pair<RealmValue, Boolean> {
+        val previousValue = realm_dictionary_find(dictionary, mapKey)
+        val index = LongArray(1)
+        val inserted = BooleanArray(1)
+        realmc.realm_dictionary_insert(dictionary.cptr(), mapKey.value, value.value, index, inserted)
+        return Pair(previousValue, inserted[0])
+    }
+
+    actual fun MemAllocator.realm_dictionary_erase(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Pair<RealmValue, Boolean> {
+        val previousValue = realm_dictionary_find(dictionary, mapKey)
+        val erased = BooleanArray(1)
+        realmc.realm_dictionary_erase(dictionary.cptr(), mapKey.value, erased)
+        return Pair(previousValue, erased[0])
+    }
+
+    actual fun realm_dictionary_contains_key(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Boolean {
+        val found = BooleanArray(1)
+        realmc.realm_dictionary_contains_key(dictionary.cptr(), mapKey.value, found)
+        return found[0]
+    }
+
+    actual fun realm_dictionary_contains_value(
+        dictionary: RealmMapPointer,
+        value: RealmValue
+    ): Boolean {
+        val index = LongArray(1)
+        realmc.realm_dictionary_contains_value(dictionary.cptr(), value.value, index)
+        return index[0] != -1L
+    }
+
+    actual fun MemAllocator.realm_dictionary_insert_embedded(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue {
+        val struct = allocRealmValueT()
+
+        // Returns the new object as a Link to follow convention of other getters and allow to
+        // reuse the converter infrastructure
+        val embedded = realmc.realm_dictionary_insert_embedded(dictionary.cptr(), mapKey.value)
+        val link: realm_link_t = realmc.realm_object_as_link(embedded)
+        return RealmValue(
+            struct.apply {
+                this.type = realm_value_type_e.RLM_TYPE_LINK
+                this.link = link
+            }
+        )
+    }
+
+    actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
+        val size = LongArray(1)
+        val keysPointer = longArrayOf(0)
+        realmc.realm_dictionary_get_keys(dictionary.cptr(), size, keysPointer)
+        return if (keysPointer[0] != 0L) {
+            LongPointerWrapper(keysPointer[0])
+        } else {
+            throw IllegalArgumentException("There was an error retrieving the dictionary keys.")
+        }
+    }
+
+    actual fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer? {
+        val dictionaryPointer = longArrayOf(0)
+        realmc.realm_set_resolve_in(dictionary.cptr(), realm.cptr(), dictionaryPointer)
+        return if (dictionaryPointer[0] != 0L) {
+            LongPointerWrapper(dictionaryPointer[0])
+        } else {
+            null
+        }
+    }
+
+    actual fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean {
+        return realmc.realm_dictionary_is_valid(dictionary.cptr())
     }
 
     actual fun realm_object_add_notification_callback(
@@ -706,6 +846,24 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return LongPointerWrapper(
+            realmc.register_notification_cb(
+                map.cptr(),
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY.nativeValue,
+                object : NotificationCallback {
+                    override fun onChange(pointer: Long) {
+                        callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
+                    }
+                }
+            ),
+            managed = false
+        )
+    }
+
     actual fun realm_object_changes_get_modified_properties(change: RealmChangesPointer): List<PropertyKey> {
         val propertyCount = realmc.realm_object_changes_get_num_modified_properties(change.cptr())
 
@@ -761,7 +919,10 @@ actual object RealmInterop {
         builder.movesCount = movesCount[0].toInt()
     }
 
-    actual fun <T, R> realm_collection_changes_get_ranges(change: RealmChangesPointer, builder: CollectionChangeSetBuilder<T, R>) {
+    actual fun <T, R> realm_collection_changes_get_ranges(
+        change: RealmChangesPointer,
+        builder: CollectionChangeSetBuilder<T, R>
+    ) {
         val insertRangesCount = LongArray(1)
         val deleteRangesCount = LongArray(1)
         val modificationRangesCount = LongArray(1)
@@ -803,6 +964,53 @@ actual object RealmInterop {
         builder.initRangesArray(builder::insertionRanges, insertionRanges, insertRangesCount[0])
         builder.initRangesArray(builder::modificationRanges, modificationRanges, modificationRangesCount[0])
         builder.initRangesArray(builder::modificationRangesAfter, modificationRangesAfter, modificationRangesCount[0])
+    }
+
+    actual fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
+    ) {
+        val deletions = longArrayOf(0)
+        val insertions = longArrayOf(0)
+        val modifications = longArrayOf(0)
+        realmc.realm_dictionary_get_changes(
+            change.cptr(),
+            deletions,
+            insertions,
+            modifications
+        )
+
+        val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
+        val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
+        val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
+        realmc.realm_dictionary_get_changed_keys(
+            change.cptr(),
+            deletionStructs,
+            deletions,
+            insertionStructs,
+            insertions,
+            modificationStructs,
+            modifications
+        )
+
+        // TODO optimize - integrate within mem allocator?
+        // Get keys and release array of structs
+        val deletedKeys = (0 until deletions[0]).map {
+            realmc.valueArray_getitem(deletionStructs, it.toInt()).string
+        }
+        val insertedKeys = (0 until insertions[0]).map {
+            realmc.valueArray_getitem(insertionStructs, it.toInt()).string
+        }
+        val modifiedKeys = (0 until modifications[0]).map {
+            realmc.valueArray_getitem(modificationStructs, it.toInt()).string
+        }
+        realmc.delete_valueArray(deletionStructs)
+        realmc.delete_valueArray(insertionStructs)
+        realmc.delete_valueArray(modificationStructs)
+
+        builder.initDeletions(deletedKeys.toTypedArray())
+        builder.initInsertions(insertedKeys.toTypedArray())
+        builder.initModifications(modifiedKeys.toTypedArray())
     }
 
     actual fun realm_app_get(
@@ -997,18 +1205,16 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
     }
 
-    actual fun realm_sync_client_config_set_log_callback(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        callback: SyncLogCallback
-    ) {
-        realmc.set_log_callback(syncClientConfig.cptr(), callback)
+    actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
+        realmc.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
     }
 
-    actual fun realm_sync_client_config_set_log_level(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        level: CoreLogLevel
-    ) {
-        realmc.realm_sync_client_config_set_log_level(syncClientConfig.cptr(), level.priority)
+    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
+        realmc.set_log_callback(level.priority, callback)
+    }
+
+    actual fun realm_set_log_level(level: CoreLogLevel) {
+        realmc.realm_set_log_level(level.priority)
     }
 
     actual fun realm_sync_client_config_set_metadata_mode(
@@ -1194,13 +1400,12 @@ actual object RealmInterop {
         }
         realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
         realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
-        realmc.realm_app_config_set_platform(config, connectionParams.platform)
         realmc.realm_app_config_set_platform_version(config, connectionParams.platformVersion)
-        realmc.realm_app_config_set_cpu_arch(config, connectionParams.cpuArch)
         realmc.realm_app_config_set_device_name(config, connectionParams.device)
         realmc.realm_app_config_set_device_version(config, connectionParams.deviceVersion)
         realmc.realm_app_config_set_framework_name(config, connectionParams.framework)
         realmc.realm_app_config_set_framework_version(config, connectionParams.frameworkVersion)
+        realmc.realm_app_config_set_bundle_id(config, connectionParams.bundleId)
 
         return LongPointerWrapper(config)
     }
@@ -1218,7 +1423,7 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_credentials_new_api_key(key: String): RealmCredentialsPointer {
-        return LongPointerWrapper(realmc.realm_app_credentials_new_user_api_key(key))
+        return LongPointerWrapper(realmc.realm_app_credentials_new_api_key(key))
     }
 
     actual fun realm_app_credentials_new_apple(idToken: String): RealmCredentialsPointer {
@@ -1340,7 +1545,7 @@ actual object RealmInterop {
         serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, callback)
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, null, callback)
     }
 
     actual fun realm_app_call_reset_password_function(
@@ -1396,15 +1601,15 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return LongPointerWrapper(
             realmc.realm_query_parse(
                 realm.cptr(),
                 classKey.key,
                 query,
-                args.first.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1412,15 +1617,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_results(
                 results.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1428,15 +1632,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_list(
                 list.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1444,15 +1647,14 @@ actual object RealmInterop {
     actual fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
-        val count = args.first
         return LongPointerWrapper(
             realmc.realm_query_parse_for_set(
                 set.cptr(),
                 query,
-                count.toLong(),
-                args.second.value
+                args.size,
+                args.head
             )
         )
     }
@@ -1483,20 +1685,19 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer {
         return LongPointerWrapper(
-            realmc.realm_query_append_query(
-                query.cptr(),
-                filter,
-                args.first.toLong(),
-                args.second.value
-            )
+            realmc.realm_query_append_query(query.cptr(), filter, args.size, args.head)
         )
     }
 
     actual fun realm_query_get_description(query: RealmQueryPointer): String {
         return realmc.realm_query_get_description(query.cptr())
+    }
+
+    actual fun realm_results_get_query(results: RealmResultsPointer): RealmQueryPointer {
+        return LongPointerWrapper(realmc.realm_results_get_query(results.cptr()))
     }
 
     actual fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer {
@@ -1550,10 +1751,13 @@ actual object RealmInterop {
     }
 
     // TODO OPTIMIZE Getting a range
-    actual fun realm_results_get(results: RealmResultsPointer, index: Long): Link {
-        val value = realm_value_t()
+    actual fun MemAllocator.realm_results_get(
+        results: RealmResultsPointer,
+        index: Long
+    ): RealmValue {
+        val value = allocRealmValueT()
         realmc.realm_results_get(results.cptr(), index, value)
-        return value.asLink()
+        return RealmValue(value)
     }
 
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {

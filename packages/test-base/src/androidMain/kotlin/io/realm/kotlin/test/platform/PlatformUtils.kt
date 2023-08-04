@@ -20,23 +20,34 @@ import android.annotation.SuppressLint
 import android.os.SystemClock
 import java.io.File
 import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
 import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 actual object PlatformUtils {
     @SuppressLint("NewApi")
-    actual fun createTempDir(prefix: String): String {
-        return Files.createTempDirectory("$prefix-android_tests").absolutePathString()
+    actual fun createTempDir(prefix: String, readOnly: Boolean): String {
+        val dir: Path = Files.createTempDirectory("$prefix-android_tests")
+        if (readOnly) {
+            Files.setPosixFilePermissions(
+                dir,
+                setOf(
+                    PosixFilePermission.GROUP_READ,
+                    PosixFilePermission.OTHERS_READ,
+                    PosixFilePermission.OWNER_READ
+                )
+            )
+        }
+        return dir.absolutePathString()
     }
 
     actual fun deleteTempDir(path: String) {
         File(path).deleteRecursively()
     }
 
-    @OptIn(ExperimentalTime::class)
     actual fun sleep(duration: Duration) {
-        Thread.sleep(duration.toLongMilliseconds())
+        Thread.sleep(duration.inWholeMilliseconds)
     }
 
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()

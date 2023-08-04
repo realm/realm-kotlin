@@ -48,6 +48,7 @@ actual enum class SchemaMode(override val nativeValue: realm_schema_mode) : Nati
 actual object ClassFlags {
     actual val RLM_CLASS_NORMAL = realm_wrapper.RLM_CLASS_NORMAL.toInt()
     actual val RLM_CLASS_EMBEDDED = realm_wrapper.RLM_CLASS_EMBEDDED.toInt()
+    actual val RLM_CLASS_ASYMMETRIC = realm_wrapper.RLM_CLASS_ASYMMETRIC.toInt()
 }
 
 actual enum class PropertyType(override val nativeValue: UInt) : NativeEnumerated {
@@ -90,6 +91,7 @@ actual object PropertyFlags {
     actual val RLM_PROPERTY_NULLABLE: Int = realm_wrapper.RLM_PROPERTY_NULLABLE.toInt()
     actual val RLM_PROPERTY_PRIMARY_KEY: Int = realm_wrapper.RLM_PROPERTY_PRIMARY_KEY.toInt()
     actual val RLM_PROPERTY_INDEXED: Int = realm_wrapper.RLM_PROPERTY_INDEXED.toInt()
+    actual val RLM_PROPERTY_FULLTEXT_INDEXED: Int = realm_wrapper.RLM_PROPERTY_FULLTEXT_INDEXED.toInt()
 }
 
 actual enum class SchemaValidationMode(override val nativeValue: UInt) : NativeEnumerated {

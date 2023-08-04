@@ -13,31 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.mongodb
 
 import io.ktor.client.plugins.logging.Logger
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
-import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.internal.RealmLog
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.canWrite
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.directoryExists
 import io.realm.kotlin.internal.platform.fileExists
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmDirectoryPath
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
+import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.mongodb.ext.customData
+import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
+import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -48,12 +52,24 @@ import kotlinx.coroutines.CoroutineDispatcher
 public interface AppConfiguration {
 
     public val appId: String
+
     // TODO Consider replacing with URL type, but didn't want to include io.ktor.http.Url as it
     //  requires ktor as api dependency
     public val baseUrl: String
     public val encryptionKey: ByteArray?
     public val metadataMode: MetadataMode
     public val syncRootDirectory: String
+
+    /**
+     * Authorization header name used for Atlas App services requests.
+     */
+    public val authorizationHeaderName: String
+
+    /**
+     * Custom configured headers that will be sent alongside other headers when
+     * making network requests towards Atlas App services.
+     */
+    public val customRequestHeaders: Map<String, String>
 
     /**
      * The name of app. This is only used for debugging.
@@ -68,6 +84,23 @@ public interface AppConfiguration {
      * @see [AppConfiguration.Builder.appVersion]
      */
     public val appVersion: String?
+
+    /**
+     * The default EJson decoder that would be used to encode and decode arguments and results
+     * when calling remote App [Functions], authenticating with a [customFunction], and retrieving
+     * a user [profile] or [customData].
+     *
+     * It can be set with [Builder.ejson] if a certain configuration, such as contextual classes, is
+     * required.
+     */
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    public val ejson: EJson
+
+    /**
+     * The configured [HttpLogObfuscator] for this app. If this property returns `null` no
+     * obfuscator is being used.
+     */
+    public val httpLogObfuscator: HttpLogObfuscator?
 
     public companion object {
         /**
@@ -98,19 +131,24 @@ public interface AppConfiguration {
      * @param appId the application id of the App Services Application.
      */
     public class Builder(
-        private val appId: String
+        private val appId: String,
     ) {
 
         private var baseUrl: String = DEFAULT_BASE_URL
         private var dispatcher: CoroutineDispatcher? = null
         private var encryptionKey: ByteArray? = null
-        private var logLevel: LogLevel = LogLevel.WARN
-        private var removeSystemLogger: Boolean = false
+        private var logLevel: LogLevel? = null
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
+
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        private var ejson: EJson = EJson
+        private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
+        private val customRequestHeaders = mutableMapOf<String, String>()
+        private var authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -155,7 +193,11 @@ public interface AppConfiguration {
          * LogCat on Android and NSLog on iOS.
          * @return the Builder instance used.
          */
-        public fun log(level: LogLevel = LogLevel.WARN, customLoggers: List<RealmLogger> = emptyList()): Builder =
+        @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
+        public fun log(
+            level: LogLevel = LogLevel.WARN,
+            customLoggers: List<RealmLogger> = emptyList(),
+        ): Builder =
             apply {
                 this.logLevel = level
                 this.userLoggers = customLoggers
@@ -231,16 +273,57 @@ public interface AppConfiguration {
         }
 
         /**
-         * TODO Evaluate if this should be part of the public API. For now keep it internal.
+         * Sets the a [HttpLogObfuscator] used to keep sensitive information in HTTP requests from
+         * being displayed in the log. Logs containing tokens, passwords or custom function
+         * arguments and the result of computing these will be obfuscated by default. Logs will not
+         * be obfuscated if the value is set to `null`.
          *
-         * Removes the default system logger from being installed. If no custom loggers have
-         * been configured, no log events will be reported, regardless of the configured
-         * log level.
-         *
+         * @param httpLogObfuscator the HTTP log obfuscator to be used or `null` if obfuscation
+         * should be disabled.
          * @return the Builder instance used.
-         * @see [RealmConfiguration.Builder.log]
          */
-        internal fun removeSystemLogger(): Builder = apply { this.removeSystemLogger = true }
+        public fun httpLogObfuscator(httpLogObfuscator: HttpLogObfuscator?): Builder = apply {
+            this.httpLogObfuscator = httpLogObfuscator
+        }
+
+        /**
+         * Sets the name of the HTTP header used to send authorization data in when making requests to
+         * Atlas App Services. The Atlas App or firewall must have been configured to expect a
+         * custom authorization header.
+         *
+         * The default authorization header is named [DEFAULT_AUTHORIZATION_HEADER_NAME].
+         *
+         * @param name name of the header.
+         * @throws IllegalArgumentException if an empty [name] is provided.
+         */
+        public fun authorizationHeaderName(name: String): Builder = apply {
+            require(name.isNotEmpty()) { "Non-empty 'name' required." }
+            authorizationHeaderName = name
+        }
+
+        /**
+         * Update the custom headers that would be appended to every request to an Atlas App Services Application.
+         *
+         * @param block lambda with the the custom header map update instructions.
+         * @throws IllegalArgumentException if an empty header name is provided.
+         */
+        public fun customRequestHeaders(
+            block: MutableMap<String, String>.() -> Unit,
+        ): Builder = apply {
+            customRequestHeaders.block()
+            require(!customRequestHeaders.containsKey("")) { "Non-empty custom header name required." }
+        }
+
+        /**
+         * Sets the default EJson decoder that would be use to encode and decode arguments and results
+         * when calling remote Atlas [Functions], authenticating with a [customFunction], and retrieving
+         * a user [profile] or [customData].
+         */
+        @ExperimentalRealmSerializerApi
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        public fun ejson(ejson: EJson): Builder = apply {
+            this.ejson = ejson
+        }
 
         /**
          * Allows defining a custom network transport. It is used by some tests that require simulating
@@ -256,12 +339,29 @@ public interface AppConfiguration {
          * @return the AppConfiguration that can be used to create a [App].
          */
         public fun build(): AppConfiguration {
+            // We cannot rewire this to build(bundleId) and just have REPLACED_BY_IR here,
+            // as these calls might be in a module where the compiler plugin hasn't been applied.
+            // In that case we don't setup the correct bundle ID. If this is an issue we could maybe
+            // just force users to apply our plugin.
+            return build("UNKNOWN_BUNDLE_ID")
+        }
+
+        // This method is used to inject bundleId to the sync configuration. The
+        // SyncLoweringExtension is replacing calls to SyncConfiguration.Builder.build() with calls
+        // to this method.
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        public fun build(bundleId: String): AppConfiguration {
+            // Configure logging during creation of AppConfiguration to keep old behavior for
+            // configuring logging. This should be removed when `LogConfiguration` is removed.
             val allLoggers = mutableListOf<RealmLogger>()
-            if (!removeSystemLogger) {
-                allLoggers.add(createDefaultSystemLogger(Realm.DEFAULT_LOG_TAG))
-            }
             allLoggers.addAll(userLoggers)
-            val appLogger = RealmLog(configuration = LogConfiguration(this.logLevel, allLoggers))
+
+            val logConfig = this.logLevel?.let {
+                RealmLog.level = it
+                LogConfiguration(it, allLoggers)
+            }
+
+            userLoggers.forEach { RealmLog.add(it) }
 
             val appNetworkDispatcherFactory = if (dispatcher != null) {
                 CoroutineDispatcherFactory.unmanaged(dispatcher!!)
@@ -272,20 +372,26 @@ public interface AppConfiguration {
                 CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
-            val networkTransport: () -> NetworkTransport = {
-                networkTransport ?: KtorNetworkTransport(
-                    // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
-                    //  constant in AppConfiguration.Companion
-                    //  https://github.com/realm/realm-kotlin/issues/408
-                    timeoutMs = 15000,
-                    dispatcherFactory = appNetworkDispatcherFactory,
-                    logger = object : Logger {
+            val appLogger = ContextLogger("Sdk")
+            val networkTransport: (dispatcher: DispatcherHolder) -> NetworkTransport =
+                { dispatcherHolder ->
+                    val logger: Logger = object : Logger {
                         override fun log(message: String) {
-                            appLogger.debug(message)
+                            val obfuscatedMessage = httpLogObfuscator?.obfuscate(message)
+                            appLogger.debug(obfuscatedMessage ?: message)
                         }
                     }
-                ).freeze() // Kotlin network client needs to be frozen before passed to the C-API
-            }
+                    networkTransport ?: KtorNetworkTransport(
+                        // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
+                        //  constant in AppConfiguration.Companion
+                        //  https://github.com/realm/realm-kotlin/issues/408
+                        timeoutMs = 60000,
+                        dispatcherHolder = dispatcherHolder,
+                        logger = logger,
+                        customHeaders = customRequestHeaders,
+                        authorizationHeaderName = authorizationHeaderName
+                    )
+                }
 
             return AppConfigurationImpl(
                 appId = appId,
@@ -294,11 +400,17 @@ public interface AppConfiguration {
                 metadataMode = if (encryptionKey == null)
                     MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_PLAINTEXT
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
+                appNetworkDispatcherFactory = appNetworkDispatcherFactory,
                 networkTransportFactory = networkTransport,
                 syncRootDirectory = syncRootDirectory,
-                log = appLogger,
+                logger = logConfig,
                 appName = appName,
-                appVersion = appVersion
+                appVersion = appVersion,
+                bundleId = bundleId,
+                ejson = ejson,
+                httpLogObfuscator = httpLogObfuscator,
+                customRequestHeaders = customRequestHeaders,
+                authorizationHeaderName = authorizationHeaderName,
             )
         }
     }

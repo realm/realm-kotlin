@@ -2,19 +2,20 @@ package io.realm.kotlinx.dataframe.internal
 
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmClass
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.SetPropertyType
 import io.realm.kotlin.schema.ValuePropertyType
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlinx.dataframe.internal.RealmDataFrameBuilder.ColumnType
 import org.jetbrains.kotlinx.dataframe.AnyFrame
 import org.jetbrains.kotlinx.dataframe.DataColumn
 import org.jetbrains.kotlinx.dataframe.DataFrame
-import org.jetbrains.kotlinx.dataframe.api.DataFrameBuilder
 import org.jetbrains.kotlinx.dataframe.api.dataFrameOf
 import org.jetbrains.kotlinx.dataframe.api.explode
 import kotlin.reflect.KType
@@ -43,6 +44,7 @@ internal class RealmDataFrameBuilder(classSchema: RealmClass) {
             when (it.type) {
                 is ListPropertyType -> addColumn(it.name, ColumnType.DATAFRAME, it.type.storageType.kClass.createType())
                 is SetPropertyType -> addColumn(it.name, ColumnType.DATAFRAME, it.type.storageType.kClass.createType())
+                is MapPropertyType -> addColumn(it.name, ColumnType.DATAFRAME, it.type.storageType.kClass.createType())
                 is ValuePropertyType -> {
                     if (it.type.storageType == RealmStorageType.OBJECT) {
                         addColumn(it.name, ColumnType.COLUMN_GROUP, it.type.storageType.kClass.createType())
@@ -143,6 +145,7 @@ private fun addObjectToFrame(schema: RealmSchema, classSchema: RealmClass, build
         when (val type = prop.type) {
             is ListPropertyType -> addListPropertyToFrame(schema, type, obj, prop, builder)
             is SetPropertyType -> addSetPropertyToFrame(schema, type, obj, prop, builder)
+            is MapPropertyType -> addMapPropertyToFrame(schema, type, obj, prop, builder)
             is ValuePropertyType -> {
                 if (prop.type.storageType == RealmStorageType.OBJECT) {
                     val df: AnyFrame = createDataFrameForObject(schema, obj.getObject(prop.name))
@@ -226,4 +229,39 @@ private fun addSetPropertyToFrame(
         val data = DataColumn.createValueColumn("value", list, setType.storageType.kClass.createType())
         builder.addValue(prop.name, dataFrameOf(data))
     }
+}
+
+private fun addMapPropertyToFrame(
+    schema: RealmSchema,
+    mapType: MapPropertyType,
+    obj: DynamicRealmObject,
+    prop: RealmProperty,
+    builder: RealmDataFrameBuilder
+): Nothing = when (mapType.storageType) {
+    else -> TODO()
+//    RealmStorageType.OBJECT -> {
+//        val map: RealmDictionary<out DynamicRealmObject?> = obj.getObjectDictionary(prop.name)
+//        if (map.isEmpty()) {
+//            // TODO RealmSchema cannot tell the type of set items :/
+//            builder.addValue(prop.name, DataFrame.Empty)
+//        } else {
+//            val className: String = map.first().type
+//            val classSchema: RealmClass = schema[className]!!
+//            val setBuilder = createBuilderForType(classSchema)
+//            map.forEach { obj: DynamicRealmObject ->
+//                addObjectToFrame(schema, classSchema, setBuilder, obj)
+//            }
+//            val df: AnyFrame = setBuilder.build()
+//            builder.addValue(prop.name, df)
+//        }
+//    }
+//    else -> {
+//        val list = if (setType.isNullable) {
+//            obj.getNullableValueSet(prop.name, setType.storageType.kClass).toList()
+//        } else {
+//            obj.getValueSet(prop.name, setType.storageType.kClass).toList()
+//        }
+//        val data = DataColumn.createValueColumn("value", list, setType.storageType.kClass.createType())
+//        builder.addValue(prop.name, dataFrameOf(data))
+//    }
 }

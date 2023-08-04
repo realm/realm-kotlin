@@ -16,6 +16,10 @@
 
 package io.realm.kotlin.schema
 
+import io.realm.kotlin.query.RealmResults
+import io.realm.kotlin.types.RealmDictionary
+import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmSet
 import kotlin.reflect.KClass
 
 /**
@@ -39,7 +43,12 @@ public sealed interface RealmPropertyType {
         //  allows to define the options centrally and use it to verify exhaustiveness in tests.
         //  JUST DON'T FORGET TO UPDATE ON WHEN ADDING NEW SUBCLASSES :see_no_evil:
         //  We could do a JVM test that verifies that it is exhaustive :thinking:
-        internal val subTypes: Set<KClass<out RealmPropertyType>> = setOf(ValuePropertyType::class, ListPropertyType::class, SetPropertyType::class)
+        internal val subTypes: Set<KClass<out RealmPropertyType>> = setOf(
+            ValuePropertyType::class,
+            ListPropertyType::class,
+            SetPropertyType::class,
+            MapPropertyType::class
+        )
     }
 }
 
@@ -56,7 +65,11 @@ public data class ValuePropertyType(
     /**
      * Indicates whether there is an index associated with this property.
      */
-    public val isIndexed: Boolean
+    public val isIndexed: Boolean,
+    /**
+     * Indicates whether there is a full-text index associated with this property.
+     */
+    public val isFullTextIndexed: Boolean
 ) : RealmPropertyType
 
 /**
@@ -88,6 +101,20 @@ public data class SetPropertyType(
     override val storageType: RealmStorageType,
     /**
      * Whether or not the elements inside the list can be `null`.
+     */
+    override val isNullable: Boolean = false
+) : RealmPropertyType
+
+/**
+ * A [RealmPropertyType] describing map properties like [RealmDictionary].
+ */
+public data class MapPropertyType(
+    /**
+     * The type of elements inside the list.
+     */
+    override val storageType: RealmStorageType,
+    /**
+     * Whether or not the elements inside the map can be `null`.
      */
     override val isNullable: Boolean = false
 ) : RealmPropertyType

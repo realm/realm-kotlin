@@ -21,4 +21,5 @@ actual object PropertyFlags {
     actual val RLM_PROPERTY_NULLABLE: Int = realm_property_flags_e.RLM_PROPERTY_NULLABLE
     actual val RLM_PROPERTY_PRIMARY_KEY: Int = realm_property_flags_e.RLM_PROPERTY_PRIMARY_KEY
     actual val RLM_PROPERTY_INDEXED: Int = realm_property_flags_e.RLM_PROPERTY_INDEXED
+    actual val RLM_PROPERTY_FULLTEXT_INDEXED: Int = realm_property_flags_e.RLM_PROPERTY_FULLTEXT_INDEXED
 }

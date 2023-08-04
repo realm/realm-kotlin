@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
+import io.realm.kotlin.compiler.FqNames.ASYMMETRIC_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
 import io.realm.kotlin.compiler.FqNames.PERSISTED_NAME_ANNOTATION
+import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -32,6 +35,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
+import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
@@ -44,11 +48,11 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
-import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationWithName
 import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrMutableAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -65,6 +69,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrElseBranchImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrWhenImpl
@@ -79,8 +84,10 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
+import org.jetbrains.kotlin.ir.types.impl.IrErrorClassImpl.superTypes
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.superTypes
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.copyTo
@@ -89,9 +96,10 @@ import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
-import org.jetbrains.kotlin.ir.util.nameForIrSerialization
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
@@ -123,7 +131,8 @@ val ClassDescriptor.isRealmObjectCompanion
 
 val realmObjectInterfaceFqNames = setOf(FqNames.REALM_OBJECT_INTERFACE)
 val realmEmbeddedObjectInterfaceFqNames = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
-val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames
+val realmAsymmetricObjectInterfaceFqNames = setOf(FqNames.ASYMMETRIC_OBJECT_INTERFACE)
+val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames + realmAsymmetricObjectInterfaceFqNames
 
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
@@ -161,13 +170,14 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
 // `RealmObject` (Kotlin, interface).
 val realmObjectPsiNames = setOf("RealmObject", "io.realm.kotlin.types.RealmObject")
 val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.kotlin.types.EmbeddedRealmObject")
+val asymmetricRealmObjectPsiNames = setOf("AsymmetricRealmObject", "io.realm.kotlin.types.AsymmetricRealmObject")
 val realmJavaObjectPsiNames = setOf("io.realm.RealmObject()", "RealmObject()")
 val ClassDescriptor.isRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
 val ClassDescriptor.isBaseRealmObject: Boolean
-    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
@@ -181,6 +191,15 @@ val IrClass.isRealmObject
 
 val IrClass.isEmbeddedRealmObject: Boolean
     get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
+
+val IrClass.isAsymmetricRealmObject: Boolean
+    get() = superTypes.any { it.classFqName == ASYMMETRIC_OBJECT_INTERFACE }
+
+val IrType.isEmbeddedRealmObject: Boolean
+    get() = superTypes().any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
+
+val IrType.isAsymmetricRealmObject: Boolean
+    get() = superTypes().any { it.classFqName == ASYMMETRIC_OBJECT_INTERFACE }
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset
@@ -216,6 +235,11 @@ internal fun IrPluginContext.lookupFunctionInClass(
     }
 }
 
+internal fun IrPluginContext.lookupClassOrThrow(name: ClassId): IrClass {
+    return referenceClass(name)?.owner
+        ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
+}
+
 internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
     return referenceClass(name)?.owner
         ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
@@ -233,7 +257,9 @@ internal fun IrPluginContext.lookupConstructorInClass(
 internal fun <T> IrClass.lookupCompanionDeclaration(
     name: Name
 ): T {
-    return this.companionObject()?.declarations?.first { it.nameForIrSerialization == name } as T
+    return this.companionObject()?.declarations?.first {
+        it is IrDeclarationWithName && it.name == name
+    } as T
         ?: fatalError("Cannot find companion method ${name.asString()} on ${this.name}")
 }
 
@@ -441,7 +467,7 @@ fun IrClass.addValueProperty(
     getter.body = pluginContext.blockBody(getter.symbol) {
         at(startOffset, endOffset)
         +irReturn(
-            irGetField(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
+            irGetFieldWrapper(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
         )
     }
     return property
@@ -570,6 +596,18 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
     }
 }
 
+/**
+ * Returns the underlying schema name for a given class type
+ */
+fun getSchemaClassName(clazz: IrClass): String {
+    return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
+        @Suppress("UNCHECKED_CAST")
+        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+    } else {
+        clazz.name.identifier
+    }
+}
+
 /** Finds the line and column of [IrDeclaration] */
 fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
     val sourceRangeInfo = file.fileEntry.getSourceRangeInfo(
@@ -585,6 +623,10 @@ fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
         lineContent = null
     )!!
 }
+
+/** Wrapper method to overcome API differences from Kotlin 1.7.20-1.8.20 */
+fun IrBuilderWithScope.irGetFieldWrapper(receiver: IrGetValueImpl, field: IrField, type: IrType = field.type): IrExpression =
+    IrGetFieldImpl(startOffset, endOffset, field.symbol, type, receiver)
 
 /**
  * Method to indicate fatal issues that should not have happeneded; as opposed to user modeling

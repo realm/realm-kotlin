@@ -18,9 +18,7 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
-import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreUserState
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
@@ -31,8 +29,6 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import kotlinx.coroutines.channels.Channel
-import org.mongodb.kbson.BsonDocument
-import org.mongodb.kbson.serialization.Bson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -53,7 +49,7 @@ public class UserImpl(
     override val loggedIn: Boolean
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
     override val provider: AuthenticationProvider
-        get() = getProviderFromCore(RealmInterop.realm_user_get_auth_provider(nativePointer))
+        get() = AuthenticationProviderImpl.fromId(RealmInterop.realm_user_get_auth_provider(nativePointer))
     override val accessToken: String
         get() = RealmInterop.realm_user_get_access_token(nativePointer)
     override val refreshToken: String
@@ -63,17 +59,12 @@ public class UserImpl(
     override val functions: Functions by lazy { FunctionsImpl(app, this) }
 
     @PublishedApi
-    internal fun profileAsBsonDocumentInternal(): BsonDocument {
-        return Bson(RealmInterop.realm_user_get_profile(nativePointer)) as BsonDocument
-    }
+    internal fun <T> profileInternal(block: (ejsonEncodedProfile: String) -> T): T =
+        block(RealmInterop.realm_user_get_profile(nativePointer))
 
     @PublishedApi
-    internal fun customDataAsBsonDocumentInternal(): BsonDocument? {
-        return RealmInterop.realm_user_get_custom_data(nativePointer)
-            ?.let { ejsonCustomData: String ->
-                Bson(ejsonCustomData) as BsonDocument
-            }
-    }
+    internal fun <T> customDataInternal(block: (ejsonEncodedCustomData: String) -> T?): T? =
+        RealmInterop.realm_user_get_custom_data(nativePointer)?.let(block)
 
     override suspend fun refreshCustomData() {
         Channel<Result<Unit>>(1).use { channel ->
@@ -91,34 +82,52 @@ public class UserImpl(
 
     override val identities: List<UserIdentity>
         get() = RealmInterop.realm_user_get_all_identities(nativePointer).map {
-            UserIdentity(it.id, getProviderFromCore(it.provider))
+            UserIdentity(it.id, AuthenticationProviderImpl.fromId(it.provider))
         }
 
     override suspend fun logOut() {
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State?>>(1).use { channel ->
+            val reportLoggedOut = loggedIn
             RealmInterop.realm_app_log_out(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
-                }.freeze()
+                channelResultCallback<Unit, User.State?>(channel) {
+                    if (reportLoggedOut) {
+                        User.State.LOGGED_OUT
+                    } else {
+                        null
+                    }
+                }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State? ->
+                    if (state != null) {
+                        app.reportAuthenticationChange(this, state)
+                    }
+                }
         }
     }
 
     override suspend fun remove(): User {
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State?>>(1).use { channel ->
+            val reportRemoved = loggedIn
             RealmInterop.realm_app_remove_user(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
-                }.freeze()
+                channelResultCallback<Unit, User.State?>(channel) {
+                    if (reportRemoved) {
+                        User.State.REMOVED
+                    } else {
+                        null
+                    }
+                }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State? ->
+                    if (state != null) {
+                        app.reportAuthenticationChange(this, state)
+                    }
+                }
         }
         return this
     }
@@ -127,16 +136,18 @@ public class UserImpl(
         if (state != User.State.LOGGED_IN) {
             throw IllegalStateException("User must be logged in, in order to be deleted.")
         }
-        Channel<Result<Unit>>(1).use { channel ->
+        Channel<Result<User.State>>(1).use { channel ->
             RealmInterop.realm_app_delete_user(
                 app.nativePointer,
                 nativePointer,
-                channelResultCallback<Unit, Unit>(channel) {
-                    // No-op
-                }.freeze()
+                channelResultCallback<Unit, User.State>(channel) {
+                    User.State.REMOVED
+                }
             )
             return@use channel.receive()
-                .getOrThrow()
+                .getOrThrow().also { state: User.State ->
+                    app.reportAuthenticationChange(this, state)
+                }
         }
     }
 
@@ -152,7 +163,7 @@ public class UserImpl(
                     (credentials as CredentialsImpl).nativePointer,
                     channelResultCallback<RealmUserPointer, User>(channel) { userPointer ->
                         UserImpl(userPointer, app)
-                    }.freeze()
+                    }
                 )
                 channel.receive().getOrThrow()
                 return this
@@ -184,22 +195,6 @@ public class UserImpl(
         var result = identity.hashCode()
         result = 31 * result + app.configuration.appId.hashCode()
         return result
-    }
-
-    private fun getProviderFromCore(authProvider: AuthProvider): AuthenticationProvider {
-        return when (authProvider) {
-            AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS -> AuthenticationProvider.ANONYMOUS
-            AuthProvider.RLM_AUTH_PROVIDER_ANONYMOUS_NO_REUSE -> AuthenticationProvider.ANONYMOUS
-            AuthProvider.RLM_AUTH_PROVIDER_FACEBOOK -> AuthenticationProvider.FACEBOOK
-            AuthProvider.RLM_AUTH_PROVIDER_GOOGLE -> AuthenticationProvider.GOOGLE
-            AuthProvider.RLM_AUTH_PROVIDER_APPLE -> AuthenticationProvider.APPLE
-            AuthProvider.RLM_AUTH_PROVIDER_CUSTOM -> TODO()
-            AuthProvider.RLM_AUTH_PROVIDER_EMAIL_PASSWORD -> AuthenticationProvider.EMAIL_PASSWORD
-            AuthProvider.RLM_AUTH_PROVIDER_FUNCTION -> TODO()
-            AuthProvider.RLM_AUTH_PROVIDER_USER_API_KEY -> AuthenticationProvider.API_KEY
-            AuthProvider.RLM_AUTH_PROVIDER_SERVER_API_KEY -> TODO()
-            else -> throw IllegalStateException("Unknown auth provider: $authProvider")
-        }
     }
 
     public companion object {

@@ -26,9 +26,9 @@ import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
@@ -201,14 +201,17 @@ internal open class SyncSessionImpl(
             val result: Any = withTimeout(timeout) {
                 withContext(realm.notificationDispatcherHolder.dispatcher) {
                     val callback = object : SyncSessionTransferCompletionCallback {
-                        override fun invoke(error: SyncErrorCode?) {
-                            if (error != null) {
-                                channel.trySend(convertSyncErrorCode(error))
+                        override fun invoke(errorCode: SyncErrorCode?) {
+                            if (errorCode != null) {
+                                // Transform the errorCode into a dummy syncError so we can have a
+                                // common path.
+                                val syncError = SyncError(errorCode)
+                                channel.trySend(convertSyncError(syncError))
                             } else {
                                 channel.trySend(true)
                             }
                         }
-                    }.freeze()
+                    }
                     when (direction) {
                         TransferDirection.UPLOAD -> {
                             RealmInterop.realm_sync_session_wait_for_upload_completion(

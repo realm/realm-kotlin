@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.InitialDataCallback
+import io.realm.kotlin.InitialRealmFileConfiguration
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
@@ -36,7 +37,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.appFilesDirectory
-import io.realm.kotlin.internal.platform.freeze
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
@@ -62,7 +62,9 @@ public open class ConfigurationImpl constructor(
     private val userMigration: RealmMigration?,
     initialDataCallback: InitialDataCallback?,
     override val isFlexibleSyncConfiguration: Boolean,
-    inMemory: Boolean
+    inMemory: Boolean,
+    initialRealmFileConfiguration: InitialRealmFileConfiguration?,
+    logger: ContextLogger
 ) : InternalConfiguration {
 
     override val path: String
@@ -79,6 +81,8 @@ public open class ConfigurationImpl constructor(
 
     override val schemaMode: SchemaMode
 
+    override val logger: ContextLogger = logger
+
     override val encryptionKey: ByteArray?
         get(): ByteArray? = userEncryptionKey
 
@@ -94,15 +98,20 @@ public open class ConfigurationImpl constructor(
 
     override val initialDataCallback: InitialDataCallback?
     override val inMemory: Boolean
+    override val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
         val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
         return configInitializer(nativeConfig)
     }
 
-    override suspend fun openRealm(realm: RealmImpl): Pair<LiveRealmPointer, Boolean> {
+    override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         val configPtr = realm.configuration.createNativeConfiguration()
-        return RealmInterop.realm_open(configPtr)
+        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr)
+        val liveRealmReference = LiveRealmReference(realm, dbPointer)
+        val frozenReference = liveRealmReference.snapshot(realm)
+        liveRealmReference.close()
+        return frozenReference to fileCreated
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
@@ -132,6 +141,7 @@ public open class ConfigurationImpl constructor(
         this.compactOnLaunchCallback = compactOnLaunchCallback
         this.initialDataCallback = initialDataCallback
         this.inMemory = inMemory
+        this.initialRealmFileConfiguration = initialRealmFileConfiguration
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->
@@ -139,7 +149,7 @@ public open class ConfigurationImpl constructor(
                 override fun invoke(totalBytes: Long, usedBytes: Long): Boolean {
                     return callback.shouldCompact(totalBytes, usedBytes)
                 }
-            }.freeze()
+            }
         }
 
         // We need to prepare the the migration callback so it can be frozen for Kotlin Native, but
@@ -153,27 +163,25 @@ public open class ConfigurationImpl constructor(
                     RealmInterop.realm_begin_read(newRealm)
                     val old = DynamicRealmImpl(this@ConfigurationImpl, oldRealm)
                     val new = DynamicMutableRealmImpl(this@ConfigurationImpl, newRealm)
-                    @Suppress("TooGenericExceptionCaught")
-                    try {
-                        userMigration.migrate(object : AutomaticSchemaMigration.MigrationContext {
-                            override val oldRealm: DynamicRealm = old
-                            override val newRealm: DynamicMutableRealm = new
-                        })
-                        true
-                    } catch (e: Throwable) {
-                        // Returning false will cause Realm.open to fail with a
-                        // RuntimeException with a text saying "User-provided callback failed"
-                        // which is the closest that we can get across platforms, so dump the
-                        // actual exception to stdout, so users have a chance to see what is
-                        // actually failing
-                        // TODO Should we dump the actual exceptions in a platform specific way
-                        //  https://github.com/realm/realm-kotlin/issues/665
-                        e.printStackTrace()
-                        false
-                    }
+                    userMigration.migrate(object : AutomaticSchemaMigration.MigrationContext {
+                        override val oldRealm: DynamicRealm = old
+                        override val newRealm: DynamicMutableRealm = new
+                    })
                 }
-                else -> TODO("Unsupported migration") // Should never be hit, but build is sometimes complaining that when is not exhausted
             }
+        }
+
+        // Verify schema invariants that cannot be captured at compile time nor by Core.
+        // For now, the only invariant we capture here is wrong use of @PersistedName on classes
+        // which might accidentally create multiple model classes with the same name.
+        val duplicates: Set<String> = mapOfKClassWithCompanion.values
+            .map { it.`io_realm_kotlin_schema`().name }
+            .groupingBy { it }
+            .eachCount()
+            .filter { it.value > 1 }
+            .keys
+        if (duplicates.isNotEmpty()) {
+            throw IllegalArgumentException("The schema has declared the following class names multiple times: ${duplicates.joinToString()}")
         }
 
         // Invariant: All native modifications should happen inside this initializer, as that
@@ -208,7 +216,7 @@ public open class ConfigurationImpl constructor(
             )
 
             migrationCallback?.let {
-                RealmInterop.realm_config_set_migration_function(nativeConfig, it.freeze())
+                RealmInterop.realm_config_set_migration_function(nativeConfig, it)
             }
 
             userEncryptionKey?.let { key: ByteArray ->

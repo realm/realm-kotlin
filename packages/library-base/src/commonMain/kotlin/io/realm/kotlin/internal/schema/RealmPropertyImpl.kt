@@ -16,8 +16,10 @@
 
 package io.realm.kotlin.internal.schema
 
+import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.MapPropertyType
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.SetPropertyType
@@ -32,26 +34,31 @@ internal data class RealmPropertyImpl(
         is ValuePropertyType -> type.isNullable
         is ListPropertyType -> false
         is SetPropertyType -> false
+        is MapPropertyType -> false
     }
 
     companion object {
         fun fromCoreProperty(corePropertyImpl: PropertyInfo): RealmPropertyImpl {
             return with(corePropertyImpl) {
-                val storageType =
-                    io.realm.kotlin.internal.schema.RealmStorageTypeImpl.fromCorePropertyType(type)
+                val storageType = RealmStorageTypeImpl.fromCorePropertyType(type)
                 val type = when (collectionType) {
-                    io.realm.kotlin.internal.interop.CollectionType.RLM_COLLECTION_TYPE_NONE -> ValuePropertyType(
+                    CollectionType.RLM_COLLECTION_TYPE_NONE -> ValuePropertyType(
                         storageType,
                         isNullable,
                         isPrimaryKey,
-                        isIndexed
+                        isIndexed,
+                        isFullTextIndexed
                     )
-                    io.realm.kotlin.internal.interop.CollectionType.RLM_COLLECTION_TYPE_LIST -> ListPropertyType(
+                    CollectionType.RLM_COLLECTION_TYPE_LIST -> ListPropertyType(
                         storageType,
                         isNullable,
                         isComputed
                     )
-                    io.realm.kotlin.internal.interop.CollectionType.RLM_COLLECTION_TYPE_SET -> SetPropertyType(
+                    CollectionType.RLM_COLLECTION_TYPE_SET -> SetPropertyType(
+                        storageType,
+                        isNullable
+                    )
+                    CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> MapPropertyType(
                         storageType,
                         isNullable
                     )

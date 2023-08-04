@@ -1,0 +1,34 @@
+/*
+ * Copyright 2023 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package io.realm.kotlin.internal.util
+
+// Common exceptions used to raise uniform errors from platform specific implementations.
+public object Exceptions {
+
+    public fun assetFileNotFound(
+        filename: String,
+        cause: Throwable? = null
+    ): IllegalArgumentException =
+        IllegalArgumentException("Asset file not found: '$filename'", cause)
+
+    public fun assetFileChecksumMismatch(
+        filename: String,
+        expectedSha256: String,
+        actualSha256: String
+    ): IllegalArgumentException =
+        IllegalArgumentException("Asset file checksum for '$filename' does not match. Expected '$expectedSha256' but was '$actualSha256'")
+}

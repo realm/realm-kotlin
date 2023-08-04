@@ -54,11 +54,9 @@ import realm_wrapper.realm_config_set_path
 import realm_wrapper.realm_config_set_schema
 import realm_wrapper.realm_config_set_schema_mode
 import realm_wrapper.realm_config_set_schema_version
-import realm_wrapper.realm_errno
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_class
 import realm_wrapper.realm_get_last_error
-import realm_wrapper.realm_get_library_version
 import realm_wrapper.realm_get_num_classes
 import realm_wrapper.realm_get_schema
 import realm_wrapper.realm_open
@@ -80,10 +78,6 @@ import kotlin.test.assertTrue
 // These test are not thought as being exhaustive, but is more to provide a playground for
 // experiments and maybe more relevant for reproduction of C-API issues.
 class CinteropTest {
-    @Test
-    fun version() {
-        assertEquals("13.5.0", realm_get_library_version()!!.toKString())
-    }
 
     @Test
     fun cinterop_cinterop() {

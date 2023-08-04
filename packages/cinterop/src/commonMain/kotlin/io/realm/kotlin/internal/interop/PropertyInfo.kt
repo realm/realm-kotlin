@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal.interop
 
+import io.realm.kotlin.internal.interop.PropertyFlags.RLM_PROPERTY_FULLTEXT_INDEXED
 import io.realm.kotlin.internal.interop.PropertyFlags.RLM_PROPERTY_INDEXED
 import io.realm.kotlin.internal.interop.PropertyFlags.RLM_PROPERTY_NORMAL
 import io.realm.kotlin.internal.interop.PropertyFlags.RLM_PROPERTY_NULLABLE
@@ -38,6 +39,7 @@ data class PropertyInfo( // Kotlin variant of realm_property_info
     val isNullable: Boolean = flags and PropertyFlags.RLM_PROPERTY_NULLABLE != 0
     val isPrimaryKey: Boolean = flags and PropertyFlags.RLM_PROPERTY_PRIMARY_KEY != 0
     val isIndexed: Boolean = flags and PropertyFlags.RLM_PROPERTY_INDEXED != 0
+    val isFullTextIndexed: Boolean = flags and PropertyFlags.RLM_PROPERTY_FULLTEXT_INDEXED != 0
     val isComputed: Boolean = type == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
 
     companion object {
@@ -51,10 +53,14 @@ data class PropertyInfo( // Kotlin variant of realm_property_info
             linkOriginPropertyName: String?,
             isNullable: Boolean,
             isPrimaryKey: Boolean,
-            isIndexed: Boolean
+            isIndexed: Boolean,
+            isFullTextIndexed: Boolean
         ): PropertyInfo {
             val flags =
-                (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or (if (isPrimaryKey) RLM_PROPERTY_PRIMARY_KEY else 0) or (if (isIndexed) RLM_PROPERTY_INDEXED else 0)
+                (if (isNullable) RLM_PROPERTY_NULLABLE else 0) or
+                    (if (isPrimaryKey) RLM_PROPERTY_PRIMARY_KEY else 0) or
+                    (if (isIndexed) RLM_PROPERTY_INDEXED else 0) or
+                    (if (isFullTextIndexed) RLM_PROPERTY_FULLTEXT_INDEXED else 0)
             return PropertyInfo(
                 name,
                 publicName ?: SCHEMA_NO_VALUE,

@@ -16,11 +16,13 @@
 
 package io.realm.kotlin
 
+import io.realm.kotlin.Configuration.SharedBuilder
 import io.realm.kotlin.internal.MISSING_PLUGIN_MESSAGE
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.realmObjectCompanionOrNull
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -75,6 +77,7 @@ public fun interface InitialDataCallback {
 /**
  * Configuration for log events created by a Realm instance.
  */
+@Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
 public data class LogConfiguration(
     /**
      * The [LogLevel] for which all log events of equal or higher priority will be reported.
@@ -86,6 +89,21 @@ public data class LogConfiguration(
      * than the value defined in [LogConfiguration.level].
      */
     public val loggers: List<RealmLogger>
+)
+
+/**
+ * Configuration for pre-bundled asset files used as initial state of the realm file.
+ */
+public data class InitialRealmFileConfiguration(
+    /**
+     * Path to the realm file. This will be interpreted differently depending on the platform. See [SharedBuilder.initialRealmFile] for details.
+     */
+    val assetFile: String,
+    /**
+     * Asset file SHA256-checksum used to verify the integrity of the asset file. See
+     * [SharedBuilder.initialRealmFile] for details.
+     */
+    val checksum: String?
 )
 
 /**
@@ -111,6 +129,7 @@ public interface Configuration {
     /**
      * The log configuration used for the realm instance.
      */
+    @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
     public val log: LogConfiguration
 
     /**
@@ -171,6 +190,13 @@ public interface Configuration {
     public val inMemory: Boolean
 
     /**
+     * Configuration that holds details of a bundled asset file used as initial state of the realm
+     * file. See [SharedBuilder.initialRealmFile] for details. `null` is returned if no initial realm
+     * file has been configured.
+     */
+    public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
+
+    /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
      *
@@ -200,9 +226,9 @@ public interface Configuration {
 
         // 'name' must be nullable as it is optional when getting SyncClient's default path!
         protected abstract var name: String?
-        protected var logLevel: LogLevel = LogLevel.WARN
-        protected var removeSystemLogger: Boolean = false
-        protected var userLoggers: List<RealmLogger> = listOf()
+        protected var logLevel: LogLevel = RealmLog.level
+        protected var appConfigLoggers: List<RealmLogger> = listOf()
+        protected var realmConfigLoggers: List<RealmLogger> = listOf()
         protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
         protected var notificationDispatcher: CoroutineDispatcher? = null
         protected var writeDispatcher: CoroutineDispatcher? = null
@@ -211,6 +237,7 @@ public interface Configuration {
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
+        protected var initialRealmFileConfiguration: InitialRealmFileConfiguration? = null
 
         /**
          * Sets the filename of the realm file.
@@ -224,6 +251,9 @@ public interface Configuration {
          * Creates the RealmConfiguration based on the builder properties.
          *
          * @return the created RealmConfiguration.
+         *
+         * @throws IllegalStateException if trying to build a configuration with incompatible
+         * options.
          */
         public abstract fun build(): T
 
@@ -260,12 +290,13 @@ public interface Configuration {
          * installed by default that will redirect to the common logging framework on the platform,
          * i.e. LogCat on Android and NSLog on iOS.
          */
+        @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
         public open fun log(
             level: LogLevel = LogLevel.WARN,
             customLoggers: List<RealmLogger> = emptyList()
         ): S = apply {
             this.logLevel = level
-            this.userLoggers = customLoggers
+            this.realmConfigLoggers = customLoggers
         } as S
 
         /**
@@ -372,14 +403,49 @@ public interface Configuration {
             apply { this.inMemory = true } as S
 
         /**
-         * Removes the default system logger from being installed. If no custom loggers have
-         * been configured, no log events will be reported, regardless of the configured
-         * log level.
+         * Initializes a realm file with a bundled asset realm file.
          *
-         * @see [Configuration.SharedBuilder.log]
+         * When opening the realm for the first time the realm file is initialized from the given
+         * [assetFile]. This only happens if the realm files at [path] not already exists.
+         *
+         * The asset file is sought located on the platform's conventional locations for bundled
+         * assets/resources:
+         * - Android: Through android.content.res.AssetManager.open(assetFilename)
+         * - JVM: Class<T>.javaClass.classLoader.getResource(assetFilename)
+         * - Darwin: NSBundle.mainBundle.pathForResource(assetFilenameBase, assetFilenameExtension)
+         * And it is the responsibility of the developer to place the files at the appropriate
+         * location.
+         *
+         * This cannot be combined with [inMemory] or
+         * [RealmConfiguration.Builder.deleteRealmIfMigrationNeeded]. Attempts to do so will cause
+         * [build] to throw an [IllegalStateException].
+         *
+         * NOTE: This could potentially be a lengthy operation, so opening a Realm with a predefined
+         * asset file should ideally be done on a background thread.
+         * NOTE: There is currently no protection against multiple processes trying to copy the
+         * asset file in place at the same time, so user must ensure that only one process is trying
+         * to trigger this at a time.
+         *
+         * @param assetFile the name of the assetFile in the platform's default asset/resource
+         * location. If the asset file cannot be located when opening the realm for the first time
+         * [Realm.open] will fail with an [IllegalArgumentException].
+         * @param sha256checkSum a SHA256-checksum used to verify the integrity of the asset file.
+         * If this is specified and the checksum does not match the computed checksum of the
+         * [assetFile] when the realm is opened the first time [Realm.open] will fail with a
+         * [IllegalArgumentException].
+         *
+         * @throws IllegalArgumentException if called with an empty [assetFile].
          */
-        // TODO Evaluate if this should be part of the public API. For now keep it internal.
-        internal fun removeSystemLogger() = apply { this.removeSystemLogger = true } as S
+        public fun initialRealmFile(assetFile: String, sha256checkSum: String? = null): S {
+            require(assetFile.isNotEmpty()) {
+                "Asset file must be a non-empty filename."
+            }
+            require(sha256checkSum == null || sha256checkSum.isNotEmpty()) {
+                "Checksum must be null or a non-empty string."
+            }
+            this.initialRealmFileConfiguration = InitialRealmFileConfiguration(assetFile, sha256checkSum)
+            return this as S
+        }
 
         protected fun validateEncryptionKey(encryptionKey: ByteArray): ByteArray {
             if (encryptionKey.size != Realm.ENCRYPTION_KEY_LENGTH) {
@@ -397,6 +463,14 @@ public interface Configuration {
             }
             require(name != REALM_FILE_EXTENSION) {
                 "'$REALM_FILE_EXTENSION' is not a valid filename"
+            }
+        }
+
+        protected open fun verifyConfig() {
+            initialRealmFileConfiguration?.let {
+                if (inMemory) {
+                    throw IllegalStateException("Cannot combine `initialRealmFile` and `inMemory` configuration options")
+                }
             }
         }
     }

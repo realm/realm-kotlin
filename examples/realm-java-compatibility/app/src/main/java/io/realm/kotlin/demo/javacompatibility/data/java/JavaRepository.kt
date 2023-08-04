@@ -45,12 +45,12 @@ class JavaRepository(appContext: Context) : Repository {
 
     init {
         Realm.init(appContext)
-        realm = Realm.getInstance(
-            RealmConfiguration.Builder()
-                .name("java.realm")
-                .allowWritesOnUiThread(true)
-                .build()
-        )
+        val config = RealmConfiguration.Builder()
+            .name("java.realm")
+            .allowWritesOnUiThread(true)
+            .build()
+        Realm.deleteRealm(config)
+        realm = Realm.getInstance(config)
         realm.executeTransaction {
             realm.createObject(JavaEntity::class.java)
             val entities = realm.where(JavaEntity::class.java).findAll()

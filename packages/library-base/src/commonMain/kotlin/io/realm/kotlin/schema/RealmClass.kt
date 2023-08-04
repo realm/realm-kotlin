@@ -39,7 +39,13 @@ public interface RealmClass {
     /**
      * Returns whether or not the class is embedded.
      */
+    @Deprecated("This property has been deprecated.", ReplaceWith("kind == RealmClassKind.EMBEDDED", "io.realm.kotlin.schema.RealmClassKind"))
     public val isEmbedded: Boolean
+
+    /**
+     * Returns what type of Realm model class this is.
+     */
+    public val kind: RealmClassKind
 
     /**
      * Index operator to lookup a specific [RealmProperty] from its persisted property name.

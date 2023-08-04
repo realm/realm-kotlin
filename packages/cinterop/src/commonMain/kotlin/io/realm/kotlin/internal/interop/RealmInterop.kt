@@ -64,13 +64,12 @@ interface FrozenRealmT : RealmT
 interface RealmObjectT : CapiT
 interface RealmListT : CapiT
 interface RealmSetT : CapiT
+interface RealmMapT : CapiT
 interface RealmResultsT : CapiT
 interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
-interface RealmObjectChangesT : RealmChangesT
-interface RealmCollectionChangesT : RealmChangesT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -83,6 +82,7 @@ typealias FrozenRealmPointer = NativePointer<FrozenRealmT>
 typealias RealmObjectPointer = NativePointer<RealmObjectT>
 typealias RealmListPointer = NativePointer<RealmListT>
 typealias RealmSetPointer = NativePointer<RealmSetT>
+typealias RealmMapPointer = NativePointer<RealmMapT>
 typealias RealmResultsPointer = NativePointer<RealmResultsT>
 typealias RealmQueryPointer = NativePointer<RealmQueryT>
 typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
@@ -129,9 +129,8 @@ class SyncConnectionParams(
     sdkVersion: String,
     localAppName: String?,
     localAppVersion: String?,
-    platform: String,
+    bundleId: String,
     platformVersion: String,
-    cpuArch: String,
     device: String,
     deviceVersion: String,
     framework: Runtime,
@@ -140,10 +139,9 @@ class SyncConnectionParams(
     val sdkName = "Kotlin"
     val localAppName: String?
     val localAppVersion: String?
+    val bundleId: String
     val sdkVersion: String
-    val platform: String
     val platformVersion: String
-    val cpuArch: String
     val device: String
     val deviceVersion: String
     val framework: String
@@ -157,60 +155,20 @@ class SyncConnectionParams(
 
     init {
         this.sdkVersion = sdkVersion
+        this.bundleId = bundleId
         this.localAppName = localAppName
         this.localAppVersion = localAppVersion
-        this.platform = normalizePlatformValue(platform)
         this.platformVersion = platformVersion
-        this.cpuArch = normalizeCpuArch(cpuArch)
         this.device = device
         this.deviceVersion = deviceVersion
         this.framework = framework.description
         this.frameworkVersion = frameworkVersion
     }
-
-    private fun normalizeCpuArch(cpuArch: String): String {
-        return if (cpuArch.isEmpty()) {
-            return ""
-        } else if (Regex("x86.64", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
-            "x86_64"
-        } else if (cpuArch.contains("x86", ignoreCase = true)) {
-            "x86"
-        } else if (Regex("v7a", RegexOption.IGNORE_CASE).find(cpuArch) != null) {
-            "armeabi-v7a"
-        } else if (
-            Regex("arm64", RegexOption.IGNORE_CASE).find(cpuArch) != null ||
-            cpuArch.equals("aarch64", ignoreCase = true)
-        ) {
-            "arm64"
-        } else {
-            "Unknown ($cpuArch)"
-        }
-    }
-
-    private fun normalizePlatformValue(platform: String): String {
-        return if (platform.isEmpty()) {
-            return ""
-        } else if (platform.contains("windows", ignoreCase = true)) {
-            "Windows"
-        } else if (platform.contains("linux", ignoreCase = true)) {
-            "Linux"
-        } else if (
-            Regex("mac( )?os", setOf(RegexOption.IGNORE_CASE)).find(platform) != null ||
-            platform.equals("NSMACHOperatingSystem", ignoreCase = true)
-        ) {
-            "MacOS"
-        } else if (platform.contains("ios", ignoreCase = true)) {
-            "iOS"
-        } else if (platform.contains("android", ignoreCase = true)) {
-            "Android"
-        } else {
-            "Unknown ($platform)"
-        }
-    }
 }
 
 @Suppress("FunctionNaming", "LongParameterList")
 expect object RealmInterop {
+    fun realm_value_get(value: RealmValue): Any?
     fun realm_get_version_id(realm: RealmPointer): Long
     fun realm_get_library_version(): String
     fun realm_refresh(realm: RealmPointer)
@@ -267,6 +225,7 @@ expect object RealmInterop {
     fun realm_is_frozen(realm: RealmPointer): Boolean
     fun realm_close(realm: RealmPointer)
     fun realm_delete_files(path: String)
+    fun realm_compact(realm: RealmPointer): Boolean
     fun realm_convert_with_config(
         realm: RealmPointer,
         config: RealmConfigurationPointer,
@@ -370,27 +329,69 @@ expect object RealmInterop {
     fun realm_set_resolve_in(set: RealmSetPointer, realm: RealmPointer): RealmSetPointer?
     fun realm_set_is_valid(set: RealmSetPointer): Boolean
 
+    // dictionary
+    fun realm_get_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer
+    fun realm_dictionary_clear(dictionary: RealmMapPointer)
+    fun realm_dictionary_size(dictionary: RealmMapPointer): Long
+    fun realm_dictionary_to_results(dictionary: RealmMapPointer): RealmResultsPointer
+    fun MemAllocator.realm_dictionary_find(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue
+    fun MemAllocator.realm_dictionary_get(
+        dictionary: RealmMapPointer,
+        pos: Int
+    ): Pair<RealmValue, RealmValue>
+    fun MemAllocator.realm_dictionary_insert(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue,
+        value: RealmValue
+    ): Pair<RealmValue, Boolean>
+    fun MemAllocator.realm_dictionary_erase(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Pair<RealmValue, Boolean>
+    fun realm_dictionary_contains_key(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): Boolean
+    fun realm_dictionary_contains_value(
+        dictionary: RealmMapPointer,
+        value: RealmValue
+    ): Boolean
+    fun MemAllocator.realm_dictionary_insert_embedded(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmValue
+    fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
+    fun realm_dictionary_resolve_in(
+        dictionary: RealmMapPointer,
+        realm: RealmPointer
+    ): RealmMapPointer?
+
+    fun realm_dictionary_is_valid(dictionary: RealmMapPointer): Boolean
+
     // query
     fun realm_query_parse(
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: Pair<Int, RealmQueryArgsTransport>
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
@@ -398,12 +399,13 @@ expect object RealmInterop {
     fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: Pair<Int, RealmQueryArgsTransport> // Sending the size inside a pair avoids a roundtrip to C just to get the size of the arguments in the struct
+        args: RealmQueryArgumentList
     ): RealmQueryPointer
     fun realm_query_get_description(query: RealmQueryPointer): String
     // Not implemented in C-API yet
     // RLM_API bool realm_query_delete_all(const realm_query_t*);
 
+    fun realm_results_get_query(results: RealmResultsPointer): RealmQueryPointer
     fun realm_results_resolve_in(results: RealmResultsPointer, realm: RealmPointer): RealmResultsPointer
     fun realm_results_count(results: RealmResultsPointer): Long
     fun MemAllocator.realm_results_average(
@@ -424,7 +426,7 @@ expect object RealmInterop {
     ): RealmValue
 
     // FIXME OPTIMIZE Get many
-    fun realm_results_get(results: RealmResultsPointer, index: Long): Link
+    fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer
@@ -452,6 +454,10 @@ expect object RealmInterop {
         set: RealmSetPointer,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
+    fun realm_dictionary_add_notification_callback(
+        map: RealmMapPointer,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer
     fun realm_object_changes_get_modified_properties(
         change: RealmChangesPointer
     ): List<PropertyKey>
@@ -462,6 +468,10 @@ expect object RealmInterop {
     fun <T, R> realm_collection_changes_get_ranges(
         change: RealmChangesPointer,
         builder: CollectionChangeSetBuilder<T, R>
+    )
+    fun <R> realm_dictionary_get_changes(
+        change: RealmChangesPointer,
+        builder: DictionaryChangeSetBuilder<R>
     )
 
     // App
@@ -551,11 +561,11 @@ expect object RealmInterop {
         basePath: String
     )
 
-    fun realm_sync_client_config_set_log_callback(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
-        callback: SyncLogCallback
-    )
-    fun realm_sync_client_config_set_log_level(syncClientConfig: RealmSyncClientConfigurationPointer, level: CoreLogLevel)
+    fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean)
+
+    fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
+
+    fun realm_set_log_level(level: CoreLogLevel)
 
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,

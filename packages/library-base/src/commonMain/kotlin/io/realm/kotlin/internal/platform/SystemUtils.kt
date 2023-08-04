@@ -1,9 +1,11 @@
+@file:JvmName("SystemUtilsJvm")
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
+import kotlin.jvm.JvmName
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
@@ -63,6 +65,16 @@ public expect val PATH_SEPARATOR: String
 public expect fun appFilesDirectory(): String
 
 /**
+ * Copies an asset file into location if the realm files does not exist.
+ *
+ * The asset file is located according to the platform conventions:
+ * - Android: Through android.content.res.AssetManager.open(assetFilename)
+ * - JVM: Class<T>.javaClass.classLoader.getResource(assetFilename)
+ * - Darwin: NSBundle.mainBundle.pathForResource(assetFilenameBase, assetFilenameExtension)
+ */
+public expect fun copyAssetFile(realmFilePath: String, assetFilename: String, sha256Checksum: String?)
+
+/**
  * Checks whether a file in the specified path exists.
  */
 public expect fun fileExists(path: String): Boolean
@@ -107,30 +119,6 @@ public expect fun prepareRealmFilePath(directoryPath: String, filename: String):
 public expect fun createDefaultSystemLogger(tag: String, logLevel: LogLevel = LogLevel.NONE): RealmLogger
 
 /**
- * Method to freeze state.
- * Calls the platform implementation of 'freeze' on native, and is a noop on other platforms.
- *
- * Note, this method refers to Kotlin Natives notion of frozen objects, and not Realms variant
- * of frozen objects.
- *
- * From Kotlin 1.7.20 freeze is deprecated, so this is a no-op on all platforms.
- */
-public expect fun <T> T.freeze(): T
-
-/**
- * Determine if object is frozen.
- * Will return false on non-native platforms.
- */
-public expect val <T> T.isFrozen: Boolean
-
-/**
- * Call on an object which should never be frozen.
- * Will help debug when something inadvertently is.
- * This is a noop on non-native platforms.
- */
-public expect fun Any.ensureNeverFrozen()
-
-/**
  * Return the current thread id.
  */
 public expect fun threadId(): ULong
@@ -152,3 +140,8 @@ internal expect fun currentTime(): RealmInstant
  * JVM and macOS: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.reflect/-k-callable/
  */
 public expect fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>): KType
+
+/**
+ * Returns whether or not we are running on Windows
+ */
+public expect fun isWindows(): Boolean

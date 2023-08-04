@@ -51,8 +51,9 @@ private:
         , m_io_realm_kotlin_internal_interop_sync_response(env, "io/realm/kotlin/internal/interop/sync/Response", false)
         , m_io_realm_kotlin_internal_interop_long_pointer_wrapper(env, "io/realm/kotlin/internal/interop/LongPointerWrapper", false)
         , m_io_realm_kotlin_internal_interop_sync_sync_error(env, "io/realm/kotlin/internal/interop/sync/SyncError", false)
+        , m_io_realm_kotlin_internal_interop_sync_core_compensating_write_info(env, "io/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo", false)
         , m_io_realm_kotlin_internal_interop_sync_app_error(env, "io/realm/kotlin/internal/interop/sync/AppError", false)
-        , m_io_realm_kotlin_internal_interop_sync_log_callback(env, "io/realm/kotlin/internal/interop/SyncLogCallback", false)
+        , m_io_realm_kotlin_internal_interop_log_callback(env, "io/realm/kotlin/internal/interop/LogCallback", false)
         , m_io_realm_kotlin_internal_interop_sync_error_callback(env, "io/realm/kotlin/internal/interop/SyncErrorCallback", false)
         , m_io_realm_kotlin_internal_interop_sync_jvm_sync_session_transfer_completion_callback(env, "io/realm/kotlin/internal/interop/sync/JVMSyncSessionTransferCompletionCallback", false)
         , m_io_realm_kotlin_internal_interop_sync_response_callback_impl(env, "io/realm/kotlin/internal/interop/sync/ResponseCallbackImpl", false)
@@ -76,8 +77,9 @@ private:
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_response;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_long_pointer_wrapper;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_sync_error;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_core_compensating_write_info;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_app_error;
-    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_log_callback;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_log_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_error_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_jvm_sync_session_transfer_completion_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_response_callback_impl;
@@ -145,14 +147,19 @@ public:
         return instance()->m_io_realm_kotlin_internal_interop_sync_sync_error;
     }
 
+    inline static const jni_util::JavaClass& core_compensating_write_info()
+    {
+        return instance()->m_io_realm_kotlin_internal_interop_sync_core_compensating_write_info;
+    }
+
     inline static const jni_util::JavaClass& app_error()
     {
         return instance()->m_io_realm_kotlin_internal_interop_sync_app_error;
     }
 
-    inline static const jni_util::JavaClass& sync_log_callback()
+    inline static const jni_util::JavaClass& log_callback()
     {
-        return instance()->m_io_realm_kotlin_internal_interop_sync_log_callback;
+        return instance()->m_io_realm_kotlin_internal_interop_log_callback;
     }
 
     inline static const jni_util::JavaClass& sync_error_callback()

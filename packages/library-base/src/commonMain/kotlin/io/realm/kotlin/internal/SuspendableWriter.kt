@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
@@ -44,7 +45,8 @@ import kotlin.reflect.KClass
  * @param owner The Realm instance needed for emitting updates.
  * @param dispatcher The dispatcher on which to execute all the writers operations on.
  */
-internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) {
+internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) :
+    LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
 
     internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcher), InternalMutableRealm, InternalTypedRealm, WriteTransactionManager {
@@ -52,19 +54,23 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
         override val realmReference: LiveRealmReference
             get() = super.realmReference
 
-        override fun <T : BaseRealmObject> query(clazz: KClass<T>, query: String, vararg args: Any?): RealmQuery<T> {
+        override fun <T : TypedRealmObject> query(
+            clazz: KClass<T>,
+            query: String,
+            vararg args: Any?
+        ): RealmQuery<T> {
             return super.query(clazz, query, *args)
         }
 
         override fun cancelWrite() { super.cancelWrite() }
     }
 
-    private val realmInitializer = lazy {
+    override val realmInitializer: Lazy<WriterRealm> = lazy {
         WriterRealm()
     }
 
     // Must only be accessed from the dispatchers thread
-    private val realm: WriterRealm by realmInitializer
+    override val realm: WriterRealm by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
 
@@ -73,7 +79,7 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
     }
 
     // Currently just for internal-only usage in test, thus API is not polished
-    suspend fun updateSchema(schema: RealmSchemaImpl): FrozenRealmReference {
+    suspend fun updateSchema(schema: RealmSchemaImpl) {
         return withContext(dispatcher) {
             transactionMutex.withLock {
                 realm.log.debug("Updating schema: $schema")
@@ -87,12 +93,12 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                 // - onRealmChanged - updating the realm.snapshot to also point to the latest key cache
                 // Seems like order is not guaranteed, but it is synchroneous, so updating snapshot
                 // in both callbacks should ensure that we have the right snapshot here
-                realm.snapshot
+                realm.updateSnapshot()
             }
         }
     }
 
-    suspend fun <R> write(block: MutableRealm.() -> R): Pair<FrozenRealmReference, R> {
+    suspend fun <R> write(block: MutableRealm.() -> R): R {
         // TODO Would we be able to offer a per write error handler by adding a CoroutineExceptionHandler
         return withContext(dispatcher) {
             var result: R
@@ -105,6 +111,9 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                     ensureActive()
                     if (!shouldClose.value && realm.isInTransaction()) {
                         realm.commitTransaction()
+                    } else {
+                        if (shouldClose.value)
+                            throw IllegalStateException("Cannot commit transaction on closed realm")
                     }
                 } catch (e: IllegalStateException) {
                     if (realm.isInTransaction()) {
@@ -113,19 +122,18 @@ internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: C
                     throw e
                 }
             }
-
-            // Freeze the triple of <Realm, Version, Result> while in the context
-            // of the Dispatcher. The dispatcher should be single-threaded so will
-            // guarantee that no other threads can modify the Realm between
-            // the transaction is committed and we freeze it.
-            // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
-            //  lock this code?
-            val newReference = realm.snapshot
-            // FIXME Should we actually rather just throw if we cannot freeze the result?
+            realm.updateSnapshot()
             if (shouldFreezeWriteReturnValue(result)) {
-                result = freezeWriteReturnValue(newReference, result)
+                // Freeze the result in the context of the Dispatcher. The dispatcher should be
+                // single-threaded so will guarantee that no other threads can modify the Realm
+                // between the transaction is committed and we freeze it.
+                // TODO Can we guarantee the Dispatcher is single-threaded? Or otherwise
+                //  lock this code?
+                val newReference = realm.gcTrackedSnapshot()
+                freezeWriteReturnValue(newReference, result)
+            } else {
+                result
             }
-            Pair(newReference, result)
         }
     }
 

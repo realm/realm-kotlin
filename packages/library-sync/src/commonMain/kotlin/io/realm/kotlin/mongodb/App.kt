@@ -23,6 +23,7 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.AppImpl
+import kotlinx.coroutines.flow.Flow
 
 /**
  * An **App** is the main client-side entry point for interacting with an **Atlas App Services
@@ -102,6 +103,14 @@ public interface App {
     public suspend fun login(credentials: Credentials): User
 
     /**
+     * Create a [Flow] of [AuthenticationChange]-events to receive notifications of updates to all
+     * app user authentication states: login, logout and removal.
+     *
+     * @return a [Flow] of authentication events for users associated with this app.
+     */
+    public fun authenticationChangeAsFlow(): Flow<AuthenticationChange>
+
+    /**
      * Close the app instance and release all underlying resources.
      *
      * This class maintains a number of thread pools, these should normally run for the entire
@@ -119,6 +128,10 @@ public interface App {
          */
         public fun create(appId: String): App {
             Validation.checkEmpty(appId, "appId")
+            // We cannot rewire this to create(appId, bundleId) and just have REPLACED_BY_IR here,
+            // as these calls might be in a module where the compiler plugin hasn't been applied.
+            // In that case we don't setup the correct bundle ID. If this is an issue we could maybe
+            // just force users to apply our plugin.
             return create(AppConfiguration.Builder(appId).build())
         }
 

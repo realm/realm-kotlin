@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(ExperimentalCompilerApi::class)
 
 package io.realm.kotlin.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
+import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.BaseRealmImpl
 import io.realm.kotlin.internal.Mediator
@@ -36,6 +38,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import java.io.File
 import kotlin.reflect.KClass
@@ -137,6 +140,11 @@ class GenerationExtensionTest {
             owner = MockRealmReference(),
             mediator = MockMediator()
         )
+        val companionObject = sampleModel::class.companionObjectInstance
+
+        assertTrue(companionObject is RealmObjectCompanion)
+
+        val (table, properties) = companionObject.`io_realm_kotlin_schema`()
 
         // Accessing getters/setters
         sampleModel.`io_realm_kotlin_objectReference` = realmObjectReference
@@ -209,6 +217,7 @@ class GenerationExtensionTest {
             "uuidListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128ListField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "embeddedRealmObjectListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Nullable list types
@@ -226,6 +235,7 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdListField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDListField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinaryListField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128ListField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "nullableRealmAnyListField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
 
             // Set types
@@ -244,6 +254,7 @@ class GenerationExtensionTest {
             "uuidSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "objectSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
             "binarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128SetField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
 
             // Nullable set types
             "nullableStringSetField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -260,11 +271,50 @@ class GenerationExtensionTest {
             "nullableBsonObjectIdSetField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
             "nullableUUIDSetField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
             "nullableBinarySetField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128SetField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
             "nullableRealmAnySetField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
+
+            // Dictionary types
+            "stringDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "byteDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "charDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "shortDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "intDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "longDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "booleanDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "floatDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "doubleDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "timestampDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            "objectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "bsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "uuidDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "binaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "decimal128DictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
+
+            // Nullable dictionary types
+            "nullableStringDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
+            "nullableByteDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableCharDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableShortDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableIntDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableLongDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_INT,
+            "nullableBooleanDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BOOL,
+            "nullableFloatDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+            "nullableDoubleDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+            "nullableTimestampDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            "nullableObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableBsonObjectIdDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+            "nullableUUIDDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_UUID,
+            "nullableBinaryDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_BINARY,
+            "nullableDecimal128DictionaryField" to PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
+            "nullableRealmAnyDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_MIXED,
+            "nullableObjectDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
+            "nullableEmbeddedObjectDictionaryField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
 
             // Linking objects
             "linkingObjectsByList" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
             "linkingObjectsBySet" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+            "linkingObjectsByDictionary" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
 
             // @PersistedName annotated fields
             "persistedNameStringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
@@ -323,35 +373,43 @@ class GenerationExtensionTest {
         // assertEquals("Hello Zepp", nameProperty.call(sampleModel))
     }
 
+    @Test
+    fun testBundleIdRewiring() {
+        val inputs = Files("/sync")
+        val result = compile(
+            inputs,
+            options = listOf(
+                PluginOption(
+                    pluginId = "io.realm.kotlin",
+                    optionName = "bundleId",
+                    optionValue = "BUNDLE_ID"
+                ),
+            )
+        )
+        assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode)
+        inputs.assertGeneratedIR()
+    }
+
     private fun compile(
         inputs: Files,
-        plugins: List<ComponentRegistrar> = listOf(Registrar())
-    ): KotlinCompilation.Result =
-        KotlinCompilation().apply {
+        plugins: List<ComponentRegistrar> = listOf(Registrar()),
+        options: List<PluginOption> = emptyList(),
+    ): KotlinCompilation.Result {
+        return KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
             useIR = true
             messageOutputStream = System.out
-            compilerPlugins = plugins
+            componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
                 "-Xjvm-default=enable",
                 "-Xdump-directory=${inputs.outputDir()}",
                 "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )
+            commandLineProcessors = listOf(RealmCommandLineProcessor())
+            pluginOptions = options
         }.compile()
-
-    private fun compileFromSource(
-        source: SourceFile,
-        plugins: List<Registrar> = listOf(Registrar())
-    ): KotlinCompilation.Result =
-        KotlinCompilation().apply {
-            sources = listOf(source)
-            useIR = true
-            messageOutputStream = System.out
-            compilerPlugins = plugins
-            inheritClassPath = true
-            kotlincArguments = listOf("-Xjvm-default=enable")
-        }.compile()
+    }
 
     companion object {
         private fun stripInputPath(file: File, map: Map<String, File>) {
