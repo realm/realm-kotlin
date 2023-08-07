@@ -26,11 +26,13 @@ import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
+import org.jetbrains.kotlin.com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -104,6 +106,8 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
+import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.types.KotlinType
 import java.lang.reflect.Field
 import java.util.function.Predicate
 
@@ -269,6 +273,28 @@ internal fun <T> IrClass.lookupCompanionDeclaration(
         it is IrDeclarationWithName && it.name == name
     } as T
         ?: fatalError("Cannot find companion method ${name.asString()} on ${this.name}")
+}
+
+// Copy of `KotlinType.getKotlinTypeFqName` from Kotlin 1.8.21. This method needs to be backported
+// as it is not available in Kotlin 1.8.0.
+internal fun KotlinType.getKotlinTypeFqNameCompat(printTypeArguments: Boolean): String {
+    val declaration = requireNotNull(constructor.declarationDescriptor) {
+        "declarationDescriptor is null for constructor = $constructor with ${constructor.javaClass}"
+    }
+    if (declaration is TypeParameterDescriptor) {
+        return StringUtil.join(declaration.upperBounds, { type -> type.getKotlinTypeFqNameCompat(printTypeArguments) }, "&")
+    }
+
+    val typeArguments = arguments
+    val typeArgumentsAsString = if (printTypeArguments && !typeArguments.isEmpty()) {
+        val joinedTypeArguments = StringUtil.join(typeArguments, { projection -> projection.type.getKotlinTypeFqNameCompat(false) }, ", ")
+
+        "<$joinedTypeArguments>"
+    } else {
+        ""
+    }
+
+    return DescriptorUtils.getFqName(declaration).asString() + typeArgumentsAsString
 }
 
 object SchemaCollector {

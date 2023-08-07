@@ -103,7 +103,6 @@ import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
-import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -544,7 +543,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             if (!(isValidTargetType || isValidGenericType)) {
                                 val targetPropertyName = getLinkingObjectPropertyName(declaration.backingField!!)
                                 logError(
-                                    "Error in backlinks field '${declaration.name}' - target property '$targetPropertyName' does not reference '${sourceType.toIrBasedKotlinType().getKotlinTypeFqName(true)}'.",
+                                    "Error in backlinks field '${declaration.name}' - target property '$targetPropertyName' does not reference '${sourceType.toIrBasedKotlinType().getKotlinTypeFqNameCompat(true)}'.",
                                     declaration.locationOf()
                                 )
                             }
@@ -1102,7 +1101,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val genericPropertyType: PropertyType? = getPropertyTypeFromKotlinType(collectionGenericType)
         return if (genericPropertyType == null) {
             logError(
-                "Unsupported type for ${collectionType.description}: '${collectionGenericType.getKotlinTypeFqName(true)
+                "Unsupported type for ${collectionType.description}: '${collectionGenericType.getKotlinTypeFqNameCompat(true)
                 }'",
                 declaration.locationOf()
             )
