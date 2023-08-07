@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
@@ -82,13 +81,12 @@ import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
-import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
-import org.jetbrains.kotlin.ir.types.impl.IrErrorClassImpl.superTypes
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.types.superTypes
 import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.copyTo
 import org.jetbrains.kotlin.ir.util.file
@@ -97,6 +95,7 @@ import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.name.ClassId
@@ -133,6 +132,8 @@ val realmObjectInterfaceFqNames = setOf(FqNames.REALM_OBJECT_INTERFACE)
 val realmEmbeddedObjectInterfaceFqNames = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
 val realmAsymmetricObjectInterfaceFqNames = setOf(FqNames.ASYMMETRIC_OBJECT_INTERFACE)
 val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames + realmAsymmetricObjectInterfaceFqNames
+
+fun IrType.classIdOrFail(): ClassId = getClass()?.classId ?: error("Can't get classId of ${render()}")
 
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
@@ -184,22 +185,25 @@ fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
 }
 
 val IrClass.isBaseRealmObject
-    get() = superTypes.any { it.classFqName in anyRealmObjectInterfacesFqNames }
+    get() = superTypes.any { it.classId in anyRealmObjectInterfacesFqNames }
 
 val IrClass.isRealmObject
-    get() = superTypes.any { it.classFqName == BASE_REALM_OBJECT_INTERFACE }
+    get() = superTypes.any { it.classId == BASE_REALM_OBJECT_INTERFACE }
 
 val IrClass.isEmbeddedRealmObject: Boolean
-    get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
+    get() = superTypes.any { it.classId == EMBEDDED_OBJECT_INTERFACE }
 
 val IrClass.isAsymmetricRealmObject: Boolean
-    get() = superTypes.any { it.classFqName == ASYMMETRIC_OBJECT_INTERFACE }
+    get() = superTypes.any { it.classId == ASYMMETRIC_OBJECT_INTERFACE }
+
+val IrType.classId: ClassId?
+    get() = this.getClass()?.classId
 
 val IrType.isEmbeddedRealmObject: Boolean
-    get() = superTypes().any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
+    get() = superTypes().any { it.classId == EMBEDDED_OBJECT_INTERFACE }
 
 val IrType.isAsymmetricRealmObject: Boolean
-    get() = superTypes().any { it.classFqName == ASYMMETRIC_OBJECT_INTERFACE }
+    get() = superTypes().any { it.classId == ASYMMETRIC_OBJECT_INTERFACE }
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset
@@ -240,11 +244,13 @@ internal fun IrPluginContext.lookupClassOrThrow(name: ClassId): IrClass {
         ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
 }
 
+@OptIn(FirIncompatiblePluginAPI::class)
 internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
     return referenceClass(name)?.owner
         ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
 }
 
+@OptIn(FirIncompatiblePluginAPI::class)
 internal fun IrPluginContext.lookupConstructorInClass(
     fqName: FqName,
     filter: (ctor: IrConstructorSymbol) -> Boolean = { true }
@@ -384,6 +390,7 @@ internal fun <T : IrExpression> buildOf(
     }
 }
 
+@OptIn(FirIncompatiblePluginAPI::class)
 internal fun <T : IrExpression> buildSetOf(
     context: IrPluginContext,
     startOffset: Int,
@@ -400,6 +407,7 @@ internal fun <T : IrExpression> buildSetOf(
     return buildOf(context, startOffset, endOffset, setOf, setIrClass, elementType, args)
 }
 
+@OptIn(FirIncompatiblePluginAPI::class)
 internal fun <T : IrExpression> buildListOf(
     context: IrPluginContext,
     startOffset: Int,

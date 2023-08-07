@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
@@ -96,7 +95,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -207,7 +206,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             objectIdType,
             realmObjectIdType,
             realmUUIDType
-        ).map { it.classifierOrFail }
+        )
     }
     private val indexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
@@ -223,12 +222,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmObjectIdType,
             realmUUIDType,
             realmAnyType
-        ).map { it.classifierOrFail }
+        )
     }
     private val fullTextIndexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
             stringType
-        ).map { it.classifierOrFail }
+        )
     }
 
     /**
@@ -424,7 +423,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     // TODO OPTIMIZE should be a one time only constructed object
-    @OptIn(ObsoleteDescriptorBasedAPI::class)
     @Suppress("LongMethod", "ComplexMethod")
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
@@ -545,25 +543,24 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     value.coreGenericTypes?.get(0)?.nullable
                                         ?: fatalError("Missing generic type while processing a collection field.")
                                 }
-
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
+                                if (primaryKey && validPrimaryKeyTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Primary key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${validPrimaryKeyTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
-                                if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
+                                if (isIndexed && indexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Indexed key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${indexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isFullTextIndexed = backingField.hasAnnotation(FULLTEXT_ANNOTATION)
-                                if (isFullTextIndexed && backingField.type.classifierOrFail !in fullTextIndexableTypes) {
+                                if (isFullTextIndexed && fullTextIndexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Full-text key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${fullTextIndexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Full-text key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${fullTextIndexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }

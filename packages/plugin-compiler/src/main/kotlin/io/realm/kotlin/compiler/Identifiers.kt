@@ -95,11 +95,11 @@ internal object FqNames {
     val REALM_CLASS_IMPL = FqName("io.realm.kotlin.internal.schema.RealmClassImpl")
     val OBJECT_REFERENCE_CLASS = FqName("io.realm.kotlin.internal.RealmObjectReference")
 
-    val BASE_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.BaseRealmObject")
-    val REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.RealmObject")
+    val BASE_REALM_OBJECT_INTERFACE = ClassId(FqName("io.realm.kotlin.types"), FqName("BaseRealmObject"), false)
+    val REALM_OBJECT_INTERFACE = ClassId(FqName("io.realm.kotlin.types"), FqName("RealmObject"), false)
     val TYPED_REALM_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.TypedRealmObject")
-    val EMBEDDED_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.EmbeddedRealmObject")
-    val ASYMMETRIC_OBJECT_INTERFACE = FqName("io.realm.kotlin.types.AsymmetricRealmObject")
+    val EMBEDDED_OBJECT_INTERFACE = ClassId(FqName("io.realm.kotlin.types"), FqName("EmbeddedRealmObject"), false)
+    val ASYMMETRIC_OBJECT_INTERFACE = ClassId(FqName("io.realm.kotlin.types"), FqName("AsymmetricRealmObject"), false)
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = FqName("kotlin.collections.Set")
