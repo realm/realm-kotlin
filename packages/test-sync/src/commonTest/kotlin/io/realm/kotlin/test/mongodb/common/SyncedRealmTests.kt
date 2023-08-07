@@ -20,6 +20,7 @@ import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
@@ -28,6 +29,7 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -1551,6 +1553,33 @@ class SyncedRealmTests {
         assertFailsWithMessage<IllegalStateException>("has history type 'Local in-Realm'") {
             Realm.open(local)
         }
+    }
+
+    @Test
+    fun cannotSyncCollectionsInMixed() = runBlocking {
+        val flexApp = TestApp(
+            logLevel = LogLevel.ALL,
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        )
+        val (email, password) = randomEmail() to "password1234"
+        val user = flexApp.createUserAndLogIn(email, password)
+        val local = createFlexibleSyncConfig(user = user, name = "local", schema = setOf(JsonStyleRealmObject::class)) {
+            initialSubscriptions {
+                this.add(it.query<JsonStyleRealmObject>())
+            }
+        }
+        Realm.open(local).use {
+            it.write {
+                val obj = copyToRealm(JsonStyleRealmObject())
+                assertFailsWith<IllegalStateException> {
+                    obj.value = realmAnyListOf()
+                }
+            }
+        }
+        flexApp.close()
     }
 
 //    @Test

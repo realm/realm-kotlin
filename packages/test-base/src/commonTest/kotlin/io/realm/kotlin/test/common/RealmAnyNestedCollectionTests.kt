@@ -18,6 +18,7 @@ package io.realm.kotlin.test.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
@@ -31,17 +32,12 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmAny
-import io.realm.kotlin.types.RealmObject
+import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-
-internal class JsonStyleRealmObject : RealmObject {
-    var id: String = "JsonStyleRealmObject"
-    var value: RealmAny? = null
-}
 
 class RealmAnyNestedCollectionTests {
 
@@ -121,7 +117,7 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun setInRealmAny_throwsOnNestedCollections_copyToRealm() = runBlocking<Unit> {
         realm.write {
-            JsonStyleRealmObject().apply {
+            JsonStyleRealmObject(ObjectId().toString()).apply {
                 value =
                     RealmAny.create(realmSetOf(RealmAny.create(realmListOf(RealmAny.create(5)))))
             }.let {
@@ -129,7 +125,7 @@ class RealmAnyNestedCollectionTests {
                     copyToRealm(it)
                 }
             }
-            JsonStyleRealmObject().apply {
+            JsonStyleRealmObject(ObjectId().toString()).apply {
                 value = RealmAny.create(
                     realmSetOf(
                         RealmAny.create(realmDictionaryOf("key" to RealmAny.create(5)))
@@ -617,8 +613,9 @@ class RealmAnyNestedCollectionTests {
             // FIXME Seems like we don't throw a nice error when accessing a delete collection
             //  Overwriting with different collection type seems to ruin original item without
             //  throwing proper fix
-//            val realmAny = nestedList[0]
-//            assertEquals(7, realmAny!!.asInt())
+            nestedList[0] = RealmAny.create(5)
+            val realmAny = nestedList[0]
+            assertEquals(7, realmAny!!.asInt())
         }
     }
 
@@ -639,16 +636,16 @@ class RealmAnyNestedCollectionTests {
     fun query() = runBlocking<Unit> {
         realm.write {
             copyToRealm(JsonStyleRealmObject().apply {
-                id = "SET"
+                _id = "SET"
 //                value = RealmAny.create(realmSetOf(RealmAny.create(1), RealmAny.create(2), RealmAny.create(3)))
                 value = realmAnySetOf(1, 2, 3)
             })
             copyToRealm(JsonStyleRealmObject().apply {
-                id = "LIST"
+                _id = "LIST"
                 value = realmAnyListOf(4, 5, 6)
             })
             copyToRealm(JsonStyleRealmObject().apply {
-                id = "DICT"
+                _id = "DICT"
                 value = realmAnyDictionaryOf(
                         "key1" to 7,
                         "key2" to 8,
@@ -656,7 +653,7 @@ class RealmAnyNestedCollectionTests {
                     )
             })
             copyToRealm(JsonStyleRealmObject().apply {
-                id = "EMBEDDED"
+                _id = "EMBEDDED"
                 value = realmAnyListOf(
                     setOf(1, 2, 3),
                     listOf(4, 5, 6),
@@ -684,10 +681,10 @@ class RealmAnyNestedCollectionTests {
 
         // Matching lists
         realm.query<JsonStyleRealmObject>("value[0] == 4").find().single().run {
-            assertEquals("LIST", id)
+            assertEquals("LIST", _id)
         }
         realm.query<JsonStyleRealmObject>("value[*] == 4").find().single().run {
-            assertEquals("LIST", id)
+            assertEquals("LIST", _id)
         }
         // Size
         // [RLM_ERR_INVALID_QUERY]: Operation '@size' is not supported on property of type 'mixed'
@@ -708,16 +705,16 @@ class RealmAnyNestedCollectionTests {
 //            assertEquals("EMBEDDED", id)
 //        }
         realm.query<JsonStyleRealmObject>("value[*][*] == 4").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals("EMBEDDED", _id)
         }
         realm.query<JsonStyleRealmObject>("value[*][*] == 7").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals("EMBEDDED", _id)
         }
         realm.query<JsonStyleRealmObject>("value[*].@keys == 'key1'").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals("EMBEDDED", _id)
         }
         realm.query<JsonStyleRealmObject>("value[*].key3[0] == 9").find().single().run {
-            assertEquals("EMBEDDED", id)
+            assertEquals("EMBEDDED", _id)
         }
     }
 }

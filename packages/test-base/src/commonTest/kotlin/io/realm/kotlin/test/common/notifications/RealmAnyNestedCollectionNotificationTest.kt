@@ -18,8 +18,10 @@ package io.realm.kotlin.test.common.notifications
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.realmAnyListOf
+import io.realm.kotlin.ext.realmAnyOf
 import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedSet
@@ -28,7 +30,7 @@ import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedObject
-import io.realm.kotlin.test.common.JsonStyleRealmObject
+import io.realm.kotlin.notifications.UpdatedSet
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
@@ -80,7 +82,7 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
 
         val o: JsonStyleRealmObject = realm.write {
             copyToRealm(JsonStyleRealmObject().apply {
-                id = "SET"
+                _id = "SET"
                 value = realmAnyListOf(realmAnyListOf(1, 2, 3))
             })
         }
@@ -119,7 +121,7 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
 
         val o: JsonStyleRealmObject = realm.write {
             copyToRealm(JsonStyleRealmObject().apply {
-                id = "SET"
+                _id = "SET"
                 value = realmAnySetOf(1, 2, 3)
             })
         }
@@ -132,7 +134,7 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
             }
         }
 
-        channel.receive().run {
+        channel.receiveOrFail(1.seconds).run {
             assertIs<InitialSet<RealmAny?>>(this)
             val expectedSet = mutableSetOf(1, 2, 3)
             this.set.forEach { expectedSet.remove(it!!.asInt()) }
@@ -144,35 +146,23 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
             liveSet.add(RealmAny.create(4))
         }
 
-        channel.receive().run {
-            TODO("Missing test of updates and deletion events")
-
-//            channel.receive().run {
-//                assertIs<InitialSet<RealmAny?>>(this)
-//                val expectedSet = mutableSetOf(1, 2, 3)
-//                this.set.forEach { expectedSet.remove(it!!.asInt()) }
-//                assertTrue { expectedSet.isEmpty() }
-//            }
-//            while (!listener.isCompleted) {
-//                realm.write {
-//                    val x = findLatest(o)
-//                    if (x != null) {
-//                        val value = x.value!!
-//                        if (value.type == RealmAny.Type.SET) {
-//                            val asSet = value.asSet()
-//                            if (asSet.size < 10) {
-//                                asSet.add(RealmAny.create(RealmUUID.random()))
-//                            } else {
-//                                delete(x)
-////                            x.value = realmAnyListOf()
-//                            }
-//                        }
-//                    }
-//                }
-//            }
+        channel.receiveOrFail(1.seconds).run {
+            assertIs<UpdatedSet<RealmAny?>>(this)
+            val expectedSet = mutableSetOf(1, 2, 3, 4)
+            this.set.forEach { expectedSet.remove(it!!.asInt()) }
+            assertTrue { expectedSet.isEmpty() }
         }
-            listener.cancel()
-            channel.close()
+
+        realm.write {
+            findLatest(o)!!.value = realmAnyOf(5)
+        }
+
+        // Fails due to missing deletion events
+        channel.receiveOrFail(1.seconds).run {
+            assertIs<DeletedSet<RealmAny?>>(this)
+        }
+        listener.cancel()
+        channel.close()
     }
 
     @Test
@@ -229,8 +219,8 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
         }
     }
 
-    // FIXME Create core issue for missing events on deletion of collections?
     @Test
+    @Ignore // Awaiting callbacks on deletion https://github.com/realm/realm-core/issues/6857
     override fun deleteEntity() = runBlocking<Unit> {
         val container =
             realm.write { copyToRealm(JsonStyleRealmObject().apply { value = realmAnySetOf() }) }
@@ -281,7 +271,7 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
 
         // Verify that a flow on the deleted entity will signal a deletion and complete gracefully
         withTimeout(10.seconds) {
-            container.value!!.asSet().asFlow().collect {
+            container.value!!.asList()[0]!!.asSet().asFlow().collect {
                 assertIs<DeletedSet<*>>(it)
             }
         }
