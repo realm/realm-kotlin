@@ -19,7 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -80,7 +79,6 @@ import kotlinx.cinterop.usePinned
 import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
@@ -494,11 +492,10 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
+    actual fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer): Pair<LiveRealmPointer, Boolean> {
         val fileCreated = atomic(false)
         val callback = DataInitializationCallback {
             fileCreated.value = true
-            true
         }
         realm_wrapper.realm_config_set_data_initialization_function(
             config.cptr(),
@@ -516,19 +513,73 @@ actual object RealmInterop {
         //      val dispatcher = runBlocking { coroutineContext[CoroutineDispatcher.Key] }
         //  but requires opting in for @ExperimentalStdlibApi, and have really gotten it to play
         //  for default cases.
-        if (dispatcher != null) {
-            val scheduler = checkedPointerResult(createSingleThreadDispatcherScheduler(dispatcher))
-            realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)
-        } else {
-            // If there is no notification dispatcher use the default scheduler.
-            // Re-verify if this is actually needed when notification scheduler is fully in place.
-            val scheduler = checkedPointerResult(realm_wrapper.realm_scheduler_make_default())
-            realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler)
-        }
+        realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler.cptr())
+
         val realmPtr = CPointerWrapper<LiveRealmT>(realm_wrapper.realm_open(config.cptr()))
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return Pair(realmPtr, fileCreated.value)
+    }
+
+    actual fun realm_create_scheduler(): RealmSchedulerPointer {
+        // If there is no notification dispatcher use the default scheduler.
+        // Re-verify if this is actually needed when notification scheduler is fully in place.
+        val scheduler = checkedPointerResult(realm_wrapper.realm_scheduler_make_default())
+        return CPointerWrapper<RealmSchedulerT>(scheduler)
+    }
+
+    actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer {
+        printlntid("createSingleThreadDispatcherScheduler")
+        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher)
+
+        val capi_scheduler: CPointer<realm_scheduler_t> = checkedPointerResult(
+            realm_wrapper.realm_scheduler_new(
+                // userdata: kotlinx.cinterop.CValuesRef<*>?,
+                scheduler.ref,
+
+                // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    printlntid("free")
+                    userdata?.asStableRef<SingleThreadDispatcherScheduler>()?.dispose()
+                },
+
+                // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
+                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                    // Must be thread safe
+                    val scheduler =
+                        userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                    printlntid("$scheduler notify")
+                    try {
+                        scheduler.notify()
+                    } catch (e: Exception) {
+                        // Should never happen, but is included for development to get some indicators
+                        // on errors instead of silent crashes.
+                        e.printStackTrace()
+                    }
+                },
+
+                // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+                staticCFunction<COpaquePointer?, Boolean> { userdata ->
+                    // Must be thread safe
+                    val scheduler =
+                        userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
+                    printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
+                    scheduler.threadId == tid()
+                },
+
+                // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+                staticCFunction<COpaquePointer?, COpaquePointer?, Boolean> { userdata, other ->
+                    userdata == other
+                },
+
+                // can_deliver_notifications: realm_wrapper.realm_scheduler_can_deliver_notifications_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
+                staticCFunction<COpaquePointer?, Boolean> { _ -> true },
+            )
+        ) ?: error("Couldn't create scheduler")
+
+        scheduler.set_scheduler(capi_scheduler)
+
+        return CPointerWrapper<RealmSchedulerT>(capi_scheduler)
     }
 
     actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
@@ -3241,61 +3292,6 @@ actual object RealmInterop {
             ?: throw NullPointerException(identifier?.let { "'$identifier' shouldn't be null." })
     }
 
-    private fun createSingleThreadDispatcherScheduler(
-        dispatcher: CoroutineDispatcher
-    ): CPointer<realm_scheduler_t> {
-        printlntid("createSingleThreadDispatcherScheduler")
-        val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher)
-
-        val capi_scheduler: CPointer<realm_scheduler_t> = checkedPointerResult(
-            realm_wrapper.realm_scheduler_new(
-                // userdata: kotlinx.cinterop.CValuesRef<*>?,
-                scheduler.ref,
-
-                // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    printlntid("free")
-                    userdata?.asStableRef<SingleThreadDispatcherScheduler>()?.dispose()
-                },
-
-                // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
-                    // Must be thread safe
-                    val scheduler =
-                        userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                    printlntid("$scheduler notify")
-                    try {
-                        scheduler.notify()
-                    } catch (e: Exception) {
-                        // Should never happen, but is included for development to get some indicators
-                        // on errors instead of silent crashes.
-                        e.printStackTrace()
-                    }
-                },
-
-                // is_on_thread: realm_wrapper.realm_scheduler_is_on_thread_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
-                staticCFunction<COpaquePointer?, Boolean> { userdata ->
-                    // Must be thread safe
-                    val scheduler =
-                        userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
-                    printlntid("is_on_thread[$scheduler] ${scheduler.threadId} " + tid())
-                    scheduler.threadId == tid()
-                },
-
-                // is_same_as: realm_wrapper.realm_scheduler_is_same_as_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */, kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
-                staticCFunction<COpaquePointer?, COpaquePointer?, Boolean> { userdata, other ->
-                    userdata == other
-                },
-
-                // can_deliver_notifications: realm_wrapper.realm_scheduler_can_deliver_notifications_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Boolean>>? */,
-                staticCFunction<COpaquePointer?, Boolean> { userdata -> true },
-            )
-        ) ?: error("Couldn't create scheduler")
-        scheduler.set_scheduler(capi_scheduler)
-        scheduler
-        return capi_scheduler
-    }
-
     private fun <R> handleAppCallback(
         userData: COpaquePointer?,
         error: CPointer<realm_app_error_t>?,
@@ -3401,7 +3397,7 @@ actual object RealmInterop {
         }
 
         override fun notify() {
-            val function: suspend CoroutineScope.() -> Unit = {
+            scope.launch {
                 try {
                     printlntid("on dispatcher")
                     realm_wrapper.realm_scheduler_perform_work(scheduler)
@@ -3411,11 +3407,6 @@ actual object RealmInterop {
                     e.printStackTrace()
                 }
             }
-            scope.launch(
-                scope.coroutineContext,
-                CoroutineStart.DEFAULT,
-                function
-            )
         }
     }
 }

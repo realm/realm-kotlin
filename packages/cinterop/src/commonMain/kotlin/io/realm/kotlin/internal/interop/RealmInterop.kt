@@ -70,6 +70,7 @@ interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
+interface RealmSchedulerT : CapiT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -88,6 +89,7 @@ typealias RealmQueryPointer = NativePointer<RealmQueryT>
 typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
 typealias RealmNotificationTokenPointer = NativePointer<RealmNotificationTokenT>
 typealias RealmChangesPointer = NativePointer<RealmChangesT>
+typealias RealmSchedulerPointer = NativePointer<RealmSchedulerT>
 
 // Sync types
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
@@ -190,6 +192,8 @@ expect object RealmInterop {
     fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean)
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 
+    fun realm_create_scheduler(): RealmSchedulerPointer
+    fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer
     /**
      * Open a realm on the current thread.
      *
@@ -211,7 +215,7 @@ expect object RealmInterop {
      */
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
-    fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): Pair<LiveRealmPointer, Boolean>
+    fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer): Pair<LiveRealmPointer, Boolean>
 
     // Opening a Realm asynchronously. Only supported for synchronized realms.
     fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer

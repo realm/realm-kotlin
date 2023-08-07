@@ -16,12 +16,15 @@
 
 package io.realm.kotlin.internal.util
 
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.platform.multiThreadDispatcher
+import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlin.jvm.JvmInline
+import kotlinx.coroutines.withContext
 
 /**
  * Factory wrapper for passing around dispatchers without needing to create them. This makes it
@@ -35,6 +38,7 @@ public fun interface CoroutineDispatcherFactory {
          * Let Realm create and control the dispatcher. Managed dispatchers will be closed
          * when their owner Realm/App is closed as well.
          */
+        @OptIn(ExperimentalCoroutinesApi::class)
         public fun managed(name: String, threads: Int = 1): CoroutineDispatcherFactory {
             return CoroutineDispatcherFactory {
                 ManagedDispatcherHolder(
@@ -88,17 +92,38 @@ public sealed interface DispatcherHolder {
     public fun close()
 }
 
-@JvmInline
 @OptIn(ExperimentalCoroutinesApi::class)
-private value class ManagedDispatcherHolder(
-    override val dispatcher: CloseableCoroutineDispatcher
+private class ManagedDispatcherHolder(
+    override val dispatcher: CloseableCoroutineDispatcher,
 ) : DispatcherHolder {
     override fun close(): Unit = dispatcher.close()
 }
 
-@JvmInline
-private value class UnmanagedDispatcherHolder(
+private class UnmanagedDispatcherHolder(
     override val dispatcher: CoroutineDispatcher
 ) : DispatcherHolder {
     override fun close(): Unit = Unit
 }
+
+/**
+ * Object that creates a Realm scheduler based and a coroutine dispatcher, and binds their resource
+ * lifecycle.
+ */
+public class LiveRealmContext(
+    private val dispatcherHolder: DispatcherHolder,
+) : DispatcherHolder by dispatcherHolder {
+
+    public val scheduler: RealmSchedulerPointer = runBlocking {
+        withContext(dispatcherHolder.dispatcher) {
+            RealmInterop.realm_create_scheduler(dispatcher)
+        }
+    }
+
+    override fun close() {
+        scheduler.release()
+        dispatcherHolder.close()
+    }
+}
+
+internal fun CoroutineDispatcherFactory.createLiveRealmContext(): LiveRealmContext =
+    LiveRealmContext(create())
