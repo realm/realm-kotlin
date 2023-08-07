@@ -18,32 +18,24 @@ package io.realm.kotlin.test.common.notifications
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmAnySetOf
-import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.notifications.DeletedList
-import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.InitialSet
-import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.test.common.JsonStyleRealmObject
-import io.realm.kotlin.test.common.OBJECT_VALUES
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmAny
-import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
@@ -92,9 +84,10 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
                 value = realmAnyListOf(realmAnyListOf(1, 2, 3))
             })
         }
+
         val listener = async {
-            o.asFlow().collect {
-                channel.send(it)
+            o.asFlow().collect { change ->
+                channel.send(change)
             }
         }
 
@@ -107,8 +100,9 @@ class RealmAnyNestedCollectionNotificationTest : RealmEntityNotificationTests {
         val objectUpdate = channel.receive()
         assertIs<UpdatedObject<JsonStyleRealmObject>>(objectUpdate)
         objectUpdate.run {
-            val realmAny = obj.value
-            val nestedList = realmAny!!.asList().first()!!.asList()
+            assertEquals(1, changedFields.size)
+            assertTrue(changedFields.contains("value"))
+            val nestedList = obj.value!!.asList().first()!!.asList()
             assertEquals(listOf(1, 4, 3), nestedList.map { it!!.asInt() })
         }
         listener.cancel()

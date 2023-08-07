@@ -356,18 +356,30 @@ public interface RealmAny {
         public fun create(realmObject: DynamicRealmObject): RealmAny =
             RealmAnyImpl(Type.OBJECT, DynamicRealmObject::class, realmObject)
 
-        // FIXME Docs
-        // Directly from Set?
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [RealmSet] of [RealmAny] values.
+         *
+         * To create a [RealmAny] containing a [RealmSet] of arbitrary values wrapped in [RealmAny]s
+         * use the [io.realm.kotlin.ext.realmAnySetOf].
+         */
         public fun create(value: RealmSet<RealmAny?>): RealmAny =
             RealmAnyImpl(Type.SET, RealmAny::class, value)
 
-        // FIXME Docs
-        // Directly from Collection?
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [RealmList] of [RealmAny] values.
+         *
+         * To create a [RealmAny] containing a [RealmList] of arbitrary values wrapped in [RealmAny]s
+         * use the [io.realm.kotlin.ext.realmAnyListOf].
+         */
         public fun create(value: RealmList<RealmAny?>): RealmAny =
             RealmAnyImpl(Type.LIST, RealmAny::class, value)
 
-        // FIXME Docs
-        // Directly from map?
+        /**
+         * Creates an unmanaged `RealmAny` instance from a [RealmDictionary] of [RealmAny] values.
+         *
+         * To create a [RealmAny] containing a [RealmDictionary] of arbitrary values wrapped in
+         * [RealmAny]s use the [io.realm.kotlin.ext.realmAnyDictionaryOf].
+         */
         public fun create(value: RealmDictionary<RealmAny?>): RealmAny =
             RealmAnyImpl(Type.DICTIONARY, RealmAny::class, value)
     }
