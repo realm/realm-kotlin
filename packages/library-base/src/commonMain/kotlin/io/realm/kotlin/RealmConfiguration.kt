@@ -125,7 +125,10 @@ public interface RealmConfiguration : Configuration {
          * @see RealmMigration
          * @see AutomaticSchemaMigration
          */
-        public fun migration( migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean = false ): Builder =
+        public fun migration(
+            migration: AutomaticSchemaMigration,
+            resolveEmbeddedObjectConstraints: Boolean = false
+        ): Builder =
             apply {
                 this.migration = migration
                 this.automaticEmbeddedObjectConstraintsResolution = resolveEmbeddedObjectConstraints
