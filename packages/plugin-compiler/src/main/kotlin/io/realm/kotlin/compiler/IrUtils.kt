@@ -16,12 +16,12 @@
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.ASYMMETRIC_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
-import io.realm.kotlin.compiler.FqNames.PERSISTED_NAME_ANNOTATION
-import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
+import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.BASE_REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_LISTOF
+import io.realm.kotlin.compiler.ClassIds.PERSISTED_NAME_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -98,6 +99,7 @@ import org.jetbrains.kotlin.ir.util.properties
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -128,9 +130,9 @@ fun IrPluginContext.blockBody(
 val ClassDescriptor.isRealmObjectCompanion
     get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isBaseRealmObject
 
-val realmObjectInterfaceFqNames = setOf(FqNames.REALM_OBJECT_INTERFACE)
-val realmEmbeddedObjectInterfaceFqNames = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
-val realmAsymmetricObjectInterfaceFqNames = setOf(FqNames.ASYMMETRIC_OBJECT_INTERFACE)
+val realmObjectInterfaceFqNames = setOf(REALM_OBJECT_INTERFACE)
+val realmEmbeddedObjectInterfaceFqNames = setOf(EMBEDDED_OBJECT_INTERFACE)
+val realmAsymmetricObjectInterfaceFqNames = setOf(ASYMMETRIC_OBJECT_INTERFACE)
 val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames + realmAsymmetricObjectInterfaceFqNames
 
 fun IrType.classIdOrFail(): ClassId = getClass()?.classId ?: error("Can't get classId of ${render()}")
@@ -179,6 +181,13 @@ val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
 val ClassDescriptor.isBaseRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+
+// JetBrains already have a method `fun IrAnnotationContainer.hasAnnotation(symbol: IrClassSymbol)`
+// It is unclear exactly what the difference is and how to get a ClassSymbol from a ClassId,
+// so for now just work around it.
+fun IrAnnotationContainer?.hasAnnotation(annotation: ClassId): Boolean {
+    return this?.hasAnnotation(annotation.asSingleFqName()) ?: false
+}
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
@@ -231,10 +240,10 @@ internal fun IrClass.lookupProperty(name: Name): IrProperty {
 }
 
 internal fun IrPluginContext.lookupFunctionInClass(
-    fqName: FqName,
+    clazz: ClassId,
     function: String
 ): IrSimpleFunction {
-    return lookupClassOrThrow(fqName).functions.first {
+    return lookupClassOrThrow(clazz).functions.first {
         it.name == Name.identifier(function)
     }
 }
@@ -244,18 +253,11 @@ internal fun IrPluginContext.lookupClassOrThrow(name: ClassId): IrClass {
         ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
 }
 
-@OptIn(FirIncompatiblePluginAPI::class)
-internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
-    return referenceClass(name)?.owner
-        ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
-}
-
-@OptIn(FirIncompatiblePluginAPI::class)
 internal fun IrPluginContext.lookupConstructorInClass(
-    fqName: FqName,
+    clazz: ClassId,
     filter: (ctor: IrConstructorSymbol) -> Boolean = { true }
 ): IrConstructorSymbol {
-    return referenceConstructors(fqName).first {
+    return referenceConstructors(clazz).first {
         filter(it)
     }
 }
@@ -350,7 +352,7 @@ data class SchemaProperty(
     companion object {
         fun getPersistedName(declaration: IrProperty): String {
             @Suppress("UNCHECKED_CAST")
-            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
         }
     }
 }
@@ -390,7 +392,6 @@ internal fun <T : IrExpression> buildOf(
     }
 }
 
-@OptIn(FirIncompatiblePluginAPI::class)
 internal fun <T : IrExpression> buildSetOf(
     context: IrPluginContext,
     startOffset: Int,
@@ -398,16 +399,15 @@ internal fun <T : IrExpression> buildSetOf(
     elementType: IrType,
     args: List<T>
 ): IrExpression {
-    val setOf = context.referenceFunctions(FqName("kotlin.collections.setOf"))
+    val setOf = context.referenceFunctions(CallableId(FqName("kotlin.collections"), Name.identifier("setOf")))
         .first {
             val parameters = it.owner.valueParameters
             parameters.size == 1 && parameters.first().isVararg
         }
-    val setIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_SET)
+    val setIrClass: IrClass = context.lookupClassOrThrow(ClassIds.KOTLIN_COLLECTIONS_SET)
     return buildOf(context, startOffset, endOffset, setOf, setIrClass, elementType, args)
 }
 
-@OptIn(FirIncompatiblePluginAPI::class)
 internal fun <T : IrExpression> buildListOf(
     context: IrPluginContext,
     startOffset: Int,
@@ -420,7 +420,7 @@ internal fun <T : IrExpression> buildListOf(
             val parameters = it.owner.valueParameters
             parameters.size == 1 && parameters.first().isVararg
         }
-    val listIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
+    val listIrClass: IrClass = context.lookupClassOrThrow(ClassIds.KOTLIN_COLLECTIONS_LIST)
     return buildOf(context, startOffset, endOffset, listOf, listIrClass, elementType, args)
 }
 
@@ -610,7 +610,7 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
 fun getSchemaClassName(clazz: IrClass): String {
     return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
         @Suppress("UNCHECKED_CAST")
-        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
     } else {
         clazz.name.identifier
     }

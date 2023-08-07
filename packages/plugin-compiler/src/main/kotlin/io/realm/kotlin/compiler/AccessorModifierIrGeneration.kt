@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.ASYMMETRIC_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.IGNORE_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.KBSON_DECIMAL128
-import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.REALM_ANY
-import io.realm.kotlin.compiler.FqNames.REALM_BACKLINKS
-import io.realm.kotlin.compiler.FqNames.REALM_DICTIONARY
-import io.realm.kotlin.compiler.FqNames.REALM_EMBEDDED_BACKLINKS
-import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
-import io.realm.kotlin.compiler.FqNames.REALM_LIST
-import io.realm.kotlin.compiler.FqNames.REALM_MUTABLE_INTEGER
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_HELPER
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.REALM_SET
-import io.realm.kotlin.compiler.FqNames.REALM_UUID
-import io.realm.kotlin.compiler.FqNames.TRANSIENT_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.IGNORE_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.KBSON_DECIMAL128
+import io.realm.kotlin.compiler.ClassIds.KBSON_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.REALM_ANY
+import io.realm.kotlin.compiler.ClassIds.REALM_BACKLINKS
+import io.realm.kotlin.compiler.ClassIds.REALM_DICTIONARY
+import io.realm.kotlin.compiler.ClassIds.REALM_EMBEDDED_BACKLINKS
+import io.realm.kotlin.compiler.ClassIds.REALM_INSTANT
+import io.realm.kotlin.compiler.ClassIds.REALM_LIST
+import io.realm.kotlin.compiler.ClassIds.REALM_MUTABLE_INTEGER
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_HELPER
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_SET
+import io.realm.kotlin.compiler.ClassIds.REALM_UUID
+import io.realm.kotlin.compiler.ClassIds.TRANSIENT_ANNOTATION
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BOOLEAN
 import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY
@@ -59,7 +58,6 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
-import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -102,13 +100,14 @@ import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.defaultType
-import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.js.descriptorUtils.getKotlinTypeFqName
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.StarProjectionImpl
@@ -191,25 +190,25 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     // Top level SDK->Core converters
     private val byteToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.byteToLong")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("byteToLong"))).first().owner
     private val charToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.charToLong")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("charToLong"))).first().owner
     private val shortToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.shortToLong")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("shortToLong"))).first().owner
     private val intToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.intToLong")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("intToLong"))).first().owner
 
     // Top level Core->SDK converters
     private val longToByte: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToByte")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToByte"))).first().owner
     private val longToChar: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToChar")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToChar"))).first().owner
     private val longToShort: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToShort")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToShort"))).first().owner
     private val longToInt: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.longToInt")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToInt"))).first().owner
     private val objectIdToRealmObjectId: IrSimpleFunction =
-        pluginContext.referenceFunctions(FqName("io.realm.kotlin.internal.objectIdToRealmObjectId")).first().owner
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("objectIdToRealmObjectId"))).first().owner
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType

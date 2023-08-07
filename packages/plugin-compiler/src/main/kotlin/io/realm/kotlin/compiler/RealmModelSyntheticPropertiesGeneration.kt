@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.CLASS_INFO
-import io.realm.kotlin.compiler.FqNames.CLASS_KIND_TYPE
-import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
-import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAPOF
-import io.realm.kotlin.compiler.FqNames.KOTLIN_PAIR
-import io.realm.kotlin.compiler.FqNames.OBJECT_REFERENCE_CLASS
-import io.realm.kotlin.compiler.FqNames.PRIMARY_KEY_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
-import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO_CREATE
-import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
-import io.realm.kotlin.compiler.FqNames.REALM_ANY
-import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
-import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
-import io.realm.kotlin.compiler.FqNames.REALM_UUID
-import io.realm.kotlin.compiler.FqNames.TYPED_REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.CLASS_INFO
+import io.realm.kotlin.compiler.ClassIds.CLASS_KIND_TYPE
+import io.realm.kotlin.compiler.ClassIds.COLLECTION_TYPE
+import io.realm.kotlin.compiler.ClassIds.FULLTEXT_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.INDEX_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.KBSON_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAP
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAPOF
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_PAIR
+import io.realm.kotlin.compiler.ClassIds.OBJECT_REFERENCE_CLASS
+import io.realm.kotlin.compiler.ClassIds.PRIMARY_KEY_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_INFO
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_INFO_CREATE
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_TYPE
+import io.realm.kotlin.compiler.ClassIds.REALM_ANY
+import io.realm.kotlin.compiler.ClassIds.REALM_INSTANT
+import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_UUID
+import io.realm.kotlin.compiler.ClassIds.TYPED_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_DICTIONARY
@@ -55,7 +54,6 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.kotlin.compiler.Names.SET
-import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
@@ -155,10 +153,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmAnyType: IrType = pluginContext.lookupClassOrThrow(REALM_ANY).defaultType
 
     private val kMutableProperty1Class: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
+        pluginContext.lookupClassOrThrow(ClassIds.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
 
     private val kProperty1Class: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
+        pluginContext.lookupClassOrThrow(ClassIds.KOTLIN_REFLECT_KPROPERTY1)
 
     private val mapClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MAP)
     private val pairClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_PAIR)
@@ -190,8 +188,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         realmObjectMutablePropertyType
     )
 
-    val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
-    private val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
+    val realmClassImpl = pluginContext.lookupClassOrThrow(ClassIds.REALM_CLASS_IMPL)
+    private val realmClassCtor = pluginContext.lookupConstructorInClass(ClassIds.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
     }
 
