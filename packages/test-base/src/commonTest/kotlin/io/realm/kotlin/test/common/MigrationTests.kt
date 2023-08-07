@@ -247,8 +247,7 @@ class MigrationTests {
         )
             .directory(tmpDir)
             .schemaVersion(1)
-            .resolveEmbeddedObjectConstraintsOnMigration(true)
-            .migration(AutomaticSchemaMigration { })
+            .migration(AutomaticSchemaMigration { }, resolveEmbeddedObjectConstraints = true)
             .build()
 
         Realm.open(migratedConfiguration).use {
@@ -299,8 +298,7 @@ class MigrationTests {
         )
             .directory(tmpDir)
             .schemaVersion(1)
-            .resolveEmbeddedObjectConstraintsOnMigration(true)
-            .migration(AutomaticSchemaMigration { })
+            .migration(AutomaticSchemaMigration { }, resolveEmbeddedObjectConstraints = true)
             .build()
 
         Realm.open(migratedConfiguration).use {
