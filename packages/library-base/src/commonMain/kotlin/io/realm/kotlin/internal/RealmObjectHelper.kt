@@ -1145,6 +1145,27 @@ internal object RealmObjectHelper {
         }
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
+    @Suppress("unused") // Called from generated code
+    internal fun realmToString(obj: BaseRealmObject): String {
+//        if (objReference == null) {
+//            return "${obj::class.qualifiedName}[Unmanaged]@${hashCode().toHexString()}"
+//        } else {
+
+//        }
+        TODO("Custom toString")
+    }
+
+    @Suppress("unused") // Called from generated code
+    internal inline fun realmEquals(obj: BaseRealmObject, other: Any?): Boolean {
+        TODO("BOOM")
+    }
+
+    @Suppress("unused") // Called from generated code
+    internal inline fun realmHashCode(obj: BaseRealmObject): Int {
+        return 42
+    }
+
     private fun checkPropertyType(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,

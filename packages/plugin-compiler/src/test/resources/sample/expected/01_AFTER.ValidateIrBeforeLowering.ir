@@ -8508,19 +8508,30 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in sample.input.Sample.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_classKind>' type=sample.input.Sample.Companion origin=null
-      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
-        overridden:
-          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
       FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
         overridden:
           public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      FUN name:equals visibility:public modality:OPEN <> ($this:sample.input.Sample, other:kotlin.Any?) returnType:kotlin.Int [operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Int [operator] declared in sample.input.Sample'
+            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.equals' type=sample.input.Sample origin=null
+              other: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.equals' type=sample.input.Sample origin=null
+      FUN name:toString visibility:public modality:OPEN <> ($this:sample.input.Sample) returnType:kotlin.String
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:sample.input.Sample
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in sample.input.Sample'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.toString' type=sample.input.Sample origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? visibility:private
           EXPRESSION_BODY
@@ -8795,19 +8806,30 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in sample.input.Child.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_classKind>' type=sample.input.Child.Companion origin=null
-      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
-        overridden:
-          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
       FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
         overridden:
           public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      FUN name:equals visibility:public modality:OPEN <> ($this:sample.input.Child, other:kotlin.Any?) returnType:kotlin.Int [operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:sample.input.Child
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Int [operator] declared in sample.input.Child'
+            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.equals' type=sample.input.Child origin=null
+              other: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.equals' type=sample.input.Child origin=null
+      FUN name:toString visibility:public modality:OPEN <> ($this:sample.input.Child) returnType:kotlin.String
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:sample.input.Child
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in sample.input.Child'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.Child declared in sample.input.Child.toString' type=sample.input.Child origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.Child>? visibility:private
           EXPRESSION_BODY
@@ -9016,19 +9038,30 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in sample.input.EmbeddedParent.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: sample.input.EmbeddedParent.Companion declared in sample.input.EmbeddedParent.Companion.<get-io_realm_kotlin_classKind>' type=sample.input.EmbeddedParent.Companion origin=null
-      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
-        overridden:
-          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
       FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
         overridden:
           public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      FUN name:equals visibility:public modality:OPEN <> ($this:sample.input.EmbeddedParent, other:kotlin.Any?) returnType:kotlin.Int [operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:sample.input.EmbeddedParent
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Int [operator] declared in sample.input.EmbeddedParent'
+            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.EmbeddedParent declared in sample.input.EmbeddedParent.equals' type=sample.input.EmbeddedParent origin=null
+              other: GET_VAR '<this>: sample.input.EmbeddedParent declared in sample.input.EmbeddedParent.equals' type=sample.input.EmbeddedParent origin=null
+      FUN name:toString visibility:public modality:OPEN <> ($this:sample.input.EmbeddedParent) returnType:kotlin.String
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:sample.input.EmbeddedParent
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in sample.input.EmbeddedParent'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.EmbeddedParent declared in sample.input.EmbeddedParent.toString' type=sample.input.EmbeddedParent origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.EmbeddedParent>? visibility:private
           EXPRESSION_BODY
@@ -9235,19 +9268,30 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in sample.input.EmbeddedChild.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: sample.input.EmbeddedChild.Companion declared in sample.input.EmbeddedChild.Companion.<get-io_realm_kotlin_classKind>' type=sample.input.EmbeddedChild.Companion origin=null
-      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
-        overridden:
-          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.EmbeddedRealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
       FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
         overridden:
           public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.EmbeddedRealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      FUN name:equals visibility:public modality:OPEN <> ($this:sample.input.EmbeddedChild, other:kotlin.Any?) returnType:kotlin.Int [operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.EmbeddedRealmObject
+        $this: VALUE_PARAMETER name:<this> type:sample.input.EmbeddedChild
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Int [operator] declared in sample.input.EmbeddedChild'
+            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.EmbeddedChild declared in sample.input.EmbeddedChild.equals' type=sample.input.EmbeddedChild origin=null
+              other: GET_VAR '<this>: sample.input.EmbeddedChild declared in sample.input.EmbeddedChild.equals' type=sample.input.EmbeddedChild origin=null
+      FUN name:toString visibility:public modality:OPEN <> ($this:sample.input.EmbeddedChild) returnType:kotlin.String
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.EmbeddedRealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:sample.input.EmbeddedChild
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in sample.input.EmbeddedChild'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: sample.input.EmbeddedChild declared in sample.input.EmbeddedChild.toString' type=sample.input.EmbeddedChild origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<sample.input.EmbeddedChild>? visibility:private
           EXPRESSION_BODY

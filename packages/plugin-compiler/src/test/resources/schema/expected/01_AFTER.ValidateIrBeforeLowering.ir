@@ -127,10 +127,15 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      FUN name:toString visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.String
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:schema.input.A
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.A'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.A declared in schema.input.A.toString' type=schema.input.A origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? visibility:private
           EXPRESSION_BODY
@@ -280,10 +285,15 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      FUN name:toString visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.String
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:schema.input.B
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.B'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.B declared in schema.input.B.toString' type=schema.input.B origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? visibility:private
           EXPRESSION_BODY
@@ -433,10 +443,15 @@ MODULE_FRAGMENT name:<main>
         overridden:
           public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
         $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+      FUN name:toString visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.String
         overridden:
           public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:schema.input.C
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.C'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.C declared in schema.input.C.toString' type=schema.input.C origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? visibility:private
           EXPRESSION_BODY

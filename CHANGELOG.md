@@ -4,6 +4,8 @@
 * None.
 
 ### Enhancements
+* Realm model classes now generate custom `toString`, `equals` and `hashCode` implementations. This makes it possible to compare by object reference across multiple collections. Note that two objects at different versions will not be considered equal, even 
+if the content is the same. Custom implementations of these methods will be respected if they are present. (Issue [#1097](https://github.com/realm/realm-kotlin/issues/1097)) 
 * Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
 * [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
 

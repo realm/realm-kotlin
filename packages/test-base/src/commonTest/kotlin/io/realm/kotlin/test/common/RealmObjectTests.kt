@@ -113,6 +113,81 @@ class RealmObjectTests : RealmStateTest {
         // FIXME
     }
 
+    @Test
+    fun toString_managed() {
+        assertEquals("BOOM", Parent().toString())
+    }
+
+    @Test
+    fun toString_managed_cyclicData() {
+        TODO()
+    }
+
+    @Test
+    fun toString_customMethod() {
+        TODO()
+    }
+
+    @Test
+    fun toString_managed_invalid() {
+        TODO()
+    }
+
+    @Test
+    fun toString_unmanaged() {
+        assertEquals(42, Parent().hashCode())
+    }
+
+    @Test
+    fun equals_managed() {
+        TODO()
+    }
+
+    @Test
+    fun equals_managed_cyclicData() {
+        TODO()
+    }
+
+    @Test
+    fun equals_customMethod() {
+        TODO()
+    }
+
+    @Test
+    fun equals_managed_invalid() {
+        TODO()
+    }
+
+    @Test
+    fun equals_unmanaged() {
+        assertEquals(false, Parent().equals(this))
+    }
+
+    @Test
+    fun hashCode_managed() {
+        TODO()
+    }
+
+    @Test
+    fun hashCode_managed_cyclicData() {
+        TODO()
+    }
+
+    @Test
+    fun hashCode_customMethod() {
+        TODO()
+    }
+
+    @Test
+    fun hashCode_managed_invalid() {
+        TODO()
+    }
+
+    @Test
+    fun hashCode_unmanaged() {
+        TODO()
+    }
+
     override fun isFrozen_throwsIfRealmIsClosed() {
         realm.close()
         assertFailsWith<IllegalStateException> {

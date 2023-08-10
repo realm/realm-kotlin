@@ -107,6 +107,10 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
 
+            // Add custom toString, equals and hashCode methods
+            val methodGenerator = RealmModelDefaultMethodGeneration(pluginContext)
+            methodGenerator.addDefaultMethods(irClass)
+
             // Add body for synthetic companion methods
             val companion = irClass.companionObject() ?: fatalError("RealmObject without companion: ${irClass.kotlinFqName}")
             generator.addCompanionFields(irClass, companion, SchemaCollector.properties[irClass])
