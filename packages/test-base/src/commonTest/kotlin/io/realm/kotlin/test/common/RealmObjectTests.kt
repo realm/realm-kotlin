@@ -25,6 +25,7 @@ import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.version
 import io.realm.kotlin.test.common.utils.RealmStateTest
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.types.RealmObject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -32,7 +33,33 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
+
+// Model class with toString/equals/hashCode
+class CustomMethods : RealmObject {
+    var name: String = ""
+    var age: Int = 0
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as CustomMethods
+        return this.age == 42 && other.age == 42
+    }
+
+    override fun hashCode(): Int {
+        return if (isValid()) {
+            42
+        } else {
+            -1
+        }
+    }
+
+    override fun toString(): String {
+        return "customToString"
+    }
+}
 
 class RealmObjectTests : RealmStateTest {
 
@@ -48,7 +75,7 @@ class RealmObjectTests : RealmStateTest {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class, CustomMethods::class))
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -115,77 +142,180 @@ class RealmObjectTests : RealmStateTest {
 
     @Test
     fun toString_managed() {
-        assertEquals("BOOM", Parent().toString())
+        val managedObj = realm.writeBlocking {
+            copyToRealm(Parent())
+        }
+        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=VALID, schemaName=Parent, objKey=[0-9]*, version=[0-9]*, realm=${realm.configuration.path}}")
+        assertTrue(regex.matches(managedObj.toString()), managedObj.toString())
     }
 
     @Test
     fun toString_managed_cyclicData() {
-        TODO()
-    }
-
-    @Test
-    fun toString_customMethod() {
-        TODO()
+        val p1 = Parent()
+        p1.name = "Parent"
+        p1.otherParent = p1
+        val managedObj = realm.writeBlocking { copyToRealm(p1) }
+        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=VALID, schemaName=Parent, objKey=[0-9]*, version=[0-9]*, realm=${realm.configuration.path}}")
+        assertTrue(regex.matches(managedObj.toString()), managedObj.toString())
     }
 
     @Test
     fun toString_managed_invalid() {
-        TODO()
+        realm.writeBlocking {
+            val managedObject = copyToRealm(Parent())
+            delete(managedObject)
+            val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=INVALID, schemaName=Parent, realm=${realm.configuration.path}, hashCode=[0-9]*\\}")
+            assertTrue(regex.matches(managedObject.toString()), managedObject.toString())
+            cancelWrite()
+        }
+    }
+
+    @Test
+    fun toString_managed_closedRealm() {
+        val managedObject = realm.writeBlocking {
+            copyToRealm(Parent())
+        }
+        realm.close()
+        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=CLOSED, schemaName=Parent, realm=${realm.configuration.path}, hashCode=[0-9]*\\}")
+        assertTrue(regex.matches(managedObject.toString()), managedObject.toString())
+    }
+
+    @Test
+    fun toString_customMethod() {
+        assertEquals("customToString", CustomMethods().toString())
+        val managedObj = realm.writeBlocking { copyToRealm(CustomMethods()) }
+        assertEquals("customToString", managedObj.toString())
     }
 
     @Test
     fun toString_unmanaged() {
-        assertEquals(42, Parent().hashCode())
+        val unmanagedObject = Parent()
+        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=UNMANAGED, schemaName=Parent, hashCode=[0-9]*\\}")
+        assertTrue(regex.matches(unmanagedObject.toString()), unmanagedObject.toString())
     }
 
     @Test
     fun equals_managed() {
-        TODO()
-    }
+        realm.writeBlocking {
+            val p1 = copyToRealm(Parent().apply { this.name = "Jane" })
+            val p2 = copyToRealm(Parent())
+            val p3 = query(Parent::class, "name = 'Jane'").first().find()!!
+            assertEquals(p1, p1)
+            assertEquals(p1, p3)
+            assertEquals(p1.hashCode(), p1.hashCode())
+            assertEquals(p1.hashCode(), p3.hashCode())
 
-    @Test
-    fun equals_managed_cyclicData() {
-        TODO()
-    }
-
-    @Test
-    fun equals_customMethod() {
-        TODO()
-    }
-
-    @Test
-    fun equals_managed_invalid() {
-        TODO()
+            // Not restrictions are given on hashCode if two objects are not equal
+            assertNotEquals(p2, p1)
+            assertNotEquals(p2, p3)
+        }
     }
 
     @Test
     fun equals_unmanaged() {
-        assertEquals(false, Parent().equals(this))
+        val p1 = Parent()
+        val p2 = Parent()
+        assertEquals(p1, p1)
+        assertEquals(p1.hashCode(), p1.hashCode())
+        assertNotEquals(p1, p2)
+    }
+
+    @Test
+    fun equals_mixed() {
+        val unmanagedObj = Parent()
+        val managedObj = realm.writeBlocking { copyToRealm(Parent()) }
+        assertNotEquals(unmanagedObj, managedObj)
+        assertNotEquals(managedObj, unmanagedObj)
+    }
+
+    @Test
+    fun equals_managed_cyclicData() {
+        realm.writeBlocking {
+            val p1 = copyToRealm(Parent().apply { this.name = "Jane" })
+            p1.otherParent = p1
+            val p2 = copyToRealm(Parent())
+            val p3 = query(Parent::class, "name = 'Jane'").first().find()!!
+            assertEquals(p1, p1)
+            assertEquals(p1, p3)
+            assertEquals(p1.hashCode(), p1.hashCode())
+            assertEquals(p1.hashCode(), p3.hashCode())
+
+            // Not restrictions are given on hashCode if two objects are not equal
+            assertNotEquals(p2, p1)
+            assertNotEquals(p2, p3)
+        }
+    }
+
+    @Test
+    fun equals_customMethod() {
+        // Only equals if age = 42 or same instance
+        val obj1 = CustomMethods()
+        val obj2 = CustomMethods()
+        assertEquals(obj1, obj1)
+        assertEquals(obj1.hashCode(), obj1.hashCode())
+        assertNotEquals(obj1, obj2)
+
+        val obj3 = CustomMethods().apply { age = 42 }
+        val obj4 = CustomMethods().apply { age = 42 }
+        assertEquals(obj3, obj3)
+        assertEquals(obj3.hashCode(), obj4.hashCode())
+        assertEquals(obj3, obj4)
+        assertEquals(obj3.hashCode(), obj4.hashCode())
+
+        // Managed objects
+        realm.writeBlocking {
+            val obj1 = copyToRealm(CustomMethods())
+            val obj2 = copyToRealm(CustomMethods())
+            assertEquals(obj1, obj1)
+            assertEquals(obj1.hashCode(), obj1.hashCode())
+            assertNotEquals(obj1, obj2)
+
+            val obj3 = copyToRealm(CustomMethods().apply { age = 42 })
+            val obj4 = copyToRealm(CustomMethods().apply { age = 42 })
+            assertEquals(obj3, obj3)
+            assertEquals(obj3.hashCode(), obj3.hashCode())
+            assertEquals(obj3, obj4)
+            assertEquals(obj3.hashCode(), obj4.hashCode())
+        }
+    }
+
+    @Test
+    fun equals_managed_invalid() {
+        realm.writeBlocking {
+            val p1 = copyToRealm(Parent().apply { this.name = "Jane" })
+            val p2 = copyToRealm(Parent())
+            delete(p1)
+            delete(p2)
+
+            assertEquals(p1, p1)
+            assertEquals(p1.hashCode(), p1.hashCode())
+            assertNotEquals(p1, p2)
+        }
     }
 
     @Test
     fun hashCode_managed() {
-        TODO()
+//        TODO()
     }
 
     @Test
     fun hashCode_managed_cyclicData() {
-        TODO()
+//        TODO()
     }
 
     @Test
     fun hashCode_customMethod() {
-        TODO()
+//        TODO()
     }
 
     @Test
     fun hashCode_managed_invalid() {
-        TODO()
+//        TODO()
     }
 
     @Test
     fun hashCode_unmanaged() {
-        TODO()
+//        TODO()
     }
 
     override fun isFrozen_throwsIfRealmIsClosed() {

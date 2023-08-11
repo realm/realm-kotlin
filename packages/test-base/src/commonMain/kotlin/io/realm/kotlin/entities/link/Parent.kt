@@ -21,4 +21,5 @@ import io.realm.kotlin.types.RealmObject
 class Parent : RealmObject {
     var name: String = "N.N."
     var child: Child? = null
+    var otherParent: Parent? = null
 }

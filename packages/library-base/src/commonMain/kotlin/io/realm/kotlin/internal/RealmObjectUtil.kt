@@ -144,7 +144,14 @@ internal fun BaseRealmObject.getIdentifier(): RealmObjectIdentifier {
         val version: VersionId = version()
         return Triple(classKey, objKey, version)
     } ?: throw IllegalStateException("Identifier can only be calculated for managed objects.")
-    ULong
+}
+
+public fun BaseRealmObject.getIdentifierOrNull(): RealmObjectIdentifier? {
+    return if (realmObjectReference != null) {
+        getIdentifier()
+    } else {
+        null
+    }
 }
 
 /**

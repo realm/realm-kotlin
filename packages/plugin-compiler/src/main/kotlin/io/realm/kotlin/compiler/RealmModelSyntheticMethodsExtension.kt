@@ -44,13 +44,13 @@ class RealmModelSyntheticMethodsExtension : SyntheticResolveExtension {
         fromSupertypes: List<SimpleFunctionDescriptor>,
         result: MutableCollection<SimpleFunctionDescriptor>
     ) {
-        if (thisDescriptor.isRealmObject
-            && !thisDescriptor.isCompanionObject /* Do not override companion object methods */
-            && !thisDescriptor.isInner /* Do not override inner class methods */
-            && !isNestedInRealmModelClass(thisDescriptor) /* do not override nested class methods */
-            && result.isEmpty() /* = no method has been declared in the current class */
+        if (thisDescriptor.isRealmObject &&
+            !thisDescriptor.isCompanionObject && /* Do not override companion object methods */
+            !thisDescriptor.isInner && /* Do not override inner class methods */
+            !isNestedInRealmModelClass(thisDescriptor) && /* do not override nested class methods */
+            result.isEmpty() /* = no method has been declared in the current class */
         ) {
-            when(name.identifier) {
+            when (name.identifier) {
                 "toString" -> {
                     result.add(
                         createMethod(
@@ -127,7 +127,7 @@ class RealmModelSyntheticMethodsExtension : SyntheticResolveExtension {
 
     private fun isNestedInRealmModelClass(classDescriptor: ClassDescriptor): Boolean {
         return classDescriptor.parents.firstOrNull {
-            if (it is ClassDescriptor) {
+            return if (it is ClassDescriptor) {
                 it.isRealmObject
             } else {
                 false

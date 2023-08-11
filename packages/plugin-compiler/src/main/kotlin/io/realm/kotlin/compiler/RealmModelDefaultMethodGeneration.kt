@@ -17,6 +17,14 @@ import org.jetbrains.kotlin.name.Name
  * - toString()
  * - hashCode()
  * - equals()
+ *
+ * WARNING: The current logic in here does not work well with incremental compilation. The reason
+ * is that we check if these methods are "empty" before filling them out, and during incremental
+ * compilation they already have content, and since all of these methods are using inlined
+ * methods they will not pick up changes in the RealmObjectHelper.
+ *
+ * This should only impact us as SDK developers though, but it does mean that changes to
+ * RealmObjectHelper methods will require a clean build to take effect.
  */
 class RealmModelDefaultMethodGeneration(private val pluginContext: IrPluginContext) {
 
@@ -69,7 +77,7 @@ class RealmModelDefaultMethodGeneration(private val pluginContext: IrPluginConte
                 ).apply {
                     dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                     putValueArgument(0, irGet(function.dispatchReceiverParameter!!.type, function.dispatchReceiverParameter!!.symbol))
-                    putValueArgument(1, irGet(function.dispatchReceiverParameter!!.type, function.dispatchReceiverParameter!!.symbol))
+                    putValueArgument(1, irGet(function.valueParameters[0].type, function.valueParameters[0].symbol))
                 }
             )
         }
@@ -97,19 +105,19 @@ class RealmModelDefaultMethodGeneration(private val pluginContext: IrPluginConte
     private fun addToStringMethodBody(irClass: IrClass) {
         val function: IrSimpleFunction = irClass.symbol.owner.functions.single { it.name.toString() == "toString" }
         function.body = pluginContext.blockBody(function.symbol) {
-                +irReturn(
-                    IrCallImpl(
-                        startOffset = startOffset,
-                        endOffset = endOffset,
-                        type = pluginContext.irBuiltIns.stringType,
-                        symbol = realmToString.symbol,
-                        typeArgumentsCount = 0,
-                        valueArgumentsCount = 1
-                    ).apply {
-                        dispatchReceiver = irGetObject(realmObjectHelper.symbol)
-                        putValueArgument(0, irGet(function.dispatchReceiverParameter!!.type, function.dispatchReceiverParameter!!.symbol))
-                    }
-                )
-            }
+            +irReturn(
+                IrCallImpl(
+                    startOffset = startOffset,
+                    endOffset = endOffset,
+                    type = pluginContext.irBuiltIns.stringType,
+                    symbol = realmToString.symbol,
+                    typeArgumentsCount = 0,
+                    valueArgumentsCount = 1
+                ).apply {
+                    dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                    putValueArgument(0, irGet(function.dispatchReceiverParameter!!.type, function.dispatchReceiverParameter!!.symbol))
+                }
+            )
+        }
     }
 }
