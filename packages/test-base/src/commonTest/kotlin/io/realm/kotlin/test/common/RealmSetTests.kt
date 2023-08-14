@@ -777,25 +777,25 @@ internal abstract class ManagedSetTester<T>(
     }
 
     override fun remove() {
-        // TODO https://github.com/realm/realm-kotlin/issues/1097
-        //  Ignore RealmObject: structural equality cannot be assessed for this type when removing
-        //  elements from the set
-        if (classifier != RealmObject::class) {
-            val dataSet = typeSafetyManager.dataSetToLoad
+        val dataSet = typeSafetyManager.dataSetToLoad
 
-            errorCatcher {
-                realm.writeBlocking {
-                    val set = typeSafetyManager.createContainerAndGetCollection(this)
-                    set.add(dataSet[0])
-                    assertTrue(set.remove(dataSet[0]))
-                    assertTrue(set.isEmpty())
+        errorCatcher {
+            realm.writeBlocking {
+                val set = typeSafetyManager.createContainerAndGetCollection(this)
+                val element = if (classifier == RealmObject::class) {
+                    copyToRealm(dataSet[0] as RealmObject) as T
+                } else {
+                    dataSet[0]
                 }
-            }
-
-            assertContainerAndCleanup { container ->
-                val set = typeSafetyManager.getCollection(container)
+                set.add(element)
+                assertTrue(set.remove(element))
                 assertTrue(set.isEmpty())
             }
+        }
+
+        assertContainerAndCleanup { container ->
+            val set = typeSafetyManager.getCollection(container)
+            assertTrue(set.isEmpty())
         }
     }
 

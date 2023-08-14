@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.types.SimpleType
  * Triggers generation of synthetic methods on Realm model classes, in particular
  * `toString()`, `equals()` and `hashCode()`.
  */
+@Suppress("ComplexCondition")
 class RealmModelSyntheticMethodsExtension : SyntheticResolveExtension {
 
     override fun generateSyntheticMethods(

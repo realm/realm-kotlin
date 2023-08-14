@@ -21,6 +21,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
@@ -1167,12 +1168,12 @@ internal object RealmObjectHelper {
                 } else {
                     "INVALID"
                 }
-                "$fqName{state=$state, schemaName=$schemaName, realm=${it.owner.owner.configuration.path}, hashCode=${obj.hashCode()}}"
+                "$fqName{state=$state, schemaName=$schemaName, realm=${it.owner.owner.configuration.name}, hashCode=${obj.hashCode()}}"
             }
         } ?: "$fqName{state=UNMANAGED, schemaName=$schemaName, hashCode=${obj.hashCode()}}"
     }
 
-    @Suppress("unused") // Called from generated code
+    @Suppress("unused", "ReturnCount") // Called from generated code
     // Inlining this functions somehow break the IntelliJ debugger, unclear why?
     internal fun realmEquals(obj: BaseRealmObject, other: Any?): Boolean {
         if (obj === other) return true
@@ -1180,12 +1181,18 @@ internal object RealmObjectHelper {
 
         other as BaseRealmObject
 
-        if (obj.isValid() != other.isValid()) return false
-        if (obj.getIdentifierOrNull() != other.getIdentifierOrNull()) return false
-        return (obj.realmObjectReference?.owner?.owner?.configuration?.path == other.realmObjectReference?.owner?.owner?.configuration?.path)
+        if (other.isManaged()) {
+            if (obj.isValid() != other.isValid()) return false
+            if (obj.getIdentifierOrNull() != other.getIdentifierOrNull()) return false
+            return (obj.realmObjectReference?.owner?.owner?.configuration?.path == other.realmObjectReference?.owner?.owner?.configuration?.path)
+        } else {
+            // If one of the objects are unmanaged, they are only equal if identical, which
+            // should have been caught at the top of this function.
+            return false
+        }
     }
 
-    @Suppress("unused") // Called from generated code
+    @Suppress("unused", "MagicNumber") // Called from generated code
     // Inlining this functions somehow break the IntelliJ debugger, unclear why?
     internal fun realmHashCode(obj: BaseRealmObject): Int {
         // This code assumes no race conditions
