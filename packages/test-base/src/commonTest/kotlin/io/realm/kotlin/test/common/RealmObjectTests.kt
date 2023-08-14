@@ -18,6 +18,7 @@ package io.realm.kotlin.test.common
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.entities.SampleWithPrimaryKey
 import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.ext.isFrozen
@@ -75,7 +76,7 @@ class RealmObjectTests : RealmStateTest {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class, CustomMethods::class))
+        val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class, SampleWithPrimaryKey::class, CustomMethods::class))
             .directory(tmpDir)
             .build()
         realm = Realm.open(configuration)
@@ -151,11 +152,11 @@ class RealmObjectTests : RealmStateTest {
 
     @Test
     fun toString_managed_cyclicData() {
-        val p1 = Parent()
-        p1.name = "Parent"
-        p1.otherParent = p1
+        val p1 = SampleWithPrimaryKey()
+        p1.stringField = "Parent"
+        p1.nullableObject = p1
         val managedObj = realm.writeBlocking { copyToRealm(p1) }
-        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=VALID, schemaName=Parent, objKey=[0-9]*, version=[0-9]*, realm=${realm.configuration.name}}")
+        val regex = Regex("io.realm.kotlin.entities.SampleWithPrimaryKey\\{state=VALID, schemaName=SampleWithPrimaryKey, objKey=[0-9]*, version=[0-9]*, realm=${realm.configuration.name}\\}")
         assertTrue(regex.matches(managedObj.toString()), managedObj.toString())
     }
 
@@ -164,7 +165,7 @@ class RealmObjectTests : RealmStateTest {
         realm.writeBlocking {
             val managedObject = copyToRealm(Parent())
             delete(managedObject)
-            val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=INVALID, schemaName=Parent, realm=${realm.configuration.name}, hashCode=[0-9]*\\}")
+            val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=INVALID, schemaName=Parent, realm=${realm.configuration.name}, hashCode=[-0-9]*\\}")
             assertTrue(regex.matches(managedObject.toString()), managedObject.toString())
             cancelWrite()
         }
@@ -176,7 +177,7 @@ class RealmObjectTests : RealmStateTest {
             copyToRealm(Parent())
         }
         realm.close()
-        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=CLOSED, schemaName=Parent, realm=${realm.configuration.name}, hashCode=[0-9]*\\}")
+        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=CLOSED, schemaName=Parent, realm=${realm.configuration.name}, hashCode=[-0-9]*\\}")
         assertTrue(regex.matches(managedObject.toString()), managedObject.toString())
     }
 
@@ -190,7 +191,7 @@ class RealmObjectTests : RealmStateTest {
     @Test
     fun toString_unmanaged() {
         val unmanagedObject = Parent()
-        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=UNMANAGED, schemaName=Parent, hashCode=[0-9]*\\}")
+        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=UNMANAGED, schemaName=Parent, hashCode=[-0-9]*\\}")
         assertTrue(regex.matches(unmanagedObject.toString()), unmanagedObject.toString())
     }
 
@@ -231,10 +232,20 @@ class RealmObjectTests : RealmStateTest {
     @Test
     fun equals_hashCode_managed_cyclicData() {
         realm.writeBlocking {
-            val p1 = copyToRealm(Parent().apply { this.name = "Jane" })
-            p1.otherParent = p1
-            val p2 = copyToRealm(Parent())
-            val p3 = query(Parent::class, "name = 'Jane'").first().find()!!
+            val p1 = copyToRealm(
+                SampleWithPrimaryKey().apply {
+                    primaryKey = 1
+                    stringField = "Jane"
+                }
+            )
+            p1.nullableObject = p1
+            val p2 = copyToRealm(
+                SampleWithPrimaryKey().apply {
+                    primaryKey = 2
+                    stringField = "John"
+                }
+            )
+            val p3 = query(SampleWithPrimaryKey::class, "stringField = 'Jane'").first().find()!!
             assertEquals(p1, p1)
             assertEquals(p1, p3)
             assertEquals(p1.hashCode(), p1.hashCode())
