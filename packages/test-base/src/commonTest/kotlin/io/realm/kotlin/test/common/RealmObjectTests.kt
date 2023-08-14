@@ -146,7 +146,7 @@ class RealmObjectTests : RealmStateTest {
         val managedObj = realm.writeBlocking {
             copyToRealm(Parent())
         }
-        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=VALID, schemaName=Parent, objKey=[0-9]*, version=[0-9]*, realm=${realm.configuration.name}}")
+        val regex = Regex("io.realm.kotlin.entities.link.Parent\\{state=VALID, schemaName=Parent, objKey=[0-9]*, version=[0-9]*, realm=${realm.configuration.name}\\}")
         assertTrue(regex.matches(managedObj.toString()), managedObj.toString())
     }
 
