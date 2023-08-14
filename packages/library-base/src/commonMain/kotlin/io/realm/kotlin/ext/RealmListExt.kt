@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.asRealmList
 import io.realm.kotlin.internal.getRealm
 import io.realm.kotlin.internal.query
+import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
@@ -29,6 +30,7 @@ import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
+import kotlinx.coroutines.flow.Flow
 
 /**
  * Instantiates an **unmanaged** [RealmList].
@@ -72,3 +74,15 @@ public fun <T : BaseRealmObject> RealmList<T>.query(
     } else {
         throw IllegalArgumentException("Unmanaged list cannot be queried")
     }
+
+/**
+ * TODO
+ */
+public fun <T: BaseRealmObject> RealmList<T>.asFlow(vararg keyPaths: String): Flow<ListChange<T>> {
+    if (this is ManagedRealmList) {
+        operator.realmReference.checkClosed()
+        return operator.realmReference.owner.registerObserver(this, keyPaths)
+    } else {
+        throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
+    }
+}

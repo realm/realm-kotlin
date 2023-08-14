@@ -115,7 +115,7 @@ internal class ManagedRealmList<E>(
 
     override fun asFlow(): Flow<ListChange<E>> {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this)
+        return operator.realmReference.owner.registerObserver(this, arrayOf())
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {

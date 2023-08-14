@@ -160,7 +160,7 @@ internal class ManagedRealmSet<E> constructor(
     }
 
     override fun asFlow(): Flow<SetChange<E>> {
-        return operator.realmReference.owner.registerObserver(this)
+        return operator.realmReference.owner.registerObserver(this, arrayOf())
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmSet<E>? {

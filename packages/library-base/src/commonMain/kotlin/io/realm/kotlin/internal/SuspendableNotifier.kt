@@ -86,7 +86,7 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>): Flow<C> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: Array<out String>): Flow<C> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> =
                 kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)

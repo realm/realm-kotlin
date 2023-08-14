@@ -20,6 +20,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
@@ -123,7 +124,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             val channel = Channel<ListChange<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
-                    .asFlow()
+                    .asFlow("*")
                     .collect { flowList ->
                         channel.send(flowList)
                     }

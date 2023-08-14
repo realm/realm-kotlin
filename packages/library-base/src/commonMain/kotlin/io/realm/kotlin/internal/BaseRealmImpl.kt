@@ -64,7 +64,7 @@ public abstract class BaseRealmImpl internal constructor(
         return RealmInterop.realm_get_schema_version(realmReference.dbPointer)
     }
 
-    internal open fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>): Flow<C> {
+    internal open fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPath: Array<out String>): Flow<C> {
         throw UnsupportedOperationException(OBSERVABLE_NOT_SUPPORTED_MESSAGE)
     }
 

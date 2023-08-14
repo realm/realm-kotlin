@@ -301,4 +301,31 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             c.close()
         }
     }
+
+    @Test
+    fun keyPath_allTopLevelProperties() = runBlocking {
+        val c = Channel<ObjectChange<Sample>>(1)
+        val obj: Sample = realm.write {
+            copyToRealm(Sample().apply { stringField = "Foo" })
+        }
+        val observer = async {
+            obj.asFlow("*").collect {
+                c.trySend(it)
+            }
+            fail("Flow should not be canceled.")
+        }
+        c.receiveOrFail().let { objectChange ->
+            assertIs<InitialObject<Sample>>(objectChange)
+            assertEquals("Foo", objectChange.obj.stringField)
+        }
+        realm.close()
+        observer.cancel()
+        c.close()
+    }
+
+    @Test
+    fun keyPath_singleTopLevelProperty() {
+
+    }
+
 }

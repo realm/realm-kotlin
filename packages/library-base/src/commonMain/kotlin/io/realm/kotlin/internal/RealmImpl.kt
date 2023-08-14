@@ -215,8 +215,8 @@ public class RealmImpl private constructor(
         )
     }
 
-    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>): Flow<C> {
-        return notifier.registerObserver(t)
+    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: Array<out String>): Flow<C> {
+        return notifier.registerObserver(t, keyPaths)
     }
 
     public fun realmReference(): FrozenRealmReference {

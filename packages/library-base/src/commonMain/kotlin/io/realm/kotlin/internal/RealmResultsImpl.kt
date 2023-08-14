@@ -106,7 +106,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
 
     override fun asFlow(): Flow<ResultsChange<E>> {
         realm.checkClosed()
-        return realm.owner.registerObserver(this)
+        return realm.owner.registerObserver(this, arrayOf())
     }
 
     override fun delete() {

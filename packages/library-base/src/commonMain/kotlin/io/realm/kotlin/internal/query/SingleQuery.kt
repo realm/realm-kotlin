@@ -56,9 +56,9 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
      * new head if any.
      * If there is an update, we ignore it, as the object flow would automatically emit the event.
      */
-    override fun asFlow(): Flow<SingleQueryChange<E>> {
+    override fun asFlow(vararg keyPaths: String): Flow<SingleQueryChange<E>> {
         var oldHead: E? = null
-        return realmReference.owner.registerObserver(this)
+        return realmReference.owner.registerObserver(this, keyPaths)
             // Convert into flow of result head
             .map { resultChange: ResultsChange<E> -> resultChange.list.firstOrNull() }
             // Only react when head is changed

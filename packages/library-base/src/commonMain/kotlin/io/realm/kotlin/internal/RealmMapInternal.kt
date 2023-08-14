@@ -101,7 +101,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
 
     override fun asFlow(): Flow<MapChange<K, V>> {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this)
+        return operator.realmReference.owner.registerObserver(this, arrayOf())
     }
 
     override fun registerForNotification(

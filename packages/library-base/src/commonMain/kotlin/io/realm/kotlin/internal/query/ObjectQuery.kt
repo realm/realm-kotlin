@@ -172,7 +172,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
 
     override fun asFlow(): Flow<ResultsChange<E>> {
         return realmReference.owner
-            .registerObserver(this)
+            .registerObserver(this, arrayOf())
     }
 
     override fun delete() {

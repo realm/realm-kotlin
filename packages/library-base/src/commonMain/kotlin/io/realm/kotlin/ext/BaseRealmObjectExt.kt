@@ -88,7 +88,7 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * from a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
-public fun <T : BaseRealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
+public fun <T : BaseRealmObject> T.asFlow(vararg keyPaths: String): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
-    return owner.owner.registerObserver(this) as Flow<ObjectChange<T>>
+    return owner.owner.registerObserver(this, keyPaths) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")

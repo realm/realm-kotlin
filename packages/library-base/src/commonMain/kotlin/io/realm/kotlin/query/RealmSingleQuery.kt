@@ -72,8 +72,9 @@ public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
+     * @param keyPaths TODO
      * @return a flow representing changes to the [RealmObject] or [EmbeddedRealmObject] resulting from
      * running this query.
      */
-    public fun asFlow(): Flow<SingleQueryChange<T>>
+    public fun asFlow(vararg keyPaths: String): Flow<SingleQueryChange<T>>
 }
