@@ -5,6 +5,7 @@
 
 ### Enhancements
 * Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
+* Support for automatic resolution of embedded object constraints during migration through `RealmConfiguration.Builder.migration(migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean)`. (Issue [#1464](https://github.com/realm/realm-kotlin/issues/1464)
 * [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
 
 ### Fixed

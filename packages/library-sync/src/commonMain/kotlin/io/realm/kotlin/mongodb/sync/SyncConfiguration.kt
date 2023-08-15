@@ -568,6 +568,7 @@ public interface SyncConfiguration : Configuration {
                 encryptionKey,
                 compactOnLaunchCallback,
                 null, // migration is not relevant for sync,
+                false, // automatic backlink handling is not relevant for sync
                 initialDataCallback,
                 partitionValue == null,
                 inMemory,

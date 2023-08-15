@@ -47,7 +47,7 @@ import kotlin.reflect.KClass
 
 // TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
-public open class ConfigurationImpl constructor(
+public open class ConfigurationImpl(
     directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,
@@ -60,6 +60,7 @@ public open class ConfigurationImpl constructor(
     private val userEncryptionKey: ByteArray?,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     private val userMigration: RealmMigration?,
+    automaticBacklinkHandling: Boolean,
     initialDataCallback: InitialDataCallback?,
     override val isFlexibleSyncConfiguration: Boolean,
     inMemory: Boolean,
@@ -218,6 +219,7 @@ public open class ConfigurationImpl constructor(
             migrationCallback?.let {
                 RealmInterop.realm_config_set_migration_function(nativeConfig, it)
             }
+            RealmInterop.realm_config_set_automatic_backlink_handling(nativeConfig, automaticBacklinkHandling)
 
             userEncryptionKey?.let { key: ByteArray ->
                 RealmInterop.realm_config_set_encryption_key(nativeConfig, key)
