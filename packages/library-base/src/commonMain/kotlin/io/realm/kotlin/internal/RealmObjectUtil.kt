@@ -142,15 +142,14 @@ internal fun BaseRealmObject.getIdentifier(): RealmObjectIdentifier {
         val classKey: ClassKey = metadata.classKey
         val objKey: ObjectKey = RealmInterop.realm_object_get_key(objectPointer)
         val version: VersionId = version()
-        return Triple(classKey, objKey, version)
+        val path: String = owner.owner.configuration.path
+        return RealmObjectIdentifier(classKey, objKey, version, path)
     } ?: throw IllegalStateException("Identifier can only be calculated for managed objects.")
 }
 
 public fun BaseRealmObject.getIdentifierOrNull(): RealmObjectIdentifier? {
-    return if (realmObjectReference != null) {
+    return runIfManaged {
         getIdentifier()
-    } else {
-        null
     }
 }
 

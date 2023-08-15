@@ -227,6 +227,8 @@ class RealmObjectTests : RealmStateTest {
         val managedObj = realm.writeBlocking { copyToRealm(Parent()) }
         assertNotEquals(unmanagedObj, managedObj)
         assertNotEquals(managedObj, unmanagedObj)
+        // When objects are not equal, no guarantees are given on the behavior of hashCode()
+        // thus nothing can be asserted here.
     }
 
     @Test

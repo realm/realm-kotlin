@@ -1158,9 +1158,9 @@ internal object RealmObjectHelper {
         val fqName = obj::class.qualifiedName
         return obj.realmObjectReference?.let {
             if (obj.isValid()) {
-                val id: Triple<ClassKey, ObjectKey, VersionId> = obj.getIdentifier()
-                val objKey = id.second.key
-                val version = id.third.version
+                val id: RealmObjectIdentifier = obj.getIdentifier()
+                val objKey = id.objectKey.key
+                val version = id.versionId.version
                 "$fqName{state=VALID, schemaName=$schemaName, objKey=$objKey, version=$version, realm=${it.owner.owner.configuration.name}}"
             } else {
                 val state = if (it.owner.isClosed()) {
@@ -1183,8 +1183,7 @@ internal object RealmObjectHelper {
 
         if (other.isManaged()) {
             if (obj.isValid() != other.isValid()) return false
-            if (obj.getIdentifierOrNull() != other.getIdentifierOrNull()) return false
-            return (obj.realmObjectReference?.owner?.owner?.configuration?.path == other.realmObjectReference?.owner?.owner?.configuration?.path)
+            return obj.getIdentifierOrNull() == other.getIdentifierOrNull()
         } else {
             // If one of the objects are unmanaged, they are only equal if identical, which
             // should have been caught at the top of this function.
@@ -1198,8 +1197,8 @@ internal object RealmObjectHelper {
         // This code assumes no race conditions
         return obj.realmObjectReference?.let {
             val isValid: Boolean = obj.isValid()
-            val identifier: Triple<ClassKey, ObjectKey, VersionId> = if (it.isClosed()) {
-                Triple(ClassKey(-1), ObjectKey(-1), VersionId(0))
+            val identifier: RealmObjectIdentifier = if (it.isClosed()) {
+                RealmObjectIdentifier(ClassKey(-1), ObjectKey(-1), VersionId(0), "")
             } else {
                 obj.getIdentifier()
             }

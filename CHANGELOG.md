@@ -1,7 +1,25 @@
 ## 1.11.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
+
+```
+val childA: Child = realm.query<Child>().first().find()!!
+val childB: Child = realm.query<Child>().first().find()!!
+
+// This behavior is the same both before 1.11.0 and before
+childA === childB // false
+
+// This will return true in 1.11.0 and onwards. Before it will return false
+childA == childB
+
+realm.writeBlocking { /* Do a write */ }
+val childC = realm.query<Child>().first().find()!!
+
+// This will return false because childA belong to version 1, while childC belong to version 2.
+// Override equals/hashCode if value semantics are wanted.
+childA == childC
+```
 
 ### Enhancements
 * Realm model classes now generate custom `toString`, `equals` and `hashCode` implementations. This makes it possible to compare by object reference across multiple collections. Note that two objects at different versions will not be considered equal, even 
