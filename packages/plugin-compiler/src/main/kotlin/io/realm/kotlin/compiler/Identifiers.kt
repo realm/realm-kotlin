@@ -87,6 +87,7 @@ internal object Names {
 
 internal object FqNames {
     val PACKAGE_ANNOTATIONS = FqName("io.realm.kotlin.types.annotations")
+    val PACKAGE_KBSON = FqName("org.mongodb.kbson")
     val PACKAGE_KOTLIN_COLLECTIONS = FqName("kotlin.collections")
     val PACKAGE_KOTLIN_REFLECT = FqName("kotlin.reflect")
     val PACKAGE_TYPES = FqName("io.realm.kotlin.types")
@@ -100,7 +101,7 @@ object ClassIds {
 
     // TODO we can replace with RealmObject::class.java.canonicalName if we make the runtime_api available as a compile time only dependency for the compiler-plugin
     val REALM_NATIVE_POINTER = FqName("io.realm.kotlin.internal.interop.NativePointer")
-    val REALM_OBJECT_INTERNAL_INTERFACE = ClassId(FqName("io.realm.kotlin.internal"), Name.identifier("RealmObjectInternal"))
+    val REALM_OBJECT_INTERNAL_INTERFACE = ClassId(FqNames.PACKAGE_REALM_INTERNAL, Name.identifier("RealmObjectInternal"))
 
     val REALM_MODEL_COMPANION = ClassId(FqNames.PACKAGE_REALM_INTERNAL, Name.identifier("RealmObjectCompanion"))
     val REALM_OBJECT_HELPER = ClassId(FqNames.PACKAGE_REALM_INTERNAL, Name.identifier("RealmObjectHelper"))
@@ -113,7 +114,7 @@ object ClassIds {
     val EMBEDDED_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("EmbeddedRealmObject"))
     val ASYMMETRIC_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("AsymmetricRealmObject"))
 
-    val CLASS_APP_CONFIGURATION = ClassId(FqName("io.realm.kotlin.mongodb"), Name.identifier("AppConfiguration"))
+    val CLASS_APP_CONFIGURATION = ClassId(FqNames.PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = ClassId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("Set"))
@@ -148,8 +149,8 @@ object ClassIds {
     val REALM_BACKLINKS = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("BacklinksDelegate"))
     val REALM_EMBEDDED_BACKLINKS = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("EmbeddedBacklinksDelegate"))
     val REALM_OBJECT_ID = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("ObjectId"))
-    val KBSON_OBJECT_ID = ClassId(FqName("org.mongodb.kbson"), Name.identifier("BsonObjectId"))
-    val KBSON_DECIMAL128 = ClassId(FqName("org.mongodb.kbson"), Name.identifier("BsonDecimal128"))
+    val KBSON_OBJECT_ID = ClassId(FqNames.PACKAGE_KBSON, Name.identifier("BsonObjectId"))
+    val KBSON_DECIMAL128 = ClassId(FqNames.PACKAGE_KBSON, Name.identifier("BsonDecimal128"))
     val REALM_UUID = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmUUID"))
     val REALM_MUTABLE_INTEGER = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("MutableRealmInt"))
     val REALM_ANY = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmAny"))
