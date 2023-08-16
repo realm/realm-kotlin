@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.name.Name
  */
 class RealmModelDefaultMethodGeneration(private val pluginContext: IrPluginContext) {
 
-    private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(FqNames.REALM_OBJECT_HELPER)
+    private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(ClassIds.REALM_OBJECT_HELPER)
     private val realmToString: IrSimpleFunction = realmObjectHelper.lookupFunction(Name.identifier("realmToString"))
     private val realmEquals: IrSimpleFunction = realmObjectHelper.lookupFunction(Name.identifier("realmEquals"))
     private val realmHashCode: IrSimpleFunction = realmObjectHelper.lookupFunction(Name.identifier("realmHashCode"))
