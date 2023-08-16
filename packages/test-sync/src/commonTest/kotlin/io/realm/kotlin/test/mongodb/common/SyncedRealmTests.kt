@@ -29,7 +29,9 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
+import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -1541,6 +1543,7 @@ class SyncedRealmTests {
 
     @Test
     fun flexibleSync_throwsWithLocalInitialRealmFile() {
+
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -1574,8 +1577,14 @@ class SyncedRealmTests {
         Realm.open(local).use {
             it.write {
                 val obj = copyToRealm(JsonStyleRealmObject())
-                assertFailsWith<IllegalStateException> {
+                assertFailsWithMessage<IllegalStateException>("Cannot sync nested set") {
+                    obj.value = realmAnySetOf()
+                }
+                assertFailsWithMessage<IllegalStateException>("Cannot sync nested list") {
                     obj.value = realmAnyListOf()
+                }
+                assertFailsWithMessage<IllegalStateException>("Cannot sync nested dictionary") {
+                    obj.value = realmAnyDictionaryOf()
                 }
             }
         }

@@ -190,7 +190,7 @@ internal class ManagedRealmSet<E> constructor(
         RealmInterop.realm_set_remove_all(nativePointer)
     }
 
-    internal fun isValid(): Boolean {
+    override fun isValid(): Boolean {
         return !nativePointer.isReleased() && RealmInterop.realm_set_is_valid(nativePointer)
     }
 }
@@ -208,7 +208,7 @@ internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
             queryArgs
         )
     }
-    if (parent == null) TODO()
+    if (parent == null) error("Cannot perform subqueries on non-object sets")
     return ObjectBoundQuery(
         parent,
         ObjectQuery(

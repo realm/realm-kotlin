@@ -538,9 +538,24 @@ actual object RealmInterop {
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
     }
-    actual fun realm_list_insert_collection(list: RealmListPointer, index: Long, collectionType: CollectionType) {
-        realmc.realm_list_insert_collection(list.cptr(), index, collectionType.nativeValue)
+    actual fun realm_list_insert_set(list: RealmListPointer, index: Long): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_set(list.cptr(), index))
     }
+    actual fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_list(list.cptr(), index))
+    }
+    actual fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_dictionary(list.cptr(), index))
+    }
+//    actual fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer {
+//        return LongPointerWrapper(realmc.realm_list_set_collection(list.cptr(), index))
+//    }
+//    actual fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer {
+//        return LongPointerWrapper(realmc.realm_list_set_list(list.cptr(), index))
+//    }
+//    actual fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+//        return LongPointerWrapper(realmc.realm_list_set_dictionary(list.cptr(), index))
+//    }
     actual fun realm_list_set_collection(list: RealmListPointer, index: Long, collectionType: CollectionType) {
         realmc.realm_list_set_collection(list.cptr(), index, collectionType.nativeValue)
     }
@@ -787,8 +802,16 @@ actual object RealmInterop {
             }
         )
     }
-    actual fun realm_dictionary_insert_collection(dictionary: RealmMapPointer, mapKey: RealmValue, collectionType: CollectionType) {
-        realmc.realm_dictionary_insert_collection(dictionary.cptr(), mapKey.value, collectionType.nativeValue)
+    actual fun realm_dictionary_insert_set(dictionary: RealmMapPointer, mapKey: RealmValue): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_insert_set(dictionary.cptr(), mapKey.value))
+    }
+
+    actual fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_insert_list(dictionary.cptr(), mapKey.value))
+    }
+
+    actual fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_insert_dictionary(dictionary.cptr(), mapKey.value))
     }
 
     actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
@@ -926,6 +949,7 @@ actual object RealmInterop {
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
         val collectionWasCleared = BooleanArray(1)
+        val collectionWasDeleted = BooleanArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
@@ -933,7 +957,8 @@ actual object RealmInterop {
             insertionCount,
             modificationCount,
             movesCount,
-            collectionWasCleared
+            collectionWasCleared,
+            collectionWasDeleted,
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
@@ -1017,11 +1042,13 @@ actual object RealmInterop {
         val deletions = longArrayOf(0)
         val insertions = longArrayOf(0)
         val modifications = longArrayOf(0)
+        val collectionWasDeleted = BooleanArray(1)
         realmc.realm_dictionary_get_changes(
             change.cptr(),
             deletions,
             insertions,
-            modifications
+            modifications,
+            collectionWasDeleted,
         )
 
         val deletionStructs = realmc.new_valueArray(deletions[0].toInt())

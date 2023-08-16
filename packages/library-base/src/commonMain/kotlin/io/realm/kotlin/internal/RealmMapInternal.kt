@@ -112,7 +112,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     ): RealmNotificationTokenPointer =
         RealmInterop.realm_dictionary_add_notification_callback(nativePointer, callback)
 
-    internal fun isValid(): Boolean =
+    override fun isValid(): Boolean =
         !nativePointer.isReleased() && RealmInterop.realm_dictionary_is_valid(nativePointer)
 
     // TODO add equals and hashCode and tests for those. Observe this constrain
@@ -130,7 +130,7 @@ internal fun <K, V : BaseRealmObject> ManagedRealmMap<K, V?>.query(
         val mapValues = values as RealmMapValues<*, *>
         RealmInterop.realm_query_parse_for_results(mapValues.resultsPointer, query, queryArgs)
     }
-    if (parent == null) TODO()
+    if (parent == null) error("Cannot perform subqueries on non-object dictionaries")
     return ObjectBoundQuery(
         parent,
         ObjectQuery(
@@ -475,8 +475,7 @@ internal class RealmAnyMapOperator<K> constructor(
             if (value != null && value.type in RealmAny.Type.COLLECTION_TYPES) {
                 when (value.type) {
                     RealmAny.Type.SET -> {
-                        RealmInterop.realm_dictionary_insert_collection(nativePointer, keyTransport, CollectionType.RLM_COLLECTION_TYPE_SET)
-                        val newNativePointer = RealmInterop.realm_dictionary_find_set(nativePointer, keyTransport)
+                        val newNativePointer = RealmInterop.realm_dictionary_insert_set(nativePointer, keyTransport)
                         val operator = RealmAnySetOperator(
                             mediator,
                             realmReference,
@@ -489,16 +488,14 @@ internal class RealmAnyMapOperator<K> constructor(
                         RealmAny.create(ManagedRealmSet(null, newNativePointer, operator)) to true
                     }
                     RealmAny.Type.LIST -> {
-                        RealmInterop.realm_dictionary_insert_collection(nativePointer, keyTransport, CollectionType.RLM_COLLECTION_TYPE_LIST)
-                        val newNativePointer = RealmInterop.realm_dictionary_find_list(nativePointer, keyTransport)
+                        val newNativePointer = RealmInterop.realm_dictionary_insert_list(nativePointer, keyTransport)
                         val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, updatePolicy, cache, issueDynamicObject, issueDynamicMutableObject)
                         // FIXME Return value for updates??!?
                         operator.insertAll(0, value.asList(), updatePolicy, cache)
                         RealmAny.create(ManagedRealmList(null, newNativePointer, operator)) to true
                     }
                     RealmAny.Type.DICTIONARY -> {
-                        RealmInterop.realm_dictionary_insert_collection(nativePointer, keyTransport, CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
-                        val newNativePointer = RealmInterop.realm_dictionary_find_dictionary(nativePointer, keyTransport)
+                        val newNativePointer = RealmInterop.realm_dictionary_insert_dictionary(nativePointer, keyTransport)
                         val operator = RealmAnyMapOperator(
                             mediator, realmReference,
                             realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject),
@@ -797,7 +794,7 @@ internal class ManagedRealmDictionary<V> constructor(
                 owner.version().version,
                 RealmInterop.realm_object_get_key(parent.objectPointer).key
             )
-        } ?: TODO()
+        } ?: Triple("null", "null", -1)
         return "RealmDictionary{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 

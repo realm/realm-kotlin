@@ -312,7 +312,12 @@ expect object RealmInterop {
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
     fun realm_list_set(list: RealmListPointer, index: Long, inputTransport: RealmValue)
-    fun realm_list_insert_collection(list: RealmListPointer, index: Long, collectionType: CollectionType)
+    fun realm_list_insert_set(list: RealmListPointer, index: Long): RealmSetPointer
+    fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
+//    fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer
+//    fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
+//    fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
     fun realm_list_set_collection(list: RealmListPointer, index: Long, collectionType: CollectionType)
 
     // Returns the newly inserted element as the previous embedded element is automatically delete
@@ -383,7 +388,9 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue
-    fun realm_dictionary_insert_collection(dictionary: RealmMapPointer, mapKey: RealmValue, collectionType: CollectionType)
+    fun realm_dictionary_insert_set(dictionary: RealmMapPointer, mapKey: RealmValue): RealmSetPointer
+    fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer
+    fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
     fun realm_dictionary_resolve_in(
         dictionary: RealmMapPointer,

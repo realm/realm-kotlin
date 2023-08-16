@@ -32,6 +32,9 @@ abstract class CollectionChangeSetBuilder<T, R> {
 
     var movesCount: Int = 0
 
+    var isCleared: Boolean = false
+    var isDeleted: Boolean = false
+
     fun isEmpty(): Boolean = insertionIndices.isEmpty() &&
         modificationIndices.isEmpty() &&
         deletionIndices.isEmpty() &&

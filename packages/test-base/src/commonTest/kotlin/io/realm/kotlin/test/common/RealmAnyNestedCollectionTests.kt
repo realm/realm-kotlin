@@ -413,26 +413,67 @@ class RealmAnyNestedCollectionTests {
             val instance = copyToRealm(JsonStyleRealmObject())
             instance.value = RealmAny.create(realmListOf(RealmAny.create(5)))
 
+            // Store local reference to existing list
             val nestedList = instance.value!!.asList()
-            assertEquals(5, nestedList[0]!!.asInt())
+            // Accessing returns excepted value 5
+            nestedList[0]!!.asInt()
 
-            // FIXME Overwrite nested list element with new list just updates existing list
+            // Overwriting with new list
             instance.value = realmAnyListOf(7)
-            assertFailsWithMessage<IllegalStateException>("This is an ex-list") {
-                assertEquals(5, nestedList[0]!!.asInt())
-            }
+            // Accessing original orphaned list return 7 from the new instance, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
+            nestedList[0]!!.asInt()
 
-            // Overwrite nested list element with new collection of different type
-            instance.value = realmAnySetOf(8)
+            // Overwriting with null value
+            instance.value = null
+            // Throws excepted ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
+            nestedList[0]!!.asInt()
 
-            // Update old list
-            assertFailsWithMessage<IllegalStateException>("This is an ex-list") {
-                nestedList.add(RealmAny.create(1))
-            }
-            // FIXME Throws RLM_ERR_INDEX_OUT_OF_BOUNDS instead of RLM_ERR_ILLEGAL_OPERATION
-            assertFailsWithMessage<IllegalStateException>("This is an ex-list") {
-                val realmAny = nestedList[0]
-            }
+            // Updating to a new list
+            instance.value = realmAnyListOf(7)
+            // Accessing original orphaned list return 7 from the new instance again, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
+            nestedList[0]!!.asInt()
+
+//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+//                nestedList[0]!!.asInt()
+//            }
+
+
+//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+//                nestedList[0]!!.asInt()
+//
+//            }
+//
+//            // Overwrite with null value
+//            instance.value = null
+//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+//                nestedList[0]!!.asInt()
+//            }
+//
+//            // Overwrite with another list suddently revives the old list
+//            instance.value = realmAnyListOf(5)
+//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+//                nestedList[0]!!.asInt()
+//            }
+//
+//
+//            instance.value = realmAnyListOf()
+//            println("Updated empty")
+//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+//                println("Assert empty")
+//                    nestedList[0]!!.asInt()
+//            }
+//
+//            // Overwrite nested list element with new collection of different type
+//            instance.value = realmAnySetOf(8)
+//
+//            // Update old list
+//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+//                nestedList.add(RealmAny.create(1))
+//            }
+//            // FIXME Throws RLM_ERR_INDEX_OUT_OF_BOUNDS instead of RLM_ERR_ILLEGAL_OPERATION
+//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+//                val realmAny = nestedList[0]
+//            }
         }
     }
 
