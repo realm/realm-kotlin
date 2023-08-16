@@ -124,3 +124,5 @@ private fun preparePath(directoryPath: String) {
 }
 
 public actual fun isWindows(): Boolean = OS_NAME.contains("windows", ignoreCase = true)
+
+internal actual fun identityHashCode(obj: Any?): Int = System.identityHashCode(obj)
