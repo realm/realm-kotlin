@@ -17,9 +17,12 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.isManaged
+import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
@@ -27,6 +30,7 @@ import io.realm.kotlin.internal.dynamic.DynamicUnmanagedRealmObject
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.MemAllocator
+import io.realm.kotlin.internal.interop.ObjectKey
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -39,6 +43,7 @@ import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
+import io.realm.kotlin.internal.platform.identityHashCode
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.schema.ClassMetadata
 import io.realm.kotlin.internal.schema.PropertyMetadata
@@ -1141,6 +1146,66 @@ internal object RealmObjectHelper {
             }
             else -> IllegalStateException("Unknown type: ${propertyMetadata.collectionType}")
         }
+    }
+
+    @Suppress("unused") // Called from generated code
+    // Inlining this functions somehow break the IntelliJ debugger, unclear why?
+    internal fun realmToString(obj: BaseRealmObject): String {
+        // This code assumes no race conditions
+        val schemaName = obj::class.realmObjectCompanionOrNull()?.io_realm_kotlin_className
+        val fqName = obj::class.qualifiedName
+        return obj.realmObjectReference?.let {
+            if (obj.isValid()) {
+                val id: RealmObjectIdentifier = obj.getIdentifier()
+                val objKey = id.objectKey.key
+                val version = id.versionId.version
+                "$fqName{state=VALID, schemaName=$schemaName, objKey=$objKey, version=$version, realm=${it.owner.owner.configuration.name}}"
+            } else {
+                val state = if (it.owner.isClosed()) {
+                    "CLOSED"
+                } else {
+                    "INVALID"
+                }
+                "$fqName{state=$state, schemaName=$schemaName, realm=${it.owner.owner.configuration.name}, hashCode=${obj.hashCode()}}"
+            }
+        } ?: "$fqName{state=UNMANAGED, schemaName=$schemaName, hashCode=${obj.hashCode()}}"
+    }
+
+    @Suppress("unused", "ReturnCount") // Called from generated code
+    // Inlining this functions somehow break the IntelliJ debugger, unclear why?
+    internal fun realmEquals(obj: BaseRealmObject, other: Any?): Boolean {
+        if (obj === other) return true
+        if (other == null || obj::class != other::class) return false
+
+        other as BaseRealmObject
+
+        if (other.isManaged()) {
+            if (obj.isValid() != other.isValid()) return false
+            return obj.getIdentifierOrNull() == other.getIdentifierOrNull()
+        } else {
+            // If one of the objects are unmanaged, they are only equal if identical, which
+            // should have been caught at the top of this function.
+            return false
+        }
+    }
+
+    @Suppress("unused", "MagicNumber") // Called from generated code
+    // Inlining this functions somehow break the IntelliJ debugger, unclear why?
+    internal fun realmHashCode(obj: BaseRealmObject): Int {
+        // This code assumes no race conditions
+        return obj.realmObjectReference?.let {
+            val isValid: Boolean = obj.isValid()
+            val identifier: RealmObjectIdentifier = if (it.isClosed()) {
+                RealmObjectIdentifier(ClassKey(-1), ObjectKey(-1), VersionId(0), "")
+            } else {
+                obj.getIdentifier()
+            }
+            val realmPath: String = it.owner.owner.configuration.path
+            var hashCode = isValid.hashCode()
+            hashCode = 31 * hashCode + identifier.hashCode()
+            hashCode = 31 * hashCode + realmPath.hashCode()
+            hashCode
+        } ?: identityHashCode(obj)
     }
 
     private fun checkPropertyType(

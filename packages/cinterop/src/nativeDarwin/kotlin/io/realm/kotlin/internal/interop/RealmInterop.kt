@@ -433,6 +433,15 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_config_set_automatic_backlink_handling(
+        config: RealmConfigurationPointer,
+        enabled: Boolean
+    ) {
+        realm_wrapper.realm_config_set_automatic_backlink_handling(
+            config.cptr(),
+            enabled,
+        )
+    }
     actual fun realm_config_set_migration_function(
         config: RealmConfigurationPointer,
         callback: MigrationCallback

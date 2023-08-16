@@ -173,6 +173,10 @@ actual object RealmInterop {
         realmc.realm_config_set_migration_function(config.cptr(), callback)
     }
 
+    actual fun realm_config_set_automatic_backlink_handling(config: RealmConfigurationPointer, enabled: Boolean) {
+        realmc.realm_config_set_automatic_backlink_handling(config.cptr(), enabled)
+    }
+
     actual fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback) {
         realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
     }

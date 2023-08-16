@@ -69,6 +69,13 @@ class Registrar : ComponentRegistrar {
                 LoadingOrder.LAST,
                 project
             )
+            // Trigger generation of Realm specific methods in model classes:
+            // toString(), equals() and hashCode()
+            getExtensionPoint(SyntheticResolveExtension.extensionPointName).registerExtension(
+                RealmModelSyntheticMethodsExtension(),
+                LoadingOrder.LAST,
+                project
+            )
             // Adds RealmObjectInternal properties, rewires accessors and adds static companion
             // properties and methods
             getExtensionPoint(IrGenerationExtension.extensionPointName).registerExtension(
