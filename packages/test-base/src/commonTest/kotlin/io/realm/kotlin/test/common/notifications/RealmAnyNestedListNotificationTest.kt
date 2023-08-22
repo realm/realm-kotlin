@@ -24,11 +24,9 @@ import io.realm.kotlin.ext.realmAnyOf
 import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedList
-import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
-import io.realm.kotlin.notifications.SetChange
-import io.realm.kotlin.notifications.UpdatedSet
+import io.realm.kotlin.notifications.UpdatedList
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
@@ -82,14 +80,13 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
         val o: JsonStyleRealmObject = realm.write {
             copyToRealm(JsonStyleRealmObject().apply {
                 _id = "LIST"
-                value = realmAnyListOf(realmAnyListOf(realmAnyListOf(1, 2, 3)))
+                value = realmAnyListOf(realmAnyListOf(1, 2, 3))
             })
         }
 
-        val list = o.value!!.asList()[0]!!.asList()[0]!!.asList()
+        val list = o.value!!.asList()[0]!!.asList()
         assertEquals(3, list.size)
         val listener = async {
-            println("LISTENING to $list")
             list.asFlow().collect {
                 channel.send(it)
             }
@@ -97,19 +94,16 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
 
         channel.receiveOrFail(1.seconds).run {
             assertIs<InitialList<RealmAny?>>(this)
-            println(this)
-            println(this.list)
-            println(this.list[0])
             assertEquals(listOf(1,2,3), this.list.map{ it!!.asInt()})
         }
 
         realm.write {
-            val liveList = findLatest(o)!!.value!!.asList()[0]!!.asList()
-            liveList.add(RealmAny.create(4))
+            val liveNestedList = findLatest(o)!!.value!!.asList()[0]!!.asList()
+            liveNestedList.add(RealmAny.create(4))
         }
 
         channel.receiveOrFail(1.seconds).run {
-            assertIs<InitialList<RealmAny?>>(this)
+            assertIs<UpdatedList<RealmAny?>>(this)
             assertEquals(listOf(1,2,3, 4), this.list.map{ it!!.asInt()})
         }
 
@@ -154,9 +148,7 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
-                // FIXME Suspendable notifier listens to root list instead of nested list
-//                queriedContainer!!.value!!.asList()[0]!!.asList().add(RealmAny.create(1))
-                queriedContainer!!.value!!.asList().add(RealmAny.create(1))
+                queriedContainer!!.value!!.asList()[0]!!.asList().add(RealmAny.create(1))
             }
             assertEquals(1, channel1.receiveOrFail().list.size)
             assertEquals(1, channel2.receiveOrFail().list.size)
@@ -199,10 +191,7 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
         mutex.lock()
         // Update mixed value to overwrite and delete set
         realm.write {
-            // FIMXE Overwriting with similar container type doesn't emit a deletion event
-            //  https://github.com/realm/realm-core/issues/6895
-//            findLatest(container)!!.value = realmAnyListOf()
-            findLatest(container)!!.value = realmAnySetOf()
+            findLatest(container)!!.value = realmAnyListOf()
         }
 
         // Await that notifier has signalled the deletion so we are certain that the entity

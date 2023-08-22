@@ -463,8 +463,17 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
     }
 
-    actual fun realm_set_collection(obj: RealmObjectPointer, key: PropertyKey, collectionType: CollectionType) {
-        realmc.realm_set_collection(obj.cptr(), key.key, collectionType.nativeValue)
+    actual fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey) : RealmSetPointer {
+        realmc.realm_set_set(obj.cptr(), key.key)
+        return realm_get_set(obj, key)
+    }
+    actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey) : RealmListPointer  {
+        realmc.realm_set_list(obj.cptr(), key.key)
+        return realm_get_list(obj, key)
+    }
+    actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey) : RealmMapPointer  {
+        realmc.realm_set_dictionary(obj.cptr(), key.key)
+        return realm_get_dictionary(obj, key)
     }
 
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
@@ -556,8 +565,15 @@ actual object RealmInterop {
 //    actual fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
 //        return LongPointerWrapper(realmc.realm_list_set_dictionary(list.cptr(), index))
 //    }
-    actual fun realm_list_set_collection(list: RealmListPointer, index: Long, collectionType: CollectionType) {
-        realmc.realm_list_set_collection(list.cptr(), index, collectionType.nativeValue)
+
+    actual fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_list_set_set(list.cptr(), index))
+    }
+    actual fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_list_set_list(list.cptr(), index))
+    }
+    actual fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_list_set_dictionary(list.cptr(), index))
     }
 
     actual fun realm_list_set(

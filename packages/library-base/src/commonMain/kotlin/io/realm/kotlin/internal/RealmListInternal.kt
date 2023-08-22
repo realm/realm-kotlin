@@ -414,9 +414,12 @@ internal class RealmAnyListOperator(
         return get(index).also {
             inputScope {
                 if (element != null && element.type in RealmAny.Type.COLLECTION_TYPES) {
+                    // Core will not detect updates if resetting with similar containertype, so
+                    // force detection of new reference by clearing the value first.
+                    RealmInterop.realm_list_set(nativePointer, index.toLong(), nullTransport())
                     when (element.type) {
                         RealmAny.Type.SET -> {
-                            RealmInterop.realm_list_set_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_SET)
+                            RealmInterop.realm_list_set_set(nativePointer, index.toLong())
                             val newNativePointer = RealmInterop.realm_list_get_set(nativePointer, index.toLong())
                             val operator = RealmAnySetOperator(
                                 mediator,
@@ -428,13 +431,13 @@ internal class RealmAnyListOperator(
                             operator.addAllInternal(element.asSet(), updatePolicy, cache)
                         }
                         RealmAny.Type.LIST -> {
-                            RealmInterop.realm_list_set_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_LIST)
+                            RealmInterop.realm_list_set_list(nativePointer, index.toLong())
                             val newNativePointer = RealmInterop.realm_list_get_list(nativePointer, index.toLong())
                             val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, updatePolicy, cache, issueDynamicObject, issueDynamicMutableObject)
                             operator.insertAll(0, element.asList(), updatePolicy, cache)
                         }
                         RealmAny.Type.DICTIONARY -> {
-                            RealmInterop.realm_list_set_collection(nativePointer, index.toLong(), CollectionType.RLM_COLLECTION_TYPE_DICTIONARY)
+                            RealmInterop.realm_list_set_dictionary(nativePointer, index.toLong())
                             val newNativePointer = RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong())
                             val operator = RealmAnyMapOperator(
                                 mediator, realmReference,

@@ -153,9 +153,7 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
-                // FIXME Suspendable notifier listens to root list instead of nested list
-//                queriedContainer!!.value!!.asList()[0]!!.asDictionary().put("key1", RealmAny.create(1))
-                queriedContainer!!.value!!.asDictionary()["root"]!!.asDictionary().put("key1", RealmAny.create(1))
+                queriedContainer!!.value!!.asList()[0]!!.asDictionary().put("key1", RealmAny.create(1))
             }
             assertEquals(2, channel1.receiveOrFail().map.size)
             assertEquals(2, channel2.receiveOrFail().map.size)

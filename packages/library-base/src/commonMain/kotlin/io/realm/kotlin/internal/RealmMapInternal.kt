@@ -473,6 +473,9 @@ internal class RealmAnyMapOperator<K> constructor(
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             if (value != null && value.type in RealmAny.Type.COLLECTION_TYPES) {
+                // Core will not detect updates if resetting with similar containertype, so
+                // force detection of new reference by clearing the value first.
+                realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                 when (value.type) {
                     RealmAny.Type.SET -> {
                         val newNativePointer = RealmInterop.realm_dictionary_insert_set(nativePointer, keyTransport)

@@ -93,7 +93,7 @@ internal sealed interface RealmAnyContainer {
     }
 
     fun MemTrackingAllocator.setPrimitive(value: RealmAny)
-    fun createCollection(collectionType: CollectionType)
+    fun MemTrackingAllocator.createCollection(collectionType: CollectionType)
     fun getSet(): RealmSet<RealmAny?>
     fun getList(): RealmList<RealmAny?>
     fun getDictionary(): RealmDictionary<RealmAny?>
@@ -109,8 +109,21 @@ internal class RealmAnyProperty(
     override val mediator = obj.mediator
     override val realm: RealmReference = obj.owner
 
-    override fun createCollection(collectionType: CollectionType) {
-        RealmInterop.realm_set_collection(obj.objectPointer, key, collectionType)
+    override fun MemTrackingAllocator.createCollection(collectionType: CollectionType) {
+        RealmInterop.realm_set_value(obj.objectPointer, key, nullTransport(), false)
+        when(collectionType) {
+            CollectionType.RLM_COLLECTION_TYPE_NONE -> TODO()
+            CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                RealmInterop.realm_set_list(obj.objectPointer, key)
+            }
+            CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                RealmInterop.realm_set_set(obj.objectPointer, key)
+            }
+            CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                RealmInterop.realm_set_dictionary(obj.objectPointer, key)
+            }
+            else -> TODO()
+        }
     }
 
     override fun MemTrackingAllocator.setPrimitive(value: RealmAny) {

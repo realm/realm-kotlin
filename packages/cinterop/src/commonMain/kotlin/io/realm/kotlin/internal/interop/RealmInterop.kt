@@ -293,7 +293,9 @@ expect object RealmInterop {
         isDefault: Boolean
     )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
-    fun realm_set_collection(obj: RealmObjectPointer, key: PropertyKey, collectionType: CollectionType)
+    fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey) : RealmSetPointer
+    fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey) : RealmListPointer
+    fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
     fun <T> realm_object_get_parent(
         obj: RealmObjectPointer,
@@ -318,7 +320,9 @@ expect object RealmInterop {
 //    fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer
 //    fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
 //    fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
-    fun realm_list_set_collection(list: RealmListPointer, index: Long, collectionType: CollectionType)
+    fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer
+    fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
 
     // Returns the newly inserted element as the previous embedded element is automatically delete
     // by this operation

@@ -33,6 +33,7 @@ import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmAny
 import org.mongodb.kbson.ObjectId
+import java.lang.IllegalStateException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -411,27 +412,27 @@ class RealmAnyNestedCollectionTests {
     fun nestedCollectionsInList_set_invalidatesOldElement() = runBlocking<Unit> {
         realm.write {
             val instance = copyToRealm(JsonStyleRealmObject())
-            instance.value = RealmAny.create(realmListOf(RealmAny.create(5)))
+            instance.value = realmAnyListOf(realmAnyListOf(5))
 
             // Store local reference to existing list
-            val nestedList = instance.value!!.asList()
+            var nestedList = instance.value!!.asList()[0]!!.asList()
             // Accessing returns excepted value 5
-            nestedList[0]!!.asInt()
+            assertEquals(5, nestedList[0]!!.asInt())
 
-            // Overwriting with new list
-            instance.value = realmAnyListOf(7)
-            // Accessing original orphaned list return 7 from the new instance, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
-            nestedList[0]!!.asInt()
+            // Overwriting exact list with new list
+            instance.value!!.asList()[0] = realmAnyListOf(7)
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
 
-            // Overwriting with null value
+            nestedList = instance.value!!.asList()[0]!!.asList()
+            assertEquals(7, nestedList[0]!!.asInt())
+
+            // Overwriting root entry
             instance.value = null
-            // Throws excepted ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
-            nestedList[0]!!.asInt()
-
-            // Updating to a new list
-            instance.value = realmAnyListOf(7)
-            // Accessing original orphaned list return 7 from the new instance again, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
-            nestedList[0]!!.asInt()
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
 
 //            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
 //                nestedList[0]!!.asInt()
@@ -474,6 +475,11 @@ class RealmAnyNestedCollectionTests {
 //            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
 //                val realmAny = nestedList[0]
 //            }
+            // Recreating list doesn't bring things back to shape
+            instance.value = realmAnyListOf(realmAnyListOf(8))
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
         }
     }
 
@@ -645,9 +651,12 @@ class RealmAnyNestedCollectionTests {
             val nestedList = instance.value!!.asDictionary()["key"]!!.asList()
             assertEquals(5, nestedList[0]!!.asInt())
             // Overwrite nested list element with new list
-            instance.value!!.asDictionary()["key"] = RealmAny.create(realmListOf(RealmAny.create(7)))
-            // FIXME This shouldn't be true. We shouldn't have overwrite the old list
-//            assertEquals(5, nestedList[0]!!.asInt())
+            instance.value!!.asDictionary()["key"] = null
+
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
+
             // Overwrite nested list element with new collection of different type
             instance.value!!.asDictionary()["key"] = RealmAny.create(realmSetOf(RealmAny.create(8)))
             // Access the old list
@@ -657,6 +666,41 @@ class RealmAnyNestedCollectionTests {
             nestedList[0] = RealmAny.create(5)
             val realmAny = nestedList[0]
             assertEquals(7, realmAny!!.asInt())
+        }
+    }
+
+    @Test
+    fun updateMixed_invalidatesOldElement() = runBlocking<Unit> {
+        realm.write {
+            val instance = copyToRealm(JsonStyleRealmObject())
+            instance.value = RealmAny.create(realmListOf(RealmAny.create(5)))
+
+            // Store local reference to existing list
+            val nestedList = instance.value!!.asList()
+            // Accessing returns excepted value 5
+            nestedList[0]!!.asInt()
+
+            // Overwriting with new list
+            instance.value = realmAnyListOf(7)
+            // Accessing original orphaned list return 7 from the new instance, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
+
+            // Overwriting with null value
+            instance.value = null
+            // Throws excepted ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
+
+            // Updating to a new list
+            instance.value = realmAnyListOf(7)
+            // Accessing original orphaned list return 7 from the new instance again, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
+
         }
     }
 
