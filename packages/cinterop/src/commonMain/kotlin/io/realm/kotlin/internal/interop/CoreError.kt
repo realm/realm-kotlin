@@ -40,6 +40,7 @@ data class CategoryFlags(val categoryFlags: Int) {
         val CATEGORY_ORDER: List<ErrorCategory> = listOf(
             ErrorCategory.RLM_ERR_CAT_CUSTOM_ERROR,
             ErrorCategory.RLM_ERR_CAT_WEBSOCKET_ERROR,
+            ErrorCategory.RLM_ERR_CAT_SYNC_ERROR,
             ErrorCategory.RLM_ERR_CAT_SERVICE_ERROR,
             ErrorCategory.RLM_ERR_CAT_JSON_ERROR,
             ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR,
@@ -55,7 +56,8 @@ data class CategoryFlags(val categoryFlags: Int) {
 
     /**
      * Returns a description of the most important category defined in [categoryFlags].
-     * If no known categories are found, "Unknown[categoryFlags]" is returned.
+     * If no known categories are found, the integer values for all the categories is returned
+     * as debugging information.
      */
     val description: String = CATEGORY_ORDER.firstOrNull { category ->
         category in this
