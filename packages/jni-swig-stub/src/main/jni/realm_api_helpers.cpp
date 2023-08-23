@@ -716,10 +716,10 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
                                              "<init>",
     "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
 
-    jint category = static_cast<jint>(error.error_code.category);
-    jint value = error.error_code.value;
-    jstring msg = to_jstring(jenv, error.error_code.message);
-    jstring detailed_msg = to_jstring(jenv, error.detailed_message);
+    jint category = static_cast<jint>(error.status.categories);
+    jint value = static_cast<jint>(error.status.error);
+    jstring msg = to_jstring(jenv, error.status.message);
+    jstring path = to_jstring(jenv, error.status.path);
     jstring joriginal_file_path = nullptr;
     jstring jrecovery_file_path = nullptr;
     jboolean is_fatal = error.is_fatal;
@@ -793,7 +793,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             category,
             value,
             msg,
-            detailed_msg,
+            path,
             joriginal_file_path,
             jrecovery_file_path,
             is_fatal,
@@ -827,7 +827,7 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                         });
 }
 
-void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error) {
+void transfer_completion_callback(void* userdata, realm_error_t* error) {
     auto env = get_env(true);
     static JavaMethod java_success_callback_method(env,
                                            JavaClassGlobalDef::sync_session_transfer_completion_callback(),
@@ -836,12 +836,13 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
     static JavaMethod java_error_callback_method(env,
                                                    JavaClassGlobalDef::sync_session_transfer_completion_callback(),
                                                    "onError",
-                                                   "(IILjava/lang/String;)V");
+                                                   "(IILjava/lang/String;Ljava/lang/String;)V");
     if (error) {
-        jint category = static_cast<jint>(error->category);
-        jint value = error->value;
+        jint category = static_cast<jint>(error->categories);
+        jint value = error->error;
         jstring msg = to_jstring(env, error->message);
-        env->CallVoidMethod(static_cast<jobject>(userdata), java_error_callback_method, category, value, msg);
+        jstring path = to_jstring(env, error->path);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_error_callback_method, category, value, msg, path);
     } else {
         env->CallVoidMethod(static_cast<jobject>(userdata), java_success_callback_method);
     }

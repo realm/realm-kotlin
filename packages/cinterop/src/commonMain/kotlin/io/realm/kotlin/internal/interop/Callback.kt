@@ -19,7 +19,6 @@ package io.realm.kotlin.internal.interop
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
 import io.realm.kotlin.internal.interop.sync.SyncError
-import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 
 // TODO Could be replace by lambda. See realm_app_config_new networkTransportFactory for example.
 interface Callback<T : RealmNativePointer> {
@@ -39,7 +38,7 @@ fun interface SyncErrorCallback {
 
 // Interface exposed towards `library-sync`
 interface SyncSessionTransferCompletionCallback {
-    fun invoke(error: SyncErrorCode?)
+    fun invoke(error: CoreError?)
 }
 
 interface LogCallback {

@@ -25,8 +25,7 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -609,10 +608,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     // TODO Twice until the deprecated method is removed
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
@@ -682,10 +678,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     // TODO Twice until the deprecated method is removed
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
@@ -898,9 +891,8 @@ class SyncClientResetIntegrationTests {
                 )
                 // assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receiveOrFail())
 
-                (realm.syncSession as SyncSessionImpl).simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                (realm.syncSession as SyncSessionImpl).simulateSyncError(
+                    ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED
                 )
                 // Validate that we receive logs on the error callback
                 val actual = logChannel.receiveOrFail()
@@ -948,10 +940,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with((realm.syncSession as SyncSessionImpl)) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     val exception = channel.receiveOrFail()
                     val originalFilePath = assertNotNull(exception.originalFilePath)
@@ -1002,10 +991,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     val exception = channel.receiveOrFail()
 
@@ -1121,10 +1107,7 @@ class SyncClientResetIntegrationTests {
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
-                (realm.syncSession as SyncSessionImpl).simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                )
+                (realm.syncSession as SyncSessionImpl).simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
                 val exception = channel.receiveOrFail()
 
                 assertNotNull(exception.recoveryFilePath)
@@ -1248,10 +1231,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     // TODO Twice until the deprecated method is removed
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
@@ -1449,10 +1429,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     // TODO Twice until the deprecated method is removed
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())

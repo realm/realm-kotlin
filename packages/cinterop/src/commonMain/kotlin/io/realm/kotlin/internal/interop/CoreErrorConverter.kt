@@ -31,7 +31,7 @@ object CoreErrorConverter {
         path: String?,
         userError: Throwable?
     ): Throwable {
-        val categories: CategoryFlag = CategoryFlag(categoriesNativeValue)
+        val categories: CategoryFlags = CategoryFlags(categoriesNativeValue)
         val errorCode: ErrorCode? = ErrorCode.of(errorCodeNativeValue)
         val message: String = "[$errorCode]: $messageNativeValue"
 
@@ -44,9 +44,5 @@ object CoreErrorConverter {
                 IllegalStateException(message)
             else -> Error(message) // This can happen when propagating user level exceptions.
         }
-    }
-
-    data class CategoryFlag(val categoryCode: Int) {
-        operator fun contains(other: ErrorCategory): Boolean = categoryCode and other.nativeValue != 0
     }
 }

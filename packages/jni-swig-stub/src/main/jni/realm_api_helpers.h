@@ -72,7 +72,7 @@ void
 complete_http_request(void* request_context, jobject j_response);
 
 void
-transfer_completion_callback(void* userdata, realm_sync_error_code_t* error);
+transfer_completion_callback(void* userdata, realm_error_t* error);
 
 void
 realm_subscriptionset_changed_callback(void* userdata,
