@@ -18,6 +18,8 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
+import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
@@ -338,7 +340,19 @@ internal class RealmAnySetOperator(
         }
     }
 
+    override fun remove(element: RealmAny?): Boolean {
+        // Unmanaged objects are never found in a managed dictionary
+        if (element?.type == RealmAny.Type.OBJECT) {
+            if (!element.asRealmObject<RealmObjectInternal>().isManaged()) return false
+        }
+        return super.remove(element)
+    }
+
     override fun contains(element: RealmAny?): Boolean {
+        // Unmanaged objects are never found in a managed dictionary
+        if (element?.type == RealmAny.Type.OBJECT) {
+            if (!element.asRealmObject<RealmObjectInternal>().isManaged()) return false
+        }
         return inputScope {
             with(valueConverter) {
                 val transport = publicToRealmValue(element)
@@ -446,7 +460,19 @@ internal class RealmObjectSetOperator<E> constructor(
         }
     }
 
+    override fun remove(element: E): Boolean {
+        // Unmanaged objects are never found in a managed set
+        element?.also {
+            if (!(it as RealmObjectInternal).isManaged()) return false
+        }
+        return super.remove(element)
+    }
+
     override fun contains(element: E): Boolean {
+        // Unmanaged objects are never found in a managed set
+        element?.also {
+            if (!(it as RealmObjectInternal).isManaged()) return false
+        }
         return inputScope {
             val objRef = realmObjectToRealmReferenceWithImport(
                 element as BaseRealmObject?,

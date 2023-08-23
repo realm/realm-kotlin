@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
+import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryEntryOf
@@ -1321,6 +1322,21 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
             objectDictionaryField.query()
         }
         Unit
+    }
+
+    @Test
+    fun contains_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmDictionaryContainer())
+            assertEquals(1, query<RealmDictionaryContainer>().find().size)
+            assertFalse(liveObject.nullableObjectDictionaryField.containsValue(RealmDictionaryContainer()))
+            assertFalse(liveObject.nullableRealmAnyDictionaryField.containsValue(RealmAny.create(RealmDictionaryContainer())))
+            assertEquals(1, query<RealmDictionaryContainer>().find().size)
+            liveObject
+        }
+        // Verify that we can also call this on frozen instances
+        assertFalse(frozenObject.nullableObjectDictionaryField.containsValue(RealmDictionaryContainer()))
+        assertFalse(frozenObject.nullableRealmAnyDictionaryField.containsValue(RealmAny.create(RealmDictionaryContainer())))
     }
 
     private fun getCloseableRealm(): Realm =
