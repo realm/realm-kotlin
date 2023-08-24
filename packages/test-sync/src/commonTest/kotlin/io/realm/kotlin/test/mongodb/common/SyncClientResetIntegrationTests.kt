@@ -595,7 +595,7 @@ class SyncClientResetIntegrationTests {
                 // testing the server will send a different message. This just ensures that
                 // we don't accidentally modify or remove the message.
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] Simulate Client Reset.",
                     exception.message
                 )
 
@@ -728,7 +728,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -740,7 +740,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -812,7 +812,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -824,7 +824,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -948,7 +948,7 @@ class SyncClientResetIntegrationTests {
                     assertTrue(fileExists(originalFilePath))
                     assertFalse(fileExists(recoveryFilePath))
                     assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                        "[Sync][AutoClientResetFailed(1028)] Simulate Client Reset.",
                         exception.message
                     )
                 }
@@ -1114,7 +1114,7 @@ class SyncClientResetIntegrationTests {
                 assertNotNull(exception.originalFilePath)
                 assertFalse(fileExists(exception.recoveryFilePath))
                 assertTrue(fileExists(exception.originalFilePath))
-                assertTrue(exception.message!!.contains("Automatic recovery from client reset failed"))
+                assertTrue(exception.message!!.contains("Simulate Client Reset"))
             }
         }
     }
@@ -1157,7 +1157,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -1218,7 +1218,7 @@ class SyncClientResetIntegrationTests {
                 assertTrue(fileExists(recoveryFilePath))
 
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] Simulate Client Reset.",
                     exception.message
                 )
 
@@ -1416,7 +1416,7 @@ class SyncClientResetIntegrationTests {
                 assertTrue(fileExists(recoveryFilePath))
 
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] Simulate Client Reset.",
                     exception.message
                 )
 
