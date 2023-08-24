@@ -386,15 +386,9 @@ class SyncedRealmTests {
             exception.message.let { errorMessage ->
                 assertNotNull(errorMessage)
                 // Some race on JVM in particular mean that different errors can be reported.
-                if (errorMessage.contains("[Client]")) {
-                    assertTrue(errorMessage.contains("[BadChangeset(112)]"), errorMessage)
-                    assertTrue(errorMessage.contains("Bad changeset (DOWNLOAD)"), errorMessage)
-                } else if (errorMessage.contains("[Session]")) {
-                    assertTrue(errorMessage.contains("InvalidSchemaChange(225)"), errorMessage)
-                    assertTrue(
-                        errorMessage.contains("Invalid schema change (UPLOAD)"),
-                        errorMessage
-                    )
+                if (errorMessage.contains("[Sync]")) {
+                    assertTrue(errorMessage.contains("[BadChangeset(1015)]"), errorMessage)
+                    assertTrue(errorMessage.contains("Schema mismatch"), errorMessage)
                 } else {
                     fail("Unexpected error message: $errorMessage")
                 }
