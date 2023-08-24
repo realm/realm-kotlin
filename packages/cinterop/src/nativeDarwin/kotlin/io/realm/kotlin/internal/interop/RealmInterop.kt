@@ -21,7 +21,6 @@ package io.realm.kotlin.internal.interop
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.AppError.Companion.newInstance
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -2636,8 +2635,7 @@ actual object RealmInterop {
             val category = error.pointed.categories.toInt()
             val value: Int = error.pointed.error.value.toInt()
             val message = error.pointed.message.safeKString()
-            val path = error.pointed.path.safeKString()
-            completionCallback.invoke(CoreError(category, value, message, path, null))
+            completionCallback.invoke(CoreError(category, value, message))
         } else {
             completionCallback.invoke(null)
         }
