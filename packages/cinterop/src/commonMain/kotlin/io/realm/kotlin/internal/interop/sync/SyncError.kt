@@ -51,7 +51,6 @@ data class SyncError constructor(
         categoryFlags: Int,
         value: Int,
         message: String,
-        path: String,
         originalFilePath: String?,
         recoveryFilePath: String?,
         isFatal: Boolean,
@@ -59,7 +58,7 @@ data class SyncError constructor(
         isClientResetRequested: Boolean,
         compensatingWrites: Array<CoreCompensatingWriteInfo>
     ) : this(
-        CoreError(categoryFlags, value, message, path, null),
+        CoreError(categoryFlags, value, message),
         originalFilePath,
         recoveryFilePath,
         isFatal,

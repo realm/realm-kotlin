@@ -2390,9 +2390,7 @@ actual object RealmInterop {
                     val code = CoreError(
                         this.status.categories.toInt(),
                         this.status.error.value.toInt(),
-                        this.status.message.safeKString(),
-                        this.status.path.safeKString(),
-                        null
+                        this.status.message.safeKString()
                     )
 
                     val userInfoMap = (0 until user_info_length.toInt())

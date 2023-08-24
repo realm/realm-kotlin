@@ -41,9 +41,7 @@ class RealmSyncUtilsTest {
                 CoreError(
                     categoriesNativeValue = ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR.nativeValue,
                     errorCodeNativeValue = UNMAPPED_ERROR_CODE,
-                    messageNativeValue = "Placeholder message",
-                    path = "no-path",
-                    userError = null
+                    messageNativeValue = "Placeholder message"
                 )
             )
         )
@@ -61,9 +59,7 @@ class RealmSyncUtilsTest {
                 CoreError(
                     categoriesNativeValue = UNMAPPED_CATEGORY_CODE,
                     errorCodeNativeValue = UNMAPPED_ERROR_CODE,
-                    messageNativeValue = "Placeholder message",
-                    path = "no-path",
-                    userError = null
+                    messageNativeValue = "Placeholder message"
                 )
             )
         )
@@ -83,9 +79,7 @@ class RealmSyncUtilsTest {
                 CoreError(
                     categoriesNativeValue = ErrorCategory.RLM_ERR_CAT_CLIENT_ERROR.nativeValue,
                     errorCodeNativeValue = ErrorCode.RLM_ERR_UNKNOWN.nativeValue,
-                    messageNativeValue = "Placeholder message",
-                    path = "no-path",
-                    userError = null
+                    messageNativeValue = "Placeholder message"
                 )
             )
         )

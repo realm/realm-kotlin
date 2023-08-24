@@ -29,7 +29,7 @@ internal class JVMSyncSessionTransferCompletionCallback(
     fun onSuccess() {
         callback.invoke(null)
     }
-    fun onError(categoryFlags: Int, value: Int, message: String, path: String) {
-        callback.invoke(CoreError(categoryFlags, value, message, path, null))
+    fun onError(categoryFlags: Int, value: Int, message: String) {
+        callback.invoke(CoreError(categoryFlags, value, message))
     }
 }

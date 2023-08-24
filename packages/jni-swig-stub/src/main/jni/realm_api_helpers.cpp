@@ -714,12 +714,11 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
+    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
 
     jint category = static_cast<jint>(error.status.categories);
     jint value = static_cast<jint>(error.status.error);
     jstring msg = to_jstring(jenv, error.status.message);
-    jstring path = to_jstring(jenv, error.status.path);
     jstring joriginal_file_path = nullptr;
     jstring jrecovery_file_path = nullptr;
     jboolean is_fatal = error.is_fatal;
@@ -793,7 +792,6 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             category,
             value,
             msg,
-            path,
             joriginal_file_path,
             jrecovery_file_path,
             is_fatal,
@@ -836,13 +834,12 @@ void transfer_completion_callback(void* userdata, realm_error_t* error) {
     static JavaMethod java_error_callback_method(env,
                                                    JavaClassGlobalDef::sync_session_transfer_completion_callback(),
                                                    "onError",
-                                                   "(IILjava/lang/String;Ljava/lang/String;)V");
+                                                   "(IILjava/lang/String;)V");
     if (error) {
         jint category = static_cast<jint>(error->categories);
         jint value = error->error;
         jstring msg = to_jstring(env, error->message);
-        jstring path = to_jstring(env, error->path);
-        env->CallVoidMethod(static_cast<jobject>(userdata), java_error_callback_method, category, value, msg, path);
+        env->CallVoidMethod(static_cast<jobject>(userdata), java_error_callback_method, category, value, msg);
     } else {
         env->CallVoidMethod(static_cast<jobject>(userdata), java_success_callback_method);
     }

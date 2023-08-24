@@ -8,14 +8,13 @@ class CoreError(
     categoriesNativeValue: Int,
     val errorCodeNativeValue: Int,
     messageNativeValue: String?,
-    path: String,
-    userError: Throwable?
+    // These are represent in the C-API, but not populated by Core.
+    // path: String,
+    // userError: Throwable?
 ) {
     val categories: CategoryFlags = CategoryFlags((categoriesNativeValue))
     val errorCode: ErrorCode? = ErrorCode.of(errorCodeNativeValue)
     val message = messageNativeValue
-    val realmPath: String = path
-    val userError: Throwable? = userError
 
     operator fun contains(category: ErrorCategory): Boolean = category in categories
 }
