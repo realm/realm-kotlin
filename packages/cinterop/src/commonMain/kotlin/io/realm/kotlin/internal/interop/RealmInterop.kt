@@ -317,9 +317,6 @@ expect object RealmInterop {
     fun realm_list_insert_set(list: RealmListPointer, index: Long): RealmSetPointer
     fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer
     fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
-//    fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer
-//    fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
-//    fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
     fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer
     fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
     fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer

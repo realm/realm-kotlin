@@ -22,7 +22,6 @@ import io.realm.kotlin.internal.interop.NativePointer
 internal interface CollectionOperator<E, T> {
     val mediator: Mediator
     val realmReference: RealmReference
-    val valueConverter: RealmValueConverter<E>
     val nativePointer: NativePointer<out CapiT>
 }
 

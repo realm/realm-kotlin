@@ -18,12 +18,12 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
-import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_erase
@@ -37,7 +37,6 @@ import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.RealmValue
-import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
@@ -52,6 +51,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
+import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -215,14 +215,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun getValue(resultsPointer: RealmResultsPointer, index: Int): V? {
-        return getterScope {
-            with(valueConverter) {
-                val transport = realm_results_get(resultsPointer, index.toLong())
-                realmValueToPublic(transport)
-            } as V
-        }
-    }
+    fun getValue(resultsPointer: RealmResultsPointer, index: Int): V?
 
     @Suppress("UNCHECKED_CAST")
     fun getKey(resultsPointer: RealmResultsPointer, index: Int): K {
@@ -286,7 +279,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
 internal open class PrimitiveMapOperator<K, V> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val valueConverter: RealmValueConverter<V>,
+    val realmValueConverter: RealmValueConverter<V>,
     override val keyConverter: RealmValueConverter<K>,
     override val nativePointer: RealmMapPointer
 ) : MapOperator<K, V> {
@@ -301,7 +294,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
     ): Pair<V?, Boolean> {
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
-            with(valueConverter) {
+            with(realmValueConverter) {
                 val valueTransport = publicToRealmValue(value)
                 realm_dictionary_insert(
                     nativePointer,
@@ -317,7 +310,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
     override fun eraseInternal(key: K): Pair<V?, Boolean> {
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
-            with(valueConverter) {
+            with(realmValueConverter) {
                 realm_dictionary_erase(nativePointer, keyTransport).let {
                     Pair(realmValueToPublic(it.first), it.second)
                 }
@@ -331,9 +324,19 @@ internal open class PrimitiveMapOperator<K, V> constructor(
             realm_dictionary_get(nativePointer, position)
                 .let {
                     val key = with(keyConverter) { realmValueToPublic(it.first) }
-                    val value = with(valueConverter) { realmValueToPublic(it.second) }
+                    val value = with(realmValueConverter) { realmValueToPublic(it.second) }
                     Pair(key, value)
                 } as Pair<K, V>
+        }
+    }
+
+    override fun getValue(resultsPointer: RealmResultsPointer, index: Int): V?
+    {
+        return getterScope {
+            with(realmValueConverter) {
+                val transport = realm_results_get(resultsPointer, index.toLong())
+                realmValueToPublic(transport)
+            } as V
         }
     }
 
@@ -343,7 +346,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             val valueTransport = realm_dictionary_find(nativePointer, keyTransport)
-            with(valueConverter) { realmValueToPublic(valueTransport) }
+            with(realmValueConverter) { realmValueToPublic(valueTransport) }
         }
     }
 
@@ -351,7 +354,8 @@ internal open class PrimitiveMapOperator<K, V> constructor(
         // Even though we are getting a value we need to free the data buffers of the string values
         // we send down to Core, so we need to use an inputScope.
         return inputScope {
-            with(valueConverter) {
+            // FIXME This could potentially import an object?
+            with(realmValueConverter) {
                 RealmInterop.realm_dictionary_contains_value(
                     nativePointer,
                     publicToRealmValue(value)
@@ -370,25 +374,44 @@ internal open class PrimitiveMapOperator<K, V> constructor(
         realmReference: RealmReference,
         nativePointer: RealmMapPointer
     ): MapOperator<K, V> =
-        PrimitiveMapOperator(mediator, realmReference, valueConverter, keyConverter, nativePointer)
+        PrimitiveMapOperator(mediator, realmReference, realmValueConverter, keyConverter, nativePointer)
 }
 
+internal fun realmAnyMapOperator(
+    mediator: Mediator,
+    realm: RealmReference,
+    nativePointer: RealmMapPointer,
+    issueDynamicObject: Boolean,
+    issueDynamicMutableObject: Boolean
+): RealmAnyMapOperator<String> = RealmAnyMapOperator(
+    mediator,
+    realm,
+    converter(String::class),
+    nativePointer,
+    issueDynamicObject,
+    issueDynamicMutableObject
+)
 @Suppress("LongParameterList")
 internal class RealmAnyMapOperator<K> constructor(
-    mediator: Mediator,
-    realmReference: RealmReference,
-    valueConverter: RealmValueConverter<RealmAny?>,
-    keyConverter: RealmValueConverter<K>,
-    nativePointer: RealmMapPointer,
-    val issueDynamicObject: Boolean,
-    val issueDynamicMutableObject: Boolean
-) : PrimitiveMapOperator<K, RealmAny?>(
-    mediator,
-    realmReference,
-    valueConverter,
-    keyConverter,
-    nativePointer
-) {
+    override val mediator: Mediator,
+    override val realmReference: RealmReference,
+    override val keyConverter: RealmValueConverter<K>,
+    override val nativePointer: RealmMapPointer,
+    private val issueDynamicObject: Boolean,
+    private val issueDynamicMutableObject: Boolean
+) : MapOperator<K, RealmAny?> {
+
+    override var modCount: Int = 0
+
+    override fun eraseInternal(key: K): Pair<RealmAny?, Boolean> {
+        return inputScope {
+            val keyTransport = with(keyConverter) { publicToRealmValue(key) }
+                realm_dictionary_erase(nativePointer, keyTransport).let {
+                    Pair(realmAny(it.first, keyTransport), it.second)
+                }
+            }
+        }
+
     override fun containsValueInternal(value: RealmAny?): Boolean {
         // Unmanaged objects are never found in a managed dictionary
         if (value?.type == RealmAny.Type.OBJECT) {
@@ -398,12 +421,10 @@ internal class RealmAnyMapOperator<K> constructor(
         // Even though we are getting a value we need to free the data buffers of the string values
         // we send down to Core, so we need to use an inputScope.
         return inputScope {
-            with(valueConverter) {
-                RealmInterop.realm_dictionary_contains_value(
-                    nativePointer,
-                    publicToRealmValue(value)
-                )
-            }
+            RealmInterop.realm_dictionary_contains_value(
+                nativePointer,
+                realmAnyToRealmValueWithoutImport(value)
+            )
         }
     }
 
@@ -413,56 +434,50 @@ internal class RealmAnyMapOperator<K> constructor(
             realm_dictionary_get(nativePointer, position)
                 .let {
                     val keyTransport: K = with(keyConverter) { realmValueToPublic(it.first) as K }
-                    // FIXME Should we have realm_dictionaryy_get_list, ..._dict, ..._set
                     return keyTransport to getInternal(keyTransport)
                 }
         }
     }
+
+    override fun getValue(resultsPointer: RealmResultsPointer, index: Int): RealmAny? {
+        return getterScope {
+            val transport = realm_results_get(resultsPointer, index.toLong())
+            realmValueToRealmAny(transport, null, mediator, realmReference, issueDynamicObject, issueDynamicMutableObject,
+                {TODO("Nested sets cannot be obtained from iterator")},
+                {TODO("Nested lists cannot be obtained from iterator")},
+                {TODO("Nested dictionaries cannot be obtained from iterator")},
+            )
+        }
+    }
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmMapPointer
+    ): MapOperator<K, RealmAny?> =
+        RealmAnyMapOperator<K>(mediator, realmReference, keyConverter, nativePointer, issueDynamicObject, issueDynamicMutableObject)
+
+    override fun areValuesEqual(expected: RealmAny?, actual: RealmAny?): Boolean {
+        return expected == actual
+    }
+
     override fun getInternal(key: K): RealmAny? {
         return inputScope {
             val keyTransport: RealmValue = with(keyConverter) { publicToRealmValue(key) }
             val valueTransport: RealmValue = realm_dictionary_find(nativePointer, keyTransport)
-            val element = valueTransport.getType()
-            if (element == ValueType.RLM_TYPE_SET) {
-                val newNativePointer = RealmInterop.realm_dictionary_find_set(nativePointer, keyTransport)
-                val operator = RealmAnySetOperator(
-                    mediator,
-                    realmReference,
-                    newNativePointer,
-                    issueDynamicObject,
-                    issueDynamicMutableObject
-                )
-                val realmAnySet = ManagedRealmSet(null, newNativePointer, operator)
-                RealmAny.Companion.create(realmAnySet)
-            } else if (element == ValueType.RLM_TYPE_LIST) {
-                val newNativePointer = RealmInterop.realm_dictionary_find_list(nativePointer, keyTransport)
-                val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, issueDynamicObject = issueDynamicObject, issueDynamicMutableObject = issueDynamicMutableObject)
-                val realmAnyList = ManagedRealmList(null, newNativePointer, operator)
-                RealmAny.Companion.create(realmAnyList)
-            } else if (element == ValueType.RLM_TYPE_DICTIONARY) {
-                val newNativePointer = RealmInterop.realm_dictionary_find_dictionary(nativePointer, keyTransport)
-                val operator = RealmAnyMapOperator(
-                    mediator,
-                    realmReference,
-                    realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject),
-                    converter(String::class, mediator, realmReference),
-                    newNativePointer,
-                    issueDynamicObject,
-                    issueDynamicMutableObject
-                )
-                val realmDict = ManagedRealmDictionary(
-                    null,
-                    newNativePointer,
-                    operator
-                )
-                RealmAny.create(realmDict)
-            } else {
-                with(valueConverter) {
-                    realmValueToPublic(valueTransport)
-                }
-            }
+            realmAny(valueTransport, keyTransport)
         }
     }
+
+    private fun realmAny(
+        valueTransport: RealmValue,
+        keyTransport: RealmValue
+    ) = realmValueToRealmAny(
+        valueTransport, null, mediator, realmReference,
+        issueDynamicObject,
+        issueDynamicMutableObject,
+        { RealmInterop.realm_dictionary_find_set(nativePointer, keyTransport) },
+        { RealmInterop.realm_dictionary_find_list(nativePointer, keyTransport) }
+    ) { RealmInterop.realm_dictionary_find_dictionary(nativePointer, keyTransport) }
 
     override fun insertInternal(
         key: K,
@@ -472,67 +487,64 @@ internal class RealmAnyMapOperator<K> constructor(
     ): Pair<RealmAny?, Boolean> {
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
-            if (value != null && value.type in RealmAny.Type.COLLECTION_TYPES) {
-                // Core will not detect updates if resetting with similar containertype, so
-                // force detection of new reference by clearing the value first.
-                realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
-                when (value.type) {
-                    RealmAny.Type.SET -> {
-                        val newNativePointer = RealmInterop.realm_dictionary_insert_set(nativePointer, keyTransport)
-                        val operator = RealmAnySetOperator(
-                            mediator,
-                            realmReference,
-                            newNativePointer,
-                            issueDynamicObject,
-                            issueDynamicMutableObject
-                        ) // , updatePolicy, cache)
-                        operator.addAllInternal(value.asSet(), updatePolicy, cache)
-                        // FIXME Return value for updates??!?
-                        RealmAny.create(ManagedRealmSet(null, newNativePointer, operator)) to true
+            return realmAnyHandler(value,
+                primitiveValues = {
+                    realm_dictionary_insert(nativePointer, keyTransport, it).let { result ->
+                        realmAny(result.first, keyTransport) to result.second
                     }
-                    RealmAny.Type.LIST -> {
-                        val newNativePointer = RealmInterop.realm_dictionary_insert_list(nativePointer, keyTransport)
-                        val operator = RealmAnyListOperator(mediator, realmReference, newNativePointer, updatePolicy, cache, issueDynamicObject, issueDynamicMutableObject)
-                        // FIXME Return value for updates??!?
-                        operator.insertAll(0, value.asList(), updatePolicy, cache)
-                        RealmAny.create(ManagedRealmList(null, newNativePointer, operator)) to true
+                },
+                reference = {
+                    val obj = when (issueDynamicObject) {
+                        true -> it.asRealmObject<DynamicRealmObject>()
+                        false -> it.asRealmObject<RealmObject>()
                     }
-                    RealmAny.Type.DICTIONARY -> {
-                        val newNativePointer = RealmInterop.realm_dictionary_insert_dictionary(nativePointer, keyTransport)
-                        val operator = RealmAnyMapOperator(
-                            mediator, realmReference,
-                            realmAnyConverter(mediator, realmReference, issueDynamicObject, issueDynamicMutableObject),
-                            converter(String::class, mediator, realmReference),
-                            newNativePointer,
-                            issueDynamicObject, issueDynamicMutableObject
-                        )
-                        operator.putAll(value.asDictionary(), updatePolicy, cache)
-                        // FIXME Return value for updates??!?
-                        RealmAny.create(ManagedRealmDictionary(null, nativePointer, operator)) to true
+                    val objRef = realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
+                    val transport = realmObjectTransport(objRef as RealmObjectInterop)
+                    realm_dictionary_insert(nativePointer, keyTransport, transport).let { result ->
+                        realmAny(result.first, keyTransport) to result.second
                     }
-                    else -> TODO()
-                }
-            } else {
-                with(valueConverter) {
-                    val valueTransport = publicToRealmValue(value)
-                    realm_dictionary_insert(
+                },
+                set = { realmValue ->
+                    val previous = getInternal(key)
+                    val nativePointer = RealmInterop.realm_dictionary_insert_set(nativePointer, keyTransport)
+                    val operator = realmAnySetOperator(
+                        mediator,
+                        realmReference,
                         nativePointer,
-                        keyTransport,
-                        valueTransport
-                    ).let {
-                        Pair(realmValueToPublic(it.first), it.second)
-                    }
+                        issueDynamicObject, issueDynamicMutableObject
+                    )
+                    operator.addAll(realmValue.asSet(), updatePolicy, cache)
+                    previous to true
+                },
+                list = { realmValue ->
+                    val previous = getInternal(key)
+                    val nativePointer = RealmInterop.realm_dictionary_insert_list(nativePointer, keyTransport)
+                    val operator = realmAnyListOperator(
+                        mediator,
+                        realmReference,
+                        nativePointer,
+                        issueDynamicObject, issueDynamicMutableObject
+                    )
+                    operator.insertAll(0, realmValue.asList(), updatePolicy, cache)
+                    previous to true
+                },
+                dictionary = { realmValue ->
+                    val previous = getInternal(key)
+                    val nativePointer = RealmInterop.realm_dictionary_insert_dictionary(nativePointer, keyTransport)
+                    val operator =
+                        realmAnyMapOperator(mediator, realmReference, nativePointer, issueDynamicObject, issueDynamicMutableObject)
+                    operator.putAll(realmValue.asDictionary(), updatePolicy, cache)
+                    previous to true
                 }
-            }
+            )
         }
     }
 }
 
 @Suppress("LongParameterList")
-internal abstract class BaseRealmObjectMapOperator<K, V> constructor(
+internal abstract class BaseRealmObjectMapOperator<K, V: BaseRealmObject?> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val valueConverter: RealmValueConverter<V>,
     override val keyConverter: RealmValueConverter<K>,
     override val nativePointer: RealmMapPointer,
     val clazz: KClass<V & Any>,
@@ -589,6 +601,13 @@ internal abstract class BaseRealmObjectMapOperator<K, V> constructor(
         } as V?
     }
 
+    override fun getValue(resultsPointer: RealmResultsPointer, index: Int): V? {
+        return getterScope {
+            val transport = realm_results_get(resultsPointer, index.toLong())
+            realmValueToRealmObject(transport, clazz, mediator, realmReference)
+        }
+    }
+
     override fun containsValueInternal(value: V): Boolean {
         value?.also {
             // Unmanaged objects are never found in a managed dictionary
@@ -598,12 +617,10 @@ internal abstract class BaseRealmObjectMapOperator<K, V> constructor(
         // Even though we are getting a value we need to free the data buffers of the string we
         // send down to Core, so we need to use an inputScope.
         return inputScope {
-            with(valueConverter) {
-                RealmInterop.realm_dictionary_contains_value(
-                    nativePointer,
-                    publicToRealmValue(value)
-                )
-            }
+            RealmInterop.realm_dictionary_contains_value(
+                nativePointer,
+                realmObjectToRealmValue(value)
+            )
         }
     }
 
@@ -623,8 +640,7 @@ internal abstract class BaseRealmObjectMapOperator<K, V> constructor(
     ): MapOperator<K, V> = RealmObjectMapOperator(
         mediator,
         realmReference,
-        converter(clazz, mediator, realmReference),
-        converter(String::class, mediator, realmReference) as RealmValueConverter<K>,
+        converter(String::class) as RealmValueConverter<K>,
         nativePointer,
         clazz,
         classKey
@@ -632,10 +648,9 @@ internal abstract class BaseRealmObjectMapOperator<K, V> constructor(
 }
 
 @Suppress("LongParameterList")
-internal class RealmObjectMapOperator<K, V> constructor(
+internal class RealmObjectMapOperator<K, V: BaseRealmObject?> constructor(
     mediator: Mediator,
     realmReference: RealmReference,
-    valueConverter: RealmValueConverter<V>,
     keyConverter: RealmValueConverter<K>,
     nativePointer: RealmMapPointer,
     clazz: KClass<V & Any>,
@@ -643,7 +658,6 @@ internal class RealmObjectMapOperator<K, V> constructor(
 ) : BaseRealmObjectMapOperator<K, V>(
     mediator,
     realmReference,
-    valueConverter,
     keyConverter,
     nativePointer,
     clazz,
@@ -682,13 +696,13 @@ internal class RealmObjectMapOperator<K, V> constructor(
             } as Pair<V?, Boolean>
         }
     }
+
 }
 
 @Suppress("LongParameterList")
 internal class EmbeddedRealmObjectMapOperator<K, V : BaseRealmObject> constructor(
     mediator: Mediator,
     realmReference: RealmReference,
-    valueConverter: RealmValueConverter<V>,
     keyConverter: RealmValueConverter<K>,
     nativePointer: RealmMapPointer,
     clazz: KClass<V>,
@@ -696,7 +710,6 @@ internal class EmbeddedRealmObjectMapOperator<K, V : BaseRealmObject> constructo
 ) : BaseRealmObjectMapOperator<K, V>(
     mediator,
     realmReference,
-    valueConverter,
     keyConverter,
     nativePointer,
     clazz,
@@ -728,11 +741,9 @@ internal class EmbeddedRealmObjectMapOperator<K, V : BaseRealmObject> constructo
                 // We cannot return the old object as it is deleted when losing its parent so just
                 // return the newly created object even though it goes against the API
                 val embedded = realm_dictionary_insert_embedded(nativePointer, keyTransport)
-                with(valueConverter) {
-                    val newEmbeddedRealmObject = realmValueToPublic(embedded) as BaseRealmObject
-                    RealmObjectHelper.assign(newEmbeddedRealmObject, value, updatePolicy, cache)
-                    Pair(newEmbeddedRealmObject, true)
-                }
+                val newEmbeddedRealmObject = realmValueToRealmObject(embedded, clazz, mediator, realmReference) as V
+                RealmObjectHelper.assign(newEmbeddedRealmObject, value, updatePolicy, cache)
+                Pair(newEmbeddedRealmObject, true)
             } as Pair<V?, Boolean>
         }
     }

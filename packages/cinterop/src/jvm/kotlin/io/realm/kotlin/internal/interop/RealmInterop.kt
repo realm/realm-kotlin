@@ -556,16 +556,6 @@ actual object RealmInterop {
     actual fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
         return LongPointerWrapper(realmc.realm_list_insert_dictionary(list.cptr(), index))
     }
-//    actual fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer {
-//        return LongPointerWrapper(realmc.realm_list_set_collection(list.cptr(), index))
-//    }
-//    actual fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer {
-//        return LongPointerWrapper(realmc.realm_list_set_list(list.cptr(), index))
-//    }
-//    actual fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
-//        return LongPointerWrapper(realmc.realm_list_set_dictionary(list.cptr(), index))
-//    }
-
     actual fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer {
         return LongPointerWrapper(realmc.realm_list_set_set(list.cptr(), index))
     }
