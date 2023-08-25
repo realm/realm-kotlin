@@ -254,9 +254,9 @@ internal fun createMessageFromSyncError(error: CoreError): String {
 
     // Make sure that messages are uniformly formatted, so it looks nice if we append the
     // server log.
-    val msg = error.message!!.let { message: String ->
+    val msg = error.message?.let { message: String ->
         " $message${if (!message.endsWith(".")) "." else ""}"
-    }
+    } ?: ""
 
     return "[$categoryDesc][$errorDesc]$msg"
 }

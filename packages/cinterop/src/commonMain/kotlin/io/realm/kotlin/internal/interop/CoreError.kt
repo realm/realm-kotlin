@@ -8,9 +8,6 @@ class CoreError(
     categoriesNativeValue: Int,
     val errorCodeNativeValue: Int,
     messageNativeValue: String?,
-    // These are represent in the C-API, but not populated by Core.
-    // path: String,
-    // userError: Throwable?
 ) {
     val categories: CategoryFlags = CategoryFlags((categoriesNativeValue))
     val errorCode: ErrorCode? = ErrorCode.of(errorCodeNativeValue)
@@ -59,7 +56,7 @@ data class CategoryFlags(val categoryFlags: Int) {
      * as debugging information.
      */
     val description: String = CATEGORY_ORDER.firstOrNull { category ->
-        category in this
+        this.contains(category)
     }?.description ?: "$categoryFlags"
 
     /**
