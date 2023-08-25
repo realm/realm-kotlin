@@ -1,7 +1,6 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.interop.SynchronizableObject
-import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 
 // Register a system specific network listener (if supported)
