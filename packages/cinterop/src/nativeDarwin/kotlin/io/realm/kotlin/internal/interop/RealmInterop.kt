@@ -19,7 +19,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.safeKString
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -31,11 +30,8 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.SyncError
-import io.realm.kotlin.internal.interop.sync.SyncErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.atomicfu.AtomicBoolean
@@ -121,7 +117,6 @@ import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_set_t
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_sync_client_metadata_mode
-import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_sync_session_stop_policy_e
@@ -562,7 +557,7 @@ actual object RealmInterop {
                         )
                         err.usercode_error?.let { disposeUserData<Throwable>(it) }
                     } else {
-                        realm_wrapper.realm_release(realm)
+                        realm_release(realm)
                     }
                     safeUserData<AsyncOpenCallback>(userData).invoke(exception)
                 }
@@ -2391,10 +2386,10 @@ actual object RealmInterop {
             syncConfig.cptr(),
             staticCFunction { userData, syncSession, error ->
                 val syncError: SyncError = error.useContents {
-                    val code = SyncErrorCode.newInstance(
-                        error_code.category.value.toInt(),
-                        error_code.value,
-                        error_code.message.safeKString()
+                    val code = CoreError(
+                        this.status.categories.toInt(),
+                        this.status.error.value.toInt(),
+                        this.status.message.safeKString()
                     )
 
                     val userInfoMap = (0 until user_info_length.toInt())
@@ -2421,7 +2416,6 @@ actual object RealmInterop {
 
                     SyncError(
                         errorCode = code,
-                        detailedMessage = detailed_message.safeKString(),
                         originalFilePath = userInfoMap[c_original_file_path_key.safeKString()],
                         recoveryFilePath = userInfoMap[c_recovery_file_path_key.safeKString()],
                         isFatal = is_fatal,
@@ -2527,7 +2521,7 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_session_wait_for_download_completion(
             syncSession.cptr(),
-            staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
+            staticCFunction<COpaquePointer?, CPointer<realm_error_t>?, Unit> { userData, error ->
                 handleCompletionCallback(userData, error)
             },
             StableRef.create(callback).asCPointer(),
@@ -2543,7 +2537,7 @@ actual object RealmInterop {
     ) {
         realm_wrapper.realm_sync_session_wait_for_upload_completion(
             syncSession.cptr(),
-            staticCFunction<COpaquePointer?, CPointer<realm_sync_error_code_t>?, Unit> { userData, error ->
+            staticCFunction<COpaquePointer?, CPointer<realm_error_t>?, Unit> { userData, error ->
                 handleCompletionCallback(userData, error)
             },
             StableRef.create(callback).asCPointer(),
@@ -2574,15 +2568,13 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory,
+        error: ErrorCode,
         errorMessage: String,
         isFatal: Boolean
     ) {
         realm_wrapper.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode.nativeValue.toInt(),
-            category.nativeValue,
+            error.asNativeEnum,
             errorMessage,
             isFatal
         )
@@ -2636,14 +2628,14 @@ actual object RealmInterop {
 
     private fun handleCompletionCallback(
         userData: CPointer<out CPointed>?,
-        error: CPointer<realm_sync_error_code_t>?
+        error: CPointer<realm_error_t>?
     ) {
         val completionCallback = safeUserData<SyncSessionTransferCompletionCallback>(userData)
         if (error != null) {
-            val category = error.pointed.category.value.toInt()
-            val value: Int = error.pointed.value
+            val category = error.pointed.categories.toInt()
+            val value: Int = error.pointed.error.value.toInt()
             val message = error.pointed.message.safeKString()
-            completionCallback.invoke(SyncErrorCode.newInstance(category, value, message))
+            completionCallback.invoke(CoreError(category, value, message))
         } else {
             completionCallback.invoke(null)
         }
@@ -2672,12 +2664,6 @@ actual object RealmInterop {
         baseUrl?.let { realm_wrapper.realm_app_config_set_base_url(appConfig, it) }
 
         // Sync Connection Parameters
-        connectionParams.localAppName?.let { appName ->
-            realm_wrapper.realm_app_config_set_local_app_name(appConfig, appName)
-        }
-        connectionParams.localAppVersion?.let { appVersion ->
-            realm_wrapper.realm_app_config_set_local_app_name(appConfig, appVersion)
-        }
         realm_wrapper.realm_app_config_set_sdk(appConfig, connectionParams.sdkName)
         realm_wrapper.realm_app_config_set_sdk_version(appConfig, connectionParams.sdkVersion)
         realm_wrapper.realm_app_config_set_platform_version(appConfig, connectionParams.platformVersion)

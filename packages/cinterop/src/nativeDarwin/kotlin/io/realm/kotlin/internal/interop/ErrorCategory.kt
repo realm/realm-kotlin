@@ -35,7 +35,8 @@ actual enum class ErrorCategory(
     RLM_ERR_CAT_SERVICE_ERROR("Service", realm_error_category.RLM_ERR_CAT_SERVICE_ERROR.value.toInt()),
     RLM_ERR_CAT_HTTP_ERROR("Http", realm_error_category.RLM_ERR_CAT_HTTP_ERROR.value.toInt()),
     RLM_ERR_CAT_CUSTOM_ERROR("Custom", realm_error_category.RLM_ERR_CAT_CUSTOM_ERROR.value.toInt()),
-    RLM_ERR_CAT_WEBSOCKET_ERROR("Websocket", realm_error_category.RLM_ERR_CAT_WEBSOCKET_ERROR.value.toInt());
+    RLM_ERR_CAT_WEBSOCKET_ERROR("Websocket", realm_error_category.RLM_ERR_CAT_WEBSOCKET_ERROR.value.toInt()),
+    RLM_ERR_CAT_SYNC_ERROR("Sync", realm_error_category.RLM_ERR_CAT_SYNC_ERROR.value.toInt());
 
     actual companion object {
 

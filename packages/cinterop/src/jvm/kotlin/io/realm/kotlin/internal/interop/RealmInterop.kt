@@ -27,8 +27,6 @@ import io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCal
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
@@ -1340,15 +1338,13 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory,
+        error: ErrorCode,
         errorMessage: String,
         isFatal: Boolean
     ) {
         realmc.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode.nativeValue,
-            category.nativeValue,
+            error.nativeValue,
             errorMessage,
             isFatal
         )
@@ -1396,12 +1392,6 @@ actual object RealmInterop {
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
         // Sync Connection Parameters
-        connectionParams.localAppName?.let { appName ->
-            realmc.realm_app_config_set_local_app_name(config, appName)
-        }
-        connectionParams.localAppVersion?.let { appVersion ->
-            realmc.realm_app_config_set_local_app_name(config, appVersion)
-        }
         realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
         realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
         realmc.realm_app_config_set_platform_version(config, connectionParams.platformVersion)

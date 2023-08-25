@@ -19,16 +19,15 @@ package io.realm.kotlin.mongodb.internal
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.NotificationToken
 import io.realm.kotlin.internal.RealmImpl
+import io.realm.kotlin.internal.interop.CoreError
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncSessionTransferCompletionCallback
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncError
-import io.realm.kotlin.internal.interop.sync.SyncErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
 import io.realm.kotlin.mongodb.User
@@ -165,15 +164,13 @@ internal open class SyncSessionImpl(
     /**
      * Simulates a sync error. Internal visibility only for testing.
      */
-    internal fun simulateError(
-        errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory,
+    internal fun simulateSyncError(
+        error: ErrorCode,
         message: String = "Simulate Client Reset"
     ) {
         RealmInterop.realm_sync_session_handle_error_for_testing(
             nativePointer,
-            errorCode,
-            category,
+            error,
             message,
             true
         )
@@ -201,7 +198,7 @@ internal open class SyncSessionImpl(
             val result: Any = withTimeout(timeout) {
                 withContext(realm.notificationDispatcherHolder.dispatcher) {
                     val callback = object : SyncSessionTransferCompletionCallback {
-                        override fun invoke(errorCode: SyncErrorCode?) {
+                        override fun invoke(errorCode: CoreError?) {
                             if (errorCode != null) {
                                 // Transform the errorCode into a dummy syncError so we can have a
                                 // common path.
