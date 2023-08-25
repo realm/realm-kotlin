@@ -707,6 +707,11 @@ expect object RealmInterop {
         callback: AppCallback<String>
     )
 
+    // Sync Client
+    fun realm_app_sync_client_reconnect(app: RealmAppPointer)
+    fun realm_app_sync_client_has_sessions(app: RealmAppPointer): Boolean
+    fun realm_app_sync_client_wait_for_sessions_to_terminate(app: RealmAppPointer)
+
     // Sync config
     fun realm_config_set_sync_config(
         realmConfiguration: RealmConfigurationPointer,

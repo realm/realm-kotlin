@@ -29,6 +29,7 @@ import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
+import io.realm.kotlin.mongodb.sync.Sync
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -44,6 +45,13 @@ public class AppImpl(
     internal val nativePointer: RealmAppPointer
     internal val appNetworkDispatcher: DispatcherHolder
     private val networkTransport: NetworkTransport
+    private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
+        // If the network connections becomes available again, automatically reconnect
+        // immediately. This can e.g. be useful when toggling airplane mode on and off.
+        if (connectionAvailable) {
+            sync.reconnect()
+        }
+    }
 
     // Allow some delay between events being reported and them being consumed.
     // When the (somewhat arbitrary) limit is hit, we will throw an exception, since we assume the
@@ -61,6 +69,7 @@ public class AppImpl(
         appNetworkDispatcher = appResources.first
         networkTransport = appResources.second
         nativePointer = appResources.third
+        NetworkStateObserver.addListener(connectionListener)
     }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
@@ -68,6 +77,7 @@ public class AppImpl(
     override val currentUser: User?
         get() = RealmInterop.realm_app_get_current_user(nativePointer)
             ?.let { UserImpl(it, this) }
+    override val sync: Sync by lazy { SyncImpl(nativePointer) }
 
     override fun allUsers(): Map<String, User> {
         val nativeUsers: List<RealmUserPointer> =
@@ -130,6 +140,7 @@ public class AppImpl(
         // be beneficial in order to reason about the lifecycle of the Sync thread and dispatchers.
         networkTransport.close()
         nativePointer.release()
+        NetworkStateObserver.removeListener(connectionListener)
     }
 
     internal companion object {

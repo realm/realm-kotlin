@@ -23,6 +23,7 @@ import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.AppImpl
+import io.realm.kotlin.mongodb.sync.Sync
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -76,6 +77,12 @@ public interface App {
      * The value of this property will be `null` if no user is logged in or the user has expired.
      */
     public val currentUser: User?
+
+    /**
+     * Returns a Device Sync manager that control functionality across all open realms associated
+     * with this app.
+     */
+    public val sync: Sync
 
     /**
      * Returns all known users that are either [User.State.LOGGED_IN] or [User.State.LOGGED_OUT].

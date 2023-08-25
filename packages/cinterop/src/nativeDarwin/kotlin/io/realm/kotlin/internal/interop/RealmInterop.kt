@@ -2948,6 +2948,17 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_app_sync_client_reconnect(app: RealmAppPointer) {
+        realm_wrapper.realm_app_sync_client_reconnect(app.cptr())
+    }
+    actual fun realm_app_sync_client_has_sessions(app: RealmAppPointer): Boolean {
+        return realm_wrapper.realm_app_sync_client_has_sessions(app.cptr())
+    }
+
+    actual fun realm_app_sync_client_wait_for_sessions_to_terminate(app: RealmAppPointer) {
+        realm_wrapper.realm_app_sync_client_wait_for_sessions_to_terminate(app.cptr())
+    }
+
     actual fun realm_config_set_sync_config(realmConfiguration: RealmConfigurationPointer, syncConfiguration: RealmSyncConfigurationPointer) {
         realm_wrapper.realm_config_set_sync_config(realmConfiguration.cptr(), syncConfiguration.cptr())
     }
