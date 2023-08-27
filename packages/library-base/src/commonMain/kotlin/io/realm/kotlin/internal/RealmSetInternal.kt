@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
@@ -42,6 +43,7 @@ import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
@@ -304,8 +306,8 @@ internal fun realmAnySetOperator(
     mediator: Mediator,
     realm: RealmReference,
     nativePointer: RealmSetPointer,
-    issueDynamicObject: Boolean,
-    issueDynamicMutableObject: Boolean
+    issueDynamicObject: Boolean = false,
+    issueDynamicMutableObject: Boolean = false,
 ): RealmAnySetOperator = RealmAnySetOperator(
                     mediator,
                     realm,
@@ -350,13 +352,17 @@ internal class RealmAnySetOperator(
                     RealmInterop.realm_set_insert(nativePointer, realmValue)
                 },
                 reference = { realmValue ->
+                    val obj = when (issueDynamicObject) {
+                        true -> realmValue.asRealmObject<DynamicRealmObject>()
+                        false -> realmValue.asRealmObject<RealmObject>()
+                    }
                     val objRef =
-                        realmObjectToRealmReferenceWithImport(realmValue.asRealmObject(), mediator, realmReference, updatePolicy, cache)
+                        realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
                     RealmInterop.realm_set_insert(nativePointer, realmObjectTransport(objRef))
                 },
-//                set = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections") },
-//                list = { realmValue -> error("Sets cannot contain other collections ") },
-//                dictionary = { realmValue -> error("Sets cannot contain other collections ") },
+                set = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections") },
+                list = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
+                dictionary = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
             )
         }
     }

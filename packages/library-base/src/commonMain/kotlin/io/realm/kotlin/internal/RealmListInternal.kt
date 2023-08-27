@@ -18,6 +18,8 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
+import io.realm.kotlin.dynamic.DynamicMutableRealmObject
+import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
@@ -306,8 +308,8 @@ internal fun realmAnyListOperator(
                     mediator: Mediator,
                     realm: RealmReference,
                     nativePointer: RealmListPointer,
-                    issueDynamicObject: Boolean,
-                    issueDynamicMutableObject: Boolean,
+                    issueDynamicObject: Boolean = false,
+                    issueDynamicMutableObject: Boolean = false,
 ) :  RealmAnyListOperator = RealmAnyListOperator(
         mediator,
         realm,
@@ -354,9 +356,13 @@ internal class RealmAnyListOperator(
                 primitiveValues = { realmValue: RealmValue ->
                     RealmInterop.realm_list_add(nativePointer, index.toLong(), realmValue)
                 },
-                reference = { realmValue ->
+                reference = { realmValue: RealmAny ->
+                    val obj = when (issueDynamicObject) {
+                        true -> realmValue.asRealmObject<DynamicRealmObject>()
+                        false -> realmValue.asRealmObject<RealmObject>()
+                    }
                     val objRef =
-                        realmObjectToRealmReferenceWithImport(realmValue.asRealmObject(), mediator, realmReference, updatePolicy, cache)
+                        realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
                     RealmInterop.realm_list_add(nativePointer, index.toLong(), realmObjectTransport(objRef))
                 },
                 set = { realmValue ->

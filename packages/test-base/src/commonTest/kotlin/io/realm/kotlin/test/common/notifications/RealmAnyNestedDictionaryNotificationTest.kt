@@ -153,10 +153,10 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
             // Trigger an update
             realm.write {
                 val queriedContainer = findLatest(container)
-                queriedContainer!!.value!!.asList()[0]!!.asDictionary().put("key1", RealmAny.create(1))
+                queriedContainer!!.value!!.asDictionary()["root"]!!.asDictionary().put("key1", RealmAny.create(1))
             }
-            assertEquals(2, channel1.receiveOrFail().map.size)
-            assertEquals(2, channel2.receiveOrFail().map.size)
+            assertEquals(1, channel1.receiveOrFail().map.size)
+            assertEquals(1, channel2.receiveOrFail().map.size)
 
             // Cancel observer 1
             observer1.cancel()
@@ -170,7 +170,7 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
             // Check channel 1 didn't receive the update
             assertTrue(channel1.isEmpty)
             // But channel 2 did
-            assertEquals(3, channel2.receiveOrFail().map.size)
+            assertEquals(2, channel2.receiveOrFail().map.size)
 
             observer2.cancel()
             channel1.close()

@@ -122,7 +122,7 @@ class RealmAnyNestedCollectionTests {
                 value =
                     RealmAny.create(realmSetOf(RealmAny.create(realmListOf(RealmAny.create(5)))))
             }.let {
-                assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
+                assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
                     copyToRealm(it)
                 }
             }
@@ -133,7 +133,7 @@ class RealmAnyNestedCollectionTests {
                     )
                 )
             }.let {
-                assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
+                assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
                     copyToRealm(it)
                 }
             }
@@ -148,12 +148,14 @@ class RealmAnyNestedCollectionTests {
             )
             val set = instance.value!!.asSet()
 
-            assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
-                set.add(RealmAny.create(realmListOf()))
+            val realmAnyList = RealmAny.create(realmListOf())
+            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
+                set.add(realmAnyList)
             }
 
-            assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
-                set.add(RealmAny.create(realmDictionaryOf()))
+            val realmAnyDictionary = RealmAny.create(realmDictionaryOf())
+            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
+                set.add(realmAnyDictionary)
             }
         }
     }
@@ -241,6 +243,7 @@ class RealmAnyNestedCollectionTests {
 
         // Assert structure
         anyValue.asList().let {
+            it.contains(realmAnyListOf())
             assertEquals(RealmAny.create(5), it[0])
             assertEquals(RealmAny.create("Realm"), it[1])
             assertEquals("SAMPLE", it[2]!!.asRealmObject<Sample>().stringField)
@@ -434,47 +437,6 @@ class RealmAnyNestedCollectionTests {
                 nestedList[0]!!.asInt()
             }
 
-//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-//                nestedList[0]!!.asInt()
-//            }
-
-
-//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-//                nestedList[0]!!.asInt()
-//
-//            }
-//
-//            // Overwrite with null value
-//            instance.value = null
-//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-//                nestedList[0]!!.asInt()
-//            }
-//
-//            // Overwrite with another list suddently revives the old list
-//            instance.value = realmAnyListOf(5)
-//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-//                nestedList[0]!!.asInt()
-//            }
-//
-//
-//            instance.value = realmAnyListOf()
-//            println("Updated empty")
-//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-//                println("Assert empty")
-//                    nestedList[0]!!.asInt()
-//            }
-//
-//            // Overwrite nested list element with new collection of different type
-//            instance.value = realmAnySetOf(8)
-//
-//            // Update old list
-//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-//                nestedList.add(RealmAny.create(1))
-//            }
-//            // FIXME Throws RLM_ERR_INDEX_OUT_OF_BOUNDS instead of RLM_ERR_ILLEGAL_OPERATION
-//            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-//                val realmAny = nestedList[0]
-//            }
             // Recreating list doesn't bring things back to shape
             instance.value = realmAnyListOf(realmAnyListOf(8))
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
@@ -639,7 +601,7 @@ class RealmAnyNestedCollectionTests {
     }
 
     @Test
-    fun nestedCollectionsInDictionary_put_invalidatesOldElement() = runBlocking {
+    fun nestedCollectionsInDictionary_put_invalidatesOldElement() = runBlocking<Unit> {
         realm.write {
             val instance = copyToRealm(
                 JsonStyleRealmObject().apply {
@@ -648,24 +610,27 @@ class RealmAnyNestedCollectionTests {
                     )
                 }
             )
-            val nestedList = instance.value!!.asDictionary()["key"]!!.asList()
+            // Store local reference to existing list
+            var nestedList = instance.value!!.asDictionary()["key"]!!.asList()
+            // Accessing returns excepted value 5
             assertEquals(5, nestedList[0]!!.asInt())
-            // Overwrite nested list element with new list
-            instance.value!!.asDictionary()["key"] = null
+            // Overwriting exact list with new list
+            instance.value!!.asDictionary()["key"] = realmAnyListOf(7)
 
+            // Fails due to https://github.com/realm/realm-core/issues/6895
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
                 nestedList[0]!!.asInt()
             }
 
-            // Overwrite nested list element with new collection of different type
-            instance.value!!.asDictionary()["key"] = RealmAny.create(realmSetOf(RealmAny.create(8)))
-            // Access the old list
-            // FIXME Seems like we don't throw a nice error when accessing a delete collection
-            //  Overwriting with different collection type seems to ruin original item without
-            //  throwing proper fix
-            nestedList[0] = RealmAny.create(5)
-            val realmAny = nestedList[0]
-            assertEquals(7, realmAny!!.asInt())
+            // Getting updated reference to embedded list
+            nestedList = instance.value!!.asDictionary()["key"]!!.asList()
+            assertEquals(7, nestedList[0]!!.asInt())
+
+            // Overwriting root entry
+            instance.value = null
+            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
+                nestedList[0]!!.asInt()
+            }
         }
     }
 

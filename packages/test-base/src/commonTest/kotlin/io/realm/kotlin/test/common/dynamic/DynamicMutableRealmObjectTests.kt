@@ -1415,13 +1415,13 @@ class DynamicMutableRealmObjectTests {
             // Verify that we can add elements to the set
             set.add(RealmAny.Companion.create(dynamicSampleInner))
             // Verify that we cannot add nested collections
-            assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
+            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
                 set.add(RealmAny.Companion.create(realmSetOf()))
             }
-            assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
+            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
                 set.add(RealmAny.Companion.create(realmListOf()))
             }
-            assertFailsWithMessage<IllegalArgumentException>("Cannot add collections to RealmSets") {
+            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
                 set.add(RealmAny.Companion.create(realmDictionaryOf()))
             }
         }

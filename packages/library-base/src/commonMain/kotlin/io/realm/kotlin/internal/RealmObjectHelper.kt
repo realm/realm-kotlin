@@ -1133,26 +1133,25 @@ internal object RealmObjectHelper {
                                             setObjectByKey( obj, key, realmValue.asRealmObject(), updatePolicy, cache )
                                         },
                                         set = { realmValue ->
-                                            val nativePointer = RealmInterop.realm_get_set(obj.objectPointer, key)
+                                            val nativePointer = RealmInterop.realm_set_set(obj.objectPointer, key)
                                             val operator = realmAnySetOperator(
                                                 obj.mediator,
                                                 obj.owner,
                                                 nativePointer,
-                                                false,
-                                                false
+                                                true,
                                             )
                                             operator.addAll(value.asSet(), updatePolicy, cache)
                                         },
                                         list = { realmValue ->
                                             val nativePointer = RealmInterop.realm_set_list(obj.objectPointer, key)
                                             val operator =
-                                                realmAnyListOperator(obj.mediator, obj.owner, nativePointer, false, false)
-                                            operator.insertAll(0, value.asSet(), updatePolicy, cache)
+                                                realmAnyListOperator(obj.mediator, obj.owner, nativePointer, true)
+                                            operator.insertAll(0, value.asList(), updatePolicy, cache)
                                         },
                                         dictionary = { realmValue ->
                                             val nativePointer = RealmInterop.realm_set_dictionary(obj.objectPointer, key)
                                             val operator =
-                                                realmAnyMapOperator(obj.mediator, obj.owner, nativePointer, false, false)
+                                                realmAnyMapOperator(obj.mediator, obj.owner, nativePointer)
                                             operator.putAll(value.asDictionary(), updatePolicy, cache)
                                         }
                                     )

@@ -381,8 +381,8 @@ internal fun realmAnyMapOperator(
     mediator: Mediator,
     realm: RealmReference,
     nativePointer: RealmMapPointer,
-    issueDynamicObject: Boolean,
-    issueDynamicMutableObject: Boolean
+    issueDynamicObject: Boolean = false,
+    issueDynamicMutableObject: Boolean = false,
 ): RealmAnyMapOperator<String> = RealmAnyMapOperator(
     mediator,
     realm,
@@ -505,6 +505,7 @@ internal class RealmAnyMapOperator<K> constructor(
                     }
                 },
                 set = { realmValue ->
+                    realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_set(nativePointer, keyTransport)
                     val operator = realmAnySetOperator(
@@ -517,6 +518,7 @@ internal class RealmAnyMapOperator<K> constructor(
                     previous to true
                 },
                 list = { realmValue ->
+                    realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_list(nativePointer, keyTransport)
                     val operator = realmAnyListOperator(
@@ -529,6 +531,8 @@ internal class RealmAnyMapOperator<K> constructor(
                     previous to true
                 },
                 dictionary = { realmValue ->
+                    // Need to clear out
+                    realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_dictionary(nativePointer, keyTransport)
                     val operator =
