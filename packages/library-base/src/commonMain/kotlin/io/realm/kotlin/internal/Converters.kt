@@ -168,18 +168,18 @@ internal inline fun realmValueToRealmAny(
     }
 }
 
-
-// FIXME Do we really need to propagate dynamic and dynamic mutable info here
-internal fun <T> MemTrackingAllocator.realmAnyHandler(value: RealmAny?,
-                                                      primitiveValues: (RealmValue) -> T = { throw IllegalArgumentException("Operation not support for primitive values")},
-                                                      reference: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for objects")},
-                                                      set: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for sets")},
-                                                      list: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for lists")},
-                                                      dictionary: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for dictionaries")},
+internal fun <T> MemTrackingAllocator.realmAnyHandler(
+    value: RealmAny?,
+    primitiveValues: (RealmValue) -> T = { throw IllegalArgumentException("Operation not support for primitive values") },
+    reference: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for objects") },
+    set: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for sets") },
+    list: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for lists") },
+    dictionary: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for dictionaries") },
 ): T {
     return when (value?.type) {
         null ->
             primitiveValues(nullTransport())
+
         io.realm.kotlin.types.RealmAny.Type.INT,
         io.realm.kotlin.types.RealmAny.Type.BOOL,
         io.realm.kotlin.types.RealmAny.Type.STRING,
@@ -191,55 +191,21 @@ internal fun <T> MemTrackingAllocator.realmAnyHandler(value: RealmAny?,
         io.realm.kotlin.types.RealmAny.Type.OBJECT_ID,
         io.realm.kotlin.types.RealmAny.Type.UUID ->
             primitiveValues(realmAnyPrimitiveToRealmValue(value))
+
         io.realm.kotlin.types.RealmAny.Type.OBJECT -> {
-//                val converter = if (value.type == io.realm.kotlin.types.RealmAny.Type.OBJECT) {
-//                    when ((value as RealmAnyImpl<*>).clazz) {
-//                        DynamicRealmObject::class ->
-//                            realmAnyConverter(mediator, realmReference, true)
-//
-//                       DynamicMutableRealmObject::class ->
-//                            realmAnyConverter(
-//                                mediator,
-//                                realmReference,
-//                                issueDynamicObject = true,
-//                                issueDynamicMutableObject = true
-//                            )
-//
-//                        else ->
-//                            realmAnyConverter(obj.mediator, obj.owner)
-//                    }
-//                } else {
-//                    realmAnyConverter(obj.mediator, obj.owner)
-//                }
-//                with(converter) {
-//                    setValueTransportByKey(obj, key, publicToRealmValue(value))
-//                }
-            // UPDATE POLICY
-//                val transport = realmAnyToRealmValueWithImport(value, mediator, realmReference, false)
-//                primitiveValues()
-//                primitiveValues(transport)
             reference(value)
         }
 
         io.realm.kotlin.types.RealmAny.Type.SET -> {
             set(value)
-//                val nativePointer = set()
-//                val operator = realmAnySetOperator(mediator, realmReference, nativePointer, false, false)
-//                operator.addAll(value.asSet())//, updatePolicy, cache)
         }
 
         io.realm.kotlin.types.RealmAny.Type.LIST -> {
             list(value)
-//                val nativePointer = list()
-//                val operator = realmAnyList(mediator, realmReference, nativePointer, false, false)
-//                operator.insertAll(0, value.asList())//, updatePolicy, cache)
         }
 
         io.realm.kotlin.types.RealmAny.Type.DICTIONARY -> {
             dictionary(value)
-//                val nativePointer = dictionary()
-//                val operator = realmAnyMapOperator(mediator, realmReference, nativePointer, false, false)
-//                operator.putAll( value.asDictionary()) //, updatePolicy, cache )
         }
     }
 }

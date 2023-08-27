@@ -190,7 +190,9 @@ internal object RealmObjectHelper {
     internal fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
-        value: Any?
+        value: Any?,
+        updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
+        cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
         // TODO optimize: avoid this by creating the scope in the accessor via the compiler plugin
         //  See comment in AccessorModifierIrGeneration.modifyAccessor about this.
@@ -227,7 +229,7 @@ internal object RealmObjectHelper {
                         value = value,
                         primitiveValues = { realmValue -> setValueTransportByKey( obj, key, realmValue ) },
                         reference = { realmValue ->
-                            setObjectByKey( obj, key, realmValue.asRealmObject() )
+                            setObjectByKey( obj, key, realmValue.asRealmObject(), updatePolicy, cache)
                         },
                         set = { realmValue ->
                             RealmInterop.realm_set_value(obj.objectPointer, key, nullTransport(), false)
@@ -239,21 +241,21 @@ internal object RealmObjectHelper {
                                 false,
                                 false
                             )
-                            operator.addAll(value.asSet())//, updatePolicy, cache)
+                            operator.addAll(value.asSet(), updatePolicy, cache)
                         },
                         list = { realmValue ->
                             RealmInterop.realm_set_value(obj.objectPointer, key, nullTransport(), false)
                             val nativePointer = RealmInterop.realm_set_list(obj.objectPointer, key)
                             val operator =
                                 realmAnyListOperator(obj.mediator, obj.owner, nativePointer, false, false)
-                            operator.insertAll(0, value.asList())
+                            operator.insertAll(0, value.asList(), updatePolicy, cache)
                         },
                         dictionary = { realmValue ->
                             RealmInterop.realm_set_value(obj.objectPointer, key, nullTransport(), false)
                             val nativePointer = RealmInterop.realm_set_dictionary(obj.objectPointer, key)
                             val operator =
                                 realmAnyMapOperator(obj.mediator, obj.owner, nativePointer, false, false)
-                            operator.putAll(value.asDictionary())
+                            operator.putAll(value.asDictionary(), updatePolicy, cache)
                         }
                     )
                 }
@@ -809,6 +811,16 @@ internal object RealmObjectHelper {
                             )
                         }
                     }
+                    PropertyType.RLM_PROPERTY_TYPE_MIXED -> {
+                        val value = accessor.get(source)
+                        setValueByKey(
+                            target.realmObjectReference!!,
+                            property.key,
+                            value,
+                            updatePolicy,
+                            cache
+                        )
+                    }
                     else -> {
                         val getterValue = accessor.get(source)
                         accessor.set(target, getterValue)
@@ -1151,7 +1163,7 @@ internal object RealmObjectHelper {
                                         dictionary = { realmValue ->
                                             val nativePointer = RealmInterop.realm_set_dictionary(obj.objectPointer, key)
                                             val operator =
-                                                realmAnyMapOperator(obj.mediator, obj.owner, nativePointer)
+                                                realmAnyMapOperator(obj.mediator, obj.owner, nativePointer, true)
                                             operator.putAll(value.asDictionary(), updatePolicy, cache)
                                         }
                                     )
