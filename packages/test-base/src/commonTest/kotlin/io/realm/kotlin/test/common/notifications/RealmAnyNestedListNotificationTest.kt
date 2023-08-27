@@ -21,7 +21,6 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmAnyOf
-import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
@@ -78,10 +77,12 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
         val channel = Channel<ListChange<RealmAny?>>()
 
         val o: JsonStyleRealmObject = realm.write {
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "LIST"
-                value = realmAnyListOf(realmAnyListOf(1, 2, 3))
-            })
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "LIST"
+                    value = realmAnyListOf(realmAnyListOf(1, 2, 3))
+                }
+            )
         }
 
         val list = o.value!!.asList()[0]!!.asList()
@@ -94,7 +95,7 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
 
         channel.receiveOrFail(1.seconds).run {
             assertIs<InitialList<RealmAny?>>(this)
-            assertEquals(listOf(1,2,3), this.list.map{ it!!.asInt()})
+            assertEquals(listOf(1, 2, 3), this.list.map { it!!.asInt() })
         }
 
         realm.write {
@@ -104,7 +105,7 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
 
         channel.receiveOrFail(1.seconds).run {
             assertIs<UpdatedList<RealmAny?>>(this)
-            assertEquals(listOf(1,2,3, 4), this.list.map{ it!!.asInt()})
+            assertEquals(listOf(1, 2, 3, 4), this.list.map { it!!.asInt() })
         }
 
         realm.write {
@@ -123,7 +124,7 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
     override fun cancelAsFlow() {
         kotlinx.coroutines.runBlocking {
             val container = realm.write {
-                copyToRealm(JsonStyleRealmObject().apply { value = realmAnyListOf(realmAnyListOf())})
+                copyToRealm(JsonStyleRealmObject().apply { value = realmAnyListOf(realmAnyListOf()) })
             }
             val channel1 = Channel<ListChange<*>>(1)
             val channel2 = Channel<ListChange<*>>(1)
@@ -135,7 +136,7 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
                     }
             }
             val observer2 = async {
-                    observedSet.asFlow()
+                observedSet.asFlow()
                     .collect { change ->
                         channel2.trySend(change)
                     }
@@ -175,10 +176,15 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
 
     @Test
     override fun deleteEntity() = runBlocking<Unit> {
-        val container =
-            realm.write { copyToRealm(JsonStyleRealmObject().apply { value = realmAnyListOf(
-                realmAnyListOf()
-            ) }) }
+        val container = realm.write {
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    value = realmAnyListOf(
+                        realmAnyListOf()
+                    )
+                }
+            )
+        }
         val mutex = Mutex(true)
         val flow = async {
             container.value!!.asList()[0]!!.asList().asFlow().first {
@@ -203,10 +209,11 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
 
     @Test
     override fun asFlowOnDeletedEntity() = runBlocking<Unit> {
-        val container =
-            realm.write { copyToRealm(JsonStyleRealmObject().apply { value = realmAnyListOf(
-                realmAnyListOf()
-            ) }) }
+        val container = realm.write {
+            copyToRealm(
+                JsonStyleRealmObject().apply { value = realmAnyListOf(realmAnyListOf()) }
+            )
+        }
         val mutex = Mutex(true)
         val flow = async {
             container.value!!.asList()[0]!!.asList().asFlow().first {
@@ -245,4 +252,3 @@ class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
         TODO("Not yet implemented")
     }
 }
-

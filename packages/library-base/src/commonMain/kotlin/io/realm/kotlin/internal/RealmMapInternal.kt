@@ -330,8 +330,7 @@ internal open class PrimitiveMapOperator<K, V> constructor(
         }
     }
 
-    override fun getValue(resultsPointer: RealmResultsPointer, index: Int): V?
-    {
+    override fun getValue(resultsPointer: RealmResultsPointer, index: Int): V? {
         return getterScope {
             with(realmValueConverter) {
                 val transport = realm_results_get(resultsPointer, index.toLong())
@@ -406,11 +405,11 @@ internal class RealmAnyMapOperator<K> constructor(
     override fun eraseInternal(key: K): Pair<RealmAny?, Boolean> {
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
-                realm_dictionary_erase(nativePointer, keyTransport).let {
-                    Pair(realmAny(it.first, keyTransport), it.second)
-                }
+            realm_dictionary_erase(nativePointer, keyTransport).let {
+                Pair(realmAny(it.first, keyTransport), it.second)
             }
         }
+    }
 
     override fun containsValueInternal(value: RealmAny?): Boolean {
         // Unmanaged objects are never found in a managed dictionary
@@ -442,10 +441,16 @@ internal class RealmAnyMapOperator<K> constructor(
     override fun getValue(resultsPointer: RealmResultsPointer, index: Int): RealmAny? {
         return getterScope {
             val transport = realm_results_get(resultsPointer, index.toLong())
-            realmValueToRealmAny(transport, null, mediator, realmReference, issueDynamicObject, issueDynamicMutableObject,
-                {TODO("Nested sets cannot be obtained from iterator")},
-                {TODO("Nested lists cannot be obtained from iterator")},
-                {TODO("Nested dictionaries cannot be obtained from iterator")},
+            realmValueToRealmAny(
+                transport,
+                null,
+                mediator,
+                realmReference,
+                issueDynamicObject,
+                issueDynamicMutableObject,
+                { TODO("Nested sets cannot be obtained from iterator") },
+                { TODO("Nested lists cannot be obtained from iterator") },
+                { TODO("Nested dictionaries cannot be obtained from iterator") },
             )
         }
     }
@@ -487,7 +492,8 @@ internal class RealmAnyMapOperator<K> constructor(
     ): Pair<RealmAny?, Boolean> {
         return inputScope {
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
-            return realmAnyHandler(value,
+            return realmAnyHandler(
+                value,
                 primitiveValues = {
                     realm_dictionary_insert(nativePointer, keyTransport, it).let { result ->
                         realmAny(result.first, keyTransport) to result.second
@@ -546,7 +552,7 @@ internal class RealmAnyMapOperator<K> constructor(
 }
 
 @Suppress("LongParameterList")
-internal abstract class BaseRealmObjectMapOperator<K, V: BaseRealmObject?> constructor(
+internal abstract class BaseRealmObjectMapOperator<K, V : BaseRealmObject?> constructor(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val keyConverter: RealmValueConverter<K>,
@@ -652,7 +658,7 @@ internal abstract class BaseRealmObjectMapOperator<K, V: BaseRealmObject?> const
 }
 
 @Suppress("LongParameterList")
-internal class RealmObjectMapOperator<K, V: BaseRealmObject?> constructor(
+internal class RealmObjectMapOperator<K, V : BaseRealmObject?> constructor(
     mediator: Mediator,
     realmReference: RealmReference,
     keyConverter: RealmValueConverter<K>,
@@ -700,7 +706,6 @@ internal class RealmObjectMapOperator<K, V: BaseRealmObject?> constructor(
             } as Pair<V?, Boolean>
         }
     }
-
 }
 
 @Suppress("LongParameterList")

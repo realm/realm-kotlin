@@ -19,17 +19,13 @@ package io.realm.kotlin.test.common.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.JsonStyleRealmObject
-import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmAnyOf
 import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedSet
-import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.InitialSet
-import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.SetChange
-import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.notifications.UpdatedSet
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -50,7 +46,6 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
 class RealmAnyNestedSetNotificationTest : RealmEntityNotificationTests {
-
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -83,10 +78,12 @@ class RealmAnyNestedSetNotificationTest : RealmEntityNotificationTests {
         val channel = Channel<SetChange<RealmAny?>>()
 
         val o: JsonStyleRealmObject = realm.write {
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "SET"
-                value = realmAnySetOf(1, 2, 3)
-            })
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "SET"
+                    value = realmAnySetOf(1, 2, 3)
+                }
+            )
         }
 
         val set = o.value!!.asSet()
@@ -132,7 +129,7 @@ class RealmAnyNestedSetNotificationTest : RealmEntityNotificationTests {
     override fun cancelAsFlow() {
         kotlinx.coroutines.runBlocking {
             val container = realm.write {
-                copyToRealm(JsonStyleRealmObject().apply { value = realmAnySetOf()})
+                copyToRealm(JsonStyleRealmObject().apply { value = realmAnySetOf() })
             }
             val channel1 = Channel<SetChange<*>>(1)
             val channel2 = Channel<SetChange<*>>(1)
@@ -144,7 +141,7 @@ class RealmAnyNestedSetNotificationTest : RealmEntityNotificationTests {
                     }
             }
             val observer2 = async {
-                    observedSet.asFlow()
+                observedSet.asFlow()
                     .collect { change ->
                         channel2.trySend(change)
                     }
@@ -250,4 +247,3 @@ class RealmAnyNestedSetNotificationTest : RealmEntityNotificationTests {
         TODO("Not yet implemented")
     }
 }
-

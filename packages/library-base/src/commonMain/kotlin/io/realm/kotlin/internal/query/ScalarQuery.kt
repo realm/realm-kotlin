@@ -129,7 +129,8 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     private val queryType: AggregatorQueryType
 ) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), TypeBoundQuery<T>, RealmScalarNullableQuery<T> {
 
-    override val converter: (RealmValue) -> T? = when(propertyMetadata.type) {
+    @Suppress("ExplicitItLambdaParameter")
+    override val converter: (RealmValue) -> T? = when (propertyMetadata.type) {
         PropertyType.RLM_PROPERTY_TYPE_INT -> { it -> IntConverter.fromRealmValue(it)?.let { coerceLong(propertyMetadata.name, it, type) } as T? }
         PropertyType.RLM_PROPERTY_TYPE_FLOAT -> { it -> FloatConverter.fromRealmValue(it)?.let { coerceFloat(propertyMetadata.name, it, type) } as T? }
         PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> { it -> DoubleConverter.fromRealmValue(it)?.let { coerceDouble(propertyMetadata.name, it, type) } as T? }
@@ -200,7 +201,8 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     private val type: KClass<T>
 ) : BaseScalarQuery<E>(realmReference, queryPointer, mediator, classKey, clazz), TypeBoundQuery<T>, RealmScalarQuery<T> {
 
-    override val converter: (RealmValue) -> T? = when(propertyMetadata.type) {
+    @Suppress("ExplicitItLambdaParameter")
+    override val converter: (RealmValue) -> T? = when (propertyMetadata.type) {
         PropertyType.RLM_PROPERTY_TYPE_INT -> { it -> IntConverter.fromRealmValue(it)?.let { coerceLong(propertyMetadata.name, it, type) } as T? }
         PropertyType.RLM_PROPERTY_TYPE_FLOAT -> { it -> DoubleConverter.fromRealmValue(it)?.let { coerceDouble(propertyMetadata.name, it, type) } as T? }
         PropertyType.RLM_PROPERTY_TYPE_DOUBLE -> { it -> DoubleConverter.fromRealmValue(it)?.let { coerceDouble(propertyMetadata.name, it, type) } as T? }
@@ -269,18 +271,19 @@ private fun <T : Any> queryTypeValidator(
     }
 }
 
-internal fun coerceLong(propertyName: String, value: Long, coercedType: KClass<*>):Any {
+internal fun coerceLong(propertyName: String, value: Long, coercedType: KClass<*>): Any {
     return when (coercedType) {
-            Short::class -> value.toShort()
-            Int::class -> value.toInt()
-            Byte::class -> value.toByte()
-            Char::class -> value.toInt().toChar()
-            Long::class -> value
-            Double::class -> value.toDouble()
-            Float::class -> value.toFloat()
-            else -> throw IllegalArgumentException("Cannot coerce type of property '$propertyName' to '${coercedType.simpleName}'.")
-        }
+        Short::class -> value.toShort()
+        Int::class -> value.toInt()
+        Byte::class -> value.toByte()
+        Char::class -> value.toInt().toChar()
+        Long::class -> value
+        Double::class -> value.toDouble()
+        Float::class -> value.toFloat()
+        else -> throw IllegalArgumentException("Cannot coerce type of property '$propertyName' to '${coercedType.simpleName}'.")
+    }
 }
+
 internal fun coerceFloat(propertyName: String, value: Float, coercedType: KClass<*>): Any {
     return when (coercedType) {
         Short::class -> value.toInt().toShort()
@@ -293,6 +296,7 @@ internal fun coerceFloat(propertyName: String, value: Float, coercedType: KClass
         else -> throw IllegalArgumentException("Cannot coerce type of property '$$propertyName' to '${coercedType.simpleName}'.")
     }
 }
+
 internal fun coerceDouble(propertyName: String, value: Double, coercedType: KClass<*>): Any {
     return when (coercedType) {
         Short::class -> value.toInt().toShort()

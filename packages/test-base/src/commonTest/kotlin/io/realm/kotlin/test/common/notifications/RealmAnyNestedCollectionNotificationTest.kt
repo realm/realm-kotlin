@@ -21,36 +21,22 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.realmAnyListOf
-import io.realm.kotlin.ext.realmAnyOf
-import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialObject
-import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.ObjectChange
-import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.UpdatedObject
-import io.realm.kotlin.notifications.UpdatedSet
-import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmAny
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withTimeout
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.seconds
 
 class RealmAnyNestedCollectionNotificationTest {
-
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration
@@ -79,10 +65,12 @@ class RealmAnyNestedCollectionNotificationTest {
         val channel = Channel<ObjectChange<JsonStyleRealmObject>>()
 
         val o: JsonStyleRealmObject = realm.write {
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "SET"
-                value = realmAnyListOf(realmAnyListOf(1, 2, 3))
-            })
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "SET"
+                    value = realmAnyListOf(realmAnyListOf(1, 2, 3))
+                }
+            )
         }
 
         val listener = async {
@@ -109,4 +97,3 @@ class RealmAnyNestedCollectionNotificationTest {
         channel.close()
     }
 }
-

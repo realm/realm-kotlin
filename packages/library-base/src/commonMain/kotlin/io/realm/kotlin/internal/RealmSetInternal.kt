@@ -283,7 +283,7 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
         modCount++
     }
 
-    abstract fun removeInternal(element: E): Boolean
+    fun removeInternal(element: E): Boolean
     fun remove(element: E): Boolean {
         return removeInternal(element).also {
             // FIXME Should this only be updated if above value is true?
@@ -309,12 +309,12 @@ internal fun realmAnySetOperator(
     issueDynamicObject: Boolean = false,
     issueDynamicMutableObject: Boolean = false,
 ): RealmAnySetOperator = RealmAnySetOperator(
-                    mediator,
-                    realm,
-                    nativePointer,
-                    issueDynamicObject,
-                    issueDynamicMutableObject
-                )
+    mediator,
+    realm,
+    nativePointer,
+    issueDynamicObject,
+    issueDynamicMutableObject
+)
 
 internal class RealmAnySetOperator(
     override val mediator: Mediator,
@@ -452,7 +452,7 @@ internal class PrimitiveSetOperator<E>(
         PrimitiveSetOperator(mediator, realmReference, realmValueConverter, nativePointer)
 }
 
-internal class RealmObjectSetOperator<E: BaseRealmObject?> : SetOperator<E> {
+internal class RealmObjectSetOperator<E : BaseRealmObject?> : SetOperator<E> {
 
     override val mediator: Mediator
     override val realmReference: RealmReference
@@ -497,13 +497,13 @@ internal class RealmObjectSetOperator<E: BaseRealmObject?> : SetOperator<E> {
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-                realm_set_get(nativePointer, index.toLong())
-                    .let { transport ->
-                        when (ValueType.RLM_TYPE_NULL) {
-                            transport.getType() -> null
-                            else -> realmValueToRealmObject(transport, clazz, mediator, realmReference)
-                        }
-                    } as E
+            realm_set_get(nativePointer, index.toLong())
+                .let { transport ->
+                    when (ValueType.RLM_TYPE_NULL) {
+                        transport.getType() -> null
+                        else -> realmValueToRealmObject(transport, clazz, mediator, realmReference)
+                    }
+                } as E
         }
     }
 
@@ -517,7 +517,6 @@ internal class RealmObjectSetOperator<E: BaseRealmObject?> : SetOperator<E> {
             RealmInterop.realm_set_erase(nativePointer, transport)
         }
     }
-
 
     override fun contains(element: E): Boolean {
         // Unmanaged objects are never found in a managed set

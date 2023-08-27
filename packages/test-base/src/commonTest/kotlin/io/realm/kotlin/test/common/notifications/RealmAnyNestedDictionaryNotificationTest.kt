@@ -22,9 +22,7 @@ import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmAnyOf
-import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.DeletedMap
 import io.realm.kotlin.notifications.InitialMap
 import io.realm.kotlin.notifications.MapChange
@@ -80,10 +78,18 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
         val channel = Channel<MapChange<String, RealmAny?>>()
 
         val o: JsonStyleRealmObject = realm.write {
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "DICTIONARY"
-                value = realmAnyDictionaryOf("root" to realmAnyDictionaryOf("key1" to 1, "key2" to  2, "key3" to 3))
-            })
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "DICTIONARY"
+                    value = realmAnyDictionaryOf(
+                        "root" to realmAnyDictionaryOf(
+                            "key1" to 1,
+                            "key2" to 2,
+                            "key3" to 3
+                        )
+                    )
+                }
+            )
         }
 
         val dict = o.value!!.asDictionary()["root"]!!.asDictionary()
@@ -96,7 +102,10 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
 
         channel.receiveOrFail(1.seconds).run {
             assertIs<InitialMap<String, RealmAny?>>(this)
-            assertEquals(mapOf("key1" to 1,"key2" to 2,"key3" to 3), this.map.mapValues{ it.value!!.asInt()})
+            assertEquals(
+                mapOf("key1" to 1, "key2" to 2, "key3" to 3),
+                this.map.mapValues { it.value!!.asInt() }
+            )
         }
 
         realm.write {
@@ -105,8 +114,8 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
         }
 
         channel.receiveOrFail(1.seconds).run {
-            assertIs<UpdatedMap<String,RealmAny?>>(this)
-            assertEquals(mapOf("key1" to 1,"key2" to 2,"key3" to 3, "key4" to 4), this.map.mapValues{ it.value!!.asInt()})
+            assertIs<UpdatedMap<String, RealmAny?>>(this)
+            assertEquals(mapOf("key1" to 1, "key2" to 2, "key3" to 3, "key4" to 4), this.map.mapValues { it.value!!.asInt() })
         }
 
         realm.write {
@@ -125,13 +134,14 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
     override fun cancelAsFlow() {
         kotlinx.coroutines.runBlocking {
             val container = realm.write {
-                copyToRealm(JsonStyleRealmObject().apply { value = realmAnyDictionaryOf("root" to
-                    realmAnyDictionaryOf()
+                copyToRealm(
+                    JsonStyleRealmObject().apply {
+                        value = realmAnyDictionaryOf("root" to realmAnyDictionaryOf())
+                    }
                 )
-                })
             }
-            val channel1 = Channel<MapChange<String,*>>(1)
-            val channel2 = Channel<MapChange<String,*>>(1)
+            val channel1 = Channel<MapChange<String, *>>(1)
+            val channel2 = Channel<MapChange<String, *>>(1)
             val observedDict = container.value!!.asDictionary()["root"]!!.asDictionary()
             val observer1 = async {
                 observedDict.asFlow()
@@ -180,10 +190,13 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
 
     @Test
     override fun deleteEntity() = runBlocking<Unit> {
-        val container =
-            realm.write { copyToRealm(JsonStyleRealmObject().apply { value = realmAnyDictionaryOf("root" to
-                realmAnyDictionaryOf()
-            ) }) }
+        val container = realm.write {
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    value = realmAnyDictionaryOf("root" to realmAnyDictionaryOf())
+                }
+            )
+        }
         val mutex = Mutex(true)
         val flow = async {
             container.value!!.asDictionary()["root"]!!.asDictionary().asFlow().first {
@@ -196,10 +209,7 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
         mutex.lock()
         // Update mixed value to overwrite and delete set
         realm.write {
-            // FIMXE Overwriting with similar container type doesn't emit a deletion event
-            //  https://github.com/realm/realm-core/issues/6895
-//            findLatest(container)!!.value = realmAnyListOf()
-            findLatest(container)!!.value = realmAnySetOf()
+            findLatest(container)!!.value = realmAnyListOf()
         }
 
         // Await that notifier has signalled the deletion so we are certain that the entity
@@ -211,10 +221,13 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
 
     @Test
     override fun asFlowOnDeletedEntity() = runBlocking<Unit> {
-        val container =
-            realm.write { copyToRealm(JsonStyleRealmObject().apply { value = realmAnyDictionaryOf("root" to
-                realmAnyDictionaryOf()
-            ) }) }
+        val container = realm.write {
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    value = realmAnyDictionaryOf("root" to realmAnyDictionaryOf())
+                }
+            )
+        }
         val mutex = Mutex(true)
         val flow = async {
             container.value!!.asDictionary()["root"]!!.asDictionary().asFlow().first {

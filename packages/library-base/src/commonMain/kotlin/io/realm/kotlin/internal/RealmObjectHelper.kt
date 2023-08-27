@@ -227,9 +227,15 @@ internal object RealmObjectHelper {
                 is RealmAny -> {
                     realmAnyHandler(
                         value = value,
-                        primitiveValues = { realmValue -> setValueTransportByKey( obj, key, realmValue ) },
+                        primitiveValues = { realmValue ->
+                            setValueTransportByKey(
+                                obj,
+                                key,
+                                realmValue
+                            )
+                        },
                         reference = { realmValue ->
-                            setObjectByKey( obj, key, realmValue.asRealmObject(), updatePolicy, cache)
+                            setObjectByKey(obj, key, realmValue.asRealmObject(), updatePolicy, cache)
                         },
                         set = { realmValue ->
                             RealmInterop.realm_set_value(obj.objectPointer, key, nullTransport(), false)
@@ -1140,9 +1146,9 @@ internal object RealmObjectHelper {
                                 } else {
                                     realmAnyHandler(
                                         value = value,
-                                        primitiveValues = { realmValue -> setValueTransportByKey( obj, key, realmValue ) },
+                                        primitiveValues = { realmValue -> setValueTransportByKey(obj, key, realmValue) },
                                         reference = { realmValue ->
-                                            setObjectByKey( obj, key, realmValue.asRealmObject(), updatePolicy, cache )
+                                            setObjectByKey(obj, key, realmValue.asRealmObject(), updatePolicy, cache)
                                         },
                                         set = { realmValue ->
                                             val nativePointer = RealmInterop.realm_set_set(obj.objectPointer, key)

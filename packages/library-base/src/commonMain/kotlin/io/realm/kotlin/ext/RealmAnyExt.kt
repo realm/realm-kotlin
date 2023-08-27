@@ -18,8 +18,9 @@ public inline fun <reified T : BaseRealmObject> RealmAny.asRealmObject(): T =
     asRealmObject(T::class)
 
 // FIXME Doc if this is public
+@Suppress("ComplexMethod")
 public fun realmAnyOf(value: Any?): RealmAny? {
-    return when(value) {
+    return when (value) {
         (value == null) -> null
         is Boolean -> RealmAny.create(value)
         is Byte -> RealmAny.create(value)
@@ -54,6 +55,5 @@ public fun realmAnyListOf(vararg values: Any?): RealmAny =
     RealmAny.create(values.map { realmAnyOf(it) }.toRealmList())
 
 // FIXME Doc
-public fun realmAnyDictionaryOf(vararg values: Pair<String,Any?>): RealmAny =
-    RealmAny.create(values.map { (key, value) -> key to realmAnyOf(value) }
-        .toRealmDictionary())
+public fun realmAnyDictionaryOf(vararg values: Pair<String, Any?>): RealmAny =
+    RealmAny.create(values.map { (key, value) -> key to realmAnyOf(value) }.toRealmDictionary())

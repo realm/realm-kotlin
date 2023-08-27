@@ -665,7 +665,6 @@ class RealmAnyNestedCollectionTests {
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
                 nestedList[0]!!.asInt()
             }
-
         }
     }
 
@@ -685,35 +684,42 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun query() = runBlocking<Unit> {
         realm.write {
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "SET"
-//                value = RealmAny.create(realmSetOf(RealmAny.create(1), RealmAny.create(2), RealmAny.create(3)))
-                value = realmAnySetOf(1, 2, 3)
-            })
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "LIST"
-                value = realmAnyListOf(4, 5, 6)
-            })
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "DICT"
-                value = realmAnyDictionaryOf(
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "SET"
+                    value = realmAnySetOf(1, 2, 3)
+                }
+            )
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "LIST"
+                    value = realmAnyListOf(4, 5, 6)
+                }
+            )
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "DICT"
+                    value = realmAnyDictionaryOf(
                         "key1" to 7,
                         "key2" to 8,
                         "key3" to 9,
                     )
-            })
-            copyToRealm(JsonStyleRealmObject().apply {
-                _id = "EMBEDDED"
-                value = realmAnyListOf(
-                    setOf(1, 2, 3),
-                    listOf(4, 5, 6),
-                    mapOf(
-                        "key1" to 7,
-                        "key2" to 8,
-                        "key3" to listOf(9),
+                }
+            )
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    id = "EMBEDDED"
+                    value = realmAnyListOf(
+                        setOf(1, 2, 3),
+                        listOf(4, 5, 6),
+                        mapOf(
+                            "key1" to 7,
+                            "key2" to 8,
+                            "key3" to listOf(9),
+                        )
                     )
-                )
-            })
+                }
+            )
         }
 
         assertEquals(4, realm.query<JsonStyleRealmObject>().find().size)
@@ -731,10 +737,10 @@ class RealmAnyNestedCollectionTests {
 
         // Matching lists
         realm.query<JsonStyleRealmObject>("value[0] == 4").find().single().run {
-            assertEquals("LIST", _id)
+            assertEquals("LIST", id)
         }
         realm.query<JsonStyleRealmObject>("value[*] == 4").find().single().run {
-            assertEquals("LIST", _id)
+            assertEquals("LIST", id)
         }
         // Size
         // [RLM_ERR_INVALID_QUERY]: Operation '@size' is not supported on property of type 'mixed'
@@ -755,16 +761,16 @@ class RealmAnyNestedCollectionTests {
 //            assertEquals("EMBEDDED", id)
 //        }
         realm.query<JsonStyleRealmObject>("value[*][*] == 4").find().single().run {
-            assertEquals("EMBEDDED", _id)
+            assertEquals("EMBEDDED", id)
         }
         realm.query<JsonStyleRealmObject>("value[*][*] == 7").find().single().run {
-            assertEquals("EMBEDDED", _id)
+            assertEquals("EMBEDDED", id)
         }
         realm.query<JsonStyleRealmObject>("value[*].@keys == 'key1'").find().single().run {
-            assertEquals("EMBEDDED", _id)
+            assertEquals("EMBEDDED", id)
         }
         realm.query<JsonStyleRealmObject>("value[*].key3[0] == 9").find().single().run {
-            assertEquals("EMBEDDED", _id)
+            assertEquals("EMBEDDED", id)
         }
     }
 }

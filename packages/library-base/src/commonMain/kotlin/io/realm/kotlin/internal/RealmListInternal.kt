@@ -18,7 +18,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
-import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
@@ -305,18 +304,18 @@ internal class PrimitiveListOperator<E>(
 }
 
 internal fun realmAnyListOperator(
-                    mediator: Mediator,
-                    realm: RealmReference,
-                    nativePointer: RealmListPointer,
-                    issueDynamicObject: Boolean = false,
-                    issueDynamicMutableObject: Boolean = false,
-) :  RealmAnyListOperator = RealmAnyListOperator(
-        mediator,
-        realm,
-        nativePointer,
-        issueDynamicObject = issueDynamicObject,
-        issueDynamicMutableObject = issueDynamicMutableObject
-    )
+    mediator: Mediator,
+    realm: RealmReference,
+    nativePointer: RealmListPointer,
+    issueDynamicObject: Boolean = false,
+    issueDynamicMutableObject: Boolean = false,
+): RealmAnyListOperator = RealmAnyListOperator(
+    mediator,
+    realm,
+    nativePointer,
+    issueDynamicObject = issueDynamicObject,
+    issueDynamicMutableObject = issueDynamicMutableObject
+)
 
 @Suppress("LongParameterList")
 internal class RealmAnyListOperator(
@@ -455,7 +454,7 @@ internal class RealmAnyListOperator(
         RealmAnyListOperator(mediator, realmReference, nativePointer, issueDynamicObject = issueDynamicObject, issueDynamicMutableObject = issueDynamicMutableObject)
 }
 
-internal abstract class BaseRealmObjectListOperator<E: BaseRealmObject?> (
+internal abstract class BaseRealmObjectListOperator<E : BaseRealmObject?> (
     override val mediator: Mediator,
     override val realmReference: RealmReference,
     override val nativePointer: RealmListPointer,
@@ -472,7 +471,7 @@ internal abstract class BaseRealmObjectListOperator<E: BaseRealmObject?> (
     }
 }
 
-internal class RealmObjectListOperator<E: BaseRealmObject?>(
+internal class RealmObjectListOperator<E : BaseRealmObject?>(
     mediator: Mediator,
     realmReference: RealmReference,
     nativePointer: RealmListPointer,

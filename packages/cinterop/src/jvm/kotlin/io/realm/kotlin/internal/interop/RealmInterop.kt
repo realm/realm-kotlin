@@ -463,15 +463,15 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
     }
 
-    actual fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey) : RealmSetPointer {
+    actual fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
         realmc.realm_set_set(obj.cptr(), key.key)
         return realm_get_set(obj, key)
     }
-    actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey) : RealmListPointer  {
+    actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         realmc.realm_set_list(obj.cptr(), key.key)
         return realm_get_list(obj, key)
     }
-    actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey) : RealmMapPointer  {
+    actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer {
         realmc.realm_set_dictionary(obj.cptr(), key.key)
         return realm_get_dictionary(obj, key)
     }

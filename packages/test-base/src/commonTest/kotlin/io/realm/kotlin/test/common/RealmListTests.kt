@@ -27,7 +27,6 @@ import io.realm.kotlin.entities.list.Level2
 import io.realm.kotlin.entities.list.Level3
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
-import io.realm.kotlin.entities.set.RealmSetContainer
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
@@ -661,8 +660,6 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
         assertFalse(frozenObject.objectListField.contains(RealmListContainer()))
         assertFalse(frozenObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
     }
-
-
 
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = listTestSchema)
