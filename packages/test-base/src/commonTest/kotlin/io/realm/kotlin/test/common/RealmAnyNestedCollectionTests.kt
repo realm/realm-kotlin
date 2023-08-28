@@ -33,7 +33,6 @@ import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmAny
 import org.mongodb.kbson.ObjectId
-import java.lang.IllegalStateException
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -238,8 +237,6 @@ class RealmAnyNestedCollectionTests {
         val instance = realm.query<JsonStyleRealmObject>().find().single()
         val anyValue: RealmAny = instance.value!!
         assertEquals(RealmAny.Type.LIST, anyValue.type)
-        // FIXME Duplicate references not identified through RealmAny imports
-//        assertEquals(1, realm.query<Sample>().find().size)
 
         // Assert structure
         anyValue.asList().let {
@@ -536,8 +533,6 @@ class RealmAnyNestedCollectionTests {
                 )
             }
         }
-        // FIXME Duplicate references not identified through RealmAny imports
-//        assertEquals(1, realm.query<Sample>().find().size)
     }
     @Test
     fun dictionaryInRealmAny_put() = runBlocking {
@@ -596,8 +591,7 @@ class RealmAnyNestedCollectionTests {
                     embeddedDict["keyObject"]!!.asRealmObject<Sample>().stringField
                 )
             }
-        } // FIXME Duplicate references not identified through RealmAny imports
-//        assertEquals(1, realm.query<Sample>().find().size)
+        }
     }
 
     @Test
