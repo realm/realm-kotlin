@@ -242,6 +242,9 @@ class CinteropTest {
             }
             .toIntArray()
 
+        val unmappedErrors = coreErrorNativeValues
+            .filter { ErrorCode.of(it) == null }
+
         val errorCodeValues = coreErrorNativeValues
             .map {
                 ErrorCode.of(it)
@@ -250,7 +253,7 @@ class CinteropTest {
             .toSet()
 
         // validate that all error codes are mapped
-        assertEquals(coreErrorNativeValues.size, errorCodeValues.size)
+        assertEquals(coreErrorNativeValues.size, errorCodeValues.size, "Unmapped error codes: $unmappedErrors")
     }
 }
 
