@@ -162,7 +162,7 @@ internal object RealmObjectHelper {
     // Primitives
     // ---------------------------------------------------------------------
 
-    internal fun setValue(
+    internal inline fun setValue(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         value: Any?
@@ -187,7 +187,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("ComplexMethod", "LongMethod")
-    internal fun setValueByKey(
+    internal inline fun setValueByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         key: PropertyKey,
         value: Any?,
@@ -324,7 +324,7 @@ internal object RealmObjectHelper {
         propertyName: String
     ): ByteArray? = getterScope { getRealmValue(obj, propertyName)?.let { realmValueToByteArray(it) } }
 
-    internal fun getRealmAny(
+    internal inline fun getRealmAny(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String
     ): RealmAny? = getterScope {
