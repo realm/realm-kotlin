@@ -13,7 +13,7 @@ internal class SyncImpl(private val app: RealmAppPointer) : Sync {
         RealmInterop.realm_app_sync_client_reconnect(app)
     }
 
-    override suspend fun waitForSessionsToTerminate() {
+    override fun waitForSessionsToTerminate() {
         RealmInterop.realm_app_sync_client_wait_for_sessions_to_terminate(app)
     }
 }

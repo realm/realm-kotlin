@@ -38,5 +38,5 @@ public interface Sync {
      * an [IllegalStateException]. Using this method can be a way to ensure it is safe to delete
      * the file.
      */
-    public suspend fun waitForSessionsToTerminate()
+    public fun waitForSessionsToTerminate()
 }

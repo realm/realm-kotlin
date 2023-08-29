@@ -1,7 +1,6 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.interop.SynchronizableObject
-import kotlinx.atomicfu.atomic
 
 // Register a system specific network listener (if supported)
 internal expect fun registerSystemNetworkObserver()
@@ -12,12 +11,15 @@ internal expect fun registerSystemNetworkObserver()
  */
 internal object NetworkStateObserver {
 
+    /**
+     * This interface is used in a thread-safe manner, i.e. implementers do not have to think
+     * about race conditions.
+     */
     internal fun interface ConnectionListener {
         fun onChange(connectionAvailable: Boolean)
     }
 
     private val mutex = SynchronizableObject()
-    private var isConnected = atomic(true)
     private val listeners = mutableListOf<ConnectionListener>()
 
     init {
@@ -28,11 +30,9 @@ internal object NetworkStateObserver {
      * Called by each custom network implementation whenever a network change is detected.
      */
     fun notifyConnectionChange(isOnline: Boolean) {
-        if (isConnected.compareAndSet(expect = !isOnline, update = isOnline)) {
-            mutex.withLock {
-                listeners.forEach {
-                    it.onChange(isOnline)
-                }
+        mutex.withLock {
+            listeners.forEach {
+                it.onChange(isOnline)
             }
         }
     }

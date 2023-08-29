@@ -28,6 +28,7 @@ import android.net.NetworkRequest
 import android.os.Build
 import androidx.startup.Initializer
 import io.realm.kotlin.internal.RealmInitializer
+import io.realm.kotlin.log.RealmLog
 
 /**
  * An **initializer** for Sync specific functionality that does not fit into the `RealmInitializer`
@@ -69,15 +70,22 @@ class RealmSyncInitializer : Initializer<Context> {
         // On later versions of Android (need reference), these callbacks will also only trigger
         // if the app is in the foreground.
         //
+        // The current implementation is a best-effort in detecting when the network is available
+        // again.
+        //
         // See https://developer.android.com/training/basics/network-ops/reading-network-state
         // See https://developer.android.com/reference/android/net/ConnectivityManager#CONNECTIVITY_ACTION
         // See https://developer.android.com/reference/android/net/ConnectivityManager.NetworkCallback
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP /* 21 */) {
             val request = NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .build()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP /* 23 */) {
+                request.addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            }
+            @Suppress("invisible_member", "invisible_reference")
+            RealmLog.info("Register ConnectivityManager network callbacks")
             connectivityManager?.registerNetworkCallback(
-                request,
+                request.build(),
                 object : NetworkCallback() {
                     override fun onAvailable(network: Network) {
                         NetworkStateObserver.notifyConnectionChange(true)
@@ -88,6 +96,8 @@ class RealmSyncInitializer : Initializer<Context> {
                 }
             )
         } else {
+            @Suppress("invisible_member", "invisible_reference")
+            RealmLog.info("Register BroadcastReceiver connectivity callbacks")
             @Suppress("DEPRECATION")
             context.registerReceiver(
                 object : BroadcastReceiver() {

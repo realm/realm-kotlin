@@ -20,9 +20,11 @@ import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.platform.currentTime
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
@@ -30,6 +32,7 @@ import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import io.realm.kotlin.mongodb.sync.Sync
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -45,12 +48,37 @@ public class AppImpl(
     internal val nativePointer: RealmAppPointer
     internal val appNetworkDispatcher: DispatcherHolder
     private val networkTransport: NetworkTransport
+
+    private var lastOnlineStateReportedMs: Long? = null
+    private var lastConnectedState: Boolean? = null // null = unknown, true = connected, false = disconnected
+    private val reconnectThresholdMs = 5_000 // 5 seconds
+
+    @Suppress("invisible_member", "invisible_reference")
     private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
-        // If the network connections becomes available again, automatically reconnect
-        // immediately. This can e.g. be useful when toggling airplane mode on and off.
-        if (connectionAvailable) {
-            sync.reconnect()
+        // In an ideal world, we would be able to reliably detect the network coming and
+        // going. Unfortunately that does not seem to be case (at least on Android).
+        //
+        // So instead of assuming that we have always detect the device going offline first,
+        // we just tell Realm Core to reconnect when we detect the network has come back.
+        //
+        // Due to the way network interfaces are re-enabled on Android, we might see multiple
+        // "isOnline" messages in short order. So in order to prevent resetting the network
+        // too often we throttle messages, so a reconnect can only happen ever 5 seconds.
+        RealmLog.debug("Network state change detected. ConnectionAvailable = $connectionAvailable")
+        val nowMs: Long = RealmInstant.now().let { timestamp ->
+            timestamp.epochSeconds * 1000L + timestamp.nanosecondsOfSecond/1_000_000L
         }
+        if (connectionAvailable && (lastOnlineStateReportedMs == null || nowMs - lastOnlineStateReportedMs!! > reconnectThresholdMs)
+        ) {
+            RealmLog.info("Trigger network reconnect.")
+            try {
+                sync.reconnect()
+            } catch (ex: Exception) {
+                RealmLog.error(ex.toString())
+            }
+            lastOnlineStateReportedMs = nowMs
+        }
+        lastConnectedState = connectionAvailable
     }
 
     // Allow some delay between events being reported and them being consumed.
