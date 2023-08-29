@@ -26,6 +26,9 @@ public interface Sync {
      * In those cases it can be beneficial to call this method manually, which will force all
      * sessions to attempt to reconnect immediately and reset any timers they are using for
      * incremental backoff.
+     *
+     * Note, Realm has an internal default socket read timeout of 2 minutes. Calling this method
+     * within those two minutes will not trigger a reconnect.
      */
     public fun reconnect()
 
