@@ -20,7 +20,6 @@ import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
-import io.realm.kotlin.internal.platform.currentTime
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
@@ -51,9 +50,10 @@ public class AppImpl(
 
     private var lastOnlineStateReportedMs: Long? = null
     private var lastConnectedState: Boolean? = null // null = unknown, true = connected, false = disconnected
+    @Suppress("MagicNumber")
     private val reconnectThresholdMs = 5_000 // 5 seconds
 
-    @Suppress("invisible_member", "invisible_reference")
+    @Suppress("invisible_member", "invisible_reference", "MagicNumber")
     private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
         // In an ideal world, we would be able to reliably detect the network coming and
         // going. Unfortunately that does not seem to be case (at least on Android).
@@ -66,7 +66,7 @@ public class AppImpl(
         // too often we throttle messages, so a reconnect can only happen ever 5 seconds.
         RealmLog.debug("Network state change detected. ConnectionAvailable = $connectionAvailable")
         val nowMs: Long = RealmInstant.now().let { timestamp ->
-            timestamp.epochSeconds * 1000L + timestamp.nanosecondsOfSecond/1_000_000L
+            timestamp.epochSeconds * 1000L + timestamp.nanosecondsOfSecond / 1_000_000L
         }
         if (connectionAvailable && (lastOnlineStateReportedMs == null || nowMs - lastOnlineStateReportedMs!! > reconnectThresholdMs)
         ) {
