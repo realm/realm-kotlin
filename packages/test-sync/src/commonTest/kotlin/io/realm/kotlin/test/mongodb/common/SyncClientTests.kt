@@ -33,7 +33,6 @@ class SyncClientTests {
     fun setup() {
         app = TestApp(
             appName = TEST_APP_FLEX,
-            logLevel = LogLevel.ALL,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("syncclient-"))
             }
