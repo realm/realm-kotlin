@@ -121,7 +121,6 @@ open class TestApp private constructor(
         if (dispatcher is CloseableCoroutineDispatcher) {
             dispatcher.close()
         }
-        app.sync.waitForSessionsToTerminate()
         app.close()
 
         // Close network client resources
