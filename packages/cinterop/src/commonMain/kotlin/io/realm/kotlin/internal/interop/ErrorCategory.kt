@@ -32,7 +32,8 @@ expect enum class ErrorCategory : CodeDescription {
     RLM_ERR_CAT_SERVICE_ERROR,
     RLM_ERR_CAT_HTTP_ERROR,
     RLM_ERR_CAT_CUSTOM_ERROR,
-    RLM_ERR_CAT_WEBSOCKET_ERROR;
+    RLM_ERR_CAT_WEBSOCKET_ERROR,
+    RLM_ERR_CAT_SYNC_ERROR;
 
     companion object {
         internal fun of(nativeValue: Int): ErrorCategory?

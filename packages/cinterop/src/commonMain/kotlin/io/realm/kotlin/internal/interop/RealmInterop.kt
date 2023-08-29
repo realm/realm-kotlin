@@ -27,8 +27,6 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
@@ -127,8 +125,6 @@ typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscri
 @Suppress("LongParameterList")
 class SyncConnectionParams(
     sdkVersion: String,
-    localAppName: String?,
-    localAppVersion: String?,
     bundleId: String,
     platformVersion: String,
     device: String,
@@ -137,8 +133,6 @@ class SyncConnectionParams(
     frameworkVersion: String
 ) {
     val sdkName = "Kotlin"
-    val localAppName: String?
-    val localAppVersion: String?
     val bundleId: String
     val sdkVersion: String
     val platformVersion: String
@@ -156,8 +150,6 @@ class SyncConnectionParams(
     init {
         this.sdkVersion = sdkVersion
         this.bundleId = bundleId
-        this.localAppName = localAppName
-        this.localAppVersion = localAppVersion
         this.platformVersion = platformVersion
         this.device = device
         this.deviceVersion = deviceVersion
@@ -652,8 +644,7 @@ expect object RealmInterop {
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory,
+        error: ErrorCode,
         errorMessage: String,
         isFatal: Boolean
     )

@@ -22,6 +22,7 @@ childA == childC
 ```
 
 ### Enhancements
+* Fulltext queries now support prefix search by using the * operator, like `description TEXT 'alex*'`. (Core issue [#6860](https://github.com/realm/realm-core/issues/6860))
 * Realm model classes now generate custom `toString`, `equals` and `hashCode` implementations. This makes it possible to compare by object reference across multiple collections. Note that two objects at different versions will not be considered equal, even 
 if the content is the same. Custom implementations of these methods will be respected if they are present. (Issue [#1097](https://github.com/realm/realm-kotlin/issues/1097)) 
 * Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
@@ -47,7 +48,7 @@ if the content is the same. Custom implementations of these methods will be resp
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.19.0, commit ea7c5d5e2900b8411a295aea3d1aa56aa55fff1d.
 
 
 ## 1.10.2 (2023-07-21)
