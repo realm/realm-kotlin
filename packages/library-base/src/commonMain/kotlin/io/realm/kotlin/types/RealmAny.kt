@@ -60,6 +60,9 @@ import kotlin.reflect.KClass
  *          OBJECT_ID -> doSomething(realmAny.asObjectId())
  *          REALM_UUID -> doSomething(realmAny.asRealmUUID())
  *          REALM_OBJECT -> doSomething(realmAny.asRealmObject<MyRealmObject>())
+ *          SET -> doSomething(realmAny.asSet())
+ *          LIST -> doSomething(realmAny.asList())
+ *          DICTIONARY -> doSomething(realmAny.asDictionary())
  *      }
  * ```
  * [Short], [Int], [Byte], [Char] and [Long] values are converted internally to `int64_t` values.
@@ -113,11 +116,6 @@ public interface RealmAny {
      */
     public enum class Type {
         INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, SET, LIST, DICTIONARY;
-
-        // FIXME Should this be public!?
-        public companion object {
-            public val COLLECTION_TYPES: Set<Type> = setOf(SET, LIST, DICTIONARY)
-        }
     }
 
     /**
@@ -238,11 +236,22 @@ public interface RealmAny {
      */
     public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
 
-    // FIXME Docs
+    /**
+     * Returns the value from this `RealmAny` as a [RealmSet] containing new [RealmAny]s.
+     * @throws [IllegalStateException] if the stored value is not a set.
+     */
     public fun asSet(): RealmSet<RealmAny?>
-    // FIXME Docs
+
+    /**
+     * Returns the value from this `RealmAny` as a [RealmList] containing new [RealmAny]s.
+     * @throws [IllegalStateException] if the stored value is not a list.
+     */
     public fun asList(): RealmList<RealmAny?>
-    // FIXME Docs
+
+    /**
+     * Returns the value from this `RealmAny` as a [RealmDictionary] containing new [RealmAny]s.
+     * @throws [IllegalStateException] if the stored value is not a dictionary.
+     */
     public fun asDictionary(): RealmDictionary<RealmAny?>
 
     /**

@@ -46,14 +46,24 @@ public fun realmAnyOf(value: Any?): RealmAny? {
     }
 }
 
-// FIXME Doc
+/**
+ * Create a [RealmAny] containing a [RealmSet] of all arguments wrapped as [RealmAny]s.
+ * @param values elements of the set.
+ */
 public fun realmAnySetOf(vararg values: Any?): RealmAny =
     RealmAny.create(values.map { realmAnyOf(it) }.toRealmSet())
 
-// FIXME Doc
+/**
+ * Create a [RealmAny] containing a [RealmList] of all arguments wrapped as [RealmAny]s.
+ * @param values elements of the set.
+ */
 public fun realmAnyListOf(vararg values: Any?): RealmAny =
     RealmAny.create(values.map { realmAnyOf(it) }.toRealmList())
 
-// FIXME Doc
+/**
+ * Create a [RealmAny] containing a [RealmDictionary] with all argument values wrapped as
+ * [RealmAnys]s.
+ * @param values entries of the dictionary.
+ */
 public fun realmAnyDictionaryOf(vararg values: Pair<String, Any?>): RealmAny =
     RealmAny.create(values.map { (key, value) -> key to realmAnyOf(value) }.toRealmDictionary())
