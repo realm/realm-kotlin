@@ -18,11 +18,13 @@ package io.realm.kotlin.entities
 
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.PrimaryKey
 
 class JsonStyleRealmObject(id: String) : RealmObject {
     constructor() : this("JsonStyleRealmObject")
     @PrimaryKey
+    @PersistedName("_id")
     var id: String = id
     var value: RealmAny? = null
 }
