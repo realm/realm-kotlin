@@ -30,12 +30,7 @@ class SyncClientTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(
-            appName = TEST_APP_FLEX,
-            builder = {
-                it.syncRootDirectory(PlatformUtils.createTempDir("syncclient-"))
-            }
-        )
+        app = TestApp()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -92,7 +87,7 @@ class SyncClientTests {
         val config1 = SyncConfiguration.Builder(user, schema = setOf()).build()
         val config2 = SyncConfiguration.Builder(user, schema = setOf()).name("other.realm").build()
 
-        Realm.open(config1).use { realm1 ->
+        Realm.open(config1).use {
             assertTrue(app.sync.hasSyncSessions)
             Realm.open(config2).use { /* do nothing */ }
             assertTrue(app.sync.hasSyncSessions)
