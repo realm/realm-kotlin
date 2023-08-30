@@ -511,6 +511,7 @@ internal class RealmAnyMapOperator<K> constructor(
                     }
                 },
                 set = { realmValue ->
+                    // Have to clear existing elements for core to know if we are updating with a new collection
                     realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_set(nativePointer, keyTransport)
@@ -524,6 +525,7 @@ internal class RealmAnyMapOperator<K> constructor(
                     previous to true
                 },
                 list = { realmValue ->
+                    // Have to clear existing elements for core to know if we are updating with a new collection
                     realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_list(nativePointer, keyTransport)
@@ -537,7 +539,7 @@ internal class RealmAnyMapOperator<K> constructor(
                     previous to true
                 },
                 dictionary = { realmValue ->
-                    // Need to clear out
+                    // Have to clear existing elements for core to know if we are updating with a new collection
                     realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_dictionary(nativePointer, keyTransport)

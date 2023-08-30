@@ -414,6 +414,7 @@ internal class RealmAnyListOperator(
                         RealmInterop.realm_list_set(nativePointer, index.toLong(), realmObjectTransport(objRef))
                     },
                     set = { realmValue ->
+                        // Have to clear existing elements for core to know if we are updating with a new collection
                         RealmInterop.realm_list_set(nativePointer, index.toLong(), nullTransport())
                         val nativePointer = RealmInterop.realm_list_set_set(nativePointer, index.toLong())
                         val operator = realmAnySetOperator(
@@ -425,6 +426,7 @@ internal class RealmAnyListOperator(
                         operator.addAll(realmValue.asSet(), updatePolicy, cache)
                     },
                     list = { realmValue ->
+                        // Have to clear existing elements for core to know if we are updating with a new collection
                         RealmInterop.realm_list_set(nativePointer, index.toLong(), nullTransport())
                         val nativePointer = RealmInterop.realm_list_set_list(nativePointer, index.toLong())
                         val operator = realmAnyListOperator(
@@ -436,6 +438,7 @@ internal class RealmAnyListOperator(
                         operator.insertAll(0, realmValue.asList(), updatePolicy, cache)
                     },
                     dictionary = { realmValue ->
+                        // Have to clear existing elements for core to know if we are updating with a new collection
                         RealmInterop.realm_list_set(nativePointer, index.toLong(), nullTransport())
                         val nativePointer = RealmInterop.realm_list_set_dictionary(nativePointer, index.toLong())
                         val operator =
