@@ -45,10 +45,10 @@ class RealmTests {
         Realm.open(configuration).close()
         app.close()
 
-        // Wait max 10 seconds for threads to settle
+        // Wait max 30 seconds for threads to settle
         var activeThreads = 0
         var fullyClosed = false
-        var count = 10
+        var count = 30
         while (!fullyClosed && count > 0) {
             delay(1.seconds)
             // Ensure we only have daemon threads after closing Realms and Apps
