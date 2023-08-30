@@ -30,6 +30,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -351,6 +352,13 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
         @Serializable(RealmUUIDKSerializer::class)
         var uuid: RealmUUID? = null
         var realmObject: RealmObject? = null
+
+        @Contextual
+        var set: RealmSet<RealmAny?>? = null
+        @Contextual
+        var list: RealmList<RealmAny?>? = null
+        @Contextual
+        var dictionary: RealmDictionary<RealmAny?>? = null
     }
 
     private val serializer = SerializableRealmAny.serializer()
@@ -371,10 +379,9 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                 Type.OBJECT_ID -> RealmAny.create(it.objectId!!)
                 Type.UUID -> RealmAny.create(it.uuid!!)
                 Type.OBJECT -> RealmAny.create(it.realmObject!!)
-                Type.SET,
-                Type.LIST,
-                Type.DICTIONARY ->
-                    throw UnsupportedOperationException("Serialization of nested collections is not yet supported")
+                Type.SET -> RealmAny.create(it.set!!)
+                Type.LIST -> RealmAny.create(it.list!!)
+                Type.DICTIONARY -> RealmAny.create(it.dictionary!!)
             }
         }
     }
@@ -399,10 +406,9 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                     )
                     Type.UUID -> uuid = value.asRealmUUID()
                     Type.OBJECT -> realmObject = value.asRealmObject()
-                    Type.SET,
-                    Type.LIST,
-                    Type.DICTIONARY ->
-                        throw UnsupportedOperationException("Serialization of nested collections is not yet supported")
+                    Type.SET -> set = value.asSet()
+                    Type.LIST -> list = value.asList()
+                    Type.DICTIONARY -> dictionary = value.asDictionary()
                 }
             }
         )
