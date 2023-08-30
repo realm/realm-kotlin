@@ -91,7 +91,7 @@ open class TestApp private constructor(
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("$testId-dispatcher"),
         logLevel: LogLevel? = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = {
-            it.syncRootDirectory(PlatformUtils.createTempDir("$appName-"))
+            it.syncRootDirectory(PlatformUtils.createTempDir("$appName-$testId"))
         },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,

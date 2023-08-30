@@ -38,7 +38,7 @@ class RealmTests {
     // effort in detecting the cases we do know about.
     @Test
     fun cleanupAllRealmThreadsOnClose() = runBlocking {
-        val app = TestApp()
+        val app = TestApp("cleanupAllRealmThreadsOnClose")
         val user = app.login(Credentials.anonymous())
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))
         Realm.open(configuration).close()
