@@ -506,3 +506,4 @@ public object MutableRealmIntKSerializer : KSerializer<MutableRealmInt> {
         encoder.encodeLong(value.toLong())
     }
 }
+

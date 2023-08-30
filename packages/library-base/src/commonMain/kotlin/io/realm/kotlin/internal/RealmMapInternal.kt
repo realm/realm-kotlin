@@ -448,6 +448,7 @@ internal class RealmAnyMapOperator<K> constructor(
                 realmReference,
                 issueDynamicObject,
                 issueDynamicMutableObject,
+                // Not supported by core yet. Tracked by https://github.com/realm/realm-core/issues/6936
                 { TODO("Nested sets cannot be obtained from iterator") },
                 { TODO("Nested lists cannot be obtained from iterator") },
                 { TODO("Nested dictionaries cannot be obtained from iterator") },
