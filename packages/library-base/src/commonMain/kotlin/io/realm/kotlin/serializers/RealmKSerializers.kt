@@ -371,9 +371,10 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                 Type.OBJECT_ID -> RealmAny.create(it.objectId!!)
                 Type.UUID -> RealmAny.create(it.uuid!!)
                 Type.OBJECT -> RealmAny.create(it.realmObject!!)
-                Type.SET -> TODO()
-                Type.LIST -> TODO()
-                Type.DICTIONARY -> TODO()
+                Type.SET,
+                Type.LIST,
+                Type.DICTIONARY ->
+                    throw UnsupportedOperationException("Serialization of nested collections is not yet supported")
             }
         }
     }
@@ -398,9 +399,10 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                     )
                     Type.UUID -> uuid = value.asRealmUUID()
                     Type.OBJECT -> realmObject = value.asRealmObject()
-                    Type.SET -> TODO()
-                    Type.LIST -> TODO()
-                    Type.DICTIONARY -> TODO()
+                    Type.SET,
+                    Type.LIST,
+                    Type.DICTIONARY ->
+                        throw UnsupportedOperationException("Serialization of nested collections is not yet supported")
                 }
             }
         )

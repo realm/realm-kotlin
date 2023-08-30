@@ -1,5 +1,7 @@
 ## 1.11.0-SNAPSHOT (YYYY-MM-DD)
 
+This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
+
 ### Breaking Changes
 * `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
 
@@ -34,7 +36,7 @@ if the content is the same. Custom implementations of these methods will be resp
 * None.
 
 ### Compatibility
-* File format: Generates Realms with file format v23.
+* File format: Generates Realms with file format v24.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
