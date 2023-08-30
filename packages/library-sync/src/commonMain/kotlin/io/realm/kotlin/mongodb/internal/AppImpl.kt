@@ -53,7 +53,7 @@ public class AppImpl(
     @Suppress("MagicNumber")
     private val reconnectThresholdMs = 5_000 // 5 seconds
 
-    @Suppress("invisible_member", "invisible_reference", "MagicNumber")
+    @Suppress("invisible_member", "invisible_reference", "MagicNumber", "UnusedPrivateMember")
     private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
         // In an ideal world, we would be able to reliably detect the network coming and
         // going. Unfortunately that does not seem to be case (at least on Android).
