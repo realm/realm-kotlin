@@ -47,7 +47,7 @@ if the content is the same. Custom implementations of these methods will be resp
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.19.0, commit ea7c5d5e2900b8411a295aea3d1aa56aa55fff1d.
+* Updated to Realm Core 13.19.1, commit f47e0bfb371f5dd76b33a8250e2a34ee30a10307.
 
 
 ## 1.10.2 (2023-07-21)
