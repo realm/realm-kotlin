@@ -97,7 +97,7 @@ public class AppImpl(
         appNetworkDispatcher = appResources.first
         networkTransport = appResources.second
         nativePointer = appResources.third
-        NetworkStateObserver.addListener(connectionListener)
+//        NetworkStateObserver.addListener(connectionListener)
     }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
@@ -168,7 +168,7 @@ public class AppImpl(
         // be beneficial in order to reason about the lifecycle of the Sync thread and dispatchers.
         networkTransport.close()
         nativePointer.release()
-        NetworkStateObserver.removeListener(connectionListener)
+//        NetworkStateObserver.removeListener(connectionListener)
     }
 
     internal companion object {
