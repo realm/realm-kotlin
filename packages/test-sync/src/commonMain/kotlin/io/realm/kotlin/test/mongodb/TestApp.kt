@@ -62,6 +62,7 @@ open class TestApp private constructor(
     pairAdminApp: Pair<App, AppAdmin>
 ) : App by pairAdminApp.first, AppAdmin by pairAdminApp.second {
 
+    var isClosed: Boolean = false
     val app: App = pairAdminApp.first
 
     /**
@@ -109,6 +110,9 @@ open class TestApp private constructor(
     }
 
     override fun close() {
+        if (isClosed) {
+            return
+        }
         // This is needed to "properly reset" all sessions across tests since deleting users
         // directly using the REST API doesn't do the trick
         runBlocking {
@@ -131,6 +135,7 @@ open class TestApp private constructor(
 
         // Delete metadata Realm files
         PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
+        isClosed = true
     }
 
     companion object {

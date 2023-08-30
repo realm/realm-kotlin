@@ -12,7 +12,6 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -22,7 +21,6 @@ import kotlin.test.assertTrue
  * Tests for [io.realm.kotlin.mongodb.sync.Sync] that is accessed through
  * [io.realm.kotlin.mongodb.App.sync].
  */
-@Ignore
 class SyncClientTests {
 
     private lateinit var user: User
