@@ -31,6 +31,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -69,7 +70,7 @@ class ProgressListenerTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_PARTITION)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
         partitionValue = ObjectId().toString()
     }
 
@@ -239,35 +240,37 @@ class ProgressListenerTests {
 
     @Test
     fun throwsOnFlexibleSync() = runBlocking {
-        val app = TestApp(TEST_APP_FLEX)
-        val user = app.createUserAndLogIn()
-        val configuration: SyncConfiguration = SyncConfiguration.create(user, schema)
-        Realm.open(configuration).use { realm ->
-            assertFailsWithMessage<UnsupportedOperationException>(
-                "Progress listeners are not supported for Flexible Sync"
-            ) {
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
+        TestApp("throwsOnFlexibleSync", TEST_APP_FLEX).use {
+            val user = app.createUserAndLogIn()
+            val configuration: SyncConfiguration = SyncConfiguration.create(user, schema)
+            Realm.open(configuration).use { realm ->
+                assertFailsWithMessage<UnsupportedOperationException>(
+                    "Progress listeners are not supported for Flexible Sync"
+                ) {
+                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
+                }
             }
         }
     }
 
     @Test
     fun completesOnClose() = runBlocking {
-        val app = TestApp(TEST_APP_PARTITION)
-        val user = app.createUserAndLogIn()
-        val realm = Realm.open(createSyncConfig(user))
-        try {
-            val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
-            val job = async {
-                withTimeout(10.seconds) {
-                    flow.collect { }
+        TestApp("completesOnClose", TEST_APP_PARTITION).use { app ->
+            val user = app.createUserAndLogIn()
+            val realm = Realm.open(createSyncConfig(user))
+            try {
+                val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                val job = async {
+                    withTimeout(10.seconds) {
+                        flow.collect { }
+                    }
                 }
-            }
-            realm.close()
-            job.await()
-        } finally {
-            if (!realm.isClosed()) {
                 realm.close()
+                job.await()
+            } finally {
+                if (!realm.isClosed()) {
+                    realm.close()
+                }
             }
         }
     }

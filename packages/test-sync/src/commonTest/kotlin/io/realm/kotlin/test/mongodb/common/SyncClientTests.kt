@@ -28,7 +28,7 @@ class SyncClientTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)

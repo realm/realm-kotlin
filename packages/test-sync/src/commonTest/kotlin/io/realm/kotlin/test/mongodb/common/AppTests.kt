@@ -39,6 +39,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
@@ -65,7 +66,7 @@ class AppTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
     }
 
     @AfterTest
@@ -77,9 +78,10 @@ class AppTests {
 
     @Test
     fun defaultApp() {
-        val defaultApp = App.create("foo")
-        assertEquals("foo", defaultApp.configuration.appId)
-        assertEquals(AppConfiguration.DEFAULT_BASE_URL, defaultApp.configuration.baseUrl)
+        App.create("foo").use { defaultApp ->
+            assertEquals("foo", defaultApp.configuration.appId)
+            assertEquals(AppConfiguration.DEFAULT_BASE_URL, defaultApp.configuration.baseUrl)
+        }
     }
 
     @Test
@@ -372,18 +374,17 @@ class AppTests {
     fun encryptedMetadataRealm() {
         // Create new test app with a random encryption key
         val key = TestHelper.getRandomKey()
-        val app = TestApp(
+        TestApp(
+            "encryptedMetadataRealm",
             appName = TEST_APP_FLEX,
             builder = {
                 it
                     .encryptionKey(key)
                     .syncRootDirectory("${appFilesDirectory()}/foo")
             }
-        )
-
-        try {
+        ).use { app ->
             // Create Realm in order to create the sync metadata Realm
-            val user = app.createUserAndLogin()
+            val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
                 .Builder(user, setOf(ParentPk::class, ChildPk::class))
                 .build()
@@ -403,27 +404,24 @@ class AppTests {
 
             // Should be possible to open the encrypted metadata realm file with the encryption key
             Realm.open(config).close()
-        } finally {
-            app.close()
-        }
+    }
     }
 
     @Test
     fun encryptedMetadataRealm_openWithWrongKeyThrows() {
         // Create new test app with a random encryption key
         val correctKey = TestHelper.getRandomKey()
-        val app = TestApp(
+        TestApp(
+            "encryptedMetadataRealm_openWithWrongKeyThrows",
             appName = TEST_APP_FLEX,
             builder = {
                 it
                     .encryptionKey(correctKey)
                     .syncRootDirectory("${appFilesDirectory()}/foo")
             }
-        )
-
-        try {
+        ).use { app ->
             // Create Realm in order to create the sync metadata Realm
-            val user = app.createUserAndLogin()
+            val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
                 .Builder(user, setOf(ParentPk::class, ChildPk::class))
                 .build()
@@ -445,26 +443,23 @@ class AppTests {
             assertFailsWithMessage<IllegalStateException>("Failed to open Realm file at path") {
                 Realm.open(config)
             }
-        } finally {
-            app.close()
         }
     }
 
     @Test
     fun encryptedMetadataRealm_openWithoutKeyThrows() {
         // Create new test app with a random encryption key
-        val app = TestApp(
+        TestApp(
+            "encryptedMetadataRealm_openWithoutKeyThrows",
             appName = TEST_APP_FLEX,
             builder = {
                 it
                     .encryptionKey(TestHelper.getRandomKey())
                     .syncRootDirectory("${appFilesDirectory()}/foo")
             }
-        )
-
-        try {
+        ).use { app ->
             // Create Realm in order to create the sync metadata Realm
-            val user = app.createUserAndLogin()
+            val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
                 .Builder(user, setOf(ParentPk::class, ChildPk::class))
                 .build()
@@ -483,31 +478,6 @@ class AppTests {
             assertFailsWithMessage<IllegalStateException>("Failed to open Realm file at path") {
                 Realm.open(config)
             }
-        } finally {
-            app.close()
         }
     }
-
-//
-//    // Check that it is possible to have two Java instances of an App class, but they will
-//    // share the underlying App state.
-//    @Test
-//    fun multipleInstancesSameApp() {
-//        // Create a second copy of the test app
-//        val app2 = TestApp()
-//        try {
-//            // User handling are shared between each app
-//            val user = app.login(Credentials.anonymous());
-//            assertEquals(user, app2.currentUser())
-//            assertEquals(user, app.allUsers().values.first())
-//            assertEquals(user, app2.allUsers().values.first())
-//
-//            user.logOut();
-//
-//            assertNull(app.currentUser())
-//            assertNull(app2.currentUser())
-//        } finally {
-//            app2.close()
-//        }
-//    }
 }
