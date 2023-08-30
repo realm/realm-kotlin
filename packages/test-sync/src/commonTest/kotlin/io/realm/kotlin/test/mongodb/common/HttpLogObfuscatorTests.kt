@@ -26,7 +26,6 @@ import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.CustomLogCollector
 import io.realm.kotlin.test.mongodb.syncServerAppName
-import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.util.receiveOrFail

@@ -19,7 +19,6 @@
 
 package io.realm.kotlin.test.mongodb
 
-import io.realm.kotlin.Realm
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
@@ -139,7 +138,7 @@ open class TestApp private constructor(
                 // Some tests might render the server inaccessible, preventing us from
                 // deleting users. Assume those tests know what they are doing and
                 // ignore errors here.
-                RealmLog.warn("Server side users could not be deleted: ${ex.toString()}")
+                RealmLog.warn("Server side users could not be deleted: $ex")
             }
         }
 

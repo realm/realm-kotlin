@@ -1296,7 +1296,7 @@ class SyncedRealmTests {
             assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
             assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") }, "Missing MyCustomApp/1.0.0")
         }
-   }
+    }
 
     // This test verifies that the user facing Realm instance is actually advanced on an on-needed
     // basis even though there is no actual listener or explicit await download/upload calls.

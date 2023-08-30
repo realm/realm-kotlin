@@ -404,7 +404,7 @@ class AppTests {
 
             // Should be possible to open the encrypted metadata realm file with the encryption key
             Realm.open(config).close()
-    }
+        }
     }
 
     @Test
