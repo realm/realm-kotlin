@@ -129,6 +129,9 @@ open class TestApp private constructor(
             if (isClosed) {
                 return
             }
+
+            app.sync.waitForSessionsToTerminate()
+
             // This is needed to "properly reset" all sessions across tests since deleting users
             // directly using the REST API doesn't do the trick
             runBlocking {

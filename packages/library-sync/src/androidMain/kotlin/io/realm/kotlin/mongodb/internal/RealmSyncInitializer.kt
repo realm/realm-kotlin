@@ -59,7 +59,7 @@ class RealmSyncInitializer : Initializer<Context> {
         }
     }
 
-    @Suppress("invisible_member", "invisible_reference")
+    @Suppress("invisible_member", "invisible_reference", "NestedBlockDepth")
     override fun create(context: Context): Context {
         val result: Int = context.checkCallingOrSelfPermission(android.Manifest.permission.ACCESS_NETWORK_STATE)
         if (result == PackageManager.PERMISSION_GRANTED) {
@@ -115,8 +115,10 @@ class RealmSyncInitializer : Initializer<Context> {
                 RealmLog.warn("Something went wrong trying to register a network state listener: $ex")
             }
         } else {
-            RealmLog.warn("It was not possible to register a network state listener. " +
-                    "ACCESS_NETWORK_STATE was not granted.")
+            RealmLog.warn(
+                "It was not possible to register a network state listener. " +
+                    "ACCESS_NETWORK_STATE was not granted."
+            )
         }
         return context
     }
