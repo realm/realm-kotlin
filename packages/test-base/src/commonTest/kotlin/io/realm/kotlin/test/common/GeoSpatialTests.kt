@@ -591,5 +591,4 @@ class GeoSpatialTests {
         )
         assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $0", polygonWithHole).count().find())
     }
-
 }

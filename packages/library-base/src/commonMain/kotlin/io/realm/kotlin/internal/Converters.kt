@@ -39,7 +39,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.geo.GeoBox
 import io.realm.kotlin.types.geo.GeoCircle
-import io.realm.kotlin.types.geo.GeoPoint
 import io.realm.kotlin.types.geo.GeoPolygon
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
