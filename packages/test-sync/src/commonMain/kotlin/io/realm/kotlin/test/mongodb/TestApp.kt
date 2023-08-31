@@ -21,6 +21,7 @@ package io.realm.kotlin.test.mongodb
 
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
@@ -72,6 +73,7 @@ open class TestApp private constructor(
     pairAdminApp: Pair<App, AppAdmin>
 ) : App by pairAdminApp.first, AppAdmin by pairAdminApp.second {
 
+    var mutex = SynchronizableObject()
     var isClosed: Boolean = false
     val app: App = pairAdminApp.first
 
@@ -123,39 +125,41 @@ open class TestApp private constructor(
     }
 
     override fun close() {
-        if (isClosed) {
-            return
-        }
-        // This is needed to "properly reset" all sessions across tests since deleting users
-        // directly using the REST API doesn't do the trick
-        runBlocking {
-            try {
-                while (currentUser != null) {
-                    (currentUser as User).logOut()
-                }
-                deleteAllUsers()
-            } catch (ex: Exception) {
-                // Some tests might render the server inaccessible, preventing us from
-                // deleting users. Assume those tests know what they are doing and
-                // ignore errors here.
-                RealmLog.warn("Server side users could not be deleted: $ex")
+        mutex.withLock {
+            if (isClosed) {
+                return
             }
+            // This is needed to "properly reset" all sessions across tests since deleting users
+            // directly using the REST API doesn't do the trick
+            runBlocking {
+                try {
+                    while (currentUser != null) {
+                        (currentUser as User).logOut()
+                    }
+                    deleteAllUsers()
+                } catch (ex: Exception) {
+                    // Some tests might render the server inaccessible, preventing us from
+                    // deleting users. Assume those tests know what they are doing and
+                    // ignore errors here.
+                    RealmLog.warn("Server side users could not be deleted: $ex")
+                }
+            }
+
+            if (dispatcher is CloseableCoroutineDispatcher) {
+                dispatcher.close()
+            }
+            app.close()
+
+            // Close network client resources
+            closeClient()
+
+            // Make sure to clear cached apps before deleting files
+            RealmInterop.realm_clear_cached_apps()
+
+            // Delete metadata Realm files
+            PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
+            isClosed = true
         }
-
-        if (dispatcher is CloseableCoroutineDispatcher) {
-            dispatcher.close()
-        }
-        app.close()
-
-        // Close network client resources
-        closeClient()
-
-        // Make sure to clear cached apps before deleting files
-        RealmInterop.realm_clear_cached_apps()
-
-        // Delete metadata Realm files
-        PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
-        isClosed = true
     }
 
     companion object {

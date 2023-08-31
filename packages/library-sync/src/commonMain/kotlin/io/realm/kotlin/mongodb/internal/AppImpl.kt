@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
@@ -36,6 +37,8 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 internal typealias AppResources = Triple<DispatcherHolder, NetworkTransport, RealmAppPointer>
 
@@ -48,10 +51,10 @@ public class AppImpl(
     internal val appNetworkDispatcher: DispatcherHolder
     private val networkTransport: NetworkTransport
 
-    private var lastOnlineStateReportedMs: Long? = null
+    private var lastOnlineStateReported: Duration? = null
     private var lastConnectedState: Boolean? = null // null = unknown, true = connected, false = disconnected
     @Suppress("MagicNumber")
-    private val reconnectThresholdMs = 5_000 // 5 seconds
+    private val reconnectThreshold = 5.seconds
 
     @Suppress("invisible_member", "invisible_reference", "MagicNumber")
     private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
@@ -65,10 +68,8 @@ public class AppImpl(
         // "isOnline" messages in short order. So in order to prevent resetting the network
         // too often we throttle messages, so a reconnect can only happen ever 5 seconds.
         RealmLog.debug("Network state change detected. ConnectionAvailable = $connectionAvailable")
-        val nowMs: Long = RealmInstant.now().let { timestamp ->
-            timestamp.epochSeconds * 1000L + timestamp.nanosecondsOfSecond / 1_000_000L
-        }
-        if (connectionAvailable && (lastOnlineStateReportedMs == null || nowMs - lastOnlineStateReportedMs!! > reconnectThresholdMs)
+        val now: Duration = RealmInstant.now().toDuration()
+        if (connectionAvailable && (lastOnlineStateReported == null || now.minus(lastOnlineStateReported!!) > reconnectThreshold)
         ) {
             RealmLog.info("Trigger network reconnect.")
             try {
@@ -76,7 +77,7 @@ public class AppImpl(
             } catch (ex: Exception) {
                 RealmLog.error(ex.toString())
             }
-            lastOnlineStateReportedMs = nowMs
+            lastOnlineStateReported = now
         }
         lastConnectedState = connectionAvailable
     }

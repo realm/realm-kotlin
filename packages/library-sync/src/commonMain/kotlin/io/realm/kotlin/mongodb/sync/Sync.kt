@@ -4,7 +4,7 @@ import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.syncSession
 
 /**
- * A <i>Device Sync</i> manager responsible for controlling all sync sessions across all realms
+ * A _Device Sync_ manager responsible for controlling all sync sessions across all realms
  * associated with a given [App] instance. For session functionality associated with a single
  * realm, see [syncSession].
  *
