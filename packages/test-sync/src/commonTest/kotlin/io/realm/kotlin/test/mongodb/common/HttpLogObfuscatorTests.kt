@@ -119,6 +119,7 @@ class HttpLogObfuscatorTests {
 
     private fun initApp(): TestApp {
         return TestApp(
+            this::class.simpleName,
             appName = syncServerAppName("obfsctr"),
             logLevel = LogLevel.DEBUG,
             customLogger = ObfuscatorLoggerInspector(channel),
@@ -144,6 +145,7 @@ class HttpLogObfuscatorTests {
     fun nullObfuscator() = runBlocking {
         val logger = CustomLogCollector("NULL-OBFUSCATOR", LogLevel.DEBUG)
         app = TestApp(
+            "nullObfuscator",
             appName = syncServerAppName("null-obf"),
             logLevel = LogLevel.DEBUG,
             builder = { it.httpLogObfuscator(null) },

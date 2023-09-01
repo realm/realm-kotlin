@@ -28,6 +28,7 @@ if the content is the same. Custom implementations of these methods will be resp
 * Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
 * Support for automatic resolution of embedded object constraints during migration through `RealmConfiguration.Builder.migration(migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean)`. (Issue [#1464](https://github.com/realm/realm-kotlin/issues/1464)
 * [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
+* [Sync] Added support for manually triggering a reconnect attempt for Device Sync. This is done through a new `App.Sync.reconnect()` method. This method is also now called automatically when a mobile device toggles off airplane mode. (Issue [#1479](https://github.com/realm/realm-kotlin/issues/1479))
 
 ### Fixed
 * None.

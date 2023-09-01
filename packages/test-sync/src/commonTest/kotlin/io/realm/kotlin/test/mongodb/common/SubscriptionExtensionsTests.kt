@@ -60,7 +60,7 @@ class SubscriptionExtensionsTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

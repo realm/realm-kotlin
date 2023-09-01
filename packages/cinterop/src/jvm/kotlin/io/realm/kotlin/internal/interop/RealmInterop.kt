@@ -1558,6 +1558,17 @@ actual object RealmInterop {
         )
     }
 
+    actual fun realm_app_sync_client_reconnect(app: RealmAppPointer) {
+        realmc.realm_app_sync_client_reconnect(app.cptr())
+    }
+    actual fun realm_app_sync_client_has_sessions(app: RealmAppPointer): Boolean {
+        return realmc.realm_app_sync_client_has_sessions(app.cptr())
+    }
+
+    actual fun realm_app_sync_client_wait_for_sessions_to_terminate(app: RealmAppPointer) {
+        realmc.realm_app_sync_client_wait_for_sessions_to_terminate(app.cptr())
+    }
+
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
         return LongPointerWrapper<RealmSyncConfigT>(realmc.realm_sync_config_new(user.cptr(), partition)).also { ptr ->
             // Stop the session immediately when the Realm is closed, so the lifecycle of the

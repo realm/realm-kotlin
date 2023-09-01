@@ -87,7 +87,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
     }
 
     @AfterTest
@@ -1230,7 +1230,7 @@ class SyncConfigTests {
     fun logLevelDoesNotGetOverwrittenByConfig() {
         app.asTestApp.close()
         // Prevent AppConfiguration to set a log level
-        app = TestApp(logLevel = null)
+        app = TestApp("logLevelDoesNotGetOverwrittenByConfig", logLevel = null)
 
         val expectedLogLevel = LogLevel.ALL
 

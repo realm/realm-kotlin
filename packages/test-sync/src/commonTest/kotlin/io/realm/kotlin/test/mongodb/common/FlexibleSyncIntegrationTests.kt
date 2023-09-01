@@ -64,7 +64,7 @@ class FlexibleSyncIntegrationTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX, logLevel = LogLevel.ALL)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX, logLevel = LogLevel.ALL)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         runBlocking {
             app.createUserAndLogIn(email, password)

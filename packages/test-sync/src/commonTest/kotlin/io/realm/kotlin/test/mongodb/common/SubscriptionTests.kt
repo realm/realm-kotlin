@@ -55,7 +55,7 @@ class SubscriptionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)

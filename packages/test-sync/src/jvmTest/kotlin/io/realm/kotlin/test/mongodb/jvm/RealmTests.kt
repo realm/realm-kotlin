@@ -22,12 +22,11 @@ import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.time.Duration.Companion.seconds
 
 class RealmTests {
 
@@ -39,18 +38,18 @@ class RealmTests {
     // effort in detecting the cases we do know about.
     @Test
     fun cleanupAllRealmThreadsOnClose() = runBlocking {
-        val app = TestApp()
+        val app = TestApp("cleanupAllRealmThreadsOnClose")
         val user = app.login(Credentials.anonymous())
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))
         Realm.open(configuration).close()
         app.close()
 
-        // Wait max 10 seconds for threads to settle
-        var activeThreads = 0
+        // Wait max 30 seconds for threads to settle
+        var activeThreads: List<Thread> = emptyList()
         var fullyClosed = false
-        var count = 10
+        var count = 5
         while (!fullyClosed && count > 0) {
-            delay(1.seconds)
+            PlatformUtils.triggerGC()
             // Ensure we only have daemon threads after closing Realms and Apps
             activeThreads = Thread.getAllStackTraces().keys
                 .filter { !it.isDaemon }
@@ -62,26 +61,25 @@ class RealmTests {
                     // Test thread
                     it.name.startsWith("Test worker")
                 }
-                .size
-            if (activeThreads == 0) {
+            if (activeThreads.isEmpty()) {
                 fullyClosed = true
             } else {
                 count -= 1
             }
         }
-        assertEquals(0, activeThreads, "Active threads where found: ${threadTrace()}")
+        assertEquals(0, activeThreads.size, "Active threads where found ($activeThreads.size): ${threadTrace(activeThreads)}")
     }
 
-    private fun threadTrace(): String {
+    private fun threadTrace(threads: List<Thread>? = null): String {
         val sb = StringBuilder()
         sb.appendLine("--------------------------------")
-        val stack = Thread.getAllStackTraces()
-        stack.keys
+        val stack: List<Thread> = threads ?: Thread.getAllStackTraces().keys.toList()
+        stack
             .sortedBy { it.name }
             .forEach { t: Thread ->
                 sb.appendLine("${t.name} - Is Daemon ${t.isDaemon} - Is Alive ${t.isAlive}")
             }
-        sb.appendLine("All threads: ${stack.keys.size}")
+        sb.appendLine("All threads: ${stack.size}")
         sb.appendLine("Active threads: ${Thread.activeCount()}")
         return sb.toString()
     }
