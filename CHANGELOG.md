@@ -1,4 +1,4 @@
-## 1.11.0-SNAPSHOT (YYYY-MM-DD)
+## 1.11.0 (2023-09-01)
 
 ### Breaking Changes
 * `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
@@ -51,7 +51,7 @@ if the content is the same. Custom implementations of these methods will be resp
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.19.1, commit c258e2681bca5fb33bbd23c112493817b43bfa86.
+* Updated to Realm Core 13.20.0, commit c258e2681bca5fb33bbd23c112493817b43bfa86.
 
 
 ## 1.10.2 (2023-07-21)
