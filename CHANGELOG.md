@@ -1,10 +1,34 @@
-## 1.10.3-SNAPSHOT (YYYY-MM-DD)
+## 1.11.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
-* None.
+* `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
+
+```
+val childA: Child = realm.query<Child>().first().find()!!
+val childB: Child = realm.query<Child>().first().find()!!
+
+// This behavior is the same both before 1.11.0 and before
+childA === childB // false
+
+// This will return true in 1.11.0 and onwards. Before it will return false
+childA == childB
+
+realm.writeBlocking { /* Do a write */ }
+val childC = realm.query<Child>().first().find()!!
+
+// This will return false because childA belong to version 1, while childC belong to version 2.
+// Override equals/hashCode if value semantics are wanted.
+childA == childC
+```
 
 ### Enhancements
-* None.
+* Fulltext queries now support prefix search by using the * operator, like `description TEXT 'alex*'`. (Core issue [#6860](https://github.com/realm/realm-core/issues/6860))
+* Realm model classes now generate custom `toString`, `equals` and `hashCode` implementations. This makes it possible to compare by object reference across multiple collections. Note that two objects at different versions will not be considered equal, even 
+if the content is the same. Custom implementations of these methods will be respected if they are present. (Issue [#1097](https://github.com/realm/realm-kotlin/issues/1097)) 
+* Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
+* Support for automatic resolution of embedded object constraints during migration through `RealmConfiguration.Builder.migration(migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean)`. (Issue [#1464](https://github.com/realm/realm-kotlin/issues/1464)
+* [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
+* [Sync] Added support for manually triggering a reconnect attempt for Device Sync. This is done through a new `App.Sync.reconnect()` method. This method is also now called automatically when a mobile device toggles off airplane mode. (Issue [#1479](https://github.com/realm/realm-kotlin/issues/1479))
 
 ### Fixed
 * Rare corruption causing 'Invalid streaming format cookie'-exception. Typically following compact, convert or copying to a new file. (Issue [#1440](https://github.com/realm/realm-kotlin/issues/1440))
@@ -27,7 +51,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.17.1, commit fb5bdccba1daad0bd6e65757a6a1596dc98cebf4.
+* Updated to Realm Core 13.19.1, commit c258e2681bca5fb33bbd23c112493817b43bfa86.
 
 
 ## 1.10.2 (2023-07-21)

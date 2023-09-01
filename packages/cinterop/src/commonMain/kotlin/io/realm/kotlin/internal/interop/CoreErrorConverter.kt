@@ -31,22 +31,21 @@ object CoreErrorConverter {
         path: String?,
         userError: Throwable?
     ): Throwable {
-        val categories: CategoryFlag = CategoryFlag(categoriesNativeValue)
+        val categories: CategoryFlags = CategoryFlags(categoriesNativeValue)
         val errorCode: ErrorCode? = ErrorCode.of(errorCodeNativeValue)
         val message: String = "[$errorCode]: $messageNativeValue"
 
         return userError ?: when {
             ErrorCode.RLM_ERR_INDEX_OUT_OF_BOUNDS == errorCode ->
                 IndexOutOfBoundsException(message)
-            ErrorCategory.RLM_ERR_CAT_INVALID_ARG in categories ->
+            ErrorCategory.RLM_ERR_CAT_INVALID_ARG in categories && ErrorCategory.RLM_ERR_CAT_SYNC_ERROR !in categories -> {
+                // Some sync errors flagged as both logical and illegal. In our case, we consider those
+                // IllegalState, so discard them them here and let them fall through to the bottom case
                 IllegalArgumentException(message)
+            }
             ErrorCategory.RLM_ERR_CAT_LOGIC in categories || ErrorCategory.RLM_ERR_CAT_RUNTIME in categories ->
                 IllegalStateException(message)
             else -> Error(message) // This can happen when propagating user level exceptions.
         }
-    }
-
-    data class CategoryFlag(val categoryCode: Int) {
-        operator fun contains(other: ErrorCategory): Boolean = categoryCode and other.nativeValue != 0
     }
 }

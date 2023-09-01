@@ -27,8 +27,6 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
@@ -129,8 +127,6 @@ typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscri
 @Suppress("LongParameterList")
 class SyncConnectionParams(
     sdkVersion: String,
-    localAppName: String?,
-    localAppVersion: String?,
     bundleId: String,
     platformVersion: String,
     device: String,
@@ -139,8 +135,6 @@ class SyncConnectionParams(
     frameworkVersion: String
 ) {
     val sdkName = "Kotlin"
-    val localAppName: String?
-    val localAppVersion: String?
     val bundleId: String
     val sdkVersion: String
     val platformVersion: String
@@ -158,8 +152,6 @@ class SyncConnectionParams(
     init {
         this.sdkVersion = sdkVersion
         this.bundleId = bundleId
-        this.localAppName = localAppName
-        this.localAppVersion = localAppVersion
         this.platformVersion = platformVersion
         this.device = device
         this.deviceVersion = deviceVersion
@@ -188,6 +180,7 @@ expect object RealmInterop {
     fun realm_config_get_encryption_key(config: RealmConfigurationPointer): ByteArray?
     fun realm_config_set_should_compact_on_launch_function(config: RealmConfigurationPointer, callback: CompactOnLaunchCallback)
     fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback)
+    fun realm_config_set_automatic_backlink_handling(config: RealmConfigurationPointer, enabled: Boolean)
     fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback)
     fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean)
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
@@ -627,8 +620,7 @@ expect object RealmInterop {
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory,
+        error: ErrorCode,
         errorMessage: String,
         isFatal: Boolean
     )
@@ -718,6 +710,11 @@ expect object RealmInterop {
         serializedEjsonArgs: String, // as ejson
         callback: AppCallback<String>
     )
+
+    // Sync Client
+    fun realm_app_sync_client_reconnect(app: RealmAppPointer)
+    fun realm_app_sync_client_has_sessions(app: RealmAppPointer): Boolean
+    fun realm_app_sync_client_wait_for_sessions_to_terminate(app: RealmAppPointer)
 
     // Sync config
     fun realm_config_set_sync_config(

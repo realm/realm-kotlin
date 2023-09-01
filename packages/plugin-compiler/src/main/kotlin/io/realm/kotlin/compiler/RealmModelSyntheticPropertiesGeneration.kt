@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.CLASS_INFO
-import io.realm.kotlin.compiler.FqNames.CLASS_KIND_TYPE
-import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
-import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAPOF
-import io.realm.kotlin.compiler.FqNames.KOTLIN_PAIR
-import io.realm.kotlin.compiler.FqNames.OBJECT_REFERENCE_CLASS
-import io.realm.kotlin.compiler.FqNames.PRIMARY_KEY_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
-import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO_CREATE
-import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
-import io.realm.kotlin.compiler.FqNames.REALM_ANY
-import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
-import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
-import io.realm.kotlin.compiler.FqNames.REALM_UUID
-import io.realm.kotlin.compiler.FqNames.TYPED_REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.CLASS_INFO
+import io.realm.kotlin.compiler.ClassIds.CLASS_KIND_TYPE
+import io.realm.kotlin.compiler.ClassIds.COLLECTION_TYPE
+import io.realm.kotlin.compiler.ClassIds.FULLTEXT_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.INDEX_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.KBSON_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAP
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAPOF
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_PAIR
+import io.realm.kotlin.compiler.ClassIds.OBJECT_REFERENCE_CLASS
+import io.realm.kotlin.compiler.ClassIds.PRIMARY_KEY_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_INFO
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_INFO_CREATE
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_TYPE
+import io.realm.kotlin.compiler.ClassIds.REALM_ANY
+import io.realm.kotlin.compiler.ClassIds.REALM_INSTANT
+import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_UUID
+import io.realm.kotlin.compiler.ClassIds.TYPED_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_DICTIONARY
@@ -55,13 +54,11 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.kotlin.compiler.Names.SET
-import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
@@ -96,7 +93,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -156,10 +153,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmAnyType: IrType = pluginContext.lookupClassOrThrow(REALM_ANY).defaultType
 
     private val kMutableProperty1Class: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
+        pluginContext.lookupClassOrThrow(ClassIds.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
 
     private val kProperty1Class: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
+        pluginContext.lookupClassOrThrow(ClassIds.KOTLIN_REFLECT_KPROPERTY1)
 
     private val mapClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MAP)
     private val pairClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_PAIR)
@@ -191,8 +188,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         realmObjectMutablePropertyType
     )
 
-    val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
-    private val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
+    val realmClassImpl = pluginContext.lookupClassOrThrow(ClassIds.REALM_CLASS_IMPL)
+    private val realmClassCtor = pluginContext.lookupConstructorInClass(ClassIds.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
     }
 
@@ -207,7 +204,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             objectIdType,
             realmObjectIdType,
             realmUUIDType
-        ).map { it.classifierOrFail }
+        )
     }
     private val indexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
@@ -223,12 +220,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmObjectIdType,
             realmUUIDType,
             realmAnyType
-        ).map { it.classifierOrFail }
+        )
     }
     private val fullTextIndexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
             stringType
-        ).map { it.classifierOrFail }
+        )
     }
 
     /**
@@ -424,7 +421,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     // TODO OPTIMIZE should be a one time only constructed object
-    @OptIn(ObsoleteDescriptorBasedAPI::class)
     @Suppress("LongMethod", "ComplexMethod")
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
@@ -545,25 +541,24 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     value.coreGenericTypes?.get(0)?.nullable
                                         ?: fatalError("Missing generic type while processing a collection field.")
                                 }
-
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
+                                if (primaryKey && validPrimaryKeyTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Primary key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${validPrimaryKeyTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
-                                if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
+                                if (isIndexed && indexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Indexed key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${indexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isFullTextIndexed = backingField.hasAnnotation(FULLTEXT_ANNOTATION)
-                                if (isFullTextIndexed && backingField.type.classifierOrFail !in fullTextIndexableTypes) {
+                                if (isFullTextIndexed && fullTextIndexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Full-text key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${fullTextIndexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Full-text key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${fullTextIndexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
