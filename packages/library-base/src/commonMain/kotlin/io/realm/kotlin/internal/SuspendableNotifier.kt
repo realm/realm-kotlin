@@ -103,7 +103,7 @@ internal class SuspendableNotifier(
                 // notifications on newer objects.
                 realm.refresh()
                 val observable = flowable.notifiable()
-                val lifeRef = observable.coreObservable(realm)
+                val lifeRef: CoreNotifiable<T, C>? = observable.coreObservable(realm)
                 val changeFlow = observable.changeFlow(this@callbackFlow)
                 // Only emit events during registration if the observed entity is already deleted
                 // (lifeRef == null) as there is no guarantee when the first callback is delivered

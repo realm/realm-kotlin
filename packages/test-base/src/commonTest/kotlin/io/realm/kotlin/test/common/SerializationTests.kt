@@ -288,7 +288,7 @@ class SerializationTests {
                     RealmAny.Type.INT -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(longField)
                     }
-                   RealmAny.Type.FLOAT -> SerializableSample().apply {
+                    RealmAny.Type.FLOAT -> SerializableSample().apply {
                         nullableRealmAnyField = RealmAny.create(floatField)
                     }
                     RealmAny.Type.DOUBLE -> SerializableSample().apply {

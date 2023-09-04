@@ -136,5 +136,6 @@ internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Ve
     override fun notifiable(): Notifiable<T, C> = this
     override fun coreObservable(liveRealm: LiveRealm): CoreNotifiable<T, C>? = thaw(liveRealm.realmReference)
 
+    // Checks if the underlying native pointer points still points to a valid object.
     fun isValid(): Boolean
 }

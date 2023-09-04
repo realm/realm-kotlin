@@ -955,6 +955,9 @@ actual object RealmInterop {
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
+        // Not exposed in SDK yet, but could be used to provide optimized notifications when
+        // collections are cleared.
+        //  https://github.com/realm/realm-kotlin/issues/1498
         val collectionWasCleared = BooleanArray(1)
         val collectionWasDeleted = BooleanArray(1)
 
@@ -1061,8 +1064,10 @@ actual object RealmInterop {
         val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
         val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
         val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
-        // FIXME New in core ... what does it do?
-        val collection_was_cleared = booleanArrayOf(false)
+        // Not exposed in SDK yet, but could be used to provide optimized notifications when
+        // collections are cleared.
+        //  https://github.com/realm/realm-kotlin/issues/1498
+        val collectionWasCleared = booleanArrayOf(false)
         realmc.realm_dictionary_get_changed_keys(
             change.cptr(),
             deletionStructs,
@@ -1071,7 +1076,7 @@ actual object RealmInterop {
             insertions,
             modificationStructs,
             modifications,
-            collection_was_cleared
+            collectionWasCleared
         )
 
         // TODO optimize - integrate within mem allocator?

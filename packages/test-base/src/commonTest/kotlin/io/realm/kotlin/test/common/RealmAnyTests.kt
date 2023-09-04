@@ -26,7 +26,9 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
@@ -447,7 +449,9 @@ class RealmAnyTests {
         realm.write {
             val parent = Sample().apply {
                 nullableRealmAnyField = RealmAny.create(child)
+                nullableRealmAnySetField = realmSetOf(RealmAny.create(child))
                 nullableRealmAnyListField = realmListOf(RealmAny.create(child))
+                nullableRealmAnyDictionaryField = realmDictionaryOf("key" to RealmAny.create(child))
             }
             copyToRealm(parent)
         }

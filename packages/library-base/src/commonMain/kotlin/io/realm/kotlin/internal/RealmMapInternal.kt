@@ -495,12 +495,12 @@ internal class RealmAnyMapOperator<K> constructor(
             val keyTransport = with(keyConverter) { publicToRealmValue(key) }
             return realmAnyHandler(
                 value,
-                primitiveValues = {
+                primitiveValueAsRealmValueHandler = {
                     realm_dictionary_insert(nativePointer, keyTransport, it).let { result ->
                         realmAny(result.first, keyTransport) to result.second
                     }
                 },
-                reference = {
+                referenceAsRealmAnyHandler = {
                     val obj = when (issueDynamicObject) {
                         true -> it.asRealmObject<DynamicRealmObject>()
                         false -> it.asRealmObject<RealmObject>()
@@ -511,7 +511,7 @@ internal class RealmAnyMapOperator<K> constructor(
                         realmAny(result.first, keyTransport) to result.second
                     }
                 },
-                set = { realmValue ->
+                setAsRealmAnyHandler = { realmValue ->
                     // Have to clear existing elements for core to know if we are updating with a new collection
                     realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
@@ -525,7 +525,7 @@ internal class RealmAnyMapOperator<K> constructor(
                     operator.addAll(realmValue.asSet(), updatePolicy, cache)
                     previous to true
                 },
-                list = { realmValue ->
+                listAsRealmAnyHandler = { realmValue ->
                     // Have to clear existing elements for core to know if we are updating with a new collection
                     realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
@@ -539,7 +539,7 @@ internal class RealmAnyMapOperator<K> constructor(
                     operator.insertAll(0, realmValue.asList(), updatePolicy, cache)
                     previous to true
                 },
-                dictionary = { realmValue ->
+                dictionaryAsRealmAnyHandler = { realmValue ->
                     // Have to clear existing elements for core to know if we are updating with a new collection
                     realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
@@ -987,7 +987,7 @@ internal class RealmMapValues<K, V> constructor(
                 owner.version().version,
                 RealmInterop.realm_object_get_key(parent.objectPointer).key
             )
-        } ?: TODO()
+        } ?: Triple("null", operator.realmReference.owner.version(), "null")
         return "RealmDictionary.values{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 

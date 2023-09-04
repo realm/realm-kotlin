@@ -17,7 +17,14 @@ import org.mongodb.kbson.ObjectId
 public inline fun <reified T : BaseRealmObject> RealmAny.asRealmObject(): T =
     asRealmObject(T::class)
 
-// FIXME Doc if this is public
+/**
+ * Create a [RealmAny] encapsulating the [value] argument.
+ *
+ * This corresponds to calling [RealmAny.create]-variant with the specific typed non-null argument.
+ *
+ * @param value the value that should be wrapped in a [RealmAny].
+ * @return a [RealmAny] wrapping the [value] argument, or `null` if [value] is null.
+ */
 @Suppress("ComplexMethod")
 public fun realmAnyOf(value: Any?): RealmAny? {
     return when (value) {
@@ -40,7 +47,15 @@ public fun realmAnyOf(value: Any?): RealmAny? {
         is DynamicRealmObject -> RealmAny.create(value)
         is Set<*> -> RealmAny.create(value.map { realmAnyOf(it) }.toRealmSet())
         is List<*> -> RealmAny.create(value.map { realmAnyOf(it) }.toRealmList())
-        is Map<*, *> -> RealmAny.create(value.map { (key, value) -> key as String to realmAnyOf(value) }.toRealmDictionary())
+        is Map<*, *> -> RealmAny.create(
+            value.map { (mapKey, mapValue) ->
+                try {
+                    mapKey as String
+                } catch (e: ClassCastException) {
+                    throw IllegalArgumentException("Cannot create a RealmAny from a map with non-string key, found '${mapKey?.let { it::class.simpleName } ?: "null"}'")
+                } to realmAnyOf(mapValue)
+            }.toRealmDictionary()
+        )
         is RealmAny -> value
         else -> throw IllegalArgumentException("Cannot create RealmAny from '$value'")
     }

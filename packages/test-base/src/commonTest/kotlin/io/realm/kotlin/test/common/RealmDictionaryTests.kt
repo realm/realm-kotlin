@@ -3078,10 +3078,9 @@ internal class RealmAnyDictionaryTester(
                 assertEquals(expectedObj.stringField, assertNotNull(actualObj).stringField)
             }
             null -> assertNull(actualValue)
-            // FIXME Should we rather test nested collections somewhere else?
-            RealmAny.Type.SET -> TODO()
-            RealmAny.Type.LIST -> TODO()
-            RealmAny.Type.DICTIONARY -> TODO()
+            RealmAny.Type.SET,
+            RealmAny.Type.LIST,
+            RealmAny.Type.DICTIONARY -> {} // Tested separately in RealmAnyNestedCollectionTests
         }
     }
 }

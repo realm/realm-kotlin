@@ -67,23 +67,16 @@ class RealmAnyNestedCollectionTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
-    // Set
-    // - Import primitive values
-    // - Set primitive values
-    // - Notifications
     @Test
     fun setInRealmAny_copyToRealm() = runBlocking {
         val sample = Sample().apply { stringField = "SAMPLE" }
         realm.write {
             val instance = JsonStyleRealmObject().apply {
-                // Assigning set
-                // - How to prevent adding a set containing non-any elements?
-                //   - Can we do this on the fly!?
                 value = RealmAny.create(
                     realmSetOf(
                         RealmAny.create(5),
                         RealmAny.create("Realm"),
-                        RealmAny.create(sample)
+                        RealmAny.create(sample),
                     )
                 )
             }
@@ -91,27 +84,34 @@ class RealmAnyNestedCollectionTests {
         }
         val anyValue: RealmAny = realm.query<JsonStyleRealmObject>().find().single().value!!
         assertEquals(RealmAny.Type.SET, anyValue.type)
+        anyValue.asSet().toMutableSet().let { embeddedSet ->
+            assertTrue { embeddedSet.remove(RealmAny.create(5)) }
+            assertTrue { embeddedSet.remove(RealmAny.create("Realm")) }
+            assertEquals("SAMPLE", embeddedSet.single()!!.asRealmObject<Sample>().stringField)
+        }
     }
 
     @Test
     fun setInRealmAny_assignment() = runBlocking {
+        val sample = Sample().apply { stringField = "SAMPLE" }
         realm.write {
-            copyToRealm(Sample().apply { stringField = "SAMPLE" })
             val instance = copyToRealm(JsonStyleRealmObject())
-            // Assigning set
-            // - How to prevent adding a set containing non-any elements?
-            //   - Can we do this on the fly!?
             instance.value = RealmAny.create(
                 realmSetOf(
                     RealmAny.create(5),
-                    RealmAny.create(4),
-                    RealmAny.create(6)
+                    RealmAny.create("Realm"),
+                    RealmAny.create(sample),
                 )
             )
             instance
         }
         val anyValue: RealmAny = realm.query<JsonStyleRealmObject>().find().single().value!!
         assertEquals(RealmAny.Type.SET, anyValue.type)
+        anyValue.asSet().toMutableSet().let { embeddedSet ->
+            assertTrue { embeddedSet.remove(RealmAny.create(5)) }
+            assertTrue { embeddedSet.remove(RealmAny.create("Realm")) }
+            assertEquals("SAMPLE", embeddedSet.single()!!.asRealmObject<Sample>().stringField)
+        }
     }
 
     @Test
@@ -164,11 +164,6 @@ class RealmAnyNestedCollectionTests {
         val sample = Sample().apply { stringField = "SAMPLE" }
         realm.write<Unit> {
             JsonStyleRealmObject().apply {
-                // Assigning list
-                // - Quite verbose!?
-                // - How to prevent/support adding a set containing non-any elements?
-                //   - Can we do this on the fly!?
-                //   - Type system to allow only `RealmAny.create(list: RealmList<RealmAny>)`
                 value = RealmAny.create(
                     realmListOf(
                         RealmAny.create(5),
@@ -176,13 +171,6 @@ class RealmAnyNestedCollectionTests {
                         RealmAny.create(sample),
                     )
                 )
-                //     - Could add:
-                //         fun realmAnyListOf(vararg: Any): RealmList<RealmAny>
-                //       or
-                //         fun Iterable.toRealmAnyList(): RealmList<RealmAny>
-                //       to allow convenience like
-                //         realmAnyListOf(5, "Realm", realmAnyListOf())
-                //         listOf(3, "Realm", realmAnyListOf()).toRealmAnyList()
             }.let {
                 copyToRealm(it)
             }
@@ -190,7 +178,6 @@ class RealmAnyNestedCollectionTests {
         val instance = realm.query<JsonStyleRealmObject>().find().single()
         val anyValue: RealmAny = instance.value!!
         assertEquals(RealmAny.Type.LIST, anyValue.type)
-//        TabbedStringBuilder().dumpRealmAny(anyValue)
     }
 
     @Test
@@ -240,7 +227,6 @@ class RealmAnyNestedCollectionTests {
 
         // Assert structure
         anyValue.asList().let {
-            it.contains(realmAnyListOf())
             assertEquals(RealmAny.create(5), it[0])
             assertEquals(RealmAny.create("Realm"), it[1])
             assertEquals("SAMPLE", it[2]!!.asRealmObject<Sample>().stringField)
@@ -422,7 +408,7 @@ class RealmAnyNestedCollectionTests {
             // Overwriting exact list with new list
             instance.value!!.asList()[0] = realmAnyListOf(7)
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
 
             nestedList = instance.value!!.asList()[0]!!.asList()
@@ -431,36 +417,16 @@ class RealmAnyNestedCollectionTests {
             // Overwriting root entry
             instance.value = null
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
 
             // Recreating list doesn't bring things back to shape
             instance.value = realmAnyListOf(realmAnyListOf(8))
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
         }
     }
-
-    // List
-    // - Notifications
-    //   - Parent bound deletion
-
-    // Dict
-    // - Import primitive values, SET, LIST, MAP
-    // - Put primitive values, SET, LIST, MAP
-    //   - Deletes other lists
-    // - Notifications
-    //   - Parent bound deletion
-
-    // Others
-    // - Queries for nested elements??
-    // - No collections as primary key arguments - RealmAny is not supported at all
-    // - No collections as query arguments - DONE
-    // - toJson/fromJson
-    // - Serialization
-    // - Dynamic API
-    // - Importing objects with cache through a setter for nested collections
 
     @Test
     fun dictionaryInRealmAny_copyToRealm() = runBlocking {
@@ -469,7 +435,7 @@ class RealmAnyNestedCollectionTests {
         realm.write {
             // Normal realm link/object reference
             JsonStyleRealmObject().apply {
-                // Assigning dictornary with nested lists and dictionaries
+                // Assigning dictionary with nested lists and dictionaries
                 value = RealmAny.create(
                     realmDictionaryOf(
                         "keyInt" to RealmAny.create(5),
@@ -613,7 +579,7 @@ class RealmAnyNestedCollectionTests {
 
             // Fails due to https://github.com/realm/realm-core/issues/6895
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
 
             // Getting updated reference to embedded list
@@ -623,7 +589,7 @@ class RealmAnyNestedCollectionTests {
             // Overwriting root entry
             instance.value = null
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
         }
     }
@@ -643,34 +609,34 @@ class RealmAnyNestedCollectionTests {
             instance.value = realmAnyListOf(7)
             // Accessing original orphaned list return 7 from the new instance, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
 
             // Overwriting with null value
             instance.value = null
             // Throws excepted ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
 
             // Updating to a new list
             instance.value = realmAnyListOf(7)
             // Accessing original orphaned list return 7 from the new instance again, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
             assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]!!.asInt()
+                nestedList[0]
             }
         }
     }
 
     @Test
     fun query_ThrowsOnNestedCollectionArguments() {
-        assertFailsWithMessage<IllegalArgumentException>("Cannot use nested collections as primary keys or query arguments") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid query argument: Cannot pass unmanaged collections as input argument") {
             realm.query<JsonStyleRealmObject>("value == $0", RealmAny.create(realmSetOf()))
         }
-        assertFailsWithMessage<IllegalArgumentException>("Cannot use nested collections as primary keys or query arguments") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid query argument: Cannot pass unmanaged collections as input argument") {
             realm.query<JsonStyleRealmObject>("value == $0", RealmAny.create(realmListOf()))
         }
-        assertFailsWithMessage<IllegalArgumentException>("Cannot use nested collections as primary keys or query arguments") {
+        assertFailsWithMessage<IllegalArgumentException>("Invalid query argument: Cannot pass unmanaged collections as input argument") {
             realm.query<JsonStyleRealmObject>("value == $0", RealmAny.create(realmDictionaryOf()))
         }
     }
@@ -718,17 +684,6 @@ class RealmAnyNestedCollectionTests {
 
         assertEquals(4, realm.query<JsonStyleRealmObject>().find().size)
 
-        // Matching sets
-//        realm.query<JsonStyleRealmObject>("value[0] == 1").find().single().run {
-//            assertEquals("SET", id)
-//        }
-//        realm.query<JsonStyleRealmObject>("value[*] == 1").find().single().run {
-//            assertEquals("SET", id)
-//        }
-        // Size
-        // [RLM_ERR_INVALID_QUERY]: Operation '@size' is not supported on property of type 'mixed'
-        // assertEquals(1, realm.query<JsonStyleRealmObject>("value[*].@size == 3").find().size)
-
         // Matching lists
         realm.query<JsonStyleRealmObject>("value[0] == 4").find().single().run {
             assertEquals("LIST", id)
@@ -736,9 +691,6 @@ class RealmAnyNestedCollectionTests {
         realm.query<JsonStyleRealmObject>("value[*] == 4").find().single().run {
             assertEquals("LIST", id)
         }
-        // Size
-        // [RLM_ERR_INVALID_QUERY]: Operation '@size' is not supported on property of type 'mixed'
-        // assertEquals(1, realm.query<JsonStyleRealmObject>("value[1].@size == 3").find().size)
 
         // Matching dictionaries
         assertEquals(1, realm.query<JsonStyleRealmObject>("value.key1 == 7").find().size)
@@ -751,9 +703,6 @@ class RealmAnyNestedCollectionTests {
         assertTrue { realm.query<JsonStyleRealmObject>("value[*] == 10").find().isEmpty() }
 
         // Matching across all elements and in nested structures
-//        realm.query<JsonStyleRealmObject>("value[*][*] == 1").find().single().run {
-//            assertEquals("EMBEDDED", id)
-//        }
         realm.query<JsonStyleRealmObject>("value[*][*] == 4").find().single().run {
             assertEquals("EMBEDDED", id)
         }
@@ -766,45 +715,5 @@ class RealmAnyNestedCollectionTests {
         realm.query<JsonStyleRealmObject>("value[*].key3[0] == 9").find().single().run {
             assertEquals("EMBEDDED", id)
         }
-    }
-}
-
-class TabbedStringBuilder {
-    private val builder = StringBuilder()
-    internal var indentation = 0
-    internal fun append(s: String) = builder.append("\t".repeat(indentation) + s + "\n")
-    override fun toString(): String {
-        return builder.toString()
-    }
-}
-
-fun TabbedStringBuilder.dumpRealmAny(value: RealmAny?) {
-    if (value == null) {
-        append("null")
-        return
-    }
-    when (value.type) {
-        RealmAny.Type.SET, RealmAny.Type.LIST -> {
-            val collection: Collection<RealmAny?> =
-                if (value.type == RealmAny.Type.SET) value.asSet() else value.asList()
-            append("[")
-            indentation += 1
-            collection.map { dumpRealmAny(it) }
-            indentation -= 1
-            append("]")
-        }
-        RealmAny.Type.DICTIONARY -> value.asDictionary().let { dictionary ->
-            append("{")
-            indentation += 1
-            dictionary.map { (key, element) ->
-                append("$key:")
-                indentation += 1
-                dumpRealmAny(element)
-                indentation -= 1
-            }
-            indentation -= 1
-            append("}")
-        }
-        else -> append(value.toString())
     }
 }

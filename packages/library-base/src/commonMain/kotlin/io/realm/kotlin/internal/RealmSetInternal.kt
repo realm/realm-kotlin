@@ -348,10 +348,10 @@ internal class RealmAnySetOperator(
         return inputScope {
             realmAnyHandler(
                 value = element,
-                primitiveValues = { realmValue: RealmValue ->
+                primitiveValueAsRealmValueHandler = { realmValue: RealmValue ->
                     RealmInterop.realm_set_insert(nativePointer, realmValue)
                 },
-                reference = { realmValue ->
+                referenceAsRealmAnyHandler = { realmValue ->
                     val obj = when (issueDynamicObject) {
                         true -> realmValue.asRealmObject<DynamicRealmObject>()
                         false -> realmValue.asRealmObject<RealmObject>()
@@ -360,9 +360,9 @@ internal class RealmAnySetOperator(
                         realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
                     RealmInterop.realm_set_insert(nativePointer, realmObjectTransport(objRef))
                 },
-                set = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections") },
-                list = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
-                dictionary = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
+                setAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections") },
+                listAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
+                dictionaryAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
             )
         }
     }
