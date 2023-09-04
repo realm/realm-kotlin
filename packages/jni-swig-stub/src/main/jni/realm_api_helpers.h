@@ -47,8 +47,8 @@ realm_network_transport_new(jobject network_transport);
 void
 set_log_callback(jint log_level, jobject log_callback);
 
-realm_t*
-open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler);
+realm_scheduler_t*
+realm_create_scheduler(jobject dispatchScheduler);
 
 bool
 realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_t used_bytes);

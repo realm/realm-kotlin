@@ -30,6 +30,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlin.test.AfterTest
@@ -56,7 +57,7 @@ class SubscriptionSetTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -89,18 +90,19 @@ class SubscriptionSetTests {
 
     @Test
     fun subscriptions_failOnNonFlexibleSyncRealms() {
-        val app = TestApp(appName = TEST_APP_PARTITION)
-        val (email, password) = TestHelper.randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
-        val config = SyncConfiguration.create(
-            user,
-            TestHelper.randomPartitionValue(),
-            setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
-        )
-        Realm.open(config).use { partionBasedRealm ->
-            assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }
+        TestApp(this::class.simpleName, appName = TEST_APP_PARTITION).use { testApp ->
+            val (email, password) = TestHelper.randomEmail() to "password1234"
+            val user = runBlocking {
+                testApp.createUserAndLogIn(email, password)
+            }
+            val config = SyncConfiguration.create(
+                user,
+                TestHelper.randomPartitionValue(),
+                setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            )
+            Realm.open(config).use { partionBasedRealm ->
+                assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }
+            }
         }
     }
 
@@ -132,7 +134,7 @@ class SubscriptionSetTests {
         val sub: Subscription = subscriptions.findByQuery(query)!!
         assertNotNull(sub)
         assertEquals("FlexParentObject", sub.objectType)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
     }
 
     @Test

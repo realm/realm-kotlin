@@ -1,4 +1,33 @@
-## 1.11.0-SNAPSHOT (YYYY-MM-DD)
+## 1.12.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.11.0 (2023-09-01)
 
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
 
@@ -31,9 +60,13 @@ if the content is the same. Custom implementations of these methods will be resp
 * Support for automatic resolution of embedded object constraints during migration through `RealmConfiguration.Builder.migration(migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean)`. (Issue [#1464](https://github.com/realm/realm-kotlin/issues/1464)
 * Support for collections in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 * [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
+* [Sync] Added support for manually triggering a reconnect attempt for Device Sync. This is done through a new `App.Sync.reconnect()` method. This method is also now called automatically when a mobile device toggles off airplane mode. (Issue [#1479](https://github.com/realm/realm-kotlin/issues/1479))
 
 ### Fixed
-* None.
+* Rare corruption causing 'Invalid streaming format cookie'-exception. Typically following compact, convert or copying to a new file. (Issue [#1440](https://github.com/realm/realm-kotlin/issues/1440))
+* Compiler error when using Kotlin 1.9.0 and backlinks. (Issue [#1469](https://github.com/realm/realm-kotlin/issues/1469))
+* Leaking `JVMScheduler` instances. In certain circumstances, it could lead to a JNI crash. (Issue [#1463](https://github.com/realm/realm-kotlin/pull/1463))
+* [Sync] Changing a subscriptions query type or query itself will now trigger the `WaitForSync.FIRST_TIME` behaviour, rather than only checking changes to the name. (Issues [#1466](https://github.com/realm/realm-kotlin/issues/1466))
 
 ### Compatibility
 * File format: Generates Realms with file format v24.
@@ -50,7 +83,7 @@ if the content is the same. Custom implementations of these methods will be resp
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.19.0, commit ea7c5d5e2900b8411a295aea3d1aa56aa55fff1d.
+* Updated to Realm Core 13.20.0, commit c258e2681bca5fb33bbd23c112493817b43bfa86.
 
 
 ## 1.10.2 (2023-07-21)

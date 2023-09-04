@@ -131,7 +131,7 @@ public expect fun epochInSeconds(): Long
 /**
  * Returns a RealmInstant representing the time that has passed since the Unix epoch.
  */
-internal expect fun currentTime(): RealmInstant
+public expect fun currentTime(): RealmInstant
 
 /**
  * Returns the type of a mutable property.

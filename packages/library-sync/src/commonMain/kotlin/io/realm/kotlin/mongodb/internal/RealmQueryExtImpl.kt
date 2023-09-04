@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+@file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.Subscription
+import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.WaitForSync
 import io.realm.kotlin.mongodb.syncSession
@@ -32,7 +35,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
 
-@Suppress("invisible_reference", "invisible_member")
 internal suspend fun <T : RealmObject> createSubscriptionFromQuery(
     query: RealmQuery<T>,
     name: String?,
@@ -41,7 +43,7 @@ internal suspend fun <T : RealmObject> createSubscriptionFromQuery(
     timeout: Duration
 ): RealmResults<T> {
 
-    if (query !is io.realm.kotlin.internal.query.ObjectQuery<T>) {
+    if (query !is ObjectQuery<T>) {
         throw IllegalStateException("Only queries on objects are supported. This was: ${query::class}")
     }
     if (query.realmReference.owner !is RealmImpl) {
@@ -53,8 +55,7 @@ internal suspend fun <T : RealmObject> createSubscriptionFromQuery(
 
     return withTimeout(timeout) {
         withContext(appDispatcher) {
-            val existingSubscription: Subscription? =
-                if (name != null) subscriptions.findByName(name) else subscriptions.findByQuery(query)
+            val existingSubscription: Subscription? = findExistingQueryInSubscriptions(name, query, subscriptions)
             if (existingSubscription == null || updateExisting) {
                 subscriptions.update {
                     add(query, name, updateExisting)
@@ -66,9 +67,33 @@ internal suspend fun <T : RealmObject> createSubscriptionFromQuery(
                 // The subscription should already exist, just make sure we downloaded all
                 // server data before continuing.
                 realm.syncSession.downloadAllServerChanges()
+                subscriptions.refresh()
+                subscriptions.errorMessage?.let { errorMessage: String ->
+                    throw BadFlexibleSyncQueryException(errorMessage)
+                }
             }
             // Rerun the query on the latest Realm version.
             realm.query(query.clazz, query.description()).find()
         }
+    }
+}
+
+// A subscription only matches if name, type and query all matches
+private fun <T : RealmObject> findExistingQueryInSubscriptions(
+    name: String?,
+    query: ObjectQuery<T>,
+    subscriptions: SubscriptionSet<Realm>
+): Subscription? {
+    return if (name != null) {
+        val sub: Subscription? = subscriptions.findByName(name)
+        val companion = io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(query.clazz)
+        val userTypeName = companion.io_realm_kotlin_className
+        if (sub?.queryDescription == query.description() && sub.objectType == userTypeName) {
+            sub
+        } else {
+            null
+        }
+    } else {
+        subscriptions.findByQuery(query)
     }
 }

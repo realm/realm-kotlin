@@ -113,6 +113,7 @@ class SyncClientResetIntegrationTests {
             ) -> Unit
         ) {
             val app = TestApp(
+                this::class.simpleName,
                 appName = appName,
                 logLevel = LogLevel.INFO,
                 customLogger = ClientResetLoggerInspector(logChannel),

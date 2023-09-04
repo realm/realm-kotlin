@@ -313,8 +313,8 @@ void invoke_core_notify_callback(int64_t scheduler) {
     realm_scheduler_perform_work(reinterpret_cast<realm_scheduler_t *>(scheduler));
 }
 
-realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
-    auto config = reinterpret_cast<realm_config_t *>(config_ptr);
+realm_scheduler_t*
+realm_create_scheduler(jobject dispatchScheduler) {
     if (dispatchScheduler) {
         auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
         auto scheduler = realm_scheduler_new(
@@ -326,13 +326,9 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
         );
         jvmScheduler->set_scheduler(scheduler);
-        realm_config_set_scheduler(config, scheduler);
-    } else {
-        // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
-        auto scheduler =  new realm_scheduler_t{realm::util::Scheduler::make_generic()};
-        realm_config_set_scheduler(config, scheduler);
+        return scheduler;
     }
-    return realm_open(config);
+    throw std::runtime_error("Null dispatchScheduler");
 }
 
 jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
