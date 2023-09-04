@@ -178,6 +178,11 @@ class RealmAnyNestedCollectionTests {
         val instance = realm.query<JsonStyleRealmObject>().find().single()
         val anyValue: RealmAny = instance.value!!
         assertEquals(RealmAny.Type.LIST, anyValue.type)
+        anyValue.asList().let { embeddedList ->
+            assertEquals(RealmAny.create(5), embeddedList[0])
+            assertEquals(RealmAny.create("Realm"), embeddedList[1])
+            assertEquals("SAMPLE", embeddedList[2]!!.asRealmObject<Sample>().stringField)
+        }
     }
 
     @Test

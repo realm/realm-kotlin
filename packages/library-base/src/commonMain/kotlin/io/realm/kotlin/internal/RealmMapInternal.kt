@@ -1151,7 +1151,7 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
                 owner.version().version,
                 RealmInterop.realm_object_get_key(parent.objectPointer).key
             )
-        } ?: TODO()
+        } ?: Triple("null", operator.realmReference.owner.version(), "null")
         return "RealmDictionary.entries{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 

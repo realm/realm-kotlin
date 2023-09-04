@@ -1808,21 +1808,36 @@ class DynamicRealmObjectTests {
                 )!!.asDictionary()
 
                 actualDictionary["list"]!!.let { innerList ->
-                    val actualSample = innerList.asList()[0]!!.asRealmObject<DynamicRealmObject>()
+                    val innerSample = innerList.asList()[0]!!
+                    val actualSample = innerSample.asRealmObject<DynamicRealmObject>()
                     assertIs<DynamicRealmObject>(actualSample)
                     assertEquals("INNER_LIST", actualSample.getValue("stringField"))
+
+                    assertFailsWith<ClassCastException> {
+                        innerSample.asRealmObject<Sample>()
+                    }
                 }
                 actualDictionary["set"]!!.let { innerSet ->
+                    val innerSample = innerSet.asSet()!!.first()!!
                     val actualSample =
-                        innerSet.asSet()!!.first()!!.asRealmObject<DynamicRealmObject>()
+                        innerSample.asRealmObject<DynamicRealmObject>()
                     assertIs<DynamicRealmObject>(actualSample)
                     assertEquals("INNER_SET", actualSample.getValue("stringField"))
+
+                    assertFailsWith<ClassCastException> {
+                        innerSample.asRealmObject<Sample>()
+                    }
                 }
                 actualDictionary["dict"]!!.let { innerDictionary ->
+                    val innerSample = innerDictionary.asDictionary()!!["key"]!!
                     val actualSample =
-                        innerDictionary.asDictionary()!!["key"]!!.asRealmObject<DynamicRealmObject>()
+                        innerSample.asRealmObject<DynamicRealmObject>()
                     assertIs<DynamicRealmObject>(actualSample)
                     assertEquals("INNER_DICT", actualSample.getValue("stringField"))
+
+                    assertFailsWith<ClassCastException> {
+                        innerSample.asRealmObject<Sample>()
+                    }
                 }
             }
     }
