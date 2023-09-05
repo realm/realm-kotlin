@@ -19,7 +19,7 @@ package io.realm.kotlin.ext
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 
 /**
  * Returns a [RealmQuery] matching the predicate represented by [query].
@@ -29,7 +29,7 @@ import io.realm.kotlin.types.BaseRealmObject
  * @param query the Realm Query Language predicate to append.
  * @param args Realm values for the predicate.
  */
-public inline fun <reified T : BaseRealmObject> TypedRealm.query(
+public inline fun <reified T : TypedRealmObject> TypedRealm.query(
     query: String = TRUE_PREDICATE,
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

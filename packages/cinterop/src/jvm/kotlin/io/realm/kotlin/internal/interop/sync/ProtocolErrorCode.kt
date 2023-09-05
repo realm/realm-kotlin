@@ -17,55 +17,11 @@
 package io.realm.kotlin.internal.interop.sync
 
 import io.realm.kotlin.internal.interop.CodeDescription
-import io.realm.kotlin.internal.interop.realm_sync_errno_client_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_connection_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_session_e
+import io.realm.kotlin.internal.interop.realm_web_socket_errno_e
 
-actual enum class ProtocolClientErrorCode(
-    override val description: String,
-    override val nativeValue: Int
-) : CodeDescription {
-    RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED("ConnectionClosed", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED),
-    RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE("UnknownMessage", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE),
-    RLM_SYNC_ERR_CLIENT_BAD_SYNTAX("BadSyntax", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_SYNTAX),
-    RLM_SYNC_ERR_CLIENT_LIMITS_EXCEEDED("LimitsExceeded", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_LIMITS_EXCEEDED),
-    RLM_SYNC_ERR_CLIENT_BAD_SESSION_IDENT("BadSessionIdent", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_SESSION_IDENT),
-    RLM_SYNC_ERR_CLIENT_BAD_MESSAGE_ORDER("BadMessageOrder", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_MESSAGE_ORDER),
-    RLM_SYNC_ERR_CLIENT_BAD_CLIENT_FILE_IDENT("BadClientFileIdent", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_CLIENT_FILE_IDENT),
-    RLM_SYNC_ERR_CLIENT_BAD_PROGRESS("BadProgress", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_PROGRESS),
-    RLM_SYNC_ERR_CLIENT_BAD_CHANGESET_HEADER_SYNTAX("BadChangesetHeaderSyntax", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_CHANGESET_HEADER_SYNTAX),
-    RLM_SYNC_ERR_CLIENT_BAD_CHANGESET_SIZE("BadChangesetSize", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_CHANGESET_SIZE),
-    RLM_SYNC_ERR_CLIENT_BAD_ORIGIN_FILE_IDENT("BadOriginFileIdent", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_ORIGIN_FILE_IDENT),
-    RLM_SYNC_ERR_CLIENT_BAD_SERVER_VERSION("BadServerVersion", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_SERVER_VERSION),
-    RLM_SYNC_ERR_CLIENT_BAD_CHANGESET("BadChangeset", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_CHANGESET),
-    RLM_SYNC_ERR_CLIENT_BAD_REQUEST_IDENT("BadRequestIdent", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_REQUEST_IDENT),
-    RLM_SYNC_ERR_CLIENT_BAD_ERROR_CODE("BadErrorCode", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_ERROR_CODE),
-    RLM_SYNC_ERR_CLIENT_BAD_COMPRESSION("BadCompression", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_COMPRESSION),
-    RLM_SYNC_ERR_CLIENT_BAD_CLIENT_VERSION("BadClientVersion", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_CLIENT_VERSION),
-    RLM_SYNC_ERR_CLIENT_SSL_SERVER_CERT_REJECTED("SslServerCertRejected", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_SSL_SERVER_CERT_REJECTED),
-    RLM_SYNC_ERR_CLIENT_PONG_TIMEOUT("PongTimeout", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_PONG_TIMEOUT),
-    RLM_SYNC_ERR_CLIENT_BAD_CLIENT_FILE_IDENT_SALT("BadClientFileIdentSalt", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_CLIENT_FILE_IDENT_SALT),
-    RLM_SYNC_ERR_CLIENT_BAD_FILE_IDENT("BadFileIdent", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_FILE_IDENT),
-    RLM_SYNC_ERR_CLIENT_CONNECT_TIMEOUT("ConnectTimeout", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_CONNECT_TIMEOUT),
-    RLM_SYNC_ERR_CLIENT_BAD_TIMESTAMP("BadTimestamp", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_TIMESTAMP),
-    RLM_SYNC_ERR_CLIENT_BAD_PROTOCOL_FROM_SERVER("BadProtocolFromServer", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_PROTOCOL_FROM_SERVER),
-    RLM_SYNC_ERR_CLIENT_CLIENT_TOO_OLD_FOR_SERVER("ClientTooOldForServer", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_CLIENT_TOO_OLD_FOR_SERVER),
-    RLM_SYNC_ERR_CLIENT_CLIENT_TOO_NEW_FOR_SERVER("ClientTooNewForServer", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_CLIENT_TOO_NEW_FOR_SERVER),
-    RLM_SYNC_ERR_CLIENT_PROTOCOL_MISMATCH("ProtocolMismatch", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_PROTOCOL_MISMATCH),
-    RLM_SYNC_ERR_CLIENT_BAD_STATE_MESSAGE("BadStateMessage", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_BAD_STATE_MESSAGE),
-    RLM_SYNC_ERR_CLIENT_MISSING_PROTOCOL_FEATURE("MissingProtocolFeature", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_MISSING_PROTOCOL_FEATURE),
-    RLM_SYNC_ERR_CLIENT_HTTP_TUNNEL_FAILED("HttpTunnelFailed", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_HTTP_TUNNEL_FAILED),
-    RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE("AutoClientResetFailure", realm_sync_errno_client_e.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE);
-
-    actual companion object {
-        internal actual fun of(nativeValue: Int): ProtocolClientErrorCode? =
-            values().firstOrNull { value ->
-                value.nativeValue == nativeValue
-            }
-    }
-}
-
-actual enum class ProtocolConnectionErrorCode(
+actual enum class SyncConnectionErrorCode(
     override val description: String,
     override val nativeValue: Int
 ) : CodeDescription {
@@ -74,7 +30,7 @@ actual enum class ProtocolConnectionErrorCode(
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE("UnknownMessage", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE),
     RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX("BadSyntax", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX),
     RLM_SYNC_ERR_CONNECTION_LIMITS_EXCEEDED("LimitsExceeded", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_LIMITS_EXCEEDED),
-    RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION("WrongProtocolVersion", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION),
+    RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION("WrongBadSyncPartitionValueProtocolVersion", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION),
     RLM_SYNC_ERR_CONNECTION_BAD_SESSION_IDENT("BadSessionIdent", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_BAD_SESSION_IDENT),
     RLM_SYNC_ERR_CONNECTION_REUSE_OF_SESSION_IDENT("ReuseOfSessionIdent", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_REUSE_OF_SESSION_IDENT),
     RLM_SYNC_ERR_CONNECTION_BOUND_IN_OTHER_SESSION("BoundInOtherSession", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_BOUND_IN_OTHER_SESSION),
@@ -86,14 +42,14 @@ actual enum class ProtocolConnectionErrorCode(
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS("SwitchToPbs", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS);
 
     actual companion object {
-        internal actual fun of(nativeValue: Int): ProtocolConnectionErrorCode? =
+        internal actual fun of(nativeValue: Int): SyncConnectionErrorCode? =
             values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
     }
 }
 
-actual enum class ProtocolSessionErrorCode(
+actual enum class SyncSessionErrorCode(
     override val description: String,
     override val nativeValue: Int
 ) : CodeDescription {
@@ -133,7 +89,47 @@ actual enum class ProtocolSessionErrorCode(
     RLM_SYNC_ERR_SESSION_REVERT_TO_PBS("RevertToPartitionBasedSync", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_REVERT_TO_PBS);
 
     actual companion object {
-        internal actual fun of(nativeValue: Int): ProtocolSessionErrorCode? =
+        internal actual fun of(nativeValue: Int): SyncSessionErrorCode? =
+            values().firstOrNull { value ->
+                value.nativeValue == nativeValue
+            }
+    }
+}
+
+actual enum class WebsocketErrorCode(
+    override val description: String,
+    override val nativeValue: Int
+) : CodeDescription {
+    RLM_ERR_WEBSOCKET_OK("Ok", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_OK),
+    RLM_ERR_WEBSOCKET_GOINGAWAY("GoingAway", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_GOINGAWAY),
+    RLM_ERR_WEBSOCKET_PROTOCOLERROR("ProtocolError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_PROTOCOLERROR),
+    RLM_ERR_WEBSOCKET_UNSUPPORTEDDATA("UnsupportedData", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_UNSUPPORTEDDATA),
+    RLM_ERR_WEBSOCKET_RESERVED("Reserved", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_RESERVED),
+    RLM_ERR_WEBSOCKET_NOSTATUSRECEIVED("NoStatusReceived", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_NOSTATUSRECEIVED),
+    RLM_ERR_WEBSOCKET_ABNORMALCLOSURE("AbnormalClosure", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_ABNORMALCLOSURE),
+    RLM_ERR_WEBSOCKET_INVALIDPAYLOADDATA("InvalidPayloadData", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_INVALIDPAYLOADDATA),
+    RLM_ERR_WEBSOCKET_POLICYVIOLATION("PolicyViolation", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_POLICYVIOLATION),
+    RLM_ERR_WEBSOCKET_MESSAGETOOBIG("MessageToBig", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_MESSAGETOOBIG),
+    RLM_ERR_WEBSOCKET_INAVALIDEXTENSION("InvalidExtension", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_INAVALIDEXTENSION),
+    RLM_ERR_WEBSOCKET_INTERNALSERVERERROR("InternalServerError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_INTERNALSERVERERROR),
+    RLM_ERR_WEBSOCKET_TLSHANDSHAKEFAILED("TlsHandshakeFailed", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_TLSHANDSHAKEFAILED),
+
+    RLM_ERR_WEBSOCKET_UNAUTHORIZED("Unauthorized", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_UNAUTHORIZED),
+    RLM_ERR_WEBSOCKET_FORBIDDEN("Forbidden", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_FORBIDDEN),
+    RLM_ERR_WEBSOCKET_MOVEDPERMANENTLY("MovedPermanently", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_MOVEDPERMANENTLY),
+    RLM_ERR_WEBSOCKET_CLIENT_TOO_OLD("ClientTooOld", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_CLIENT_TOO_OLD),
+    RLM_ERR_WEBSOCKET_CLIENT_TOO_NEW("ClientTooNew", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_CLIENT_TOO_NEW),
+    RLM_ERR_WEBSOCKET_PROTOCOL_MISMATCH("ProtocolMismatch", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_PROTOCOL_MISMATCH),
+
+    RLM_ERR_WEBSOCKET_RESOLVE_FAILED("ResolveFailed", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_RESOLVE_FAILED),
+    RLM_ERR_WEBSOCKET_CONNECTION_FAILED("ConnectionFailed", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_CONNECTION_FAILED),
+    RLM_ERR_WEBSOCKET_READ_ERROR("ReadError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_READ_ERROR),
+    RLM_ERR_WEBSOCKET_WRITE_ERROR("WriteError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_WRITE_ERROR),
+    RLM_ERR_WEBSOCKET_RETRY_ERROR("RetryError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_RETRY_ERROR),
+    RLM_ERR_WEBSOCKET_FATAL_ERROR("FatalError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_FATAL_ERROR);
+
+    actual companion object {
+        internal actual fun of(nativeValue: Int): WebsocketErrorCode? =
             values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }

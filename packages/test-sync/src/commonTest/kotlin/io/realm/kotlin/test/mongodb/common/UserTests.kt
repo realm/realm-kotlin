@@ -62,7 +62,7 @@ class UserTests {
 
     @BeforeTest
     fun setUp() {
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
     }
 
     @AfterTest

@@ -375,9 +375,10 @@ public interface SyncConfiguration : Configuration {
                 throw IllegalArgumentException("A valid, logged in user is required.")
             }
             // Prime builder with log configuration from AppConfiguration
-            val appLog = (user as UserImpl).app.configuration.logger
-            this.logLevel = appLog.level
-            this.appConfigLoggers = appLog.loggers
+            (user as UserImpl).app.configuration.logger?.let { appLog ->
+                this.logLevel = appLog.level
+                this.appConfigLoggers = appLog.loggers
+            }
         }
 
         /**
@@ -567,6 +568,7 @@ public interface SyncConfiguration : Configuration {
                 encryptionKey,
                 compactOnLaunchCallback,
                 null, // migration is not relevant for sync,
+                false, // automatic backlink handling is not relevant for sync
                 initialDataCallback,
                 partitionValue == null,
                 inMemory,

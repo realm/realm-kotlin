@@ -55,7 +55,7 @@ internal class KtorNetworkTransportTest {
 
         transport = KtorNetworkTransport(
             timeoutMs = 60000,
-            dispatcherFactory = dispatcherFactory
+            dispatcherHolder = dispatcherFactory.create()
         )
 
         val app = runBlocking(dispatcher) {

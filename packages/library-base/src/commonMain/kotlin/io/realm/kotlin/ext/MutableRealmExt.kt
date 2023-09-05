@@ -17,14 +17,14 @@ package io.realm.kotlin.ext
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 
 /**
  * Returns a [RealmQuery] matching the predicate represented by [query].
  *
  * Reified convenience wrapper for [MutableRealm.query].
  */
-public inline fun <reified T : BaseRealmObject> MutableRealm.query(
+public inline fun <reified T : TypedRealmObject> MutableRealm.query(
     query: String = TRUE_PREDICATE,
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

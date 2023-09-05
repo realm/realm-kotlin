@@ -1,11 +1,160 @@
-## 1.10.0 (YYYY-MM-DD)
+## 1.12.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.11.0 (2023-09-01)
+
+### Breaking Changes
+* `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
+
+```
+val childA: Child = realm.query<Child>().first().find()!!
+val childB: Child = realm.query<Child>().first().find()!!
+
+// This behavior is the same both before 1.11.0 and before
+childA === childB // false
+
+// This will return true in 1.11.0 and onwards. Before it will return false
+childA == childB
+
+realm.writeBlocking { /* Do a write */ }
+val childC = realm.query<Child>().first().find()!!
+
+// This will return false because childA belong to version 1, while childC belong to version 2.
+// Override equals/hashCode if value semantics are wanted.
+childA == childC
+```
+
+### Enhancements
+* Fulltext queries now support prefix search by using the * operator, like `description TEXT 'alex*'`. (Core issue [#6860](https://github.com/realm/realm-core/issues/6860))
+* Realm model classes now generate custom `toString`, `equals` and `hashCode` implementations. This makes it possible to compare by object reference across multiple collections. Note that two objects at different versions will not be considered equal, even 
+if the content is the same. Custom implementations of these methods will be respected if they are present. (Issue [#1097](https://github.com/realm/realm-kotlin/issues/1097)) 
+* Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
+* Support for automatic resolution of embedded object constraints during migration through `RealmConfiguration.Builder.migration(migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean)`. (Issue [#1464](https://github.com/realm/realm-kotlin/issues/1464)
+* [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
+* [Sync] Added support for manually triggering a reconnect attempt for Device Sync. This is done through a new `App.Sync.reconnect()` method. This method is also now called automatically when a mobile device toggles off airplane mode. (Issue [#1479](https://github.com/realm/realm-kotlin/issues/1479))
+
+### Fixed
+* Rare corruption causing 'Invalid streaming format cookie'-exception. Typically following compact, convert or copying to a new file. (Issue [#1440](https://github.com/realm/realm-kotlin/issues/1440))
+* Compiler error when using Kotlin 1.9.0 and backlinks. (Issue [#1469](https://github.com/realm/realm-kotlin/issues/1469))
+* Leaking `JVMScheduler` instances. In certain circumstances, it could lead to a JNI crash. (Issue [#1463](https://github.com/realm/realm-kotlin/pull/1463))
+* [Sync] Changing a subscriptions query type or query itself will now trigger the `WaitForSync.FIRST_TIME` behaviour, rather than only checking changes to the name. (Issues [#1466](https://github.com/realm/realm-kotlin/issues/1466))
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.20.0, commit c258e2681bca5fb33bbd23c112493817b43bfa86.
+
+
+## 1.10.2 (2023-07-21)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* `RealmInstant` could be instantiated with invalid arguments. (Issue [#1443](https://github.com/realm/realm-kotlin/issues/1443))
+* `equals` and `hashCode` on unmanaged `RealmList` and `RealmSet` resulted in incorrect values. (Issue [#1454](https://github.com/realm/realm-kotlin/pull/1454))
+* [Sync] HTTP requests were not logged when the log level was set in `RealmLog.level`. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1456))
+* [Sync] `RealmLog.level` is set to `WARN` after creating an `App` or `Realm` configuration. (Issue [#1456](https://github.com/realm/realm-kotlin/pull/1459))
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.17.0, commit f1e962cd447f8b69f8f7cf46a188b1c6246923c5.
+
+
+## 1.10.1 (2023-06-30)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* [Sync] Optimized the opening of Flexible Sync Realms when `waitForInitialRemoteData` is used. (Issue [#1438](https://github.com/realm/realm-kotlin/issues/1438))
+
+### Fixed
+* [Sync] Using `SyncConfiguration.waitForInitialRemoteData()` would require a network connection, even after opening the realm file for the first time. (Issue [#1439](https://github.com/realm/realm-kotlin/pull/1439)) 
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.10.0 (2023-06-28)
+
+### Breaking Changes
+* Generic arguments have been cleaned up. In a lot of places, `BaseRealmObject` was accepted as input. This was too broad and could result in runtime exceptions. In those places the argument has been restricted to the correct `TypedRealmObject`.
+
+### Enhancements
+* Loading the native library on Android above API 22 is no longer using Relinker, but now uses the normal `System.loadLibrary()`.
 * Running Android Unit tests on the JVM is now supported instead of throwing `java.lang.NullPointerException`. This includes both pure Android projects (in the `/test` directory) and common tests in Multiplatform projects.
 * Support for passing list, sets or iterable arguments to queries with `IN`-operators, e.g. `query<TYPE>("<field> IN $0", listOf(1,2,3))`. (Issue [#929](https://github.com/realm/realm-kotlin/issues/929))
+* [Sync] Support for `RealmQuery.subscribe()` and `RealmResults.subscribe()` as an easy way to create subscriptions in the background while continuing to use the query result. This API is experimental. (Issue [#1363](https://github.com/realm/realm-kotlin/issues/1363))
+* [Sync] Support for "write-only" objects which can be written to MongoDB time-series collections. This can be useful for e.g. telemetry data. Use this by creating a model classes that inherit from the new `AsymmetricRealmObject` base class. See this class for more information. (Issue [#1420](https://github.com/realm/realm-kotlin/pull/1420))
 
 ### Fixed
 * None
@@ -16,7 +165,7 @@
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
   * Ktor 2.1.2 and above.
-  * Coroutines 1.6.4 and above.
+  * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Kbson 0.3.0.
@@ -25,7 +174,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.15.0, commit d86103556a139686836dd565862e1a8b36917c76.
+* Updated to Realm Core 13.15.2, commit b8f3244a316f512ad48c761e11e4a135f729ad23.
 * Bumped Android Gradle Version to 7.3.1.
 * Add bundle ID sync connection parameter.
 * Enabled profiling for unit test modules.

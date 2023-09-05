@@ -19,52 +19,10 @@ package io.realm.kotlin.internal.interop.sync
 import io.realm.kotlin.internal.interop.CodeDescription
 
 /**
- * Wrapper for C-API `realm_sync_errno_client`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3214
- */
-expect enum class ProtocolClientErrorCode : CodeDescription {
-    RLM_SYNC_ERR_CLIENT_CONNECTION_CLOSED,
-    RLM_SYNC_ERR_CLIENT_UNKNOWN_MESSAGE,
-    RLM_SYNC_ERR_CLIENT_BAD_SYNTAX,
-    RLM_SYNC_ERR_CLIENT_LIMITS_EXCEEDED,
-    RLM_SYNC_ERR_CLIENT_BAD_SESSION_IDENT,
-    RLM_SYNC_ERR_CLIENT_BAD_MESSAGE_ORDER,
-    RLM_SYNC_ERR_CLIENT_BAD_CLIENT_FILE_IDENT,
-    RLM_SYNC_ERR_CLIENT_BAD_PROGRESS,
-    RLM_SYNC_ERR_CLIENT_BAD_CHANGESET_HEADER_SYNTAX,
-    RLM_SYNC_ERR_CLIENT_BAD_CHANGESET_SIZE,
-    RLM_SYNC_ERR_CLIENT_BAD_ORIGIN_FILE_IDENT,
-    RLM_SYNC_ERR_CLIENT_BAD_SERVER_VERSION,
-    RLM_SYNC_ERR_CLIENT_BAD_CHANGESET,
-    RLM_SYNC_ERR_CLIENT_BAD_REQUEST_IDENT,
-    RLM_SYNC_ERR_CLIENT_BAD_ERROR_CODE,
-    RLM_SYNC_ERR_CLIENT_BAD_COMPRESSION,
-    RLM_SYNC_ERR_CLIENT_BAD_CLIENT_VERSION,
-    RLM_SYNC_ERR_CLIENT_SSL_SERVER_CERT_REJECTED,
-    RLM_SYNC_ERR_CLIENT_PONG_TIMEOUT,
-    RLM_SYNC_ERR_CLIENT_BAD_CLIENT_FILE_IDENT_SALT,
-    RLM_SYNC_ERR_CLIENT_BAD_FILE_IDENT,
-    RLM_SYNC_ERR_CLIENT_CONNECT_TIMEOUT,
-    RLM_SYNC_ERR_CLIENT_BAD_TIMESTAMP,
-    RLM_SYNC_ERR_CLIENT_BAD_PROTOCOL_FROM_SERVER,
-    RLM_SYNC_ERR_CLIENT_CLIENT_TOO_OLD_FOR_SERVER,
-    RLM_SYNC_ERR_CLIENT_CLIENT_TOO_NEW_FOR_SERVER,
-    RLM_SYNC_ERR_CLIENT_PROTOCOL_MISMATCH,
-    RLM_SYNC_ERR_CLIENT_BAD_STATE_MESSAGE,
-    RLM_SYNC_ERR_CLIENT_MISSING_PROTOCOL_FEATURE,
-    RLM_SYNC_ERR_CLIENT_HTTP_TUNNEL_FAILED,
-    RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE;
-
-    companion object {
-        internal fun of(nativeValue: Int): ProtocolClientErrorCode?
-    }
-}
-
-/**
  * Wrapper for C-API `realm_sync_errno_connection`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2942
+ * See https://github.com/realm/realm-core/blob/master/src/realm/error_codes.h#L209
  */
-expect enum class ProtocolConnectionErrorCode : CodeDescription {
+expect enum class SyncConnectionErrorCode : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED,
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR,
     RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE,
@@ -82,15 +40,15 @@ expect enum class ProtocolConnectionErrorCode : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS;
 
     companion object {
-        internal fun of(nativeValue: Int): ProtocolConnectionErrorCode?
+        internal fun of(nativeValue: Int): SyncConnectionErrorCode?
     }
 }
 
 /**
  * Wrapper for C-API `realm_sync_errno_session`.
- * See https://github.com/realm/realm-core/blob/master/src/realm.h#L2960
+ * See https://github.com/realm/realm-core/blob/master/src/realm/error_codes.h#L228
  */
-expect enum class ProtocolSessionErrorCode : CodeDescription {
+expect enum class SyncSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED,
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR,
     RLM_SYNC_ERR_SESSION_TOKEN_EXPIRED,
@@ -127,6 +85,42 @@ expect enum class ProtocolSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_REVERT_TO_PBS;
 
     companion object {
-        internal fun of(nativeValue: Int): ProtocolSessionErrorCode?
+        internal fun of(nativeValue: Int): SyncSessionErrorCode?
+    }
+}
+
+/**
+ * Wrapper for C-API `realm_web_socket_errno`.
+ * See https://github.com/realm/realm-core/blob/master/src/realm/error_codes.h#L266
+ */
+expect enum class WebsocketErrorCode : CodeDescription {
+    RLM_ERR_WEBSOCKET_OK,
+    RLM_ERR_WEBSOCKET_GOINGAWAY,
+    RLM_ERR_WEBSOCKET_PROTOCOLERROR,
+    RLM_ERR_WEBSOCKET_UNSUPPORTEDDATA,
+    RLM_ERR_WEBSOCKET_RESERVED,
+    RLM_ERR_WEBSOCKET_NOSTATUSRECEIVED,
+    RLM_ERR_WEBSOCKET_ABNORMALCLOSURE,
+    RLM_ERR_WEBSOCKET_INVALIDPAYLOADDATA,
+    RLM_ERR_WEBSOCKET_POLICYVIOLATION,
+    RLM_ERR_WEBSOCKET_MESSAGETOOBIG,
+    RLM_ERR_WEBSOCKET_INAVALIDEXTENSION,
+    RLM_ERR_WEBSOCKET_INTERNALSERVERERROR,
+    RLM_ERR_WEBSOCKET_TLSHANDSHAKEFAILED,
+    RLM_ERR_WEBSOCKET_UNAUTHORIZED,
+    RLM_ERR_WEBSOCKET_FORBIDDEN,
+    RLM_ERR_WEBSOCKET_MOVEDPERMANENTLY,
+    RLM_ERR_WEBSOCKET_CLIENT_TOO_OLD,
+    RLM_ERR_WEBSOCKET_CLIENT_TOO_NEW,
+    RLM_ERR_WEBSOCKET_PROTOCOL_MISMATCH,
+    RLM_ERR_WEBSOCKET_RESOLVE_FAILED,
+    RLM_ERR_WEBSOCKET_CONNECTION_FAILED,
+    RLM_ERR_WEBSOCKET_READ_ERROR,
+    RLM_ERR_WEBSOCKET_WRITE_ERROR,
+    RLM_ERR_WEBSOCKET_RETRY_ERROR,
+    RLM_ERR_WEBSOCKET_FATAL_ERROR;
+
+    companion object {
+        internal fun of(nativeValue: Int): WebsocketErrorCode?
     }
 }

@@ -26,6 +26,7 @@ import io.realm.kotlin.internal.interop.FrozenRealmPointer
 import io.realm.kotlin.internal.query.ObjectQuery
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.query.RealmQuery
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmSchema
 
 internal open class DynamicRealmImpl(
@@ -39,8 +40,11 @@ internal open class DynamicRealmImpl(
         className: String,
         query: String,
         vararg args: Any?
-    ): RealmQuery<DynamicRealmObject> =
-        ObjectQuery(
+    ): RealmQuery<DynamicRealmObject> {
+        if (realmReference.owner.schema()[className]?.kind == RealmClassKind.ASYMMETRIC) {
+            throw IllegalArgumentException("Queries on asymmetric objects are not allowed: $className")
+        }
+        return ObjectQuery(
             realmReference,
             realmReference.schemaMetadata.getOrThrow(className).classKey,
             DynamicRealmObject::class,
@@ -48,6 +52,7 @@ internal open class DynamicRealmImpl(
             query,
             args
         )
+    }
 
     // FIXME Currently constructs a new instance on each invocation. We could cache this pr. schema
     //  update, but requires that we initialize it all on the actual schema update to allow freezing

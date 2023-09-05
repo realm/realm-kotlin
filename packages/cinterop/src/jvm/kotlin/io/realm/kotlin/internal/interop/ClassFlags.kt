@@ -19,4 +19,5 @@ package io.realm.kotlin.internal.interop
 actual object ClassFlags {
     actual val RLM_CLASS_NORMAL = realm_class_flags_e.RLM_CLASS_NORMAL
     actual val RLM_CLASS_EMBEDDED = realm_class_flags_e.RLM_CLASS_EMBEDDED
+    actual val RLM_CLASS_ASYMMETRIC = realm_class_flags_e.RLM_CLASS_ASYMMETRIC
 }

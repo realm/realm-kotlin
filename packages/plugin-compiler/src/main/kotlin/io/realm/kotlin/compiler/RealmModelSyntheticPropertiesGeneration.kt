@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.CLASS_INFO
-import io.realm.kotlin.compiler.FqNames.COLLECTION_TYPE
-import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.FULLTEXT_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.INDEX_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.KBSON_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAP
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_MAPOF
-import io.realm.kotlin.compiler.FqNames.KOTLIN_PAIR
-import io.realm.kotlin.compiler.FqNames.OBJECT_REFERENCE_CLASS
-import io.realm.kotlin.compiler.FqNames.PRIMARY_KEY_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO
-import io.realm.kotlin.compiler.FqNames.PROPERTY_INFO_CREATE
-import io.realm.kotlin.compiler.FqNames.PROPERTY_TYPE
-import io.realm.kotlin.compiler.FqNames.REALM_ANY
-import io.realm.kotlin.compiler.FqNames.REALM_INSTANT
-import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_ID
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
-import io.realm.kotlin.compiler.FqNames.REALM_UUID
-import io.realm.kotlin.compiler.FqNames.TYPED_REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.CLASS_INFO
+import io.realm.kotlin.compiler.ClassIds.CLASS_KIND_TYPE
+import io.realm.kotlin.compiler.ClassIds.COLLECTION_TYPE
+import io.realm.kotlin.compiler.ClassIds.FULLTEXT_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.INDEX_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.KBSON_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAP
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAPOF
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_PAIR
+import io.realm.kotlin.compiler.ClassIds.OBJECT_REFERENCE_CLASS
+import io.realm.kotlin.compiler.ClassIds.PRIMARY_KEY_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_INFO
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_INFO_CREATE
+import io.realm.kotlin.compiler.ClassIds.PROPERTY_TYPE
+import io.realm.kotlin.compiler.ClassIds.REALM_ANY
+import io.realm.kotlin.compiler.ClassIds.REALM_INSTANT
+import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_ID
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_UUID
+import io.realm.kotlin.compiler.ClassIds.TYPED_REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.Names.CLASS_INFO_CREATE
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_DICTIONARY
@@ -47,21 +46,19 @@ import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_NONE
 import io.realm.kotlin.compiler.Names.PROPERTY_COLLECTION_TYPE_SET
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_LINKING_OBJECTS
 import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_KIND
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_IS_EMBEDDED
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
 import io.realm.kotlin.compiler.Names.SET
-import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.addGetter
@@ -80,8 +77,11 @@ import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
+import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.expressions.IrConst
+import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
@@ -93,10 +93,9 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrFail
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.isNullable
-import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.typeWith
@@ -126,8 +125,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE)
     private val typedRealmObjectInterface: IrClass =
         pluginContext.lookupClassOrThrow(TYPED_REALM_OBJECT_INTERFACE)
-    private val embeddedRealmObjectInterface: IrClass =
-        pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE)
     private val realmModelInternalInterface: IrClass =
         pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERNAL_INTERFACE)
     private val realmObjectCompanionInterface =
@@ -145,6 +142,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val collectionType: IrClass = pluginContext.lookupClassOrThrow(COLLECTION_TYPE)
     private val collectionTypes =
         collectionType.declarations.filterIsInstance<IrEnumEntry>()
+    private val classKindType: IrClass = pluginContext.lookupClassOrThrow(CLASS_KIND_TYPE)
+    private val classKindTypes = classKindType.declarations.filterIsInstance<IrEnumEntry>()
 
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
@@ -154,10 +153,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     private val realmAnyType: IrType = pluginContext.lookupClassOrThrow(REALM_ANY).defaultType
 
     private val kMutableProperty1Class: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
+        pluginContext.lookupClassOrThrow(ClassIds.KOTLIN_REFLECT_KMUTABLEPROPERTY1)
 
     private val kProperty1Class: IrClass =
-        pluginContext.lookupClassOrThrow(FqNames.KOTLIN_REFLECT_KPROPERTY1)
+        pluginContext.lookupClassOrThrow(ClassIds.KOTLIN_REFLECT_KPROPERTY1)
 
     private val mapClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MAP)
     private val pairClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_PAIR)
@@ -189,8 +188,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         realmObjectMutablePropertyType
     )
 
-    val realmClassImpl = pluginContext.lookupClassOrThrow(FqNames.REALM_CLASS_IMPL)
-    private val realmClassCtor = pluginContext.lookupConstructorInClass(FqNames.REALM_CLASS_IMPL) {
+    val realmClassImpl = pluginContext.lookupClassOrThrow(ClassIds.REALM_CLASS_IMPL)
+    private val realmClassCtor = pluginContext.lookupConstructorInClass(ClassIds.REALM_CLASS_IMPL) {
         it.owner.valueParameters.size == 2
     }
 
@@ -205,7 +204,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             objectIdType,
             realmObjectIdType,
             realmUUIDType
-        ).map { it.classifierOrFail }
+        )
     }
     private val indexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
@@ -221,12 +220,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             realmObjectIdType,
             realmUUIDType,
             realmAnyType
-        ).map { it.classifierOrFail }
+        )
     }
     private val fullTextIndexableTypes = with(pluginContext.irBuiltIns) {
         setOf(
             stringType
-        ).map { it.classifierOrFail }
+        )
     }
 
     /**
@@ -395,25 +394,33 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             )
         }
 
-        // Add `public val `io_realm_kotlin_isEmbedded`: Boolean` property.
+        // Add `public val `io_realm_kotlin_classKind`: RealmClassKind` property.
         companion.addValueProperty(
             pluginContext,
             realmObjectCompanionInterface,
-            REALM_OBJECT_COMPANION_IS_EMBEDDED,
-            pluginContext.irBuiltIns.booleanType
+            REALM_OBJECT_COMPANION_CLASS_KIND,
+            classKindType.defaultType
         ) { startOffset, endOffset ->
-            IrConstImpl.boolean(
-                startOffset,
-                endOffset,
-                pluginContext.irBuiltIns.booleanType,
-                companion.parentAsClass.defaultType.isSubtypeOfClass(embeddedRealmObjectInterface.symbol)
+            val isEmbedded = clazz.isEmbeddedRealmObject
+            val isAsymmetric = clazz.isAsymmetricRealmObject
+            IrGetEnumValueImpl(
+                startOffset = startOffset,
+                endOffset = endOffset,
+                type = classKindType.defaultType,
+                symbol = classKindTypes.first {
+                    // These names must match the values in io.realm.kotlin.schema.RealmClassKind
+                    it.name == when {
+                        isEmbedded -> Name.identifier("EMBEDDED")
+                        isAsymmetric -> Name.identifier("ASYMMETRIC")
+                        else -> Name.identifier("STANDARD")
+                    }
+                }.symbol
             )
         }
     }
 
     // Generate body for the synthetic schema method defined inside the Companion instance previously declared via `RealmModelSyntheticCompanionExtension`
     // TODO OPTIMIZE should be a one time only constructed object
-    @OptIn(ObsoleteDescriptorBasedAPI::class)
     @Suppress("LongMethod", "ComplexMethod")
     fun addSchemaMethodBody(irClass: IrClass) {
         val companionObject = irClass.companionObject() as? IrClass
@@ -434,6 +441,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         if (embedded && primaryKeyFields.isNotEmpty()) {
             logError("Embedded object is not allowed to have a primary key", irClass.locationOf())
         }
+
+        val asymmetric = irClass.isAsymmetricRealmObject
+
         val primaryKey: String? = when (primaryKeyFields.size) {
             0 -> null
             1 -> primaryKeyFields.entries.first().value.persistedName
@@ -462,7 +472,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             type = classInfoClass.defaultType,
                             symbol = classInfoCreateMethod.symbol,
                             typeArgumentsCount = 0,
-                            valueArgumentsCount = 4
+                            valueArgumentsCount = 5
                         ).apply {
                             dispatchReceiver = irGetObject(classInfoClass.companionObject()!!.symbol)
                             var arg = 0
@@ -482,6 +492,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                             // num properties
                             putValueArgument(arg++, irLong(fields.size.toLong()))
                             putValueArgument(arg++, irBoolean(embedded))
+                            putValueArgument(arg++, irBoolean(asymmetric))
                         }
                     )
                     putValueArgument(
@@ -495,7 +506,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 // 1 - primitive type, in which case it is extracted as is
                                 // 2 - collection type, in which case the collection type(s)
                                 //     specified in value.genericTypes should be used as type
-                                val type = when (val primitiveType = getType(value.propertyType)) {
+                                val type: IrEnumEntry = when (val primitiveType = getType(value.propertyType)) {
                                     null -> // Primitive type is null for collections
                                         when (value.collectionType) {
                                             CollectionType.LIST,
@@ -512,16 +523,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         primitiveType
                                 }
 
-                                val objectType = propertyTypes.firstOrNull {
+                                val objectType: IrEnumEntry = propertyTypes.firstOrNull {
                                     it.name == PROPERTY_TYPE_OBJECT
                                 } ?: error("Unknown type ${value.propertyType}")
 
-                                val linkingObjectType = propertyTypes.firstOrNull {
+                                val linkingObjectType: IrEnumEntry = propertyTypes.firstOrNull {
                                     it.name == PROPERTY_TYPE_LINKING_OBJECTS
                                 } ?: error("Unknown type ${value.propertyType}")
 
-                                val property = value.declaration
-                                val backingField = property.backingField
+                                val property: IrProperty = value.declaration
+                                val backingField: IrField = property.backingField
                                     ?: fatalError("Property without backing field or type.")
                                 // Nullability applies to the generic type in collections
                                 val nullable = if (value.collectionType == CollectionType.NONE) {
@@ -531,23 +542,23 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         ?: fatalError("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                if (primaryKey && backingField.type.classifierOrFail !in validPrimaryKeyTypes) {
+                                if (primaryKey && validPrimaryKeyTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Primary key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${validPrimaryKeyTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Primary key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${validPrimaryKeyTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
-                                if (isIndexed && backingField.type.classifierOrFail !in indexableTypes) {
+                                if (isIndexed && indexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Indexed key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${indexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Indexed key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${indexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isFullTextIndexed = backingField.hasAnnotation(FULLTEXT_ANNOTATION)
-                                if (isFullTextIndexed && backingField.type.classifierOrFail !in fullTextIndexableTypes) {
+                                if (isFullTextIndexed && fullTextIndexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
                                     logError(
-                                        "Full-text key ${property.name} is of type ${backingField.type.classifierOrFail.owner.symbol.descriptor.name} but must be of type ${fullTextIndexableTypes.map { it.owner.symbol.descriptor.name }}",
+                                        "Full-text key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${fullTextIndexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
@@ -578,6 +589,103 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     persistedAndPublicNameToLocation[publicName] = location
                                 }
 
+                                // Validate asymmetric object constraints:
+                                // - Asymmetric objects can only contain embedded objects.
+                                // - RealmObject and EmbeddedObject cannot contain a Asymmetric object.
+                                // I.e. Asymmetric objects are only allowed as top-level objects.
+                                when (type) {
+                                    objectType -> {
+                                        // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                        when (value.collectionType) {
+                                            CollectionType.NONE -> {
+                                                backingField.type
+                                            }
+                                            CollectionType.LIST,
+                                            CollectionType.SET,
+                                            CollectionType.DICTIONARY -> {
+                                                getCollectionElementType(backingField.type)
+                                                    ?: error("Could not get collection type from ${backingField.type}")
+                                            }
+                                        }
+                                    }
+                                    else -> null
+                                }?.let { linkedType: IrType ->
+                                    if (asymmetric) {
+                                        if (!linkedType.isEmbeddedRealmObject) {
+                                            logError("AsymmetricObjects can only reference EmbeddedRealmObject classes.", property.locationOf())
+                                        }
+                                    } else {
+                                        if (linkedType.isAsymmetricRealmObject) {
+                                            logError("RealmObjects and EmbeddedRealmObjects cannot reference AsymmetricRealmObjects.", property.locationOf())
+                                        }
+                                    }
+                                }
+
+                                // Define the Realm `PropertyType` enum value for this kind of
+                                // property.
+                                val realmPropertyType = IrGetEnumValueImpl(
+                                    startOffset = UNDEFINED_OFFSET,
+                                    endOffset = UNDEFINED_OFFSET,
+                                    type = propertyType.defaultType,
+                                    symbol = type.symbol
+                                )
+
+                                // Collection type: remember to specify it correctly here - the
+                                // type of the contents itself is specified as "type" above!
+                                val collectionTypeSymbol = when (value.collectionType) {
+                                    CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
+                                    CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
+                                    CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
+                                    CollectionType.DICTIONARY -> PROPERTY_COLLECTION_TYPE_DICTIONARY
+                                }
+                                val collectionType = IrGetEnumValueImpl(
+                                    startOffset = UNDEFINED_OFFSET,
+                                    endOffset = UNDEFINED_OFFSET,
+                                    type = collectionType.defaultType,
+                                    symbol = collectionTypes.first {
+                                        it.name == collectionTypeSymbol
+                                    }.symbol
+                                )
+
+                                // Find the link target if any. This is a `KClass<out TypedRealmObject>?`
+                                // reference, that is `null` if this property is not a object link
+                                // or a collection.
+                                val linkTarget: IrExpression = when (type) {
+                                    objectType -> {
+                                        // Collections of type RealmObject require the type parameter be retrieved from the generic argument
+                                        when (collectionTypeSymbol) {
+                                            PROPERTY_COLLECTION_TYPE_NONE ->
+                                                backingField.type
+                                            PROPERTY_COLLECTION_TYPE_LIST,
+                                            PROPERTY_COLLECTION_TYPE_SET,
+                                            PROPERTY_COLLECTION_TYPE_DICTIONARY ->
+                                                getCollectionElementType(backingField.type)
+                                                    ?: error("Could not get collection type from ${backingField.type}")
+                                            else ->
+                                                error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
+                                        }
+                                    }
+                                    linkingObjectType -> getBacklinksTargetType(backingField)
+                                    else -> null
+                                }?.let { linkTargetType: IrType ->
+                                    val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
+                                    IrClassReferenceImpl(
+                                        startOffset = UNDEFINED_OFFSET,
+                                        endOffset = UNDEFINED_OFFSET,
+                                        type = classRef.symbol.starProjectedType,
+                                        symbol = classRef.symbol,
+                                        classType = classRef.defaultType
+                                    )
+                                } ?: irNull(pluginContext.irBuiltIns.kClassClass.typeWith(typedRealmObjectInterface.defaultType).makeNullable())
+
+                                // Define the link target. Empty string if there is none.
+                                val linkPropertyName: IrConst<String> = if (type == linkingObjectType) {
+                                    val targetPropertyName = getLinkingObjectPropertyName(backingField)
+                                    irString(targetPropertyName)
+                                } else {
+                                    irString("")
+                                }
+
                                 IrCallImpl(
                                     startOffset,
                                     endOffset,
@@ -592,75 +700,13 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                     // Public name
                                     putValueArgument(arg++, irString(publicName))
                                     // Type
-                                    putValueArgument(
-                                        arg++,
-                                        IrGetEnumValueImpl(
-                                            startOffset = UNDEFINED_OFFSET,
-                                            endOffset = UNDEFINED_OFFSET,
-                                            type = propertyType.defaultType,
-                                            symbol = type.symbol
-                                        )
-                                    )
-                                    // Collection type: remember to specify it correctly here - the
-                                    // type of the contents itself is specified as "type" above!
-                                    val collectionTypeSymbol = when (value.collectionType) {
-                                        CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
-                                        CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
-                                        CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
-                                        CollectionType.DICTIONARY -> PROPERTY_COLLECTION_TYPE_DICTIONARY
-                                    }
-                                    putValueArgument(
-                                        arg++,
-                                        IrGetEnumValueImpl(
-                                            startOffset = UNDEFINED_OFFSET,
-                                            endOffset = UNDEFINED_OFFSET,
-                                            type = collectionType.defaultType,
-                                            symbol = collectionTypes.first {
-                                                it.name == collectionTypeSymbol
-                                            }.symbol
-                                        )
-                                    )
+                                    putValueArgument(arg++, realmPropertyType)
+                                    // Collection Type
+                                    putValueArgument(arg++, collectionType)
                                     // Link target
-                                    putValueArgument(
-                                        arg++,
-                                        when (type) {
-                                            objectType -> {
-                                                // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                                when (collectionTypeSymbol) {
-                                                    PROPERTY_COLLECTION_TYPE_NONE ->
-                                                        backingField.type
-                                                    PROPERTY_COLLECTION_TYPE_LIST,
-                                                    PROPERTY_COLLECTION_TYPE_SET,
-                                                    PROPERTY_COLLECTION_TYPE_DICTIONARY ->
-                                                        getCollectionElementType(backingField.type)
-                                                            ?: error("Could not get collection type from ${backingField.type}")
-                                                    else ->
-                                                        error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
-                                                }
-                                            }
-                                            linkingObjectType -> getBacklinksTargetType(backingField)
-                                            else -> null
-                                        }?.let { linkTargetType: IrType ->
-                                            val classRef: IrClass = linkTargetType.getClass() ?: error("$linkTargetType is not a supported class type.")
-                                            IrClassReferenceImpl(
-                                                startOffset = UNDEFINED_OFFSET,
-                                                endOffset = UNDEFINED_OFFSET,
-                                                type = classRef.symbol.starProjectedType,
-                                                symbol = classRef.symbol,
-                                                classType = classRef.defaultType
-                                            )
-                                        } ?: irNull(pluginContext.irBuiltIns.kClassClass.typeWith(typedRealmObjectInterface.defaultType).makeNullable())
-                                    )
+                                    putValueArgument(arg++, linkTarget)
                                     // Link property name
-                                    putValueArgument(
-                                        arg++,
-                                        if (type == linkingObjectType) {
-                                            val targetPropertyName = getLinkingObjectPropertyName(backingField)
-                                            irString(targetPropertyName)
-                                        } else {
-                                            irString("")
-                                        }
-                                    )
+                                    putValueArgument(arg++, linkPropertyName)
                                     // isNullable
                                     putValueArgument(arg++, irBoolean(nullable))
                                     // isPrimaryKey

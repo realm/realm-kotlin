@@ -2361,7 +2361,7 @@ class QueryTests {
 
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'quick dog'").find().size) // words at different locations
         assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'brown -fox'").find().size) // exclusion
-        assertEquals(0, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // token prefix search does not work
+        assertEquals(2, realm.query<QuerySample>("fulltextField TEXT 'fo*'").find().size) // token prefix search is supported.
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'cafe big'").find().size) // case- and diacritics-insensitive
         assertEquals(1, realm.query<QuerySample>("fulltextField TEXT 'rødgrød'").find().size) // Latin-1 supplement
         assertEquals(0, realm.query<QuerySample>("fulltextField TEXT '😊'").find().size) // Searching outside supported chars return nothing

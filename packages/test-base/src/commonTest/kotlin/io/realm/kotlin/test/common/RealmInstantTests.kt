@@ -10,6 +10,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.query.find
+import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.delay
@@ -114,14 +115,6 @@ class RealmInstantTests {
             assertEquals(0, zeroMinusOne.epochSeconds)
             assertEquals(-1, zeroMinusOne.nanosecondsOfSecond)
         }
-
-        roundTrip(RealmInstant.from(-1, 2_000_000_200)) { crossingZeroFromNegative ->
-            assertEquals(RealmInstant.from(1, 200), crossingZeroFromNegative)
-        }
-
-        roundTrip(RealmInstant.from(1, -2_000_000_200)) { crossingZeroFromPositive ->
-            assertEquals(RealmInstant.from(-1, -200), crossingZeroFromPositive)
-        }
     }
 
     // Store value and retrieve it again
@@ -204,6 +197,17 @@ class RealmInstantTests {
             val duration1 = ts1.epochSeconds.seconds + ts1.nanosecondsOfSecond.nanoseconds
             val duration2 = ts2.epochSeconds.seconds + ts2.nanosecondsOfSecond.nanoseconds
             assertTrue(duration2 > duration1)
+        }
+    }
+
+    @Test
+    fun mismatchingSign_throws() {
+        assertFailsWithMessage<IllegalArgumentException>("Arguments must be both positive or negative.") {
+            RealmInstant.from(Long.MAX_VALUE, Int.MIN_VALUE)
+        }
+
+        assertFailsWithMessage<IllegalArgumentException>("Arguments must be both positive or negative.") {
+            RealmInstant.from(Long.MIN_VALUE, Int.MAX_VALUE)
         }
     }
 

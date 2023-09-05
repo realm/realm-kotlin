@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.interop.SyncBeforeClientResetHandler
 import io.realm.kotlin.internal.interop.SyncErrorCallback
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
+import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
@@ -48,6 +49,7 @@ import io.realm.kotlin.mongodb.sync.SyncClientResetStrategy
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.TimeoutCancellationException
@@ -69,17 +71,24 @@ internal class SyncConfigurationImpl(
 
     override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         // Partition-based Realms with `waitForInitialRemoteData` enabled will use
-        // async open first do download the server side Realm. This is much much faster than
+        // async open first do download the server side Realm. This is much faster than
         // creating the Realm locally first and then downloading (and integrating) changes into
         // that.
-        if (partitionValue != null && initialRemoteData != null) {
+        //
+        // Flexible Sync Realms with `waitForInitialRemoteData` enabled will use async open
+        // in order to prevent overloading the server with schema updates. By itself, it isn't
+        // a big problem, but if many thousands of devices all connect at the same time it puts
+        // unnecessary pressure on the server.
+        val fileExists: Boolean = fileExists(configuration.path)
+        val asyncOpenCreatedRealmFile: AtomicBoolean = atomic(false)
+        if (initialRemoteData != null && !fileExists) {
             // Channel to work around not being able to use `suspendCoroutine` to wrap the callback, as
             // that results in the `Continuation` being frozen, which breaks it.
             val channel = Channel<Any>(1)
             val taskPointer: AtomicRef<RealmAsyncOpenTaskPointer?> = atomic(null)
             try {
                 val result: Any = withTimeout(initialRemoteData.timeout.inWholeMilliseconds) {
-                    withContext(realm.notificationDispatcherHolder.dispatcher) {
+                    withContext(realm.notificationScheduler.dispatcher) {
                         val callback = AsyncOpenCallback { error: Throwable? ->
                             if (error != null) {
                                 channel.trySend(error)
@@ -95,7 +104,10 @@ internal class SyncConfigurationImpl(
                     }
                 }
                 when (result) {
-                    is Boolean -> { /* Do nothing, opening the Realm will follow below */ }
+                    is Boolean -> {
+                        // Track whether or not async open created the file.
+                        asyncOpenCreatedRealmFile.value = true
+                    }
                     is Throwable -> throw result
                     else -> throw IllegalStateException("Unexpected value: $result")
                 }
@@ -109,9 +121,18 @@ internal class SyncConfigurationImpl(
             }
         }
 
-        // Open the local Realm file. This will also include any data potentially downloaded
+        // Open the local Realm file. This will include any data potentially downloaded
         // by Async Open above.
-        return configuration.openRealm(realm)
+        //
+        // Core will track whether or not the file was created as part of opening for the first
+        // time, but that might conflicts with us potentially using async open before calling
+        // this method.
+        //
+        // So there are two possibilities for the file to be created:
+        // 1) .waitForInitialRemoteData caused async open to be used, which created the file.
+        // 2) The synced Realm was opened locally first (without async open), which then created the file.
+        val result: Pair<FrozenRealmReference, Boolean> = configuration.openRealm(realm)
+        return Pair(result.first, result.second || asyncOpenCreatedRealmFile.value)
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {

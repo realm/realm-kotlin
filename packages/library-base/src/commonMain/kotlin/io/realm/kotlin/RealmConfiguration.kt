@@ -22,8 +22,9 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
+import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -48,13 +49,14 @@ public interface RealmConfiguration : Configuration {
      * created using the [RealmConfiguration.create] function.
      */
     public class Builder(
-        schema: Set<KClass<out BaseRealmObject>>
+        schema: Set<KClass<out TypedRealmObject>>
     ) : Configuration.SharedBuilder<RealmConfiguration, Builder>(schema) {
 
         protected override var name: String? = Realm.DEFAULT_FILE_NAME
         private var directory: String = appFilesDirectory()
         private var deleteRealmIfMigrationNeeded: Boolean = false
         private var migration: RealmMigration? = null
+        private var automaticEmbeddedObjectConstraintsResolution = false
 
         /**
          * Sets the path to the directory that contains the realm file. If the directory does not
@@ -108,6 +110,29 @@ public interface RealmConfiguration : Configuration {
          */
         public fun migration(migration: RealmMigration): Builder =
             apply { this.migration = migration }
+
+        /**
+         * Sets the migration to handle schema updates with automatic migration of data.
+         *
+         * @param migration the [AutomaticSchemaMigration] instance to handle schema and data
+         * migration in the event of a schema update.
+         * @param resolveEmbeddedObjectConstraints a flag to indicate whether realm should resolve
+         * embedded object constraints after migration. If this is `true` then all embedded objects
+         * without a parent will be deleted and every embedded object with multiple references to it
+         * will be duplicated so that every referencing object will hold its own copy of the
+         * embedded object.
+         *
+         * @see RealmMigration
+         * @see AutomaticSchemaMigration
+         */
+        public fun migration(
+            migration: AutomaticSchemaMigration,
+            resolveEmbeddedObjectConstraints: Boolean = false
+        ): Builder =
+            apply {
+                this.migration = migration
+                this.automaticEmbeddedObjectConstraintsResolution = resolveEmbeddedObjectConstraints
+            }
 
         override fun name(name: String): Builder = apply {
             checkName(name)
@@ -163,6 +188,7 @@ public interface RealmConfiguration : Configuration {
                 deleteRealmIfMigrationNeeded,
                 compactOnLaunchCallback,
                 migration,
+                automaticEmbeddedObjectConstraintsResolution,
                 initialDataCallback,
                 inMemory,
                 initialRealmFileConfiguration,
@@ -177,7 +203,7 @@ public interface RealmConfiguration : Configuration {
          *
          * @param schema the classes of the schema. The elements of the set must be direct class literals.
          */
-        public fun create(schema: Set<KClass<out BaseRealmObject>>): RealmConfiguration =
+        public fun create(schema: Set<KClass<out TypedRealmObject>>): RealmConfiguration =
             Builder(schema).build()
     }
 }

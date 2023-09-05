@@ -30,6 +30,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.schema.ListPropertyType
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.schema.RealmPropertyType
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.schema.ValuePropertyType
@@ -41,6 +42,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -95,18 +97,21 @@ class RealmSchemaTests {
             ?: fail("Couldn't find class")
         assertEquals(SCHEMA_VARIATION_CLASS_NAME, schemaVariationsDescriptor.name)
         assertFalse(schemaVariationsDescriptor.isEmbedded)
+        assertEquals(schemaVariationsDescriptor.kind, RealmClassKind.STANDARD)
         assertEquals("string", schemaVariationsDescriptor.primaryKey?.name)
 
         val sampleName = "Sample"
         val sampleDescriptor = schema[sampleName] ?: fail("Couldn't find class")
         assertEquals(sampleName, sampleDescriptor.name)
         assertFalse(sampleDescriptor.isEmbedded)
+        assertNotEquals(sampleDescriptor.kind, RealmClassKind.EMBEDDED)
         assertNull(sampleDescriptor.primaryKey)
 
         val embeddedChildName = "EmbeddedChild"
         val embeddedChildDescriptor = schema[embeddedChildName] ?: fail("Couldn't find class")
         assertEquals(embeddedChildName, embeddedChildDescriptor.name)
         assertTrue(embeddedChildDescriptor.isEmbedded)
+        assertEquals(embeddedChildDescriptor.kind, RealmClassKind.EMBEDDED)
         assertNull(embeddedChildDescriptor.primaryKey)
     }
 

@@ -317,6 +317,7 @@ object TestAppInitializer {
         addFunction(insertDocument)
         addFunction(queryDocument)
         addFunction(deleteDocument)
+        addFunction(countDocuments)
 
         val testAuthFuncId = addFunction(testAuthFunc)._id
         addAuthProvider(
@@ -436,6 +437,22 @@ object TestAppInitializer {
                 .findOne(EJSON.parse(query));
         
             return result;
+        }
+        
+        """.trimIndent()
+    )
+
+    private val countDocuments = Function(
+        name = "countDocuments",
+        source =
+        """
+        exports = function (service, db, collection) {
+            const mongodb = context.services.get(service);
+            const result = mongodb
+                .db(db)
+                .collection(collection)
+                .count();
+            return { value: result };
         }
         
         """.trimIndent()

@@ -13,24 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:OptIn(FirIncompatiblePluginAPI::class)
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.BASE_REALM_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.EMBEDDED_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.FqNames.KOTLIN_COLLECTIONS_LISTOF
-import io.realm.kotlin.compiler.FqNames.PERSISTED_NAME_ANNOTATION
-import org.jetbrains.kotlin.backend.common.extensions.FirIncompatiblePluginAPI
+import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.BASE_REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_LISTOF
+import io.realm.kotlin.compiler.ClassIds.PERSISTED_NAME_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSourceLocation
+import org.jetbrains.kotlin.com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -48,6 +50,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclaration
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
@@ -81,11 +84,12 @@ import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
-import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrTypeBase
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.copyTo
 import org.jetbrains.kotlin.ir.util.file
@@ -94,11 +98,16 @@ import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.properties
+import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.ir.util.superTypes
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
+import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
+import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.types.KotlinType
 import java.lang.reflect.Field
 import java.util.function.Predicate
 
@@ -125,9 +134,12 @@ fun IrPluginContext.blockBody(
 val ClassDescriptor.isRealmObjectCompanion
     get() = isCompanionObject && (containingDeclaration as ClassDescriptor).isBaseRealmObject
 
-val realmObjectInterfaceFqNames = setOf(FqNames.REALM_OBJECT_INTERFACE)
-val realmEmbeddedObjectInterfaceFqNames = setOf(FqNames.EMBEDDED_OBJECT_INTERFACE)
-val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames
+val realmObjectInterfaceFqNames = setOf(REALM_OBJECT_INTERFACE)
+val realmEmbeddedObjectInterfaceFqNames = setOf(EMBEDDED_OBJECT_INTERFACE)
+val realmAsymmetricObjectInterfaceFqNames = setOf(ASYMMETRIC_OBJECT_INTERFACE)
+val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames + realmAsymmetricObjectInterfaceFqNames
+
+fun IrType.classIdOrFail(): ClassId = getClass()?.classId ?: error("Can't get classId of ${render()}")
 
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
@@ -165,26 +177,46 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
 // `RealmObject` (Kotlin, interface).
 val realmObjectPsiNames = setOf("RealmObject", "io.realm.kotlin.types.RealmObject")
 val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.kotlin.types.EmbeddedRealmObject")
+val asymmetricRealmObjectPsiNames = setOf("AsymmetricRealmObject", "io.realm.kotlin.types.AsymmetricRealmObject")
 val realmJavaObjectPsiNames = setOf("io.realm.RealmObject()", "RealmObject()")
 val ClassDescriptor.isRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
 val ClassDescriptor.isBaseRealmObject: Boolean
-    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+
+// JetBrains already have a method `fun IrAnnotationContainer.hasAnnotation(symbol: IrClassSymbol)`
+// It is unclear exactly what the difference is and how to get a ClassSymbol from a ClassId,
+// so for now just work around it.
+fun IrAnnotationContainer?.hasAnnotation(annotation: ClassId): Boolean {
+    return this?.hasAnnotation(annotation.asSingleFqName()) ?: false
+}
 
 fun IrMutableAnnotationContainer.hasAnnotation(annotation: FqName): Boolean {
     return annotations.hasAnnotation(annotation)
 }
 
 val IrClass.isBaseRealmObject
-    get() = superTypes.any { it.classFqName in anyRealmObjectInterfacesFqNames }
+    get() = superTypes.any { it.classId in anyRealmObjectInterfacesFqNames }
 
 val IrClass.isRealmObject
-    get() = superTypes.any { it.classFqName == BASE_REALM_OBJECT_INTERFACE }
+    get() = superTypes.any { it.classId == BASE_REALM_OBJECT_INTERFACE }
 
 val IrClass.isEmbeddedRealmObject: Boolean
-    get() = superTypes.any { it.classFqName == EMBEDDED_OBJECT_INTERFACE }
+    get() = superTypes.any { it.classId == EMBEDDED_OBJECT_INTERFACE }
+
+val IrClass.isAsymmetricRealmObject: Boolean
+    get() = superTypes.any { it.classId == ASYMMETRIC_OBJECT_INTERFACE }
+
+val IrType.classId: ClassId?
+    get() = this.getClass()?.classId
+
+val IrType.isEmbeddedRealmObject: Boolean
+    get() = superTypes().any { it.classId == EMBEDDED_OBJECT_INTERFACE }
+
+val IrType.isAsymmetricRealmObject: Boolean
+    get() = superTypes().any { it.classId == ASYMMETRIC_OBJECT_INTERFACE }
 
 internal fun IrFunctionBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.startOffset = startOffset
@@ -212,10 +244,10 @@ internal fun IrClass.lookupProperty(name: Name): IrProperty {
 }
 
 internal fun IrPluginContext.lookupFunctionInClass(
-    fqName: FqName,
+    clazz: ClassId,
     function: String
 ): IrSimpleFunction {
-    return lookupClassOrThrow(fqName).functions.first {
+    return lookupClassOrThrow(clazz).functions.first {
         it.name == Name.identifier(function)
     }
 }
@@ -225,16 +257,11 @@ internal fun IrPluginContext.lookupClassOrThrow(name: ClassId): IrClass {
         ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
 }
 
-internal fun IrPluginContext.lookupClassOrThrow(name: FqName): IrClass {
-    return referenceClass(name)?.owner
-        ?: fatalError("Cannot find ${name.asString()} on platform $platform.")
-}
-
 internal fun IrPluginContext.lookupConstructorInClass(
-    fqName: FqName,
+    clazz: ClassId,
     filter: (ctor: IrConstructorSymbol) -> Boolean = { true }
 ): IrConstructorSymbol {
-    return referenceConstructors(fqName).first {
+    return referenceConstructors(clazz).first {
         filter(it)
     }
 }
@@ -246,6 +273,28 @@ internal fun <T> IrClass.lookupCompanionDeclaration(
         it is IrDeclarationWithName && it.name == name
     } as T
         ?: fatalError("Cannot find companion method ${name.asString()} on ${this.name}")
+}
+
+// Copy of `KotlinType.getKotlinTypeFqName` from Kotlin 1.8.21. This method needs to be backported
+// as it is not available in Kotlin 1.8.0.
+internal fun KotlinType.getKotlinTypeFqNameCompat(printTypeArguments: Boolean): String {
+    val declaration = requireNotNull(constructor.declarationDescriptor) {
+        "declarationDescriptor is null for constructor = $constructor with ${constructor.javaClass}"
+    }
+    if (declaration is TypeParameterDescriptor) {
+        return StringUtil.join(declaration.upperBounds, { type -> type.getKotlinTypeFqNameCompat(printTypeArguments) }, "&")
+    }
+
+    val typeArguments = arguments
+    val typeArgumentsAsString = if (printTypeArguments && !typeArguments.isEmpty()) {
+        val joinedTypeArguments = StringUtil.join(typeArguments, { projection -> projection.type.getKotlinTypeFqNameCompat(false) }, ", ")
+
+        "<$joinedTypeArguments>"
+    } else {
+        ""
+    }
+
+    return DescriptorUtils.getFqName(declaration).asString() + typeArgumentsAsString
 }
 
 object SchemaCollector {
@@ -329,7 +378,7 @@ data class SchemaProperty(
     companion object {
         fun getPersistedName(declaration: IrProperty): String {
             @Suppress("UNCHECKED_CAST")
-            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
         }
     }
 }
@@ -376,12 +425,12 @@ internal fun <T : IrExpression> buildSetOf(
     elementType: IrType,
     args: List<T>
 ): IrExpression {
-    val setOf = context.referenceFunctions(FqName("kotlin.collections.setOf"))
+    val setOf = context.referenceFunctions(CallableId(FqName("kotlin.collections"), Name.identifier("setOf")))
         .first {
             val parameters = it.owner.valueParameters
             parameters.size == 1 && parameters.first().isVararg
         }
-    val setIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_SET)
+    val setIrClass: IrClass = context.lookupClassOrThrow(ClassIds.KOTLIN_COLLECTIONS_SET)
     return buildOf(context, startOffset, endOffset, setOf, setIrClass, elementType, args)
 }
 
@@ -397,7 +446,7 @@ internal fun <T : IrExpression> buildListOf(
             val parameters = it.owner.valueParameters
             parameters.size == 1 && parameters.first().isVararg
         }
-    val listIrClass: IrClass = context.lookupClassOrThrow(FqNames.KOTLIN_COLLECTIONS_LIST)
+    val listIrClass: IrClass = context.lookupClassOrThrow(ClassIds.KOTLIN_COLLECTIONS_LIST)
     return buildOf(context, startOffset, endOffset, listOf, listIrClass, elementType, args)
 }
 
@@ -572,11 +621,11 @@ fun getBacklinksTargetPropertyType(declaration: IrProperty): IrType? {
 fun getLinkingObjectPropertyName(backingField: IrField): String {
     (backingField.initializer!!.expression as IrCall).let { irCall ->
         val propertyReference = irCall.getValueArgument(0) as IrPropertyReference
-        val targetProperty = propertyReference.symbol.owner
+        val targetProperty: IrProperty = propertyReference.symbol.owner
         return if (targetProperty.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
             SchemaProperty.getPersistedName(targetProperty)
         } else {
-            propertyReference.referencedName.identifier
+            targetProperty.name.identifier
         }
     }
 }
@@ -587,7 +636,7 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
 fun getSchemaClassName(clazz: IrClass): String {
     return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
         @Suppress("UNCHECKED_CAST")
-        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION).getValueArgument(0)!! as IrConstImpl<String>).value
+        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
     } else {
         clazz.name.identifier
     }

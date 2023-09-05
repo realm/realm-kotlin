@@ -32,7 +32,7 @@ class EmailPasswordAuthWithAutoConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_PARTITION)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
     }
 
     @AfterTest
@@ -243,7 +243,7 @@ class EmailPasswordAuthWithEmailConfirmTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = syncServerAppName("em-cnfrm"), initialSetup = { app: BaasApp, service: Service ->
+        app = TestApp(this::class.simpleName, appName = syncServerAppName("em-cnfrm"), initialSetup = { app: BaasApp, service: Service ->
             addEmailProvider(app, autoConfirm = false)
         })
     }
@@ -281,7 +281,7 @@ class EmailPasswordAuthWithCustomFunctionTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = syncServerAppName("em-cstm"), initialSetup = { app: BaasApp, service: Service ->
+        app = TestApp(this::class.simpleName, appName = syncServerAppName("em-cstm"), initialSetup = { app: BaasApp, service: Service ->
             addEmailProvider(app, autoConfirm = false, runConfirmationFunction = true)
         })
     }

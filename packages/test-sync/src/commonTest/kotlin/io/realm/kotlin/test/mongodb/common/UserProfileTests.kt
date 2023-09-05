@@ -101,6 +101,7 @@ class UserProfileTests {
     @BeforeTest
     fun setUp() {
         app = TestApp(
+            this::class.simpleName,
             networkTransport = object : NetworkTransport {
                 override val authorizationHeaderName: String?
                     get() = ""

@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.schema.RealmClassImpl
+import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -31,7 +32,7 @@ public interface RealmObjectCompanion {
     public val `io_realm_kotlin_className`: String
     public val `io_realm_kotlin_fields`: Map<String, KProperty1<BaseRealmObject, Any?>>
     public val `io_realm_kotlin_primaryKey`: KMutableProperty1<*, *>?
-    public val `io_realm_kotlin_isEmbedded`: Boolean
+    public val `io_realm_kotlin_classKind`: RealmClassKind
     public fun `io_realm_kotlin_schema`(): RealmClassImpl
     public fun `io_realm_kotlin_newInstance`(): Any
 }
