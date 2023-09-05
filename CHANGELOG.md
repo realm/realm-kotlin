@@ -31,7 +31,6 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ## 1.11.0 (2023-09-01)
 
-
 ### Breaking Changes
 * `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
 
