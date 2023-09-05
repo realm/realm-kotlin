@@ -442,16 +442,15 @@ internal class RealmAnyMapOperator<K> constructor(
         return getterScope {
             val transport = realm_results_get(resultsPointer, index.toLong())
             realmValueToRealmAny(
-                transport,
-                null,
-                mediator,
-                realmReference,
-                issueDynamicObject,
-                issueDynamicMutableObject,
-                // Not supported by core yet. Tracked by https://github.com/realm/realm-core/issues/6936
-                { TODO("Nested sets cannot be obtained from iterator") },
-                { TODO("Nested lists cannot be obtained from iterator") },
-                { TODO("Nested dictionaries cannot be obtained from iterator") },
+                realmValue = transport,
+                parent = null,
+                mediator = mediator,
+                owner = realmReference,
+                issueDynamicObject = issueDynamicObject,
+                issueDynamicMutableObject = issueDynamicMutableObject,
+                getSetFunction = { RealmInterop.realm_results_get_set(resultsPointer, index.toLong()) },
+                getListFunction = { RealmInterop.realm_results_get_list(resultsPointer, index.toLong()) },
+                getDictionaryFunction = { RealmInterop.realm_results_get_dictionary(resultsPointer, index.toLong()) },
             )
         }
     }

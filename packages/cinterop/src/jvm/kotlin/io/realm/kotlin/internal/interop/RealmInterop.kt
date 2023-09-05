@@ -1849,6 +1849,15 @@ actual object RealmInterop {
         return RealmValue(value)
     }
 
+    actual fun realm_results_get_set(results: RealmResultsPointer, index: Long): RealmSetPointer =
+        LongPointerWrapper(realmc.realm_results_get_set(results.cptr(), index))
+
+    actual fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer =
+        LongPointerWrapper(realmc.realm_results_get_list(results.cptr(), index))
+
+    actual fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer =
+        LongPointerWrapper(realmc.realm_results_get_dictionary(results.cptr(), index))
+
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.classKey.key, link.objKey))
     }

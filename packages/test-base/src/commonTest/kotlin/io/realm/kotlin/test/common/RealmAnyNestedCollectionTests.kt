@@ -506,6 +506,70 @@ class RealmAnyNestedCollectionTests {
         }
     }
     @Test
+    fun dictionaryInRealmAny_values() = runBlocking {
+        val sample = Sample().apply { stringField = "SAMPLE" }
+        // Import
+        realm.write {
+            copyToRealm(
+                JsonStyleRealmObject().apply {
+                    // Assigning dictionary with nested lists and dictionaries
+                    value = realmAnyDictionaryOf(
+                        "keySet" to realmAnySetOf(5, "Realm", sample),
+                        "keyList" to realmAnyListOf(5, "Realm", sample),
+                        "keyDictionary" to realmAnyDictionaryOf(
+                            "keyInt" to 5,
+                            "keyString" to "Realm",
+                            "keyObject" to sample,
+                        ),
+                    )
+                }
+            )
+        }
+
+        val jsonStyleRealmObject: JsonStyleRealmObject =
+            realm.query<JsonStyleRealmObject>().find().single()
+        val anyValue: RealmAny = jsonStyleRealmObject.value!!
+        assertEquals(RealmAny.Type.DICTIONARY, anyValue.type)
+        anyValue.asDictionary().values.run {
+            assertEquals(3, size)
+            forEach { value ->
+                when (value?.type) {
+                    RealmAny.Type.SET -> {
+                        value.asSet().toMutableSet().let { embeddedSet ->
+                            assertEquals(3, embeddedSet.size)
+                            assertTrue { embeddedSet.remove(RealmAny.create(5)) }
+                            assertTrue { embeddedSet.remove(RealmAny.create("Realm")) }
+                            assertEquals(
+                                "SAMPLE",
+                                embeddedSet.single()!!.asRealmObject<Sample>().stringField
+                            )
+                            assertEquals(1, embeddedSet.size)
+                        }
+                    }
+                    RealmAny.Type.LIST -> {
+                        value.asList().let { embeddedList ->
+                            assertEquals(RealmAny.create(5), embeddedList[0])
+                            assertEquals(RealmAny.create("Realm"), embeddedList[1])
+                            assertEquals("SAMPLE", embeddedList[2]!!.asRealmObject<Sample>().stringField)
+                        }
+                    }
+                    RealmAny.Type.DICTIONARY -> {
+                        value.asDictionary().let { embeddedDict ->
+                            assertEquals(RealmAny.create(5), embeddedDict["keyInt"])
+                            assertEquals(RealmAny.create("Realm"), embeddedDict["keyString"])
+                            assertEquals(
+                                "SAMPLE",
+                                embeddedDict["keyObject"]!!.asRealmObject<Sample>().stringField
+                            )
+                        }
+                    }
+                    else -> {} // NO-OP Only testing for nested collections in here
+                }
+            }
+        }
+    }
+
+    @Test
     fun dictionaryInRealmAny_put() = runBlocking {
         val sample = Sample().apply { stringField = "SAMPLE" }
         // Import

@@ -1669,6 +1669,15 @@ actual object RealmInterop {
         return RealmValue(value)
     }
 
+    actual fun realm_results_get_set(results: RealmResultsPointer, index: Long): RealmSetPointer =
+        CPointerWrapper(realm_wrapper.realm_results_get_set(results.cptr(), index.toULong()))
+
+    actual fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer =
+        CPointerWrapper(realm_wrapper.realm_results_get_list(results.cptr(), index.toULong()))
+
+    actual fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer =
+        CPointerWrapper(realm_wrapper.realm_results_get_dictionary(results.cptr(), index.toULong()))
+
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
         val ptr = checkedPointerResult(
             realm_wrapper.realm_get_object(
