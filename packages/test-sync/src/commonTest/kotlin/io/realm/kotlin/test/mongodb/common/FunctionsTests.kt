@@ -196,6 +196,7 @@ class FunctionsTests {
     @BeforeTest
     fun setup() {
         app = TestApp(
+            FunctionsTests::class.simpleName,
             syncServerAppName("funcs"),
             ejson = EJson(
                 serializersModule = SerializersModule {

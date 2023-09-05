@@ -26,6 +26,7 @@ import io.realm.kotlin.mongodb.sync.Subscription
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import org.mongodb.kbson.ObjectId
 import kotlin.reflect.KClass
 
 internal class SubscriptionImpl(
@@ -33,11 +34,13 @@ internal class SubscriptionImpl(
     private val parentNativePointer: RealmBaseSubscriptionSetPointer,
     internal val nativePointer: RealmSubscriptionPointer
 ) : Subscription {
+    override val id: ObjectId = RealmInterop.realm_sync_subscription_id(nativePointer)
     override val createdAt: RealmInstant = RealmInstantImpl(RealmInterop.realm_sync_subscription_created_at(nativePointer))
     override val updatedAt: RealmInstant = RealmInstantImpl(RealmInterop.realm_sync_subscription_updated_at(nativePointer))
     override val name: String? = RealmInterop.realm_sync_subscription_name(nativePointer)
     override val objectType: String = RealmInterop.realm_sync_subscription_object_class_name(nativePointer)
-    override val queryDescription: String = RealmInterop.realm_sync_subscription_query_string(nativePointer)
+    // Trim the query to match the output of RealmQuery.description()
+    override val queryDescription: String = RealmInterop.realm_sync_subscription_query_string(nativePointer).trim()
 
     @Suppress("invisible_member")
     override fun <T : RealmObject> asQuery(type: KClass<T>): RealmQuery<T> {

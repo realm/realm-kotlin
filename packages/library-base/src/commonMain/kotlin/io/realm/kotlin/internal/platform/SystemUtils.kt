@@ -131,7 +131,7 @@ public expect fun epochInSeconds(): Long
 /**
  * Returns a RealmInstant representing the time that has passed since the Unix epoch.
  */
-internal expect fun currentTime(): RealmInstant
+public expect fun currentTime(): RealmInstant
 
 /**
  * Returns the type of a mutable property.
@@ -145,3 +145,8 @@ public expect fun <K : Any?, V : Any?> returnType(field: KMutableProperty1<K, V>
  * Returns whether or not we are running on Windows
  */
 public expect fun isWindows(): Boolean
+
+/**
+ * Returns the identity hashcode for a given object.
+ */
+internal expect fun identityHashCode(obj: Any?): Int

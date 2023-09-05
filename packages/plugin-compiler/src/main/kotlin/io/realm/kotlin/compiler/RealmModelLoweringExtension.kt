@@ -16,9 +16,9 @@
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.FqNames.MODEL_OBJECT_ANNOTATION
-import io.realm.kotlin.compiler.FqNames.REALM_MODEL_COMPANION
-import io.realm.kotlin.compiler.FqNames.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.MODEL_OBJECT_ANNOTATION
+import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
+import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -106,6 +106,10 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
             // Modify properties accessor to generate custom getter/setter
             AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
+
+            // Add custom toString, equals and hashCode methods
+            val methodGenerator = RealmModelDefaultMethodGeneration(pluginContext)
+            methodGenerator.addDefaultMethods(irClass)
 
             // Add body for synthetic companion methods
             val companion = irClass.companionObject() ?: fatalError("RealmObject without companion: ${irClass.kotlinFqName}")

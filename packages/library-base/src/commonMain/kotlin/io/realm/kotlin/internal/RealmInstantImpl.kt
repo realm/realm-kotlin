@@ -32,7 +32,7 @@ public data class RealmInstantImpl(override val seconds: Long, override val nano
     }
 }
 
-internal fun RealmInstant.toDuration(): Duration {
+public fun RealmInstant.toDuration(): Duration {
     return epochSeconds.seconds + nanosecondsOfSecond.nanoseconds
 }
 

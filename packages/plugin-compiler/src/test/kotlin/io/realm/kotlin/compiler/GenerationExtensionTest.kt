@@ -402,7 +402,7 @@ class GenerationExtensionTest {
             componentRegistrars = plugins
             inheritClassPath = true
             kotlincArguments = listOf(
-                "-Xjvm-default=enable",
+                "-Xjvm-default=all-compatibility",
                 "-Xdump-directory=${inputs.outputDir()}",
                 "-Xphases-to-dump-after=ValidateIrBeforeLowering"
             )

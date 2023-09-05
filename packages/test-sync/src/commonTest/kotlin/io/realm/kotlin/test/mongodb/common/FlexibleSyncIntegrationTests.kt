@@ -22,6 +22,7 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.exceptions.CompensatingWriteException
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.exceptions.SyncException
@@ -63,7 +64,7 @@ class FlexibleSyncIntegrationTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX, logLevel = LogLevel.ALL)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         runBlocking {
             app.createUserAndLogIn(email, password)
@@ -332,7 +333,7 @@ class FlexibleSyncIntegrationTests {
 
             val exception: CompensatingWriteException = channel.receiveOrFail()
 
-            assertEquals("[Session][CompensatingWrite(231)] Client attempted a write that is disallowed by permissions, or modifies an object outside the current query, and the server undid the change.", exception.message)
+            assertTrue(exception.message!!.startsWith("[Sync][CompensatingWrite(1033)] Client attempted a write that is outside of permissions or query filters; it has been reverted Logs:"), exception.message)
             assertEquals(1, exception.writes.size)
 
             exception.writes[0].run {

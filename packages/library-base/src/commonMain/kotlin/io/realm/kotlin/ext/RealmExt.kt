@@ -18,14 +18,14 @@ package io.realm.kotlin.ext
 import io.realm.kotlin.Realm
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 
 /**
  * Returns a [RealmQuery] matching the predicate represented by [query].
  *
  * Reified convenience wrapper for [Realm.query].
  */
-public inline fun <reified T : BaseRealmObject> Realm.query(
+public inline fun <reified T : TypedRealmObject> Realm.query(
     query: String = TRUE_PREDICATE,
     vararg args: Any?
 ): RealmQuery<T> = query(T::class, query, *args)

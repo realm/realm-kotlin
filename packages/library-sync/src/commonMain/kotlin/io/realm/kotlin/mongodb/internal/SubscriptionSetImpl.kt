@@ -88,19 +88,17 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
         try {
             val result: Any = withTimeout(timeout) {
                 // TODO Assuming this is always a RealmImpl is probably dangerous. But should be safe until we introduce a public DynamicRealm.
-                withContext((realm as RealmImpl).notificationDispatcherHolder.dispatcher) {
-                    val callback = object : SubscriptionSetCallback {
-                        override fun onChange(state: CoreSubscriptionSetState) {
-                            when (state) {
-                                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE -> {
-                                    channel.trySend(true)
-                                }
-                                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_ERROR -> {
-                                    channel.trySend(false)
-                                }
-                                else -> {
-                                    // Ignore all other states, wait for either complete or error.
-                                }
+                withContext((realm as RealmImpl).notificationScheduler.dispatcher) {
+                    val callback = SubscriptionSetCallback { state ->
+                        when (state) {
+                            CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE -> {
+                                channel.trySend(true)
+                            }
+                            CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_ERROR -> {
+                                channel.trySend(false)
+                            }
+                            else -> {
+                                // Ignore all other states, wait for either complete or error.
                             }
                         }
                     }

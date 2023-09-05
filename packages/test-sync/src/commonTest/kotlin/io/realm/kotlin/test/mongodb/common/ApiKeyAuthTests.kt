@@ -50,7 +50,7 @@ class ApiKeyAuthTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_PARTITION)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
         user = app.createUserAndLogin()
         provider = user.apiKeyAuth
     }

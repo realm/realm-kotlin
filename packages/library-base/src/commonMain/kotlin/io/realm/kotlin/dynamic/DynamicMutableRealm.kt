@@ -32,7 +32,8 @@ import io.realm.kotlin.types.RealmObject
 public interface DynamicMutableRealm : DynamicRealm {
 
     /**
-     * Copy new objects into the realm or update existing objects.
+     * Copy new objects into the realm or update existing ones. The managed version of the object
+     * will be returned.
      *
      * This will recursively copy objects to the realm. Both those with and without primary keys.
      * The behavior of copying objects with primary keys will depend on the specified update
@@ -46,9 +47,9 @@ public interface DynamicMutableRealm : DynamicRealm {
      * itself. Trying to copy outdated objects will throw an exception. To get hold of an updated
      * reference for an object use [findLatest].
      *
-     * @param instance the object to create a copy from.
+     * @param obj the object to create a copy from.
      * @param updatePolicy update policy when importing objects.
-     * @return the managed version of the `instance`.
+     * @return the managed version of [obj].
      *
      * @throws IllegalArgumentException if the object graph of `instance` either contains an object
      * with a primary key value that already exists and the update policy is [UpdatePolicy.ERROR],

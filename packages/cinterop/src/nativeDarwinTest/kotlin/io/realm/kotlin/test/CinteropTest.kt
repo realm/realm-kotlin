@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SchemaValidationMode
 import io.realm.kotlin.internal.interop.set
 import io.realm.kotlin.internal.interop.toKotlinString
+import io.realm.kotlin.internal.interop.use
 import kotlinx.cinterop.BooleanVar
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVarOf
@@ -54,11 +55,9 @@ import realm_wrapper.realm_config_set_path
 import realm_wrapper.realm_config_set_schema
 import realm_wrapper.realm_config_set_schema_mode
 import realm_wrapper.realm_config_set_schema_version
-import realm_wrapper.realm_errno
 import realm_wrapper.realm_error_t
 import realm_wrapper.realm_find_class
 import realm_wrapper.realm_get_last_error
-import realm_wrapper.realm_get_library_version
 import realm_wrapper.realm_get_num_classes
 import realm_wrapper.realm_get_schema
 import realm_wrapper.realm_open
@@ -80,10 +79,6 @@ import kotlin.test.assertTrue
 // These test are not thought as being exhaustive, but is more to provide a playground for
 // experiments and maybe more relevant for reproduction of C-API issues.
 class CinteropTest {
-    @Test
-    fun version() {
-        assertEquals("13.15.0", realm_get_library_version()!!.toKString())
-    }
 
     @Test
     fun cinterop_cinterop() {
@@ -184,9 +179,12 @@ class CinteropTest {
                 SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
             )
             RealmInterop.realm_config_set_schema_version(nativeConfig, 1)
-
-            val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig)
-            assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
+            RealmInterop.realm_create_scheduler()
+                .use { scheduler ->
+                    val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig, scheduler)
+                    assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
+                    RealmInterop.realm_close(realm)
+                }
         }
     }
 

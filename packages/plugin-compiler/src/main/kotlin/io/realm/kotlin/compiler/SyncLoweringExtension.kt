@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
-import org.jetbrains.kotlin.ir.backend.js.utils.valueArguments
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationContainer
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -130,7 +129,7 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
 
     val transformer = object : IrElementTransformerVoid() {
         override fun visitCall(expression: IrCall): IrExpression {
-            replacements.get(expression.symbol)?.let { (target, dispatchReceiverFunction) ->
+            replacements[expression.symbol]?.let { (target, dispatchReceiverFunction) ->
                 return IrCallImpl(
                     startOffset = expression.startOffset,
                     endOffset = expression.endOffset,
@@ -142,7 +141,8 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
                     superQualifierSymbol = null
                 ).apply {
                     dispatchReceiver = dispatchReceiverFunction(expression)
-                    expression.valueArguments.forEachIndexed { index, irExpression ->
+                    val valueArguments = List(expression.valueArgumentsCount) { expression.getValueArgument(it) }
+                    valueArguments.forEachIndexed { index, irExpression ->
                         putValueArgument(index, irExpression,)
                     }
                     putValueArgument(

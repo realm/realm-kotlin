@@ -34,7 +34,7 @@ class NonLatinTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)

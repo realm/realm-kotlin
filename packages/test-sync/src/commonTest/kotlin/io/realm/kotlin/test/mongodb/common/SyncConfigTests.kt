@@ -87,7 +87,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
     }
 
     @AfterTest
@@ -547,7 +547,7 @@ class SyncConfigTests {
         assertFailsWith<IllegalArgumentException> { builder.encryptionKey(byteArrayOf(1, 2, 3)) }
     }
 
-//    @Test
+    //    @Test
 //    fun initialData() {
 //        val user: User = createTestUser(app)
 //        val config = configFactory.createSyncConfigurationBuilder(user)
@@ -600,7 +600,7 @@ class SyncConfigTests {
         }
     }
 
-//
+    //
 //    // Check that it is possible for multiple users to reference the same Realm URL while each user still use their
 //    // own copy on the filesystem. This is e.g. what happens if a Realm is shared using a PermissionOffer.
 //    @Test
@@ -1224,6 +1224,30 @@ class SyncConfigTests {
             })
             .build()
         assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
+    }
+
+    @Test
+    fun logLevelDoesNotGetOverwrittenByConfig() {
+        app.asTestApp.close()
+        // Prevent AppConfiguration to set a log level
+        app = TestApp("logLevelDoesNotGetOverwrittenByConfig", logLevel = null)
+
+        val expectedLogLevel = LogLevel.ALL
+
+        RealmLog.level = expectedLogLevel
+
+        val (email, password) = randomEmail() to "password1234"
+        val user = runBlocking {
+            app.createUserAndLogIn(email, password)
+        }
+
+        SyncConfiguration.Builder(
+            schema = setOf(ParentPk::class, ChildPk::class),
+            user = user,
+            partitionValue = partitionValue
+        ).build()
+
+        assertEquals(expectedLogLevel, RealmLog.level)
     }
 
     private fun createTestUser(): User = runBlocking {

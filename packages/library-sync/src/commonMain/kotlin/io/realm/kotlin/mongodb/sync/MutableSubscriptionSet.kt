@@ -112,8 +112,11 @@ public interface MutableSubscriptionSet : BaseSubscriptionSet {
     /**
      * Remove all subscriptions in this subscription set.
      *
+     * @param anonymousOnly whether or not to only remove anonymous subscriptions. If `true` only
+     * anonymous subscriptions will be removed. If `false` both anonymous and named subscriptions
+     * will be removed.
      * @return `true` if one or more subscriptions were removed, `false` if the subscription set
      * was empty.
      */
-    public fun removeAll(): Boolean
+    public fun removeAll(anonymousOnly: Boolean = false): Boolean
 }

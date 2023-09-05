@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
+import io.realm.kotlin.annotations.ExperimentalGeoSpatialApi
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
@@ -36,6 +37,9 @@ import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.geo.GeoBox
+import io.realm.kotlin.types.geo.GeoCircle
+import io.realm.kotlin.types.geo.GeoPolygon
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.native.concurrent.SharedImmutable
@@ -352,6 +356,7 @@ internal object RealmValueArgumentConverter {
         } ?: nullTransport()
     }
 
+    @OptIn(ExperimentalGeoSpatialApi::class)
     fun MemTrackingAllocator.convertQueryArg(value: Any?): RealmQueryArgument =
         when (value) {
             is Collection<*> -> {
@@ -373,6 +378,13 @@ internal object RealmValueArgumentConverter {
                         }
                     }
                 )
+            }
+            is GeoBox,
+            is GeoCircle,
+            is GeoPolygon -> {
+                // Hack support for geospatial arguments until we have propert C-API support.
+                // See https://github.com/realm/realm-core/pull/6934
+                RealmQuerySingleArgument(kAnyToRealmValue(value.toString()))
             }
             else -> {
                 RealmQuerySingleArgument(kAnyToRealmValue(value))

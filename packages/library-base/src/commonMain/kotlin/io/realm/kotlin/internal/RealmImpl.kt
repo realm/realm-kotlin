@@ -27,14 +27,15 @@ import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
-import io.realm.kotlin.internal.util.DispatcherHolder
+import io.realm.kotlin.internal.util.LiveRealmContext
 import io.realm.kotlin.internal.util.Validation.sdkError
+import io.realm.kotlin.internal.util.createLiveRealmContext
 import io.realm.kotlin.internal.util.terminateWhen
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
 import io.realm.kotlin.query.RealmQuery
-import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -52,24 +53,30 @@ import kotlin.reflect.KClass
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 // TODO Public due to being accessed from `SyncedRealmContext`
 public class RealmImpl private constructor(
-    configuration: InternalConfiguration
+    configuration: InternalConfiguration,
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
 
     private val realmPointerMutex = Mutex()
 
-    public val notificationDispatcherHolder: DispatcherHolder =
-        configuration.notificationDispatcherFactory.create()
-    public val writeDispatcherHolder: DispatcherHolder =
-        configuration.writeDispatcherFactory.create()
+    public val notificationScheduler: LiveRealmContext =
+        configuration.notificationDispatcherFactory.createLiveRealmContext()
+
+    public val writeScheduler: LiveRealmContext =
+        configuration.writeDispatcherFactory.createLiveRealmContext()
 
     internal val realmScope =
-        CoroutineScope(SupervisorJob() + notificationDispatcherHolder.dispatcher)
+        CoroutineScope(SupervisorJob() + notificationScheduler.dispatcher)
     private val notifierFlow: MutableSharedFlow<RealmChange<Realm>> =
         MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val notifier =
-        SuspendableNotifier(this, notificationDispatcherHolder.dispatcher)
-    private val writer =
-        SuspendableWriter(this, writeDispatcherHolder.dispatcher)
+
+    private val notifier = SuspendableNotifier(
+        owner = this,
+        scheduler = notificationScheduler,
+    )
+    private val writer = SuspendableWriter(
+        owner = this,
+        scheduler = writeScheduler,
+    )
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
     // closed.
@@ -175,7 +182,7 @@ public class RealmImpl private constructor(
 
     // Required as Kotlin otherwise gets confused about the visibility and reports
     // "Cannot infer visibility for '...'. Please specify it explicitly"
-    override fun <T : BaseRealmObject> query(
+    override fun <T : TypedRealmObject> query(
         clazz: KClass<T>,
         query: String,
         vararg args: Any?
@@ -272,8 +279,9 @@ public class RealmImpl private constructor(
         if (!realmStateFlow.tryEmit(State.CLOSED)) {
             log.warn("Cannot signal internal close")
         }
-        notificationDispatcherHolder.close()
-        writeDispatcherHolder.close()
+
+        notificationScheduler.close()
+        writeScheduler.close()
     }
 
     internal companion object {

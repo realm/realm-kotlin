@@ -113,6 +113,17 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
+    fun unmanagedRealmList_equalsHash() {
+        assertEquals(realmListOf("1", "2"), realmListOf("1", "2"))
+        assertEquals(realmListOf("1", "2").hashCode(), realmListOf("1", "2").hashCode())
+    }
+
+    @Test
+    fun unmanagedRealmList_toString() {
+        assertEquals("""UnmanagedRealmList{1, 2}""", realmListOf("1", "2").toString())
+    }
+
+    @Test
     fun realmListInitializer_toRealmList() {
         val realmListFromEmptyCollection = emptyList<String>().toRealmList()
         assertTrue(realmListFromEmptyCollection.isEmpty())
@@ -269,6 +280,13 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
     fun clearFailsIfClosed() {
         // No need to be exhaustive
         managedTesters[0].clearFailsIfClosed(getCloseableRealm())
+    }
+
+    @Test
+    fun remove() {
+        for (tester in managedTesters) {
+            tester.remove()
+        }
     }
 
     @Test
@@ -718,6 +736,7 @@ internal interface ListApiTester<T, Container> : ErrorCatcher {
     fun addAllWithIndexFailsIfClosed(realm: Realm)
     fun clear()
     fun clearFailsIfClosed(realm: Realm)
+    fun remove()
     fun removeAt()
     fun removeAtFailsIfClosed(realm: Realm)
     fun set()
@@ -798,7 +817,7 @@ internal class ListTypeSafetyManager<T>(
  */
 internal abstract class ManagedListTester<T>(
     override val realm: Realm,
-    private val typeSafetyManager: ListTypeSafetyManager<T>,
+    protected val typeSafetyManager: ListTypeSafetyManager<T>,
     override val classifier: KClassifier
 ) : ListApiTester<T, RealmListContainer> {
 
@@ -1057,6 +1076,25 @@ internal abstract class ManagedListTester<T>(
         }
     }
 
+    override fun remove() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+        val assertions = { list: RealmList<T> ->
+            assertTrue(list.isEmpty())
+        }
+
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
+                assertFalse(list.remove(dataSet[0]))
+                assertTrue(list.add(dataSet[0]))
+                assertTrue(list.remove(list.last()))
+                assertions(list)
+            }
+        }
+
+        assertListAndCleanup { list -> assertions(list) }
+    }
+
     override fun removeAt() {
         val dataSet = typeSafetyManager.dataSetToLoad
         val assertions = { list: RealmList<T> ->
@@ -1193,7 +1231,7 @@ internal abstract class ManagedListTester<T>(
     }
 
     // Retrieves the list again but this time from Realm to check the getter is called correctly
-    private fun assertListAndCleanup(assertion: (RealmList<T>) -> Unit) {
+    protected fun assertListAndCleanup(assertion: (RealmList<T>) -> Unit) {
         realm.writeBlocking {
             val container = this.query<RealmListContainer>()
                 .first()
@@ -1307,6 +1345,27 @@ internal class ByteArrayListTester(
 ) : ManagedListTester<ByteArray?>(realm, typeSafetyManager, ByteArray::class) {
     override fun assertElementsAreEqual(expected: ByteArray?, actual: ByteArray?) =
         assertContentEquals(expected, actual)
+
+    // Removing elements using equals/hashcode will fail for byte arrays since they are
+    // are only equal if identical
+    override fun remove() {
+        val dataSet = typeSafetyManager.dataSetToLoad
+        val assertions = { list: RealmList<ByteArray?> ->
+            assertFalse(list.isEmpty())
+        }
+
+        errorCatcher {
+            realm.writeBlocking {
+                val list = typeSafetyManager.createContainerAndGetCollection(this)
+                assertFalse(list.remove(dataSet[0]))
+                assertTrue(list.add(dataSet[0]))
+                assertFalse(list.remove(list.last()))
+                assertions(list)
+            }
+        }
+
+        assertListAndCleanup { list -> assertions(list) }
+    }
 }
 
 // -----------------------------------

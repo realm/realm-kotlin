@@ -29,10 +29,9 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
-import io.realm.kotlin.test.mongodb.TestApp.Companion.use
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -71,7 +70,7 @@ class ProgressListenerTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_PARTITION)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
         partitionValue = ObjectId().toString()
     }
 
@@ -242,9 +241,7 @@ class ProgressListenerTests {
 
     @Test
     fun throwsOnFlexibleSync() = runBlocking {
-        TestApp(appName = TEST_APP_FLEX, builder = {
-            it.syncRootDirectory(PlatformUtils.createTempDir())
-        }).use { app ->
+        TestApp("throwsOnFlexibleSync", TEST_APP_FLEX).use {
             val user = app.createUserAndLogIn()
             val configuration: SyncConfiguration = SyncConfiguration.create(user, schema)
             Realm.open(configuration).use { realm ->
@@ -259,20 +256,23 @@ class ProgressListenerTests {
 
     @Test
     fun completesOnClose() = runBlocking {
-        val user = app.createUserAndLogIn()
-        val realm = Realm.open(createSyncConfig(user))
-        try {
-            val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
-            val job = async {
-                withTimeout(10.seconds) {
-                    flow.collect { }
+        val app = TestApp(TEST_APP_PARTITION)
+        TestApp("completesOnClose", TEST_APP_PARTITION).use { app ->
+            val user = app.createUserAndLogIn()
+            val realm = Realm.open(createSyncConfig(user))
+            try {
+                val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                val job = async {
+                    withTimeout(10.seconds) {
+                        flow.collect { }
+                    }
                 }
-            }
-            realm.close()
-            job.await()
-        } finally {
-            if (!realm.isClosed()) {
                 realm.close()
+                job.await()
+            } finally {
+                if (!realm.isClosed()) {
+                    realm.close()
+                }
             }
         }
     }
