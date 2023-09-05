@@ -1,10 +1,12 @@
 ## 1.12.0-SNAPSHOT (YYYY-MM-DD)
 
+This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
+
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* None.
+* Support for RealmLists, RealmSets and RealmDictionaries in `RealmAny`. This is only supported in the local database, Device Sync support will come in a future release. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 
 ### Fixed
 * None.
@@ -24,12 +26,11 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core `next-major`, commit 596fc2b7667d86c62c151d0061ecf56cfaaf87b1.
 
 
 ## 1.11.0 (2023-09-01)
 
-This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
 
 ### Breaking Changes
 * `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
@@ -58,7 +59,6 @@ childA == childC
 if the content is the same. Custom implementations of these methods will be respected if they are present. (Issue [#1097](https://github.com/realm/realm-kotlin/issues/1097)) 
 * Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
 * Support for automatic resolution of embedded object constraints during migration through `RealmConfiguration.Builder.migration(migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean)`. (Issue [#1464](https://github.com/realm/realm-kotlin/issues/1464)
-* Support for RealmLists, RealmSets and RealmDictionaries in `RealmAny`. This is only supported in the local database, Device Sync support will come in a future release. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 * [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
 * [Sync] Added support for manually triggering a reconnect attempt for Device Sync. This is done through a new `App.Sync.reconnect()` method. This method is also now called automatically when a mobile device toggles off airplane mode. (Issue [#1479](https://github.com/realm/realm-kotlin/issues/1479))
 
@@ -69,7 +69,7 @@ if the content is the same. Custom implementations of these methods will be resp
 * [Sync] Changing a subscriptions query type or query itself will now trigger the `WaitForSync.FIRST_TIME` behaviour, rather than only checking changes to the name. (Issues [#1466](https://github.com/realm/realm-kotlin/issues/1466))
 
 ### Compatibility
-* File format: Generates Realms with file format v24.
+* File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
   * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
