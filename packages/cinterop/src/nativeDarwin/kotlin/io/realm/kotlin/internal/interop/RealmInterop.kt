@@ -947,15 +947,15 @@ actual object RealmInterop {
     }
 
     actual fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
-        realm_wrapper.realm_set_set(obj.cptr(), key.key)
+        checkedBooleanResult(realm_wrapper.realm_set_set(obj.cptr(), key.key))
         return realm_get_set(obj, key)
     }
     actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
-        realm_wrapper.realm_set_list(obj.cptr(), key.key)
+        checkedBooleanResult(realm_wrapper.realm_set_list(obj.cptr(), key.key))
         return realm_get_list(obj, key)
     }
     actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer {
-        realm_wrapper.realm_set_dictionary(obj.cptr(), key.key)
+        checkedBooleanResult(realm_wrapper.realm_set_dictionary(obj.cptr(), key.key))
         return realm_get_dictionary(obj, key)
     }
 
