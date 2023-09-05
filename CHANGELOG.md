@@ -26,7 +26,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core `next-major`, commit 596fc2b7667d86c62c151d0061ecf56cfaaf87b1.
+* Updated to Realm Core `next-major`, commit 0da737b699bf4bcfc1a3772385cd49cd9eb9cad9.
 
 
 ## 1.11.0 (2023-09-01)
