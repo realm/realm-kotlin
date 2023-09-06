@@ -17,7 +17,7 @@ TODO
 Currently, the Github UI and API only only deleting each cache invidiually. This following shell command will run through all caches and delete each one individually. It requires the Github CLI installed and authenticated as well as `jq`:
 
 ```
-gh api -H 'Accept: application/vnd.github+json' /repos/realm/realm-kotlin/actions/caches --paginate | jq -r '.actions_caches | .[].key' | sed -e 's/|/%7c/g' -e 's/\[/%5b/g' -e 's/\]/%5d/g' | xargs -I {} sh -c 'gh api --method DELETE -H "Accept: application/vnd.github+json" /repos/realm/realm-kotlin/actions/caches?key={} --silent'
+gh api -H 'Accept: application/vnd.github+json' /repos/realm/realm-kotlin/actions/caches --paginate | jq -r '.actions_caches | .[].id' | xargs -I {} sh -c 'gh api --method DELETE -H "Accept: application/vnd.github+json" /repos/realm/realm-kotlin/actions/caches/{} --silent'
 ```
 
 ## See all caches
