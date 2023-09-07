@@ -16,10 +16,11 @@ package io.realm.kotlin.types.annotations
  *
  * The full-text index currently support this set of features:
  *
- * - Only token or word search, e.g. `bio TEXT 'computer dancing'` will find all objects that
+ * - Token or word search, e.g. `bio TEXT 'computer dancing'` will find all objects that
  *   contains the words `computer` and `dancing` in their `bio` property.
  * - Tokens are diacritics- and case-insensitive, e.g.`bio TEXT 'cafe dancing'` and
  *   `bio TEXT 'café DANCING'` will return the same set of matches.
+ * - Token prefix search can be done using `*`, like `bio TEXT comp*`.
  * - Ignoring results with certain tokens are done using `-`, e.g. `bio TEXT 'computer -dancing'`
  *   will find all objects that contain `computer` but not `dancing`.
  * - Tokens are defined by a simple tokenizer that uses the following rules:
@@ -29,7 +30,7 @@ package io.realm.kotlin.types.annotations
  *
  * Note the following constraints before using full-text search:
  *
- * - Token prefix or suffix search like `bio TEXT 'comp* *cing'` is not supported.
+ * - Token suffix search like `bio TEXT '*cing'` is not supported.
  * - Only ASCII and Latin-1 alphanumerical chars are included in the index (most western languages).
  * - Only boolean match is supported, i.e. "found" or "not found". It is not possible to sort
  *   results by "relevance" .
