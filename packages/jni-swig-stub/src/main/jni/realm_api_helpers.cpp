@@ -1051,5 +1051,5 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error) {
 
 realm_scheduler_t*
 realm_create_generic_scheduler() {
-    return new realm_scheduler_t{realm::util::Scheduler::make_generic()};
+    return new realm_scheduler_t { realm::util::Scheduler::make_dummy() };
 }
