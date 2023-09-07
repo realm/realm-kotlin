@@ -284,33 +284,6 @@ kotlin {
 
 // The Device Sync server used by the tests are configured through Gradle properties defined
 // in `<root>/packages/gradle.properties`
-// - 'syncTest.url` defines the root URL for the App Services server. Default is `http://localhost:9090`
-// - 'syncTest.appNamePrefix' is added a differentiator for all apps created by tests. This makes
-//   it possible for builds in parallel to run against the same test server. Default is `test-app`.
-buildkonfig {
-    packageName = "io.realm.kotlin.test.mongodb"
-    objectName = "SyncServerConfig"
-    defaultConfigs {
-        buildConfigField(Type.STRING, "url", properties["syncTestUrl"]!! as String)
-        buildConfigField(Type.STRING, "appPrefix", properties["syncTestAppNamePrefix"]!! as String)
-        if (properties.containsKey("syncTestLoginEmail") && properties.containsKey("syncTestLoginPassword")) {
-            buildConfigField(Type.STRING, "email", properties["syncTestLoginEmail"]!! as String)
-            buildConfigField(Type.STRING, "password", properties["syncTestLoginPassword"]!! as String)
-        } else {
-            buildConfigField(Type.STRING, "email", "")
-            buildConfigField(Type.STRING, "password", "")
-        }
-        if (properties.containsKey("syncTestLoginPublicApiKey") && properties.containsKey("syncTestLoginPrivateApiKey")) {
-            buildConfigField(Type.STRING, "publicApiKey", properties["syncTestLoginPublicApiKey"]!! as String)
-            buildConfigField(Type.STRING, "privateApiKey", properties["syncTestLoginPrivateApiKey"]!! as String)
-        } else {
-            buildConfigField(Type.STRING, "publicApiKey", "")
-            buildConfigField(Type.STRING, "privateApiKey", "")
-        }
-        buildConfigField(Type.STRING, "clusterName", properties["syncTestClusterName"] as String? ?: "")
-    }
-}
-
 // - 'syncTestUrl` defines the root URL for the App Services server. Default is `http://localhost:9090`
 // - 'syncTestAppNamePrefix' is added a differentiator for all apps created by tests. This makes
 //   it possible for builds in parallel to run against the same test server. Default is `test-app`.

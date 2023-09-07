@@ -256,7 +256,6 @@ class ProgressListenerTests {
 
     @Test
     fun completesOnClose() = runBlocking {
-        val app = TestApp(TEST_APP_PARTITION)
         TestApp("completesOnClose", TEST_APP_PARTITION).use { app ->
             val user = app.createUserAndLogIn()
             val realm = Realm.open(createSyncConfig(user))
