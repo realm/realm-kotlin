@@ -1048,3 +1048,8 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error) {
     env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, to_jstring(env, msg));
     jni_check_exception(env);
 }
+
+realm_scheduler_t*
+realm_create_generic_scheduler() {
+    return new realm_scheduler_t { realm::util::Scheduler::make_dummy() };
+}
