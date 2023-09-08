@@ -157,8 +157,8 @@ class RealmAnyNestedDictionaryNotificationTest : RealmEntityNotificationTests {
             }
 
             // Ignore first emission with empty sets
-            channel1.receiveOrFail()
-            channel2.receiveOrFail()
+            assertTrue { channel1.receiveOrFail(1.seconds).map.isEmpty() }
+            assertTrue { channel2.receiveOrFail(1.seconds).map.isEmpty() }
 
             // Trigger an update
             realm.write {

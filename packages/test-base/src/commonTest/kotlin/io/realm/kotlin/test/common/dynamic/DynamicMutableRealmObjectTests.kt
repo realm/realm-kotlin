@@ -1413,16 +1413,16 @@ class DynamicMutableRealmObjectTests {
             assertEquals("INNER", setObject.getValue("stringField"))
             setObject.set("stringField", "UPDATED_INNER")
             // Verify that we can add elements to the set
-            set.add(RealmAny.Companion.create(dynamicSampleInner))
+            set.add(RealmAny.create(dynamicSampleInner))
             // Verify that we cannot add nested collections
             assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(RealmAny.Companion.create(realmSetOf()))
+                set.add(RealmAny.create(realmSetOf()))
             }
             assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(RealmAny.Companion.create(realmListOf()))
+                set.add(RealmAny.create(realmListOf()))
             }
             assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(RealmAny.Companion.create(realmDictionaryOf()))
+                set.add(RealmAny.create(realmDictionaryOf()))
             }
         }
     }

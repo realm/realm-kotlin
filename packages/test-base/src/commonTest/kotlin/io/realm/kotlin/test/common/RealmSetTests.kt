@@ -638,24 +638,12 @@ class RealmSetTests : CollectionQueryTests {
     }
 
     @Test
-    fun contains_unmanagedArgs() = runBlocking<Unit> {
+    fun dontImportUnmanagedArgsToNonImportingMethods() = runBlocking<Unit> {
         val frozenObject = realm.write {
             val liveObject = copyToRealm(RealmSetContainer())
             assertEquals(1, query<RealmSetContainer>().find().size)
             assertFalse(liveObject.objectSetField.contains(RealmSetContainer()))
             assertFalse(liveObject.nullableRealmAnySetField.contains(RealmAny.create(RealmSetContainer())))
-            assertEquals(1, query<RealmSetContainer>().find().size)
-            liveObject
-        }
-        assertFalse(frozenObject.objectSetField.contains(RealmSetContainer()))
-        assertFalse(frozenObject.nullableRealmAnySetField.contains(RealmAny.create(RealmSetContainer())))
-    }
-
-    @Test
-    fun remove_unmanagedArgs() = runBlocking<Unit> {
-        val frozenObject = realm.write {
-            val liveObject = copyToRealm(RealmSetContainer())
-            assertEquals(1, query<RealmSetContainer>().find().size)
             assertFalse(liveObject.objectSetField.remove(RealmSetContainer()))
             assertFalse(liveObject.nullableRealmAnySetField.remove(RealmAny.create(RealmSetContainer())))
             assertEquals(1, query<RealmSetContainer>().find().size)

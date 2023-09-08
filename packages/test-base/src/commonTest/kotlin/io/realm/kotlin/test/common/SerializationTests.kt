@@ -89,13 +89,13 @@ class SerializationTests {
                 subclass(SerializableEmbeddedObject::class)
             }
 
-            contextual(RealmSet::class) { args ->
+            contextual(RealmSet::class) { _ ->
                 RealmSetKSerializer(RealmAnyKSerializer.nullable)
             }
-            contextual(RealmList::class) { args ->
+            contextual(RealmList::class) { _ ->
                 RealmListKSerializer(RealmAnyKSerializer.nullable)
             }
-            contextual(RealmDictionary::class) { args ->
+            contextual(RealmDictionary::class) { _ ->
                 RealmDictionaryKSerializer(RealmAnyKSerializer.nullable)
             }
         }
