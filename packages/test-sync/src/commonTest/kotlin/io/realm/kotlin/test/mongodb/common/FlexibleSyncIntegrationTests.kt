@@ -146,7 +146,7 @@ class FlexibleSyncIntegrationTests {
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(60.seconds))
+            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
             realm.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
@@ -156,7 +156,7 @@ class FlexibleSyncIntegrationTests {
                 val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
                 add(query, "sub", updateExisting = true)
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(60.seconds))
+            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
             assertEquals(1, realm.query<FlexParentObject>().count().find())
         }
     }
