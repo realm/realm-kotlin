@@ -18,24 +18,29 @@ package io.realm.kotlin.gradle.analytics
 import io.realm.kotlin.gradle.RealmCompilerSubplugin
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.ValueSource
+import org.gradle.api.provider.ValueSourceParameters
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
+import org.gradle.process.ExecOperations
+import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.FileNotFoundException
-import java.io.IOException
 import java.io.UnsupportedEncodingException
 import java.net.HttpURLConnection
 import java.net.NetworkInterface
-import java.net.SocketException
 import java.net.URL
+import java.nio.charset.Charset
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.Scanner
+import javax.inject.Inject
 import javax.xml.bind.DatatypeConverter
 import kotlin.experimental.and
 
 /**
- * Analytics Build Service responsible for triggering analytics at the correct time.
+ * Analytics Build Service holding cross-target project specific info and methods for dispatching
+ * analytics.
  * Build Services are only marked stable from Gradle 7.4, so additional logging has been added
  * to this class to catch catches where types are different than expected. We do _NOT_
  * want analytics to take down a users build, so exceptions are avoided on purpose.
@@ -68,7 +73,8 @@ import kotlin.experimental.and
 //
 // Currently the following information is reported:
 // - What version of Realm is being used
-// - What OS you are running on
+// - What host you are running on
+// - What targets you are building for
 // - An anonymized MAC address and bundle ID to aggregate the other information on.
 //
 // The collected information can be inspected by settings the system environment variable
@@ -80,18 +86,19 @@ private const val TOKEN = "ce0fac19508f6c8f20066d345d360fd0"
 private const val EVENT_NAME = "Run"
 private const val URL_PREFIX = "https://data.mongodb-api.com/app/realmsdkmetrics-zmhtm/endpoint/metric_webhook/metric?data="
 
-// Container object for project specific details, thus equal across all platforms.
-data class ProjectInfo(
-    val appId: String,
-    val userId: String,
-    val builderId: String,
-    val hostOsType: String,
-    val hostOsVersion: String,
-    val hostCpuArch: String,
-    val usesSync: Boolean,
-);
+// Container for the project specific details, thus equal across all platforms.
+interface ProjectConfiguration : BuildServiceParameters {
+    val appId: Property<String>
+    val userId: Property<String>
+    val builderId: Property<String>
+    val hostOsType: Property<String>
+    val hostOsVersion: Property<String>
+    val hostCpuArch: Property<String>
+    val usesSync: Property<Boolean>
+    val verbose: Property<Boolean>
+}
 
-// Container object for target specific details.
+// Container object for target specific details that varies across compilation targets.
 data class TargetInfo(
     val targetOsType: String,
     val targetCpuArch: String,
@@ -99,54 +106,39 @@ data class TargetInfo(
     val targetOSMinVersion: String?,
 )
 
-abstract class AnalyticsService : BuildService<BuildServiceParameters.None> {
+abstract class AnalyticsService : BuildService<ProjectConfiguration> {
     private val logger: Logger = Logging.getLogger("realm-analytics")
 
-    private lateinit var projectInfo: ProjectInfo
-    private var verbose: Boolean = false
-
-    fun init(anonymizedBundleId: String, usesSync: Boolean) {
-        projectInfo = ProjectInfo(
-            appId = anonymizedBundleId,
-            userId = ComputerIdentifierGenerator.get(),
-            builderId = BuilderIdentifierGenerator.get(),
-            hostOsType = HOST_OS.serializedName,
-            hostOsVersion = System.getProperty("os.version"),
-            hostCpuArch = HOST_ARCH,
-            usesSync = usesSync,
-        )
-        verbose = "true".equals(System.getenv()["REALM_PRINT_ANALYTICS"], ignoreCase = true)
-    }
-
     fun submit(targetInfo: TargetInfo) {
+        val projectInfo = parameters
         val json = """
             {
                "event": "$EVENT_NAME",
                "properties": {
                   "token": "$TOKEN",
-                  "distinct_id": "${projectInfo.userId}",
-                  "builder_id: "${projectInfo.builderId}",
-                  "Anonymized MAC Address": "${projectInfo.userId}",
-                  "Anonymized Bundle ID": "${projectInfo.appId}",
+                  "distinct_id": "${projectInfo.userId.get()}",
+                  "builder_id: "${projectInfo.builderId.get()}",
+                  "Anonymized Bundle ID": "${projectInfo.appId.get()}",
                   "Binding": "kotlin",
                   "Language": "kotlin",
-                  "Host OS Type": "${projectInfo.hostOsType}",
-                  "Host OS Version": "${projectInfo.hostOsVersion}",
-                  "Host CPU Arch": "${projectInfo.hostCpuArch}",
+                  "Host OS Type": "${projectInfo.hostOsType.get()}",
+                  "Host OS Version": "${projectInfo.hostOsVersion.get()}",
+                  "Host CPU Arch": "${projectInfo.hostCpuArch.get()}",
                   "Target CPU Arch": "${targetInfo.targetCpuArch}",
                   "Target OS Type": "${targetInfo.targetOsType}",
                   "Target OS Minimum Version": "${targetInfo.targetOSMinVersion}",
                   "Target OS Version": "${targetInfo.targetOSVersion}"
                   "Realm Version": "${RealmCompilerSubplugin.version}",
                   "Core Version": "${RealmCompilerSubplugin.coreVersion}",
-                  "Sync Enabled": ${if (projectInfo.usesSync) "true" else "false"},
+                  "Sync Enabled": ${if (projectInfo.usesSync.get()) "true" else "false"},
                }
-            }""".trimIndent()
-        sendAnalytics(json)
+            }
+        """.trimIndent()
+        sendAnalytics(json, projectInfo.verbose.get())
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun sendAnalytics(json: String) {
+    private fun sendAnalytics(json: String, verbose: Boolean) {
         try {
             if (!verbose) {
                 debug("Submitting analytics payload:\n$json")
@@ -186,46 +178,36 @@ abstract class AnalyticsService : BuildService<BuildServiceParameters.None> {
     private fun warn(message: String) = logger.warn(tag(message))
 }
 
+// Common abstraction to collection various host identification identifiers through various exec
+// operations
+abstract class HostIdentifier : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    val identifier: String =
+        when (HOST_OS) {
+            Host.WINDOWS -> windowsIdentifier
+            Host.MACOS -> macOsIdentifier
+            Host.LINUX -> linuxIdentifier
+            else -> throw IllegalStateException("Unknown host identifier")
+        }
+    abstract val linuxIdentifier: String
+    abstract val macOsIdentifier: String
+    abstract val windowsIdentifier: String
+
+    companion object {
+        const val UNKNOWN = "unknown"
+    }
+}
+
 /**
- * Generate a unique identifier for a computer. The method being used depends on the platform:
+ * Provider of a unique identifier for a computer. The method being used depends on the platform:
  *  - OS X:  Mac address of en0
  *  - Windows:  BIOS identifier
  *  - Linux: Machine ID provided by the OS
  */
-internal object ComputerIdentifierGenerator {
-    private const val UNKNOWN = "unknown"
-    private val OS = System.getProperty("os.name").lowercase()
-    @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    fun get(): String {
-        return try {
-            when {
-                isWindows -> {
-                    windowsIdentifier
-                }
-                isMac -> {
-                    macOsIdentifier
-                }
-                isLinux -> {
-                    linuxMacAddress
-                }
-                else -> {
-                    UNKNOWN
-                }
-            }
-        } catch (e: Exception) {
-            UNKNOWN
-        }
-    }
-
-    private val isWindows: Boolean
-        get() = OS.contains("win")
-    private val isMac: Boolean
-        get() = OS.contains("mac")
-    private val isLinux: Boolean
-        get() = OS.contains("inux")
-
-    @get:Throws(FileNotFoundException::class, NoSuchAlgorithmException::class)
-    private val linuxMacAddress: String
+abstract class ComputerId : HostIdentifier() {
+    override val linuxIdentifier: String
         get() {
             var machineId = File("/var/lib/dbus/machine-id")
             if (!machineId.exists()) {
@@ -238,86 +220,91 @@ internal object ComputerIdentifierGenerator {
             return try {
                 scanner = Scanner(machineId)
                 val id = scanner.useDelimiter("\\A").next()
-                hexStringify(sha256Hash(id.toByteArray()))
+                id
             } finally {
                 scanner?.close()
             }
         }
 
-    @get:Throws(SocketException::class, NoSuchAlgorithmException::class)
-    private val macOsIdentifier: String
+    override val macOsIdentifier: String
         get() {
             val networkInterface = NetworkInterface.getByName("en0")
             val hardwareAddress = networkInterface.hardwareAddress
-            return hexStringify(sha256Hash(hardwareAddress))
+            return String(hardwareAddress, Charset.defaultCharset())
         }
 
-    @get:Throws(IOException::class, NoSuchAlgorithmException::class)
-    private val windowsIdentifier: String
+    override val windowsIdentifier: String
         get() {
-            val runtime = Runtime.getRuntime()
-            val process = runtime.exec(arrayOf("wmic", "csproduct", "get", "UUID"))
+            val output = ByteArrayOutputStream()
+            execOperations.exec {
+                it.commandLine("wmic", "csproduct", "get", "UUID")
+                it.standardOutput = output
+            }
+            val input = String(output.toByteArray(), Charset.defaultCharset())
             var result: String? = null
-            val `is` = process.inputStream
-            val sc = Scanner(process.inputStream)
-            `is`.use {
-                while (sc.hasNext()) {
-                    val next = sc.next()
-                    if (next.contains("UUID")) {
-                        result = sc.next().trim { it <= ' ' }
-                        break
-                    }
+            val sc = Scanner(input)
+            while (sc.hasNext()) {
+                val next = sc.next()
+                if (next.contains("UUID")) {
+                    result = sc.next().trim { it <= ' ' }
+                    break
                 }
             }
-            return if (result == null) UNKNOWN else hexStringify(sha256Hash(result!!.toByteArray()))
+            return result!!
         }
-}
-internal object BuilderIdentifierGenerator {
-    private const val UNKNOWN = "unknown"
-    @Suppress("TooGenericExceptionCaught", "SwallowedException")
-    fun get(): String {
-        return try {
-            val hostIdentifier = when (HOST_OS){
-                Host.WINDOWS -> windowsIdentifier
-                Host.MACOS -> macOsIdentifier
-                Host.LINUX -> linuxMacAddress
-                else -> throw RuntimeException("Unkown host identifier")
-            }
-            val data = "Realm is great" + hostIdentifier
-            return base64Encode(sha256Hash(data.toByteArray()))!!
-        } catch (e: Exception) {
-            UNKNOWN
-        }
-    }
 
-    @get:Throws(FileNotFoundException::class, NoSuchAlgorithmException::class)
-    private val linuxMacAddress: String
+    override fun obtain(): String? = try {
+        hexStringify(sha256Hash(identifier.toByteArray()))
+    } catch (e: Exception) {
+        UNKNOWN
+    }
+}
+
+/**
+ * Provider of a unique builder identifier for a computer.
+ *
+ * Successor of [ComputerId] standardized across SDKs.
+ */
+abstract class BuilderId : HostIdentifier() {
+    override val linuxIdentifier: String
         get() {
             return File("/etc/machine-id").inputStream().readBytes().toString().trim()
         }
 
-    @get:Throws(SocketException::class, NoSuchAlgorithmException::class)
-    private val macOsIdentifier: String
+    override val macOsIdentifier: String
         get() {
-            val runtime = Runtime.getRuntime()
-            val process = runtime.exec(arrayOf("ioreg", "-rd1", "-c", "IOPlatformExpertDevice"))
+            val output = ByteArrayOutputStream()
+            execOperations.exec {
+                it.commandLine("ioreg", "-rd1", "-c", "IOPlatformExpertDevice")
+                it.standardOutput = output
+            }
+            val input = String(output.toByteArray(), Charset.defaultCharset())
             val regEx = ".*\"IOPlatformUUID\"\\s=\\s\"(.+)\"".toRegex()
-            val input = String(process.inputStream.readBytes())
             val find: MatchResult? = regEx.find(input)
             return find?.groups?.get(1)?.value!!
         }
 
-    @get:Throws(IOException::class, NoSuchAlgorithmException::class)
-    private val windowsIdentifier: String
+    override val windowsIdentifier: String
         get() {
-            val runtime = Runtime.getRuntime()
-            val process = runtime.exec(arrayOf("Reg", "QUERY", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography", "MachineGuid"))
-            val input = String(process.inputStream.readAllBytes())
+            val output = ByteArrayOutputStream()
+            execOperations.exec {
+                it.commandLine("Reg", "QUERY", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography", "MachineGuid")
+                it.standardOutput = output
+            }
+            val input = String(output.toByteArray(), Charset.defaultCharset())
             // Manually expanded [:alnum:] as ([[:alnum:]-]+) didn't seems to work
-            val regEx =  "\\s*MachineGuid\\s*\\w*\\s*([A-Za-z0-9-]+)".toRegex()
+            val regEx = "\\s*MachineGuid\\s*\\w*\\s*([A-Za-z0-9-]+)".toRegex()
             val find: MatchResult? = regEx.find(input)
             return find?.groups?.get(1)?.value!!
         }
+
+    override fun obtain(): String = try {
+        val id = identifier
+        val data = "Realm is great$id"
+        base64Encode(sha256Hash(data.toByteArray()))!!
+    } catch (e: Exception) {
+        "UNKNOWN"
+    }
 }
 
 /**
@@ -385,6 +372,9 @@ enum class Architecture(val serializedName: String) {
     ARM64("Arm64"),
 }
 
+/**
+ * String that represents the architecture of the host the build is running on.
+ */
 val HOST_ARCH: String = run {
     val hostArch = System.getProperty("os.arch")
     when {

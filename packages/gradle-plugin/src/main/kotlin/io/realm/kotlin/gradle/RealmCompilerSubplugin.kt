@@ -18,12 +18,18 @@ package io.realm.kotlin.gradle
 
 import com.android.build.gradle.BaseExtension
 import io.realm.kotlin.gradle.analytics.AnalyticsService
+import io.realm.kotlin.gradle.analytics.BuilderId
+import io.realm.kotlin.gradle.analytics.ComputerId
+import io.realm.kotlin.gradle.analytics.HOST_ARCH
+import io.realm.kotlin.gradle.analytics.HOST_OS
+import io.realm.kotlin.gradle.analytics.ProjectConfiguration
 import io.realm.kotlin.gradle.analytics.TargetInfo
 import io.realm.kotlin.gradle.analytics.hexStringify
 import io.realm.kotlin.gradle.analytics.sha256Hash
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Provider
+import org.gradle.api.services.BuildServiceSpec
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
@@ -62,24 +68,26 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
 
         // Must match io.realm.kotlin.compiler.bundleIdKey
         const val bundleIdKey = "bundleId"
+
         // Must match io.realm.kotlin.compiler.
         const val featureListPathKey = "featureListPath"
     }
 
-    override fun apply(project: Project) {
-        super.apply(project)
+    @Suppress("NestedBlockDepth")
+    override fun apply(target: Project) {
+        super.apply(target)
 
         // We build the anonymized bundle id here and pass it to the compiler plugin to ensure
         // that the metrics and sync connection parameters are aligned.
-        val bundleId = project.rootProject.name + ":" + project.name
+        val bundleId = target.rootProject.name + ":" + target.name
         anonymizedBundleId = hexStringify(sha256Hash(bundleId.toByteArray()))
 
-        val disableAnalytics: Boolean = project.gradle.startParameter.isOffline || "true".equals(
+        val disableAnalytics: Boolean = target.gradle.startParameter.isOffline || "true".equals(
             System.getenv()["REALM_DISABLE_ANALYTICS"],
             ignoreCase = true
         )
         if (!disableAnalytics) {
-            // Indentify if project is using sync by inspecting dependencies.
+            // Identify if project is using sync by inspecting dependencies.
             // We cannot use resolved configurations here as this code is called in
             // afterEvaluate, and resolving it prevents other plugins from modifying
             // them. E.g the KMP plugin will crash if we resolve the configurations
@@ -88,7 +96,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
             // want to track builds directly using Realm.
             var usesSync = false
             outer@
-            for (conf in project.configurations) {
+            for (conf in target.configurations) {
                 for (dependency in conf.dependencies) {
                     if (dependency.group == "io.realm.kotlin" && dependency.name == "library-sync") {
                         // In Java we can detect Sync through a Gradle configuration closure.
@@ -99,11 +107,26 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
                     }
                 }
             }
-            analyticsServiceProvider = project.gradle.sharedServices.registerIfAbsent(
+
+            val userId = target.providers.of(ComputerId::class.java) {}.get()
+            val builderId = target.providers.of(BuilderId::class.java) {}.get()
+            val verbose = "true".equals(System.getenv()["REALM_PRINT_ANALYTICS"], ignoreCase = true)
+
+            analyticsServiceProvider = target.gradle.sharedServices.registerIfAbsent(
                 "Realm Analytics",
                 AnalyticsService::class.java
-            ) {}
-            analyticsServiceProvider!!.get().init(anonymizedBundleId, usesSync)
+            ) { spec: BuildServiceSpec<ProjectConfiguration> ->
+                spec.parameters.run {
+                    this.appId.set(anonymizedBundleId)
+                    this.userId.set(userId)
+                    this.builderId.set(builderId)
+                    this.hostOsType.set(HOST_OS.serializedName)
+                    this.hostOsVersion.set(System.getProperty("os.version"))
+                    this.hostCpuArch.set(HOST_ARCH)
+                    this.usesSync.set(usesSync)
+                    this.verbose.set(verbose)
+                }
+            }
         }
     }
 
@@ -133,62 +156,20 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
         )
         // Only bother collecting info if the analytics service is registered
         analyticsServiceProvider?.let { provider ->
-            // Enable feature collection in compiler plugin by setting a path for the feature set file
-            val featureListPath = listOf( project.buildDir.path, "outputs", "realm-features", kotlinCompilation.defaultSourceSet.name ).joinToString( File.separator )
+            // Enable feature collection in compiler plugin by setting a path for the feature list
+            // file and pass it to the compiler plugin as a compiler plugin option
+            val featureListPath = listOf(
+                project.buildDir.path,
+                "outputs",
+                "realm-features",
+                kotlinCompilation.defaultSourceSet.name
+            ).joinToString(File.separator)
             options.add(SubpluginOption(key = featureListPathKey, featureListPath))
 
-            val targetInfo: TargetInfo? = when (kotlinCompilation) {
-                // We don't send metrics for common targets but still collect features as the
-                // target specific features is a union of common and target specific features
-                is KotlinCommonCompilation,
-                is KotlinSharedNativeCompilation ->
-                    null
-                is KotlinJvmAndroidCompilation -> {
-                    val androidExtension =
-                        project.extensions.findByName("android") as BaseExtension?
-                    val defaultConfig = androidExtension?.defaultConfig
-                    val minSDK = defaultConfig?.minSdkVersion?.apiString
-                    val targetSDK = defaultConfig?.targetSdkVersion?.apiString
-                    val targetCpuArch: String =
-                        defaultConfig?.ndk?.abiFilters?.singleOrNull()?.let { androidArch(it) }
-                            ?: "Universal"
-                    TargetInfo("Android", targetCpuArch, targetSDK, minSDK)
-                }
-                is KotlinJvmCompilation -> {
-                    val jvmTarget = kotlinCompilation.kotlinOptions.jvmTarget
-                    TargetInfo("JVM", "Universal", jvmTarget, jvmTarget)
-                }
-                is KotlinNativeCompilation -> {
-                    // We currently only support Darwin targets, so assume that we can pull minSdk
-                    // from the given deploymentTarget. Non-CocoaPod Xcode project have this in its
-                    // pdxproj-file as <X>OS_DEPLOYMENT_TARGET, but assuming that most people use
-                    // CocoaPods as it is the default. Reevaluate if we see too many missing values.
-                    val kotlinExtension: KotlinMultiplatformExtension = project.extensions.getByType(KotlinMultiplatformExtension::class.java)
-                    val cocoapodsExtension = (kotlinExtension as ExtensionAware).extensions.getByName(COCOAPODS_EXTENSION_NAME) as CocoapodsExtension?
-                    val minSdk = cocoapodsExtension?.let { cocoapods ->
-                        when (kotlinCompilation.konanTarget.family) {
-                            Family.OSX -> cocoapods.osx.deploymentTarget
-                            Family.IOS -> cocoapods.ios.deploymentTarget
-                            Family.TVOS -> cocoapods.tvos.deploymentTarget
-                            Family.WATCHOS -> cocoapods.watchos.deploymentTarget
-                            Family.LINUX,
-                            Family.MINGW,
-                            Family.ANDROID,
-                            Family.WASM,
-                            Family.ZEPHYR -> null // Not supported yet
-                        }
-                    }
-                    TargetInfo(nativeTarget(kotlinCompilation.konanTarget), nativeArch(kotlinCompilation.konanTarget), null, minSdk)
-               }
-                // Not supported yet so don't try to gather target information
-                is KotlinJsCompilation,
-                is KotlinWithJavaCompilation<*, *> -> null
-                else -> {
-                    null
-                }
-            }
+            // Gather target specific information
+            val targetInfo: TargetInfo? = gatherTargetInfo(kotlinCompilation)
             // If we have something to submit register it for submission after the compilation has
-            // gathered feature information
+            // gathered the feature list information
             targetInfo?.let {
                 kotlinCompilation.compileTaskProvider.get().doLast {
                     analyticsServiceProvider!!.get().submit(targetInfo)
@@ -197,6 +178,74 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
         }
         return project.provider {
             options
+        }
+    }
+}
+
+@Suppress("ComplexMethod", "NestedBlockDepth")
+private fun gatherTargetInfo(kotlinCompilation: KotlinCompilation<*>): TargetInfo? {
+    val project = kotlinCompilation.target.project
+    return when (kotlinCompilation) {
+        // We don't send metrics for common targets but still collect features as the
+        // target specific features is a union of common and target specific features
+        is KotlinCommonCompilation,
+        is KotlinSharedNativeCompilation ->
+            null
+
+        is KotlinJvmAndroidCompilation -> {
+            val androidExtension =
+                project.extensions.findByName("android") as BaseExtension?
+            val defaultConfig = androidExtension?.defaultConfig
+            val minSDK = defaultConfig?.minSdkVersion?.apiString
+            val targetSDK = defaultConfig?.targetSdkVersion?.apiString
+            val targetCpuArch: String =
+                defaultConfig?.ndk?.abiFilters?.singleOrNull()?.let { androidArch(it) }
+                    ?: "Universal"
+            TargetInfo("Android", targetCpuArch, targetSDK, minSDK)
+        }
+
+        is KotlinJvmCompilation -> {
+            val jvmTarget = kotlinCompilation.kotlinOptions.jvmTarget
+            TargetInfo("JVM", "Universal", jvmTarget, jvmTarget)
+        }
+
+        is KotlinNativeCompilation -> {
+            // We currently only support Darwin targets, so assume that we can pull minSdk
+            // from the given deploymentTarget. Non-CocoaPod Xcode project have this in its
+            // pdxproj-file as <X>OS_DEPLOYMENT_TARGET, but assuming that most people use
+            // CocoaPods as it is the default. Reevaluate if we see too many missing values.
+            val kotlinExtension: KotlinMultiplatformExtension =
+                project.extensions.getByType(KotlinMultiplatformExtension::class.java)
+            val cocoapodsExtension =
+                (kotlinExtension as ExtensionAware).extensions.getByName(
+                    COCOAPODS_EXTENSION_NAME
+                ) as CocoapodsExtension?
+            val minSdk = cocoapodsExtension?.let { cocoapods ->
+                when (kotlinCompilation.konanTarget.family) {
+                    Family.OSX -> cocoapods.osx.deploymentTarget
+                    Family.IOS -> cocoapods.ios.deploymentTarget
+                    Family.TVOS -> cocoapods.tvos.deploymentTarget
+                    Family.WATCHOS -> cocoapods.watchos.deploymentTarget
+                    Family.LINUX,
+                    Family.MINGW,
+                    Family.ANDROID,
+                    Family.WASM,
+                    Family.ZEPHYR -> null // Not supported yet
+                }
+            }
+            TargetInfo(
+                nativeTarget(kotlinCompilation.konanTarget),
+                nativeArch(kotlinCompilation.konanTarget),
+                null,
+                minSdk
+            )
+        }
+        // Not supported yet so don't try to gather target information
+        is KotlinJsCompilation,
+        is KotlinWithJavaCompilation<*, *> -> null
+
+        else -> {
+            null
         }
     }
 }
@@ -233,5 +282,5 @@ fun androidArch(target: String): String = when (target) {
     "arm64-v8a" -> io.realm.kotlin.gradle.analytics.Architecture.ARM64.serializedName
     "x86" -> io.realm.kotlin.gradle.analytics.Architecture.X86.serializedName
     "x86_64" -> io.realm.kotlin.gradle.analytics.Architecture.X64.serializedName
-    else -> "Unknown[${target}]"
+    else -> "Unknown[$target]"
 }

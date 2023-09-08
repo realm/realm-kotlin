@@ -101,11 +101,7 @@ tasks.create("coreVersion", Exec::class.java) {
     commandLine = listOf("grep", "^VERSION", "dependencies.list")
     standardOutput = ByteArrayOutputStream()
     doLast {
-        extra["output"] = try {
-            standardOutput.toString().trim().split("=")[1]
-        } catch (e: Exception) {
-            ""
-        }
+        extra["output"] = standardOutput.toString().trim().split("=")[1]
     }
 }
 
