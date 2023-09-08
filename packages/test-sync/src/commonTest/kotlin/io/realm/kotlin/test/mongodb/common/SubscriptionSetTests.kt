@@ -199,7 +199,10 @@ class SubscriptionSetTests {
         assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
         }
-        assertTrue(subscriptions.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            subscriptions.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            subscriptions.errorMessage
+        )
         subscriptions.update {
             removeAll()
         }
@@ -273,7 +276,10 @@ class SubscriptionSetTests {
             updatedSubs.waitForSynchronization()
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
-        assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            updatedSubs.errorMessage
+        )
         subscriptions.close()
     }
 
@@ -289,7 +295,10 @@ class SubscriptionSetTests {
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
         assertEquals("TRUEPREDICATE and TRUEPREDICATE LIMIT(1)", updatedSubs.first().queryDescription)
-        assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            updatedSubs.errorMessage
+        )
         subscriptions.close()
     }
 
