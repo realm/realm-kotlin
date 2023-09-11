@@ -85,6 +85,26 @@ import kotlin.reflect.KClass
  * ```
  * `RealmAny` cannot store [EmbeddedRealmObject]s.
  *
+ * `RealmAny` can contain other collections of [RealmAny]. This means that you can build nested
+ * collections inside a `RealmAny`-field. The only constraint is that sets cannot contain other
+ * collections, so must be at the leaf of such nested hierarchies.
+ * ```
+ * realmObjct.realmAnyField = realmAnyDictionaryOf(
+ *     // Sets are allowed but cannot contain nested collection types
+ *     "realmSetOf(1),
+ *     // Lists and dictionaries can contain other nested collection types
+ *     realmListOf(
+ *         realmSetOf(),
+ *         realmListOf(),
+ *         realmDictionaryOf()
+ *     ),
+ *     realmDictionaryOf(
+ *         "key1" to realmSetOf(),
+ *         "key2" to realmListOf(),
+ *         "key3" to realmDictionaryOf())
+ * )
+ * ```
+ *
  * [DynamicRealmObject]s and [DynamicMutableRealmObject]s can be used inside `RealmAny` with
  * the corresponding [create] function for `DynamicRealmObject`s and with [asRealmObject] using
  * either `DynamicRealmObject` or `DynamicMutableRealmObject` as the generic parameter.
