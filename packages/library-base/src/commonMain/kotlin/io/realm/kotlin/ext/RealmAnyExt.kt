@@ -64,6 +64,8 @@ public fun realmAnyOf(value: Any?): RealmAny? {
 /**
  * Create a [RealmAny] containing a [RealmSet] of all arguments wrapped as [RealmAny]s.
  * @param values elements of the set.
+ *
+ * See [RealmAny.create] for [RealmSet] constraints and examples of usage.
  */
 public fun realmAnySetOf(vararg values: Any?): RealmAny =
     RealmAny.create(values.map { realmAnyOf(it) }.toRealmSet())
@@ -71,6 +73,8 @@ public fun realmAnySetOf(vararg values: Any?): RealmAny =
 /**
  * Create a [RealmAny] containing a [RealmList] of all arguments wrapped as [RealmAny]s.
  * @param values elements of the set.
+ *
+ * See [RealmAny.create] for [RealmList] constraints and examples of usage.
  */
 public fun realmAnyListOf(vararg values: Any?): RealmAny =
     RealmAny.create(values.map { realmAnyOf(it) }.toRealmList())
@@ -79,6 +83,8 @@ public fun realmAnyListOf(vararg values: Any?): RealmAny =
  * Create a [RealmAny] containing a [RealmDictionary] with all argument values wrapped as
  * [RealmAnys]s.
  * @param values entries of the dictionary.
+ *
+ * See [RealmAny.create] for [RealmDictionaries] constraints and examples of usage.
  */
 public fun realmAnyDictionaryOf(vararg values: Pair<String, Any?>): RealmAny =
     RealmAny.create(values.map { (key, value) -> key to realmAnyOf(value) }.toRealmDictionary())

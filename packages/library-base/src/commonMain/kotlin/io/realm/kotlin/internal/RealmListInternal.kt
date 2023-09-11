@@ -184,6 +184,11 @@ internal fun <E : BaseRealmObject> ManagedRealmList<E>.query(
             throw IllegalArgumentException(e.message, e.cause)
         }
     }
+    // parent is only available for lists with an object as an immediate parent (contrary to nested
+    // collections).
+    // Nested collections are only supported for RealmAny-values and are therefore
+    // outside of the BaseRealmObject bound for the generic type parameters, so we should never be
+    // able to reach here for nested collections of RealmAny.
     if (parent == null) error("Cannot perform subqueries on non-object lists")
     return ObjectBoundQuery(
         parent,

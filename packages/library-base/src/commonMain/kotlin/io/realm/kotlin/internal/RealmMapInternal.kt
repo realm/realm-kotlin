@@ -130,6 +130,11 @@ internal fun <K, V : BaseRealmObject> ManagedRealmMap<K, V?>.query(
         val mapValues = values as RealmMapValues<*, *>
         RealmInterop.realm_query_parse_for_results(mapValues.resultsPointer, query, queryArgs)
     }
+    // parent is only available for lists with an object as an immediate parent (contrary to nested
+    // collections).
+    // Nested collections are only supported for RealmAny-values and are therefore
+    // outside of the BaseRealmObject bound for the generic type parameters, so we should never be
+    // able to reach here for nested collections of RealmAny.
     if (parent == null) error("Cannot perform subqueries on non-object dictionaries")
     return ObjectBoundQuery(
         parent,
@@ -817,9 +822,9 @@ internal class ManagedRealmDictionary<V> constructor(
             Triple(
                 className,
                 owner.version().version,
-                RealmInterop.realm_object_get_key(parent.objectPointer).key
+                RealmInterop.realm_object_get_key(objectPointer).key
             )
-        } ?: Triple("null", "null", -1)
+        } ?: Triple("null", operator.realmReference.version().version, "null")
         return "RealmDictionary{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 
@@ -875,7 +880,7 @@ internal class KeySet<K> constructor(
                 owner.version().version,
                 RealmInterop.realm_object_get_key(parent.objectPointer).key
             )
-        } ?: TODO()
+        } ?: Triple("null", operator.realmReference.version().version, "null")
         return "RealmDictionary.keys{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 

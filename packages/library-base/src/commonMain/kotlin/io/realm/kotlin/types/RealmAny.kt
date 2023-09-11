@@ -370,6 +370,25 @@ public interface RealmAny {
          *
          * To create a [RealmAny] containing a [RealmSet] of arbitrary values wrapped in [RealmAny]s
          * use the [io.realm.kotlin.ext.realmAnySetOf].
+         *
+         * **NOTE:** Realm does not support to having other collections ([RealmSet], [RealmList] and
+         * [RealmDictionary]) in a [RealmSet]. These kind of structures can be built in a [RealmAny]
+         * but will fail if imported to realm.
+         *
+         * Example:
+         * ```
+         * class SampleObject() : RealmObject {
+         *     val realmAnyField: RealmAny? = null
+         * }
+         * val realmObject = copyToRealm(SampleObject())
+         *
+         * // Sets with non-collection types can be built and imported into realm.
+         * realmObject.realmAnyField = realmAnySetOf(1, "Realm", realmObject)
+         *
+         * // Sets with collection types can be built but cannot be imported into realm.
+         * val setsWithCollections = realmAnySetOf(realmSetOf(), realmListOf(), realmDictionaryOf())
+         * realmObject.realmAnyField = setsWithCollections // Will throw IllegalArgumentExcception
+         * ```
          */
         public fun create(value: RealmSet<RealmAny?>): RealmAny =
             RealmAnyImpl(Type.SET, RealmAny::class, value)
@@ -379,6 +398,30 @@ public interface RealmAny {
          *
          * To create a [RealmAny] containing a [RealmList] of arbitrary values wrapped in [RealmAny]s
          * use the [io.realm.kotlin.ext.realmAnyListOf].
+         *
+         * A `RealmList<RealmAny?>` can contain all [RealmAny] types, also other collection types:
+         * ```
+         * class SampleObject() : RealmObject {
+         *     val realmAnyField: RealmAny? = null
+         * }
+         * val realmObject = copyToRealm(SampleObject())
+         *
+         * // Lists can contain other collection types, including [RealmSet]s.
+         * realmObject.realmAnyField = realmAnyListOf(
+         *     // Sets are allowed but cannot contain nested collection types
+         *     realmSetOf(1),
+         *     // Lists and dictionaries can contain other collection types
+         *     realmListOf(
+         *         realmSetOf(),
+         *         realmListOf(),
+         *         realmDictionaryOf()
+         *     ),
+         *     realmDictionaryOf(
+         *         "key1" to realmSetOf(),
+         *         "key2" to realmListOf(),
+         *         "key3" to realmDictioneryOf())
+         * )
+         * ```
          */
         public fun create(value: RealmList<RealmAny?>): RealmAny =
             RealmAnyImpl(Type.LIST, RealmAny::class, value)
@@ -388,6 +431,30 @@ public interface RealmAny {
          *
          * To create a [RealmAny] containing a [RealmDictionary] of arbitrary values wrapped in
          * [RealmAny]s use the [io.realm.kotlin.ext.realmAnyDictionaryOf].
+         *
+         * A `RealmDictionery<RealmAny?>` can contain all [RealmAny] types, also other collection types:
+         * ```
+         * class SampleObject() : RealmObject {
+         *     val realmAnyField: RealmAny? = null
+         * }
+         * val realmObject = copyToRealm(SampleObject())
+         *
+         * // Dictionaries can contain other collection types, including [RealmSet]s.
+         * realmObjct.realmAnyField = realmAnyDictionaryOf(
+         *     // Sets are allowed but cannot contain nested collection types
+         *     "realmSetOf(1),
+         *     // Lists and dictionaries can contain other nested collection types
+         *     realmListOf(
+         *         realmSetOf(),
+         *         realmListOf(),
+         *         realmDictionaryOf()
+         *     ),
+         *     realmDictionaryOf(
+         *         "key1" to realmSetOf(),
+         *         "key2" to realmListOf(),
+         *         "key3" to realmDictionaryOf())
+         * )
+         * ```
          */
         public fun create(value: RealmDictionary<RealmAny?>): RealmAny =
             RealmAnyImpl(Type.DICTIONARY, RealmAny::class, value)
