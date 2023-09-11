@@ -89,7 +89,9 @@ import kotlin.reflect.KClass
  * collections inside a `RealmAny`-field. The only constraint is that sets cannot contain other
  * collections, so must be at the leaf of such nested hierarchies.
  * ```
- * realmObjct.realmAnyField = realmAnyDictionaryOf(
+ * realmObjct.realmAnyField = realmAnyListOf(
+ *     // Primitive values can be added in collections
+ *     1,
  *     // Sets are allowed but cannot contain nested collection types
  *     "realmSetOf(1),
  *     // Lists and dictionaries can contain other nested collection types
@@ -428,6 +430,8 @@ public interface RealmAny {
          *
          * // Lists can contain other collection types, including [RealmSet]s.
          * realmObject.realmAnyField = realmAnyListOf(
+         *     // Primitive values
+         *     1,
          *     // Sets are allowed but cannot contain nested collection types
          *     realmSetOf(1),
          *     // Lists and dictionaries can contain other collection types
@@ -461,15 +465,16 @@ public interface RealmAny {
          *
          * // Dictionaries can contain other collection types, including [RealmSet]s.
          * realmObjct.realmAnyField = realmAnyDictionaryOf(
+         *     "int" to 5,
          *     // Sets are allowed but cannot contain nested collection types
-         *     "realmSetOf(1),
+         *     "set" to "realmSetOf(1),
          *     // Lists and dictionaries can contain other nested collection types
-         *     realmListOf(
+         *     "list" to realmListOf(
          *         realmSetOf(),
          *         realmListOf(),
          *         realmDictionaryOf()
          *     ),
-         *     realmDictionaryOf(
+         *     "dictionary" to realmDictionaryOf(
          *         "key1" to realmSetOf(),
          *         "key2" to realmListOf(),
          *         "key3" to realmDictionaryOf())

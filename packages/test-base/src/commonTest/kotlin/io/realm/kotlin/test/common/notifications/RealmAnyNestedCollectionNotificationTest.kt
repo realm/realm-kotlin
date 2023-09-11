@@ -22,10 +22,12 @@ import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmAny
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -79,13 +81,13 @@ class RealmAnyNestedCollectionNotificationTest {
             }
         }
 
-        assertIs<InitialObject<JsonStyleRealmObject>>(channel.receive())
+        assertIs<InitialObject<JsonStyleRealmObject>>(channel.receiveOrFail())
 
         realm.write {
             findLatest(o)!!.value!!.asList()[0]!!.asList()[1] = RealmAny.create(4)
         }
 
-        val objectUpdate = channel.receive()
+        val objectUpdate = channel.receiveOrFail()
         assertIs<UpdatedObject<JsonStyleRealmObject>>(objectUpdate)
         objectUpdate.run {
             assertEquals(1, changedFields.size)
@@ -93,6 +95,13 @@ class RealmAnyNestedCollectionNotificationTest {
             val nestedList = obj.value!!.asList().first()!!.asList()
             assertEquals(listOf(1, 4, 3), nestedList.map { it!!.asInt() })
         }
+
+        realm.write {
+            delete(findLatest(o)!!)
+        }
+
+        assertIs<DeletedObject<JsonStyleRealmObject>>(channel.receiveOrFail())
+
         listener.cancel()
         channel.close()
     }

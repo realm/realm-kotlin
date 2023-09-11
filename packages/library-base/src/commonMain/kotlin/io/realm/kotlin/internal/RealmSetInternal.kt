@@ -291,7 +291,6 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
     fun removeInternal(element: E): Boolean
     fun remove(element: E): Boolean {
         return removeInternal(element).also {
-            // FIXME Should this only be updated if above value is true?
             modCount++
         }
     }
