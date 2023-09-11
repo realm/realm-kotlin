@@ -572,7 +572,6 @@ class RealmAnyNestedCollectionTests {
 
     @Test
     fun dictionaryInRealmAny_put() = runBlocking {
-        val sample = Sample().apply { stringField = "SAMPLE" }
         // Import
         realm.write {
             copyToRealm(
@@ -582,6 +581,7 @@ class RealmAnyNestedCollectionTests {
                 }
             )
             query<JsonStyleRealmObject>().find().single().value!!.asDictionary().run {
+                val sample = copyToRealm(Sample().apply { stringField = "SAMPLE" })
                 put("keyInt", RealmAny.create(5))
                 put("keySet", realmAnySetOf(5, "Realm", sample))
                 put("keyList", realmAnyListOf(5, "Realm", sample))
