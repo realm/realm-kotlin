@@ -97,7 +97,7 @@ sourceSets {
 
 // Task to fetch core version from dependency.list from core submodule
 tasks.create("coreVersion", Exec::class.java) {
-    workingDir = File(listOf("..", "external", "core").joinToString(File.separator))
+    workingDir = project.file(listOf("..", "external", "core").joinToString(File.separator))
     commandLine = listOf("grep", "^VERSION", "dependencies.list")
     standardOutput = ByteArrayOutputStream()
     doLast {

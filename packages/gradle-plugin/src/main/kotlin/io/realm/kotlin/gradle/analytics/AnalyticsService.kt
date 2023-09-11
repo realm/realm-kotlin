@@ -113,27 +113,27 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
         val projectInfo = parameters
         val json = """
             {
-               "event": "$EVENT_NAME",
-               "properties": {
-                  "token": "$TOKEN",
-                  "distinct_id": "${projectInfo.userId.get()}",
-                  "builder_id: "${projectInfo.builderId.get()}",
-                  "Anonymized Bundle ID": "${projectInfo.appId.get()}",
-                  "Binding": "kotlin",
-                  "Language": "kotlin",
-                  "Host OS Type": "${projectInfo.hostOsType.get()}",
-                  "Host OS Version": "${projectInfo.hostOsVersion.get()}",
-                  "Host CPU Arch": "${projectInfo.hostCpuArch.get()}",
-                  "Target CPU Arch": "${targetInfo.targetCpuArch}",
-                  "Target OS Type": "${targetInfo.targetOsType}",
-                  "Target OS Minimum Version": "${targetInfo.targetOSMinVersion}",
-                  "Target OS Version": "${targetInfo.targetOSVersion}"
-                  "Realm Version": "${RealmCompilerSubplugin.version}",
-                  "Core Version": "${RealmCompilerSubplugin.coreVersion}",
-                  "Sync Enabled": ${if (projectInfo.usesSync.get()) "true" else "false"},
-               }
+                "event": "$EVENT_NAME",
+                    "properties": {
+                    "token": "$TOKEN",
+                    "distinct_id": "${projectInfo.userId.get()}",
+                    "builder_id: "${projectInfo.builderId.get()}",
+                    "Anonymized Bundle ID": "${projectInfo.appId.get()}",
+                    "Binding": "kotlin",
+                    "Language": "kotlin",
+                    "Host OS Type": "${projectInfo.hostOsType.get()}",
+                    "Host OS Version": "${projectInfo.hostOsVersion.get()}",
+                    "Host CPU Arch": "${projectInfo.hostCpuArch.get()}",
+                    "Target CPU Arch": "${targetInfo.targetCpuArch}",
+                    "Target OS Type": "${targetInfo.targetOsType}",
+                    "Target OS Minimum Version": "${targetInfo.targetOSMinVersion}",
+                    "Target OS Version": "${targetInfo.targetOSVersion}"
+                    "Realm Version": "${RealmCompilerSubplugin.version}",
+                    "Core Version": "${RealmCompilerSubplugin.coreVersion}",
+                    "Sync Enabled": ${if (projectInfo.usesSync.get()) "true" else "false"}
+                }
             }
-        """.trimIndent()
+        """.trimIndent().replace("\n", "").replace("    ", "")
         sendAnalytics(json, projectInfo.verbose.get())
     }
 
@@ -147,10 +147,15 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
             }
             Thread {
                 try {
-                    val response = networkQuery(json)
-                    debug("Analytics payload sent: $response")
+                    val url = URL(URL_PREFIX + base64Encode(json))
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.requestMethod = "GET"
+                    connection.connect()
+                    debug("Analytics payload sent")
                 } catch (e: InterruptedException) {
                     debug("Submitting analytics was interrupted.")
+                } catch (e: Throwable) {
+                    debug("Error submitting analytics: ${e.message}")
                 }
             }.apply {
                 isDaemon = true
@@ -158,18 +163,6 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
         } catch (e: Exception) {
             // Analytics failing for any reason should not crash the build
             debug("Submitting analytics payload failed: $e")
-        }
-    }
-
-    private fun networkQuery(jsonPayload: String): Int {
-        try {
-            val url = URL(URL_PREFIX + base64Encode(jsonPayload))
-            val connection = url.openConnection() as HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.connect()
-            return connection.responseCode
-        } catch (ignored: Throwable) {
-            return -1
         }
     }
 
