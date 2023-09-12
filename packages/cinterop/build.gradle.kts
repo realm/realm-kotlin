@@ -115,7 +115,7 @@ val nativeLibraryIncludesIosSimulatorArm64Release =
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = Versions.jvmTarget
+            kotlinOptions.jvmTarget = Versions.kotlinJvmTarget
         }
     }
     android("android") {
@@ -344,12 +344,10 @@ android {
             path = project.file("src/jvm/CMakeLists.txt")
         }
     }
-    // To avoid
-    // Failed to transform kotlinx-coroutines-core-jvm-1.5.0-native-mt.jar ...
-    // The dependency contains Java 8 bytecode. Please enable desugaring by adding the following to build.gradle
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = Versions.sourceCompatibilityVersion
+        targetCompatibility = Versions.targetCompatibilityVersion
     }
 }
 

@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Realm will now longer set the JVM bytecode to 1.8 when applying the Realm plugin. (Issue [#XXXX]())
 
 ### Fixed
 * None.
