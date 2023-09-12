@@ -32,7 +32,7 @@ allprojects {
     }
 
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = Versions.jvmTarget
+        kotlinOptions.jvmTarget = Versions.kotlinJvmTarget
     }
 }
 

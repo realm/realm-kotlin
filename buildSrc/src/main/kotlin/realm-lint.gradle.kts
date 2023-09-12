@@ -57,6 +57,7 @@ allprojects {
 
         description = "Check Kotlin code style."
         classpath = ktlint
+        jvmArgs = listOf("--add-opens=java.base/java.lang=ALL-UNNAMED")
         mainClass.set("com.pinterest.ktlint.Main")
         args = listOf(
             "src/**/*.kt",
@@ -74,6 +75,7 @@ allprojects {
 
         description = "Fix Kotlin code style deviations."
         classpath = ktlint
+        jvmArgs = listOf("--add-opens=java.base/java.lang=ALL-UNNAMED")
         mainClass.set("com.pinterest.ktlint.Main")
         args = listOf(
             "-F",

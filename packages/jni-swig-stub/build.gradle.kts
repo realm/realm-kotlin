@@ -32,11 +32,6 @@ java {
     }
 }
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
 tasks.create("realmWrapperJvm") {
     doLast {
         // If task is actually triggered (not up to date) then we should clean up the old stuff
@@ -70,8 +65,8 @@ realmPublish {
 java {
     withSourcesJar()
     withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = Versions.sourceCompatibilityVersion
+    targetCompatibility = Versions.targetCompatibilityVersion
 }
 
 publishing {
