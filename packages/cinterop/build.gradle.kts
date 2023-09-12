@@ -113,11 +113,7 @@ val nativeLibraryIncludesIosSimulatorArm64Release =
     includeBinaries(releaseLibs.map { "$absoluteCorePath/build-simulator-arm64/lib/$it" })
 
 kotlin {
-    jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = Versions.kotlinJvmTarget
-        }
-    }
+    jvm()
     android("android") {
         publishLibraryVariants("release")
     }
