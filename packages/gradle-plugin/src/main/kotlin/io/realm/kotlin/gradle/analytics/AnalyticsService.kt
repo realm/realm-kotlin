@@ -117,7 +117,7 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
                     "properties": {
                     "token": "$TOKEN",
                     "distinct_id": "${projectInfo.userId.get()}",
-                    "builder_id: "${projectInfo.builderId.get()}",
+                    "builder_id": "${projectInfo.builderId.get()}",
                     "Anonymized Bundle ID": "${projectInfo.appId.get()}",
                     "Binding": "kotlin",
                     "Language": "kotlin",
@@ -127,7 +127,7 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
                     "Target CPU Arch": "${targetInfo.targetCpuArch}",
                     "Target OS Type": "${targetInfo.targetOsType}",
                     "Target OS Minimum Version": "${targetInfo.targetOSMinVersion}",
-                    "Target OS Version": "${targetInfo.targetOSVersion}"
+                    "Target OS Version": "${targetInfo.targetOSVersion}",
                     "Realm Version": "${RealmCompilerSubplugin.version}",
                     "Core Version": "${RealmCompilerSubplugin.coreVersion}",
                     "Sync Enabled": ${if (projectInfo.usesSync.get()) "true" else "false"}
@@ -141,9 +141,9 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
     private fun sendAnalytics(json: String, verbose: Boolean) {
         try {
             if (!verbose) {
-                debug("Submitting analytics payload:\n$json")
+                debug("Submitting analytics payload: $json")
             } else {
-                warn("Submitting analytics payload:\n$json")
+                info("Submitting analytics payload: $json")
             }
             Thread {
                 try {
@@ -153,7 +153,7 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
                     connection.connect()
                     debug("Analytics payload sent")
                 } catch (e: InterruptedException) {
-                    debug("Submitting analytics was interrupted.")
+                    debug("Submitting analytics was interrupted")
                 } catch (e: Throwable) {
                     debug("Error submitting analytics: ${e.message}")
                 }
@@ -166,9 +166,8 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
         }
     }
 
-    private fun tag(message: String): String = "[REALM-ANALYTICS] $message"
-    private fun debug(message: String) = logger.debug(tag(message))
-    private fun warn(message: String) = logger.warn(tag(message))
+    private fun debug(message: String) = logger.debug(message)
+    private fun info(message: String) = logger.info(message)
 }
 
 // Common abstraction to collection various host identification identifiers through various exec
