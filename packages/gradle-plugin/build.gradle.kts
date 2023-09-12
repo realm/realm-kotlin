@@ -111,10 +111,10 @@ tasks.create("versionConstants") {
     inputs.property("version", project.version)
     outputs.dir(outputDir)
 
-    dependsOn(tasks.get("coreVersion"))
+    dependsOn(tasks["coreVersion"])
     doLast {
         val versionFile = file("$outputDir/io/realm/kotlin/gradle/version.kt")
-        val coreVersion = (tasks.get("coreVersion") as Exec).extra["output"]
+        val coreVersion = (tasks["coreVersion"] as Exec).extra["output"]
         versionFile.parentFile.mkdirs()
         versionFile.writeText(
             """
