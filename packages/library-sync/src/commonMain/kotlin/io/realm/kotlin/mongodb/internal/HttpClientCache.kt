@@ -35,6 +35,8 @@ internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
             }
         }
 
+        // We should allow redirects for all types, not just GET and HEAD
+        // See https://github.com/ktorio/ktor/issues/1793
         install(HttpRedirect) {
             checkHttpMethod = false
         }
