@@ -87,6 +87,7 @@ internal fun <T, R : BaseRealm> executeInSyncContext(realm: R, block: (context: 
     }
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 private fun <T : BaseRealm> initSyncContextIfNeeded(realm: T): SyncedRealmContext<T> {
     // INVARIANT: `syncContext` is only ever set once, and never to `null`.
     // This code works around the fact that `Mutex`'s can only be locked inside suspend functions on
