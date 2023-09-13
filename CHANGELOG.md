@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* [Sync] Manual client reset on Windows would not trigger correctly when run inside `onManualResetFallback`. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

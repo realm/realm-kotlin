@@ -288,9 +288,7 @@ kotlin {
 // - 'syncTestAppNamePrefix' is added a differentiator for all apps created by tests. This makes
 //   it possible for builds in parallel to run against the same test server. Default is `test-app`.
 fun getPropertyValue(propertyName: String): String? {
-    println("Finding $propertyName")
     if (project.hasProperty(propertyName)) {
-        println("Found ${project.property(propertyName)}")
         return project.property(propertyName) as String
     }
    return System.getenv(propertyName)

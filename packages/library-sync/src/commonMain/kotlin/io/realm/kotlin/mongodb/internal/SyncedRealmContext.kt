@@ -33,7 +33,7 @@ import io.realm.kotlin.mongodb.sync.SyncSession
  * class must do so through the [executeInSyncContext] closure.
  */
 @OptIn(ExperimentalStdlibApi::class)
-internal class SyncedRealmContext<T : BaseRealm>(realm: T): AutoCloseable {
+internal class SyncedRealmContext<T : BaseRealm>(realm: T) : AutoCloseable {
     // TODO For now this can only be a RealmImpl, which is required by the SyncSessionImpl
     //  When we introduce a public DynamicRealm, this can also be a `DynamicRealmImpl`
     //  And we probably need to modify the SyncSessionImpl to take either of these two.

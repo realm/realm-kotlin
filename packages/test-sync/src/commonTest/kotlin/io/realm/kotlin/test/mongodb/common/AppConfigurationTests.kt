@@ -19,6 +19,7 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
@@ -151,9 +152,13 @@ class AppConfigurationTests {
 
     @Test
     fun syncRootDirectory_writeProtectedDir() {
-        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-        val dir = PlatformUtils.createTempDir(readOnly = true)
-        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
+        // It looks like we cannot create a readOnly directory on Windows, so ignore this test
+        // there for now.
+        if (!isWindows()) {
+            val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
+            val dir = PlatformUtils.createTempDir(readOnly = true)
+            assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
+        }
     }
 
     // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
