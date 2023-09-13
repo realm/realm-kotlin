@@ -2,6 +2,7 @@ package io.realm.kotlin.mongodb.internal
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
@@ -34,7 +35,9 @@ internal fun createClient(timeoutMs: Long, customLogger: Logger?): HttpClient {
             }
         }
 
-        followRedirects = true
+        install(HttpRedirect) {
+            checkHttpMethod = false
+        }
     }
 }
 
