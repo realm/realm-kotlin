@@ -1204,6 +1204,7 @@ class SyncClientResetIntegrationTests {
         val channel = Channel<ClientResetEvents>(2)
         val config = builder.syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
+                @Suppress("TooGenericExceptionThrown")
                 throw RuntimeException("Trigger onManualResetFallback")
             }
 
@@ -1400,6 +1401,7 @@ class SyncClientResetIntegrationTests {
         val channel = Channel<ClientResetEvents>(2)
         val config = builder.syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
+                @Suppress("TooGenericExceptionThrown")
                 throw RuntimeException("Trigger onManualResetFallback")
             }
 
