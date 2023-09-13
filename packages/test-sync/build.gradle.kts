@@ -287,27 +287,35 @@ kotlin {
 // - 'syncTestUrl` defines the root URL for the App Services server. Default is `http://localhost:9090`
 // - 'syncTestAppNamePrefix' is added a differentiator for all apps created by tests. This makes
 //   it possible for builds in parallel to run against the same test server. Default is `test-app`.
+fun getPropertyValue(propertyName: String): String? {
+    println("Finding $propertyName")
+    if (project.hasProperty(propertyName)) {
+        println("Found ${project.property(propertyName)}")
+        return project.property(propertyName) as String
+    }
+   return System.getenv(propertyName)
+}
 buildkonfig {
     packageName = "io.realm.kotlin.test.mongodb"
     objectName = "SyncServerConfig"
     defaultConfigs {
-        buildConfigField(Type.STRING, "url", properties["syncTestUrl"]!! as String)
-        buildConfigField(Type.STRING, "appPrefix", properties["syncTestAppNamePrefix"]!! as String)
-        if (properties.containsKey("syncTestLoginEmail") && properties.containsKey("syncTestLoginPassword")) {
-            buildConfigField(Type.STRING, "email", properties["syncTestLoginEmail"]!! as String)
-            buildConfigField(Type.STRING, "password", properties["syncTestLoginPassword"]!! as String)
+        buildConfigField(Type.STRING, "url", getPropertyValue("syncTestUrl"))
+        buildConfigField(Type.STRING, "appPrefix", getPropertyValue("syncTestAppNamePrefix"))
+        if (project.hasProperty("syncTestLoginEmail") && project.hasProperty("syncTestLoginPassword")) {
+            buildConfigField(Type.STRING, "email", getPropertyValue("syncTestLoginEmail"))
+            buildConfigField(Type.STRING, "password", getPropertyValue("syncTestLoginPassword"))
         } else {
             buildConfigField(Type.STRING, "email", "")
             buildConfigField(Type.STRING, "password", "")
         }
-        if (properties.containsKey("syncTestLoginPublicApiKey") && properties.containsKey("syncTestLoginPrivateApiKey")) {
-            buildConfigField(Type.STRING, "publicApiKey", properties["syncTestLoginPublicApiKey"]!! as String)
-            buildConfigField(Type.STRING, "privateApiKey", properties["syncTestLoginPrivateApiKey"]!! as String)
+        if (project.hasProperty("syncTestLoginPublicApiKey") && project.hasProperty("syncTestLoginPrivateApiKey")) {
+            buildConfigField(Type.STRING, "publicApiKey", getPropertyValue("syncTestLoginPublicApiKey"))
+            buildConfigField(Type.STRING, "privateApiKey", getPropertyValue("syncTestLoginPrivateApiKey"))
         } else {
             buildConfigField(Type.STRING, "publicApiKey", "")
             buildConfigField(Type.STRING, "privateApiKey", "")
         }
-        buildConfigField(Type.STRING, "clusterName", properties["syncTestClusterName"] as String? ?: "")
+        buildConfigField(Type.STRING, "clusterName", getPropertyValue("syncTestClusterName") ?: "")
     }
 }
 

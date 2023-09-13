@@ -103,7 +103,8 @@ public class RealmImpl private constructor(
 
     // Injection point for synchronized Realms. This property should only be used to hold state
     // required by synchronized realms. See `SyncedRealmContext` for more details.
-    public var syncContext: AtomicRef<Any?> = atomic(null)
+    @OptIn(ExperimentalStdlibApi::class)
+    public var syncContext: AtomicRef<AutoCloseable?> = atomic(null)
 
     init {
         @Suppress("TooGenericExceptionCaught")
@@ -271,6 +272,8 @@ public class RealmImpl private constructor(
                 realmScope.cancel()
                 notifier.close()
                 versionTracker.close()
+                @OptIn(ExperimentalStdlibApi::class)
+                syncContext.value?.close()
                 // The local realmReference is pointing to a realm reference managed by either the
                 // version tracker, writer or notifier, so it is already closed
                 super.close()
