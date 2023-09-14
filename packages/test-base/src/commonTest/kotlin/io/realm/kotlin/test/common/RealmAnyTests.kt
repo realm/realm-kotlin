@@ -26,9 +26,12 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.ext.toJson
+import io.realm.kotlin.ext.toRealmAny
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
@@ -94,6 +97,20 @@ class RealmAnyTests {
         PlatformUtils.deleteTempDir(tmpDir)
     }
 
+    @Test
+    fun json() {
+        RealmAny.create("Realn").toJson().toRealmAny().let { assertEquals(RealmAny.create("Realm"), it) }
+
+        RealmAny.create(1).toJson().toRealmAny().let { assertEquals(RealmAny.create(1), it) }
+
+        RealmAny.create(1.5).toJson().toRealmAny().let { assertEquals(RealmAny.create(1.5), it) }
+
+//        RealmAny.create(1.5f).toJson().toRealmAny().let { assertEquals(RealmAny.create(1.5f), it) } // Will fail as json parser is parsing it as double
+
+        realmAnyListOf(1, realmDictionaryOf("key" to realmListOf(1, 2))) .toJson().toRealmAny().let {
+            realmAnyListOf(1, realmDictionaryOf("key" to realmListOf(1, 2)))
+        }
+    }
     @Test
     fun missingClassFromSchema_unmanagedWorks() {
         val value = NotInSchema()

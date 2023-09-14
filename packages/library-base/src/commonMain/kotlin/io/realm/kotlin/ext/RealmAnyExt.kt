@@ -1,11 +1,36 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.internal.RealmAnyJsonSerializer
+import io.realm.kotlin.internal.defaultJson
+import io.realm.kotlin.internal.toRealmAny
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
+import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.modules.SerializersModule
 import org.mongodb.kbson.Decimal128
 import org.mongodb.kbson.ObjectId
 
@@ -88,3 +113,8 @@ public fun realmAnyListOf(vararg values: Any?): RealmAny =
  */
 public fun realmAnyDictionaryOf(vararg values: Pair<String, Any?>): RealmAny =
     RealmAny.create(values.map { (key, value) -> key to realmAnyOf(value) }.toRealmDictionary())
+
+
+public fun String.toRealmAny(json: Json = defaultJson): RealmAny? = json.parseToJsonElement(this).toRealmAny()
+public fun RealmAny.toJson(json: Json = defaultJson): String = json.encodeToString(
+    RealmAnyJsonSerializer, this)

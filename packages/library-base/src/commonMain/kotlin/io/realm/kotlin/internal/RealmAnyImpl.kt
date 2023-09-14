@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.ext.toRealmDictionary
+import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
@@ -24,6 +26,21 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.doubleOrNull
+import kotlinx.serialization.json.floatOrNull
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.modules.SerializersModule
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KClass
@@ -169,4 +186,71 @@ internal class RealmAnyImpl<T : Any> constructor(
     }
 
     override fun toString(): String = "RealmAny{type=$type, value=${getValue(type)}}"
+}
+
+internal fun realmAnyToJson(realmAny: RealmAny?): JsonElement {
+    val jsonElement = when(realmAny?.type) {
+        RealmAny.Type.INT -> JsonPrimitive(realmAny.asLong())
+        RealmAny.Type.BOOL -> JsonPrimitive(realmAny.asBoolean())
+        RealmAny.Type.STRING -> JsonPrimitive(realmAny.asString())
+        RealmAny.Type.BINARY -> TODO()
+        RealmAny.Type.TIMESTAMP -> TODO()
+        RealmAny.Type.FLOAT -> JsonPrimitive(realmAny.asFloat())
+        RealmAny.Type.DOUBLE -> JsonPrimitive(realmAny.asDouble())
+        RealmAny.Type.DECIMAL128 -> TODO()
+        RealmAny.Type.OBJECT_ID -> TODO()
+        RealmAny.Type.UUID -> TODO()
+        RealmAny.Type.OBJECT -> TODO()
+        RealmAny.Type.SET -> JsonArray(realmAny.asSet().map { realmAnyToJson(it) })
+        RealmAny.Type.LIST -> JsonArray(realmAny.asList().map { realmAnyToJson(it) })
+        RealmAny.Type.DICTIONARY -> {
+            JsonObject(realmAny.asDictionary().mapValues { (k, v) -> realmAnyToJson(v) })
+        }
+        null -> JsonNull
+    }
+    return jsonElement
+}
+
+internal fun JsonElement.toRealmAny() : RealmAny? = when (this) {
+    is JsonArray -> { RealmAny.create(this.map { it.toRealmAny() }.toRealmList()) }
+    is JsonObject -> { RealmAny.create(this.map { (key, value) -> key to value.toRealmAny() }.toRealmDictionary()) }
+    is JsonPrimitive -> {
+        if (this.isString) {
+            RealmAny.create(this.content)
+        } else
+            this.longOrNull?.let {
+                RealmAny.create(it)
+            } ?:
+            this.doubleOrNull?.let {
+                RealmAny.create(it)
+            } ?:
+            this.floatOrNull?.let {
+                RealmAny.create(it)
+            } ?:
+            this.booleanOrNull?.let {
+                RealmAny.create(it)
+            } ?:
+            TODO("Cannot parse $this into a RealmAny")
+    }
+    JsonNull -> null
+}
+
+internal val defaultJson = Json {
+    serializersModule = SerializersModule {
+        contextual(RealmAny::class) { _ -> RealmAnyJsonSerializer }
+    }
+}
+
+public object RealmAnyJsonSerializer: KSerializer<RealmAny?> {
+    private val serializer = JsonElement.serializer()
+    override val descriptor: SerialDescriptor = serializer.descriptor
+    override fun deserialize(decoder: Decoder): RealmAny? {
+        return decoder.decodeSerializableValue(serializer).toRealmAny()
+    }
+    override fun serialize(encoder: Encoder, value: RealmAny?) {
+        encoder.encodeSerializableValue(
+            serializer = serializer,
+            value = realmAnyToJson(value)
+        )
+    }
 }
