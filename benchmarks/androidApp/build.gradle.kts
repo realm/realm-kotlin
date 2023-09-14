@@ -8,12 +8,12 @@ android {
     compileSdk = Versions.Android.compileSdkVersion
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = Versions.sourceCompatibilityVersion
+        targetCompatibility = Versions.targetCompatibilityVersion
     }
 
     kotlinOptions {
-        jvmTarget = "1.8"
+        jvmTarget = Versions.kotlinJvmTarget
     }
 
     defaultConfig {

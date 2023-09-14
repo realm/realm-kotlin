@@ -145,7 +145,7 @@ class FlexibleSyncIntegrationTests {
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(240.seconds))
+            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
             realm.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
