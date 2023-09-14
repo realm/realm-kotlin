@@ -29,8 +29,8 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
+import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.LogLevel
@@ -407,7 +407,7 @@ class SyncConfigTests {
 
     private fun verifyName(builder: SyncConfiguration.Builder, expectedFileName: String) {
         val config = builder.build()
-        val suffix = "${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${config.user.app.configuration.appId}${PATH_SEPARATOR}${config.user.id}${PATH_SEPARATOR}$expectedFileName"
+        val suffix = pathOf("", "mongodb-realm", config.user.app.configuration.appId, config.user.id, expectedFileName)
         assertTrue(config.path.contains(suffix), "${config.path} failed.")
         assertEquals(expectedFileName, config.name)
     }
@@ -1261,7 +1261,7 @@ class SyncConfigTests {
         val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
             .name(fileName)
             .build()
-        val suffix = "${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}$fileName"
+        val suffix = pathOf("", "mongodb-realm", user.app.configuration.appId, user.id, fileName)
         assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
         assertEquals(fileName, config.name, "${config.name} failed.")
     }
