@@ -109,9 +109,9 @@ class VersionTrackingTests {
         // Until we actually query the object
         realm.query<Sample>().find()
         realm.activeVersions().run {
-            assertEquals(1, allTracked.size, toString())
+            assertEquals(2, allTracked.size, toString())
             assertNotNull(writer, toString())
-            assertEquals(0, writer?.active?.size, toString())
+            assertEquals(1, writer?.active?.size, toString())
         }
     }
 

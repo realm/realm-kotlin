@@ -99,7 +99,7 @@ internal abstract class LiveRealm(
     internal fun gcTrackedSnapshot(): FrozenRealmReference {
         return snapshotLock.withLock {
             _snapshot.value.also { snapshot ->
-                if (_closeSnapshotWhenAdvancing && !snapshot.isClosed()) {
+                if (_closeSnapshotWhenAdvancing) {
                     log.trace("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
                     _closeSnapshotWhenAdvancing = false
                 }

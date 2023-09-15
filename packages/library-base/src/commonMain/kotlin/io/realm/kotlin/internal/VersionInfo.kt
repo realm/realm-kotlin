@@ -22,17 +22,7 @@ import io.realm.kotlin.VersionId
  * Version meta data for an overall [Realm]-instance with [VersionData] for the user-facing [Realm]
  * and the underlying [SuspendableNotifier]'s and [SuspendableWriter]'s live realms.
  */
-public data class VersionInfo(
-    val initialVersion: VersionId?,
-    val notifier: VersionData?,
-    val writer: VersionData?,
-) {
-    val all: Set<VersionId> = (
-        setOf(notifier, writer).mapNotNull { it?.versions }
-            .flatten() + listOfNotNull(initialVersion)
-        ).toSet()
-    val allTracked: Set<VersionId> = (
-        setOf(notifier, writer).mapNotNull { it?.active }
-            .flatten() + listOfNotNull(initialVersion)
-        ).toSet()
+public data class VersionInfo(val main: VersionData?, val notifier: VersionData?, val writer: VersionData?) {
+    val all: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.versions }.flatten().toSet()
+    val allTracked: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.active }.flatten().toSet()
 }
