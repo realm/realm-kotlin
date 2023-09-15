@@ -67,7 +67,7 @@ internal abstract class LiveRealm(
      * [gcTrackedSnapshot] then the old reference will be closed, allowing Core to release the
      * underlying resources of the no-longer referenced version.
      */
-    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner))
+    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner).also { onChange() })
     /**
      * Flag used to control whether to close or track the [_snapshot] when advancing to a newer
      * version.

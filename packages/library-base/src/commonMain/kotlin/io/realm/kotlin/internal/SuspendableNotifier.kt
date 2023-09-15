@@ -76,7 +76,7 @@ internal class SuspendableNotifier(
         }
     }
 
-    override val realmInitializer = lazy<LiveRealm> { NotifierRealm().also { onChange() } }
+    override val realmInitializer = lazy<LiveRealm> { NotifierRealm() }
     // Must only be accessed from the dispatchers thread
     override val realm: LiveRealm by realmInitializer
 

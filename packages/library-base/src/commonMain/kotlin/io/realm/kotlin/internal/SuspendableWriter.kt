@@ -82,7 +82,7 @@ internal class SuspendableWriter(
     }
 
     override val realmInitializer: Lazy<WriterRealm> = lazy {
-        WriterRealm().also { onChange() }
+        WriterRealm()
     }
 
     // Must only be accessed from the dispatchers thread
