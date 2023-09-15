@@ -5,7 +5,7 @@
 
 ### Fixed
 * `Realm.getNumberOfActiveVersions` now returns the actual number of active versions. (Core issue [#6960](https://github.com/realm/realm-core/pull/6960))
-* Removed pinning the initial realm version after opening a Realm. (Issue [#1519](https://github.com/realm/realm-kotlin/pull/1519))
+* Removed pin on the initial realm version after opening a Realm. (Issue [#1519](https://github.com/realm/realm-kotlin/pull/1519))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

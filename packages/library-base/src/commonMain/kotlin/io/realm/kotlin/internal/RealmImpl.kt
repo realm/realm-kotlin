@@ -84,9 +84,8 @@ public class RealmImpl private constructor(
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    // Holds the initial realm reference until the notifier or writer can provide a newer snapshot.
+    // Holds the initial realm reference until the notifier or writer can provide with a newer snapshot.
     private var _initialRealmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
-    private var _closeInitialReferenceWhenAdvancing: Boolean = true
     private val realmReferenceLock = SynchronizableObject()
 
     /**
@@ -225,9 +224,9 @@ public class RealmImpl private constructor(
     @Suppress("ComplexCondition", "ReturnCount")
     public fun realmReference(): FrozenRealmReference {
         realmReferenceLock.withLock {
-            val initialRealmReference: FrozenRealmReference? = _initialRealmReference.value
-            val notifierVersion: VersionId? = notifier.version
-            val writerVersion: VersionId? = writer.version
+            val initialRealmReference = _initialRealmReference.value
+            val notifierVersion = notifier.version
+            val writerVersion = writer.version
 
             if (initialRealmReference != null) {
                 if (initialRealmReference.isClosed()) return initialRealmReference
@@ -240,20 +239,11 @@ public class RealmImpl private constructor(
                 if (
                     (notifierVersion == null || notifierVersion <= initialRealmVersion) &&
                     (writerVersion == null || writerVersion <= initialRealmVersion)
-                ) {
-                    // The initial reference is now GC managed.
-                    _closeInitialReferenceWhenAdvancing = false
-                    runBlocking {
-                        // Let the notifier track and release the initial version.
-                        notifier.trackReference(initialRealmReference)
-                    }
-                    return initialRealmReference
-                }
+                ) return initialRealmReference
 
-                // There is a newer snapshot available. Close the reference if not GC managed.
-                if (_closeInitialReferenceWhenAdvancing) {
-                    initialRealmReference.close()
-                }
+                // There is a newer snapshot available. Close the initial one manually, from now on
+                // we rely on the notifier and writer snapshots.
+                initialRealmReference.close()
                 _initialRealmReference.value = null
             }
 
@@ -280,7 +270,7 @@ public class RealmImpl private constructor(
         runBlocking {
             realmPointerMutex.withLock {
                 _initialRealmReference.value?.let { reference ->
-                    if (!reference.isClosed() && _closeInitialReferenceWhenAdvancing) reference.close()
+                    if (!reference.isClosed()) reference.close()
                 }
                 writer.close()
                 realmScope.cancel()

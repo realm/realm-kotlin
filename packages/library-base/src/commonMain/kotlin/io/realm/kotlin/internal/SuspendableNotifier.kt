@@ -175,10 +175,4 @@ internal class SuspendableNotifier(
             }
         }
     }
-
-    suspend fun trackReference(frozenReference: FrozenRealmReference) {
-        withContext(dispatcher) {
-            realm.versionTracker.trackAndCloseExpiredReferences(frozenReference)
-        }
-    }
 }
