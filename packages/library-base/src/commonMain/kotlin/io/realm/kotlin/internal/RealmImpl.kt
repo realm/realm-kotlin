@@ -86,7 +86,7 @@ public class RealmImpl private constructor(
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     // Initial realm reference that would be used until the notifier or writer are available.
-    private var _realmReference: FrozenRealmReference? = null
+    private var initialRealmReference: FrozenRealmReference? = null
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -134,7 +134,7 @@ public class RealmImpl private constructor(
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = assetFileCopied || fileCreated
                 versionTracker.trackReference(frozenReference)
-                _realmReference = frozenReference
+                initialRealmReference = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }
 
@@ -232,14 +232,16 @@ public class RealmImpl private constructor(
      * Removes the local reference to start relying on the notifier - writer for snapshots.
      */
     private fun removeInitialRealmReference() {
-        _realmReference = null
+        initialRealmReference = null
         versionTracker.closeExpiredReferences()
     }
 
     public fun realmReference(): FrozenRealmReference {
-        return _realmReference
-            ?: // Find whether the notifier or writer has the latest snapshot.
-            run {
+        // We don't require to return the latest snapshot to the user but the closest the best.
+        // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
+        return initialRealmReference.let { localReference ->
+            localReference ?: run {
+                // Find whether the notifier or writer has the latest snapshot.
                 val notifierVersion: VersionId? = notifier.version
                 val writerVersion: VersionId? = writer.version
                 // Find whether the notifier or writer has the latest snapshot.
@@ -251,10 +253,16 @@ public class RealmImpl private constructor(
                 // Find whether the notifier or writer has the latest snapshot.
                 newest.snapshot
             } ?: sdkError("Accessing realmReference before realm has been opened")
+        }
     }
 
     public fun activeVersions(): VersionInfo {
-        val mainVersions: VersionData? = _realmReference?.let { VersionData(it.uncheckedVersion(), versionTracker.versions()) }
+        val mainVersions: VersionData? = initialRealmReference?.let {
+            VersionData(
+                it.uncheckedVersion(),
+                versionTracker.versions()
+            )
+        }
         return VersionInfo(mainVersions, notifier.versions(), writer.versions())
     }
 
