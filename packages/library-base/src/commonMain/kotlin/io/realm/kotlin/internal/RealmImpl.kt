@@ -73,19 +73,19 @@ public class RealmImpl private constructor(
     private val notifier = SuspendableNotifier(
         owner = this,
         scheduler = notificationScheduler,
-        onInitialized = ::removeInitialRealmReference
+        onChange = ::removeInitialRealmReference
     )
     private val writer = SuspendableWriter(
         owner = this,
         scheduler = writeScheduler,
-        onInitialized = ::removeInitialRealmReference
+        onChange = ::removeInitialRealmReference
     )
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
     // closed.
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
+    // Initial realm reference that would be used until the notifier or writer are available.
     private var _realmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
 
     /**

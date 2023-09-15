@@ -43,7 +43,8 @@ import kotlinx.coroutines.withContext
 internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
-    private val scheduler: LiveRealmContext
+    private val scheduler: LiveRealmContext,
+    private val onChange: () -> Unit = { },
 ) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
@@ -117,6 +118,7 @@ internal abstract class LiveRealm(
     // Always executed on the live realm's backing thread
     internal open fun onRealmChanged() {
         updateSnapshot()
+        onChange()
     }
     // Always executed on the live realm's backing thread
     internal fun updateSnapshot() {
