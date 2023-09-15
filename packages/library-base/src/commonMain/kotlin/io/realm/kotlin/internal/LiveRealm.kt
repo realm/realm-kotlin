@@ -129,14 +129,14 @@ internal abstract class LiveRealm(
                 log.trace("${this@LiveRealm} CLOSE-UNTRACKED $version")
                 _snapshot.value.close()
             } else {
-                // TODO Split into track and clean up as we don't need to hold headLock while
-                //  cleaning up as version tracker is only accessed from the same thread
-                versionTracker.trackAndCloseExpiredReferences(_snapshot.value)
+                versionTracker.trackReference(_snapshot.value)
             }
             _snapshot.value = realmReference.snapshot(owner)
             log.trace("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
             _closeSnapshotWhenAdvancing = true
         }
+
+        versionTracker.closeExpiredReferences()
     }
 
     protected open fun onSchemaChanged(schema: RealmSchemaPointer) {
@@ -156,7 +156,7 @@ internal abstract class LiveRealm(
         // Close actual live reference. From this point off the snapshot will not be updated.
         realmReference.close()
         // Close current reference
-        _snapshot.value?.let {
+        _snapshot.value.let {
             log.trace("$this CLOSE-ACTIVE ${it.version()}")
             it.close()
         }

@@ -131,7 +131,7 @@ public class RealmImpl private constructor(
                 }
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = assetFileCopied || fileCreated
-                versionTracker.trackAndCloseExpiredReferences(frozenReference)
+                versionTracker.trackReference(frozenReference)
                 _realmReference.value = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }

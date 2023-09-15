@@ -17,12 +17,15 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
+import io.realm.kotlin.internal.interop.RealmT
 import io.realm.kotlin.internal.platform.WeakReference
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
+internal typealias IntermediateReference = Pair<NativePointer<out RealmT>, WeakReference<RealmReference>>
 /**
  * Bookkeeping of intermediate versions that needs to be closed when no longer referenced or when
  * explicitly closing a realm.
@@ -32,24 +35,31 @@ import kotlinx.atomicfu.atomic
 internal class VersionTracker(private val owner: BaseRealmImpl, private val log: ContextLogger) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
-    private val intermediateReferences: AtomicRef<Set<Pair<RealmPointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())
+    private val intermediateReferences: AtomicRef<MutableSet<IntermediateReference>> = atomic(mutableSetOf())
 
-    fun trackAndCloseExpiredReferences(realmReference: FrozenRealmReference? = null) {
-        val references = mutableSetOf<Pair<RealmPointer, WeakReference<RealmReference>>>()
-        realmReference?.let {
+    fun trackReference(realmReference: FrozenRealmReference) {
+        val references: MutableSet<IntermediateReference> = intermediateReferences.value
+
+        realmReference.let {
             log.trace("$owner TRACK-VERSION ${realmReference.version()}")
             references.add(Pair(realmReference.dbPointer, WeakReference(it)))
         }
-        intermediateReferences.value.forEach { entry ->
-            val (pointer, ref) = entry
-            if (ref.get() == null) {
-                log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
-                RealmInterop.realm_close(pointer)
-            } else {
-                references.add(entry)
+    }
+
+    fun closeExpiredReferences() {
+        val references: MutableSet<IntermediateReference> = intermediateReferences.value
+
+        with(references.iterator()) {
+            while (hasNext()) {
+                val (pointer, ref) = next()
+
+                if (ref.get() == null) {
+                    log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
+                    RealmInterop.realm_close(pointer)
+                    remove()
+                }
             }
         }
-        intermediateReferences.value = references
     }
 
     fun versions(): Set<VersionId> =
