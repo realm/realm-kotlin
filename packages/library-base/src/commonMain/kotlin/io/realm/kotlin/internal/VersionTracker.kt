@@ -19,7 +19,6 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.interop.RealmT
 import io.realm.kotlin.internal.platform.WeakReference
 import kotlinx.atomicfu.AtomicRef

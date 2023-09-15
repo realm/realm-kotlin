@@ -86,7 +86,7 @@ public class RealmImpl private constructor(
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     // Initial realm reference that would be used until the notifier or writer are available.
-    private var _realmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
+    private var _realmReference: FrozenRealmReference? = null
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -134,7 +134,7 @@ public class RealmImpl private constructor(
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = assetFileCopied || fileCreated
                 versionTracker.trackReference(frozenReference)
-                _realmReference.value = frozenReference
+                _realmReference = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }
 
@@ -232,12 +232,12 @@ public class RealmImpl private constructor(
      * Removes the local reference to start relying on the notifier - writer for snapshots.
      */
     private fun removeInitialRealmReference() {
-        _realmReference.value = null
+        _realmReference = null
         versionTracker.closeExpiredReferences()
     }
 
     public fun realmReference(): FrozenRealmReference {
-        return _realmReference.value
+        return _realmReference
             ?: // Find whether the notifier or writer has the latest snapshot.
             run {
                 val notifierVersion: VersionId? = notifier.version
@@ -254,7 +254,7 @@ public class RealmImpl private constructor(
     }
 
     public fun activeVersions(): VersionInfo {
-        val mainVersions: VersionData? = _realmReference.value?.let { VersionData(it.uncheckedVersion(), versionTracker.versions()) }
+        val mainVersions: VersionData? = _realmReference?.let { VersionData(it.uncheckedVersion(), versionTracker.versions()) }
         return VersionInfo(mainVersions, notifier.versions(), writer.versions())
     }
 
