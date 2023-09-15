@@ -49,6 +49,7 @@ import kotlin.reflect.KClass
 internal class SuspendableWriter(
     private val owner: RealmImpl,
     private val scheduler: LiveRealmContext,
+    private val onInitialized: () -> Unit = {},
 ) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
@@ -80,7 +81,7 @@ internal class SuspendableWriter(
     }
 
     override val realmInitializer: Lazy<WriterRealm> = lazy {
-        WriterRealm()
+        WriterRealm().also { onInitialized() }
     }
 
     // Must only be accessed from the dispatchers thread
@@ -147,6 +148,8 @@ internal class SuspendableWriter(
                 freezeWriteReturnValue(newReference, result)
             } else {
                 result
+            }.also {
+                onInitialized()
             }
         }
     }

@@ -19,6 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
+import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -72,10 +73,12 @@ public class RealmImpl private constructor(
     private val notifier = SuspendableNotifier(
         owner = this,
         scheduler = notificationScheduler,
+        onInitialized = ::removeInitialRealmReference
     )
     private val writer = SuspendableWriter(
         owner = this,
         scheduler = writeScheduler,
+        onInitialized = ::removeInitialRealmReference
     )
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
@@ -84,7 +87,6 @@ public class RealmImpl private constructor(
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     private var _realmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
-    private val realmReferenceLock = SynchronizableObject()
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -226,34 +228,29 @@ public class RealmImpl private constructor(
         return notifier.registerObserver(t)
     }
 
+    /**
+     * Removes the local reference to start relying on the notifier - writer for snapshots.
+     */
+    private fun removeInitialRealmReference() {
+        _realmReference.value = null
+        versionTracker.closeExpiredReferences()
+    }
+
     public fun realmReference(): FrozenRealmReference {
-        realmReferenceLock.withLock {
-            val value1 = _realmReference.value
-            // We don't consider advancing the version if is is already closed.
-            value1?.let {
-                if (it.isClosed()) return it
-            }
-
-            // Consider versions of current realm, notifier and writer to identify if we should
-            // advance the user facing realms version to a newer frozen snapshot.
-            val version = value1?.version()
-            val notifierSnapshot = notifier.version
-            val writerSnapshot = writer.version
-
-            var newest: LiveRealmHolder<LiveRealm>? = null
-            if (notifierSnapshot != null && version != null && notifierSnapshot > version) {
-                newest = notifier
-            }
-            @Suppress("ComplexCondition")
-            if (writerSnapshot != null && version != null && ((writerSnapshot > version) || (notifierSnapshot != null && writerSnapshot > notifierSnapshot))) {
-                newest = writer
-            }
-            if (newest != null) {
-                _realmReference.value = newest.snapshot
-                log.debug("$this ADVANCING $version -> ${_realmReference.value?.version()}")
-            }
-        }
-        return _realmReference.value ?: sdkError("Accessing realmReference before realm has been opened")
+        return _realmReference.value
+            ?: // Find whether the notifier or writer has the latest snapshot.
+            run {
+                val notifierVersion: VersionId? = notifier.version
+                val writerVersion: VersionId? = writer.version
+                // Find whether the notifier or writer has the latest snapshot.
+                val newest: LiveRealmHolder<LiveRealm> =
+                    if (writerVersion != null && (notifierVersion == null || writerVersion > notifierVersion))
+                        writer
+                    else
+                        notifier
+                // Find whether the notifier or writer has the latest snapshot.
+                newest.snapshot
+            } ?: sdkError("Accessing realmReference before realm has been opened")
     }
 
     public fun activeVersions(): VersionInfo {

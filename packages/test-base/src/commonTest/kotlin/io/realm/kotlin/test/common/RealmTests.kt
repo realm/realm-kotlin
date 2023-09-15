@@ -90,6 +90,7 @@ class RealmTests {
     @Test
     fun initialVersion() {
         assertEquals(INITIAL_VERSION, realm.version())
+        realm.writeBlocking {  }
     }
 
     @Test

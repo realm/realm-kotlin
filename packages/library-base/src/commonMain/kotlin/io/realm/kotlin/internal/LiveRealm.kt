@@ -43,7 +43,7 @@ import kotlinx.coroutines.withContext
 internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
-    private val scheduler: LiveRealmContext,
+    private val scheduler: LiveRealmContext
 ) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
@@ -99,7 +99,7 @@ internal abstract class LiveRealm(
     internal fun gcTrackedSnapshot(): FrozenRealmReference {
         return snapshotLock.withLock {
             _snapshot.value.also { snapshot ->
-                if (_closeSnapshotWhenAdvancing) {
+                if (_closeSnapshotWhenAdvancing && !snapshot.isClosed()) {
                     log.trace("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
                     _closeSnapshotWhenAdvancing = false
                 }
