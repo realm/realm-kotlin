@@ -17,6 +17,7 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
+import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
@@ -225,6 +226,6 @@ class FlexibleSyncConfigurationTests {
         val config: SyncConfiguration = SyncConfiguration.Builder(user, setOf())
             .name("custom.realm")
             .build()
-        assertTrue(config.path.endsWith("${app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}custom.realm"), "Path is: ${config.path}")
+        assertTrue(config.path.endsWith(pathOf(app.configuration.appId, user.id, "custom.realm")), "Path is: ${config.path}")
     }
 }
