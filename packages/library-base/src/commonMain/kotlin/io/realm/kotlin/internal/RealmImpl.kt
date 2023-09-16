@@ -261,8 +261,6 @@ public class RealmImpl private constructor(
                         notifier
                 println("NEWEST=$newest")
                 println("NEWEST SNAPSHOT=${newest.snapshot}")
-
-
                 // Find whether the notifier or writer has the latest snapshot.
                 newest.snapshot
             } ?: sdkError("Accessing realmReference before realm has been opened")
