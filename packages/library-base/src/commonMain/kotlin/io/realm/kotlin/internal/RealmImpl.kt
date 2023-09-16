@@ -87,7 +87,7 @@ public class RealmImpl private constructor(
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     // Initial realm reference that would be used until the notifier or writer are available.
-    private var initialRealmReference: FrozenRealmReference? = null
+    private var initialRealmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
     // Controls whether we have to clean any tracked references.
     private val _skipClosingReferences: AtomicBoolean = atomic(false)
 
@@ -137,7 +137,7 @@ public class RealmImpl private constructor(
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = assetFileCopied || fileCreated
                 versionTracker.trackReference(frozenReference)
-                initialRealmReference = frozenReference
+                initialRealmReference.value = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }
 
@@ -235,10 +235,10 @@ public class RealmImpl private constructor(
      * Removes the local reference to start relying on the notifier - writer for snapshots.
      */
     private fun removeInitialRealmReference() {
-        initialRealmReference = null
         // Ensure only a single thread can work on the version tracker.
         val skipClosingReferences = _skipClosingReferences.getAndSet(true)
         if (!skipClosingReferences) {
+            initialRealmReference.value = null
             val emptyTracker = versionTracker.closeExpiredReferences()
             _skipClosingReferences.value = emptyTracker
         }
@@ -247,7 +247,8 @@ public class RealmImpl private constructor(
     public fun realmReference(): FrozenRealmReference {
         // We don't require to return the latest snapshot to the user but the closest the best.
         // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
-        return initialRealmReference.let { localReference ->
+        return initialRealmReference.value.let { localReference ->
+            println("INITIAL_REF NULL=${localReference == null}")
             localReference ?: run {
                 // Find whether the notifier or writer has the latest snapshot.
                 val notifierVersion: VersionId? = notifier.version
@@ -258,6 +259,10 @@ public class RealmImpl private constructor(
                         writer
                     else
                         notifier
+                println("NEWEST=$newest")
+                println("NEWEST SNAPSHOT=${newest.snapshot}")
+
+
                 // Find whether the notifier or writer has the latest snapshot.
                 newest.snapshot
             } ?: sdkError("Accessing realmReference before realm has been opened")
@@ -265,7 +270,7 @@ public class RealmImpl private constructor(
     }
 
     public fun activeVersions(): VersionInfo {
-        val mainVersions: VersionData? = initialRealmReference?.let {
+        val mainVersions: VersionData? = initialRealmReference.value?.let {
             VersionData(
                 it.uncheckedVersion(),
                 versionTracker.versions()
