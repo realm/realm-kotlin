@@ -37,6 +37,7 @@ import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.TypedRealmObject
+import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -73,12 +74,12 @@ public class RealmImpl private constructor(
     private val notifier = SuspendableNotifier(
         owner = this,
         scheduler = notificationScheduler,
-        onChange = ::removeInitialRealmReference
+        onSnapshotAvailable = ::removeInitialRealmReference
     )
     private val writer = SuspendableWriter(
         owner = this,
         scheduler = writeScheduler,
-        onChange = ::removeInitialRealmReference
+        onSnapshotAvailable = ::removeInitialRealmReference
     )
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
@@ -87,6 +88,8 @@ public class RealmImpl private constructor(
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     // Initial realm reference that would be used until the notifier or writer are available.
     private var initialRealmReference: FrozenRealmReference? = null
+    // Controls whether we have to clean any tracked references.
+    private val _skipClosingReferences: AtomicBoolean = atomic(false)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -233,7 +236,12 @@ public class RealmImpl private constructor(
      */
     private fun removeInitialRealmReference() {
         initialRealmReference = null
-        versionTracker.closeExpiredReferences()
+        // Ensure only a single thread can work on the version tracker.
+        val skipClosingReferences = _skipClosingReferences.getAndSet(true)
+        if (!skipClosingReferences) {
+            val emptyTracker = versionTracker.closeExpiredReferences()
+            _skipClosingReferences.value = emptyTracker
+        }
     }
 
     public fun realmReference(): FrozenRealmReference {

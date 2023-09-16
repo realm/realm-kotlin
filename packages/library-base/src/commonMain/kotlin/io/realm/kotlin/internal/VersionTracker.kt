@@ -45,7 +45,12 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
         }
     }
 
-    fun closeExpiredReferences() {
+    /**
+     * Closes any realm reference that has been reclaimed by the GC.
+     * 
+     * @return whether it has or not any reference left to clean.
+     */
+    fun closeExpiredReferences(): Boolean {
         val references: MutableSet<IntermediateReference> = intermediateReferences.value
 
         with(references.iterator()) {
@@ -59,6 +64,8 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
                 }
             }
         }
+
+        return references.isEmpty()
     }
 
     fun versions(): Set<VersionId> =

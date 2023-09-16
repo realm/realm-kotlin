@@ -44,7 +44,7 @@ internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
     private val scheduler: LiveRealmContext,
-    private val onChange: () -> Unit = { },
+    private val onSnapshotAvailable: () -> Unit = { },
 ) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
@@ -67,7 +67,7 @@ internal abstract class LiveRealm(
      * [gcTrackedSnapshot] then the old reference will be closed, allowing Core to release the
      * underlying resources of the no-longer referenced version.
      */
-    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner).also { onChange() })
+    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner))
     /**
      * Flag used to control whether to close or track the [_snapshot] when advancing to a newer
      * version.
@@ -113,12 +113,13 @@ internal abstract class LiveRealm(
         val callback = WeakLiveRealmCallback(this)
         realmChangeRegistration = NotificationToken(RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, callback::onRealmChanged))
         schemaChangeRegistration = NotificationToken(RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, callback::onSchemaChanged))
+        onSnapshotAvailable()
     }
 
     // Always executed on the live realm's backing thread
     internal open fun onRealmChanged() {
         updateSnapshot()
-        onChange()
+        onSnapshotAvailable()
     }
     // Always executed on the live realm's backing thread
     internal fun updateSnapshot() {

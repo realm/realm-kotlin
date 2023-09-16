@@ -49,7 +49,7 @@ import kotlin.reflect.KClass
 internal class SuspendableWriter(
     private val owner: RealmImpl,
     private val scheduler: LiveRealmContext,
-    private val onChange: () -> Unit = {},
+    private val onSnapshotAvailable: () -> Unit = {},
 ) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
@@ -61,7 +61,7 @@ internal class SuspendableWriter(
             owner = owner,
             configuration = owner.configuration,
             scheduler = scheduler,
-            onChange = onChange,
+            onSnapshotAvailable = onSnapshotAvailable,
         ),
         InternalMutableRealm,
         InternalTypedRealm,

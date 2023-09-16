@@ -37,7 +37,7 @@ import kotlinx.coroutines.withContext
 internal class SuspendableNotifier(
     private val owner: RealmImpl,
     private val scheduler: LiveRealmContext,
-    private val onChange: () -> Unit,
+    private val onSnapshotAvailable: () -> Unit,
 ) : LiveRealmHolder<LiveRealm>() {
     // Flow used to emit events when the version of the live realm is updated
     // Adding extra buffer capacity as we are otherwise never able to emit anything
@@ -55,7 +55,7 @@ internal class SuspendableNotifier(
         owner = owner,
         configuration = owner.configuration,
         scheduler = scheduler,
-        onChange = onChange,
+        onSnapshotAvailable = onSnapshotAvailable,
     ) {
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
