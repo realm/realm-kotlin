@@ -113,7 +113,7 @@ internal abstract class LiveRealm(
         val callback = WeakLiveRealmCallback(this)
         realmChangeRegistration = NotificationToken(RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, callback::onRealmChanged))
         schemaChangeRegistration = NotificationToken(RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, callback::onSchemaChanged))
-        onSnapshotAvailable()
+//        onSnapshotAvailable()
     }
 
     // Always executed on the live realm's backing thread
