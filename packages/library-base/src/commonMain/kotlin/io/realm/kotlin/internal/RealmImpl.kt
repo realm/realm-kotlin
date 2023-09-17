@@ -253,6 +253,7 @@ public class RealmImpl private constructor(
                 val notifierVersion: VersionId? = notifier.version
                 val writerVersion: VersionId? = writer.version
                 // Find whether the notifier or writer has the latest snapshot.
+                if (notifierVersion == null && writerVersion == null) sdkError("Both versions null")
                 val newest: LiveRealmHolder<LiveRealm> =
                     if (writerVersion != null && (notifierVersion == null || writerVersion > notifierVersion))
                         writer

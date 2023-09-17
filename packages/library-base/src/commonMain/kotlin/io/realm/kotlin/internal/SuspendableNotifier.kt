@@ -76,7 +76,12 @@ internal class SuspendableNotifier(
         }
     }
 
-    override val realmInitializer = lazy<LiveRealm> { NotifierRealm() }
+    override val realmInitializer = lazy<LiveRealm> {
+        NotifierRealm().also {
+            isInitialized.value = true
+            onSnapshotAvailable()
+        }
+    }
     // Must only be accessed from the dispatchers thread
     override val realm: LiveRealm by realmInitializer
 
@@ -89,7 +94,7 @@ internal class SuspendableNotifier(
     internal suspend fun realmChanged(): Flow<VersionId> {
         // Touching realm will open the underlying realm and register change listeners, but must
         // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
-        if (!realmInitializer.isInitialized()) {
+        if (!isInitialized.value) {
             withContext(dispatcher) { realm }
         }
         return _realmChanged.asSharedFlow()
@@ -141,7 +146,7 @@ internal class SuspendableNotifier(
         runBlocking(dispatcher) {
             // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
             // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
-            if (realmInitializer.isInitialized()) {
+            if (isInitialized.value) {
                 realm.close()
             }
         }

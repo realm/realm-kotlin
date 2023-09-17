@@ -82,7 +82,10 @@ internal class SuspendableWriter(
     }
 
     override val realmInitializer: Lazy<WriterRealm> = lazy {
-        WriterRealm()
+        WriterRealm().also {
+            isInitialized.value = true
+            onSnapshotAvailable()
+        }
     }
 
     // Must only be accessed from the dispatchers thread
@@ -210,7 +213,7 @@ internal class SuspendableWriter(
             withContext(dispatcher) {
                 // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
                 // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
-                if (realmInitializer.isInitialized()) {
+                if (isInitialized.value) {
                     realm.close()
                 }
             }
