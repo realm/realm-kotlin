@@ -248,7 +248,6 @@ public class RealmImpl private constructor(
         // We don't require to return the latest snapshot to the user but the closest the best.
         // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
         return initialRealmReference.value.let { localReference ->
-            println("INITIAL_REF NULL=${localReference == null}")
             localReference ?: run {
                 // Find whether the notifier or writer has the latest snapshot.
                 val notifierVersion: VersionId? = notifier.version
@@ -259,8 +258,6 @@ public class RealmImpl private constructor(
                         writer
                     else
                         notifier
-                println("NEWEST=$newest")
-                println("NEWEST SNAPSHOT=${newest.snapshot}")
                 // Find whether the notifier or writer has the latest snapshot.
                 newest.snapshot
             } ?: sdkError("Accessing realmReference before realm has been opened")
