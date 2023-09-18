@@ -26,8 +26,11 @@ import kotlinx.atomicfu.atomic
  * references when advancing the version of [RealmImpl].
  */
 internal abstract class LiveRealmHolder<out LiveRealm> {
-    abstract val realmInitializer: Lazy<LiveRealm>
     abstract val realm: io.realm.kotlin.internal.LiveRealm
+
+    /**
+     * Indicates whether the live realm has been initialized or not.
+     */
     val isInitialized: AtomicBoolean = atomic(false)
 
     /**

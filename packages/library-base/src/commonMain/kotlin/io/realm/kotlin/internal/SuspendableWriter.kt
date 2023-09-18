@@ -81,15 +81,14 @@ internal class SuspendableWriter(
         override fun cancelWrite() { super.cancelWrite() }
     }
 
-    override val realmInitializer: Lazy<WriterRealm> = lazy {
+    // Must only be accessed from the dispatchers thread
+    override val realm: WriterRealm by lazy {
         WriterRealm().also {
             isInitialized.value = true
             onSnapshotAvailable()
         }
     }
 
-    // Must only be accessed from the dispatchers thread
-    override val realm: WriterRealm by realmInitializer
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
 

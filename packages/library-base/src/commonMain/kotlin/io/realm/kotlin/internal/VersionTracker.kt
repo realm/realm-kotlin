@@ -53,7 +53,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
     /**
      * Closes any realm reference that has been reclaimed by the GC.
      *
-     * @return whether it has or not any reference left to clean.
+     * @return false if there is no reference left to clean.
      */
     fun closeExpiredReferences(): Boolean {
         // We need a new object to update the atomic reference
