@@ -195,9 +195,9 @@ class VersionTrackingTests {
         }
         objectListener.cancel()
         realm.activeVersions().run {
-            assertEquals(2, allTracked.size, toString())
+            assertEquals(writes + 1, allTracked.size, toString())
             assertNotNull(notifier, toString())
-            assertEquals(2, notifier?.active?.size, toString())
+            assertEquals(writes + 1, notifier?.active?.size, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
@@ -208,9 +208,9 @@ class VersionTrackingTests {
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
-            assertEquals(1, allTracked.size, toString())
+            assertEquals(writes + 1, allTracked.size, toString())
             assertNotNull(notifier, toString())
-            assertEquals(1, notifier?.active?.size, toString())
+            assertEquals(writes + 1, notifier?.active?.size, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
