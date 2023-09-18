@@ -237,9 +237,11 @@ public class RealmImpl private constructor(
     private fun removeInitialRealmReference() {
         // Ensure only a single thread can work on the version tracker.
         val skipClosingReferences = _skipClosingReferences.getAndSet(true)
+        log.trace("SKIP REMOVING INITIAL VERSION = $skipClosingReferences")
         if (!skipClosingReferences) {
             initialRealmReference.value = null
             val emptyTracker = versionTracker.closeExpiredReferences()
+            log.trace("EMPTY INITIAL TRACKER = $emptyTracker")
             _skipClosingReferences.value = emptyTracker
         }
     }
@@ -252,14 +254,11 @@ public class RealmImpl private constructor(
                 // Find whether the notifier or writer has the latest snapshot.
                 val notifierVersion: VersionId? = notifier.version
                 val writerVersion: VersionId? = writer.version
-                // Find whether the notifier or writer has the latest snapshot.
-                if (notifierVersion == null && writerVersion == null) sdkError("Both versions null")
                 val newest: LiveRealmHolder<LiveRealm> =
                     if (writerVersion != null && (notifierVersion == null || writerVersion > notifierVersion))
                         writer
                     else
                         notifier
-                // Find whether the notifier or writer has the latest snapshot.
                 newest.snapshot
             } ?: sdkError("Accessing realmReference before realm has been opened")
         }

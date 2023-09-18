@@ -34,37 +34,40 @@ internal typealias IntermediateReference = Pair<NativePointer<out RealmT>, WeakR
 internal class VersionTracker(private val owner: BaseRealmImpl, private val log: ContextLogger) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
-    private val intermediateReferences: AtomicRef<MutableSet<IntermediateReference>> = atomic(mutableSetOf())
+    private val intermediateReferences: AtomicRef<MutableSet<IntermediateReference>> =
+        atomic(mutableSetOf())
 
     fun trackReference(realmReference: FrozenRealmReference) {
-        val references: MutableSet<IntermediateReference> = intermediateReferences.value
+        // We need a new object to update the atomic reference
+        val references = mutableSetOf<IntermediateReference>()
 
         realmReference.let {
             log.trace("$owner TRACK-VERSION ${realmReference.version()}")
             references.add(Pair(realmReference.dbPointer, WeakReference(it)))
         }
-    }
 
+        intermediateReferences.value = references
+    }
     /**
      * Closes any realm reference that has been reclaimed by the GC.
      *
      * @return whether it has or not any reference left to clean.
      */
     fun closeExpiredReferences(): Boolean {
-        val references: MutableSet<IntermediateReference> = intermediateReferences.value
+        // We need a new object to update the atomic reference
+        val references = mutableSetOf<IntermediateReference>()
 
-        with(references.iterator()) {
-            while (hasNext()) {
-                val (pointer, ref) = next()
-
-                if (ref.get() == null) {
-                    log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
-                    RealmInterop.realm_close(pointer)
-                    remove()
-                }
+        intermediateReferences.value.forEach { entry ->
+            val (pointer, ref) = entry
+            if (ref.get() == null) {
+                log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
+                RealmInterop.realm_close(pointer)
+            } else {
+                references.add(entry)
             }
         }
 
+        intermediateReferences.value = references
         return references.isEmpty()
     }
 
