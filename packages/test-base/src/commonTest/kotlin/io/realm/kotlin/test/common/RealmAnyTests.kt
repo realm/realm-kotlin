@@ -427,7 +427,11 @@ class RealmAnyTests {
         RealmAny.Type.values().forEach { type ->
             when (type) {
                 RealmAny.Type.INT -> {
-                    assertEquals(RealmAny.create(1), RealmAny.create(1))
+                    assertEquals(RealmAny.create(1), RealmAny.create(Char(1)))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toByte()))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toShort()))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toInt()))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toLong()))
                     assertNotEquals(RealmAny.create(1), RealmAny.create(2))
                 }
                 RealmAny.Type.BOOL -> {
@@ -452,12 +456,12 @@ class RealmAnyTests {
                     assertNotEquals(RealmAny.create(RealmInstant.from(1, 1)), RealmAny.create(now))
                 }
                 RealmAny.Type.FLOAT -> {
-                    assertEquals(RealmAny.create(1.0f), RealmAny.create(1.0f))
-                    assertNotEquals(RealmAny.create(1.0f), RealmAny.create(2.0f))
+                    assertEquals(RealmAny.create(1.5f), RealmAny.create(1.5f))
+                    assertNotEquals(RealmAny.create(1.2f), RealmAny.create(1.3f))
                 }
                 RealmAny.Type.DOUBLE -> {
-                    assertEquals(RealmAny.create(1.0), RealmAny.create(1.0))
-                    assertNotEquals(RealmAny.create(1.0), RealmAny.create(2.0))
+                    assertEquals(RealmAny.create(1.5), RealmAny.create(1.5))
+                    assertNotEquals(RealmAny.create(1.2), RealmAny.create(1.3))
                 }
                 RealmAny.Type.DECIMAL128 -> {
                     assertEquals(RealmAny.create(Decimal128("1E64")), RealmAny.create(Decimal128("1E64")))

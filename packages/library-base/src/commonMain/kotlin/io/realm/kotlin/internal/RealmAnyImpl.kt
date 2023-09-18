@@ -128,24 +128,9 @@ internal class RealmAnyImpl<T : Any> constructor(
         if (clazz == ByteArray::class) {
             if (other.internalValue !is ByteArray) return false
             return other.internalValue.contentEquals(this.internalValue as ByteArray)
-        } else if (internalValue is BsonObjectId) {
-            if (other.clazz != BsonObjectId::class) return false
-            return other.internalValue == this.internalValue
         } else if (internalValue is RealmObject) {
             if (other.clazz != this.clazz) return false
             return other.internalValue == this.internalValue
-        } else if (internalValue is Number) { // Numerics are the same as long as their value is the same
-            return when (other.internalValue) {
-                is Char -> other.internalValue.code.toLong() == internalValue.toLong()
-                is Number -> other.internalValue.toLong() == this.internalValue.toLong()
-                else -> return false
-            }
-        } else if (internalValue is Char) { // We are comparing chars
-            return when (other.internalValue) {
-                is Char -> other.internalValue.code.toLong() == internalValue.toLong()
-                is Number -> other.internalValue.toLong() == this.internalValue.toLong()
-                else -> return false
-            }
         }
         return internalValue == other.internalValue
     }
