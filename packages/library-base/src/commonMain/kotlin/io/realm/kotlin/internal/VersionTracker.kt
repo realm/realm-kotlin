@@ -39,7 +39,9 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
 
     fun trackReference(realmReference: FrozenRealmReference) {
         // We need a new object to update the atomic reference
-        val references = mutableSetOf<IntermediateReference>()
+        val references = mutableSetOf<IntermediateReference>().apply {
+            addAll(intermediateReferences.value)
+        }
 
         realmReference.let {
             log.trace("$owner TRACK-VERSION ${realmReference.version()}")
