@@ -182,6 +182,12 @@ class SerializationTests {
             RealmInstant::class -> dataSet.map { entry ->
                 entry.first to (entry.second as RealmInstant?)?.restrictToMillisPrecision() as T
             }
+            RealmAny::class -> dataSet.map { entry ->
+                val (key, value) = entry
+                if ((value as? RealmAny)?.type == RealmAny.Type.TIMESTAMP) {
+                    key to RealmAny.create((value.asRealmInstant()!!.restrictToMillisPrecision()))as T
+                } else { entry }
+            }
             else -> dataSet
         }
 
