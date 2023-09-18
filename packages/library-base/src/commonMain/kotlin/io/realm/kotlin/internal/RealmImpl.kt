@@ -266,25 +266,30 @@ public class RealmImpl private constructor(
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
         //  writer thread and just close the realm in writer.close()
         writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
-        runBlocking {
-            realmPointerMutex.withLock {
-                writer.close()
-                realmScope.cancel()
-                notifier.close()
-                versionTracker.close()
-                @OptIn(ExperimentalStdlibApi::class)
-                syncContext.value?.close()
-                // The local realmReference is pointing to a realm reference managed by either the
-                // version tracker, writer or notifier, so it is already closed
-                super.close()
+        realmReferenceLock.withLock {
+            if (isClosed()) {
+                return
             }
-        }
-        if (!realmStateFlow.tryEmit(State.CLOSED)) {
-            log.warn("Cannot signal internal close")
-        }
+            runBlocking {
+                realmPointerMutex.withLock {
+                    writer.close()
+                    realmScope.cancel()
+                    notifier.close()
+                    versionTracker.close()
+                    @OptIn(ExperimentalStdlibApi::class)
+                    syncContext.value?.close()
+                    // The local realmReference is pointing to a realm reference managed by either the
+                    // version tracker, writer or notifier, so it is already closed
+                    super.close()
+                }
+            }
+            if (!realmStateFlow.tryEmit(State.CLOSED)) {
+                log.warn("Cannot signal internal close")
+            }
 
-        notificationScheduler.close()
-        writeScheduler.close()
+            notificationScheduler.close()
+            writeScheduler.close()
+        }
     }
 
     internal companion object {

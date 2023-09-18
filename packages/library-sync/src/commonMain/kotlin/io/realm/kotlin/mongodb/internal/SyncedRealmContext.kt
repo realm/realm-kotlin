@@ -59,7 +59,7 @@ internal class SyncedRealmContext<T : BaseRealm>(realm: T) : AutoCloseable {
 
     override fun close() {
         if (sessionDelegate.isInitialized()) {
-            (session as SyncSessionImpl).nativePointer.release()
+            (session as SyncSessionImpl).close()
         }
     }
 }

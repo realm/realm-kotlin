@@ -681,13 +681,15 @@ class SyncClientResetIntegrationTests {
         }).build()
 
         runBlocking {
-            testRealm = Realm.open(config)
-            with(testRealm!!.syncSession) {
-                downloadAllServerChanges(defaultTimeout)
-                app.triggerClientReset(syncMode, this, user.id)
-                // Twice until the deprecated method is removed
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+            Realm.open(config).use { realm ->
+                testRealm = realm
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
+                    // Twice until the deprecated method is removed
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                }
             }
         }
     }
@@ -994,19 +996,20 @@ class SyncClientResetIntegrationTests {
         ).build()
 
         runBlocking {
-            val realm = Realm.open(config)
-            with(realm.syncSession) {
-                downloadAllServerChanges(defaultTimeout)
-                app.triggerClientReset(syncMode, this, user.id)
-                val exception = channel.receiveOrFail()
-                val originalFilePath = assertNotNull(exception.originalFilePath)
-                val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
-                realm.close()
-                assertTrue(fileExists(originalFilePath))
-                assertFalse(fileExists(recoveryFilePath))
-                assertTrue(exception.executeClientReset())
-                assertFalse(fileExists(originalFilePath))
-                assertTrue(fileExists(recoveryFilePath))
+            Realm.open(config).use { realm ->
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
+                    val exception = channel.receiveOrFail()
+                    val originalFilePath = assertNotNull(exception.originalFilePath)
+                    val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
+                    realm.close()
+                    assertTrue(fileExists(originalFilePath))
+                    assertFalse(fileExists(recoveryFilePath))
+                    assertTrue(exception.executeClientReset())
+                    assertFalse(fileExists(originalFilePath))
+                    assertTrue(fileExists(recoveryFilePath))
+                }
             }
         }
     }
@@ -1239,11 +1242,13 @@ class SyncClientResetIntegrationTests {
         }).build()
 
         runBlocking {
-            testRealm = Realm.open(config)
-            with(testRealm!!.syncSession) {
-                downloadAllServerChanges(defaultTimeout)
-                app.triggerClientReset(syncMode, this, user.id)
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+            Realm.open(config).use { realm ->
+                testRealm = realm
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                }
             }
         }
     }
@@ -1440,11 +1445,13 @@ class SyncClientResetIntegrationTests {
         }).build()
 
         runBlocking {
-            testRealm = Realm.open(config)
-            with(testRealm!!.syncSession) {
-                downloadAllServerChanges(defaultTimeout)
-                app.triggerClientReset(syncMode, this, user.id)
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+            Realm.open(config).use { realm ->
+                testRealm = realm
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
+                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
+                }
             }
         }
     }

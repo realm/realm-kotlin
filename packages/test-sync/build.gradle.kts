@@ -290,7 +290,7 @@ fun getPropertyValue(propertyName: String): String? {
     if (project.hasProperty(propertyName)) {
         return project.property(propertyName) as String
     }
-   return System.getenv(propertyName)
+    return System.getenv(propertyName)
 }
 buildkonfig {
     packageName = "io.realm.kotlin.test.mongodb"
