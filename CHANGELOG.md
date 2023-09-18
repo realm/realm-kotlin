@@ -7,7 +7,7 @@
 * Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. ([#1513](https://github.com/realm/realm-kotlin/issues/1513))
 
 ### Fixed
-* Fix error in `RealmAny.equals` that would sometime return true when comparing RealmAnys wrapping same type but different values.
+* Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 
 ### Compatibility
