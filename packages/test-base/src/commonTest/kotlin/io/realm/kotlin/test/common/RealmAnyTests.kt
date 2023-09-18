@@ -475,7 +475,11 @@ class RealmAnyTests {
                 }
                 RealmAny.Type.OBJECT -> {
                     val realmObject = Sample()
+                    // Same object is equal
                     assertEquals(RealmAny.create(realmObject), RealmAny.create(realmObject))
+                    // Different kind of objects are not equal
+                    assertNotEquals(RealmAny.create(RealmAnyContainer()), RealmAny.create(realmObject))
+                    // Different objects of same type are not equal
                     assertNotEquals(RealmAny.create(Sample()), RealmAny.create(realmObject))
                 }
             }
