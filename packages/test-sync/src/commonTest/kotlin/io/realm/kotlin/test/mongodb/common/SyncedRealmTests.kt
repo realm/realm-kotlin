@@ -33,6 +33,7 @@ import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.fileExists
+import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
@@ -552,18 +553,19 @@ class SyncedRealmTests {
         }
     }
 
-    // Currently no good way to delete synced Realms that has been opened.
-    // See https://github.com/realm/realm-core/issues/5542
+    // Currently there isn't a good good way to delete synced Realms that has been opened, but
+    // `Sync.waitForSessionsToTerminate` can be used in some cases.
+    //
+    // See https://github.com/realm/realm-core/issues/5542 for more details
     @Test
     @Suppress("LongMethod")
-    @Ignore
     fun deleteRealm() {
         val fileSystem = FileSystem.SYSTEM
         val user = app.asTestApp.createUserAndLogin()
         val configuration: SyncConfiguration =
             SyncConfiguration.create(user, partitionValue, setOf())
         val syncDir: Path =
-            "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/${user.identity}".toPath()
+            pathOf(app.configuration.syncRootDirectory, "mongodb-realm", app.configuration.appId, user.id).toPath()
 
         val bgThreadReadyChannel = Channel<Unit>(1)
         val readyToCloseChannel = Channel<Unit>(1)
@@ -594,6 +596,7 @@ class SyncedRealmTests {
             closedChannel.receiveOrFail()
 
             // Delete realm now that it's fully closed.
+            app.sync.waitForSessionsToTerminate()
             Realm.deleteRealm(configuration)
 
             // Lock file should never be deleted.

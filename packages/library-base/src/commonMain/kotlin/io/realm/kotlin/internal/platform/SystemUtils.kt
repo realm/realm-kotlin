@@ -60,6 +60,13 @@ public expect val DEVICE_MODEL: String
 public expect val PATH_SEPARATOR: String
 
 /**
+ * Construct a path from individual components
+ */
+public fun pathOf(vararg pathParts: String): String {
+    return pathParts.joinToString(PATH_SEPARATOR)
+}
+
+/**
  * Returns the root directory of the platform's App data.
  */
 public expect fun appFilesDirectory(): String
