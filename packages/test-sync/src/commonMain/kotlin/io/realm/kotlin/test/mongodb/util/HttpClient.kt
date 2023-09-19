@@ -18,6 +18,7 @@ package io.realm.kotlin.test.mongodb.util
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.HttpRedirect
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
@@ -65,7 +66,11 @@ fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() ->
             }
         }
 
-        followRedirects = true
+        // We should allow redirects for all types, not just GET and HEAD
+        // See https://github.com/ktorio/ktor/issues/1793
+        install(HttpRedirect) {
+            checkHttpMethod = false
+        }
 
         // TODO connectionPool?
         this.apply(block)
