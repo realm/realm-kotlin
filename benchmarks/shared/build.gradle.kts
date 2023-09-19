@@ -1,3 +1,6 @@
+import io.realm.ClassGeneratorSpec
+import io.realm.generate
+
 plugins {
     kotlin("multiplatform")
     // kotlin("native.cocoapods")
@@ -56,6 +59,26 @@ kotlin {
 //        }
     }
 }
+
+abstract class ClassGenerator : DefaultTask() {
+    @TaskAction
+    fun generate() {
+        val output = project.file("./src/commonMain/kotlin/")
+
+        // Clear out any previous contents
+        project.file("./src/commonMain/kotlin/io/realm/generated").deleteRecursively()
+
+        ClassGeneratorSpec(
+            classCount = 100,
+            packageName = "io.realm.generated",
+            className = "TenStringObject",
+            stringFieldCount = 10
+        ).generate(output)
+    }
+}
+
+// Create a task using the task type
+tasks.register<ClassGenerator>("classGen")
 
 android {
     compileSdk = Versions.Android.compileSdkVersion
