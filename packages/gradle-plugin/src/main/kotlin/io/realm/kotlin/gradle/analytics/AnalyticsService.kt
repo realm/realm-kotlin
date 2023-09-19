@@ -77,7 +77,8 @@ import kotlin.experimental.and
 // - What targets you are building for
 // - An anonymized MAC address and bundle ID to aggregate the other information on.
 //
-// The collected information can be inspected by settings the system environment variable
+// The collected information will be printed as info messages to the Gradle logger named
+// [realm-analytics] if settings the system environment variable
 //   REALM_PRINT_ANALYTICS=true
 // Collection and submission of data can be fully disabled by setting the system environment variable
 //   REALM_DISABLE_ANALYTICS=true
