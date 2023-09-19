@@ -1,5 +1,6 @@
+import com.android.build.gradle.internal.tasks.factory.dependsOn
 import io.realm.ClassGeneratorSpec
-import io.realm.generate
+import io.realm.BenchmarkClassSuite
 
 plugins {
     kotlin("multiplatform")
@@ -27,7 +28,7 @@ kotlin {
 //            baseName = "shared"
 //        }
 //    }
-    
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -60,25 +61,54 @@ kotlin {
     }
 }
 
-abstract class ClassGenerator : DefaultTask() {
-    @TaskAction
-    fun generate() {
-        val output = project.file("./src/commonMain/kotlin/")
+// Create a task using the task type
+val genClassesTask = tasks.create("classGen") {
+    val output = project.file("./src/commonMain/kotlin/")
 
-        // Clear out any previous contents
-        project.file("./src/commonMain/kotlin/io/realm/generated").deleteRecursively()
+    // Clear out any previous contents
+    project.file("./src/commonMain/kotlin/io/realm/generated").deleteRecursively()
 
-        ClassGeneratorSpec(
+    BenchmarkClassSuite(
+        name = "openCloseRealm",
+        packageName = "io.realm.generated",
+        output = output,
+    ) {
+        addClassGeneratorSpec(
             classCount = 100,
-            packageName = "io.realm.generated",
-            className = "TenStringObject",
-            stringFieldCount = 10
-        ).generate(output)
+            className = "OneString",
+            stringFieldCount = 1,
+        )
+        addClassGeneratorSpec(
+            classCount = 100,
+            className = "OneStringRealmList",
+            stringRealmListCount = 1,
+        )
+        addClassGeneratorSpec(
+            classCount = 100,
+            className = "TenStrings",
+            stringFieldCount = 10,
+        )
+        addClassGeneratorSpec(
+            classCount = 100,
+            className = "TenStringRealmLists",
+            stringRealmListCount = 10,
+        )
+        addClassGeneratorSpec(
+            classCount = 100,
+            className = "HundredStrings",
+            stringFieldCount = 100,
+        )
+        addClassGeneratorSpec(
+            classCount = 100,
+            className = "HundredStringRealmLists",
+            stringRealmListCount = 100,
+        )
     }
 }
 
-// Create a task using the task type
-tasks.register<ClassGenerator>("classGen")
+afterEvaluate {
+    tasks.named("assemble").dependsOn(genClassesTask.name)
+}
 
 android {
     compileSdk = Versions.Android.compileSdkVersion

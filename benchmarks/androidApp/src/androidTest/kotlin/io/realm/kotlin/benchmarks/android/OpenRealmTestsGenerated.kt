@@ -17,10 +17,9 @@ package io.realm.kotlin.benchmarks.android
 
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
-import io.realm.generated.tenStringObjectClasses
+import io.realm.generated.openCloseRealmClassesMap
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.benchmarks.SchemaSize
 import io.realm.kotlin.types.RealmObject
 import org.junit.After
 import org.junit.Before
@@ -31,13 +30,22 @@ import org.junit.runners.Parameterized
 import kotlin.reflect.KClass
 
 @RunWith(Parameterized::class)
-class OpenRealmTestsGenerated(private val schemaSize: Int) {
+class OpenRealmTestsGenerated(
+    private val className: String,
+    private val schemaSize: Int,
+) {
 
     companion object {
         @JvmStatic
-        @Parameterized.Parameters(name = "schema-size-{0}")
-        fun initParameters(): Collection<Int> {
-            return setOf(1, 10, 100)
+        @Parameterized.Parameters(name = "{0}-schema-size-{1}")
+        fun initParameters(): Collection<Array<*>> {
+            val schemaSizes = listOf(1, 10, 100)
+
+            return openCloseRealmClassesMap.keys
+                .flatMap {className ->
+                    schemaSizes.map { schemaSize -> arrayOf(className, schemaSize) }
+                }
+                .toList()
         }
     }
 
@@ -49,7 +57,11 @@ class OpenRealmTestsGenerated(private val schemaSize: Int) {
 
     @Before
     fun setUp() {
-        val schema: Set<KClass<out RealmObject>> = tenStringObjectClasses.subList(0, schemaSize).toSet()
+        val schema: Set<KClass<out RealmObject>> =
+            openCloseRealmClassesMap[className]!!
+                .subList(0, schemaSize)
+                .toSet()
+
         config = RealmConfiguration.Builder(schema)
             .directory("./build/benchmark-realms")
             .build()
