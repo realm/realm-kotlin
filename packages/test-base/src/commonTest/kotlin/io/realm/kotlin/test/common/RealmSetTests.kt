@@ -637,6 +637,22 @@ class RealmSetTests : CollectionQueryTests {
         Unit
     }
 
+    @Test
+    fun dontImportUnmanagedArgsToNonImportingMethods() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmSetContainer())
+            assertEquals(1, query<RealmSetContainer>().find().size)
+            assertFalse(liveObject.objectSetField.contains(RealmSetContainer()))
+            assertFalse(liveObject.nullableRealmAnySetField.contains(RealmAny.create(RealmSetContainer())))
+            assertFalse(liveObject.objectSetField.remove(RealmSetContainer()))
+            assertFalse(liveObject.nullableRealmAnySetField.remove(RealmAny.create(RealmSetContainer())))
+            assertEquals(1, query<RealmSetContainer>().find().size)
+            liveObject
+        }
+        assertFalse(frozenObject.objectSetField.contains(RealmSetContainer()))
+        assertFalse(frozenObject.nullableRealmAnySetField.contains(RealmAny.create(RealmSetContainer())))
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = setOf(RealmSetContainer::class))
             .directory(tmpDir)
@@ -800,9 +816,6 @@ internal abstract class ManagedSetTester<T>(
     }
 
     override fun removeAll() {
-        // TODO https://github.com/realm/realm-kotlin/issues/1097
-        //  Ignore RealmObject: structural equality cannot be assessed for this type when removing
-        //  elements from the set
         if (classifier != RealmObject::class) {
             val dataSet = typeSafetyManager.dataSetToLoad
 
@@ -812,9 +825,6 @@ internal abstract class ManagedSetTester<T>(
                     set.addAll(dataSet)
                     assertTrue(set.removeAll(dataSet))
 
-                    // TODO https://github.com/realm/realm-kotlin/issues/1097
-                    //  If the RealmAny instance contains an object it will NOT be removed until
-                    //  the issue above is fixed
                     if (classifier == RealmAny::class) {
                         assertEquals(1, set.size)
                     } else {
@@ -826,9 +836,6 @@ internal abstract class ManagedSetTester<T>(
             assertContainerAndCleanup { container ->
                 val set = typeSafetyManager.getCollection(container)
 
-                // TODO https://github.com/realm/realm-kotlin/issues/1097
-                //  If the RealmAny instance contains an object it will NOT be removed until
-                //  the issue above is fixed
                 if (classifier == RealmAny::class) {
                     assertEquals(1, set.size)
                 } else {

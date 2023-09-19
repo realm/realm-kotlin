@@ -1,9 +1,12 @@
 ## 1.12.0-SNAPSHOT (YYYY-MM-DD)
 
+This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
+
 ### Breaking Changes
 * None.
 
 ### Enhancements
+* Support for RealmLists, RealmSets and RealmDictionaries in `RealmAny`. This is only supported in the local database, Device Sync support will come in a future release. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 * Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. ([#1513](https://github.com/realm/realm-kotlin/issues/1513))
 
 ### Fixed
@@ -24,7 +27,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core `next-major`, commit 0da737b699bf4bcfc1a3772385cd49cd9eb9cad9.
 
 
 ## 1.11.1 (2023-09-07)

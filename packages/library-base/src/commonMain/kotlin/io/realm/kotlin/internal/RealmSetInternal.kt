@@ -18,6 +18,9 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
+import io.realm.kotlin.dynamic.DynamicRealmObject
+import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
@@ -27,6 +30,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
+import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
@@ -38,6 +42,8 @@ import io.realm.kotlin.notifications.internal.InitialSetImpl
 import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
@@ -46,7 +52,7 @@ import kotlin.reflect.KClass
 /**
  * Implementation for unmanaged sets, backed by a [MutableSet].
  */
-internal class UnmanagedRealmSet<E>(
+public class UnmanagedRealmSet<E>(
     private val backingSet: MutableSet<E> = mutableSetOf()
 ) : RealmSet<E>, InternalDeleteable, MutableSet<E> by backingSet {
     override fun asFlow(): Flow<SetChange<E>> {
@@ -68,7 +74,8 @@ internal class UnmanagedRealmSet<E>(
  * Implementation for managed sets, backed by Realm.
  */
 internal class ManagedRealmSet<E> constructor(
-    internal val parent: RealmObjectReference<*>,
+    // Rework to allow RealmAny
+    internal val parent: RealmObjectReference<*>?,
     internal val nativePointer: RealmSetPointer,
     val operator: SetOperator<E>
 ) : AbstractMutableSet<E>(), RealmSet<E>, InternalDeleteable, CoreNotifiable<ManagedRealmSet<E>, SetChange<E>>, Versioned by operator.realmReference {
@@ -188,7 +195,7 @@ internal class ManagedRealmSet<E> constructor(
         RealmInterop.realm_set_remove_all(nativePointer)
     }
 
-    internal fun isValid(): Boolean {
+    override fun isValid(): Boolean {
         return !nativePointer.isReleased() && RealmInterop.realm_set_is_valid(nativePointer)
     }
 }
@@ -206,6 +213,12 @@ internal fun <E : BaseRealmObject> ManagedRealmSet<E>.query(
             queryArgs
         )
     }
+    // parent is only available for lists with an object as an immediate parent (contrary to nested
+    // collections).
+    // Nested collections are only supported for RealmAny-values and are therefore
+    // outside of the BaseRealmObject bound for the generic type parameters, so we should never be
+    // able to reach here for nested collections of RealmAny.
+    if (parent == null) error("Cannot perform subqueries on non-object sets")
     return ObjectBoundQuery(
         parent,
         ObjectQuery(
@@ -233,7 +246,6 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ): Boolean {
-        realmReference.checkClosed()
         return addInternal(element, updatePolicy, cache)
             .also { modCount++ }
     }
@@ -276,13 +288,11 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
         modCount++
     }
 
+    fun removeInternal(element: E): Boolean
     fun remove(element: E): Boolean {
-        return inputScope {
-            with(valueConverter) {
-                val transport = publicToRealmValue(element)
-                RealmInterop.realm_set_erase(nativePointer, transport)
-            }
-        }.also { modCount++ }
+        return removeInternal(element).also {
+            modCount++
+        }
     }
 
     fun removeAll(elements: Collection<E>): Boolean {
@@ -296,10 +306,103 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
     fun copy(realmReference: RealmReference, nativePointer: RealmSetPointer): SetOperator<E>
 }
 
+internal fun realmAnySetOperator(
+    mediator: Mediator,
+    realm: RealmReference,
+    nativePointer: RealmSetPointer,
+    issueDynamicObject: Boolean = false,
+    issueDynamicMutableObject: Boolean = false,
+): RealmAnySetOperator = RealmAnySetOperator(
+    mediator,
+    realm,
+    nativePointer,
+    issueDynamicObject,
+    issueDynamicMutableObject
+)
+
+internal class RealmAnySetOperator(
+    override val mediator: Mediator,
+    override val realmReference: RealmReference,
+    override val nativePointer: RealmSetPointer,
+    val issueDynamicObject: Boolean,
+    val issueDynamicMutableObject: Boolean
+) : SetOperator<RealmAny?> {
+
+    override var modCount: Int = 0
+
+    @Suppress("UNCHECKED_CAST")
+    override fun get(index: Int): RealmAny? {
+        return getterScope {
+            val transport = realm_set_get(nativePointer, index.toLong())
+            return realmValueToRealmAny(
+                transport, null, mediator, realmReference,
+                issueDynamicObject,
+                issueDynamicMutableObject,
+                { error("Set should never container sets") },
+                { error("Set should never container lists") }
+            ) { error("Set should never container dictionaries") }
+        }
+    }
+
+    override fun addInternal(
+        element: RealmAny?,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache
+    ): Boolean {
+        return inputScope {
+            realmAnyHandler(
+                value = element,
+                primitiveValueAsRealmValueHandler = { realmValue: RealmValue ->
+                    RealmInterop.realm_set_insert(nativePointer, realmValue)
+                },
+                referenceAsRealmAnyHandler = { realmValue ->
+                    val obj = when (issueDynamicObject) {
+                        true -> realmValue.asRealmObject<DynamicRealmObject>()
+                        false -> realmValue.asRealmObject<RealmObject>()
+                    }
+                    val objRef =
+                        realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
+                    RealmInterop.realm_set_insert(nativePointer, realmObjectTransport(objRef))
+                },
+                setAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections") },
+                listAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
+                dictionaryAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
+            )
+        }
+    }
+
+    override fun removeInternal(element: RealmAny?): Boolean {
+        if (element?.type == RealmAny.Type.OBJECT) {
+            if (!element.asRealmObject<RealmObjectInternal>().isManaged()) return false
+        }
+        return inputScope {
+            val transport = realmAnyToRealmValueWithoutImport(element)
+            RealmInterop.realm_set_erase(nativePointer, transport)
+        }
+    }
+
+    override fun contains(element: RealmAny?): Boolean {
+        // Unmanaged objects are never found in a managed dictionary
+        if (element?.type == RealmAny.Type.OBJECT) {
+            if (!element.asRealmObject<RealmObjectInternal>().isManaged()) return false
+        }
+        return inputScope {
+            val transport = realmAnyToRealmValueWithoutImport(element)
+            RealmInterop.realm_set_find(nativePointer, transport)
+        }
+    }
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmSetPointer
+    ): SetOperator<RealmAny?> =
+        RealmAnySetOperator(mediator, realmReference, nativePointer, issueDynamicObject, issueDynamicMutableObject)
+}
+
 internal class PrimitiveSetOperator<E>(
     override val mediator: Mediator,
     override val realmReference: RealmReference,
-    override val valueConverter: RealmValueConverter<E>,
+    val realmValueConverter: RealmValueConverter<E>,
     override val nativePointer: RealmSetPointer
 ) : SetOperator<E> {
 
@@ -308,7 +411,7 @@ internal class PrimitiveSetOperator<E>(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            with(valueConverter) {
+            with(realmValueConverter) {
                 val transport = realm_set_get(nativePointer, index.toLong())
                 realmValueToPublic(transport)
             } as E
@@ -321,16 +424,25 @@ internal class PrimitiveSetOperator<E>(
         cache: UnmanagedToManagedObjectCache
     ): Boolean {
         return inputScope {
-            with(valueConverter) {
+            with(realmValueConverter) {
                 val transport = publicToRealmValue(element)
                 RealmInterop.realm_set_insert(nativePointer, transport)
             }
         }
     }
 
+    override fun removeInternal(element: E): Boolean {
+        return inputScope {
+            with(realmValueConverter) {
+                val transport = publicToRealmValue(element)
+                RealmInterop.realm_set_erase(nativePointer, transport)
+            }
+        }
+    }
+
     override fun contains(element: E): Boolean {
         return inputScope {
-            with(valueConverter) {
+            with(realmValueConverter) {
                 val transport = publicToRealmValue(element)
                 RealmInterop.realm_set_find(nativePointer, transport)
             }
@@ -341,17 +453,30 @@ internal class PrimitiveSetOperator<E>(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<E> =
-        PrimitiveSetOperator(mediator, realmReference, valueConverter, nativePointer)
+        PrimitiveSetOperator(mediator, realmReference, realmValueConverter, nativePointer)
 }
 
-internal class RealmObjectSetOperator<E> constructor(
-    override val mediator: Mediator,
-    override val realmReference: RealmReference,
-    override val valueConverter: RealmValueConverter<E>,
-    override val nativePointer: RealmSetPointer,
-    val clazz: KClass<E & Any>,
+internal class RealmObjectSetOperator<E : BaseRealmObject?> : SetOperator<E> {
+
+    override val mediator: Mediator
+    override val realmReference: RealmReference
+    override val nativePointer: RealmSetPointer
+    val clazz: KClass<E & Any>
     val classKey: ClassKey
-) : SetOperator<E> {
+
+    constructor(
+        mediator: Mediator,
+        realmReference: RealmReference,
+        nativePointer: RealmSetPointer,
+        clazz: KClass<E & Any>,
+        classKey: ClassKey
+    ) {
+        this.mediator = mediator
+        this.realmReference = realmReference
+        this.nativePointer = nativePointer
+        this.clazz = clazz
+        this.classKey = classKey
+    }
 
     override var modCount: Int = 0
 
@@ -376,27 +501,34 @@ internal class RealmObjectSetOperator<E> constructor(
     @Suppress("UNCHECKED_CAST")
     override fun get(index: Int): E {
         return getterScope {
-            with(valueConverter) {
-                realm_set_get(nativePointer, index.toLong())
-                    .let { transport ->
-                        when (ValueType.RLM_TYPE_NULL) {
-                            transport.getType() -> null
-                            else -> realmValueToPublic(transport)
-                        }
-                    } as E
-            }
+            realm_set_get(nativePointer, index.toLong())
+                .let { transport ->
+                    when (ValueType.RLM_TYPE_NULL) {
+                        transport.getType() -> null
+                        else -> realmValueToRealmObject(transport, clazz, mediator, realmReference)
+                    }
+                } as E
+        }
+    }
+
+    override fun removeInternal(element: E): Boolean {
+        // Unmanaged objects are never found in a managed set
+        element?.also {
+            if (!(it as RealmObjectInternal).isManaged()) return false
+        }
+        return inputScope {
+            val transport = realmObjectToRealmValue(element as BaseRealmObject?)
+            RealmInterop.realm_set_erase(nativePointer, transport)
         }
     }
 
     override fun contains(element: E): Boolean {
+        // Unmanaged objects are never found in a managed set
+        element?.also {
+            if (!(it as RealmObjectInternal).isManaged()) return false
+        }
         return inputScope {
-            val objRef = realmObjectToRealmReferenceWithImport(
-                element as BaseRealmObject?,
-                mediator,
-                realmReference,
-                UpdatePolicy.ALL,
-                mutableMapOf()
-            )
+            val objRef = realmObjectToRealmReferenceOrError(element as BaseRealmObject?)
             val transport = realmObjectTransport(objRef as RealmObjectInterop)
             RealmInterop.realm_set_find(nativePointer, transport)
         }
@@ -406,9 +538,7 @@ internal class RealmObjectSetOperator<E> constructor(
         realmReference: RealmReference,
         nativePointer: RealmSetPointer
     ): SetOperator<E> {
-        val converter =
-            converter<E>(clazz, mediator, realmReference) as CompositeConverter<E, *>
-        return RealmObjectSetOperator(mediator, realmReference, converter, nativePointer, clazz, classKey)
+        return RealmObjectSetOperator(mediator, realmReference, nativePointer, clazz, classKey)
     }
 }
 

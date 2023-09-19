@@ -135,4 +135,7 @@ internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Ve
     // Default implementation as all Observables are just thawing themselves.
     override fun notifiable(): Notifiable<T, C> = this
     override fun coreObservable(liveRealm: LiveRealm): CoreNotifiable<T, C>? = thaw(liveRealm.realmReference)
+
+    // Checks if the underlying native pointer points still points to a valid object.
+    fun isValid(): Boolean
 }

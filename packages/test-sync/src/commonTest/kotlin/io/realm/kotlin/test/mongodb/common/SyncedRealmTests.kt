@@ -20,6 +20,7 @@ import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
+import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
@@ -28,6 +29,9 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmAnyDictionaryOf
+import io.realm.kotlin.ext.realmAnyListOf
+import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
@@ -1542,6 +1546,7 @@ class SyncedRealmTests {
 
     @Test
     fun flexibleSync_throwsWithLocalInitialRealmFile() {
+
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -1553,6 +1558,44 @@ class SyncedRealmTests {
         assertFalse(fileExists(local.path))
         assertFailsWithMessage<IllegalStateException>("has history type 'Local in-Realm'") {
             Realm.open(local)
+        }
+    }
+
+    @Test
+    fun cannotSyncCollectionsInMixed() = runBlocking {
+        TestApp(
+            "cannotSyncCollectionsInMixed",
+            logLevel = LogLevel.ALL,
+            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
+            builder = {
+                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
+            }
+        ).use { flexApp ->
+            val (email, password) = randomEmail() to "password1234"
+            val user = flexApp.createUserAndLogIn(email, password)
+            val local = createFlexibleSyncConfig(
+                user = user,
+                name = "local",
+                schema = setOf(JsonStyleRealmObject::class)
+            ) {
+                initialSubscriptions {
+                    this.add(it.query<JsonStyleRealmObject>())
+                }
+            }
+            Realm.open(local).use {
+                it.write {
+                    val obj = copyToRealm(JsonStyleRealmObject())
+                    assertFailsWithMessage<IllegalStateException>("Cannot sync nested set") {
+                        obj.value = realmAnySetOf()
+                    }
+                    assertFailsWithMessage<IllegalStateException>("Cannot sync nested list") {
+                        obj.value = realmAnyListOf()
+                    }
+                    assertFailsWithMessage<IllegalStateException>("Cannot sync nested dictionary") {
+                        obj.value = realmAnyDictionaryOf()
+                    }
+                }
+            }
         }
     }
 

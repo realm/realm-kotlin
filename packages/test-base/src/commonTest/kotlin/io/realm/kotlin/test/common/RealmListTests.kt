@@ -632,6 +632,35 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
         Unit
     }
 
+    @Test
+    fun contains_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmListContainer())
+            assertEquals(1, query<RealmListContainer>().find().size)
+            assertFalse(liveObject.objectListField.contains(RealmListContainer()))
+            assertFalse(liveObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+            assertEquals(1, query<RealmListContainer>().find().size)
+            liveObject
+        }
+        // Verify that we can also call this on frozen instances
+        assertFalse(frozenObject.objectListField.contains(RealmListContainer()))
+        assertFalse(frozenObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+    }
+
+    @Test
+    fun remove_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmListContainer())
+            assertEquals(1, query<RealmListContainer>().find().size)
+            assertFalse(liveObject.objectListField.remove(RealmListContainer()))
+            assertFalse(liveObject.nullableRealmAnyListField.remove(RealmAny.create(RealmListContainer())))
+            assertEquals(1, query<RealmListContainer>().find().size)
+            liveObject
+        }
+        assertFalse(frozenObject.objectListField.contains(RealmListContainer()))
+        assertFalse(frozenObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = listTestSchema)
             .directory(tmpDir)
@@ -1316,6 +1345,10 @@ internal class RealmAnyListTester constructor(
                     expected.asRealmObject<RealmListContainer>().stringField,
                     actual.asRealmObject<RealmListContainer>().stringField
                 )
+                // FIXME Should we rather test nested collections somewhere else?
+                RealmAny.Type.SET -> TODO()
+                RealmAny.Type.LIST -> TODO()
+                RealmAny.Type.DICTIONARY -> TODO()
             }
         } else if (expected != null || actual != null) {
             fail("One of the RealmAny values is null, expected = $expected, actual = $actual")

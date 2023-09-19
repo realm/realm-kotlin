@@ -1323,6 +1323,21 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
         Unit
     }
 
+    @Test
+    fun contains_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmDictionaryContainer())
+            assertEquals(1, query<RealmDictionaryContainer>().find().size)
+            assertFalse(liveObject.nullableObjectDictionaryField.containsValue(RealmDictionaryContainer()))
+            assertFalse(liveObject.nullableRealmAnyDictionaryField.containsValue(RealmAny.create(RealmDictionaryContainer())))
+            assertEquals(1, query<RealmDictionaryContainer>().find().size)
+            liveObject
+        }
+        // Verify that we can also call this on frozen instances
+        assertFalse(frozenObject.nullableObjectDictionaryField.containsValue(RealmDictionaryContainer()))
+        assertFalse(frozenObject.nullableRealmAnyDictionaryField.containsValue(RealmAny.create(RealmDictionaryContainer())))
+    }
+
     private fun getCloseableRealm(): Realm =
         RealmConfiguration.Builder(schema = dictionarySchema)
             .directory(tmpDir)
@@ -3063,6 +3078,9 @@ internal class RealmAnyDictionaryTester(
                 assertEquals(expectedObj.stringField, assertNotNull(actualObj).stringField)
             }
             null -> assertNull(actualValue)
+            RealmAny.Type.SET,
+            RealmAny.Type.LIST,
+            RealmAny.Type.DICTIONARY -> {} // Tested separately in RealmAnyNestedCollectionTests
         }
     }
 }

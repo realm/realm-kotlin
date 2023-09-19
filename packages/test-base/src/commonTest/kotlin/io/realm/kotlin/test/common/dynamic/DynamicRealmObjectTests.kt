@@ -35,6 +35,7 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.ext.toRealmSet
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.query.RealmQuery
@@ -61,6 +62,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -1542,6 +1544,55 @@ class DynamicRealmObjectTests {
     }
 
     @Test
+    fun get_realmAny_nestedCollectionsInList() {
+        val unmanagedSample = Sample().apply {
+            nullableRealmAnyField = RealmAny.create(
+                realmListOf(
+                    RealmAny.create(
+                        realmListOf(RealmAny.create(Sample().apply { stringField = "INNER_LIST" }))
+                    ),
+                    RealmAny.create(
+                        realmSetOf(RealmAny.create(Sample().apply { stringField = "INNER_SET" }))
+                    ),
+                    RealmAny.create(
+                        realmDictionaryOf("key" to RealmAny.create(Sample().apply { stringField = "INNER_DICT" }))
+                    ),
+                )
+            )
+        }
+        realm.writeBlocking { copyToRealm(unmanagedSample) }
+        realm.asDynamicRealm()
+            .also { dynamicRealm ->
+                val dynamicSample = dynamicRealm.query("Sample")
+                    .find()
+                    .first()
+
+                val actualList = dynamicSample.getNullableValue(
+                    Sample::nullableRealmAnyField.name,
+                    RealmAny::class
+                )!!.asList()
+
+                actualList[0]!!.let { innerList ->
+                    val actualSample = innerList.asList()[0]!!.asRealmObject<DynamicRealmObject>()
+                    assertIs<DynamicRealmObject>(actualSample)
+                    assertEquals("INNER_LIST", actualSample.getValue("stringField"))
+                }
+                actualList[1]!!.let { innerSet ->
+                    val actualSample =
+                        innerSet.asSet()!!.first()!!.asRealmObject<DynamicRealmObject>()
+                    assertIs<DynamicRealmObject>(actualSample)
+                    assertEquals("INNER_SET", actualSample.getValue("stringField"))
+                }
+                actualList[2]!!.let { innerDictionary ->
+                    val actualSample =
+                        innerDictionary.asDictionary()!!["key"]!!.asRealmObject<DynamicRealmObject>()
+                    assertIs<DynamicRealmObject>(actualSample)
+                    assertEquals("INNER_DICT", actualSample.getValue("stringField"))
+                }
+            }
+    }
+
+    @Test
     fun get_realmAnySet() {
         val realmAnyValues = realmListOf(
             null,
@@ -1550,7 +1601,7 @@ class DynamicRealmObjectTests {
         )
 
         val unmanagedSample = Sample().apply {
-            nullableRealmAnySetField = realmAnyValues.toRealmSet()
+            nullableRealmAnyField = RealmAny.create(realmAnyValues.toRealmSet())
         }
         realm.writeBlocking { copyToRealm(unmanagedSample) }
         realm.asDynamicRealm()
@@ -1574,7 +1625,8 @@ class DynamicRealmObjectTests {
                             if (value?.type == RealmAny.Type.OBJECT) {
                                 assertEquals(
                                     value.asRealmObject<Sample>().stringField,
-                                    actual.asRealmObject<DynamicRealmObject>().getValue("stringField")
+                                    actual.asRealmObject<DynamicRealmObject>()
+                                        .getValue("stringField")
                                 )
                                 assertionSucceeded = true
                                 return
@@ -1602,6 +1654,61 @@ class DynamicRealmObjectTests {
         // This should be tested for DynamicMutableRealm instead.
     }
 
+    @Test
+    fun get_realmAnyNestedSet() {
+        val realmAnyValues = realmListOf(
+            null,
+            RealmAny.create("Hello"),
+            RealmAny.create(Sample().apply { stringField = "INNER" }),
+        )
+
+        val unmanagedSample = Sample().apply {
+            nullableRealmAnyField = RealmAny.create(realmAnyValues.toRealmSet())
+        }
+        realm.writeBlocking { copyToRealm(unmanagedSample) }
+        realm.asDynamicRealm()
+            .also { dynamicRealm ->
+                val dynamicSample = dynamicRealm.query("Sample")
+                    .find()
+                    .first()
+
+                val actualReifiedSet: RealmSet<RealmAny?> =
+                    dynamicSample.getNullableValue<RealmAny>(
+                        Sample::nullableRealmAnyField.name
+                    )!!.asSet()
+
+                fun assertions(actual: RealmAny?) {
+                    if (actual?.type == RealmAny.Type.OBJECT) {
+                        var assertionSucceeded = false
+                        for (value in realmAnyValues) {
+                            if (value?.type == RealmAny.Type.OBJECT) {
+                                assertEquals(
+                                    value.asRealmObject<Sample>().stringField,
+                                    actual.asRealmObject<DynamicRealmObject>()
+                                        .getValue("stringField")
+                                )
+                                assertionSucceeded = true
+                                return
+                            }
+                        }
+                        assertTrue(assertionSucceeded)
+                    } else {
+                        assertTrue(realmAnyValues.contains(actual))
+                    }
+                }
+
+                for (actual in actualReifiedSet) {
+                    assertions(actual)
+                }
+            }
+
+        // In case of testing sets we have to skip dynamic managed objects inside a
+        // RealmSet<RealmAny> since the semantics prevent us from writing a DynamicRealmObject
+        // in this way, rightfully so. The reason for this is that we use the regular realm's
+        // accessors which go through the non-dynamic path so objects inside the set are expected
+        // to be non-dynamic - the 'issueDynamicObject' flag is always false following this path.
+        // This should be tested for DynamicMutableRealm instead.
+    }
     @Test
     fun get_realmAnyDictionary() {
         val realmAnyValues = realmDictionaryOf(
@@ -1669,6 +1776,70 @@ class DynamicRealmObjectTests {
         // accessors which go through the non-dynamic path so objects inside the list are expected
         // to be non-dynamic - the 'issueDynamicObject' flag is always false following this path.
         // This should be tested for DynamicMutableRealm instead.
+    }
+
+    @Test
+    fun get_realmAny_nestedCollectionsInDictionary() {
+        val unmanagedSample = Sample().apply {
+            nullableRealmAnyField = RealmAny.create(
+                realmDictionaryOf(
+                    "list" to RealmAny.create(
+                        realmListOf(RealmAny.create(Sample().apply { stringField = "INNER_LIST" }))
+                    ),
+                    "set" to RealmAny.create(
+                        realmSetOf(RealmAny.create(Sample().apply { stringField = "INNER_SET" }))
+                    ),
+                    "dict" to RealmAny.create(
+                        realmDictionaryOf("key" to RealmAny.create(Sample().apply { stringField = "INNER_DICT" }))
+                    ),
+                )
+            )
+        }
+        realm.writeBlocking { copyToRealm(unmanagedSample) }
+        realm.asDynamicRealm()
+            .also { dynamicRealm ->
+                val dynamicSample = dynamicRealm.query("Sample")
+                    .find()
+                    .first()
+
+                val actualDictionary = dynamicSample.getNullableValue(
+                    Sample::nullableRealmAnyField.name,
+                    RealmAny::class
+                )!!.asDictionary()
+
+                actualDictionary["list"]!!.let { innerList ->
+                    val innerSample = innerList.asList()[0]!!
+                    val actualSample = innerSample.asRealmObject<DynamicRealmObject>()
+                    assertIs<DynamicRealmObject>(actualSample)
+                    assertEquals("INNER_LIST", actualSample.getValue("stringField"))
+
+                    assertFailsWith<ClassCastException> {
+                        innerSample.asRealmObject<Sample>()
+                    }
+                }
+                actualDictionary["set"]!!.let { innerSet ->
+                    val innerSample = innerSet.asSet()!!.first()!!
+                    val actualSample =
+                        innerSample.asRealmObject<DynamicRealmObject>()
+                    assertIs<DynamicRealmObject>(actualSample)
+                    assertEquals("INNER_SET", actualSample.getValue("stringField"))
+
+                    assertFailsWith<ClassCastException> {
+                        innerSample.asRealmObject<Sample>()
+                    }
+                }
+                actualDictionary["dict"]!!.let { innerDictionary ->
+                    val innerSample = innerDictionary.asDictionary()!!["key"]!!
+                    val actualSample =
+                        innerSample.asRealmObject<DynamicRealmObject>()
+                    assertIs<DynamicRealmObject>(actualSample)
+                    assertEquals("INNER_DICT", actualSample.getValue("stringField"))
+
+                    assertFailsWith<ClassCastException> {
+                        innerSample.asRealmObject<Sample>()
+                    }
+                }
+            }
     }
 
     @Test

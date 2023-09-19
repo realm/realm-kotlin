@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -463,6 +464,19 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
     }
 
+    actual fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
+        realmc.realm_set_set(obj.cptr(), key.key)
+        return realm_get_set(obj, key)
+    }
+    actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
+        realmc.realm_set_list(obj.cptr(), key.key)
+        return realm_get_list(obj, key)
+    }
+    actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer {
+        realmc.realm_set_dictionary(obj.cptr(), key.key)
+        return realm_get_dictionary(obj, key)
+    }
+
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
         realmc.realm_object_add_int(obj.cptr(), key.key, value)
     }
@@ -519,6 +533,13 @@ actual object RealmInterop {
         realmc.realm_list_get(list.cptr(), index, struct)
         return RealmValue(struct)
     }
+    actual fun realm_list_get_set(list: RealmListPointer, index: Long): RealmSetPointer =
+        LongPointerWrapper(realmc.realm_list_get_set(list.cptr(), index))
+    actual fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer =
+        LongPointerWrapper(realmc.realm_list_get_list(list.cptr(), index))
+
+    actual fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer =
+        LongPointerWrapper(realmc.realm_list_get_dictionary(list.cptr(), index))
 
     actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
         realmc.realm_list_insert(list.cptr(), index, transport.value)
@@ -526,6 +547,24 @@ actual object RealmInterop {
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
+    }
+    actual fun realm_list_insert_set(list: RealmListPointer, index: Long): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_set(list.cptr(), index))
+    }
+    actual fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_list(list.cptr(), index))
+    }
+    actual fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_list_insert_dictionary(list.cptr(), index))
+    }
+    actual fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_list_set_set(list.cptr(), index))
+    }
+    actual fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_list_set_list(list.cptr(), index))
+    }
+    actual fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_list_set_dictionary(list.cptr(), index))
     }
 
     actual fun realm_list_set(
@@ -683,6 +722,25 @@ actual object RealmInterop {
         realmc.realm_dictionary_find(dictionary.cptr(), mapKey.value, struct, found)
         return RealmValue(struct)
     }
+    actual fun realm_dictionary_find_set(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_get_set(dictionary.cptr(), mapKey.value))
+    }
+
+    actual fun realm_dictionary_find_list(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_get_list(dictionary.cptr(), mapKey.value))
+    }
+    actual fun realm_dictionary_find_dictionary(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_get_dictionary(dictionary.cptr(), mapKey.value))
+    }
 
     actual fun MemAllocator.realm_dictionary_get(
         dictionary: RealmMapPointer,
@@ -750,6 +808,17 @@ actual object RealmInterop {
                 this.link = link
             }
         )
+    }
+    actual fun realm_dictionary_insert_set(dictionary: RealmMapPointer, mapKey: RealmValue): RealmSetPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_insert_set(dictionary.cptr(), mapKey.value))
+    }
+
+    actual fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_insert_list(dictionary.cptr(), mapKey.value))
+    }
+
+    actual fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer {
+        return LongPointerWrapper(realmc.realm_dictionary_insert_dictionary(dictionary.cptr(), mapKey.value))
     }
 
     actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
@@ -886,7 +955,11 @@ actual object RealmInterop {
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
+        // Not exposed in SDK yet, but could be used to provide optimized notifications when
+        // collections are cleared.
+        //  https://github.com/realm/realm-kotlin/issues/1498
         val collectionWasCleared = BooleanArray(1)
+        val collectionWasDeleted = BooleanArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
@@ -894,7 +967,8 @@ actual object RealmInterop {
             insertionCount,
             modificationCount,
             movesCount,
-            collectionWasCleared
+            collectionWasCleared,
+            collectionWasDeleted,
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
@@ -978,16 +1052,22 @@ actual object RealmInterop {
         val deletions = longArrayOf(0)
         val insertions = longArrayOf(0)
         val modifications = longArrayOf(0)
+        val collectionWasDeleted = BooleanArray(1)
         realmc.realm_dictionary_get_changes(
             change.cptr(),
             deletions,
             insertions,
-            modifications
+            modifications,
+            collectionWasDeleted,
         )
 
         val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
         val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
         val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
+        // Not exposed in SDK yet, but could be used to provide optimized notifications when
+        // collections are cleared.
+        //  https://github.com/realm/realm-kotlin/issues/1498
+        val collectionWasCleared = booleanArrayOf(false)
         realmc.realm_dictionary_get_changed_keys(
             change.cptr(),
             deletionStructs,
@@ -995,7 +1075,8 @@ actual object RealmInterop {
             insertionStructs,
             insertions,
             modificationStructs,
-            modifications
+            modifications,
+            collectionWasCleared
         )
 
         // TODO optimize - integrate within mem allocator?
@@ -1767,6 +1848,15 @@ actual object RealmInterop {
         realmc.realm_results_get(results.cptr(), index, value)
         return RealmValue(value)
     }
+
+    actual fun realm_results_get_set(results: RealmResultsPointer, index: Long): RealmSetPointer =
+        LongPointerWrapper(realmc.realm_results_get_set(results.cptr(), index))
+
+    actual fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer =
+        LongPointerWrapper(realmc.realm_results_get_list(results.cptr(), index))
+
+    actual fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer =
+        LongPointerWrapper(realmc.realm_results_get_dictionary(results.cptr(), index))
 
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_get_object(realm.cptr(), link.classKey.key, link.objKey))

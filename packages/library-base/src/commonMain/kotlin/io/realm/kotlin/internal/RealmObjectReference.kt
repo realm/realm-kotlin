@@ -141,7 +141,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
         objectPointer.let { RealmInterop.realm_object_delete(it) }
     }
 
-    internal fun isValid(): Boolean {
+    override fun isValid(): Boolean {
         val ptr = objectPointer
         return if (ptr != null) {
             !ptr.isReleased() && RealmInterop.realm_object_is_valid(ptr)
