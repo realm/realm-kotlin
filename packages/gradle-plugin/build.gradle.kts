@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import kotlin.text.toBoolean
-import java.io.ByteArrayOutputStream
 
 plugins {
     kotlin("jvm")
@@ -95,26 +94,22 @@ sourceSets {
     }
 }
 
-// Task to fetch core version from dependency.list from core submodule
-tasks.create("coreVersion", Exec::class.java) {
-    workingDir = project.file(listOf("..", "external", "core").joinToString(File.separator))
-    commandLine = listOf("grep", "^VERSION", "dependencies.list")
-    standardOutput = ByteArrayOutputStream()
-    doLast {
-        extra["output"] = standardOutput.toString().trim().split("=")[1]
-    }
-}
-
 // Task to generate gradle plugin runtime constants for SDK and core versions
 tasks.create("versionConstants") {
+    val coreDependenciesFile = layout.projectDirectory.file(
+        listOf("..", "external", "core", "dependencies.list").joinToString(File.separator)
+    )
     val outputDir = file(versionDirectory)
     inputs.property("version", project.version)
+    inputs.file(coreDependenciesFile)
     outputs.dir(outputDir)
 
-    dependsOn(tasks["coreVersion"])
+    val versionRegex = "^VERSION=(.*)\$".toRegex()
+    val coreVersion = providers.fileContents(coreDependenciesFile).asText.get().lineSequence()
+        .map { dependecy -> versionRegex.find(dependecy)?.groups?.get(1)?.value }.single { it != null }
+
     doLast {
         val versionFile = file("$outputDir/io/realm/kotlin/gradle/version.kt")
-        val coreVersion = (tasks["coreVersion"] as Exec).extra["output"]
         versionFile.parentFile.mkdirs()
         versionFile.writeText(
             """
