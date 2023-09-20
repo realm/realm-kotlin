@@ -127,27 +127,12 @@ internal class RealmAnyImpl<T : Any> constructor(
         if (other.type != this.type) return false
         if (clazz == ByteArray::class) {
             if (other.internalValue !is ByteArray) return false
-            if (!other.internalValue.contentEquals(this.internalValue as ByteArray)) return false
-        } else if (internalValue is BsonObjectId) {
-            if (other.clazz != BsonObjectId::class) return false
-            if (other.internalValue != this.internalValue) return false
+            return other.internalValue.contentEquals(this.internalValue as ByteArray)
         } else if (internalValue is RealmObject) {
             if (other.clazz != this.clazz) return false
-            if (other.internalValue !== this.internalValue) return false
-        } else if (internalValue is Number) { // Numerics are the same as long as their value is the same
-            when (other.internalValue) {
-                is Char -> if (other.internalValue.code.toLong() != internalValue.toLong()) return false
-                is Number -> if (other.internalValue.toLong() != this.internalValue.toLong()) return false
-                else -> return false
-            }
-        } else if (internalValue is Char) { // We are comparing chars
-            when (other.internalValue) {
-                is Char -> if (other.internalValue.code.toLong() != internalValue.toLong()) return false
-                is Number -> if (other.internalValue.toLong() != this.internalValue.toLong()) return false
-                else -> return false
-            }
+            return other.internalValue == this.internalValue
         }
-        return true
+        return internalValue == other.internalValue
     }
 
     override fun hashCode(): Int {
