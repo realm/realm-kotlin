@@ -1,4 +1,4 @@
-## 1.12.0-SNAPSHOT (YYYY-MM-DD)
+## 1.12.0-NEXTMAJORCORE-SNAPSHOT (YYYY-MM-DD)
 
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
 
