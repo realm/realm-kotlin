@@ -3,6 +3,7 @@ package io.realm
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.ParameterizedTypeName
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeVariableName
@@ -13,7 +14,7 @@ import kotlin.reflect.KClass
 
 private val REALM_OBJECT_CLASS_NAME = ClassName("io.realm.kotlin.types", "RealmObject")
 private val REALM_LIST_CLASS_NAME = ClassName("io.realm.kotlin.types", "RealmList")
-private val KCLASS_SET_CLASS_NAME = List::class
+private val KCLASS_LIST_CLASS_NAME: ParameterizedTypeName = List::class
     .asClassName()
     .parameterizedBy(
         KClass::class
@@ -21,7 +22,7 @@ private val KCLASS_SET_CLASS_NAME = List::class
             .parameterizedBy(TypeVariableName("out RealmObject"))
     )
 
-private val MAP_SETS_CLASS_NAME = Map::class
+private val MAP_STRING_KCLASS_LIST_CLASS_NAME: ParameterizedTypeName = Map::class
     .asClassName()
     .parameterizedBy(
         String::class.asClassName(),
@@ -34,7 +35,7 @@ private val MAP_SETS_CLASS_NAME = Map::class
             )
     )
 
-private val STRINT_REALM_LIST_CLASS_NAME = REALM_LIST_CLASS_NAME
+private val STRINT_REALM_LIST_CLASS_NAME: ParameterizedTypeName = REALM_LIST_CLASS_NAME
     .parameterizedBy(
         String::class.asClassName()
     )
@@ -102,7 +103,7 @@ private fun generateClasses(
         // add a property to facilitate accessing these generated classes
         addProperty(
             PropertySpec
-                .builder(setName, KCLASS_SET_CLASS_NAME)
+                .builder(setName, KCLASS_LIST_CLASS_NAME)
                 .initializer(classesAsList)
                 .build()
         )
@@ -130,7 +131,7 @@ fun generateSuiteEntryPoint(
 
         addProperty(
             PropertySpec
-                .builder("${name}ClassesMap", MAP_SETS_CLASS_NAME)
+                .builder("${name}ClassesMap", MAP_STRING_KCLASS_LIST_CLASS_NAME)
                 .initializer(generatedSetsAsMap)
                 .build()
         )
