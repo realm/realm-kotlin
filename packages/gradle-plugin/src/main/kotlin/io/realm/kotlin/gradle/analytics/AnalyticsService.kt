@@ -177,12 +177,14 @@ abstract class HostIdentifier : ValueSource<String, ValueSourceParameters.None> 
     @get:Inject
     abstract val execOperations: ExecOperations
 
-    val identifier: String =
-        when (HOST_OS) {
-            Host.WINDOWS -> windowsIdentifier
-            Host.MACOS -> macOsIdentifier
-            Host.LINUX -> linuxIdentifier
-            else -> throw IllegalStateException("Unknown host identifier")
+    val identifier: String
+        get() {
+           return when (HOST_OS) {
+                Host.WINDOWS -> windowsIdentifier
+                Host.MACOS -> macOsIdentifier
+                Host.LINUX -> linuxIdentifier
+                else -> throw IllegalStateException("Unknown host identifier")
+            }
         }
     abstract val linuxIdentifier: String
     abstract val macOsIdentifier: String
@@ -259,6 +261,8 @@ abstract class ComputerId : HostIdentifier() {
  * Successor of [ComputerId] standardized across SDKs.
  */
 abstract class BuilderId : HostIdentifier() {
+    private val logger: Logger = Logging.getLogger("realm-analytics")
+
     override val linuxIdentifier: String
         get() {
             return File("/etc/machine-id").inputStream().readBytes().toString().trim()
@@ -281,11 +285,12 @@ abstract class BuilderId : HostIdentifier() {
         get() {
             val output = ByteArrayOutputStream()
             execOperations.exec {
-                it.commandLine("Reg", "QUERY", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography", "MachineGuid")
+                it.commandLine("reg", "QUERY", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography", "/v", "MachineGuid")
                 it.standardOutput = output
             }
             val input = String(output.toByteArray(), Charset.defaultCharset())
             // Manually expanded [:alnum:] as ([[:alnum:]-]+) didn't seems to work
+            // Output from Windows will be something like `MachineGuid    REG_SZ    1c197ec7-adbd-4c3a-8386-306c20e0f686`
             val regEx = "\\s*MachineGuid\\s*\\w*\\s*([A-Za-z0-9-]+)".toRegex()
             val find: MatchResult? = regEx.find(input)
             return find?.groups?.get(1)?.value!!
@@ -295,7 +300,8 @@ abstract class BuilderId : HostIdentifier() {
         val id = identifier
         val data = "Realm is great$id"
         base64Encode(sha256Hash(data.toByteArray()))!!
-    } catch (e: Exception) {
+    } catch (ex: Exception) {
+        logger.debug("Failed to calculate machine id: $ex")
         "UNKNOWN"
     }
 }
