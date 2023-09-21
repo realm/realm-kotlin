@@ -63,7 +63,6 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -79,7 +78,6 @@ import okio.Path.Companion.toPath
 import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
-import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -119,7 +117,7 @@ class SyncedRealmTests {
             app.createUserAndLogIn(email, password)
         }
 
-        syncConfiguration = createSyncConfig(
+        syncConfiguration = createPartitionSyncConfig(
             user = user,
             partitionValue = partitionValue,
         )
@@ -149,7 +147,7 @@ class SyncedRealmTests {
         val user = app.createUserAndLogIn(email, password)
         val partitionValue = Random.nextULong().toString()
 
-        val config1 = createSyncConfig(
+        val config1 = createPartitionSyncConfig(
             user = user, partitionValue = partitionValue, name = "db1",
             errorHandler = object : SyncSession.ErrorHandler {
                 override fun onError(session: SyncSession, error: SyncException) {
@@ -158,7 +156,7 @@ class SyncedRealmTests {
             }
         )
         Realm.open(config1).use { realm1 ->
-            val config2 = createSyncConfig(
+            val config2 = createPartitionSyncConfig(
                 user = user, partitionValue = partitionValue, name = "db2",
                 errorHandler = object : SyncSession.ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
@@ -216,11 +214,10 @@ class SyncedRealmTests {
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
 
-        val config1 = createSyncConfig(
+        val config1 = createPartitionSyncConfig(
             user = user1,
             name = "db1.realm",
-            partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
+            partitionValue = partitionValue
         )
         val realm1 = Realm.open(config1)
         val c = Channel<RealmChange<Realm>>(1)
@@ -233,11 +230,10 @@ class SyncedRealmTests {
         assertTrue(event is InitialRealm)
 
         // Write remote change
-        createSyncConfig(
+        createPartitionSyncConfig(
             user = user2,
             name = "db2.realm",
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         ).let { config ->
             Realm.open(config).use { realm ->
                 realm.write {
@@ -274,10 +270,10 @@ class SyncedRealmTests {
 
         val partitionValue = Random.nextLong().toString()
         // Setup two realms that synchronizes with the backend
-        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val config1 = createPartitionSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
         val realm1 = Realm.open(config1)
         assertNotNull(realm1)
-        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val config2 = createPartitionSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
         val realm2 = Realm.open(config2)
         assertNotNull(realm2)
 
@@ -296,7 +292,7 @@ class SyncedRealmTests {
         // writer and notifier) are opened before the schema is synced from the server, but
         // empirically it has shown not to be the case and cause trouble if opening the second or
         // third realm with the wrong sync-intended schema mode.
-        val config3 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db3")
+        val config3 = createPartitionSyncConfig(user = user, partitionValue = partitionValue, name = "db3")
         val realm3 = Realm.open(config3)
         assertNotNull(realm3)
 
@@ -620,10 +616,9 @@ class SyncedRealmTests {
         val id = "id-${Random.nextLong()}"
         val masterObject = SyncObjectWithAllTypes.createWithSampleData(id)
 
-        createSyncConfig(
+        createPartitionSyncConfig(
             user = user1,
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         ).let { config ->
             Realm.open(config).use { realm ->
                 realm.write {
@@ -632,10 +627,9 @@ class SyncedRealmTests {
                 realm.syncSession.uploadAllLocalChanges()
             }
         }
-        createSyncConfig(
+        createPartitionSyncConfig(
             user = user2,
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         ).let { config ->
             Realm.open(config).use { realm ->
                 val list: RealmResults<SyncObjectWithAllTypes> =
@@ -654,16 +648,17 @@ class SyncedRealmTests {
     // return the full on-disk schema from ObjectStore, but for typed Realms the user visible schema
     // should still only return classes and properties that was defined by the user.
     @Test
+    @Ignore // TODO Need to adopt this to developer mode
     fun onlyLocalSchemaIsVisible() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
         val (email2, password2) = randomEmail() to "password1234"
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
 
-        createSyncConfig(
+        createPartitionSyncConfig(
             user = user1,
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class, ChildPk::class)
+            // schema = setOf(SyncObjectWithAllTypes::class, ChildPk::class)
         ).let { config ->
             Realm.open(config).use { realm ->
                 realm.syncSession.uploadAllLocalChanges()
@@ -676,10 +671,10 @@ class SyncedRealmTests {
                 assertNotNull(childPkSchema["linkedFrom"])
             }
         }
-        createSyncConfig(
+        createPartitionSyncConfig(
             user = user2,
             partitionValue = partitionValue,
-            schema = setOf(io.realm.kotlin.entities.sync.subset.ChildPk::class)
+            // schema = setOf(io.realm.kotlin.entities.sync.subset.ChildPk::class)
         ).let { config ->
             Realm.open(config).use { realm ->
                 // Make sure that server schema changes are integrated
@@ -701,27 +696,24 @@ class SyncedRealmTests {
     @Test
     fun mutableRealmInt_convergesAcrossClients() = runBlocking {
         // Updates and initial data upload are carried out using this config
-        val config0 = createSyncConfig(
+        val config0 = createPartitionSyncConfig(
             user = app.createUserAndLogIn(randomEmail(), "password1234"),
             partitionValue = partitionValue,
             name = "db1",
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
 
         // Config for update 1
-        val config1 = createSyncConfig(
+        val config1 = createPartitionSyncConfig(
             user = app.createUserAndLogIn(randomEmail(), "password1234"),
             partitionValue = partitionValue,
             name = "db2",
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
 
         // Config for update 2
-        val config2 = createSyncConfig(
+        val config2 = createPartitionSyncConfig(
             user = app.createUserAndLogIn(randomEmail(), "password1234"),
             partitionValue = partitionValue,
             name = "db3",
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
 
         val counterValue = Channel<Long>(1)
@@ -816,17 +808,15 @@ class SyncedRealmTests {
         val user2 = app.createUserAndLogIn(email2, password2)
         val localConfig = createWriteCopyLocalConfig("local.realm")
         val partitionValue = TestHelper.randomPartitionValue()
-        val syncConfig1 = createSyncConfig(
+        val syncConfig1 = createPartitionSyncConfig(
             user = user1,
             name = "sync1.realm",
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
-        val syncConfig2 = createSyncConfig(
+        val syncConfig2 = createPartitionSyncConfig(
             user = user2,
             name = "sync2.realm",
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
         Realm.open(localConfig).use { localRealm ->
             localRealm.writeBlocking {
@@ -876,12 +866,7 @@ class SyncedRealmTests {
             val user1 = flexApp.createUserAndLogIn(email1, password1)
             val localConfig = createWriteCopyLocalConfig("local.realm")
             val flexSyncConfig = createFlexibleSyncConfig(
-                user = user1,
-                schema = setOf(
-                    FlexParentObject::class,
-                    FlexChildObject::class,
-                    FlexEmbeddedObject::class
-                )
+                user = user1
             )
             Realm.open(localConfig).use { localRealm ->
                 localRealm.writeBlocking {
@@ -907,11 +892,10 @@ class SyncedRealmTests {
         val migratedLocalConfig =
             createWriteCopyLocalConfig("local.realm", directory = dir, schemaVersion = 1)
         val partitionValue = TestHelper.randomPartitionValue()
-        val syncConfig = createSyncConfig(
+        val syncConfig = createPartitionSyncConfig(
             user = user,
             name = "sync1.realm",
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
         Realm.open(syncConfig).use { syncRealm ->
             // Write local data
@@ -960,15 +944,10 @@ class SyncedRealmTests {
             val (email1, password1) = randomEmail() to "password1234"
             val user = flexApp.createUserAndLogIn(email1, password1)
             val localConfig = createWriteCopyLocalConfig("local.realm")
-            val syncConfig = createSyncConfig(
+            val syncConfig = createPartitionSyncConfig(
                 user = user,
                 name = "sync.realm",
                 partitionValue = partitionValue,
-                schema = setOf(
-                    FlexParentObject::class,
-                    FlexChildObject::class,
-                    FlexEmbeddedObject::class
-                )
             )
             Realm.open(syncConfig).use { flexSyncRealm: Realm ->
                 flexSyncRealm.writeBlocking {
@@ -995,17 +974,15 @@ class SyncedRealmTests {
         val (email2, password2) = randomEmail() to "password1234"
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
-        val syncConfig1 = createSyncConfig(
+        val syncConfig1 = createPartitionSyncConfig(
             user = user1,
             name = "sync1.realm",
             partitionValue = TestHelper.randomPartitionValue(),
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
-        val syncConfig2 = createSyncConfig(
+        val syncConfig2 = createPartitionSyncConfig(
             user = user2,
             name = "sync2.realm",
             partitionValue = TestHelper.randomPartitionValue(),
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
         Realm.open(syncConfig1).use { syncRealm1 ->
             syncRealm1.writeBlocking {
@@ -1039,17 +1016,15 @@ class SyncedRealmTests {
         val user1 = app.createUserAndLogIn(email1, password1)
         val user2 = app.createUserAndLogIn(email2, password2)
         val partitionValue = TestHelper.randomPartitionValue()
-        val syncConfig1 = createSyncConfig(
+        val syncConfig1 = createPartitionSyncConfig(
             user = user1,
             name = "sync1.realm",
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
-        val syncConfig2 = createSyncConfig(
+        val syncConfig2 = createPartitionSyncConfig(
             user = user2,
             name = "sync2.realm",
             partitionValue = partitionValue,
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
         Realm.open(syncConfig1).use { syncRealm1 ->
             // Write local data
@@ -1098,11 +1073,6 @@ class SyncedRealmTests {
                 errorHandler = { _, error ->
                     fail(error.toString())
                 },
-                schema = setOf(
-                    FlexParentObject::class,
-                    FlexChildObject::class,
-                    FlexEmbeddedObject::class
-                ),
                 initialSubscriptions = { realm: Realm ->
                     realm.query<FlexParentObject>("section = $0", section).subscribe(name = "parentSubscription")
                 }
@@ -1112,12 +1082,7 @@ class SyncedRealmTests {
                 name = "sync2.realm",
                 errorHandler = { _, error ->
                     fail(error.toString())
-                },
-                schema = setOf(
-                    FlexParentObject::class,
-                    FlexChildObject::class,
-                    FlexEmbeddedObject::class
-                )
+                }
             )
 
             Realm.open(syncConfig1).use { flexRealm1: Realm ->
@@ -1167,17 +1132,15 @@ class SyncedRealmTests {
     fun writeCopyTo_dataNotUploaded_throws() = runBlocking {
         val (email1, password1) = randomEmail() to "password1234"
         val user1 = app.createUserAndLogIn(email1, password1)
-        val syncConfigA = createSyncConfig(
+        val syncConfigA = createPartitionSyncConfig(
             user = user1,
             name = "a.realm",
             partitionValue = TestHelper.randomPartitionValue(),
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
-        val syncConfigB = createSyncConfig(
+        val syncConfigB = createPartitionSyncConfig(
             user = user1,
             name = "b.realm",
             partitionValue = TestHelper.randomPartitionValue(),
-            schema = setOf(SyncObjectWithAllTypes::class)
         )
         Realm.open(syncConfigA).use { realm ->
             realm.syncSession.pause()
@@ -1312,8 +1275,8 @@ class SyncedRealmTests {
 
         partitionValue = TestHelper.randomPartitionValue()
 
-        val config1 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
-        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
+        val config1 = createPartitionSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val config2 = createPartitionSyncConfig(user = user, partitionValue = partitionValue, name = "db2")
 
         Realm.open(config1).use { realm1 ->
             Realm.open(config2).use { realm2 ->
@@ -1356,7 +1319,7 @@ class SyncedRealmTests {
                 copyToRealm(ParentPk().apply { _id = ObjectId().toString() })
             }
             .build()
-        val config2 = createSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
+        val config2 = createPartitionSyncConfig(user = user, partitionValue = partitionValue, name = "db1")
         Realm.open(config1).use {
             assertEquals(2, it.query<ParentPk>().find().size)
             it.writeCopyTo(config2)
@@ -1372,7 +1335,7 @@ class SyncedRealmTests {
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
-        val config1 = createSyncConfig(
+        val config1 = createPartitionSyncConfig(
             user = user, partitionValue = partitionValue, name = "db1",
             errorHandler = object : SyncSession.ErrorHandler {
                 override fun onError(session: SyncSession, error: SyncException) {
@@ -1395,7 +1358,7 @@ class SyncedRealmTests {
             }
         }
 
-        val config2 = createSyncConfig(
+        val config2 = createPartitionSyncConfig(
             user = user, partitionValue = partitionValue, name = "db1",
             errorHandler = object : SyncSession.ErrorHandler {
                 override fun onError(session: SyncSession, error: SyncException) {
@@ -1442,11 +1405,6 @@ class SyncedRealmTests {
                 errorHandler = { _, error ->
                     fail(error.toString())
                 },
-                schema = setOf(
-                    FlexParentObject::class,
-                    FlexChildObject::class,
-                    FlexEmbeddedObject::class
-                ),
                 initialSubscriptions = { realm: Realm ->
                     realm.query<FlexParentObject>()
                         .subscribe(name = "parentSubscription")
@@ -1457,12 +1415,7 @@ class SyncedRealmTests {
                 name = "asset-fs.realm",
                 errorHandler = { _, error ->
                     fail(error.toString())
-                },
-                schema = setOf(
-                    FlexParentObject::class,
-                    FlexChildObject::class,
-                    FlexEmbeddedObject::class
-                )
+                }
             )
 
             Realm.open(syncConfig1).use { flexRealm1: Realm ->
@@ -1504,12 +1457,7 @@ class SyncedRealmTests {
                 name = "sync1.realm",
                 errorHandler = { _, error ->
                     fail(error.toString())
-                },
-                schema = setOf(
-                    FlexParentObject::class,
-                    FlexChildObject::class,
-                    FlexEmbeddedObject::class
-                ),
+                }
             ) {
                 initialRealmFile("asset-fs.realm")
                 initialData {
@@ -1531,7 +1479,7 @@ class SyncedRealmTests {
             app.createUserAndLogIn(email, password)
         }
 
-        val local = createSyncConfig(user = user, partitionValue = partitionValue, name = "local") {
+        val local = createPartitionSyncConfig(user = user, partitionValue = partitionValue, name = "local") {
             initialRealmFile("asset-local.realm")
         }
         assertFalse(fileExists(local.path))
@@ -1898,17 +1846,16 @@ class SyncedRealmTests {
 //        }
 
     @Suppress("LongParameterList")
-    private fun createSyncConfig(
+    private fun createPartitionSyncConfig(
         user: User,
         partitionValue: String,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
-        schema: Set<KClass<out BaseRealmObject>> = setOf(ParentPk::class, ChildPk::class),
         block: SyncConfiguration.Builder.() -> Unit = {}
     ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = schema,
+        schema = PARTITION_SYNC_SCHEMA,
         user = user,
         partitionValue = partitionValue
     ).name(name).also { builder ->
@@ -1925,16 +1872,11 @@ class SyncedRealmTests {
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
-        schema: Set<KClass<out BaseRealmObject>> = setOf(
-            FlexParentObject::class,
-            FlexChildObject::class,
-            FlexEmbeddedObject::class
-        ),
         initialSubscriptions: InitialSubscriptionsCallback? = null,
         block: SyncConfiguration.Builder.() -> Unit = {},
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
-        schema = schema
+        schema = FLX_SYNC_SCHEMA
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)

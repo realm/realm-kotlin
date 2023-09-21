@@ -21,8 +21,6 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.entities.sync.SyncPerson
-import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.ErrorCode
@@ -161,11 +159,7 @@ class SyncClientResetIntegrationTests {
                 configBuilderGenerator = { user ->
                     return@TestEnvironment SyncConfiguration.Builder(
                         user,
-                        setOf(
-                            FlexParentObject::class,
-                            FlexChildObject::class,
-                            FlexEmbeddedObject::class
-                        )
+                        FLX_SYNC_SCHEMA
                     ).initialSubscriptions { realm ->
                         realm.query<FlexParentObject>(
                             "section = $0 AND name = $1",
@@ -220,7 +214,7 @@ class SyncClientResetIntegrationTests {
                 return@TestEnvironment SyncConfiguration.Builder(
                     user,
                     TestHelper.randomPartitionValue(),
-                    schema = setOf(SyncPerson::class)
+                    schema = PARTITION_SYNC_SCHEMA
                 )
             },
             insertElement = { realm: Realm ->
