@@ -304,7 +304,7 @@ abstract class BuilderId : HostIdentifier() {
         base64Encode(sha256Hash(data.toByteArray()))!!
     } catch (ex: Exception) {
         logger.debug("Failed to calculate machine id: $ex")
-        "UNKNOWN"
+        UNKNOWN
     }
 }
 
