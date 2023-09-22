@@ -17,8 +17,6 @@
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
-import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -45,7 +43,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import kotlin.text.Typography.section
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -67,7 +64,7 @@ class SubscriptionExtensionsTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = FLX_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -136,7 +133,7 @@ class SubscriptionExtensionsTests {
         val user1 = app.createUserAndLogIn(email, password)
         val config = SyncConfiguration.Builder(
             user1,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = FLX_SYNC_SCHEMA
         ).initialSubscriptions { realm: Realm ->
             realm.query<FlexParentObject>("section = $0", section).subscribe()
         }.build()
@@ -394,7 +391,7 @@ class SubscriptionExtensionsTests {
 
     private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
         val user = app.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class))
+        val config = SyncConfiguration.Builder(user, FLX_SYNC_SCHEMA)
             .initialSubscriptions {
                 it.query<FlexParentObject>().subscribe()
             }

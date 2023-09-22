@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
@@ -55,8 +54,6 @@ import kotlin.reflect.KClass
 public class RealmImpl private constructor(
     configuration: InternalConfiguration,
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
-
-    private val realmPointerMutex = Mutex()
 
     public val notificationScheduler: LiveRealmContext =
         configuration.notificationDispatcherFactory.createLiveRealmContext()
@@ -85,6 +82,7 @@ public class RealmImpl private constructor(
 
     private var _realmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
     private val realmReferenceLock = SynchronizableObject()
+    private val isClosed = atomic(false)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -103,7 +101,8 @@ public class RealmImpl private constructor(
 
     // Injection point for synchronized Realms. This property should only be used to hold state
     // required by synchronized realms. See `SyncedRealmContext` for more details.
-    public var syncContext: AtomicRef<Any?> = atomic(null)
+    @OptIn(ExperimentalStdlibApi::class)
+    public var syncContext: AtomicRef<AutoCloseable?> = atomic(null)
 
     init {
         @Suppress("TooGenericExceptionCaught")
@@ -261,27 +260,39 @@ public class RealmImpl private constructor(
         return VersionInfo(mainVersions, notifier.versions(), writer.versions())
     }
 
+    override fun isClosed(): Boolean {
+        // We cannot rely on `realmReference()` here. If something happens during open, this might
+        // not be available and will throw, so we need to track closed state separately.
+        return isClosed.value
+    }
+
     override fun close() {
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
         //  writer thread and just close the realm in writer.close()
         writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
-        runBlocking {
-            realmPointerMutex.withLock {
+        realmReferenceLock.withLock {
+            if (isClosed()) {
+                return
+            }
+            isClosed.value = true
+            runBlocking {
                 writer.close()
                 realmScope.cancel()
                 notifier.close()
                 versionTracker.close()
+                @OptIn(ExperimentalStdlibApi::class)
+                syncContext.value?.close()
                 // The local realmReference is pointing to a realm reference managed by either the
                 // version tracker, writer or notifier, so it is already closed
                 super.close()
             }
-        }
-        if (!realmStateFlow.tryEmit(State.CLOSED)) {
-            log.warn("Cannot signal internal close")
-        }
+            if (!realmStateFlow.tryEmit(State.CLOSED)) {
+                log.warn("Cannot signal internal close")
+            }
 
-        notificationScheduler.close()
-        writeScheduler.close()
+            notificationScheduler.close()
+            writeScheduler.close()
+        }
     }
 
     internal companion object {

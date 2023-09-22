@@ -4,10 +4,17 @@
 * None.
 
 ### Enhancements
-* None.
+* Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. ([#1513](https://github.com/realm/realm-kotlin/issues/1513))
 
 ### Fixed
-* None.
+* `Realm.close()` is now idempotent.
+* Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] Manual client reset on Windows would not trigger correctly when run inside `onManualResetFallback`. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
+GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

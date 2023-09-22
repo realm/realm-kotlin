@@ -23,6 +23,7 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.log.LogLevel
@@ -77,7 +78,7 @@ class RealmConfigurationTests {
     fun with() {
         val config = RealmConfiguration.create(schema = setOf(Sample::class))
         assertEquals(
-            "${appFilesDirectory()}${PATH_SEPARATOR}${Realm.DEFAULT_FILE_NAME}",
+            pathOf(appFilesDirectory(), Realm.DEFAULT_FILE_NAME),
             config.path
         )
         assertEquals(Realm.DEFAULT_FILE_NAME, config.name)
@@ -95,7 +96,7 @@ class RealmConfigurationTests {
     fun defaultPath() {
         val config = RealmConfiguration.create(schema = setOf(Sample::class))
         assertEquals(
-            "${appFilesDirectory()}${PATH_SEPARATOR}${Realm.DEFAULT_FILE_NAME}",
+            pathOf(appFilesDirectory(), Realm.DEFAULT_FILE_NAME),
             config.path
         )
 
@@ -103,7 +104,7 @@ class RealmConfigurationTests {
             RealmConfiguration.Builder(schema = setOf(Sample::class))
                 .build()
         assertEquals(
-            "${appFilesDirectory()}${PATH_SEPARATOR}${Realm.DEFAULT_FILE_NAME}",
+            pathOf(appFilesDirectory(), Realm.DEFAULT_FILE_NAME),
             configFromBuilderWithDefaultName.path
         )
 
@@ -112,17 +113,17 @@ class RealmConfigurationTests {
                 .name("custom.realm")
                 .build()
         assertEquals(
-            "${appFilesDirectory()}${PATH_SEPARATOR}custom.realm",
+            pathOf(appFilesDirectory(), "custom.realm"),
             configFromBuilderWithCustomName.path
         )
 
         val configFromBuilderWithCurrentDir: RealmConfiguration =
             RealmConfiguration.Builder(schema = setOf(Sample::class))
-                .directory(".${PATH_SEPARATOR}my_dir")
+                .directory("./my_dir")
                 .name("foo.realm")
                 .build()
         assertEquals(
-            "${appFilesDirectory()}${PATH_SEPARATOR}my_dir${PATH_SEPARATOR}foo.realm",
+            pathOf(appFilesDirectory(), "my_dir", "foo.realm"),
             configFromBuilderWithCurrentDir.path
         )
     }
@@ -133,16 +134,16 @@ class RealmConfigurationTests {
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .build()
-        assertEquals("$tmpDir$PATH_SEPARATOR${Realm.DEFAULT_FILE_NAME}", config.path)
+        assertEquals(pathOf(tmpDir, Realm.DEFAULT_FILE_NAME), config.path)
     }
 
     @Test
     fun directory_withSpace() {
-        val realmDir = tmpDir + "${PATH_SEPARATOR}dir with space"
+        val realmDir = pathOf(tmpDir, "dir with space")
         val config = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
             .build()
-        assertEquals("$realmDir$PATH_SEPARATOR${Realm.DEFAULT_FILE_NAME}", config.path)
+        assertEquals(pathOf(realmDir, Realm.DEFAULT_FILE_NAME), config.path)
         // Just verifying that we can open the realm
         Realm.open(config).use { }
     }
@@ -158,7 +159,7 @@ class RealmConfigurationTests {
 
     @Test
     fun directory_createIntermediateDirs() {
-        val realmDir = tmpDir + listOf("my", "intermediate", "dir").joinToString(separator = PATH_SEPARATOR, prefix = PATH_SEPARATOR)
+        val realmDir = pathOf(tmpDir, "my", "intermediate", "dir")
         val configBuilder = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .directory(realmDir)
 
@@ -168,7 +169,7 @@ class RealmConfigurationTests {
 
     @Test
     fun directory_isFileThrows() {
-        val tmpFile = "$tmpDir${PATH_SEPARATOR}file"
+        val tmpFile = pathOf(tmpDir, "file")
         platformFileSystem.write(tmpFile.toPath(), mustCreate = true) {
             write(ByteArray(0))
         }
@@ -186,7 +187,7 @@ class RealmConfigurationTests {
     fun directoryAndNameCombine() {
         val realmDir = tmpDir
         val realmName = "my.realm"
-        val expectedPath = "$realmDir${PATH_SEPARATOR}$realmName"
+        val expectedPath = pathOf(realmDir, realmName)
 
         val config =
             RealmConfiguration.Builder(setOf(Sample::class))
@@ -236,7 +237,7 @@ class RealmConfigurationTests {
             .directory(tmpDir)
             .name(name)
             .build()
-        assertEquals("$tmpDir$PATH_SEPARATOR$name", config.path)
+        assertEquals(pathOf(tmpDir, name), config.path)
         // Just verifying that we can open the realm
         Realm.open(config).use { }
     }
