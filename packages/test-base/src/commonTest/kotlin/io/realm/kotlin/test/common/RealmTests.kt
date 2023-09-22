@@ -430,6 +430,14 @@ class RealmTests {
     }
 
     @Test
+    fun close_idempotent() {
+        realm.close()
+        assertTrue(realm.isClosed())
+        realm.close()
+        assertTrue(realm.isClosed())
+    }
+
+    @Test
     @Suppress("LongMethod")
     fun deleteRealm() {
         val fileSystem = FileSystem.SYSTEM
