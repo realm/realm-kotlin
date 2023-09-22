@@ -2544,6 +2544,8 @@ actual object RealmInterop {
                 } catch (e: Throwable) {
                     println(e.message)
                     false
+                } finally {
+                    realm_wrapper.realm_close(afterRealmPtr)
                 }
             },
             StableRef.create(afterHandler).asCPointer(),
