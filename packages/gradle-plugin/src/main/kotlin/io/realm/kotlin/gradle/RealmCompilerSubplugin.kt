@@ -82,11 +82,12 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
         val bundleId = target.rootProject.name + ":" + target.name
         anonymizedBundleId = hexStringify(sha256Hash(bundleId.toByteArray()))
 
-        val disableAnalytics: Boolean = target.gradle.startParameter.isOffline || "true".equals(
+        val submitAnalytics: Boolean = !target.gradle.startParameter.isOffline && !"true".equals(
             System.getenv()["REALM_DISABLE_ANALYTICS"],
             ignoreCase = true
         )
-        if (!disableAnalytics) {
+        val printAnalytics = "true".equals(System.getenv()["REALM_PRINT_ANALYTICS"], ignoreCase = true)
+        if (submitAnalytics || printAnalytics) {
             // Identify if project is using sync by inspecting dependencies.
             // We cannot use resolved configurations here as this code is called in
             // afterEvaluate, and resolving it prevents other plugins from modifying
@@ -110,7 +111,6 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
 
             val userId = target.providers.of(ComputerId::class.java) {}.get()
             val builderId = target.providers.of(BuilderId::class.java) {}.get()
-            val verbose = "true".equals(System.getenv()["REALM_PRINT_ANALYTICS"], ignoreCase = true)
 
             analyticsServiceProvider = target.gradle.sharedServices.registerIfAbsent(
                 "Realm Analytics",
@@ -124,7 +124,8 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
                     this.hostOsVersion.set(System.getProperty("os.version"))
                     this.hostCpuArch.set(HOST_ARCH)
                     this.usesSync.set(usesSync)
-                    this.verbose.set(verbose)
+                    this.submitAnalytics.set(submitAnalytics)
+                    this.printAnalytics.set(printAnalytics)
                 }
             }
         }

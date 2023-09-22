@@ -96,7 +96,8 @@ interface ProjectConfiguration : BuildServiceParameters {
     val hostOsVersion: Property<String>
     val hostCpuArch: Property<String>
     val usesSync: Property<Boolean>
-    val verbose: Property<Boolean>
+    val submitAnalytics: Property<Boolean>
+    val printAnalytics: Property<Boolean>
 }
 
 // Container object for target specific details that varies across compilation targets.
@@ -135,17 +136,18 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
                 }
             }
         """.trimIndent().replace("\n", "").replace("    ", "")
-        sendAnalytics(json, projectInfo.verbose.get())
+        if (projectInfo.printAnalytics.get()) {
+            info("Analytics payload: $json")
+        }
+        if (projectInfo.submitAnalytics.get()) {
+            sendAnalytics(json)
+        }
     }
 
     @Suppress("TooGenericExceptionCaught")
-    private fun sendAnalytics(json: String, verbose: Boolean) {
+    private fun sendAnalytics(json: String) {
         try {
-            if (!verbose) {
-                debug("Submitting analytics payload: $json")
-            } else {
-                info("Submitting analytics payload: $json")
-            }
+            debug("Submitting analytics payload: $json")
             Thread {
                 try {
                     val url = URL(URL_PREFIX + base64Encode(json))
@@ -179,7 +181,7 @@ abstract class HostIdentifier : ValueSource<String, ValueSourceParameters.None> 
 
     val identifier: String
         get() {
-           return when (HOST_OS) {
+            return when (HOST_OS) {
                 Host.WINDOWS -> windowsIdentifier
                 Host.MACOS -> macOsIdentifier
                 Host.LINUX -> linuxIdentifier

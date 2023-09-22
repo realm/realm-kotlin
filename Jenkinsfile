@@ -84,6 +84,7 @@ pipeline {
           ANDROID_NDK="${NDK_HOME}"
           ANDROID_NDK_HOME="${NDK_HOME}"
           REALM_DISABLE_ANALYTICS=true
+          REALM_PRINT_ANALYTICS=true
           JAVA_8='/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home'
           JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
           JAVA_HOME="${JAVA_11}"
