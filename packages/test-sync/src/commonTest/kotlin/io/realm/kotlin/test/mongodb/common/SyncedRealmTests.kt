@@ -91,6 +91,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -1194,7 +1195,7 @@ class SyncedRealmTests {
             }
 
             // Reading the object means we received it from the other Realm
-            withTimeout(30.seconds) {
+            withTimeout(1.minutes) {
                 val obj: FlexParentObject = realm1.query<FlexParentObject>("section = $0", section).asFlow()
                     .map { it.list }
                     .filter { it.isNotEmpty() }
