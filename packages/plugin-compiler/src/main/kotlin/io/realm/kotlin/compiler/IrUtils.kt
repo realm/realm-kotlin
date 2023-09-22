@@ -33,6 +33,11 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
+import org.jetbrains.kotlin.fir.types.FirUserTypeRef
+import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -141,10 +146,9 @@ val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbedde
 
 fun IrType.classIdOrFail(): ClassId = getClass()?.classId ?: error("Can't get classId of ${render()}")
 
-inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
-    // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
+inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
     var hasRealmObjectAsSuperType = false
-    this.findPsi()?.acceptChildren(object : PsiElementVisitor() {
+    this.acceptChildren(object : PsiElementVisitor() {
         override fun visitElement(element: PsiElement) {
             if (element.node.elementType == SUPER_TYPE_LIST) {
                 // Check supertypes for classes with Embbeded/RealmObject as generics and remove
@@ -156,11 +160,11 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
                     .split(",") // Split by commas
                     .filter {
                         !(
-                            it.contains("<RealmObject>") ||
-                                it.contains("<io.realm.kotlin.types.RealmObject>") ||
-                                it.contains("<EmbeddedRealmObject>") ||
-                                it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
-                            )
+                                it.contains("<RealmObject>") ||
+                                        it.contains("<io.realm.kotlin.types.RealmObject>") ||
+                                        it.contains("<EmbeddedRealmObject>") ||
+                                        it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
+                                )
                     }.joinToString(",") // Re-sanitize again
                 hasRealmObjectAsSuperType = elementNodeText.findAnyOf(interfaces) != null
             }
@@ -168,6 +172,10 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     })
 
     return hasRealmObjectAsSuperType
+}
+inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
+    // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
+    return this.findPsi()?.hasInterface(interfaces) ?: false
 }
 
 // Do to the way PSI works, it can be a bit tricky to uniquely identify when the Realm Kotlin
@@ -185,6 +193,18 @@ val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
 val ClassDescriptor.isBaseRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+
+// FIXME Cannot disregard Java's constructor invocation for RealmObject()
+@OptIn(SymbolInternals::class)
+val FirClassSymbol<*>.isBaseRealmObject: Boolean
+    get() = this.fir.superTypeRefs.any {
+        // In SUPERTYPES stage
+        it is FirUserTypeRef && it.qualifier.last().name in realmObjectTypes
+        // After SUPERTYPES stage
+        || it is FirResolvedTypeRef && it.type.classId in realmObjectTypes.map { name -> ClassId(FqName("io.realm.kotlin.types"), name) }
+    }
+
+val realmObjectTypes = setOf(Name.identifier("RealmObject"), Name.identifier("EmbeddedRealmObject"), Name.identifier("AsymmetricRealmObject"))
 
 // JetBrains already have a method `fun IrAnnotationContainer.hasAnnotation(symbol: IrClassSymbol)`
 // It is unclear exactly what the difference is and how to get a ClassSymbol from a ClassId,

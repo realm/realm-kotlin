@@ -40,6 +40,9 @@ internal object Names {
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
+    val REALM_OBJECT_TO_STRING_METHOD = Name.identifier("toString")
+    val REALM_OBJECT_EQUALS = Name.identifier("equals")
+    val REALM_OBJECT_HASH_CODE = Name.identifier("hashCode")
 
     val SET = Name.special("<set-?>")
 

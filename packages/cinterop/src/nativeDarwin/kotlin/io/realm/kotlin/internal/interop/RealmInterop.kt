@@ -1967,7 +1967,7 @@ actual object RealmInterop {
                 realm_wrapper.realm_app_get_all_users(
                     app.cptr(),
                     null,
-                    0,
+                    0.toULong(),
                     capacityCount.ptr
                 )
             )

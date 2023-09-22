@@ -400,6 +400,7 @@ class GenerationExtensionTest {
             useIR = true
             messageOutputStream = System.out
             componentRegistrars = plugins
+            useK2 = true
             inheritClassPath = true
             kotlincArguments = listOf(
                 "-Xjvm-default=all-compatibility",
