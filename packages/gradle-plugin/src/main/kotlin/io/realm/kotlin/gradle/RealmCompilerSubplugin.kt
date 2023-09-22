@@ -218,7 +218,7 @@ private fun gatherTargetInfo(kotlinCompilation: KotlinCompilation<*>): TargetInf
             val kotlinExtension: KotlinMultiplatformExtension =
                 project.extensions.getByType(KotlinMultiplatformExtension::class.java)
             val cocoapodsExtension =
-                (kotlinExtension as ExtensionAware).extensions.getByName(
+                (kotlinExtension as ExtensionAware).extensions.findByName(
                     COCOAPODS_EXTENSION_NAME
                 ) as CocoapodsExtension?
             val minSdk = cocoapodsExtension?.let { cocoapods ->
