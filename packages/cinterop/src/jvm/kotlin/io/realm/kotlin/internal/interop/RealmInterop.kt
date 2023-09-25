@@ -17,6 +17,7 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
+import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -91,7 +92,7 @@ actual object RealmInterop {
             val computedCount = properties.count { it.isComputed }
 
             // Class
-            val cclass = realm_class_info_t_managed().apply {
+            val cclass = realm_class_info_t().apply {
                 name = clazz.name
                 primary_key = clazz.primaryKey
                 num_properties = (properties.size - computedCount).toLong()
@@ -102,7 +103,7 @@ actual object RealmInterop {
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
             for ((j, property) in properties.withIndex()) {
-                val cproperty = realm_property_info_t_managed().apply {
+                val cproperty = realm_property_info_t().apply {
                     name = property.name
                     public_name = property.publicName
                     type = property.type.nativeValue
@@ -120,10 +121,27 @@ actual object RealmInterop {
         try {
             return LongPointerWrapper(realmc.realm_schema_new(cclasses, count.toLong(), cproperties))
         } finally {
-            // Clean up intermediate arrays
+            // Clean up classes
             for (classIndex in 0 until count) {
+                val classInfo = realmc.classArray_getitem(cclasses, classIndex)
+
+                // Clean properties
                 val propertyArray = realmc.propertyArrayArray_getitem(cproperties, classIndex)
+
+                val propertyCount = classInfo.getNum_properties() + classInfo.getNum_computed_properties()
+                for (propertyIndex in 0 until propertyCount) {
+                    val property = realmc.propertyArray_getitem(propertyArray, propertyIndex.toInt())
+
+                    realmc.realm_property_info_t_cleanup(property)
+                    property.delete()
+                }
+
                 realmc.delete_propertyArray(propertyArray)
+
+                // end clean properties
+
+                realmc.realm_class_info_t_cleanup(classInfo)
+                classInfo.delete()
             }
 
             realmc.delete_propertyArrayArray(cproperties)
@@ -1634,62 +1652,78 @@ actual object RealmInterop {
         realm: RealmPointer,
         classKey: ClassKey,
         query: String,
-        args: RealmQueryArgumentList
+        args: RealmQueryArgumentList,
     ): RealmQueryPointer {
-        return LongPointerWrapper(
-            realmc.realm_query_parse(
-                realm.cptr(),
-                classKey.key,
-                query,
-                args.size,
-                args.head
+        try {
+            return LongPointerWrapper(
+                realmc.realm_query_parse(
+                    realm.cptr(),
+                    classKey.key,
+                    query,
+                    args.size,
+                    args.head
+                )
             )
-        )
+        } finally {
+            realmc.delete_queryArgArray(args.head)
+        }
     }
 
     actual fun realm_query_parse_for_results(
         results: RealmResultsPointer,
         query: String,
-        args: RealmQueryArgumentList
+        args: RealmQueryArgumentList,
     ): RealmQueryPointer {
-        return LongPointerWrapper(
-            realmc.realm_query_parse_for_results(
-                results.cptr(),
-                query,
-                args.size,
-                args.head
+        try {
+            return LongPointerWrapper(
+                realmc.realm_query_parse_for_results(
+                    results.cptr(),
+                    query,
+                    args.size,
+                    args.head
+                )
             )
-        )
+        } finally {
+            realmc.delete_queryArgArray(args.head)
+        }
     }
 
     actual fun realm_query_parse_for_list(
         list: RealmListPointer,
         query: String,
-        args: RealmQueryArgumentList
+        args: RealmQueryArgumentList,
     ): RealmQueryPointer {
-        return LongPointerWrapper(
-            realmc.realm_query_parse_for_list(
-                list.cptr(),
-                query,
-                args.size,
-                args.head
+        try {
+            return LongPointerWrapper(
+                realmc.realm_query_parse_for_list(
+                    list.cptr(),
+                    query,
+                    args.size,
+                    args.head
+                )
             )
-        )
+        } finally {
+            realmc.delete_queryArgArray(args.head)
+        }
     }
 
     actual fun realm_query_parse_for_set(
         set: RealmSetPointer,
         query: String,
-        args: RealmQueryArgumentList
+        args: RealmQueryArgumentList,
     ): RealmQueryPointer {
-        return LongPointerWrapper(
-            realmc.realm_query_parse_for_set(
-                set.cptr(),
-                query,
-                args.size,
-                args.head
+        try {
+            return LongPointerWrapper(
+                realmc.realm_query_parse_for_set(
+                    set.cptr(),
+                    query,
+                    args.size,
+                    args.head
+                )
             )
-        )
+        } finally {
+            realmc.delete_queryArgArray(args.head)
+        }
     }
 
     actual fun realm_query_find_first(query: RealmQueryPointer): Link? {
@@ -1718,11 +1752,15 @@ actual object RealmInterop {
     actual fun realm_query_append_query(
         query: RealmQueryPointer,
         filter: String,
-        args: RealmQueryArgumentList
+        args: RealmQueryArgumentList,
     ): RealmQueryPointer {
-        return LongPointerWrapper(
-            realmc.realm_query_append_query(query.cptr(), filter, args.size, args.head)
-        )
+        try {
+            return LongPointerWrapper(
+                realmc.realm_query_append_query(query.cptr(), filter, args.size, args.head)
+            )
+        } finally {
+            realmc.delete_queryArgArray(args.head)
+        }
     }
 
     actual fun realm_query_get_description(query: RealmQueryPointer): String {
