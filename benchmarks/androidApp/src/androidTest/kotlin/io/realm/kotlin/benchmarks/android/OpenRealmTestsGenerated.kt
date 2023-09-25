@@ -42,7 +42,7 @@ class OpenRealmTestsGenerated(
             val schemaSizes = listOf(1, 10, 100)
 
             return openCloseRealmClassesMap.keys
-                .flatMap {className ->
+                .flatMap { className ->
                     schemaSizes.map { schemaSize -> arrayOf(className, schemaSize) }
                 }
                 .toList()
