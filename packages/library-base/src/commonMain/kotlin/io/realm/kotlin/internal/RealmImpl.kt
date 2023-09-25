@@ -240,6 +240,8 @@ public class RealmImpl private constructor(
         log.trace("SKIP REMOVING INITIAL VERSION = $skipClosingReferences")
         if (!skipClosingReferences) {
             initialRealmReference.value = null
+            // Closing this reference might be done by the GC:
+            // https://github.com/realm/realm-kotlin/issues/1527
             val emptyTracker = versionTracker.closeExpiredReferences()
             log.trace("EMPTY INITIAL TRACKER = $emptyTracker")
             _skipClosingReferences.value = emptyTracker
