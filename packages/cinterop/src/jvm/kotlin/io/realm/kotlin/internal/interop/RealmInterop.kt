@@ -91,7 +91,7 @@ actual object RealmInterop {
             val computedCount = properties.count { it.isComputed }
 
             // Class
-            val cclass = realm_class_info_t().apply {
+            val cclass = realm_class_info_t_managed().apply {
                 name = clazz.name
                 primary_key = clazz.primaryKey
                 num_properties = (properties.size - computedCount).toLong()
@@ -102,7 +102,7 @@ actual object RealmInterop {
             // Properties
             val classProperties = realmc.new_propertyArray(properties.size)
             for ((j, property) in properties.withIndex()) {
-                val cproperty = realm_property_info_t().apply {
+                val cproperty = realm_property_info_t_managed().apply {
                     name = property.name
                     public_name = property.publicName
                     type = property.type.nativeValue
@@ -117,7 +117,18 @@ actual object RealmInterop {
             realmc.classArray_setitem(cclasses, i, cclass)
             realmc.propertyArrayArray_setitem(cproperties, i, classProperties)
         }
-        return LongPointerWrapper(realmc.realm_schema_new(cclasses, count.toLong(), cproperties))
+        try {
+            return LongPointerWrapper(realmc.realm_schema_new(cclasses, count.toLong(), cproperties))
+        } finally {
+            // Clean up intermediate arrays
+            for (classIndex in 0 until count) {
+                val propertyArray = realmc.propertyArrayArray_getitem(cproperties, classIndex)
+                realmc.delete_propertyArray(propertyArray)
+            }
+
+            realmc.delete_propertyArrayArray(cproperties)
+            realmc.delete_classArray(cclasses)
+        }
     }
 
     actual fun realm_config_new(): RealmConfigurationPointer {
@@ -316,23 +327,27 @@ actual object RealmInterop {
         val properties = realmc.new_propertyArray(max.toInt())
         val outCount = longArrayOf(0)
         realmc.realm_get_class_properties(realm.cptr(), classKey.key, properties, max, outCount)
-        return if (outCount[0] > 0) {
-            (0 until outCount[0]).map { i ->
-                with(realmc.propertyArray_getitem(properties, i.toInt())) {
-                    PropertyInfo(
-                        name,
-                        public_name,
-                        PropertyType.from(type),
-                        CollectionType.from(collection_type),
-                        link_target,
-                        link_origin_property_name,
-                        PropertyKey(key),
-                        flags
-                    )
+        try {
+            return if (outCount[0] > 0) {
+                (0 until outCount[0]).map { i ->
+                    with(realmc.propertyArray_getitem(properties, i.toInt())) {
+                        PropertyInfo(
+                            name,
+                            public_name,
+                            PropertyType.from(type),
+                            CollectionType.from(collection_type),
+                            link_target,
+                            link_origin_property_name,
+                            PropertyKey(key),
+                            flags
+                        )
+                    }
                 }
+            } else {
+                emptyList()
             }
-        } else {
-            emptyList()
+        } finally {
+            realmc.delete_propertyArray(properties)
         }
     }
 
@@ -922,6 +937,8 @@ actual object RealmInterop {
         builder.initIndicesArray(builder::modificationIndices, modificationIndices)
         builder.initIndicesArray(builder::modificationIndicesAfter, modificationIndicesAfter)
         builder.movesCount = movesCount[0].toInt()
+
+        realmc.delete_collectionMoveArray(moves)
     }
 
     actual fun <T, R> realm_collection_changes_get_ranges(
@@ -969,6 +986,12 @@ actual object RealmInterop {
         builder.initRangesArray(builder::insertionRanges, insertionRanges, insertRangesCount[0])
         builder.initRangesArray(builder::modificationRanges, modificationRanges, modificationRangesCount[0])
         builder.initRangesArray(builder::modificationRangesAfter, modificationRangesAfter, modificationRangesCount[0])
+
+        realmc.delete_indexRangeArray(insertionRanges)
+        realmc.delete_indexRangeArray(modificationRanges)
+        realmc.delete_indexRangeArray(modificationRangesAfter)
+        realmc.delete_indexRangeArray(deletionRanges)
+        realmc.delete_collectionMoveArray(moves)
     }
 
     actual fun <R> realm_dictionary_get_changes(
@@ -1107,6 +1130,8 @@ actual object RealmInterop {
             }
         } else {
             emptyList()
+        }.also {
+            realmc.delete_identityArray(keys)
         }
     }
 
