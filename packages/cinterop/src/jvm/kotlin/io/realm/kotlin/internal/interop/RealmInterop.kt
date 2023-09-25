@@ -31,6 +31,7 @@ import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -1156,7 +1157,6 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_sync_client_get_default_file_path_for_realm(
-        app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
         overriddenName: String?
     ): String {
@@ -1971,6 +1971,33 @@ actual object RealmInterop {
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): RealmSubscriptionSetPointer {
         return LongPointerWrapper(realmc.realm_sync_subscription_set_commit(mutableSubscriptionSet.cptr()))
+    }
+
+    actual fun realm_sync_set_websocket_transport(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        webSocketTransport: WebSocketTransport
+    ) {
+        realmc.realm_sync_websocket_new(syncClientConfig.cptr(), webSocketTransport)
+    }
+
+    actual fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean, status: Int, reason: String) {
+        realmc.realm_sync_websocket_callback_complete(cancelled, nativePointer.cptr(), status, reason)
+    }
+
+    actual fun realm_sync_socket_websocket_connected(nativePointer: RealmWebsocketProviderPointer, protocol: String) {
+        realmc.realm_sync_websocket_connected(nativePointer.cptr(), protocol)
+    }
+
+    actual fun realm_sync_socket_websocket_error(nativePointer: RealmWebsocketProviderPointer) {
+        realmc.realm_sync_websocket_error(nativePointer.cptr())
+    }
+
+    actual fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) {//data: String, size: ULong
+        realmc.realm_sync_websocket_message(nativePointer.cptr(), data, data.size.toLong())
+    }
+
+    actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: Int, reason: String) {
+        realmc.realm_sync_websocket_closed(nativePointer.cptr(), wasClean, errorCode, reason)
     }
 
     fun <T : CapiT> NativePointer<T>.cptr(): Long {

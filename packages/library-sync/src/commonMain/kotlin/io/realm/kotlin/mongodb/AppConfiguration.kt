@@ -22,6 +22,7 @@ import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.directoryExists
@@ -37,6 +38,7 @@ import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
+import io.realm.kotlin.mongodb.internal.KtorWebSocketTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
@@ -141,6 +143,7 @@ public interface AppConfiguration {
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
+        private var websocketTransport: WebSocketTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
 
@@ -149,6 +152,7 @@ public interface AppConfiguration {
         private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
         private val customRequestHeaders = mutableMapOf<String, String>()
         private var authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME
+        private var usePlatformNetworking: Boolean = false
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -326,6 +330,15 @@ public interface AppConfiguration {
         }
 
         /**
+         * Platform Networking offer improved support for proxies and firewalls that require authentication,
+         * instead of Realm's built-in WebSocket client for Sync traffic. This will become the default in a future version.
+         */
+        public fun usePlatformNetworking(): Builder =
+            apply {
+                this.usePlatformNetworking = true
+            }
+
+        /**
          * Allows defining a custom network transport. It is used by some tests that require simulating
          * network responses.
          */
@@ -393,6 +406,14 @@ public interface AppConfiguration {
                     )
                 }
 
+            val websocketTransport: ((DispatcherHolder) -> WebSocketTransport)? = if (usePlatformNetworking)
+                { dispatcherHolder ->
+                    websocketTransport ?: KtorWebSocketTransport(
+                        timeoutMs = 60000,
+                        dispatcherHolder = dispatcherHolder
+                    )
+                } else null
+
             return AppConfigurationImpl(
                 appId = appId,
                 baseUrl = baseUrl,
@@ -402,6 +423,7 @@ public interface AppConfiguration {
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
                 appNetworkDispatcherFactory = appNetworkDispatcherFactory,
                 networkTransportFactory = networkTransport,
+                webSocketTransportFactory = websocketTransport,
                 syncRootDirectory = syncRootDirectory,
                 logger = logConfig,
                 appName = appName,

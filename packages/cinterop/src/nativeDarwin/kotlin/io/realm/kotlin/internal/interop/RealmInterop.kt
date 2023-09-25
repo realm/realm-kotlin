@@ -38,6 +38,9 @@ import io.realm.kotlin.internal.interop.sync.SyncErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import io.realm.kotlin.internal.interop.sync.WebSocketClient
+import io.realm.kotlin.internal.interop.sync.WebSocketObserver
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.AutofreeScope
@@ -62,11 +65,13 @@ import kotlinx.cinterop.alloc
 import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.asStableRef
 import kotlinx.cinterop.cValue
+import kotlinx.cinterop.cValuesOf
 import kotlinx.cinterop.convert
 import kotlinx.cinterop.cstr
 import kotlinx.cinterop.get
 import kotlinx.cinterop.getBytes
 import kotlinx.cinterop.memScoped
+import kotlinx.cinterop.objcPtr
 import kotlinx.cinterop.pointed
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.readBytes
@@ -74,6 +79,7 @@ import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
+import kotlinx.cinterop.toCValues
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
@@ -81,6 +87,8 @@ import kotlinx.cinterop.value
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.launch
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
@@ -125,6 +133,10 @@ import realm_wrapper.realm_sync_error_code_t
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_sync_session_stop_policy_e
+import realm_wrapper.realm_sync_socket_callback_t
+import realm_wrapper.realm_sync_socket_t
+import realm_wrapper.realm_sync_socket_timer_t
+import realm_wrapper.realm_sync_socket_websocket_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
@@ -2199,7 +2211,6 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_sync_client_get_default_file_path_for_realm(
-        app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
         overriddenName: String?
     ): String {
@@ -2659,6 +2670,186 @@ actual object RealmInterop {
                 }
             )
         )
+    }
+    
+    actual fun realm_sync_set_websocket_transport(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        webSocketTransport: WebSocketTransport
+    ) {
+        val realmSyncSocketNew: CPointer<realm_sync_socket_t>? = realm_wrapper.realm_sync_socket_new(
+            userdata = StableRef.create(webSocketTransport).asCPointer(),
+            userdata_free = staticCFunction { userdata: CPointer<out CPointed>? ->
+                disposeUserData<WebSocketTransport>(userdata)
+            },
+            post_func = staticCFunction { userdata: CPointer<out CPointed>?, syncSocketCallback: CPointer<realm_sync_socket_callback_t>? ->
+                safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
+                    // schedule execution of the FunctionHandler
+
+                    //TODO: should we  Move the source object to a destination object? like .NET
+                    /// void post(FunctionHandler&& handler) final {
+                    //        s_post_work(m_managed_provider, new FunctionHandler(std::move(handler)));
+                    //    }
+
+//                    val destinationObjMemory = nativeHeap.alloc<realm_sync_socket_callback_t>()
+//                    websocketTransport.post(CPointerWrapper(syncSocketCallback))
+//                    val p :RealmSyncSocketCallbackPointer? = null
+//                    val toLong = syncSocketCallback.toLong()
+//                    syncSocketCallback?.pointed
+//                    websocketTransport.post(Runnable { (syncSocketCallback as CPointer<CFunction<()-> Unit>>)?.invoke() })
+//                    StableRef.create(syncSocketCallback.rawValue).asCPointer()
+                    // I'm not de-referencing it correctly causing a BAD_EXEC
+                    // TODO pass in as argument the status/error messsage
+//                    websocketTransport.post(Runnable { realm_wrapper.realm_sync_socket_callback_complete(syncSocketCallback, 0, "") })
+                    websocketTransport.post(CPointerWrapper(syncSocketCallback))
+
+//                    (syncSocketCallback as CPointer<CFunction<()-> Unit>>).invoke()
+                }
+            },
+            create_timer_func = staticCFunction<CPointer<out CPointed>?,uint64_t, CPointer<realm_sync_socket_callback_t>?, CPointer<out CPointed>?> { userdata: CPointer<out CPointed>?, delayInMilliseconds: uint64_t, syncSocketCallback: CPointer<realm_sync_socket_callback_t>? ->
+                safeUserData<WebSocketTransport>(userdata).let { ws ->
+                    // schedule the callback after the delay parameter and return SyncTimer to be able to cancel it
+                    // .NET creates the Job in C# then send the object as C opaque pointer
+                    /*
+                     var timer = new Timer(TimeSpan.FromMilliseconds(delay_milliseconds), native_callback, provider._workQueue);
+                    return GCHandle.ToIntPtr(GCHandle.Alloc(timer));
+
+                      private static void CancelTimer(IntPtr managed_timer)
+                        {
+                            var handle = GCHandle.FromIntPtr(managed_timer);
+                            try
+                            {
+                                ((Timer)handle.Target!).Cancel();
+                            }
+                            finally
+                            {
+                                handle.Free();
+                            }
+                     */
+                    // in our case we can get the CPointer value of the allocated object (outside Arena)
+                        // TODO return CancelTimer then return it as a NativePointer (use StableRef.create(networkTransport).asCPointer())
+                    //
+                    val job: Job = ws.createTimer(delayInMilliseconds.toLong(), CPointerWrapper(syncSocketCallback))
+                    StableRef.create(job).asCPointer()
+//                    val invoke: realm_sync_socket_timer_t? = f?.invoke()
+//                    invoke
+                    // return void* as COpaquePointer
+                }
+//                val objcPtr: CPointer<out CPointed>? = (a?.objcPtr() as CPointer<*>)
+//                null as CPointer<*>
+            },
+            cancel_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? ->
+//                safeUserData<WebSocketTransport>(userdata).let { ws ->
+                    val job: StableRef<Job>? = timer?.asStableRef()
+                    job?.get().run {
+                        if (this != null) {
+                            this.cancel()
+                            job!!.dispose()
+                        }
+                    }
+//                }
+            },
+            free_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? -> Unit },
+            websocket_connect_func = staticCFunction { userdata: CPointer<out CPointed>?, endpoint: CValue<realm_wrapper.realm_websocket_endpoint_t>, observer: CPointer<realm_wrapper.realm_websocket_observer_t>? ->
+                safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
+                    endpoint.useContents {
+                        // When Ktor connects it should invoke:
+                        // RLM_API void realm_sync_socket_websocket_connected(realm_websocket_observer_t* realm_websocket_observer, const char* protocol)
+                        // on Error RLM_API void realm_sync_socket_websocket_error(realm_websocket_observer_t* realm_websocket_observer)
+                        // on new Message RLM_API void realm_sync_socket_websocket_message(realm_websocket_observer_t* realm_websocket_observer, const char* data, size_t data_size)
+                        // on Close RLM_API void realm_sync_socket_websocket_closed(realm_websocket_observer_t* realm_websocket_observer, bool was_clean,
+                        //                                                realm_web_socket_errno_e code, const char* reason)
+
+                        /*
+                        WebSocketEndpoint {
+                        using port_type = sync::port_type;
+                        std::string address;                // Host address
+                        port_type port;                     // Host port number
+                        std::string path;                   // Includes access token in query.
+                        std::vector<std::string> protocols; // Array of one or more websocket protocols
+                        bool is_ssl;                        // true if SSL should be used
+                         */
+//                        val protocols1: CPointer<CPointerVarOf<CPointer<ByteVarOf<Byte>>>>? = this.protocols
+                        val supportedProtocols = mutableListOf<String>()
+                        for (i in 0 until this.num_protocols.toInt()) {
+                            val protocol: CPointer<ByteVarOf<Byte>>? = this.protocols?.get(i)
+                            supportedProtocols.add(protocol.safeKString())
+                        }
+                        // CPointer<ByteVarOf<Byte>>? -> safeKString()
+//                        val data: CPointer<ByteVarOf<Byte>>? = protocols1.readBytes()
+//                        val readBytes: ByteArray? = data?.readBytes(this.size.toInt())
+//                        readBytes?.decodeToString(0, size.toInt(), throwOnInvalidSequence = false)!!
+
+                        //TODO return KTor WebSocket as native pointer maybe use the instance as StableRef.create(networkTransport).asCPointer()
+//                        val observerWebSocketConnected : (String) -> Unit = {  }
+//                        val observerWebSocketError : () -> Unit = { realm_wrapper.realm_sync_socket_websocket_error(observer) }
+//                        val observerWebSocketNewMessage: (data: ByteArray) -> Unit = { data ->
+//                            println(">>>>>>>>>>>>>>>>>>>>>> observerWebSocketNewMessage message = ${data.toKString()}")
+//                            realm_wrapper.realm_sync_socket_websocket_message(observer, data.toKString(throwOnInvalidSequence = true), data.size.toULong()) }
+//                        val observerWebSocketClose: (wasClean: Boolean, errorCode: UInt, reason: String) -> Unit = { wasClean: Boolean, errorCode: UInt, reason: String -> realm_wrapper.realm_sync_socket_websocket_closed(observer, wasClean, errorCode, reason) }
+
+                        val managedObserver = WebSocketObserver(CPointerWrapper(observer))
+//                            override fun onConnected(protocol: String) {
+//                                realm_wrapper.realm_sync_socket_websocket_connected(observer, protocol)
+//                            }
+//
+//                            override fun onError() {
+//                                realm_wrapper.realm_sync_socket_websocket_error(observer)
+//                            }
+//
+//                            override fun onNewMessage(data: ByteArray) {
+//                                realm_wrapper.realm_sync_socket_websocket_message(observer, data.toKString(throwOnInvalidSequence = true), data.size.toULong())
+//                            }
+//
+//                            override fun onClose(
+//                                wasClean: Boolean,
+//                                errorCode: UInt,
+//                                reason: String
+//                            ) {
+//                                realm_wrapper.realm_sync_socket_websocket_closed(observer, wasClean, errorCode, reason)
+//                            }
+//                        }
+
+                        val webSocketClient: WebSocketClient = websocketTransport.connect(managedObserver, this.path.safeKString(), this.address.safeKString(), this.port.toLong(), this.is_ssl, this.num_protocols.toLong(), supportedProtocols.joinToString(", "))
+                        val webSocketClientPointer: CPointer<out CPointed> = StableRef.create(webSocketClient).asCPointer()
+                        webSocketClientPointer
+                    }
+                }
+//                null as realm_wrapper.realm_sync_socket_websocket_t?
+            },
+            websocket_write_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t?, data: CPointer<ByteVar>?, length: size_t, callback: CPointer<realm_sync_socket_callback_t>? ->
+                safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
+                    safeUserData<WebSocketClient>(websocket).let { webSocketClient ->
+                        data?.readBytes(length.toInt())?.run {
+                            websocketTransport.write(webSocketClient, this, length.toLong(), CPointerWrapper(callback) /*TODO change status and reason if there's an error sending the Frame*/)
+                        }
+                    }
+                }
+                Unit
+            },
+            websocket_free_func = staticCFunction { userdata: CPointer<out CPointed>?,  websocket: realm_sync_socket_websocket_t? -> Unit }
+        )
+        realm_wrapper.realm_sync_client_config_set_sync_socket(syncClientConfig.cptr(), realmSyncSocketNew)
+    }
+
+    actual fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean, status: Int, reason: String) {
+        //TODO use cancelled to cancel or free
+        realm_wrapper.realm_sync_socket_callback_complete(nativePointer.cptr(), status.toUInt(), reason)
+    }
+
+    actual fun realm_sync_socket_websocket_connected(nativePointer: RealmWebsocketProviderPointer, protocol: String) {
+        realm_wrapper.realm_sync_socket_websocket_connected(nativePointer.cptr(), protocol)
+    }
+
+    actual fun realm_sync_socket_websocket_error(nativePointer: RealmWebsocketProviderPointer) {
+        realm_wrapper.realm_sync_socket_websocket_error(nativePointer.cptr())
+    }
+
+    actual fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) {
+        realm_wrapper.realm_sync_socket_websocket_message(nativePointer.cptr(), data.toCValues(), data.size.toULong())
+    }
+
+    actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: Int, reason: String) {
+        realm_wrapper.realm_sync_socket_websocket_closed(nativePointer.cptr(), wasClean, errorCode.toUInt(), reason)
     }
 
     @Suppress("LongParameterList")

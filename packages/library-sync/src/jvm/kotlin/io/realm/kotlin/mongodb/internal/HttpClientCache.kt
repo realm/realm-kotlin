@@ -1,10 +1,13 @@
 @file:JvmName("HttpClientCacheJVM")
 package io.realm.kotlin.mongodb.internal
 
-import io.ktor.client.HttpClient
-import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.*
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.*
 import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.request.*
+import io.ktor.http.*
+import io.ktor.util.*
 
 /**
  * Cache HttpClient on Android and JVM.
@@ -21,12 +24,8 @@ internal actual class HttpClientCache actual constructor(timeoutMs: Long, custom
 }
 
 public actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
-    return HttpClient(OkHttp) {
-        engine {
-            config {
-                retryOnConnectionFailure(true)
-            }
-        }
+    // Revert to OkHttp when https://youtrack.jetbrains.com/issue/KTOR-6266 is fixed
+    return HttpClient(CIO) {
         this.apply(block)
     }
 }

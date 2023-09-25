@@ -43,4 +43,5 @@ internal expect class HttpClientCache(timeoutMs: Long, customLogger: Logger? = n
     fun close() // Close any resources stored in the cache.
 }
 
+// TODO use a la private val clientCache: HttpClientCache = HttpClientCache(timeoutMs, logger)
 public expect fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient

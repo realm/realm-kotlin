@@ -97,7 +97,7 @@ open class TestApp private constructor(
             builder = builder,
             networkTransport = networkTransport,
             ejson = ejson,
-            initialSetup = initialSetup
+            initialSetup = initialSetup,
         )
     )
 
@@ -118,10 +118,13 @@ open class TestApp private constructor(
             deleteAllUsers()
         }
 
+        app.close()
+
+        // Tearing down the SyncSession still relies on the the event loop (powered by the coroutines) of the platform networking
+        //  to post Function Handler, so we need to close it after we close the App
         if (dispatcher is CloseableCoroutineDispatcher) {
             dispatcher.close()
         }
-        app.close()
 
         // Close network client resources
         closeClient()
@@ -172,6 +175,7 @@ open class TestApp private constructor(
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .networkTransport(networkTransport)
                 .ejson(ejson)
+                .usePlatformNetworking()
                 .apply {
                     if (logLevel != null) {
                         log(

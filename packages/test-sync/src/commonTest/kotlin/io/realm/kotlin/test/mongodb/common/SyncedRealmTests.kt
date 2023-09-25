@@ -111,7 +111,6 @@ class SyncedRealmTests {
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
         app = TestApp()
-
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -153,7 +152,7 @@ class SyncedRealmTests {
                 override fun onError(session: SyncSession, error: SyncException) {
                     fail("Realm 1: $error")
                 }
-            }
+            },
         )
         Realm.open(config1).use { realm1 ->
             val config2 = createSyncConfig(
@@ -196,7 +195,6 @@ class SyncedRealmTests {
                 realm1.write {
                     copyToRealm(child)
                 }
-
                 val childResults = channel.receiveOrFail()
                 val childPk = childResults.list[0]
                 assertEquals("CHILD_A", childPk._id)
@@ -1103,7 +1101,8 @@ class SyncedRealmTests {
                 FlexEmbeddedObject::class
             ),
             initialSubscriptions = { realm: Realm ->
-                realm.query<FlexParentObject>("section = $0", section).subscribe(name = "parentSubscription")
+                realm.query<FlexParentObject>("section = $0", section)
+                    .subscribe(name = "parentSubscription")
             }
         )
         val syncConfig2 = createFlexibleSyncConfig(
@@ -1145,7 +1144,10 @@ class SyncedRealmTests {
 
                 // As is data
                 assertEquals(1, flexRealm2.query<FlexParentObject>().count().find())
-                assertEquals("User1Object", flexRealm2.query<FlexParentObject>().first().find()!!.name)
+                assertEquals(
+                    "User1Object",
+                    flexRealm2.query<FlexParentObject>().first().find()!!.name
+                )
 
                 flexRealm2.subscriptions.waitForSynchronization(30.seconds)
                 flexRealm2.write {
@@ -1230,10 +1232,11 @@ class SyncedRealmTests {
 
         // Reading the object means we received it from the other Realm
         withTimeout(30.seconds) {
-            val obj: FlexParentObject = realm1.query<FlexParentObject>("section = $0", section).asFlow()
-                .map { it.list }
-                .filter { it.isNotEmpty() }
-                .first().first()
+            val obj: FlexParentObject =
+                realm1.query<FlexParentObject>("section = $0", section).asFlow()
+                    .map { it.list }
+                    .filter { it.isNotEmpty() }
+                    .first().first()
             assertEquals(section, obj.section)
 
             // 1. Local write to work around https://github.com/realm/realm-kotlin/issues/1070
@@ -1293,8 +1296,14 @@ class SyncedRealmTests {
             flexSyncRealm.syncSession.uploadAllLocalChanges()
         }
         assertTrue(customLogger.logs.isNotEmpty())
-        assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
-        assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") }, "Missing MyCustomApp/1.0.0")
+        assertTrue(
+            customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") },
+            "Missing Connection[1]"
+        )
+        assertTrue(
+            customLogger.logs.any { it.contains("MyCustomApp/1.0.0") },
+            "Missing MyCustomApp/1.0.0"
+        )
         flexApp.close()
     }
 

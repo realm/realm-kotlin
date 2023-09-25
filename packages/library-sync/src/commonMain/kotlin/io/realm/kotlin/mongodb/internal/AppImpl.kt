@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
@@ -34,7 +35,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
-internal typealias AppResources = Triple<DispatcherHolder, NetworkTransport, RealmAppPointer>
+public data class AppResources(
+    val dispatcherHolder: DispatcherHolder,
+    val networkTransport: NetworkTransport,
+    val websocketTransport: WebSocketTransport?,
+    val realmAppPointer: RealmAppPointer
+)
 
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
@@ -44,6 +50,7 @@ public class AppImpl(
     internal val nativePointer: RealmAppPointer
     internal val appNetworkDispatcher: DispatcherHolder
     private val networkTransport: NetworkTransport
+    private val websocketTransport: WebSocketTransport?
 
     // Allow some delay between events being reported and them being consumed.
     // When the (somewhat arbitrary) limit is hit, we will throw an exception, since we assume the
@@ -58,9 +65,10 @@ public class AppImpl(
 
     init {
         val appResources: AppResources = configuration.createNativeApp()
-        appNetworkDispatcher = appResources.first
-        networkTransport = appResources.second
-        nativePointer = appResources.third
+        appNetworkDispatcher = appResources.dispatcherHolder
+        networkTransport = appResources.networkTransport
+        websocketTransport = appResources.websocketTransport
+        nativePointer = appResources.realmAppPointer
     }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
@@ -130,6 +138,9 @@ public class AppImpl(
         // be beneficial in order to reason about the lifecycle of the Sync thread and dispatchers.
         networkTransport.close()
         nativePointer.release()
+        // It's important to close the transport *after* we delete the App, since SyncSession dtor
+        // still relies on the event loop (powered by the coroutines) to post function handler to be executed.
+        websocketTransport?.close()
     }
 
     internal companion object {
