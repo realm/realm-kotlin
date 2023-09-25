@@ -18,9 +18,9 @@
 // For CI buils, the packages are expected to have
 // been built and deployed to a local filesystem
 // maven repo.
-//if (System.getenv("JENKINS_HOME") == null) {
-//    includeBuild("../packages")
-//}
+if (System.getenv("JENKINS_HOME") == null) {
+    includeBuild("../packages")
+}
 
 pluginManagement {
     repositories {
