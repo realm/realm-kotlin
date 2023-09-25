@@ -520,4 +520,75 @@ class GeoSpatialTests {
             }
         }
     }
+
+    // Verify that geo objects can be passed directly as query arguments
+    // Kotlin will do implicit conversion to strings until native type support is added
+    @Test
+    fun asQueryArguments() {
+        realm.writeBlocking {
+            copyToRealm(
+                Restaurant().apply {
+                    location = Location(latitude = 20.0, longitude = 20.0)
+                }
+            )
+            copyToRealm(
+                Restaurant().apply {
+                    location = Location(latitude = 5.0, longitude = 5.0)
+                }
+            )
+            copyToRealm(
+                Restaurant().apply {
+                    location = Location(latitude = -5.0, longitude = -5.0)
+                }
+            )
+            copyToRealm(
+                Restaurant().apply {
+                    location = Location(latitude = 0.0, longitude = 0.0)
+                }
+            )
+        }
+
+        var sphere = GeoCircle.create(
+            center = GeoPoint.create(0.0, 0.0),
+            radius = Distance.fromKilometers(0.0)
+        )
+        assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $0", sphere).count().find())
+
+        var box = GeoBox.create(
+            bottomLeft = GeoPoint.create(-1.0, -1.0),
+            topRight = GeoPoint.create(1.0, 1.0)
+        )
+        assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $0", box).count().find())
+
+        val onlyOuterRing = GeoPolygon.create(
+            outerRing = listOf(
+                GeoPoint.create(-5.0, -5.0),
+                GeoPoint.create(5.0, -5.0),
+                GeoPoint.create(5.0, 5.0),
+                GeoPoint.create(-5.0, 5.0),
+                GeoPoint.create(-5.0, -5.0)
+            )
+        )
+        assertEquals(2, realm.query<Restaurant>("location GEOWITHIN $0", onlyOuterRing).count().find())
+
+        val polygonWithHole = GeoPolygon.create(
+            outerRing = listOf(
+                GeoPoint.create(-5.0, -5.0),
+                GeoPoint.create(5.0, -5.0),
+                GeoPoint.create(5.0, 5.0),
+                GeoPoint.create(-5.0, 5.0),
+                GeoPoint.create(-5.0, -5.0)
+            ),
+            holes = arrayOf(
+                listOf(
+                    GeoPoint.create(-4.0, -4.0),
+                    GeoPoint.create(4.0, -4.0),
+                    GeoPoint.create(4.0, 4.0),
+                    GeoPoint.create(-4.0, 4.0),
+                    GeoPoint.create(-4.0, -4.0)
+                )
+            )
+        )
+        assertEquals(1, realm.query<Restaurant>("location GEOWITHIN $0", polygonWithHole).count().find())
+    }
 }

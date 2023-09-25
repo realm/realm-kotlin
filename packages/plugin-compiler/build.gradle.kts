@@ -43,8 +43,7 @@ dependencies {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions {
-        jvmTarget = "${Versions.jvmTarget}"
-        freeCompilerArgs = listOf("-Xjvm-default=enable")
+        freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
     }
 }
 
@@ -69,6 +68,6 @@ publishing {
 java {
     withSourcesJar()
     withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = Versions.sourceCompatibilityVersion
+    targetCompatibility = Versions.targetCompatibilityVersion
 }

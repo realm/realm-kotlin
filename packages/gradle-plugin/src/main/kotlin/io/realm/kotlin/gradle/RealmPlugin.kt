@@ -27,10 +27,6 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Provider
 import org.gradle.build.event.BuildEventsListenerRegistry
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.KotlinSingleTargetExtension
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import javax.inject.Inject
 
 @Suppress("unused")
@@ -79,24 +75,11 @@ open class RealmPlugin : Plugin<Project> {
         // Stand alone Android projects have not initialized kotlin plugin when applying this, so
         // postpone dependency injection till after evaluation.
         project.afterEvaluate {
-            val kotlin: Any? = project.extensions.findByName("kotlin")
             // TODO AUTO-SETUP To ease configuration we could/should inject dependencies to our
             //  library, but await better insight into when/what to inject and supply appropriate
             //  opt-out options through our own extension?
             //  Dependencies should probably be added by source set and not by target, as
             //  kotlin.sourceSets.getByName("commonMain").dependencies (or "main" for Android), but
-            when (kotlin) {
-                is KotlinSingleTargetExtension<*> -> {
-                    updateKotlinOption(kotlin.target)
-                }
-                is KotlinMultiplatformExtension -> {
-                    kotlin.targets.all { target -> updateKotlinOption(target) }
-                }
-                else -> {
-                    // TODO AUTO-SETUP Should we report errors? Probably an oversighted case
-                    // TODO("Cannot 'realm-kotlin' library dependency to ${if (kotlin != null) kotlin::class.qualifiedName else "null"}")
-                }
-            }
 
             // Create the analytics during configuration because it needs access to the project
             // in order to gather project relevant information in afterEvaluate. Currently
@@ -109,18 +92,6 @@ open class RealmPlugin : Plugin<Project> {
                 // Work-around for https://github.com/gradle/gradle/issues/18821
                 // Since this only happens in multi-module projects, this should be fine as
                 // the build will still be registered by the first module that starts the service.
-            }
-        }
-    }
-
-    private fun updateKotlinOption(target: KotlinTarget) {
-        target.compilations.all { compilation ->
-            // Setup correct compiler options
-            // FIXME AUTO-SETUP Are these to dangerous to apply under the hood?
-            when (val options = compilation.kotlinOptions) {
-                is KotlinJvmOptions -> {
-                    options.jvmTarget = "1.8"
-                }
             }
         }
     }

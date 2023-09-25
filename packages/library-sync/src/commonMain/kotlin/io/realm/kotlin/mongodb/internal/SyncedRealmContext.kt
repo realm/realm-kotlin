@@ -32,7 +32,8 @@ import io.realm.kotlin.mongodb.sync.SyncSession
  * In order to work around the bootstrap problem, all public API entry points that access this
  * class must do so through the [executeInSyncContext] closure.
  */
-internal class SyncedRealmContext<T : BaseRealm>(realm: T) {
+@OptIn(ExperimentalStdlibApi::class)
+internal class SyncedRealmContext<T : BaseRealm>(realm: T) : AutoCloseable {
     // TODO For now this can only be a RealmImpl, which is required by the SyncSessionImpl
     //  When we introduce a public DynamicRealm, this can also be a `DynamicRealmImpl`
     //  And we probably need to modify the SyncSessionImpl to take either of these two.
@@ -40,17 +41,26 @@ internal class SyncedRealmContext<T : BaseRealm>(realm: T) {
     internal val config: SyncConfiguration = baseRealm.configuration as SyncConfiguration
     // Note: Session and Subscriptions only need a valid dbPointer when being created, after that, they
     // have their own lifecycle and can be cached.
-    internal val session: SyncSession by lazy {
+    private val sessionDelegate: Lazy<SyncSessionImpl> = lazy {
         SyncSessionImpl(
             baseRealm,
             RealmInterop.realm_sync_session_get(baseRealm.realmReference.dbPointer)
         )
     }
-    internal val subscriptions: SubscriptionSet<T> by lazy {
+    internal val session: SyncSession by sessionDelegate
+
+    private val subscriptionsDelegate: Lazy<SubscriptionSetImpl<T>> = lazy {
         SubscriptionSetImpl(
             realm,
             RealmInterop.realm_sync_get_latest_subscriptionset(baseRealm.realmReference.dbPointer)
         )
+    }
+    internal val subscriptions: SubscriptionSet<T> by subscriptionsDelegate
+
+    override fun close() {
+        if (sessionDelegate.isInitialized()) {
+            (session as SyncSessionImpl).close()
+        }
     }
 }
 
@@ -77,6 +87,7 @@ internal fun <T, R : BaseRealm> executeInSyncContext(realm: R, block: (context: 
     }
 }
 
+@OptIn(ExperimentalStdlibApi::class)
 private fun <T : BaseRealm> initSyncContextIfNeeded(realm: T): SyncedRealmContext<T> {
     // INVARIANT: `syncContext` is only ever set once, and never to `null`.
     // This code works around the fact that `Mutex`'s can only be locked inside suspend functions on

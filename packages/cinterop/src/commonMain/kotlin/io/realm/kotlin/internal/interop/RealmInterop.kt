@@ -27,8 +27,6 @@ import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import io.realm.kotlin.internal.interop.sync.WebSocketTransport
@@ -71,6 +69,7 @@ interface RealmQueryT : CapiT
 interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
+interface RealmSchedulerT : CapiT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -89,6 +88,7 @@ typealias RealmQueryPointer = NativePointer<RealmQueryT>
 typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
 typealias RealmNotificationTokenPointer = NativePointer<RealmNotificationTokenT>
 typealias RealmChangesPointer = NativePointer<RealmChangesT>
+typealias RealmSchedulerPointer = NativePointer<RealmSchedulerT>
 
 // Sync types
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
@@ -138,8 +138,6 @@ typealias RealmWebsocketProviderPointer = NativePointer<CapiT>
 @Suppress("LongParameterList")
 class SyncConnectionParams(
     sdkVersion: String,
-    localAppName: String?,
-    localAppVersion: String?,
     bundleId: String,
     platformVersion: String,
     device: String,
@@ -148,8 +146,6 @@ class SyncConnectionParams(
     frameworkVersion: String
 ) {
     val sdkName = "Kotlin"
-    val localAppName: String?
-    val localAppVersion: String?
     val bundleId: String
     val sdkVersion: String
     val platformVersion: String
@@ -167,8 +163,6 @@ class SyncConnectionParams(
     init {
         this.sdkVersion = sdkVersion
         this.bundleId = bundleId
-        this.localAppName = localAppName
-        this.localAppVersion = localAppVersion
         this.platformVersion = platformVersion
         this.device = device
         this.deviceVersion = deviceVersion
@@ -202,6 +196,8 @@ expect object RealmInterop {
     fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean)
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 
+    fun realm_create_scheduler(): RealmSchedulerPointer
+    fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer
     /**
      * Open a realm on the current thread.
      *
@@ -223,7 +219,7 @@ expect object RealmInterop {
      */
     // The dispatcher argument is only used on Native to build a core scheduler dispatching to the
     // dispatcher. The realm itself must also be opened on the same thread
-    fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher? = null): Pair<LiveRealmPointer, Boolean>
+    fun realm_open(config: RealmConfigurationPointer, scheduler: RealmSchedulerPointer): Pair<LiveRealmPointer, Boolean>
 
     // Opening a Realm asynchronously. Only supported for synchronized realms.
     fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer
@@ -634,8 +630,7 @@ expect object RealmInterop {
     fun realm_sync_session_resume(syncSession: RealmSyncSessionPointer)
     fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory,
+        error: ErrorCode,
         errorMessage: String,
         isFatal: Boolean
     )
@@ -725,6 +720,11 @@ expect object RealmInterop {
         serializedEjsonArgs: String, // as ejson
         callback: AppCallback<String>
     )
+
+    // Sync Client
+    fun realm_app_sync_client_reconnect(app: RealmAppPointer)
+    fun realm_app_sync_client_has_sessions(app: RealmAppPointer): Boolean
+    fun realm_app_sync_client_wait_for_sessions_to_terminate(app: RealmAppPointer)
 
     // Sync config
     fun realm_config_set_sync_config(

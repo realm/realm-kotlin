@@ -28,7 +28,7 @@ public actual fun epochInSeconds(): Long =
 * Since internalNow() should only logically return a value after the Unix epoch, it is safe to create a RealmInstant
 * without considering having to pass negative nanoseconds.
 */
-internal actual fun currentTime(): RealmInstant {
+public actual fun currentTime(): RealmInstant {
     val jtInstant = systemUTC().instant()
     return RealmInstantImpl(jtInstant.epochSecond, jtInstant.nano)
 }

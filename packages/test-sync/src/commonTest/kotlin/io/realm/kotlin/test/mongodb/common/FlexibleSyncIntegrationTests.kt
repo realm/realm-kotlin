@@ -58,12 +58,11 @@ import kotlin.time.Duration.Companion.seconds
  */
 class FlexibleSyncIntegrationTests {
 
-    private val defaultSchema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
     private lateinit var app: TestApp
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         runBlocking {
             app.createUserAndLogIn(email, password)
@@ -83,7 +82,7 @@ class FlexibleSyncIntegrationTests {
 
         // Upload data from user 1
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config1 = SyncConfiguration.create(user1, defaultSchema)
+        val config1 = SyncConfiguration.create(user1, FLX_SYNC_SCHEMA)
         Realm.open(config1).use { realm1 ->
             val subs = realm1.subscriptions.update {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
@@ -98,7 +97,7 @@ class FlexibleSyncIntegrationTests {
 
         // Download data from user 2
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config2 = SyncConfiguration.Builder(user2, defaultSchema)
+        val config2 = SyncConfiguration.Builder(user2, FLX_SYNC_SCHEMA)
             .initialSubscriptions { realm ->
                 add(
                     realm.query<FlexParentObject>(
@@ -119,7 +118,7 @@ class FlexibleSyncIntegrationTests {
     @Test
     fun writeFailsIfNoSubscription() = runBlocking {
         val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config = SyncConfiguration.Builder(user, defaultSchema)
+        val config = SyncConfiguration.Builder(user, FLX_SYNC_SCHEMA)
             .build()
 
         Realm.open(config).use { realm ->
@@ -137,7 +136,7 @@ class FlexibleSyncIntegrationTests {
         val randomSection = Random.nextInt() // Generate random section to allow replays of unit tests
 
         val user = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config = SyncConfiguration.Builder(user, defaultSchema).build()
+        val config = SyncConfiguration.Builder(user, FLX_SYNC_SCHEMA).build()
         Realm.open(config).use { realm ->
             realm.subscriptions.update {
                 val query = realm.query<FlexParentObject>()
@@ -145,7 +144,7 @@ class FlexibleSyncIntegrationTests {
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(60.seconds))
+            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
             realm.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
@@ -155,14 +154,14 @@ class FlexibleSyncIntegrationTests {
                 val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
                 add(query, "sub", updateExisting = true)
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(60.seconds))
+            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
             assertEquals(1, realm.query<FlexParentObject>().count().find())
         }
     }
 
     @Test
     fun initialSubscriptions_timeOut() {
-        val config = SyncConfiguration.Builder(app.currentUser!!, defaultSchema)
+        val config = SyncConfiguration.Builder(app.currentUser!!, FLX_SYNC_SCHEMA)
             .initialSubscriptions { realm ->
                 repeat(10) {
                     add(realm.query<FlexParentObject>("section = $0", it))
@@ -185,7 +184,7 @@ class FlexibleSyncIntegrationTests {
 
         // Prepare some user data
         val user1 = app.createUserAndLogin()
-        val config1 = SyncConfiguration.create(user1, defaultSchema)
+        val config1 = SyncConfiguration.create(user1, FLX_SYNC_SCHEMA)
         Realm.open(config1).use { realm ->
             realm.subscriptions.update {
                 add(realm.query<FlexParentObject>("section = $0", randomSection))
@@ -207,7 +206,7 @@ class FlexibleSyncIntegrationTests {
         // User 2 opens a Realm twice
         val counter = atomic(0)
         val user2 = app.createUserAndLogin()
-        val config2 = SyncConfiguration.Builder(user2, defaultSchema)
+        val config2 = SyncConfiguration.Builder(user2, FLX_SYNC_SCHEMA)
             .initialSubscriptions(rerunOnOpen = true) { realm ->
                 add(
                     realm.query<FlexParentObject>(
@@ -235,7 +234,7 @@ class FlexibleSyncIntegrationTests {
 
         // Upload data from user 1
         val user1 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config1 = SyncConfiguration.create(user1, defaultSchema)
+        val config1 = SyncConfiguration.create(user1, FLX_SYNC_SCHEMA)
         Realm.open(config1).use { realm1 ->
             val subs = realm1.subscriptions.update {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
@@ -273,7 +272,7 @@ class FlexibleSyncIntegrationTests {
 
         // Download data from user 2
         val user2 = app.createUserAndLogIn(TestHelper.randomEmail(), "123456")
-        val config2 = SyncConfiguration.Builder(user2, defaultSchema)
+        val config2 = SyncConfiguration.Builder(user2, FLX_SYNC_SCHEMA)
             .initialSubscriptions { realm ->
                 add(
                     realm.query<FlexParentObject>(
@@ -304,7 +303,7 @@ class FlexibleSyncIntegrationTests {
 
         val channel = Channel<CompensatingWriteException>(1)
 
-        val config1 = SyncConfiguration.Builder(user1, defaultSchema)
+        val config1 = SyncConfiguration.Builder(user1, FLX_SYNC_SCHEMA)
             .errorHandler { _: SyncSession, syncException: SyncException ->
                 runBlocking {
                     channel.send(syncException as CompensatingWriteException)
@@ -332,7 +331,7 @@ class FlexibleSyncIntegrationTests {
 
             val exception: CompensatingWriteException = channel.receiveOrFail()
 
-            assertEquals("[Session][CompensatingWrite(231)] Client attempted a write that is disallowed by permissions, or modifies an object outside the current query, and the server undid the change.", exception.message)
+            assertTrue(exception.message!!.startsWith("[Sync][CompensatingWrite(1033)] Client attempted a write that is outside of permissions or query filters; it has been reverted Logs:"), exception.message)
             assertEquals(1, exception.writes.size)
 
             exception.writes[0].run {

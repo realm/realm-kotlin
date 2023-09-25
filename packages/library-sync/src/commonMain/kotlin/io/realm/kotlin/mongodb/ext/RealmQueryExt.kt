@@ -60,7 +60,9 @@ import kotlin.time.Duration
  * depend on which [mode] was used.
  * @throws kotlinx.coroutines.TimeoutCancellationException if the specified timeout was hit before
  * a query result could be returned.
- * @Throws IllegalStateException if this method is called on a Realm that isn't using Flexible Sync.
+ * @throws IllegalStateException if this method is called on a Realm that isn't using Flexible Sync.
+ * @throws io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException if the server did not
+ * accept the set of queries. The exact reason is found in the exception message.
  */
 @ExperimentalFlexibleSyncApi
 public suspend fun <T : RealmObject> RealmQuery<T>.subscribe(

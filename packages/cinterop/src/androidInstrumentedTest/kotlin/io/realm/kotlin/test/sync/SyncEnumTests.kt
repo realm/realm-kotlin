@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.sync
 
+import io.realm.kotlin.internal.interop.CategoryFlags
 import io.realm.kotlin.internal.interop.ErrorCategory
 import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.realm_auth_provider_e
@@ -23,23 +24,21 @@ import io.realm.kotlin.internal.interop.realm_errno_e
 import io.realm.kotlin.internal.interop.realm_error_category_e
 import io.realm.kotlin.internal.interop.realm_sync_client_metadata_mode_e
 import io.realm.kotlin.internal.interop.realm_sync_connection_state_e
-import io.realm.kotlin.internal.interop.realm_sync_errno_client_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_connection_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_session_e
-import io.realm.kotlin.internal.interop.realm_sync_error_category_e
 import io.realm.kotlin.internal.interop.realm_sync_session_resync_mode_e
 import io.realm.kotlin.internal.interop.realm_sync_session_state_e
 import io.realm.kotlin.internal.interop.realm_user_state_e
+import io.realm.kotlin.internal.interop.realm_web_socket_errno_e
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSyncSessionState
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.interop.sync.MetadataMode
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode
-import io.realm.kotlin.internal.interop.sync.ProtocolSessionErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.interop.sync.SyncConnectionErrorCode
+import io.realm.kotlin.internal.interop.sync.SyncSessionErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import org.junit.Test
 import kotlin.reflect.KClass
 import kotlin.test.BeforeTest
@@ -59,10 +58,11 @@ class SyncEnumTests {
     }
 
     @Test
-    fun appErrorCategory() {
+    fun errorCategory() {
         checkEnum(realm_error_category_e::class) { nativeValue ->
             ErrorCategory.of(nativeValue)
         }
+        assertEquals(ErrorCategory.values().size, CategoryFlags.CATEGORY_ORDER.size)
     }
 
     @Test
@@ -94,30 +94,23 @@ class SyncEnumTests {
     }
 
     @Test
-    fun protocolClientErrorCode() {
-        checkEnum(realm_sync_errno_client_e::class) { nativeValue ->
-            ProtocolClientErrorCode.of(nativeValue)
-        }
-    }
-
-    @Test
-    fun protocolConnectionErrorCode() {
+    fun syncConnectionErrorCode() {
         checkEnum(realm_sync_errno_connection_e::class) { nativeValue ->
-            ProtocolConnectionErrorCode.of(nativeValue)
+            SyncConnectionErrorCode.of(nativeValue)
         }
     }
 
     @Test
-    fun protocolSessionErrorCode() {
+    fun syncSessionErrorCode() {
         checkEnum(realm_sync_errno_session_e::class) { nativeValue ->
-            ProtocolSessionErrorCode.of(nativeValue)
+            SyncSessionErrorCode.of(nativeValue)
         }
     }
 
     @Test
-    fun syncErrorCodeCategory() {
-        checkEnum(realm_sync_error_category_e::class) { nativeValue ->
-            SyncErrorCodeCategory.of(nativeValue)
+    fun websocketErrorCode() {
+        checkEnum(realm_web_socket_errno_e::class) { nativeValue ->
+            WebsocketErrorCode.of(nativeValue)
         }
     }
 

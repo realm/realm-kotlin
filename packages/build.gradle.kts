@@ -27,8 +27,9 @@ allprojects {
     version = Realm.version
     group = Realm.group
 
+    // Define JVM bytecode target for all Kotlin targets
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        kotlinOptions.jvmTarget = "${Versions.jvmTarget}"
+        kotlinOptions.jvmTarget = "${Versions.kotlinJvmTarget}"
     }
 }
 

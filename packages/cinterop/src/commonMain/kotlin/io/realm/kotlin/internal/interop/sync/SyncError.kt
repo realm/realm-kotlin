@@ -16,13 +16,14 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CoreError
+
 /**
  * Wrapper for C-API `realm_sync_error`.
  * See https://github.com/realm/realm-core/blob/master/src/realm.h#L3321
  */
 data class SyncError constructor(
-    val errorCode: SyncErrorCode,
-    val detailedMessage: String?,
+    val errorCode: CoreError,
     val originalFilePath: String?,
     val recoveryFilePath: String?,
     val isFatal: Boolean,
@@ -34,10 +35,9 @@ data class SyncError constructor(
     // where we receive an error code rather than a full SyncErrorCode, wrapping the code
     // simplifies the error handling logic.
     constructor(
-        errorCode: SyncErrorCode
+        error: CoreError
     ) : this(
-        errorCode = errorCode,
-        detailedMessage = null,
+        errorCode = error,
         originalFilePath = null,
         recoveryFilePath = null,
         isFatal = false,
@@ -48,10 +48,9 @@ data class SyncError constructor(
 
     // Constructor used by JNI so we avoid creating too many objects on the JNI side.
     constructor(
-        category: Int,
+        categoryFlags: Int,
         value: Int,
         message: String,
-        detailedMessage: String?,
         originalFilePath: String?,
         recoveryFilePath: String?,
         isFatal: Boolean,
@@ -59,8 +58,7 @@ data class SyncError constructor(
         isClientResetRequested: Boolean,
         compensatingWrites: Array<CoreCompensatingWriteInfo>
     ) : this(
-        SyncErrorCode.newInstance(category, value, message),
-        detailedMessage,
+        CoreError(categoryFlags, value, message),
         originalFilePath,
         recoveryFilePath,
         isFatal,

@@ -30,6 +30,7 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
+import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.LogLevel
@@ -87,7 +88,7 @@ class SyncConfigTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
     }
 
     @AfterTest
@@ -104,7 +105,7 @@ class SyncConfigTests {
         val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
         val customLoggers = listOf(logger)
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).also { builder ->
@@ -123,7 +124,7 @@ class SyncConfigTests {
         }
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).also { builder ->
@@ -136,7 +137,7 @@ class SyncConfigTests {
     fun errorHandler_default() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -149,7 +150,7 @@ class SyncConfigTests {
     fun compactOnLaunch_default() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -163,7 +164,7 @@ class SyncConfigTests {
         val user = createTestUser()
         val callback = CompactOnLaunchCallback { _, _ -> false }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         )
@@ -185,7 +186,7 @@ class SyncConfigTests {
             )
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = PARTITION_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         )
@@ -248,7 +249,7 @@ class SyncConfigTests {
             }
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).syncClientResetStrategy(strategy)
@@ -276,7 +277,7 @@ class SyncConfigTests {
             }
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).syncClientResetStrategy(strategy)
@@ -308,7 +309,7 @@ class SyncConfigTests {
             }
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).syncClientResetStrategy(strategy)
@@ -320,7 +321,7 @@ class SyncConfigTests {
     fun equals_sameObject() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -373,7 +374,7 @@ class SyncConfigTests {
     fun equals_syncSpecificFields() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -406,7 +407,7 @@ class SyncConfigTests {
 
     private fun verifyName(builder: SyncConfiguration.Builder, expectedFileName: String) {
         val config = builder.build()
-        val suffix = "/mongodb-realm/${config.user.app.configuration.appId}/${config.user.identity}/$expectedFileName"
+        val suffix = pathOf("", "mongodb-realm", config.user.app.configuration.appId, config.user.id, expectedFileName)
         assertTrue(config.path.contains(suffix), "${config.path} failed.")
         assertEquals(expectedFileName, config.name)
     }
@@ -531,7 +532,7 @@ class SyncConfigTests {
     fun encryption() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).also { builder ->
@@ -758,7 +759,7 @@ class SyncConfigTests {
     fun getPartitionValue() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -1230,7 +1231,7 @@ class SyncConfigTests {
     fun logLevelDoesNotGetOverwrittenByConfig() {
         app.asTestApp.close()
         // Prevent AppConfiguration to set a log level
-        app = TestApp(logLevel = null)
+        app = TestApp("logLevelDoesNotGetOverwrittenByConfig", logLevel = null)
 
         val expectedLogLevel = LogLevel.ALL
 
@@ -1242,7 +1243,7 @@ class SyncConfigTests {
         }
 
         SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = FLX_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -1260,7 +1261,7 @@ class SyncConfigTests {
         val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
             .name(fileName)
             .build()
-        val suffix = "/mongodb-realm/${user.app.configuration.appId}/${user.identity}/$fileName"
+        val suffix = pathOf("", "mongodb-realm", user.app.configuration.appId, user.id, fileName)
         assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
         assertEquals(fileName, config.name, "${config.name} failed.")
     }

@@ -8,6 +8,7 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
+import io.realm.kotlin.test.mongodb.common.PARTITION_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
@@ -34,7 +35,7 @@ class NonLatinTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -54,7 +55,7 @@ class NonLatinTests {
     @Test
     fun readNullCharacterFromMongoDB() = runBlocking {
         val adminApi = app.asTestApp
-        val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf(ObjectIdPk::class)).build()
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = PARTITION_SYNC_SCHEMA).build()
         Realm.open(config).use { realm ->
             val json: JsonObject = adminApi.insertDocument(
                 ObjectIdPk::class.simpleName!!,

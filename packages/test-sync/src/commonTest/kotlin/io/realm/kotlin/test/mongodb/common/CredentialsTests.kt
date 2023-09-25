@@ -60,7 +60,7 @@ class CredentialsTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp()
+        app = TestApp(this::class.simpleName)
     }
 
     @AfterTest

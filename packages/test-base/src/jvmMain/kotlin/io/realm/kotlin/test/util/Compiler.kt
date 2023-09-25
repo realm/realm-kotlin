@@ -34,6 +34,6 @@ object Compiler {
             messageOutputStream = System.out
             componentRegistrars = plugins
             inheritClassPath = true
-            kotlincArguments = listOf("-Xjvm-default=enable")
+            kotlincArguments = listOf("-Xjvm-default=all-compatibility")
         }.compile()
 }

@@ -21,12 +21,9 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.entities.sync.SyncPerson
-import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
+import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -114,6 +111,7 @@ class SyncClientResetIntegrationTests {
             ) -> Unit
         ) {
             val app = TestApp(
+                this::class.simpleName,
                 appName = appName,
                 logLevel = LogLevel.INFO,
                 customLogger = ClientResetLoggerInspector(logChannel),
@@ -161,11 +159,7 @@ class SyncClientResetIntegrationTests {
                 configBuilderGenerator = { user ->
                     return@TestEnvironment SyncConfiguration.Builder(
                         user,
-                        setOf(
-                            FlexParentObject::class,
-                            FlexChildObject::class,
-                            FlexEmbeddedObject::class
-                        )
+                        FLX_SYNC_SCHEMA
                     ).initialSubscriptions { realm ->
                         realm.query<FlexParentObject>(
                             "section = $0 AND name = $1",
@@ -220,7 +214,7 @@ class SyncClientResetIntegrationTests {
                 return@TestEnvironment SyncConfiguration.Builder(
                     user,
                     TestHelper.randomPartitionValue(),
-                    schema = setOf(SyncPerson::class)
+                    schema = PARTITION_SYNC_SCHEMA
                 )
             },
             insertElement = { realm: Realm ->
@@ -596,7 +590,7 @@ class SyncClientResetIntegrationTests {
                 // testing the server will send a different message. This just ensures that
                 // we don't accidentally modify or remove the message.
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] Simulate Client Reset.",
                     exception.message
                 )
 
@@ -609,10 +603,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     // TODO Twice until the deprecated method is removed
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
@@ -624,21 +615,25 @@ class SyncClientResetIntegrationTests {
 
     @Test
     fun discardUnsyncedChanges_executeClientReset_pbs() = runBlocking {
-        performPbsTest { _, _, _, builder ->
-            discardUnsyncedChanges_executeClientReset(builder)
+        performPbsTest { syncMode, app, user, builder ->
+            discardUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
     @Test
     fun discardUnsyncedChanges_executeClientReset_flx() = runBlocking {
-        performFlxTest { _, _, _, builder ->
-            discardUnsyncedChanges_executeClientReset(builder)
+        performFlxTest { syncMode, app, user, builder ->
+            discardUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
     private fun discardUnsyncedChanges_executeClientReset(
+        syncMode: SyncMode,
+        app: TestApp,
+        user: User,
         builder: SyncConfiguration.Builder
     ) {
+        var testRealm: Realm? = null
         // Channel size is 2 because both onError and onManualResetFallback are called
         val channel = Channel<ClientResetEvents>(2)
         val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
@@ -662,12 +657,14 @@ class SyncClientResetIntegrationTests {
                 session: SyncSession,
                 exception: ClientResetRequiredException
             ) {
+                testRealm!!.close()
+
                 val originalFilePath = assertNotNull(exception.originalFilePath)
                 val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                 assertTrue(fileExists(originalFilePath))
                 assertFalse(fileExists(recoveryFilePath))
 
-                exception.executeClientReset()
+                assertTrue(exception.executeClientReset())
 
                 // Validate that files have been moved after explicit reset
                 assertFalse(fileExists(originalFilePath))
@@ -677,17 +674,13 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
-            runBlocking {
-                realm.syncSession.downloadAllServerChanges(defaultTimeout)
-
-                with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
-
-                    // TODO Twice until the deprecated method is removed
+        runBlocking {
+            Realm.open(config).use { realm ->
+                testRealm = realm
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
+                    // Twice until the deprecated method is removed
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
@@ -735,7 +728,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -747,7 +740,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -819,7 +812,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -831,7 +824,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -898,9 +891,8 @@ class SyncClientResetIntegrationTests {
                 )
                 // assertEquals(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RESET, logChannel.receiveOrFail())
 
-                (realm.syncSession as SyncSessionImpl).simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
+                (realm.syncSession as SyncSessionImpl).simulateSyncError(
+                    ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED
                 )
                 // Validate that we receive logs on the error callback
                 val actual = logChannel.receiveOrFail()
@@ -948,10 +940,7 @@ class SyncClientResetIntegrationTests {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
                 with((realm.syncSession as SyncSessionImpl)) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
+                    simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
                     val exception = channel.receiveOrFail()
                     val originalFilePath = assertNotNull(exception.originalFilePath)
@@ -959,7 +948,7 @@ class SyncClientResetIntegrationTests {
                     assertTrue(fileExists(originalFilePath))
                     assertFalse(fileExists(recoveryFilePath))
                     assertEquals(
-                        "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                        "[Sync][AutoClientResetFailed(1028)] Simulate Client Reset.",
                         exception.message
                     )
                 }
@@ -969,19 +958,22 @@ class SyncClientResetIntegrationTests {
 
     @Test
     fun manuallyRecoverUnsyncedChanges_executeClientReset_pbs() = runBlocking {
-        performPbsTest { _, _, _, builder ->
-            manuallyRecoverUnsyncedChanges_executeClientReset(builder)
+        performPbsTest { syncMode, app, user, builder ->
+            manuallyRecoverUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
     @Test
     fun manuallyRecoverUnsyncedChanges_executeClientReset_flx() = runBlocking {
-        performFlxTest { _, _, _, builder ->
-            manuallyRecoverUnsyncedChanges_executeClientReset(builder)
+        performFlxTest { syncMode, app, user, builder ->
+            manuallyRecoverUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
     private fun manuallyRecoverUnsyncedChanges_executeClientReset(
+        syncMode: SyncMode,
+        app: TestApp,
+        user: User,
         builder: SyncConfiguration.Builder
     ) {
         val channel = Channel<ClientResetRequiredException>(1)
@@ -997,24 +989,18 @@ class SyncClientResetIntegrationTests {
             }
         ).build()
 
-        Realm.open(config).use { realm ->
-            runBlocking {
-                realm.syncSession.downloadAllServerChanges(defaultTimeout)
-
-                with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
-
+        runBlocking {
+            Realm.open(config).use { realm ->
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
                     val exception = channel.receiveOrFail()
-
                     val originalFilePath = assertNotNull(exception.originalFilePath)
                     val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
+                    realm.close()
                     assertTrue(fileExists(originalFilePath))
                     assertFalse(fileExists(recoveryFilePath))
-
-                    exception.executeClientReset()
+                    assertTrue(exception.executeClientReset())
                     assertFalse(fileExists(originalFilePath))
                     assertTrue(fileExists(recoveryFilePath))
                 }
@@ -1121,17 +1107,14 @@ class SyncClientResetIntegrationTests {
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
-                (realm.syncSession as SyncSessionImpl).simulateError(
-                    ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                    SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                )
+                (realm.syncSession as SyncSessionImpl).simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
                 val exception = channel.receiveOrFail()
 
                 assertNotNull(exception.recoveryFilePath)
                 assertNotNull(exception.originalFilePath)
                 assertFalse(fileExists(exception.recoveryFilePath))
                 assertTrue(fileExists(exception.originalFilePath))
-                assertTrue(exception.message!!.contains("Automatic recovery from client reset failed"))
+                assertTrue(exception.message!!.contains("Simulate Client Reset"))
             }
         }
     }
@@ -1174,7 +1157,7 @@ class SyncClientResetIntegrationTests {
             ) {
                 // Notify that this callback has been invoked
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
                 channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
@@ -1196,23 +1179,30 @@ class SyncClientResetIntegrationTests {
 
     @Test
     fun recoverUnsyncedChanges_executeClientReset_pbs() = runBlocking {
-        performPbsTest { _, _, _, builder ->
-            recoverUnsyncedChanges_executeClientReset(builder)
+        performPbsTest { syncMode, app, user, builder ->
+            recoverUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
     @Test
     fun recoverUnsyncedChanges_executeClientReset_flx() = runBlocking {
-        performFlxTest { _, _, _, builder ->
-            recoverUnsyncedChanges_executeClientReset(builder)
+        performFlxTest { syncMode, app, user, builder ->
+            recoverUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
-    private fun recoverUnsyncedChanges_executeClientReset(builder: SyncConfiguration.Builder) {
+    private fun recoverUnsyncedChanges_executeClientReset(
+        syncMode: SyncMode,
+        app: TestApp,
+        user: User,
+        builder: SyncConfiguration.Builder
+    ) {
+        var testRealm: Realm? = null
         val channel = Channel<ClientResetEvents>(2)
         val config = builder.syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
-                fail("Should not call onBeforeReset")
+                @Suppress("TooGenericExceptionThrown")
+                throw RuntimeException("Trigger onManualResetFallback")
             }
 
             override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
@@ -1223,19 +1213,21 @@ class SyncClientResetIntegrationTests {
                 session: SyncSession,
                 exception: ClientResetRequiredException
             ) {
+                testRealm!!.close()
+
                 val originalFilePath = assertNotNull(exception.originalFilePath)
                 val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                 assertTrue(fileExists(originalFilePath))
                 assertFalse(fileExists(recoveryFilePath))
 
-                exception.executeClientReset()
+                assertTrue(exception.executeClientReset())
 
                 // Validate that files have been moved after explicit reset
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
 
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
 
@@ -1243,17 +1235,12 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
-            runBlocking {
-                realm.syncSession.downloadAllServerChanges(defaultTimeout)
-
-                with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
-
-                    // TODO Twice until the deprecated method is removed
+        runBlocking {
+            Realm.open(config).use { realm ->
+                testRealm = realm
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
@@ -1391,25 +1378,30 @@ class SyncClientResetIntegrationTests {
 
     @Test
     fun recoverOrDiscardUnsyncedChanges_executeClientReset_pbs() = runBlocking {
-        performPbsTest { _, _, _, builder ->
-            recoverOrDiscardUnsyncedChanges_executeClientReset(builder)
+        performPbsTest { syncMode, app, user, builder ->
+            recoverOrDiscardUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
     @Test
     fun recoverOrDiscardUnsyncedChanges_executeClientReset_flx() = runBlocking {
-        performFlxTest { _, _, _, builder ->
-            recoverOrDiscardUnsyncedChanges_executeClientReset(builder)
+        performFlxTest { syncMode, app, user, builder ->
+            recoverOrDiscardUnsyncedChanges_executeClientReset(syncMode, app, user, builder)
         }
     }
 
     private fun recoverOrDiscardUnsyncedChanges_executeClientReset(
+        syncMode: SyncMode,
+        app: TestApp,
+        user: User,
         builder: SyncConfiguration.Builder
     ) {
+        var testRealm: Realm? = null
         val channel = Channel<ClientResetEvents>(2)
         val config = builder.syncClientResetStrategy(object : RecoverOrDiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
-                fail("Should not call onBeforeReset")
+                @Suppress("TooGenericExceptionThrown")
+                throw RuntimeException("Trigger onManualResetFallback")
             }
 
             override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
@@ -1424,19 +1416,21 @@ class SyncClientResetIntegrationTests {
                 session: SyncSession,
                 exception: ClientResetRequiredException
             ) {
+                testRealm!!.close()
+
                 val originalFilePath = assertNotNull(exception.originalFilePath)
                 val recoveryFilePath = assertNotNull(exception.recoveryFilePath)
                 assertTrue(fileExists(originalFilePath))
                 assertFalse(fileExists(recoveryFilePath))
 
-                exception.executeClientReset()
+                assertTrue(exception.executeClientReset())
 
                 // Validate that files have been moved after explicit reset
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
 
                 assertEquals(
-                    "[Client][AutoClientResetFailure(132)] Automatic recovery from client reset failed.",
+                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
 
@@ -1444,17 +1438,12 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
-            runBlocking {
-                realm.syncSession.downloadAllServerChanges(defaultTimeout)
-
-                with(realm.syncSession as SyncSessionImpl) {
-                    simulateError(
-                        ProtocolClientErrorCode.RLM_SYNC_ERR_CLIENT_AUTO_CLIENT_RESET_FAILURE,
-                        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT
-                    )
-
-                    // TODO Twice until the deprecated method is removed
+        runBlocking {
+            Realm.open(config).use { realm ->
+                testRealm = realm
+                with(realm.syncSession) {
+                    downloadAllServerChanges(defaultTimeout)
+                    app.triggerClientReset(syncMode, this, user.id)
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }

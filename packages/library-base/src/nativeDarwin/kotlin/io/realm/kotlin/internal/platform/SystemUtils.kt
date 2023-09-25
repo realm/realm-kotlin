@@ -68,7 +68,7 @@ public actual fun epochInSeconds(): Long =
  * without considering having to pass negative nanoseconds.
  */
 @Suppress("MagicNumber")
-internal actual fun currentTime(): RealmInstant {
+public actual fun currentTime(): RealmInstant {
     val secs: Double = NSDate().timeIntervalSince1970
     return when {
         // We can't convert the MIN value to ms - it is initialized with Long.MIN_VALUE and

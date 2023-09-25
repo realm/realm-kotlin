@@ -57,14 +57,14 @@ class MutableSubscriptionSetTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = FLX_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -102,7 +102,7 @@ class MutableSubscriptionSetTests {
         assertEquals(SubscriptionSetState.PENDING, updatedSubs.state)
         val sub: Subscription = updatedSubs.first()
         assertEquals("test", sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
         assertTrue(now <= sub.createdAt, "Was: $now <= ${sub.createdAt}")
         assertEquals(sub.updatedAt, sub.createdAt)
@@ -122,7 +122,7 @@ class MutableSubscriptionSetTests {
         assertEquals(SubscriptionSetState.PENDING, updatedSubs.state)
         val sub: Subscription = updatedSubs.first()
         assertNull(sub.name)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
         assertEquals("FlexParentObject", sub.objectType)
         assertTrue(now <= sub.createdAt, "Was: $now <= ${sub.createdAt}")
         assertEquals(sub.updatedAt, sub.createdAt)
@@ -185,7 +185,7 @@ class MutableSubscriptionSetTests {
         val sub = subs.first()
         assertEquals("sub1", sub.name)
         assertEquals("FlexParentObject", sub.objectType)
-        assertEquals("name == \"red\" ", sub.queryDescription)
+        assertEquals("name == \"red\"", sub.queryDescription)
         assertTrue(sub.createdAt < sub.updatedAt)
         assertEquals(createdAt, sub.createdAt)
     }
@@ -284,7 +284,7 @@ class MutableSubscriptionSetTests {
         // Not part of schema
         realm.subscriptions.update {
             assertFailsWith<IllegalArgumentException> {
-                removeAll(io.realm.kotlin.entities.sync.ParentPk::class)
+                removeAll(io.realm.kotlin.entities.Sample::class)
             }
         }
 

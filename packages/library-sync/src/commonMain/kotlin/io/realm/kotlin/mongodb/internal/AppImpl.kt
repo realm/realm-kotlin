@@ -21,19 +21,25 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
+import io.realm.kotlin.mongodb.sync.Sync
+import io.realm.kotlin.types.RealmInstant
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 public data class AppResources(
     val dispatcherHolder: DispatcherHolder,
@@ -52,6 +58,37 @@ public class AppImpl(
     private val networkTransport: NetworkTransport
     private val websocketTransport: WebSocketTransport?
 
+    private var lastOnlineStateReported: Duration? = null
+    private var lastConnectedState: Boolean? = null // null = unknown, true = connected, false = disconnected
+    @Suppress("MagicNumber")
+    private val reconnectThreshold = 5.seconds
+
+    @Suppress("invisible_member", "invisible_reference", "MagicNumber")
+    private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
+        // In an ideal world, we would be able to reliably detect the network coming and
+        // going. Unfortunately that does not seem to be case (at least on Android).
+        //
+        // So instead of assuming that we have always detect the device going offline first,
+        // we just tell Realm Core to reconnect when we detect the network has come back.
+        //
+        // Due to the way network interfaces are re-enabled on Android, we might see multiple
+        // "isOnline" messages in short order. So in order to prevent resetting the network
+        // too often we throttle messages, so a reconnect can only happen ever 5 seconds.
+        RealmLog.debug("Network state change detected. ConnectionAvailable = $connectionAvailable")
+        val now: Duration = RealmInstant.now().toDuration()
+        if (connectionAvailable && (lastOnlineStateReported == null || now.minus(lastOnlineStateReported!!) > reconnectThreshold)
+        ) {
+            RealmLog.info("Trigger network reconnect.")
+            try {
+                sync.reconnect()
+            } catch (ex: Exception) {
+                RealmLog.error(ex.toString())
+            }
+            lastOnlineStateReported = now
+        }
+        lastConnectedState = connectionAvailable
+    }
+
     // Allow some delay between events being reported and them being consumed.
     // When the (somewhat arbitrary) limit is hit, we will throw an exception, since we assume the
     // consumer is doing something wrong. This is also needed because we don't
@@ -69,6 +106,7 @@ public class AppImpl(
         networkTransport = appResources.networkTransport
         websocketTransport = appResources.websocketTransport
         nativePointer = appResources.realmAppPointer
+        NetworkStateObserver.addListener(connectionListener)
     }
 
     override val emailPasswordAuth: EmailPasswordAuth by lazy { EmailPasswordAuthImpl(nativePointer) }
@@ -76,6 +114,7 @@ public class AppImpl(
     override val currentUser: User?
         get() = RealmInterop.realm_app_get_current_user(nativePointer)
             ?.let { UserImpl(it, this) }
+    override val sync: Sync by lazy { SyncImpl(nativePointer) }
 
     override fun allUsers(): Map<String, User> {
         val nativeUsers: List<RealmUserPointer> =
@@ -138,6 +177,7 @@ public class AppImpl(
         // be beneficial in order to reason about the lifecycle of the Sync thread and dispatchers.
         networkTransport.close()
         nativePointer.release()
+        NetworkStateObserver.removeListener(connectionListener)
         // It's important to close the transport *after* we delete the App, since SyncSession dtor
         // still relies on the event loop (powered by the coroutines) to post function handler to be executed.
         websocketTransport?.close()

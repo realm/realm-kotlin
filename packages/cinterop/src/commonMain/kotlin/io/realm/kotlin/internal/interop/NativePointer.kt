@@ -43,3 +43,14 @@ public interface NativePointer<T : CapiT> {
      */
     public fun isReleased(): Boolean
 }
+
+/**
+ * Deletes the underlying pointer after executing the lambda block.
+ */
+fun <T : CapiT, R> NativePointer<T>.use(
+    block: (NativePointer<T>) -> R,
+): R = try {
+    block(this)
+} finally {
+    release()
+}
