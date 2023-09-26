@@ -31,6 +31,8 @@ object Compiler {
         KotlinCompilation().apply {
             sources = listOf(source)
             useIR = true
+            // TODO Find a way to differentiate to test both K1 and K2 support
+            useK2 = true
             messageOutputStream = System.out
             componentRegistrars = plugins
             inheritClassPath = true

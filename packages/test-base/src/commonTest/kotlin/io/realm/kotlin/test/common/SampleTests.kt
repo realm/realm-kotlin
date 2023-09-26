@@ -27,7 +27,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.internal.RealmObjectCompanion
-import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.internal.realmObjectCompanionOrThrow
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -69,7 +68,10 @@ class SampleTests {
     @Test
     fun realmObjectCompanion() {
         assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanionOrThrow())
-        assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
+        // K2 backend cannot handle multiple imports of the same reference so use fully qualified
+        // name
+        // assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
+        assertIs<RealmObjectCompanion>(io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(Sample::class))
     }
 
     @Test

@@ -13,27 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.realm.kotlin.compiler.k2.model
+package io.realm.kotlin.compiler.fir.model
 
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
 
 /**
- * Fir extension that modifies the Realm object API.
+ * Fir extension registrar that adds extensions to modify the Realm object API.
  *
  * This consists of:
- * - A [CompanionAugmenter] that adds a (or updates existing) companion object to
+ * - A [CompanionExtension] that adds a (or updates existing) companion object to
  *   RealmObject-classes and modifies it to implement the [RealmObjectCompanion] interface and its
  *   methods.
- * - A [ModelObjectAugmenter] that adds `toString`, `equals` and `hashCode` methods to
+ * - A [ObjectExtension] that adds `toString`, `equals` and `hashCode` methods to
  *   RealmObject-classes.
  *
- * All API modifications should be tagged with the [RealmApiGeneratorKey] to make it recognizable
+ * All API modifications should be tagged with the [RealmPluginGeneratorKey] to make it recognizable
  * in other compiler plugin phases.
  */
-class RealmApiAugmenter : FirExtensionRegistrar() {
+class RealmModelRegistrar : FirExtensionRegistrar() {
     override fun ExtensionRegistrarContext.configurePlugin() {
-        +::CompanionAugmenter
-        +::ModelObjectAugmenter
+        +::CompanionExtension
+        +::ObjectExtension
     }
 }
-

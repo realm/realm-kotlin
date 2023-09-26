@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.compiler.k2.model
+package io.realm.kotlin.compiler.fir.model
 
 import io.realm.kotlin.compiler.Names
+import io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey
 import io.realm.kotlin.compiler.isBaseRealmObject
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
@@ -36,7 +37,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 
-class CompanionAugmenter(session: FirSession) : FirDeclarationGenerationExtension(session) {
+class CompanionExtension(session: FirSession) : FirDeclarationGenerationExtension(session) {
     override fun getNestedClassifiersNames(
         classSymbol: FirClassSymbol<*>,
         context: NestedClassGenerationContext
@@ -57,7 +58,7 @@ class CompanionAugmenter(session: FirSession) : FirDeclarationGenerationExtensio
         // Only generate new companion if class does not have on already
         val companion = (owner as? FirRegularClassSymbol)?.companionObjectSymbol
         return if (companion == null && owner.isBaseRealmObject) {
-            createCompanionObject(owner, RealmApiGeneratorKey).symbol
+            createCompanionObject(owner, RealmPluginGeneratorKey).symbol
         } else { null }
     }
 
@@ -85,7 +86,7 @@ class CompanionAugmenter(session: FirSession) : FirDeclarationGenerationExtensio
                 listOf(
                     createMemberFunction(
                         owner,
-                        RealmApiGeneratorKey,
+                        RealmPluginGeneratorKey,
                         callableId.callableName,
                         session.builtinTypes.anyType.type,
                     ).symbol
@@ -95,7 +96,7 @@ class CompanionAugmenter(session: FirSession) : FirDeclarationGenerationExtensio
                 listOf(
                     createMemberFunction(
                         owner,
-                        RealmApiGeneratorKey,
+                        RealmPluginGeneratorKey,
                         callableId.callableName,
                         session.builtinTypes.anyType.type
                     ).symbol
@@ -106,7 +107,7 @@ class CompanionAugmenter(session: FirSession) : FirDeclarationGenerationExtensio
     }
 
     override fun generateConstructors(context: MemberGenerationContext): List<FirConstructorSymbol> {
-        val constructor = createDefaultPrivateConstructor(context.owner, RealmApiGeneratorKey)
+        val constructor = createDefaultPrivateConstructor(context.owner, RealmPluginGeneratorKey)
         return listOf(constructor.symbol)
     }
 }

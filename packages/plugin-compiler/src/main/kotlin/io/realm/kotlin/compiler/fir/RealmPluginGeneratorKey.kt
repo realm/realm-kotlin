@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.compiler.k2.model
+package io.realm.kotlin.compiler.fir
 
 import org.jetbrains.kotlin.GeneratedDeclarationKey
 
 /**
  * Key to mark all additions made by out compile plugin.
  */
-object RealmApiGeneratorKey : GeneratedDeclarationKey() {
+object RealmPluginGeneratorKey : GeneratedDeclarationKey() {
     override fun toString(): String {
         return "RealmApiGenerator"
     }

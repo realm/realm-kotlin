@@ -17,7 +17,7 @@
 package io.realm.kotlin.compiler
 
 import com.google.auto.service.AutoService
-import io.realm.kotlin.compiler.k2.model.RealmApiAugmenter
+import io.realm.kotlin.compiler.fir.model.RealmModelRegistrar
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -81,7 +81,7 @@ class Registrar : ComponentRegistrar {
 
             // K2: Register extension that modifies the API similarly to the above two
             // SyntheticResolveExtensions
-            FirExtensionRegistrarAdapter.registerExtension(project, RealmApiAugmenter())
+            FirExtensionRegistrarAdapter.registerExtension(project, RealmModelRegistrar())
 
             // Adds RealmObjectInternal properties, rewires accessors and adds static companion
             // properties and methods

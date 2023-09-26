@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.compiler.k2.model
+package io.realm.kotlin.compiler.fir.model
 
 import io.realm.kotlin.compiler.Names
+import io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey
 import io.realm.kotlin.compiler.isBaseRealmObject
+import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.extensions.FirDeclarationGenerationExtension
 import org.jetbrains.kotlin.fir.extensions.MemberGenerationContext
@@ -26,22 +28,28 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+
+/**
+ * Name of methods for which we will generate default implementations for if the users have not
+ * defined their own.
+ */
+private val realmObjectDefaultMethods = setOf(
+    Names.REALM_OBJECT_TO_STRING_METHOD,
+    Names.REALM_OBJECT_EQUALS,
+    Names.REALM_OBJECT_HASH_CODE,
+)
 
 /**
  * Fir extension that adds `toString`, `equals` and `hashCode` to RealmObject-classes.
  */
-class ModelObjectAugmenter(session: FirSession) : FirDeclarationGenerationExtension(session) {
+class ObjectExtension(session: FirSession) : FirDeclarationGenerationExtension(session) {
     override fun getCallableNamesForClass(
         classSymbol: FirClassSymbol<*>,
         context: MemberGenerationContext
     ): Set<Name> {
         return if (classSymbol.isBaseRealmObject) {
-            setOf(
-                Names.REALM_OBJECT_TO_STRING_METHOD,
-                Names.REALM_OBJECT_EQUALS,
-                Names.REALM_OBJECT_HASH_CODE,
-            )
+            val methodNames: List<Name> = classSymbol.declarationSymbols.filterIsInstance<FirNamedFunctionSymbol>().map { it.name }
+            realmObjectDefaultMethods.filter { !methodNames.contains(it) }.toSet()
         } else {
             emptySet()
         }
@@ -57,19 +65,22 @@ class ModelObjectAugmenter(session: FirSession) : FirDeclarationGenerationExtens
                 listOf(
                     createMemberFunction(
                         owner,
-                        RealmApiGeneratorKey,
+                        RealmPluginGeneratorKey,
                         callableId.callableName,
                         session.builtinTypes.stringType.type,
-                    ).symbol
+                    ) {
+                        modality = Modality.OPEN
+                    }.symbol
                 )
             Names.REALM_OBJECT_EQUALS ->
                 listOf(
                     createMemberFunction(
                         owner,
-                        RealmApiGeneratorKey,
+                        RealmPluginGeneratorKey,
                         callableId.callableName,
                         session.builtinTypes.booleanType.type,
                     ) {
+                        modality = Modality.OPEN
                         valueParameter(Name.identifier("other"), session.builtinTypes.nullableAnyType.type)
                     }.symbol
                 )
@@ -77,10 +88,12 @@ class ModelObjectAugmenter(session: FirSession) : FirDeclarationGenerationExtens
                 listOf(
                     createMemberFunction(
                         owner,
-                        RealmApiGeneratorKey,
+                        RealmPluginGeneratorKey,
                         callableId.callableName,
                         session.builtinTypes.intType.type,
-                    ).symbol
+                    ) {
+                        modality = Modality.OPEN
+                    }.symbol
                 )
             else -> emptyList()
         }

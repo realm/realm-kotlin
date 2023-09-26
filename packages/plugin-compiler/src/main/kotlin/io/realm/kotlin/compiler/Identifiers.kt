@@ -163,5 +163,5 @@ object ClassIds {
     val APP_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppImpl"))
     val APP_CONFIGURATION = ClassId(PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
     val APP_CONFIGURATION_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppConfigurationImpl"))
-    val APP_CONFIGURATION_BUILDER = ClassId(FqName("io.realm.kotlin.mongodb.AppConfiguration"), FqName("Builder"), true)
+    val APP_CONFIGURATION_BUILDER = ClassId(FqName("io.realm.kotlin.mongodb"), FqName("AppConfiguration.Builder"), false)
 }

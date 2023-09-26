@@ -351,4 +351,9 @@ class SerializableSample : RealmObject {
 @Serializable
 class SerializableEmbeddedObject : EmbeddedRealmObject {
     var name: String = "hello world"
+
+    // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
+    // they both generate a Companion.
+    // FIXME Issue reference
+    companion object
 }

@@ -139,6 +139,11 @@ val BSON_DOCUMENT_VALUE = BsonDocument(
 class SerializablePerson : RealmObject {
     var firstName: String = "FIRST NAME"
     var lastName: String = "LAST NAME"
+
+    // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
+    // they both generate a Companion.
+    // FIXME Issue reference
+    companion object
 }
 
 class FunctionsTests {

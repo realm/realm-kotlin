@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
@@ -160,11 +161,11 @@ inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
                     .split(",") // Split by commas
                     .filter {
                         !(
-                                it.contains("<RealmObject>") ||
-                                        it.contains("<io.realm.kotlin.types.RealmObject>") ||
-                                        it.contains("<EmbeddedRealmObject>") ||
-                                        it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
-                                )
+                            it.contains("<RealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.RealmObject>") ||
+                                it.contains("<EmbeddedRealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
+                            )
                     }.joinToString(",") // Re-sanitize again
                 hasRealmObjectAsSuperType = elementNodeText.findAnyOf(interfaces) != null
             }
@@ -197,12 +198,20 @@ val ClassDescriptor.isBaseRealmObject: Boolean
 // FIXME Cannot disregard Java's constructor invocation for RealmObject()
 @OptIn(SymbolInternals::class)
 val FirClassSymbol<*>.isBaseRealmObject: Boolean
-    get() = this.fir.superTypeRefs.any {
-        // In SUPERTYPES stage
-        it is FirUserTypeRef && it.qualifier.last().name in realmObjectTypes
-        // After SUPERTYPES stage
-        || it is FirResolvedTypeRef && it.type.classId in realmObjectTypes.map { name -> ClassId(FqName("io.realm.kotlin.types"), name) }
-    }
+    get() = this.classKind == ClassKind.CLASS &&
+        this.fir.superTypeRefs.any {
+            // In SUPERTYPES stage
+            it is FirUserTypeRef && (
+                it.qualifier.last().name in realmObjectTypes
+                ) ||
+                // After SUPERTYPES stage
+                it is FirResolvedTypeRef && it.type.classId in realmObjectTypes.map { name ->
+                ClassId(
+                    FqName("io.realm.kotlin.types"),
+                    name
+                )
+            }
+        }
 
 val realmObjectTypes = setOf(Name.identifier("RealmObject"), Name.identifier("EmbeddedRealmObject"), Name.identifier("AsymmetricRealmObject"))
 
