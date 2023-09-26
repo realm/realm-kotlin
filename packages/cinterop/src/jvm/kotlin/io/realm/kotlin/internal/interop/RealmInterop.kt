@@ -1116,7 +1116,8 @@ actual object RealmInterop {
     }
 
     actual fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider {
-        return AuthProvider.of(realmc.realm_user_get_auth_provider(user.cptr()))
+        TODO("No longer valid")
+//        return AuthProvider.of(realmc.realm_user_get_auth_provider(user.cptr()))
     }
 
     actual fun realm_user_get_access_token(user: RealmUserPointer): String {

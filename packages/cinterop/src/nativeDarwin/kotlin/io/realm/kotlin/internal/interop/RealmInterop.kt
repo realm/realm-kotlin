@@ -2270,30 +2270,30 @@ actual object RealmInterop {
             .also { realm_wrapper.realm_free(cPath) }
     }
 
-    actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
-        memScoped {
-            val count = AuthProvider.values().size
-            val properties = allocArray<realm_user_identity>(count)
-            val outCount = alloc<size_tVar>()
-            realm_wrapper.realm_user_get_all_identities(
-                user.cptr(),
-                properties,
-                count.convert(),
-                outCount.ptr
-            )
-            outCount.value.toLong().let { count ->
-                return if (count > 0) {
-                    (0 until outCount.value.toLong()).map {
-                        with(properties[it]) {
-                            SyncUserIdentity(this.id!!.toKString(), AuthProvider.of(this.provider_type))
-                        }
-                    }
-                } else {
-                    emptyList()
-                }
-            }
-        }
-    }
+//    actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
+//        memScoped {
+//            val count = AuthProvider.values().size
+//            val properties = allocArray<realm_user_identity>(count)
+//            val outCount = alloc<size_tVar>()
+//            realm_wrapper.realm_user_get_all_identities(
+//                user.cptr(),
+//                properties,
+//                count.convert(),
+//                outCount.ptr
+//            )
+//            outCount.value.toLong().let { count ->
+//                return if (count > 0) {
+//                    (0 until outCount.value.toLong()).map {
+//                        with(properties[it]) {
+//                            SyncUserIdentity(this.id!!.toKString(), AuthProvider.of(this.provider_type))
+//                        }
+//                    }
+//                } else {
+//                    emptyList()
+//                }
+//            }
+//        }
+//    }
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
         return realm_wrapper.realm_user_get_identity(user.cptr()).safeKString("identity")

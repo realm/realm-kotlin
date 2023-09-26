@@ -751,7 +751,6 @@ static void websocket_cancel_timer_func(realm_userdata_t userdata,
                               realm_sync_socket_timer_t timer_userdata) {
 
     if (timer_userdata != nullptr) {
-                nullptr));
         auto jenv = get_env(true);
         jobject cancellable_timer = static_cast<jobject>(timer_userdata);
 
@@ -815,7 +814,7 @@ static void websocket_async_write_func(realm_userdata_t userdata,
     static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
     static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
     auto* lambda = new std::function<void(bool, int, const char*)>([realm_callback=std::move(realm_callback)](bool cancelled, int status, const char* reason) {
-        realm_sync_socket_post_complete(realm_callback, static_cast<realm_errno_e>(status), "foo");
+        realm_sync_socket_write_complete(realm_callback, static_cast<realm_errno_e>(status), "");
     });
     jobject callback_pointer = jenv->NewObject(native_pointer_class, native_pointer_constructor,
                                       reinterpret_cast<jlong>(lambda), false);
