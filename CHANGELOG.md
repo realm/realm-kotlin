@@ -5,6 +5,7 @@
 
 ### Fixed
 * `Realm.getNumberOfActiveVersions` now returns the actual number of active versions. (Core issue [#6960](https://github.com/realm/realm-core/pull/6960))
+* Fix a memory leak on the Darwin native platform, see PR for more information. (Issue [#1530](https://github.com/realm/realm-kotlin/pull/1530))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
