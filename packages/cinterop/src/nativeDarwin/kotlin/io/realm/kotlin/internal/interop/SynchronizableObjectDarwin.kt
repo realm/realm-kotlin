@@ -32,9 +32,9 @@ actual class SynchronizableObject {
     private val mutex = nativeHeap.alloc<native_pthread_mutex_t>()
 
     @OptIn(ExperimentalStdlibApi::class)
-    private val cleaner = createCleaner(mutex) {
-        native_pthread_mutex_destroy(mutex.ptr)
-        nativeHeap.free(mutex)
+    private val cleaner = createCleaner(mutex) { capturedMutex ->
+        native_pthread_mutex_destroy(capturedMutex.ptr)
+        nativeHeap.free(capturedMutex)
     }
 
     init {
