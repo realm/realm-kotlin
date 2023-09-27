@@ -79,11 +79,8 @@ class VersionTrackingTests {
     @Test
     fun open() = runBlocking {
         realm.activeVersions().run {
-            assertEquals(1, all.size)
-            // It might happen that the initial user facing realm has been reclaimed by the time we
-            // evaluate this all-tracked.
-            val expectedAllTracked = if (main == null) 0 else 1
-            assertEquals(expectedAllTracked, allTracked.size)
+            assertEquals(0, all.size)
+            assertEquals(0, allTracked.size)
             // The notifier might or might not had time to run
             notifier?.let {
                 assertEquals(2, it.current.version)
@@ -96,16 +93,16 @@ class VersionTrackingTests {
     @Test
     fun write_voidBlockIsNotTracked() = runBlocking {
         realm.activeVersions().run {
-            assertEquals(1, all.size)
-            assertEquals(1, allTracked.size)
+            assertEquals(0, all.size)
+            assertEquals(0, allTracked.size)
             assertNull(writer)
+
         }
 
         // Write that doesn't return objects does not trigger tracking additional versions
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
-            val expectedAllTracked = if (main == null) 0 else 1
-            assertEquals(expectedAllTracked, allTracked.size, toString())
+            assertEquals(0, allTracked.size, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
@@ -116,16 +113,14 @@ class VersionTrackingTests {
             assertEquals(1, allTracked.size, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
+
         }
     }
 
     @Test
     fun write_returnedObjectIsTracked() = runBlocking {
         realm.activeVersions().run {
-            assertEquals(1, all.size)
-            // It might happen that the initial user facing realm has been reclaimed by the time we
-            // evaluate this all-tracked.
-            val expectedAllTracked = if (main == null) 0 else 1
+            assertEquals(0, all.size)
             assertNull(writer)
         }
 
@@ -142,10 +137,7 @@ class VersionTrackingTests {
     @Test
     fun realmAsFlow_doesNotTrackVersions() = runBlocking {
         realm.activeVersions().run {
-            assertEquals(1, all.size)
-            // It might happen that the initial user facing realm has been reclaimed by the time we
-            // evaluate this all-tracked.
-            val expectedAllTracked = if (main == null) 0 else 1
+            assertEquals(0, all.size)
             assertNull(writer)
         }
 
@@ -169,10 +161,7 @@ class VersionTrackingTests {
     @Test
     fun objectNotificationsCausesTracking() = runBlocking {
         realm.activeVersions().run {
-            assertEquals(1, all.size)
-            // It might happen that the initial user facing realm has been reclaimed by the time we
-            // evaluate this all-tracked.
-            val expectedAllTracked = if (main == null) 0 else 1
+            assertEquals(0, all.size)
             assertNull(writer)
         }
 

@@ -23,6 +23,6 @@ import io.realm.kotlin.VersionId
  * and the underlying [SuspendableNotifier]'s and [SuspendableWriter]'s live realms.
  */
 public data class VersionInfo(val main: VersionData?, val notifier: VersionData?, val writer: VersionData?) {
-    val all: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.versions }.flatten().toSet()
-    val allTracked: Set<VersionId> = setOf(main, notifier, writer).mapNotNull { it?.active }.flatten().toSet()
+    val all: Set<VersionId> = setOf(notifier, writer).mapNotNull { it?.versions }.flatten().toSet()
+    val allTracked: Set<VersionId> = setOf(notifier, writer).mapNotNull { it?.active }.flatten().toSet()
 }

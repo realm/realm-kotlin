@@ -246,6 +246,7 @@ public class RealmImpl private constructor(
         // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
         return initialRealmReference.value.let { localReference ->
             // Find whether the user-facing, notifier or writer has the latest snapshot.
+            // Sort is stable, it will try to preserve the following order.
             listOf(
                 { localReference } to localReference?.uncheckedVersion(),
                 { notifier.snapshot } to notifier.version,
