@@ -39,7 +39,7 @@ class OpenRealmTestsGenerated(
         @JvmStatic
         @Parameterized.Parameters(name = "{0}-schema-size-{1}")
         fun initParameters(): Collection<Array<*>> {
-            val schemaSizes = listOf(1, 10, 100)
+            val schemaSizes = listOf(0, 25, 50, 75, 100)
 
             return openCloseRealmClassesMap.keys
                 .flatMap { className ->
@@ -74,7 +74,7 @@ class OpenRealmTestsGenerated(
         }
     }
 
-    @Test()
+    @Test
     fun openRealm() {
         benchmarkRule.measureRepeated {
             realm = Realm.open(config)
