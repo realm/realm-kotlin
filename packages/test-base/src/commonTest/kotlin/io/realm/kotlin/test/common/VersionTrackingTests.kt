@@ -96,7 +96,6 @@ class VersionTrackingTests {
             assertEquals(0, all.size)
             assertEquals(0, allTracked.size)
             assertNull(writer)
-
         }
 
         // Write that doesn't return objects does not trigger tracking additional versions
@@ -113,7 +112,6 @@ class VersionTrackingTests {
             assertEquals(1, allTracked.size, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
-
         }
     }
 
