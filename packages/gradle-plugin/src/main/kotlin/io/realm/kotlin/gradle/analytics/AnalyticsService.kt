@@ -139,7 +139,7 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
             }
         """.trimIndent().replace("\n", "").replace("    ", "")
         if (projectInfo.printAnalytics.get()) {
-            info("Realm analytics payload: $json")
+            info("[realm-analytics] Payload: $json")
         }
         if (projectInfo.submitAnalytics.get()) {
             sendAnalytics(json)
