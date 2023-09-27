@@ -49,7 +49,6 @@ import kotlin.reflect.KClass
 internal class SuspendableWriter(
     private val owner: RealmImpl,
     private val scheduler: LiveRealmContext,
-    private val onSnapshotAvailable: () -> Unit = {},
 ) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
@@ -61,7 +60,6 @@ internal class SuspendableWriter(
             owner = owner,
             configuration = owner.configuration,
             scheduler = scheduler,
-            onSnapshotAvailable = onSnapshotAvailable,
         ),
         InternalMutableRealm,
         InternalTypedRealm,
@@ -82,12 +80,7 @@ internal class SuspendableWriter(
     }
 
     // Must only be accessed from the dispatchers thread
-    override val realm: WriterRealm by lazy {
-        WriterRealm().also {
-            isInitialized.value = true
-            onSnapshotAvailable()
-        }
-    }
+    override val realm: WriterRealm by lazy { WriterRealm().also { isInitialized.value = true } }
 
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)

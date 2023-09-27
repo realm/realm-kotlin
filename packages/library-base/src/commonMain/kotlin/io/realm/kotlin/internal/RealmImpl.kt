@@ -19,7 +19,6 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
-import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -37,7 +36,6 @@ import io.realm.kotlin.notifications.internal.InitialRealmImpl
 import io.realm.kotlin.notifications.internal.UpdatedRealmImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.TypedRealmObject
-import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
@@ -74,12 +72,10 @@ public class RealmImpl private constructor(
     private val notifier = SuspendableNotifier(
         owner = this,
         scheduler = notificationScheduler,
-        onSnapshotAvailable = ::removeInitialRealmReference
     )
     private val writer = SuspendableWriter(
         owner = this,
         scheduler = writeScheduler,
-        onSnapshotAvailable = ::removeInitialRealmReference
     )
 
     // Internal flow to ease monitoring of realm state for closing active flows then the realm is
@@ -88,8 +84,6 @@ public class RealmImpl private constructor(
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     // Initial realm reference that would be used until the notifier or writer are available.
     private var initialRealmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
-    // Controls whether we have to clean any tracked references.
-    private val _skipClosingReferences: AtomicBoolean = atomic(false)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -143,6 +137,7 @@ public class RealmImpl private constructor(
 
             realmScope.launch {
                 notifier.realmChanged().collect {
+                    removeInitialRealmReference()
                     notifierFlow.emit(UpdatedRealmImpl(this@RealmImpl))
                 }
             }
@@ -235,16 +230,14 @@ public class RealmImpl private constructor(
      * Removes the local reference to start relying on the notifier - writer for snapshots.
      */
     private fun removeInitialRealmReference() {
-        // Ensure only a single thread can work on the version tracker.
-        val skipClosingReferences = _skipClosingReferences.getAndSet(true)
-        log.trace("SKIP REMOVING INITIAL VERSION = $skipClosingReferences")
-        if (!skipClosingReferences) {
+        if (initialRealmReference.value != null) {
+            log.trace("REMOVING INITIAL VERSION")
+            // There is at least a new version available in the notifier, stop tracking the local one
             initialRealmReference.value = null
+
             // Closing this reference might be done by the GC:
             // https://github.com/realm/realm-kotlin/issues/1527
-            val emptyTracker = versionTracker.closeExpiredReferences()
-            log.trace("EMPTY INITIAL TRACKER = $emptyTracker")
-            _skipClosingReferences.value = emptyTracker
+            versionTracker.closeExpiredReferences()
         }
     }
 
@@ -252,18 +245,15 @@ public class RealmImpl private constructor(
         // We don't require to return the latest snapshot to the user but the closest the best.
         // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
         return initialRealmReference.value.let { localReference ->
-            localReference ?: run {
-                // Find whether the notifier or writer has the latest snapshot.
-                val notifierVersion: VersionId? = notifier.version
-                val writerVersion: VersionId? = writer.version
-                val newest: LiveRealmHolder<LiveRealm> =
-                    if (writerVersion != null && (notifierVersion == null || writerVersion > notifierVersion))
-                        writer
-                    else
-                        notifier
-                newest.snapshot
-            } ?: sdkError("Accessing realmReference before realm has been opened")
-        }
+            // Find whether the user-facing, notifier or writer has the latest snapshot.
+            listOf(
+                { localReference } to localReference?.uncheckedVersion(),
+                { notifier.snapshot } to notifier.version,
+                { writer.snapshot } to writer.version
+            ).sortedByDescending {
+                it.second
+            }.first().first()
+        } ?: sdkError("Accessing realmReference before realm has been opened")
     }
 
     public fun activeVersions(): VersionInfo {

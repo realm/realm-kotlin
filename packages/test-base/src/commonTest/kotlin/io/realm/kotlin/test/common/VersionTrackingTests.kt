@@ -104,7 +104,8 @@ class VersionTrackingTests {
         // Write that doesn't return objects does not trigger tracking additional versions
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
-            assertEquals(0, allTracked.size, toString())
+            val expectedAllTracked = if (main == null) 0 else 1
+            assertEquals(expectedAllTracked, allTracked.size, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }

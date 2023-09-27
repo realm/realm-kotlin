@@ -57,7 +57,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
      */
     // Closing expired references might be done by the GC:
     // https://github.com/realm/realm-kotlin/issues/1527
-    fun closeExpiredReferences(): Boolean {
+    fun closeExpiredReferences() {
         // We need a new object to update the atomic reference
         val references = mutableSetOf<IntermediateReference>()
 
@@ -72,7 +72,6 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
         }
 
         intermediateReferences.value = references
-        return references.isEmpty()
     }
 
     fun versions(): Set<VersionId> =
