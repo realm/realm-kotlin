@@ -96,6 +96,7 @@ interface ProjectConfiguration : BuildServiceParameters {
     val hostOsVersion: Property<String>
     val hostCpuArch: Property<String>
     val usesSync: Property<Boolean>
+    val languageVersion: Property<String>
     val submitAnalytics: Property<Boolean>
     val printAnalytics: Property<Boolean>
 }
@@ -132,12 +133,13 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
                     "Target OS Version": "${targetInfo.targetOSVersion}",
                     "Realm Version": "${RealmCompilerSubplugin.version}",
                     "Core Version": "${RealmCompilerSubplugin.coreVersion}",
-                    "Sync Enabled": ${if (projectInfo.usesSync.get()) "true" else "false"}
+                    "Sync Enabled": ${if (projectInfo.usesSync.get()) "true" else "false"},
+                    "Language Version": "${projectInfo.languageVersion.get()}"
                 }
             }
         """.trimIndent().replace("\n", "").replace("    ", "")
         if (projectInfo.printAnalytics.get()) {
-            info("Analytics payload: $json")
+            info("Realm analytics payload: $json")
         }
         if (projectInfo.submitAnalytics.get()) {
             sendAnalytics(json)

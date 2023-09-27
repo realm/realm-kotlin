@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.gradle.plugin.SubpluginArtifact
 import org.jetbrains.kotlin.gradle.plugin.SubpluginOption
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.CocoapodsExtension
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.KotlinCocoapodsPlugin.Companion.COCOAPODS_EXTENSION_NAME
+import org.jetbrains.kotlin.gradle.plugin.kotlinToolingVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinCommonCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJsCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
@@ -111,6 +112,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
 
             val userId = target.providers.of(ComputerId::class.java) {}.get()
             val builderId = target.providers.of(BuilderId::class.java) {}.get()
+            val languageVersion = target.kotlinToolingVersion
 
             analyticsServiceProvider = target.gradle.sharedServices.registerIfAbsent(
                 "Realm Analytics",
@@ -124,6 +126,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
                     this.hostOsVersion.set(System.getProperty("os.version"))
                     this.hostCpuArch.set(HOST_ARCH)
                     this.usesSync.set(usesSync)
+                    this.languageVersion.set(languageVersion.toString())
                     this.submitAnalytics.set(submitAnalytics)
                     this.printAnalytics.set(printAnalytics)
                 }
