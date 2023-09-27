@@ -79,8 +79,12 @@ internal class SuspendableWriter(
         override fun cancelWrite() { super.cancelWrite() }
     }
 
+    override val realmInitializer: Lazy<WriterRealm> = lazy {
+        WriterRealm()
+    }
+
     // Must only be accessed from the dispatchers thread
-    override val realm: WriterRealm by lazy { WriterRealm().also { isInitialized.value = true } }
+    override val realm: WriterRealm by realmInitializer
 
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
@@ -205,7 +209,7 @@ internal class SuspendableWriter(
             withContext(dispatcher) {
                 // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
                 // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
-                if (isInitialized.value) {
+                if (realmInitializer.isInitialized()) {
                     realm.close()
                 }
             }
