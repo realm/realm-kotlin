@@ -32,6 +32,7 @@ import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -207,6 +208,41 @@ class VersionTrackingTests {
             samples.size,
             samples.map { it.list.version() }.joinToString { it.toString() }
         )
+    }
+
+    @Test
+    @Suppress("invisible_member", "invisible_reference")
+    fun initialVersionDereferencedAfterFirstWrite() {
+        (realm as RealmImpl).let { realm ->
+            realm.initialRealmReference.value
+
+            assertNotNull(realm.initialRealmReference.value, toString())
+            assertEquals(1, realm.versionTracker.versions().size, toString())
+
+            val realmUpdates = Channel<Unit>(1)
+
+            runBlocking {
+                val deferred = async {
+                    realm.asFlow().collect {
+                        realmUpdates.trySend(Unit)
+                    }
+                }
+
+                // Wait for the notifier to start
+                realmUpdates.receiveOrFail()
+
+                realm.write { }
+
+                // Wait for the notifier to start
+                realmUpdates.receiveOrFail()
+
+                assertNull(realm.initialRealmReference.value, toString())
+                assertEquals(1, realm.versionTracker.versions().size, toString())
+
+                deferred.cancel()
+                realmUpdates.close()
+            }
+        }
     }
 }
 

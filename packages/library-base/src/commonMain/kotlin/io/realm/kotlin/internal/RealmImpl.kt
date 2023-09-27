@@ -83,7 +83,7 @@ public class RealmImpl private constructor(
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     // Initial realm reference that would be used until the notifier or writer are available.
-    private var initialRealmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
+    internal var initialRealmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -98,7 +98,7 @@ public class RealmImpl private constructor(
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
     //  would require us to sync that up. Didn't address this as we already have a todo on fixing
     //  constructing the initial frozen version in the initialization of updatableRealm.
-    private val versionTracker = VersionTracker(this, log)
+    internal val versionTracker = VersionTracker(this, log)
 
     // Injection point for synchronized Realms. This property should only be used to hold state
     // required by synchronized realms. See `SyncedRealmContext` for more details.
@@ -257,15 +257,10 @@ public class RealmImpl private constructor(
         } ?: sdkError("Accessing realmReference before realm has been opened")
     }
 
-    public fun activeVersions(): VersionInfo {
-        val mainVersions: VersionData? = initialRealmReference.value?.let {
-            VersionData(
-                it.uncheckedVersion(),
-                versionTracker.versions()
-            )
-        }
-        return VersionInfo(mainVersions, notifier.versions(), writer.versions())
-    }
+    public fun activeVersions(): VersionInfo = VersionInfo(
+        notifier = notifier.versions(),
+        writer = writer.versions()
+    )
 
     override fun close() {
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
