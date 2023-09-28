@@ -138,6 +138,9 @@ public class RealmImpl private constructor(
             realmScope.launch {
                 notifier.realmChanged().collect {
                     removeInitialRealmReference()
+                    // Closing this reference might be done by the GC:
+                    // https://github.com/realm/realm-kotlin/issues/1527
+                    versionTracker.closeExpiredReferences()
                     notifierFlow.emit(UpdatedRealmImpl(this@RealmImpl))
                 }
             }
@@ -234,10 +237,6 @@ public class RealmImpl private constructor(
             log.trace("REMOVING INITIAL VERSION")
             // There is at least a new version available in the notifier, stop tracking the local one
             initialRealmReference.value = null
-
-            // Closing this reference might be done by the GC:
-            // https://github.com/realm/realm-kotlin/issues/1527
-            versionTracker.closeExpiredReferences()
         }
     }
 

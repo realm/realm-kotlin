@@ -17,14 +17,13 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
-import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmT
+import io.realm.kotlin.internal.interop.RealmPointer
 import io.realm.kotlin.internal.platform.WeakReference
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
-internal typealias IntermediateReference = Pair<NativePointer<out RealmT>, WeakReference<RealmReference>>
+internal typealias IntermediateReference = Pair<RealmPointer, WeakReference<RealmReference>>
 /**
  * Bookkeeping of intermediate versions that needs to be closed when no longer referenced or when
  * explicitly closing a realm.
