@@ -16,48 +16,85 @@
 
 package io.realm.kotlin.demo.javacompatibility.data.java
 
-import android.content.Context
 import android.util.Log
 import io.realm.Realm
 import io.realm.RealmConfiguration
-import io.realm.RealmModel
-import io.realm.RealmObject
+import io.realm.RealmList
 import io.realm.annotations.PrimaryKey
 import io.realm.annotations.RealmClass
-import io.realm.kotlin.demo.javacompatibility.TAG
+import io.realm.kotlin.demo.javacompatibility.data.BOOKS_SIZE
+import io.realm.kotlin.demo.javacompatibility.data.METADATA_SIZE
+import io.realm.kotlin.demo.javacompatibility.data.METADATA_VALUE_SIZE
+import io.realm.kotlin.demo.javacompatibility.data.REPEAT_TEST
 import io.realm.kotlin.demo.javacompatibility.data.Repository
+import kotlin.system.measureTimeMillis
 
-// Realm Kotlin will try to process this class if using io.realm.RealmObject so use
-// io.realm.RealmModel/@RealmClass approach instead
 @RealmClass
-open class JavaEntity : RealmModel {
-    var name: String = "JAVA"
-}
-
-open class JavaEntityWithBaseObject : RealmObject() {
+open class BookRealm: io.realm.RealmObject() {
     @PrimaryKey
-    var id: String = ""
+    var idRealm: String = ""
+    var metas: RealmList<MetadataRealm> = RealmList()
 }
 
-class JavaRepository(appContext: Context) : Repository {
+@RealmClass(embedded = true)
+open class MetadataRealm: io.realm.RealmObject() {
+    var key: String = ""
+    var values: RealmList<String?> = RealmList()
+}
 
-    var realm: Realm
+class JavaRepository: Repository {
+
+    val realm: Realm
 
     init {
-        Realm.init(appContext)
         val config = RealmConfiguration.Builder()
             .name("java.realm")
+            .allowQueriesOnUiThread(true)
             .allowWritesOnUiThread(true)
             .build()
         Realm.deleteRealm(config)
         realm = Realm.getInstance(config)
+    }
+
+    override fun createData() {
         realm.executeTransaction {
-            realm.createObject(JavaEntity::class.java)
-            val entities = realm.where(JavaEntity::class.java).findAll()
-            Log.d(TAG, "JAVA: ${entities.size}")
+            repeat(BOOKS_SIZE) { bookNo ->
+                val book = BookRealm().apply {
+                    idRealm = "book-$bookNo"
+                    metas = RealmList()
+                    repeat(METADATA_SIZE) { metadataNo ->
+                        val metadata = MetadataRealm().apply {
+                            key = "metadata-$bookNo-$metadataNo"
+                            values = RealmList()
+                            repeat(METADATA_VALUE_SIZE) { metadataValueNo ->
+                                values.add("metadata-value-$bookNo-$metadataNo-$metadataValueNo")
+                            }
+                        }
+                        metas.add(metadata)
+                    }
+                }
+                it.copyToRealm(book)
+            }
         }
     }
 
-    override val count: Int = realm.where(JavaEntity::class.java).findAll().count()
+    override fun queryAndConvertData() {
+        Log.e("REALM-BENCHMARK", "Starting Java Test")
+        val results = mutableListOf<Long>()
+        val mapped = mutableListOf<BookRealm>()
+        repeat(REPEAT_TEST) {
+            measureTimeMillis {
+                realm.where(BookRealm::class.java).findAll().map { results: BookRealm ->
+                    mapped.add(realm.copyFromRealm(results))
+                }
+            }.let { measurement ->
+                results.add(measurement)
+            }
+        }
+        printResults(results)
+    }
 
+    override fun close() {
+        realm.close()
+    }
 }

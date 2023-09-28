@@ -16,11 +16,7 @@
 
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
-    extra["ciBuild"] = Realm.ciBuild
     repositories {
-        if (extra["ciBuild"] as Boolean) {
-            maven(url = "file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
-        }
         google()
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
@@ -29,16 +25,14 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath ("io.realm:realm-gradle-plugin:10.11.0")
-        classpath ("io.realm.kotlin:gradle-plugin:${Realm.version}")
+        classpath ("com.android.tools.build:gradle:7.4.2")
+        classpath ("io.realm:realm-gradle-plugin:10.16.0")
+        classpath ("io.realm.kotlin:gradle-plugin:1.11.1")
     }
 }
 
 allprojects {
     repositories {
-        if (rootProject.extra["ciBuild"] as Boolean) {
-            maven("file://${rootProject.rootDir.absolutePath}/../../packages/build/m2-buildrepo")
-        }
         google()
         mavenCentral()
         maven(url = "https://oss.sonatype.org/content/repositories/snapshots")

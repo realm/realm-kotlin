@@ -19,10 +19,6 @@
 // been built and deployed to a local filesystem
 // maven repo. We cannot reference `Realm.ciBuild`
 // from buildSrc here.
-if (System.getenv("JENKINS_HOME") == null) {
-    includeBuild("../../packages")
-}
-
 pluginManagement {
     repositories {
         gradlePluginPortal()

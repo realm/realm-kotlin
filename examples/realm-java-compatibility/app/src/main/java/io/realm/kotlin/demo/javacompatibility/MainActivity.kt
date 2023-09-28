@@ -19,11 +19,26 @@ package io.realm.kotlin.demo.javacompatibility
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import io.realm.kotlin.demo.javacompatibility.data.java.JavaRepository
+import io.realm.kotlin.demo.javacompatibility.data.kotlin.KotlinRepository
 
 class MainActivity : AppCompatActivity() {
+
+    lateinit var java: JavaRepository
+    lateinit var kotlin: KotlinRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        java = JavaRepository()
+        kotlin = KotlinRepository()
+
+        java.createData()
+        java.queryAndConvertData()
+        java.close()
+
+        kotlin.createData()
+        kotlin.queryAndConvertData()
+        kotlin.close()
     }
 }

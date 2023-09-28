@@ -16,6 +16,22 @@
 
 package io.realm.kotlin.demo.javacompatibility.data
 
+import android.util.Log
+
+// From https://github.com/realm/realm-kotlin/issues/1529
+const val BOOKS_SIZE = 1_000
+const val METADATA_SIZE = 10
+const val METADATA_VALUE_SIZE = 1
+const val REPEAT_TEST = 100
+
 interface Repository {
-    val count: Int
+    fun createData()
+    fun queryAndConvertData()
+    fun printResults(results: MutableList<Long>) {
+        Log.e("REALM-BENCHMARK", "Max: ${results.max()}")
+        Log.e("REALM-BENCHMARK", "Min: ${results.min()}")
+        Log.e("REALM-BENCHMARK", "Average: ${results.average()}")
+        Log.e("REALM-BENCHMARK", "Median: ${results.sorted()[results.size/2]}")
+    }
+    fun close()
 }

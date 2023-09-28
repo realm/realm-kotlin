@@ -25,12 +25,8 @@ const val TAG: String = "JavaCompatibilityApp"
 
 class MainApplication : Application() {
 
-    lateinit var java: JavaRepository
-    lateinit var kotlin: KotlinRepository
-
     override fun onCreate() {
         super.onCreate()
-        java = JavaRepository(this)
-        kotlin = KotlinRepository()
+        Realm.init(this)
     }
 }
