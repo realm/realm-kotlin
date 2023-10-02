@@ -244,7 +244,7 @@ Next: head to the full KMM [example](https://github.com/realm/realm-kotlin-sampl
 If you want to test recent bugfixes or features that have not been packaged in an official release yet, you can use a **-SNAPSHOT** release of the current development version of Realm via Gradle, available on [Maven Central](https://oss.sonatype.org/content/repositories/snapshots/io/realm/kotlin/)
 
 ## Groovy 
-```
+```Gradle
 // Global build.gradle
 buildscript {
     repositories {
@@ -280,7 +280,7 @@ apply plugin: "io.realm.kotlin"
 ```
 
 ## Kotlin
-```
+```Kotlin
 // Global build.gradle
 
 buildscript {
