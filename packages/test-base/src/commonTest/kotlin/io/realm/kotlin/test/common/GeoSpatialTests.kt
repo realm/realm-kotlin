@@ -20,6 +20,8 @@ package io.realm.kotlin.test.common
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.annotations.ExperimentalGeoSpatialApi
+import io.realm.kotlin.entities.Location
+import io.realm.kotlin.entities.Restaurant
 import io.realm.kotlin.ext.degrees
 import io.realm.kotlin.ext.km
 import io.realm.kotlin.ext.miles
@@ -43,41 +45,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.fail
-
-class Restaurant : RealmObject {
-    var location: Location? = null
-}
-
-// Custom embedded model class for storing GeoPoints in Realm.
-class Location : EmbeddedRealmObject {
-    constructor(latitude: Double, longitude: Double) {
-        coordinates.apply {
-            add(longitude)
-            add(latitude)
-        }
-    }
-    constructor() : this(0.0, 0.0) // Empty constructor required by Realm. Should not be used.
-
-    // Name and type required by Realm
-    var coordinates: RealmList<Double> = realmListOf()
-
-    // Name and type by Realm
-    private var type: String = "Point"
-
-    @Ignore
-    var latitude: Double
-        get() = coordinates[1]
-        set(value) {
-            coordinates[1] = value
-        }
-
-    @Ignore
-    var longitude: Double
-        get() = coordinates[0]
-        set(value) {
-            coordinates[0] = value
-        }
-}
 
 @OptIn(ExperimentalGeoSpatialApi::class)
 class GeoSpatialTests {
