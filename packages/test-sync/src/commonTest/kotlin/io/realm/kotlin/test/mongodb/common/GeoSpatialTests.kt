@@ -6,9 +6,7 @@ import io.realm.kotlin.entities.Location
 import io.realm.kotlin.entities.sync.SyncRestaurant
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.User
-import io.realm.kotlin.mongodb.subscriptions
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
@@ -21,13 +19,12 @@ import io.realm.kotlin.types.geo.GeoBox
 import io.realm.kotlin.types.geo.GeoCircle
 import io.realm.kotlin.types.geo.GeoPoint
 import io.realm.kotlin.types.geo.GeoPolygon
-import kotlinx.coroutines.delay
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 
 private val GEO_SCHEMA = setOf(SyncRestaurant::class, Location::class)
@@ -38,7 +35,7 @@ class GeoSpatialTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX, logLevel = LogLevel.ALL)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
     }
 
     @AfterTest
@@ -48,47 +45,27 @@ class GeoSpatialTests {
         }
     }
 
-    private fun createRandomUser(): User =
-        runBlocking {
-            app.createUserAndLogIn(
-                email = TestHelper.randomEmail(),
-                password = "password1234"
-            )
-        }
+    private suspend fun createRandomUser(): User =
+        app.createUserAndLogIn(
+            email = TestHelper.randomEmail(),
+            password = "password1234"
+        )
 
     @Test
     fun write() {
-        val user = createRandomUser()
+        runBlocking {
+            val user = createRandomUser()
 
-        val config =
-            SyncConfiguration.Builder(
-                user = user,
-                schema = GEO_SCHEMA
-            ).initialSubscriptions(rerunOnOpen = true) {
-                add(it.query<SyncRestaurant>())
-            }.build()
+            val config =
+                SyncConfiguration.Builder(
+                    user = user,
+                    schema = GEO_SCHEMA
+                ).initialSubscriptions {
+                    add(it.query<SyncRestaurant>())
+                }.build()
 
-        Realm.open(config).use {
-            it.writeBlocking {
-                copyToRealm(SyncRestaurant())
-            }
-        }
-    }
-
-    @Test
-    fun write_outsideSubscriptionsFail() {
-        val user = createRandomUser()
-
-        val config =
-            SyncConfiguration.Builder(
-                user = user,
-                schema = GEO_SCHEMA
-            ).initialSubscriptions(rerunOnOpen = true) {
-            }.build()
-
-        Realm.open(config).use {
-            it.writeBlocking {
-                assertFails {
+            Realm.open(config).use { realm ->
+                realm.write {
                     copyToRealm(SyncRestaurant())
                 }
             }
@@ -96,55 +73,84 @@ class GeoSpatialTests {
     }
 
     @Test
+    fun write_outsideSubscriptionsFail() {
+        runBlocking {
+            val user = createRandomUser()
+
+            val config =
+                SyncConfiguration.Builder(
+                    user = user,
+                    schema = GEO_SCHEMA
+                ).build()
+
+            Realm.open(config).use { realm ->
+                realm.write {
+                    assertFailsWith<IllegalArgumentException>(
+                        message = "[RLM_ERR_NO_SUBSCRIPTION_FOR_WRITE]: Cannot write to class SyncRestaurant when no flexible sync subscription has been created."
+                    ) {
+                        copyToRealm(SyncRestaurant())
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
     fun geoBox_tests() {
-        generic_geo_test(
-            bounds = GeoBox.create(
-                top = 1.0, left = 1.0,
-                bottom = -1.0, right = -1.0,
-            ),
-            validLocation = Location(0.0, 0.0),
-            invalidLocation = Location(100.0, 100.0),
-        )
+        runBlocking {
+            generic_geo_test(
+                bounds = GeoBox.create(
+                    top = 1.0, left = 1.0,
+                    bottom = -1.0, right = -1.0,
+                ),
+                validLocation = Location(0.0, 0.0),
+                invalidLocation = Location(100.0, 100.0),
+            )
+        }
     }
 
     @Test
     fun geoCircle_tests() {
-        generic_geo_test(
-            bounds = GeoCircle.create(
-                GeoPoint.create(0.0, 0.0), Distance.fromKilometers(.01)
-            ),
-            validLocation = Location(0.0, 0.0),
-            invalidLocation = Location(101.0, 101.0),
-        )
+        runBlocking {
+            generic_geo_test(
+                bounds = GeoCircle.create(
+                    GeoPoint.create(0.0, 0.0), Distance.fromKilometers(.01)
+                ),
+                validLocation = Location(0.0, 0.0),
+                invalidLocation = Location(101.0, 101.0),
+            )
+        }
     }
 
     @Test
     fun geoPolygon_tests() {
-        generic_geo_test(
-            bounds = GeoPolygon.create(
-                outerRing = listOf(
-                    GeoPoint.create(-5.0, -5.0),
-                    GeoPoint.create(5.0, -5.0),
-                    GeoPoint.create(5.0, 5.0),
-                    GeoPoint.create(-5.0, 5.0),
-                    GeoPoint.create(-5.0, -5.0)
-                ),
-                holes = arrayOf(
-                    listOf(
-                        GeoPoint.create(-4.0, -4.0),
-                        GeoPoint.create(4.0, -4.0),
-                        GeoPoint.create(4.0, 4.0),
-                        GeoPoint.create(-4.0, 4.0),
-                        GeoPoint.create(-4.0, -4.0)
+        runBlocking {
+            generic_geo_test(
+                bounds = GeoPolygon.create(
+                    outerRing = listOf(
+                        GeoPoint.create(-5.0, -5.0),
+                        GeoPoint.create(5.0, -5.0),
+                        GeoPoint.create(5.0, 5.0),
+                        GeoPoint.create(-5.0, 5.0),
+                        GeoPoint.create(-5.0, -5.0)
+                    ),
+                    holes = arrayOf(
+                        listOf(
+                            GeoPoint.create(-4.0, -4.0),
+                            GeoPoint.create(4.0, -4.0),
+                            GeoPoint.create(4.0, 4.0),
+                            GeoPoint.create(-4.0, 4.0),
+                            GeoPoint.create(-4.0, -4.0)
+                        )
                     )
-                )
-            ),
-            validLocation = Location(4.5, 4.5), // Outside the hole and withing the ring
-            invalidLocation = Location(0.0, 0.0), // Inside the hole
-        )
+                ),
+                validLocation = Location(4.5, 4.5), // Outside the hole and withing the ring
+                invalidLocation = Location(0.0, 0.0), // Inside the hole
+            )
+        }
     }
 
-    private fun generic_geo_test(
+    private suspend fun generic_geo_test(
         bounds: Any,
         validLocation: Location,
         invalidLocation: Location,
@@ -157,7 +163,7 @@ class GeoSpatialTests {
             SyncConfiguration.Builder(
                 user = user1,
                 schema = GEO_SCHEMA
-            ).initialSubscriptions(rerunOnOpen = true) {
+            ).initialSubscriptions {
                 add(
                     it.query<SyncRestaurant>(
                         "section = $0 AND location GEOWITHIN $1",
@@ -168,10 +174,7 @@ class GeoSpatialTests {
             }.waitForInitialRemoteData().build()
 
         Realm.open(config).use { realm ->
-            runBlocking {
-                realm.subscriptions.waitForSynchronization(timeout = 30.seconds)
-            }
-            val restaurant = realm.writeBlocking {
+            val restaurant = realm.write {
                 // Fail: write outside subscription bounds, compensating write
                 copyToRealm(
                     SyncRestaurant().apply {
@@ -189,19 +192,14 @@ class GeoSpatialTests {
                 )
             }
 
-            runBlocking {
-                realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
-                delay(30000)
-            }
+            realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
 
-            realm.writeBlocking {
+            realm.write {
                 // Fail: We should not be able to update outside of subscription bounds, compensating write
                 findLatest(restaurant)!!.location = invalidLocation
             }
 
-            runBlocking {
-                realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
-            }
+            realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
         }
 
         // Download data on user #2
@@ -210,7 +208,7 @@ class GeoSpatialTests {
             SyncConfiguration.Builder(
                 user = user2,
                 schema = GEO_SCHEMA
-            ).initialSubscriptions(rerunOnOpen = true) {
+            ).initialSubscriptions {
                 add(
                     it.query<SyncRestaurant>(
                         "section = $0 AND location GEOWITHIN $1",
