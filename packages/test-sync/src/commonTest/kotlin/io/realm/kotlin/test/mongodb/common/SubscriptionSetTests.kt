@@ -64,7 +64,7 @@ class SubscriptionSetTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)

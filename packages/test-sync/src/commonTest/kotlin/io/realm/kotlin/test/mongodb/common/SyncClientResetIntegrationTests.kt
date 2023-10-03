@@ -220,7 +220,7 @@ class SyncClientResetIntegrationTests {
                 return@TestEnvironment SyncConfiguration.Builder(
                     user,
                     TestHelper.randomPartitionValue(),
-                    schema = setOf(SyncPerson::class)
+                    schema = SYNC_SCHEMA
                 )
             },
             insertElement = { realm: Realm ->

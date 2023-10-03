@@ -56,7 +56,7 @@ class SyncClientTests {
     // There is no way to test reconnect automatically, so just verify that code path does not crash.
     @Test
     fun reconnect() {
-        val config = SyncConfiguration.create(user, schema = setOf())
+        val config = SyncConfiguration.create(user, schema = SYNC_SCHEMA)
         Realm.open(config).use {
             app.sync.reconnect()
         }
@@ -69,7 +69,7 @@ class SyncClientTests {
 
     @Test
     fun hasSyncSessions() {
-        val config = SyncConfiguration.create(user, schema = setOf())
+        val config = SyncConfiguration.create(user, schema = SYNC_SCHEMA)
         Realm.open(config).use {
             assertTrue(app.sync.hasSyncSessions)
         }
@@ -82,8 +82,8 @@ class SyncClientTests {
 
     @Test
     fun waitForSessionsToTerminate() {
-        val config1 = SyncConfiguration.Builder(user, schema = setOf()).build()
-        val config2 = SyncConfiguration.Builder(user, schema = setOf()).name("other.realm").build()
+        val config1 = SyncConfiguration.Builder(user, schema = SYNC_SCHEMA).build()
+        val config2 = SyncConfiguration.Builder(user, schema = SYNC_SCHEMA).name("other.realm").build()
 
         Realm.open(config1).use {
             assertTrue(app.sync.hasSyncSessions)

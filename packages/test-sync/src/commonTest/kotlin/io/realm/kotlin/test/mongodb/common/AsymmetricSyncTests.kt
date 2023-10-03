@@ -104,12 +104,7 @@ class AsymmetricSyncTests {
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = setOf(
-                Measurement::class,
-                Device::class,
-                BackupDevice::class,
-                DeviceParent::class
-            )
+            schema = SYNC_SCHEMA
         ).initialSubscriptions {
             it.query<DeviceParent>().subscribe()
         }.build()
@@ -299,11 +294,7 @@ class AsymmetricSyncTests {
     fun asymmetricSchema() = runBlocking {
         config = SyncConfiguration.Builder(
             app.login(Credentials.anonymous()),
-            schema = setOf(
-                AsymmetricA::class,
-                EmbeddedB::class,
-                StandardC::class,
-            )
+            schema = SYNC_SCHEMA
         ).build()
         Realm.open(config).use {
             it.write {

@@ -105,7 +105,7 @@ class SyncConfigTests {
         val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
         val customLoggers = listOf(logger)
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).also { builder ->
@@ -124,7 +124,7 @@ class SyncConfigTests {
         }
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).also { builder ->
@@ -137,7 +137,7 @@ class SyncConfigTests {
     fun errorHandler_default() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -150,7 +150,7 @@ class SyncConfigTests {
     fun compactOnLaunch_default() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -164,7 +164,7 @@ class SyncConfigTests {
         val user = createTestUser()
         val callback = CompactOnLaunchCallback { _, _ -> false }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         )
@@ -186,7 +186,7 @@ class SyncConfigTests {
             )
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         )
@@ -249,7 +249,7 @@ class SyncConfigTests {
             }
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).syncClientResetStrategy(strategy)
@@ -277,7 +277,7 @@ class SyncConfigTests {
             }
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).syncClientResetStrategy(strategy)
@@ -309,7 +309,7 @@ class SyncConfigTests {
             }
         }
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).syncClientResetStrategy(strategy)
@@ -321,7 +321,7 @@ class SyncConfigTests {
     fun equals_sameObject() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -374,7 +374,7 @@ class SyncConfigTests {
     fun equals_syncSpecificFields() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -532,7 +532,7 @@ class SyncConfigTests {
     fun encryption() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).also { builder ->
@@ -759,7 +759,7 @@ class SyncConfigTests {
     fun getPartitionValue() {
         val user = createTestUser()
         val config = SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()
@@ -1243,7 +1243,7 @@ class SyncConfigTests {
         }
 
         SyncConfiguration.Builder(
-            schema = setOf(ParentPk::class, ChildPk::class),
+            schema = SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).build()

@@ -67,7 +67,7 @@ class SubscriptionExtensionsTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -136,7 +136,7 @@ class SubscriptionExtensionsTests {
         val user1 = app.createUserAndLogIn(email, password)
         val config = SyncConfiguration.Builder(
             user1,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = SYNC_SCHEMA
         ).initialSubscriptions { realm: Realm ->
             realm.query<FlexParentObject>("section = $0", section).subscribe()
         }.build()
