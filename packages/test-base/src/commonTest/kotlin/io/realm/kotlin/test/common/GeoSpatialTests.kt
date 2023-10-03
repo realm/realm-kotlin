@@ -27,13 +27,8 @@ import io.realm.kotlin.ext.km
 import io.realm.kotlin.ext.miles
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.radians
-import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.geo.Distance
 import io.realm.kotlin.types.geo.GeoBox
 import io.realm.kotlin.types.geo.GeoCircle

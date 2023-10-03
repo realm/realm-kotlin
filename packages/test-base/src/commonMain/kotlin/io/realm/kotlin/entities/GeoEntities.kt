@@ -5,6 +5,7 @@ import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.Ignore
+
 class Restaurant : RealmObject {
     var location: Location? = null
 }
@@ -23,6 +24,7 @@ class Location : EmbeddedRealmObject {
     var coordinates: RealmList<Double> = realmListOf()
 
     // Name and type by Realm
+    @Suppress("UnusedPrivateMember")
     private var type: String = "Point"
 
     @Ignore

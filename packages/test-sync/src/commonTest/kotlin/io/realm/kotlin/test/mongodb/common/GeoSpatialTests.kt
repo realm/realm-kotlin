@@ -21,6 +21,7 @@ import io.realm.kotlin.types.geo.GeoBox
 import io.realm.kotlin.types.geo.GeoCircle
 import io.realm.kotlin.types.geo.GeoPoint
 import io.realm.kotlin.types.geo.GeoPolygon
+import kotlinx.coroutines.delay
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -105,6 +106,7 @@ class GeoSpatialTests {
             invalidLocation = Location(100.0, 100.0),
         )
     }
+
     @Test
     fun geoCircle_tests() {
         generic_geo_test(
@@ -115,6 +117,7 @@ class GeoSpatialTests {
             invalidLocation = Location(101.0, 101.0),
         )
     }
+
     @Test
     fun geoPolygon_tests() {
         generic_geo_test(
@@ -156,7 +159,11 @@ class GeoSpatialTests {
                 schema = GEO_SCHEMA
             ).initialSubscriptions(rerunOnOpen = true) {
                 add(
-                    it.query<SyncRestaurant>("section = $0 AND location GEOWITHIN $1", section, bounds)
+                    it.query<SyncRestaurant>(
+                        "section = $0 AND location GEOWITHIN $1",
+                        section,
+                        bounds
+                    )
                 )
             }.waitForInitialRemoteData().build()
 
@@ -184,6 +191,7 @@ class GeoSpatialTests {
 
             runBlocking {
                 realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
+                delay(30000)
             }
 
             realm.writeBlocking {
@@ -204,7 +212,11 @@ class GeoSpatialTests {
                 schema = GEO_SCHEMA
             ).initialSubscriptions(rerunOnOpen = true) {
                 add(
-                    it.query<SyncRestaurant>("section = $0 AND location GEOWITHIN $1", section, bounds)
+                    it.query<SyncRestaurant>(
+                        "section = $0 AND location GEOWITHIN $1",
+                        section,
+                        bounds
+                    )
                 )
             }.waitForInitialRemoteData(
                 timeout = 30.seconds
