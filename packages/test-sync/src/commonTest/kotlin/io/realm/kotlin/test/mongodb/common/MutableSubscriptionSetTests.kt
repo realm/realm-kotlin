@@ -64,7 +64,7 @@ class MutableSubscriptionSetTests {
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = FLX_SYNC_SCHEMA
+            schema = SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)

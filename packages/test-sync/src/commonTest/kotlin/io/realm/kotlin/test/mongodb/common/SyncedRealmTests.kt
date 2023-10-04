@@ -386,7 +386,7 @@ class SyncedRealmTests {
                 // Some race on JVM in particular mean that different errors can be reported.
                 if (errorMessage.contains("[Sync]")) {
                     assertTrue(errorMessage.contains("[BadChangeset(1015)]"), errorMessage)
-                    assertTrue(errorMessage.contains("Schema mismatch"), errorMessage)
+                    assertTrue(errorMessage.contains("Schema.kt mismatch"), errorMessage)
                 } else {
                     fail("Unexpected error message: $errorMessage")
                 }

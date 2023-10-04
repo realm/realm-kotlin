@@ -214,7 +214,7 @@ class SyncClientResetIntegrationTests {
                 return@TestEnvironment SyncConfiguration.Builder(
                     user,
                     TestHelper.randomPartitionValue(),
-                    schema = PARTITION_SYNC_SCHEMA
+                    schema = SYNC_SCHEMA
                 )
             },
             insertElement = { realm: Realm ->

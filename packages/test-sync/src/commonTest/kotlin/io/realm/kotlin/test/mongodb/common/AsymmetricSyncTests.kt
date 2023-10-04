@@ -104,7 +104,7 @@ class AsymmetricSyncTests {
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = FLX_SYNC_SCHEMA
+            schema = SYNC_SCHEMA
         ).initialSubscriptions {
             it.query<DeviceParent>().subscribe()
         }.build()
@@ -294,7 +294,7 @@ class AsymmetricSyncTests {
     fun asymmetricSchema() = runBlocking {
         config = SyncConfiguration.Builder(
             app.login(Credentials.anonymous()),
-            schema = FLX_SYNC_SCHEMA
+            schema = SYNC_SCHEMA
         ).build()
         Realm.open(config).use {
             it.write {
