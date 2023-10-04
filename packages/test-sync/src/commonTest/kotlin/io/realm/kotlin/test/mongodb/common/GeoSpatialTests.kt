@@ -73,7 +73,7 @@ class GeoSpatialTests {
             val config =
                 SyncConfiguration.Builder(
                     user = user,
-                    schema = SYNC_SCHEMA
+                    schema = FLEXIBLE_SYNC_SCHEMA
                 ).initialSubscriptions {
                     add(it.query<SyncRestaurant>())
                 }.build()
@@ -94,7 +94,7 @@ class GeoSpatialTests {
             val config =
                 SyncConfiguration.Builder(
                     user = user,
-                    schema = SYNC_SCHEMA
+                    schema = FLEXIBLE_SYNC_SCHEMA
                 ).build()
 
             Realm.open(config).use { realm ->
@@ -176,7 +176,7 @@ class GeoSpatialTests {
         val config =
             SyncConfiguration.Builder(
                 user = user1,
-                schema = SYNC_SCHEMA
+                schema = FLEXIBLE_SYNC_SCHEMA
             ).initialSubscriptions {
                 add(
                     it.query<SyncRestaurant>(
@@ -221,7 +221,7 @@ class GeoSpatialTests {
         val config2 =
             SyncConfiguration.Builder(
                 user = user2,
-                schema = SYNC_SCHEMA
+                schema = FLEXIBLE_SYNC_SCHEMA
             ).initialSubscriptions {
                 add(
                     it.query<SyncRestaurant>(

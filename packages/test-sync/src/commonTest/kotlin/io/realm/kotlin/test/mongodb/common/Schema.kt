@@ -17,7 +17,9 @@
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.entities.Location
+import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
+import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.entities.sync.SyncPerson
@@ -26,21 +28,28 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 
-val SYNC_SCHEMA = setOf(
+private val ASYMMETRIC_SCHEMAS = setOf(
     AsymmetricSyncTests.AsymmetricA::class,
     AsymmetricSyncTests.EmbeddedB::class,
     AsymmetricSyncTests.StandardC::class,
+    Measurement::class,
+)
+private val DEFAULT_SCHEMAS = setOf(
     BackupDevice::class,
+    BinaryObject::class,
     ChildPk::class,
     Device::class,
     DeviceParent::class,
     FlexChildObject::class,
     FlexEmbeddedObject::class,
     FlexParentObject::class,
-    Measurement::class,
+    ObjectIdPk::class,
     ParentPk::class,
     SyncObjectWithAllTypes::class,
     SyncPerson::class,
     SyncRestaurant::class,
     Location::class,
 )
+
+val PARTITION_BASED_SCHEMA = DEFAULT_SCHEMAS
+val FLEXIBLE_SYNC_SCHEMA = DEFAULT_SCHEMAS + ASYMMETRIC_SCHEMAS

@@ -64,7 +64,7 @@ class SubscriptionExtensionsTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = SYNC_SCHEMA
+            schema = FLEXIBLE_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -133,7 +133,7 @@ class SubscriptionExtensionsTests {
         val user1 = app.createUserAndLogIn(email, password)
         val config = SyncConfiguration.Builder(
             user1,
-            schema = SYNC_SCHEMA
+            schema = FLEXIBLE_SYNC_SCHEMA
         ).initialSubscriptions { realm: Realm ->
             realm.query<FlexParentObject>("section = $0", section).subscribe()
         }.build()
@@ -391,7 +391,7 @@ class SubscriptionExtensionsTests {
 
     private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
         val user = app.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, FLX_SYNC_SCHEMA)
+        val config = SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
             .initialSubscriptions {
                 it.query<FlexParentObject>().subscribe()
             }

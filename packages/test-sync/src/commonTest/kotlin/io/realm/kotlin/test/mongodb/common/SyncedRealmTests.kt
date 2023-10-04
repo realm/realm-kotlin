@@ -386,7 +386,7 @@ class SyncedRealmTests {
                 // Some race on JVM in particular mean that different errors can be reported.
                 if (errorMessage.contains("[Sync]")) {
                     assertTrue(errorMessage.contains("[BadChangeset(1015)]"), errorMessage)
-                    assertTrue(errorMessage.contains("Schema.kt mismatch"), errorMessage)
+                    assertTrue(errorMessage.contains("Schema mismatch"), errorMessage)
                 } else {
                     fail("Unexpected error message: $errorMessage")
                 }
@@ -404,7 +404,7 @@ class SyncedRealmTests {
     @Ignore
     fun waitForInitialRemoteData_mainThreadThrows() = runBlocking<Unit>(Dispatchers.Main) {
         val user = app.asTestApp.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData()
             .build()
         assertFailsWith<IllegalStateException> {
@@ -429,11 +429,10 @@ class SyncedRealmTests {
     @Test
     fun waitForInitialRemoteData() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
-        val schema = setOf(ParentPk::class, ChildPk::class)
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
-        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
+        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, PARTITION_BASED_SCHEMA)
         Realm.open(config1).use { realm ->
             realm.write {
                 for (index in 0..9) {
@@ -450,7 +449,7 @@ class SyncedRealmTests {
         // 2. Sometimes it can take a little while for the data to be available to other users,
         // so make sure data has reached server.
         val user2 = app.asTestApp.createUserAndLogin()
-        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, schema)
+        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, PARTITION_BASED_SCHEMA)
         assertNotEquals(config1.path, config2.path)
         Realm.open(config2).use { realm ->
             val count = realm.query<ParentPk>()
@@ -462,7 +461,7 @@ class SyncedRealmTests {
 
         // 3. Finally verify `waitForInitialData` is working
         val user3 = app.asTestApp.createUserAndLogin()
-        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, schema)
+        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData()
             .build()
         assertNotEquals(config1.path, config3.path)
@@ -474,7 +473,6 @@ class SyncedRealmTests {
     @Test
     fun waitForInitialData_timeOut() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
-        val schema = setOf(BinaryObject::class)
 
         // High enough to introduce latency when download Realm initial data
         // but not too high so that we reach Atlas' transmission limit
@@ -482,7 +480,7 @@ class SyncedRealmTests {
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
-        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
+        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, PARTITION_BASED_SCHEMA)
         Realm.open(config1).use { realm ->
             realm.write {
                 for (index in 0 until objectCount) {
@@ -499,7 +497,7 @@ class SyncedRealmTests {
         // 2. Sometimes it can take a little while for the data to be available to other users,
         // so make sure data has reached server.
         val user2 = app.asTestApp.createUserAndLogin()
-        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, schema)
+        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, PARTITION_BASED_SCHEMA)
         assertNotEquals(config1.path, config2.path)
         Realm.open(config2).use { realm ->
             val count = realm.query<BinaryObject>()
@@ -512,7 +510,7 @@ class SyncedRealmTests {
 
         // 3. Finally verify `waitForInitialData` is working
         val user3 = app.asTestApp.createUserAndLogin()
-        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, schema)
+        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData(1.nanoseconds)
             .build()
         assertNotEquals(config1.path, config3.path)
@@ -531,9 +529,8 @@ class SyncedRealmTests {
     @Ignore // See https://github.com/realm/realm-kotlin/issues/851
     fun waitForInitialData_resilientInCaseOfRetries() = runBlocking {
         val user = app.asTestApp.createUserAndLogin()
-        val schema = setOf(ParentPk::class, ChildPk::class)
         val partitionValue = TestHelper.randomPartitionValue()
-        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, schema)
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData(1.nanoseconds)
             .build()
 
@@ -1405,6 +1402,7 @@ class SyncedRealmTests {
                 errorHandler = { _, error ->
                     fail(error.toString())
                 },
+                schema = FLEXIBLE_SYNC_SCHEMA,
                 initialSubscriptions = { realm: Realm ->
                     realm.query<FlexParentObject>()
                         .subscribe(name = "parentSubscription")
@@ -1415,7 +1413,8 @@ class SyncedRealmTests {
                 name = "asset-fs.realm",
                 errorHandler = { _, error ->
                     fail(error.toString())
-                }
+                },
+                schema = FLEXIBLE_SYNC_SCHEMA
             )
 
             Realm.open(syncConfig1).use { flexRealm1: Realm ->
@@ -1457,7 +1456,8 @@ class SyncedRealmTests {
                 name = "sync1.realm",
                 errorHandler = { _, error ->
                     fail(error.toString())
-                }
+                },
+                schema = FLEXIBLE_SYNC_SCHEMA,
             ) {
                 initialRealmFile("asset-fs.realm")
                 initialData {
@@ -1855,7 +1855,7 @@ class SyncedRealmTests {
         errorHandler: ErrorHandler? = null,
         block: SyncConfiguration.Builder.() -> Unit = {}
     ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = PARTITION_SYNC_SCHEMA,
+        schema = PARTITION_BASED_SCHEMA,
         user = user,
         partitionValue = partitionValue
     ).name(name).also { builder ->

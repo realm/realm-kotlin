@@ -18,7 +18,6 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -64,7 +63,7 @@ class MutableSubscriptionSetTests {
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = SYNC_SCHEMA
+            schema = FLEXIBLE_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -369,7 +368,7 @@ class MutableSubscriptionSetTests {
 
     private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
         val user = app.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class))
+        val config = SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
             .initialSubscriptions {
                 it.query<FlexParentObject>().subscribe()
             }
