@@ -4,7 +4,8 @@
 * None.
 
 ### Enhancements
-* Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. ([#1513](https://github.com/realm/realm-kotlin/issues/1513))
+* Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
+* The Realm Gradle Plugin no longer has a dependency on KAPT. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
 
 ### Fixed
 * `Realm.close()` is now idempotent.
