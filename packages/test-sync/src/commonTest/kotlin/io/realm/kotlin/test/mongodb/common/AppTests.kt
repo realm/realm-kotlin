@@ -391,7 +391,7 @@ class AppTests {
             Realm.open(syncConfig).close()
 
             // Create a configuration pointing to the metadata Realm for that app
-            val lastSetSchemaVersion = 6L
+            val lastSetSchemaVersion = 7L
             val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
             val config = RealmConfiguration
                 .Builder(setOf())
