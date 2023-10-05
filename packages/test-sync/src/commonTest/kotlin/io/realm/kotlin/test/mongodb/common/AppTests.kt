@@ -386,7 +386,7 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 
@@ -423,7 +423,7 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 
