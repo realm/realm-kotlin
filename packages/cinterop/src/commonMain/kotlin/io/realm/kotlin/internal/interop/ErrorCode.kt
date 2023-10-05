@@ -187,3 +187,4 @@ expect enum class ErrorCode : CodeDescription {
         fun of(nativeValue: Int): ErrorCode?
     }
 }
+

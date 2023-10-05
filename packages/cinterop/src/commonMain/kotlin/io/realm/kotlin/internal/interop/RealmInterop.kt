@@ -30,6 +30,8 @@ import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
+import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmInline
@@ -802,7 +804,7 @@ expect object RealmInterop {
         webSocketTransport: WebSocketTransport
     )
 
-    fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean = false, status: Int = 0/* ok */, reason: String = "")
+    fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean = false, status: WebsocketCallbackResult = WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS, reason: String = "")
 
     fun realm_sync_socket_websocket_connected(nativePointer: RealmWebsocketProviderPointer, protocol: String)
 
@@ -810,5 +812,5 @@ expect object RealmInterop {
 
     fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray)
 
-    fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: Int, reason: String = "")
+    fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String = "")
 }

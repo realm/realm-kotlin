@@ -1,8 +1,8 @@
 package io.realm.kotlin.internal.interop.sync
 
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmWebsocketProviderPointer
 import io.realm.kotlin.internal.interop.RealmWebsocketHandlerCallbackPointer
+import io.realm.kotlin.internal.interop.RealmWebsocketProviderPointer
 import kotlinx.coroutines.Job
 
 interface WebSocketTransport {
@@ -10,7 +10,7 @@ interface WebSocketTransport {
 
     fun createTimer(
         delayInMilliseconds: Long,
-        handlerCallback: RealmWebsocketHandlerCallbackPointer
+        handlerCallback: RealmWebsocketHandlerCallbackPointer,
     ): CancellableTimer
 
     fun connect(
@@ -32,12 +32,13 @@ interface WebSocketTransport {
 
     fun runCallback(
         handlerCallback: RealmWebsocketHandlerCallbackPointer,
-        status: Int = 0/* ok */,
+        cancelled: Boolean = false,
+        status: WebsocketCallbackResult = WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS,
         reason: String = ""
     ) {
         RealmInterop.realm_sync_socket_callback_complete(
             handlerCallback,
-            cancelled = false,
+            cancelled,
             status,
             reason
         )
@@ -48,14 +49,11 @@ interface WebSocketTransport {
 
 class CancellableTimer(
     private val job: Job,
-    private val handlerCallback: RealmWebsocketHandlerCallbackPointer
+    private val cancelCallback: () -> Unit
 ) {
     fun cancel() {
-        // avoid double delete, if the Job has completed then the callback function was already been invoked and deleted from the heap
-        if (!job.isCompleted && !job.isCancelled) {
-            job.cancel()
-            RealmInterop.realm_sync_socket_callback_complete(handlerCallback, cancelled = true)
-        }
+        job.cancel()
+        cancelCallback()
     }
 }
 
@@ -77,7 +75,7 @@ class WebSocketObserver(private val webSocketObserverPointer: RealmWebsocketProv
         RealmInterop.realm_sync_socket_websocket_message(webSocketObserverPointer, data)
     }
 
-    fun onClose(wasClean: Boolean, errorCode: Int, reason: String) {
+    fun onClose(wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {
         RealmInterop.realm_sync_socket_websocket_closed(
             webSocketObserverPointer,
             wasClean,

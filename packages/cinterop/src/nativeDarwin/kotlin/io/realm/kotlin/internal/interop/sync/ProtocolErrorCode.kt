@@ -16,8 +16,10 @@
 
 package io.realm.kotlin.internal.interop.sync
 import io.realm.kotlin.internal.interop.CodeDescription
+import realm_wrapper.realm_errno
 import realm_wrapper.realm_sync_errno_connection
 import realm_wrapper.realm_sync_errno_session
+import realm_wrapper.realm_sync_socket_callback_result
 import realm_wrapper.realm_web_socket_errno
 
 actual enum class SyncConnectionErrorCode(
@@ -131,8 +133,59 @@ actual enum class WebsocketErrorCode(
 
     override val nativeValue: Int = errorCode.value.toInt()
 
+    val asNativeEnum: realm_web_socket_errno = errorCode
+
     actual companion object {
-        internal actual fun of(nativeValue: Int): WebsocketErrorCode? =
+        actual fun of(nativeValue: Int): WebsocketErrorCode? =
+            values().firstOrNull { value ->
+                value.nativeValue == nativeValue
+            }
+    }
+}
+
+actual enum class WebsocketCallbackResult(
+    override val description: String,
+    nativeError: realm_sync_socket_callback_result
+) : CodeDescription {
+
+    RLM_ERR_SYNC_SOCKET_SUCCESS(
+        "Websocket callback success",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_SUCCESS
+    ),
+    RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED(
+        "Websocket callback aborted",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED
+    ),
+    RLM_ERR_SYNC_SOCKET_RUNTIME(
+        "Websocket Runtime error",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_RUNTIME
+    ),
+    RLM_ERR_SYNC_SOCKET_OUT_OF_MEMORY(
+        "Websocket out of memory ",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_OUT_OF_MEMORY
+    ),
+    RLM_ERR_SYNC_SOCKET_ADDRESS_SPACE_EXHAUSTED(
+        "Websocket address space exhausted",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_ADDRESS_SPACE_EXHAUSTED
+    ),
+    RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED(
+        "Websocket connection closed",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED
+    ),
+    RLM_ERR_SYNC_SOCKET_NOT_SUPPORTED(
+        "Websocket not supported",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_NOT_SUPPORTED
+    ),
+    RLM_ERR_SYNC_SOCKET_INVALID_ARGUMENT(
+        "Websocket invalid argument",
+        realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_INVALID_ARGUMENT
+    );
+
+    override val nativeValue: Int = nativeError.value.toInt()
+    val asNativeEnum: realm_sync_socket_callback_result = nativeError
+
+    actual companion object {
+        actual fun of(nativeValue: Int): WebsocketCallbackResult? =
             values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }

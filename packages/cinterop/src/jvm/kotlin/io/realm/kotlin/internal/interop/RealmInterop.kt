@@ -30,6 +30,8 @@ import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -1985,8 +1987,8 @@ actual object RealmInterop {
         realmc.realm_sync_websocket_new(syncClientConfig.cptr(), webSocketTransport)
     }
 
-    actual fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean, status: Int, reason: String) {
-        realmc.realm_sync_websocket_callback_complete(cancelled, nativePointer.cptr(), status, reason)
+    actual fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean, status: WebsocketCallbackResult, reason: String) {
+        realmc.realm_sync_websocket_callback_complete(cancelled, nativePointer.cptr(), status.nativeValue, reason)
     }
 
     actual fun realm_sync_socket_websocket_connected(nativePointer: RealmWebsocketProviderPointer, protocol: String) {
@@ -2001,8 +2003,8 @@ actual object RealmInterop {
         realmc.realm_sync_websocket_message(nativePointer.cptr(), data, data.size.toLong())
     }
 
-    actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: Int, reason: String) {
-        realmc.realm_sync_websocket_closed(nativePointer.cptr(), wasClean, errorCode, reason)
+    actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {
+        realmc.realm_sync_websocket_closed(nativePointer.cptr(), wasClean, errorCode.nativeValue, reason)
     }
 
     fun <T : CapiT> NativePointer<T>.cptr(): Long {

@@ -21,49 +21,68 @@ import io.realm.kotlin.internal.interop.sync.CancellableTimer
 import io.realm.kotlin.internal.interop.sync.WebSocketClient
 import io.realm.kotlin.internal.interop.sync.WebSocketObserver
 import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import io.realm.kotlin.internal.util.DispatcherHolder
+import kotlinx.atomicfu.AtomicRef
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.Channel.Factory.UNLIMITED
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 public class KtorWebSocketTransport(
     timeoutMs: Long,
     private val dispatcherHolder: DispatcherHolder
 ) : WebSocketTransport {
 
-    private val logger = ContextLogger("WebSocket")
+    private val logger = ContextLogger("Websocket")
     private val client: HttpClient by lazy { createWebSocketClient(timeoutMs) }
     private val transportJob: CompletableJob by lazy { Job() }
     private val scope: CoroutineScope by lazy { CoroutineScope(dispatcherHolder.dispatcher + transportJob) }
 
     override fun post(handlerCallback: RealmWebsocketHandlerCallbackPointer) {
         scope.launch {
-            runCallback(handlerCallback)
+            (this as Job).invokeOnCompletion { completionHandler: Throwable? ->
+                // Only run the callback if it was not cancelled in the meantime
+                when (completionHandler) {
+                    null -> runCallback(handlerCallback)
+                    else -> runCallback(
+                        handlerCallback,
+                        cancelled = true
+                    )
+                }
+            }
         }
     }
 
     override fun createTimer(
         delayInMilliseconds: Long,
         handlerCallback: RealmWebsocketHandlerCallbackPointer
-    ): CancellableTimer = CancellableTimer(scope.launch {
-        (this as Job).invokeOnCompletion { completionHandler ->
-            // Only run the callback if it was not cancelled in the meantime
-            when (completionHandler) {
-                null ->  {
-                    runCallback(handlerCallback)
+    ): CancellableTimer {
+        val atomic: AtomicRef<RealmWebsocketHandlerCallbackPointer?> = atomic(handlerCallback)
+        return CancellableTimer(scope.launch {
+            delay(delayInMilliseconds)
+            atomic.getAndSet(null)?.run {
+                runCallback(handlerCallback)
+            }
+        }) { // Cancel lambda
+            scope.launch {
+                atomic.getAndSet(null)?.run {
+                    runCallback(handlerCallback, cancelled = true)
                 }
             }
         }
-        delay(delayInMilliseconds)
+    }
 
-    }, handlerCallback)
-
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun connect(
         observer: WebSocketObserver,
         path: String,
@@ -83,15 +102,12 @@ public class KtorWebSocketTransport(
                 }
             }
             private val scope: CoroutineScope by lazy { CoroutineScope(dispatcherHolder.dispatcher + websocketJob + websocketExceptionHandler) }
-
-            private val writeFlow: MutableSharedFlow<Pair<ByteArray, RealmWebsocketHandlerCallbackPointer>> =
-                MutableSharedFlow()
+            private val writeChannel =
+                Channel<Pair<ByteArray, RealmWebsocketHandlerCallbackPointer>>(capacity = UNLIMITED)
 
             private val binaryBuffer = FrameBuffer {
-                // Observer could be invalid at this point?
                 observer.onNewMessage(it)
             }
-
             private lateinit var session: ClientWebSocketSession
 
             init {
@@ -117,7 +133,7 @@ public class KtorWebSocketTransport(
                             observer.onError()
                             observer.onClose(
                                 wasClean = false,
-                                errorCode = 4401/*RLM_ERR_WEBSOCKET_CONNECTION_FAILED */,
+                                errorCode = WebsocketErrorCode.RLM_ERR_WEBSOCKET_CONNECTION_FAILED,
                                 reason = "Websocket server responded with status code ${call.response.status} instead of ${HttpStatusCode.SwitchingProtocols}"
                             )
                         } else {
@@ -127,7 +143,7 @@ public class KtorWebSocketTransport(
                                     observer.onError()
                                     observer.onClose(
                                         false,
-                                        1002 /*RLM_ERR_WEBSOCKET_PROTOCOLERROR*/,
+                                        WebsocketErrorCode.RLM_ERR_WEBSOCKET_PROTOCOLERROR,
                                         "${HttpHeaders.SecWebSocketProtocol} header not returned. Sync server didn't return supported protocol" +
                                                 ". Supported protocols are = $supportedProtocols"
                                     )
@@ -148,21 +164,11 @@ public class KtorWebSocketTransport(
 
                             // Writing messages to WebSocket
                             scope.launch {
-                                writeFlow.collect {
-                                    try {
-                                        // There's no fragmentation needed when sending frames from client
-                                        // so 'fin' should always be `true`
-                                        outgoing.send(Frame.Binary(true, it.first))
-                                        scope.launch {
-                                            runCallback(it.second)
-                                        }
-                                    } catch (e: Exception) {
-                                        runCallback(
-                                            it.second,
-                                            4403 /*RLM_ERR_WEBSOCKET_WRITE_ERROR*/,
-                                            e.message.toString()
-                                        )
-                                    }
+                                writeChannel.consumeEach {
+                                    // There's no fragmentation needed when sending frames from client
+                                    // so 'fin' should always be `true`
+                                    outgoing.send(Frame.Binary(true, it.first))
+                                    runCallback(it.second)
                                 }
                             }
 
@@ -183,9 +189,10 @@ public class KtorWebSocketTransport(
                                             // via a 401 HTTP response is not possible) see https://jira.mongodb.org/browse/BAAS-10531.
                                             // In order to provide a reasonable response that the Sync Client can react upon, the private range of websocket close status codes
                                             // 4000-4999, can be used to return a more specific error.
-                                            val errorCode: Int =
+                                            val errorCode: WebsocketErrorCode =
                                                 frame.readReason()?.code?.toInt()
-                                                    ?: 0/*RLM_ERR_WEBSOCKET_OK*/
+                                                    ?.let { code -> WebsocketErrorCode.of(code) }
+                                                    ?: WebsocketErrorCode.RLM_ERR_WEBSOCKET_OK
                                             val reason: String = frame.readReason()?.toString()
                                                 ?: "Received Close from Websocket server"
 
@@ -220,16 +227,29 @@ public class KtorWebSocketTransport(
                 message: ByteArray,
                 handlerCallback: RealmWebsocketHandlerCallbackPointer
             ) {
-                scope.launch {
-                    writeFlow.emit(Pair(message, handlerCallback))
-                }
+                writeChannel.trySend(Pair(message, handlerCallback))
             }
 
             override fun closeWebsocket() {
                 if (::session.isInitialized) {
-                    session.cancel() // Terminate the WebSocket session, connect needs to be called again
+                    session.cancel() // Terminate the WebSocket session, connect needs to be called again.
                 }
-                websocketJob.cancel() // Cancel all scheduled jobs
+                // Collect unprocessed writes and cancel them (mainly to avoid leaking the FunctionHandler).
+                while (true) {
+                    val result = writeChannel.tryReceive()
+                    if (result.isSuccess) {
+                        result.getOrNull()?.run {
+                            runBlocking(scope.coroutineContext) {
+                                runCallback(handlerCallback = second, cancelled = true)
+                            }
+                        }
+                    } else {
+                        // No more elements in the channel
+                        break
+                    }
+                }
+                writeChannel.close()
+                websocketJob.cancel() // Cancel all scheduled jobs.
             }
         }
     }

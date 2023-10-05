@@ -20,7 +20,7 @@ import realm_wrapper.realm_errno
 
 actual enum class ErrorCode(
     override val description: String,
-    private val nativeError: realm_errno
+    nativeError: realm_errno
 ) : CodeDescription {
     RLM_ERR_NONE("None", realm_errno.RLM_ERR_NONE),
     RLM_ERR_RUNTIME("Runtime", realm_errno.RLM_ERR_RUNTIME),

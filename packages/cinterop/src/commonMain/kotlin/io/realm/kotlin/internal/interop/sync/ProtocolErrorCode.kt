@@ -121,6 +121,21 @@ expect enum class WebsocketErrorCode : CodeDescription {
     RLM_ERR_WEBSOCKET_FATAL_ERROR;
 
     companion object {
-        internal fun of(nativeValue: Int): WebsocketErrorCode?
+        fun of(nativeValue: Int): WebsocketErrorCode?
+    }
+}
+
+expect enum class WebsocketCallbackResult : CodeDescription {
+    RLM_ERR_SYNC_SOCKET_SUCCESS,
+    RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED,
+    RLM_ERR_SYNC_SOCKET_RUNTIME,
+    RLM_ERR_SYNC_SOCKET_OUT_OF_MEMORY,
+    RLM_ERR_SYNC_SOCKET_ADDRESS_SPACE_EXHAUSTED,
+    RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED,
+    RLM_ERR_SYNC_SOCKET_NOT_SUPPORTED,
+    RLM_ERR_SYNC_SOCKET_INVALID_ARGUMENT;
+
+    companion object {
+        fun of(nativeValue: Int): WebsocketCallbackResult?
     }
 }
