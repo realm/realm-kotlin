@@ -137,7 +137,6 @@ actual enum class WebsocketErrorCode(
     }
 }
 
-
 actual enum class WebsocketCallbackResult(override val description: String, override val nativeValue: Int) : CodeDescription {
 
     RLM_ERR_SYNC_SOCKET_SUCCESS(

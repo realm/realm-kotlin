@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.internal.interop.sync
 import io.realm.kotlin.internal.interop.CodeDescription
-import realm_wrapper.realm_errno
 import realm_wrapper.realm_sync_errno_connection
 import realm_wrapper.realm_sync_errno_session
 import realm_wrapper.realm_sync_socket_callback_result

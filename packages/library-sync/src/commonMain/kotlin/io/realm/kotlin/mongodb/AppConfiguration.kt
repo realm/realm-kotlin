@@ -406,8 +406,8 @@ public interface AppConfiguration {
                     )
                 }
 
-            val websocketTransport: ((DispatcherHolder) -> WebSocketTransport)? = if (usePlatformNetworking)
-                { dispatcherHolder ->
+            val websocketTransport: ((DispatcherHolder) -> WebSocketTransport)? =
+                if (usePlatformNetworking) { dispatcherHolder ->
                     websocketTransport ?: KtorWebSocketTransport(
                         timeoutMs = 60000,
                         dispatcherHolder = dispatcherHolder

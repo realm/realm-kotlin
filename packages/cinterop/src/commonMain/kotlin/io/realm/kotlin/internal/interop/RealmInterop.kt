@@ -30,8 +30,8 @@ import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import io.realm.kotlin.internal.interop.sync.WebSocketTransport
-import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmInline
@@ -810,7 +810,10 @@ expect object RealmInterop {
 
     fun realm_sync_socket_websocket_error(nativePointer: RealmWebsocketProviderPointer)
 
-    fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) : Boolean
+    fun realm_sync_socket_websocket_message(
+        nativePointer: RealmWebsocketProviderPointer,
+        data: ByteArray
+    ): Boolean
 
     fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String = "")
 }

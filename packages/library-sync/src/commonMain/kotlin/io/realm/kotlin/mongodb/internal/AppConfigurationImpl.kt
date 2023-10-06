@@ -150,7 +150,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         webSocketTransport: WebSocketTransport?,
         sdkInfo: String?,
         applicationInfo: String?
-        ): RealmSyncClientConfigurationPointer =
+    ): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
                 // Initialize client configuration first

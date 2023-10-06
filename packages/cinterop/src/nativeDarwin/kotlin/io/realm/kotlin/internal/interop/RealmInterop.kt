@@ -2730,10 +2730,12 @@ actual object RealmInterop {
                     disposeUserData<WebSocketTransport>(userdata)
                 },
                 post_func = staticCFunction { userdata: CPointer<out CPointed>?, syncSocketCallback: CPointer<realm_sync_socket_callback_t>? ->
-                    val callback: WebsocketFunctionHandlerCallback = { cancelled , _, _ ->
-                        realm_wrapper.realm_sync_socket_post_complete(syncSocketCallback,
+                    val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
+                        realm_wrapper.realm_sync_socket_post_complete(
+                            syncSocketCallback,
                             if (cancelled) WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED.asNativeEnum else WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
-                    "")
+                            ""
+                        )
                     }
 
                     safeUserData<WebSocketTransport>(userdata).post(
@@ -2745,7 +2747,11 @@ actual object RealmInterop {
                         if (cancelled) {
                             realm_wrapper.realm_sync_socket_timer_canceled(syncSocketCallback)
                         } else {
-                            realm_wrapper.realm_sync_socket_timer_complete(syncSocketCallback, WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum, "")
+                            realm_wrapper.realm_sync_socket_timer_complete(
+                                syncSocketCallback,
+                                WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
+                                ""
+                            )
                         }
                     }
 
@@ -2803,7 +2809,9 @@ actual object RealmInterop {
                                     webSocketClient,
                                     this,
                                     length.toLong(),
-                                    CPointerWrapper(StableRef.create(postWriteCallback).asCPointer())
+                                    CPointerWrapper(
+                                        StableRef.create(postWriteCallback).asCPointer()
+                                    )
                                 )
                             }
                         }
@@ -2835,8 +2843,15 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_socket_websocket_error(nativePointer.cptr())
     }
 
-    actual fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) : Boolean {
-        return realm_wrapper.realm_sync_socket_websocket_message(nativePointer.cptr(), data.toCValues(), data.size.toULong())
+    actual fun realm_sync_socket_websocket_message(
+        nativePointer: RealmWebsocketProviderPointer,
+        data: ByteArray
+    ): Boolean {
+        return realm_wrapper.realm_sync_socket_websocket_message(
+            nativePointer.cptr(),
+            data.toCValues(),
+            data.size.toULong()
+        )
     }
 
     actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {

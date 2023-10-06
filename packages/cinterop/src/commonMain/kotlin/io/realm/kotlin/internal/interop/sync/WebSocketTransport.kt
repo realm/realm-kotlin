@@ -13,6 +13,7 @@ interface WebSocketTransport {
         handlerCallback: RealmWebsocketHandlerCallbackPointer,
     ): CancellableTimer
 
+    @Suppress("LongParameterList")
     fun connect(
         observer: WebSocketObserver,
         path: String,
@@ -71,7 +72,7 @@ class WebSocketObserver(private val webSocketObserverPointer: RealmWebsocketProv
         RealmInterop.realm_sync_socket_websocket_error(webSocketObserverPointer)
     }
 
-    fun onNewMessage(data: ByteArray) : Boolean {
+    fun onNewMessage(data: ByteArray): Boolean {
         return RealmInterop.realm_sync_socket_websocket_message(webSocketObserverPointer, data)
     }
 

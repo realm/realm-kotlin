@@ -28,7 +28,6 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
@@ -55,8 +54,7 @@ public class KtorWebSocketTransport(
                 when (completionHandler) {
                     null -> runCallback(handlerCallback)
                     else -> runCallback(
-                        handlerCallback,
-                        cancelled = true
+                        handlerCallback, cancelled = true
                     )
                 }
             }
@@ -68,12 +66,14 @@ public class KtorWebSocketTransport(
         handlerCallback: RealmWebsocketHandlerCallbackPointer
     ): CancellableTimer {
         val atomic: AtomicRef<RealmWebsocketHandlerCallbackPointer?> = atomic(handlerCallback)
-        return CancellableTimer(scope.launch {
-            delay(delayInMilliseconds)
-            atomic.getAndSet(null)?.run {
-                runCallback(handlerCallback)
+        return CancellableTimer(
+            scope.launch {
+                delay(delayInMilliseconds)
+                atomic.getAndSet(null)?.run {
+                    runCallback(handlerCallback)
+                }
             }
-        }) { // Cancel lambda
+        ) { // Cancel lambda
             scope.launch {
                 atomic.getAndSet(null)?.run {
                     runCallback(handlerCallback, cancelled = true)
@@ -82,7 +82,6 @@ public class KtorWebSocketTransport(
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     override fun connect(
         observer: WebSocketObserver,
         path: String,
@@ -114,6 +113,7 @@ public class KtorWebSocketTransport(
                 openConnection()
             }
 
+            @Suppress("LongMethod")
             private fun openConnection() {
                 scope.launch {
                     client.webSocket(
@@ -137,15 +137,16 @@ public class KtorWebSocketTransport(
                                 reason = "Websocket server responded with status code ${call.response.status} instead of ${HttpStatusCode.SwitchingProtocols}"
                             )
                         } else {
-                            when (val selectedProtocol =
-                                call.response.headers[HttpHeaders.SecWebSocketProtocol]) {
+                            when (
+                                val selectedProtocol =
+                                    call.response.headers[HttpHeaders.SecWebSocketProtocol]
+                            ) {
                                 null -> {
                                     observer.onError()
                                     observer.onClose(
                                         false,
                                         WebsocketErrorCode.RLM_ERR_WEBSOCKET_PROTOCOLERROR,
-                                        "${HttpHeaders.SecWebSocketProtocol} header not returned. Sync server didn't return supported protocol" +
-                                                ". Supported protocols are = $supportedProtocols"
+                                        "${HttpHeaders.SecWebSocketProtocol} header not returned. Sync server didn't return supported protocol" + ". Supported protocols are = $supportedProtocols"
                                     )
                                     close(
                                         CloseReason(
@@ -177,7 +178,8 @@ public class KtorWebSocketTransport(
                                 incoming.consumeEach {
                                     when (val frame = it) {
                                         is Frame.Binary -> {
-                                            val shouldCloseSocket = binaryBuffer.appendAndSend(frame)
+                                            val shouldCloseSocket =
+                                                binaryBuffer.appendAndSend(frame)
                                             if (shouldCloseSocket) {
                                                 closeWebsocket()
                                             }
@@ -291,7 +293,7 @@ private class FrameBuffer(val sendDefragmentedMessageToObserver: (binaryMessage:
     /**
      * @return True if we should close the Websocket after this write.
      */
-    fun appendAndSend(frame: Frame) : Boolean {
+    fun appendAndSend(frame: Frame): Boolean {
         if (frame.data.isNotEmpty()) {
             buffer.add(frame.data)
             currentSize += frame.data.size
