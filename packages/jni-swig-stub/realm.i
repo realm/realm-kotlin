@@ -330,6 +330,11 @@ bool realm_object_is_valid(const realm_object_t*);
     }
     jresult = (jboolean)result;
 }
+
+%typemap(javaimports) realm_sync_socket_callback_result %{
+import static io.realm.kotlin.internal.interop.realm_errno_e.*;
+%}
+
 // Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
 //%typemap(jstype) realm_t* "LongPointerWrapper"
 //%typemap(javain) realm_t* "$javainput.ptr()"
@@ -431,4 +436,3 @@ bool realm_object_is_valid(const realm_object_t*);
 %include "realm.h"
 %include "realm/error_codes.h"
 %include "src/main/jni/realm_api_helpers.h"
-

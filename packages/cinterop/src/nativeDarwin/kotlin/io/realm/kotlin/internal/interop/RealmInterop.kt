@@ -38,6 +38,7 @@ import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import io.realm.kotlin.internal.interop.sync.WebSocketClient
 import io.realm.kotlin.internal.interop.sync.WebSocketObserver
 import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
 import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
@@ -2821,7 +2822,7 @@ actual object RealmInterop {
         realm_release(realmSyncSocketNew)
     }
 
-    actual fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean, status: WebsocketErrorCode, reason: String) {
+    actual fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean, status: WebsocketCallbackResult, reason: String) {
         safeUserData<WebsocketFunctionHandlerCallback>(nativePointer.cptr())(cancelled, status, reason)
         disposeUserData<WebsocketFunctionHandlerCallback>(nativePointer.cptr())
     }
@@ -2834,8 +2835,8 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_socket_websocket_error(nativePointer.cptr())
     }
 
-    actual fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) {
-        realm_wrapper.realm_sync_socket_websocket_message(nativePointer.cptr(), data.toCValues(), data.size.toULong())
+    actual fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) : Boolean {
+        return realm_wrapper.realm_sync_socket_websocket_message(nativePointer.cptr(), data.toCValues(), data.size.toULong())
     }
 
     actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {
@@ -3555,7 +3556,7 @@ actual object RealmInterop {
     }
 }
 
-private typealias WebsocketFunctionHandlerCallback = (Boolean, WebsocketErrorCode, String) -> Unit
+private typealias WebsocketFunctionHandlerCallback = (Boolean, WebsocketCallbackResult, String) -> Unit
 
 fun realm_value_t.asByteArray(): ByteArray {
     if (this.type != realm_value_type.RLM_TYPE_BINARY) {
