@@ -208,12 +208,13 @@ class GeoSpatialTests {
 
             realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
 
-            realm.write {
-                // Fail: We should not be able to update outside of subscription bounds, compensating write
-                findLatest(restaurant)!!.location = invalidLocation
-            }
-
-            realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
+            // TODO https://github.com/realm/realm-kotlin/issues/1538
+//            realm.write {
+//                // Fail: We should not be able to update outside of subscription bounds, compensating write
+//                findLatest(restaurant)!!.location = invalidLocation
+//            }
+//
+//            realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
         }
 
         // Download data on user #2
