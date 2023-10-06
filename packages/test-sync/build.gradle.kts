@@ -17,6 +17,7 @@
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
+import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -313,6 +314,7 @@ buildkonfig {
             buildConfigField(Type.STRING, "privateApiKey", "")
         }
         buildConfigField(Type.STRING, "clusterName", getPropertyValue("syncTestClusterName") ?: "")
+        buildConfigField(Type.BOOLEAN, "usePlatformNetworking",  getPropertyValue("REALM_USE_PLATFORM_NETWORKING")?.toLowerCaseAsciiOnly() ?: "false")
     }
 }
 

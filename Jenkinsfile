@@ -188,7 +188,7 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
+                                        testAndCollect("packages", "cleanAllTests -PREALM_USE_PLATFORM_NETWORKING=true -PincludeSdkModules=false connectedAndroidTest")
                                     }
                                 )
                             }
@@ -212,7 +212,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests jvmTest -PincludeSdkModules=false ')
+                                testAndCollect("packages", 'cleanAllTests jvmTest -PREALM_USE_PLATFORM_NETWORKING=true -PincludeSdkModules=false ')
                             }
                         ])
                     }
@@ -232,7 +232,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PincludeSdkModules=false -PtestBuildType=debugMinified')
+                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PREALM_USE_PLATFORM_NETWORKING=true -PincludeSdkModules=false -PtestBuildType=debugMinified')
                             }
                         ])
                         sh 'rm mapping.zip || true'

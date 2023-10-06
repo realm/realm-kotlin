@@ -195,20 +195,25 @@ open class TestApp private constructor(
             }
 
             @Suppress("invisible_member", "invisible_reference")
-            var config = AppConfiguration.Builder(appAdmin.clientAppId)
+            val config = AppConfiguration.Builder(appAdmin.clientAppId)
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .networkTransport(networkTransport)
                 .ejson(ejson)
-                .usePlatformNetworking()
-                .apply {
-                    if (logLevel != null) {
-                        log(
-                            logLevel,
-                            if (customLogger == null) emptyList<RealmLogger>()
-                            else listOf<RealmLogger>(customLogger)
-                        )
-                    }
+            if (SyncServerConfig.usePlatformNetworking) {
+                println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REALM_USE_PLATFORM_NETWORKING is set")
+                config.usePlatformNetworking()
+            } else {
+                println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REALM_USE_PLATFORM_NETWORKING is NOT SET")
+            }
+            config.apply {
+                if (logLevel != null) {
+                    log(
+                        logLevel,
+                        if (customLogger == null) emptyList<RealmLogger>()
+                        else listOf<RealmLogger>(customLogger)
+                    )
                 }
+            }
 
             val app = App.create(
                 builder(config)
