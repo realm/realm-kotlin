@@ -177,7 +177,10 @@ public class KtorWebSocketTransport(
                                 incoming.consumeEach {
                                     when (val frame = it) {
                                         is Frame.Binary -> {
-                                            binaryBuffer.appendAndSend(frame)
+                                            val shouldCloseSocket = binaryBuffer.appendAndSend(frame)
+                                            if (shouldCloseSocket) {
+                                                closeWebsocket()
+                                            }
                                         }
 
                                         is Frame.Close -> {
@@ -197,12 +200,6 @@ public class KtorWebSocketTransport(
                                                 ?: "Received Close from Websocket server"
 
                                             observer.onClose(true, errorCode, reason)
-                                            close(
-                                                CloseReason(
-                                                    CloseReason.Codes.NORMAL,
-                                                    "Server closed the Websocket"
-                                                )
-                                            )
                                         }
 
                                         is Frame.Text -> {
@@ -287,11 +284,14 @@ public class KtorWebSocketTransport(
  *
  * Note: Core doesn't send fragmented Frames, so this buffering only needed when reading from the websocket.
  */
-private class FrameBuffer(val sendDefragmentedMessageToObserver: (binaryMessage: ByteArray) -> Unit) {
+private class FrameBuffer(val sendDefragmentedMessageToObserver: (binaryMessage: ByteArray) -> Boolean) {
     private val buffer = mutableListOf<ByteArray>()
     private var currentSize = 0
 
-    fun appendAndSend(frame: Frame) {
+    /**
+     * @return True if we should close the Websocket after this write.
+     */
+    fun appendAndSend(frame: Frame) : Boolean {
         if (frame.data.isNotEmpty()) {
             buffer.add(frame.data)
             currentSize += frame.data.size
@@ -299,8 +299,9 @@ private class FrameBuffer(val sendDefragmentedMessageToObserver: (binaryMessage:
 
         if (frame.fin) {
             // Append fragmented Frames and flush the buffer
-            sendDefragmentedMessageToObserver(flush())
+            return sendDefragmentedMessageToObserver(flush())
         }
+        return false
     }
 
     private fun flush(): ByteArray {

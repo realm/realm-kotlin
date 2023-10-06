@@ -145,7 +145,7 @@ void realm_sync_websocket_connected(int64_t observer_ptr, const char* protocol);
 
 void realm_sync_websocket_error(int64_t observer_ptr);
 
-void realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t size);
+bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t size);
 
 void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error_code, const char* reason);
 

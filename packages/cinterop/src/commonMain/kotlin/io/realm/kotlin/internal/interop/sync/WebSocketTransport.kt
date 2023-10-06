@@ -71,8 +71,8 @@ class WebSocketObserver(private val webSocketObserverPointer: RealmWebsocketProv
         RealmInterop.realm_sync_socket_websocket_error(webSocketObserverPointer)
     }
 
-    fun onNewMessage(data: ByteArray) {
-        RealmInterop.realm_sync_socket_websocket_message(webSocketObserverPointer, data)
+    fun onNewMessage(data: ByteArray) : Boolean {
+        return RealmInterop.realm_sync_socket_websocket_message(webSocketObserverPointer, data)
     }
 
     fun onClose(wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {

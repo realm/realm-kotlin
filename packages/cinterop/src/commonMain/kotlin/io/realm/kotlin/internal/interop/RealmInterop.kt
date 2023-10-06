@@ -810,7 +810,7 @@ expect object RealmInterop {
 
     fun realm_sync_socket_websocket_error(nativePointer: RealmWebsocketProviderPointer)
 
-    fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray)
+    fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) : Boolean
 
     fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String = "")
 }

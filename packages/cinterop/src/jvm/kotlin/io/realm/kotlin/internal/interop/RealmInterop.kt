@@ -1999,8 +1999,8 @@ actual object RealmInterop {
         realmc.realm_sync_websocket_error(nativePointer.cptr())
     }
 
-    actual fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) {//data: String, size: ULong
-        realmc.realm_sync_websocket_message(nativePointer.cptr(), data, data.size.toLong())
+    actual fun realm_sync_socket_websocket_message(nativePointer: RealmWebsocketProviderPointer, data: ByteArray) : Boolean {
+        return realmc.realm_sync_websocket_message(nativePointer.cptr(), data, data.size.toLong())
     }
 
     actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {

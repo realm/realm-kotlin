@@ -867,13 +867,14 @@ void realm_sync_websocket_error(int64_t observer_ptr) {
     realm_sync_socket_websocket_error(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr));
 }
 
-void realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t size) {
+bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t size) {
     auto jenv = get_env(true);
     jbyte* byteData = jenv->GetByteArrayElements(data, NULL);
     std::unique_ptr<char[]> charData(new char[size]); // not null terminated (used in util::Span with size parameter)
     std::memcpy(charData.get(), byteData, size);
-    realm_sync_socket_websocket_message(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr), charData.get(), size);
+    bool close_websocket = !realm_sync_socket_websocket_message(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr), charData.get(), size);
     jenv->ReleaseByteArrayElements(data, byteData, JNI_ABORT);
+    return close_websocket;
 }
 
 void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error_code, const char* reason) {
