@@ -137,4 +137,10 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error);
 realm_scheduler_t*
 realm_create_generic_scheduler();
 
+void
+realm_property_info_t_cleanup(realm_property_info_t* value);
+
+void
+realm_class_info_t_cleanup(realm_class_info_t * value);
+
 #endif //TEST_REALM_API_HELPERS_H
