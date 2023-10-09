@@ -18,10 +18,13 @@ package io.realm.kotlin.gradle
 
 import com.android.build.gradle.BaseExtension
 import io.realm.kotlin.gradle.analytics.AnalyticsService
+import io.realm.kotlin.gradle.analytics.AnalyticsService.Companion.UNKNOWN
+import io.realm.kotlin.gradle.analytics.AnalyticsService.Companion.unknown
 import io.realm.kotlin.gradle.analytics.BuilderId
 import io.realm.kotlin.gradle.analytics.ComputerId
-import io.realm.kotlin.gradle.analytics.HOST_ARCH
-import io.realm.kotlin.gradle.analytics.HOST_OS
+import io.realm.kotlin.gradle.analytics.ErrorWrapper
+import io.realm.kotlin.gradle.analytics.HOST_ARCH_NAME
+import io.realm.kotlin.gradle.analytics.HOST_OS_NAME
 import io.realm.kotlin.gradle.analytics.ProjectConfiguration
 import io.realm.kotlin.gradle.analytics.TargetInfo
 import io.realm.kotlin.gradle.analytics.hexStringify
@@ -30,6 +33,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildServiceSpec
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilerPluginSupportPlugin
@@ -50,10 +54,30 @@ import org.jetbrains.kotlin.konan.target.Family
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 
-class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
+internal val gradleVersion: GradleVersion = GradleVersion.current().baseVersion
+internal val gradle70: GradleVersion = GradleVersion.version("7.0")
+internal val gradle75: GradleVersion = GradleVersion.version("7.5")
+
+class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin, ErrorWrapper {
+
+    /**
+     * Flag indicating whether we should submit analytics data to the remote endpoint
+     */
+    private var submitAnalytics: Boolean = true
+    /**
+     * Flag indicating whether we should submit analytics data to the remote endpoint
+     */
+    private var printAnalytics: Boolean = false
+
+    /**
+     * Flag to control if an exception in analytics collection should be causing the whole build to
+     * fail or just be logged and submitted as [UNKNOWN].
+     */
+    override var failOnError: Boolean = false
+
+    private var analyticsServiceProvider: Provider<AnalyticsService>? = null
 
     private lateinit var anonymizedBundleId: String
-    private var analyticsServiceProvider: Provider<AnalyticsService>? = null
 
     companion object {
         // TODO LATER Consider embedding these from the build.gradle's versionConstants task just
@@ -83,12 +107,24 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
         val bundleId = target.rootProject.name + ":" + target.name
         anonymizedBundleId = hexStringify(sha256Hash(bundleId.toByteArray()))
 
-        val submitAnalytics: Boolean = !target.gradle.startParameter.isOffline && !"true".equals(
-            System.getenv()["REALM_DISABLE_ANALYTICS"],
-            ignoreCase = true
-        )
-        val printAnalytics = "true".equals(System.getenv()["REALM_PRINT_ANALYTICS"], ignoreCase = true)
+        printAnalytics = target.providers.environmentVariable("REALM_PRINT_ANALYTICS").safeProvider().getOrElse("false").equals("true", ignoreCase = true)
+        submitAnalytics = !target.gradle.startParameter.isOffline && !target.providers.environmentVariable("REALM_DISABLE_ANALYTICS").safeProvider().getOrElse("false").equals("true", ignoreCase = true)
+        // We never want to break a user's build if collecting/submitting some data fail, but this
+        // flag can be used to treat any error in collecting as a fatal error that should break the
+        // build. This allows us to catch errors during development and on CI builds.
+        failOnError = target.providers.environmentVariable("REALM_ANALYTICS_FAILONERROR").safeProvider().getOrElse("false").equals("true", ignoreCase = true)
+
+        // Only register analytics service provider if we either want to submit or print the info
         if (submitAnalytics || printAnalytics) {
+            analyticsServiceProvider = provider(target)
+        }
+    }
+
+    private fun provider(target: Project) =
+        target.gradle.sharedServices.registerIfAbsent(
+            "Realm Analytics",
+            AnalyticsService::class.java
+        ) { spec: BuildServiceSpec<ProjectConfiguration> ->
             // Identify if project is using sync by inspecting dependencies.
             // We cannot use resolved configurations here as this code is called in
             // afterEvaluate, and resolving it prevents other plugins from modifying
@@ -96,43 +132,53 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
             // in `afterEvaluate`. This means we can only see dependencies directly set,
             // and not their transitive dependencies. This should be fine as we only
             // want to track builds directly using Realm.
-            var usesSync = false
-            outer@
-            for (conf in target.configurations) {
-                for (dependency in conf.dependencies) {
-                    if (dependency.group == "io.realm.kotlin" && dependency.name == "library-sync") {
-                        // In Java we can detect Sync through a Gradle configuration closure.
-                        // In Kotlin, this choice is currently determined by which dependency
-                        // people include
-                        usesSync = true
-                        break@outer
+            var usesSync: Boolean = withDefaultOnError("Uses Sync", false) {
+                var usesSync = false
+                outer@
+                for (conf in target.configurations) {
+                    for (dependency in conf.dependencies) {
+                        if (dependency.group == "io.realm.kotlin" && dependency.name == "library-sync") {
+                            // In Java we can detect Sync through a Gradle configuration closure.
+                            // In Kotlin, this choice is currently determined by which dependency
+                            // people include
+                            usesSync = true
+                            break@outer
+                        }
                     }
                 }
+                usesSync
             }
 
-            val userId = target.providers.of(ComputerId::class.java) {}.get()
-            val builderId = target.providers.of(BuilderId::class.java) {}.get()
-            val languageVersion = target.kotlinToolingVersion
+            // Host identifiers collects information through exec/file operations. failOnError
+            // option is propagated to the actual tasks to ensure that the don't break build if
+            // collection fail.
+            val userId: String = target.providers.of(ComputerId::class.java) {
+                it.parameters.failOnError.set(failOnError)
+            }.safeProvider().get()
+            val builderId: String = target.providers.of(BuilderId::class.java) {
+                it.parameters.failOnError.set(failOnError)
+            }.safeProvider().get()
 
-            analyticsServiceProvider = target.gradle.sharedServices.registerIfAbsent(
-                "Realm Analytics",
-                AnalyticsService::class.java
-            ) { spec: BuildServiceSpec<ProjectConfiguration> ->
-                spec.parameters.run {
-                    this.appId.set(anonymizedBundleId)
-                    this.userId.set(userId)
-                    this.builderId.set(builderId)
-                    this.hostOsType.set(HOST_OS.serializedName)
-                    this.hostOsVersion.set(System.getProperty("os.version"))
-                    this.hostCpuArch.set(HOST_ARCH)
-                    this.usesSync.set(usesSync)
-                    this.languageVersion.set(languageVersion.toString())
-                    this.submitAnalytics.set(submitAnalytics)
-                    this.printAnalytics.set(printAnalytics)
-                }
+            val languageVersion =
+                withDefaultOnError("Language version", UNKNOWN) { target.kotlinToolingVersion }
+            val hostOsType = withDefaultOnError("Host Os Type", UNKNOWN) { HOST_OS_NAME }
+            val hostOsVersion = withDefaultOnError(
+                "Host Os Version",
+                UNKNOWN
+            ) { target.providers.systemProperty("os.version").safeProvider().get() }
+            val hostCpuArch = withDefaultOnError("Host CPU Arch", UNKNOWN) { HOST_ARCH_NAME }
+
+            spec.parameters.run {
+                this.appId.set(anonymizedBundleId)
+                this.userId.set(userId)
+                this.builderId.set(builderId)
+                this.hostOsType.set(hostOsType)
+                this.hostOsVersion.set(hostOsVersion)
+                this.hostCpuArch.set(hostCpuArch)
+                this.usesSync.set(usesSync)
+                this.languageVersion.set(languageVersion.toString())
             }
         }
-    }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean {
         return kotlinCompilation.target.project.plugins.findPlugin(RealmCompilerSubplugin::class.java) != null
@@ -176,7 +222,14 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
             // gathered the feature list information
             targetInfo?.let {
                 kotlinCompilation.compileTaskProvider.get().doLast {
-                    analyticsServiceProvider!!.get().submit(targetInfo)
+                    val analyticsService = provider.get()
+                    val json = analyticsService.toJson(targetInfo)
+                    if (printAnalytics) {
+                        analyticsService.print(json)
+                    }
+                    if (submitAnalytics) {
+                        analyticsService.submit(json)
+                    }
                 }
             }
         }
@@ -186,12 +239,26 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin {
     }
 }
 
+/**
+ * Wrapper to safely obtain provider for usage in configuration phases to support configuration
+ * cache across Gradle versions.
+ */
+private fun <T> Provider<T>.safeProvider(): Provider<T> = this.let {
+    when {
+        gradleVersion < gradle70 -> {
+            @Suppress("DEPRECATION")
+            it.forUseAtConfigurationTime()
+        }
+        else -> it
+    }
+}
+
 @Suppress("ComplexMethod", "NestedBlockDepth")
 private fun gatherTargetInfo(kotlinCompilation: KotlinCompilation<*>): TargetInfo? {
     val project = kotlinCompilation.target.project
     return when (kotlinCompilation) {
         // We don't send metrics for common targets but still collect features as the
-        // target specific features is a union of common and target specific features
+        // target specific features are a union of common and target specific features
         is KotlinCommonCompilation,
         is KotlinSharedNativeCompilation ->
             null
@@ -265,7 +332,7 @@ fun nativeTarget(target: KonanTarget) = when (target.family) {
     Family.ANDROID -> "Android(native)"
     Family.WASM -> "Wasm"
     Family.ZEPHYR -> "Zephyr"
-    else -> "Unknown[${target.family}]"
+    else -> unknown(target.family.name)
 }
 
 // Helper method to ensure that we align architecture strings for Kotlin native builds
@@ -277,7 +344,7 @@ fun nativeArch(target: KonanTarget) = when (target.architecture) {
     Architecture.MIPS32 -> "Mips"
     Architecture.MIPSEL32 -> "MipsEL32"
     Architecture.WASM32 -> "Wasm"
-    else -> "Unknown[${target.architecture}]"
+    else -> unknown(target.architecture.name)
 }
 
 // Helper method to ensure that we align architecture strings for Android platforms
@@ -286,5 +353,5 @@ fun androidArch(target: String): String = when (target) {
     "arm64-v8a" -> io.realm.kotlin.gradle.analytics.Architecture.ARM64.serializedName
     "x86" -> io.realm.kotlin.gradle.analytics.Architecture.X86.serializedName
     "x86_64" -> io.realm.kotlin.gradle.analytics.Architecture.X64.serializedName
-    else -> "Unknown[$target]"
+    else -> unknown(target)
 }
