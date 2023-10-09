@@ -200,10 +200,7 @@ open class TestApp private constructor(
                 .networkTransport(networkTransport)
                 .ejson(ejson)
             if (SyncServerConfig.usePlatformNetworking) {
-                println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REALM_USE_PLATFORM_NETWORKING is set")
                 config.usePlatformNetworking()
-            } else {
-                println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> REALM_USE_PLATFORM_NETWORKING is NOT SET")
             }
             config.apply {
                 if (logLevel != null) {

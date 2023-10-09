@@ -131,6 +131,7 @@ import realm_wrapper.realm_sync_socket_t
 import realm_wrapper.realm_sync_socket_timer_t
 import realm_wrapper.realm_sync_socket_websocket_t
 import realm_wrapper.realm_t
+import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -2268,29 +2269,28 @@ actual object RealmInterop {
     }
 
     actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
-        TODO("Not Valid")
-//        memScoped {
-//            val count = AuthProvider.values().size
-//            val properties = allocArray<realm_user_identity>(count)
-//            val outCount = alloc<size_tVar>()
-//            realm_wrapper.realm_user_get_all_identities(
-//                user.cptr(),
-//                properties,
-//                count.convert(),
-//                outCount.ptr
-//            )
-//            outCount.value.toLong().let { count ->
-//                return if (count > 0) {
-//                    (0 until outCount.value.toLong()).map {
-//                        with(properties[it]) {
-//                            SyncUserIdentity(this.id!!.toKString(), AuthProvider.of(this.provider_type))
-//                        }
-//                    }
-//                } else {
-//                    emptyList()
-//                }
-//            }
-//        }
+        memScoped {
+            val count = AuthProvider.values().size
+            val properties = allocArray<realm_user_identity>(count)
+            val outCount = alloc<size_tVar>()
+            realm_wrapper.realm_user_get_all_identities(
+                user.cptr(),
+                properties,
+                count.convert(),
+                outCount.ptr
+            )
+            outCount.value.toLong().let { count ->
+                return if (count > 0) {
+                    (0 until outCount.value.toLong()).map {
+                        with(properties[it]) {
+                            SyncUserIdentity(this.id!!.toKString(), AuthProvider.of(this.provider_type))
+                        }
+                    }
+                } else {
+                    emptyList()
+                }
+            }
+        }
     }
 
     actual fun realm_user_get_identity(user: RealmUserPointer): String {
