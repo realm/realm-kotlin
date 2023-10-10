@@ -682,6 +682,7 @@ using WebsocketFunctionHandlerCallback = std::function<void(bool, int, const cha
 
 static void websocket_post_func(realm_userdata_t userdata,
                       realm_sync_socket_callback_t* realm_callback) {
+    // Some calls to 'post' happens from the external commit helper which is not necessarily attached yet to a JVM thread
     auto jenv = get_env(true, true); // attach as daemon thread
     static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
     static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
@@ -705,7 +706,8 @@ static void websocket_post_func(realm_userdata_t userdata,
 
 static realm_sync_socket_timer_t websocket_create_timer_func(
         realm_userdata_t userdata, uint64_t delay_ms, realm_sync_socket_callback_t* realm_callback) {
-    auto jenv = get_env(true, true); // attach as daemon thread
+    // called from main thread/event loop which should be already attached to JVM
+    auto jenv = get_env(false);
     static JavaClass native_pointer_class(jenv,
                                           "io/realm/kotlin/internal/interop/LongPointerWrapper");
     static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
@@ -735,9 +737,8 @@ static realm_sync_socket_timer_t websocket_create_timer_func(
 
 static void websocket_cancel_timer_func(realm_userdata_t userdata,
                               realm_sync_socket_timer_t timer_userdata) {
-
     if (timer_userdata != nullptr) {
-        auto jenv = get_env(true, true); // attach as daemon thread
+        auto jenv = get_env(false);
         jobject cancellable_timer = static_cast<jobject>(timer_userdata);
 
         static JavaClass cancellable_timer_class(jenv, "io/realm/kotlin/internal/interop/sync/CancellableTimer");
@@ -753,7 +754,7 @@ static realm_sync_socket_websocket_t websocket_connect_func(
         realm_userdata_t userdata, realm_websocket_endpoint_t endpoint,
         realm_websocket_observer_t* realm_websocket_observer) {
 
-    auto jenv = get_env(true, true); // attach as daemon thread
+    auto jenv = get_env(false);
 
     static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
     static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
@@ -795,7 +796,7 @@ static void websocket_async_write_func(realm_userdata_t userdata,
                                  realm_sync_socket_websocket_t websocket_userdata,
                                  const char* data, size_t size,
                                  realm_sync_socket_callback_t* realm_callback) {
-    auto jenv = get_env(true, true); // attach as daemon thread
+    auto jenv = get_env(false);
 
     static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
     static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
@@ -827,7 +828,7 @@ static void websocket_async_write_func(realm_userdata_t userdata,
 static void realm_sync_websocket_free(realm_userdata_t userdata,
                                       realm_sync_socket_websocket_t websocket_userdata) {
     if (websocket_userdata != nullptr) {
-        auto jenv = get_env(true, true); // attach as daemon thread
+        auto jenv = get_env(false);
         static jclass websocket_client_class = jenv->FindClass("io/realm/kotlin/internal/interop/sync/WebSocketClient");
         static jmethodID close_method = jenv->GetMethodID(websocket_client_class, "closeWebsocket", "()V");
 
@@ -840,7 +841,7 @@ static void realm_sync_websocket_free(realm_userdata_t userdata,
 
 static void realm_sync_userdata_free(realm_userdata_t userdata) {
     if (userdata != nullptr) {
-        auto jenv = get_env(true, true); // attach as daemon thread
+        auto jenv = get_env(false);
 
         static jclass websocket_client_class = jenv->FindClass("io/realm/kotlin/internal/interop/sync/WebSocketTransport");
         static jmethodID close_method = jenv->GetMethodID(websocket_client_class, "close", "()V");
@@ -868,7 +869,7 @@ void realm_sync_websocket_error(int64_t observer_ptr) {
 }
 
 bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t size) {
-    auto jenv = get_env(true, true); // attach as daemon thread
+    auto jenv = get_env(false);
     jbyte* byteData = jenv->GetByteArrayElements(data, NULL);
     std::unique_ptr<char[]> charData(new char[size]); // not null terminated (used in util::Span with size parameter)
     std::memcpy(charData.get(), byteData, size);
