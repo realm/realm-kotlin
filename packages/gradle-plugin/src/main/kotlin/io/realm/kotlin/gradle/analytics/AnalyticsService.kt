@@ -345,7 +345,7 @@ abstract class BuilderId : HostIdentifier() {
 
     override val macOsIdentifier: String
         get() {
-            val output = exec(listOf("ioeg", "-rd1", "-c", "IOPlatformExpertDevice"))
+            val output = exec(listOf("ioreg", "-rd1", "-c", "IOPlatformExpertDevice"))
             val regEx = ".*\"IOPlatformUUID\"\\s=\\s\"(.+)\"".toRegex()
             val find: MatchResult? = regEx.find(output)
             return find?.groups?.get(1)?.value!!

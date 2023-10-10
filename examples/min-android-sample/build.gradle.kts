@@ -15,6 +15,9 @@ buildscript {
     }
     dependencies {
         classpath("com.android.tools.build:gradle:4.1.3")
+//        classpath("com.android.tools.build:gradle:7.3.0")
+//        classpath("com.android.tools.build:gradle:7.4.0") // Gradle 7.5
+//        classpath("com.android.tools.build:gradle:8.1.0")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0")
         classpath("io.realm.kotlin:gradle-plugin:${rootProject.extra["realmVersion"]}")
     }
