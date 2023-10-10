@@ -118,7 +118,7 @@ class GeoSpatialTests {
                     bottom = -1.0, right = -1.0,
                 ),
                 validLocation = Location(0.0, 0.0),
-                invalidLocation = Location(100.0, 100.0),
+                invalidLocation = Location(40.0, 40.0),
             )
         }
     }
@@ -131,7 +131,7 @@ class GeoSpatialTests {
                     GeoPoint.create(0.0, 0.0), Distance.fromKilometers(.01)
                 ),
                 validLocation = Location(0.0, 0.0),
-                invalidLocation = Location(101.0, 101.0),
+                invalidLocation = Location(40.0, 40.0),
             )
         }
     }
@@ -204,17 +204,24 @@ class GeoSpatialTests {
                         this.location = validLocation
                     }
                 )
+
+                // Ok: Write within subscription bounds, this one will be moved outside of bounds later
+                copyToRealm(
+                    SyncRestaurant().apply {
+                        this.section = section
+                        this.location = validLocation
+                    }
+                )
             }
 
             realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
 
-            // TODO https://github.com/realm/realm-kotlin/issues/1538
-//            realm.write {
-//                // Fail: We should not be able to update outside of subscription bounds, compensating write
-//                findLatest(restaurant)!!.location = invalidLocation
-//            }
-//
-//            realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
+            realm.write {
+                // Ok. The object will be updated and moved outside of its view.
+                findLatest(restaurant)!!.location = invalidLocation
+            }
+
+            realm.syncSession.uploadAllLocalChanges(timeout = 30.seconds)
         }
 
         // Download data on user #2
