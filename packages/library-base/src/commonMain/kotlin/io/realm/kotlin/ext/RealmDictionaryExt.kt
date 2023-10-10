@@ -32,6 +32,8 @@ import io.realm.kotlin.types.RealmDictionaryMutableEntry
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
 
 /**
  * Instantiates an **unmanaged** [RealmDictionary] from a variable number of [Pair]s of [String]
@@ -112,3 +114,10 @@ public fun <T : BaseRealmObject> RealmDictionary<T?>.query(
     } else {
         throw IllegalArgumentException("Unmanaged dictionary values cannot be queried.")
     }
+
+/**
+ * TODO Docs
+ */
+public inline fun <reified O : TypedRealmObject, T: Any> RealmDictionary<O?>.projectInto(target: KClass<T>): Map<String, T> {
+    TODO()
+}

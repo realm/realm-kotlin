@@ -30,6 +30,7 @@ import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.schema.ClassMetadata
+import io.realm.kotlin.notifications.ProjectionsChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
@@ -84,6 +85,10 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
 
     override fun find(): RealmResults<E> =
         RealmResultsImpl(realmReference, resultsPointer, classKey, clazz, mediator)
+
+    override fun <T : Any> find(projection: KClass<T>): List<T> {
+        TODO("Not yet implemented")
+    }
 
     override fun query(filter: String, vararg arguments: Any?): RealmQuery<E> =
         inputScope {
@@ -173,6 +178,10 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     override fun asFlow(): Flow<ResultsChange<E>> {
         return realmReference.owner
             .registerObserver(this)
+    }
+
+    override fun <T : Any> asFlow(projection: KClass<T>): ProjectionsChange<T> {
+        TODO("Not yet implemented")
     }
 
     override fun delete() {

@@ -17,10 +17,13 @@ package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.realmObjectCompanionOrNull
+import io.realm.kotlin.internal.realmProjectionCompanionOrNull
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
 
 /**
  * Makes an unmanaged in-memory copy of an already persisted [io.realm.kotlin.types.RealmObject].
@@ -36,4 +39,16 @@ public inline fun <reified T : TypedRealmObject> T.copyFromRealm(depth: UInt = U
     return this.getRealm<TypedRealm>()
         ?.copyFromRealm(this, depth)
         ?: throw IllegalArgumentException("This object is unmanaged. Only managed objects can be copied.")
+}
+
+/**
+ * TODO Docs
+ */
+public inline fun <reified O : TypedRealmObject, reified T: Any> O.projectInto(target: KClass<T>): T {
+    // TODO Should this also automatically release the pointer for the object after finishing the
+    //  projection? I would be leaning towards yes, as I suspect this is primary use case. But if
+    //  enough use cases show up for keeping the backing object around, we can add a
+    //  `releaseRealmObjectAfterUse` boolean with a default value of `true` to this this method.
+    return T::class.realmProjectionCompanionOrNull<O, T>()?.createProjection(this)
+        ?: throw IllegalStateException("TODO")
 }

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2022 Realm Inc.
  *
@@ -29,6 +30,8 @@ import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
 
 /**
  * Instantiates an **unmanaged** [RealmSet].
@@ -70,3 +73,10 @@ public fun <T : BaseRealmObject> RealmSet<T>.query(
     } else {
         throw IllegalArgumentException("Unmanaged set cannot be queried")
     }
+
+/**
+ * TODO Docs
+ */
+public inline fun <reified O : TypedRealmObject, T: Any> RealmSet<O>.projectInto(target: KClass<T>): Set<T> {
+    TODO()
+}

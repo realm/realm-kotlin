@@ -17,10 +17,12 @@
 package io.realm.kotlin.query
 
 import io.realm.kotlin.Deleteable
+import io.realm.kotlin.notifications.ProjectionChange
 import io.realm.kotlin.notifications.SingleQueryChange
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
 /**
  * Query returning a single [RealmObject] or [EmbeddedRealmObject].
@@ -76,4 +78,15 @@ public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
      * running this query.
      */
     public fun asFlow(): Flow<SingleQueryChange<T>>
+
+    /**
+     * TODO Docs
+     */
+    public fun <T: Any> find(projection: KClass<T>): List<T>
+
+    /**
+     * TODO Docs
+     */
+    public fun <T: Any> asFlow(projection: KClass<T>): ProjectionChange<T>
+
 }
