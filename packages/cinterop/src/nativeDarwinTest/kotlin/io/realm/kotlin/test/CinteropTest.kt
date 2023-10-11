@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test
 
+import io.realm.kotlin.internal.interop.CPointerWrapper
 import io.realm.kotlin.internal.interop.ClassFlags
 import io.realm.kotlin.internal.interop.ClassInfo
 import io.realm.kotlin.internal.interop.CollectionType
@@ -24,6 +25,8 @@ import io.realm.kotlin.internal.interop.PropertyFlags
 import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchemaT
+import io.realm.kotlin.internal.interop.ReleasablePointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SchemaValidationMode
 import io.realm.kotlin.internal.interop.set
@@ -62,12 +65,14 @@ import realm_wrapper.realm_get_num_classes
 import realm_wrapper.realm_get_schema
 import realm_wrapper.realm_open
 import realm_wrapper.realm_property_info_t
+import realm_wrapper.realm_release
 import realm_wrapper.realm_schema_mode_e
 import realm_wrapper.realm_schema_new
 import realm_wrapper.realm_schema_t
 import realm_wrapper.realm_schema_validate
 import realm_wrapper.realm_string_t
 import realm_wrapper.realm_t
+import kotlin.native.internal.GC
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -79,6 +84,36 @@ import kotlin.test.assertTrue
 // These test are not thought as being exhaustive, but is more to provide a playground for
 // experiments and maybe more relevant for reproduction of C-API issues.
 class CinteropTest {
+    /**
+     * Tests whether our autorelease pointer wrapper releases native memory.
+     *
+     * Allocates a Realm pointer wrapped with our GC autorelease wrapper, then returns the reference
+     * to the releasable pointer that would tell if the underlying pointer has been released.
+     */
+    @Test
+    fun cpointerWrapper_releasesWhenGCed() {
+        val releasablePointer = {
+            memScoped {
+                val realmSchemaNew = realm_schema_new(
+                    classes = allocArray(0),
+                    num_classes = 0u,
+                    class_properties = allocArray(0)
+                )
+
+                CPointerWrapper<RealmSchemaT>(realmSchemaNew)._ptr
+            }
+        }()
+
+        // The pointer has not been reclaimed
+        assertFalse(releasablePointer.released.value)
+
+        // Trigger GC and wait for some time to allow it to collect the object
+        GC.collect()
+        platform.posix.sleep(5u)
+
+        // The pointer has not been reclaimed
+        assertTrue(releasablePointer.released.value)
+    }
 
     @Test
     fun cinterop_cinterop() {
