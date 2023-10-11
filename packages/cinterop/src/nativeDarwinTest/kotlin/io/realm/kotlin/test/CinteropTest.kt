@@ -26,7 +26,6 @@ import io.realm.kotlin.internal.interop.PropertyInfo
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaT
-import io.realm.kotlin.internal.interop.ReleasablePointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.interop.SchemaValidationMode
 import io.realm.kotlin.internal.interop.set
@@ -65,7 +64,6 @@ import realm_wrapper.realm_get_num_classes
 import realm_wrapper.realm_get_schema
 import realm_wrapper.realm_open
 import realm_wrapper.realm_property_info_t
-import realm_wrapper.realm_release
 import realm_wrapper.realm_schema_mode_e
 import realm_wrapper.realm_schema_new
 import realm_wrapper.realm_schema_t
