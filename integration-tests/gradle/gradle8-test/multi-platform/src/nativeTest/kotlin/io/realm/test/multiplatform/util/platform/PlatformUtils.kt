@@ -14,9 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:OptIn(ExperimentalForeignApi::class)
 
 package io.realm.test.multiplatform.util.platform
 
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.cstr
 
 actual object PlatformUtils {
