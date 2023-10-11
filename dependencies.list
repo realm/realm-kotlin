@@ -7,5 +7,5 @@ MONGODB_REALM_SERVER=2023-10-05
 # for that date within the following repositories:
 # https://github.com/10gen/baas/
 # https://github.com/10gen/baas-ui/
-REALM_BAAS_GIT_HASH=65d3d091584f47fe8c84d184ae753f7015f59e95
-REALM_BAAS_UI_GIT_HASH=3c56a1076fb8e1e876d22b656309e0da5d928b03
+REALM_BAAS_GIT_HASH=8246fc548763eb908b8090df864e9924e3330a0d
+REALM_BAAS_UI_GIT_HASH=8a1843be2bf24f2faa705c5470a5bdd8d954f7ea
