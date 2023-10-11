@@ -88,6 +88,7 @@ pipeline {
           REALM_ANALYICS_FAILONERROR=true
           JAVA_8='/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home'
           JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
+          JAVA_17='/Library/Java/JavaVirtualMachines/jdk-17.0.2.jdk/Contents/Home'
           JAVA_HOME="${JAVA_11}"
     }
     stages {
@@ -251,7 +252,9 @@ pipeline {
                         testAndCollect("integration-tests/gradle/gradle6-test", "integrationTest")
                         testAndCollect("integration-tests/gradle/gradle71-test", "integrationTest")
                         testAndCollect("integration-tests/gradle/gradle75-test", "integrationTest")
-                        testAndCollect("integration-tests/gradle/gradle8-test", "integrationTest")
+                        withEnv(["JAVA_HOME=${JAVA17}"]) {
+                            testAndCollect("integration-tests/gradle/gradle8-test", "integrationTest")
+                        }
                     }
                 }
                 stage('Tests Android Sample App') {

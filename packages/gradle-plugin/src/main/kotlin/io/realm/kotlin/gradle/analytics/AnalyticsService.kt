@@ -116,8 +116,6 @@ data class TargetInfo(
 abstract class AnalyticsService : BuildService<ProjectConfiguration> {
 
     private val projectInfo = JsonObject()
-    // FIXME Is this thread safe
-    private val jsonSerializer = GsonBuilder().create()
 
     init {
         val parameters = parameters
@@ -154,7 +152,7 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
         targetInfo?.targetOsType?.let { properties.add("Target OS Type", JsonPrimitive(it)) }
         targetInfo?.targetOSMinVersion?.let { properties.add("Target OS Minimum Version", JsonPrimitive(it)) }
         targetInfo?.targetOSVersion?.let { properties.add("Target OS Version", JsonPrimitive(it)) }
-        return jsonSerializer.toJson(targetSpecificJson)
+        return GsonBuilder().create().toJson(targetSpecificJson)
     }
 
     internal fun print(json: String) {
@@ -235,7 +233,7 @@ interface Executor {
     val execOperations: ExecOperations
     fun exec(args: List<String>): String {
         return when {
-            // FIXME Differentiate by gradle version as earlier version does not support ExecOperation
+            // Differentiate by gradle version as earlier version does not support ExecOperation
             //  https://github.com/gradle/gradle/issues/18213
             gradleVersion < gradle75 -> {
                 val runtime = Runtime.getRuntime()
