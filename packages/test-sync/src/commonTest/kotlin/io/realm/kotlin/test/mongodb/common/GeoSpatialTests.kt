@@ -205,7 +205,7 @@ class GeoSpatialTests {
                     }
                 )
 
-                // Ok: Write within subscription bounds, this one will be moved outside of bounds later
+                // Ok: Write within subscription bounds, this one will be moved outside of bounds in the next step.
                 copyToRealm(
                     SyncRestaurant().apply {
                         this.section = section
@@ -218,6 +218,8 @@ class GeoSpatialTests {
 
             realm.write {
                 // Ok. The object will be updated and moved outside of its view.
+                // It is a valid operation, it would be removed from the local Realm but still be
+                // accessible at the mongo instance.
                 findLatest(restaurant)!!.location = invalidLocation
             }
 
