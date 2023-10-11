@@ -16,6 +16,7 @@
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
 GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] Added option to use managed WebSockets via Ktor instead of Realm's built-in WebSocket client for Sync traffic. Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)). Currently only JVM and Android platforms are supported.
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -32,7 +33,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.22.0, commit 9fe0653fef672f14c771019ba27d54d568f622d0.
 
 
 ## 1.11.1 (2023-09-07)
