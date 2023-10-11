@@ -62,7 +62,7 @@ class SubscriptionTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(ParentPk::class, ChildPk::class)
+            schema = FLX_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)

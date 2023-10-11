@@ -17,7 +17,6 @@ import kotlin.text.toBoolean
 
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version Versions.gradlePluginPublishPlugin
     id("realm-publisher")
