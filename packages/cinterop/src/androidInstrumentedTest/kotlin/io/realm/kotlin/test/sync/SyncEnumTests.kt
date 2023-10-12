@@ -144,7 +144,6 @@ class SyncEnumTests {
         }
     }
 
-
     private inline fun <T : Any> checkEnum(
         enumClass: KClass<out Any>,
         mapNativeValue: (Int) -> T?
