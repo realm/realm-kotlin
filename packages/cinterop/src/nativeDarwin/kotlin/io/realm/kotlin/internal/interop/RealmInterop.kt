@@ -126,10 +126,12 @@ import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_sync_session_stop_policy_e
-import realm_wrapper.realm_sync_socket_callback_t
+import realm_wrapper.realm_sync_socket_post_callback_t
 import realm_wrapper.realm_sync_socket_t
+import realm_wrapper.realm_sync_socket_timer_callback_t
 import realm_wrapper.realm_sync_socket_timer_t
 import realm_wrapper.realm_sync_socket_websocket_t
+import realm_wrapper.realm_sync_socket_write_callback_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
@@ -2729,7 +2731,7 @@ actual object RealmInterop {
                     safeUserData<WebSocketTransport>(userdata).close()
                     disposeUserData<WebSocketTransport>(userdata)
                 },
-                post_func = staticCFunction { userdata: CPointer<out CPointed>?, syncSocketCallback: CPointer<realm_sync_socket_callback_t>? ->
+                post_func = staticCFunction { userdata: CPointer<out CPointed>?, syncSocketCallback: CPointer<realm_sync_socket_post_callback_t>? ->
                     val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
                         realm_wrapper.realm_sync_socket_post_complete(
                             syncSocketCallback,
@@ -2742,7 +2744,7 @@ actual object RealmInterop {
                         CPointerWrapper(StableRef.create(callback).asCPointer())
                     )
                 },
-                create_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, delayInMilliseconds: uint64_t, syncSocketCallback: CPointer<realm_sync_socket_callback_t>? ->
+                create_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, delayInMilliseconds: uint64_t, syncSocketCallback: CPointer<realm_sync_socket_timer_callback_t>? ->
                     val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
                         if (cancelled) {
                             realm_wrapper.realm_sync_socket_timer_canceled(syncSocketCallback)
@@ -2792,7 +2794,7 @@ actual object RealmInterop {
                         }
                     }
                 },
-                websocket_write_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t?, data: CPointer<ByteVar>?, length: size_t, callback: CPointer<realm_sync_socket_callback_t>? ->
+                websocket_write_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t?, data: CPointer<ByteVar>?, length: size_t, callback: CPointer<realm_sync_socket_write_callback_t>? ->
                     val postWriteCallback: WebsocketFunctionHandlerCallback =
                         { cancelled, status, reason ->
                             realm_wrapper.realm_sync_socket_write_complete(
