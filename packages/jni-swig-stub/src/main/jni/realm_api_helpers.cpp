@@ -681,7 +681,7 @@ realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
 using WebsocketFunctionHandlerCallback = std::function<void(bool, int, const char*)>;
 
 static void websocket_post_func(realm_userdata_t userdata,
-                      realm_sync_socket_callback_t* realm_callback) {
+                                realm_sync_socket_post_callback_t* realm_callback) {
     // Some calls to 'post' happens from the external commit helper which is not necessarily attached yet to a JVM thread
     auto jenv = get_env(true, true); // attach as daemon thread
     static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
@@ -705,7 +705,7 @@ static void websocket_post_func(realm_userdata_t userdata,
 }
 
 static realm_sync_socket_timer_t websocket_create_timer_func(
-        realm_userdata_t userdata, uint64_t delay_ms, realm_sync_socket_callback_t* realm_callback) {
+        realm_userdata_t userdata, uint64_t delay_ms, realm_sync_socket_timer_callback_t* realm_callback) {
     // called from main thread/event loop which should be already attached to JVM
     auto jenv = get_env(false);
     static JavaClass native_pointer_class(jenv,
@@ -795,7 +795,7 @@ static realm_sync_socket_websocket_t websocket_connect_func(
 static void websocket_async_write_func(realm_userdata_t userdata,
                                  realm_sync_socket_websocket_t websocket_userdata,
                                  const char* data, size_t size,
-                                 realm_sync_socket_callback_t* realm_callback) {
+                                 realm_sync_socket_write_callback_t* realm_callback) {
     auto jenv = get_env(false);
 
     static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
