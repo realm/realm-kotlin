@@ -30,6 +30,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
 import kotlin.test.AfterTest
@@ -56,14 +57,14 @@ class SubscriptionSetTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = FLX_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -89,18 +90,19 @@ class SubscriptionSetTests {
 
     @Test
     fun subscriptions_failOnNonFlexibleSyncRealms() {
-        val app = TestApp(appName = TEST_APP_PARTITION)
-        val (email, password) = TestHelper.randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
-        val config = SyncConfiguration.create(
-            user,
-            TestHelper.randomPartitionValue(),
-            setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
-        )
-        Realm.open(config).use { partionBasedRealm ->
-            assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }
+        TestApp(this::class.simpleName, appName = TEST_APP_PARTITION).use { testApp ->
+            val (email, password) = TestHelper.randomEmail() to "password1234"
+            val user = runBlocking {
+                testApp.createUserAndLogIn(email, password)
+            }
+            val config = SyncConfiguration.create(
+                user,
+                TestHelper.randomPartitionValue(),
+                setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            )
+            Realm.open(config).use { partionBasedRealm ->
+                assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }
+            }
         }
     }
 
@@ -132,7 +134,7 @@ class SubscriptionSetTests {
         val sub: Subscription = subscriptions.findByQuery(query)!!
         assertNotNull(sub)
         assertEquals("FlexParentObject", sub.objectType)
-        assertEquals("TRUEPREDICATE ", sub.queryDescription)
+        assertEquals("TRUEPREDICATE", sub.queryDescription)
     }
 
     @Test
@@ -190,7 +192,10 @@ class SubscriptionSetTests {
         assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
         }
-        assertTrue(subscriptions.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            subscriptions.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            subscriptions.errorMessage
+        )
         subscriptions.update {
             removeAll()
         }
@@ -256,7 +261,10 @@ class SubscriptionSetTests {
             updatedSubs.waitForSynchronization()
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
-        assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            updatedSubs.errorMessage
+        )
     }
 
     // Test case for https://github.com/realm/realm-core/issues/5504
@@ -270,7 +278,10 @@ class SubscriptionSetTests {
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
         assertEquals("TRUEPREDICATE and TRUEPREDICATE LIMIT(1)", updatedSubs.first().queryDescription)
-        assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            updatedSubs.errorMessage
+        )
     }
 
     @Test

@@ -26,7 +26,7 @@ import io.realm.kotlin.internal.geo.UnmanagedGeoCircle
  * ```
  * val newYork = GeoPoint.create(latitude = 40.730610, longitude = -73.935242)
  * val searchArea = GeoCircle.create(center = newYork, radius = Distance.fromMiles(2.0))
- * val restaurants = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
+ * val restaurants = realm.query<Restaurant>("location GEOWITHIN $0", searchArea).find()
  * ```
  */
 @ExperimentalGeoSpatialApi
@@ -47,6 +47,7 @@ public interface GeoCircle {
      * ```
      * val circle = GeoCircle.create(center = GeoPoint.create(0.0, 0.0), radius = Distance.fromKilometers(10.0))
      * val results = realm.query<Restaurant>("location GEOWITHIN $circle").find()
+     * ```
      */
     public override fun toString(): String
 

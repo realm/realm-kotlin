@@ -88,7 +88,7 @@ import io.realm.kotlin.internal.geo.UnmanagedGeoPoint
  *
  * val newYork = GeoPoint.create(latitude = 40.730610, longitude = -73.935242)
  * val searchArea = GeoCircle.create(center = newYork, radius = Distance.fromMiles(2.0))
- * val restaurants = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
+ * val restaurants = realm.query<Restaurant>("location GEOWITHIN $0", searchArea).find()
  * ```
  *
  * A proper persistable GeoPoint class will be implemented in an upcoming release.

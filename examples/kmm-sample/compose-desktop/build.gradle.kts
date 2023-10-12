@@ -18,7 +18,7 @@ dependencies {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = Versions.jvmTarget
+    kotlinOptions.jvmTarget = Versions.kotlinJvmTarget
 }
 
 application {

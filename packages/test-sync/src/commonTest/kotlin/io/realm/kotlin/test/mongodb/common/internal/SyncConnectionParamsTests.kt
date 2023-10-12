@@ -29,8 +29,6 @@ internal class SyncConnectionParamsTests {
     fun allProperties() {
         val props = SyncConnectionParams(
             sdkVersion = "sdkVersion",
-            localAppName = "appName",
-            localAppVersion = "appVersion",
             bundleId = "bundleId",
             platformVersion = "platformVersion",
             device = "device",
@@ -40,8 +38,6 @@ internal class SyncConnectionParamsTests {
         )
         assertEquals("Kotlin", props.sdkName)
         assertEquals("sdkVersion", props.sdkVersion)
-        assertEquals("appName", props.localAppName)
-        assertEquals("appVersion", props.localAppVersion)
         assertEquals("bundleId", props.bundleId)
         assertEquals("platformVersion", props.platformVersion)
         assertEquals("device", props.device)

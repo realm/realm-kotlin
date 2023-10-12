@@ -17,7 +17,6 @@ import kotlin.text.toBoolean
 
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version Versions.gradlePluginPublishPlugin
     id("realm-publisher")
@@ -82,8 +81,8 @@ publishing {
 java {
     withSourcesJar()
     withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = Versions.sourceCompatibilityVersion
+    targetCompatibility = Versions.targetCompatibilityVersion
 }
 
 // Make version information available at runtime

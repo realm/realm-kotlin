@@ -81,7 +81,11 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, all.size)
             assertEquals(1, allTracked.size)
-            assertNull(notifier)
+            // The notifier might or might not had time to run
+            notifier?.let {
+                assertEquals(2, it.current.version)
+                assertEquals(0, it.active.size)
+            }
             assertNull(writer)
         }
     }

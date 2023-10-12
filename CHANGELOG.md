@@ -1,14 +1,21 @@
-## 1.11.0-SNAPSHOT (YYYY-MM-DD)
+## 1.12.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
-* [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
+* Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
+* The Realm Gradle Plugin no longer has a dependency on KAPT. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
 
 ### Fixed
-* None.
+* `Realm.close()` is now idempotent.
+* Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] Manual client reset on Windows would not trigger correctly when run inside `onManualResetFallback`. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
+GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -26,6 +33,88 @@
 
 ### Internal
 * None.
+
+
+## 1.11.1 (2023-09-07)
+
+### Enhancements
+* None.
+
+### Fixed
+* Opening a Realm would crash with `No built-in scheduler implementation for this platform` on Linux (JVM) and Windows. (Issue [#1502](https://github.com/realm/realm-kotlin/issues/1502), since 1.11.0)
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.11.0 (2023-09-01)
+
+### Breaking Changes
+* `BaseRealmObject.equals()` has changed from being identity-based only (===) to instead return `true` if two objects come from the same Realm version. This e.g means that reading the same object property twice will now be identical. Note, two Realm objects, even with identical values will not be considered equal if they belong to different versions.
+
+```
+val childA: Child = realm.query<Child>().first().find()!!
+val childB: Child = realm.query<Child>().first().find()!!
+
+// This behavior is the same both before 1.11.0 and before
+childA === childB // false
+
+// This will return true in 1.11.0 and onwards. Before it will return false
+childA == childB
+
+realm.writeBlocking { /* Do a write */ }
+val childC = realm.query<Child>().first().find()!!
+
+// This will return false because childA belong to version 1, while childC belong to version 2.
+// Override equals/hashCode if value semantics are wanted.
+childA == childC
+```
+
+### Enhancements
+* Fulltext queries now support prefix search by using the * operator, like `description TEXT 'alex*'`. (Core issue [#6860](https://github.com/realm/realm-core/issues/6860))
+* Realm model classes now generate custom `toString`, `equals` and `hashCode` implementations. This makes it possible to compare by object reference across multiple collections. Note that two objects at different versions will not be considered equal, even 
+if the content is the same. Custom implementations of these methods will be respected if they are present. (Issue [#1097](https://github.com/realm/realm-kotlin/issues/1097)) 
+* Support for performing geospatial queries using the new classes: `GeoPoint`, `GeoCircle`, `GeoBox`, and `GeoPolygon`. See `GeoPoint` documentation on how to persist locations. (Issue [#1403](https://github.com/realm/realm-kotlin/pull/1403))
+* Support for automatic resolution of embedded object constraints during migration through `RealmConfiguration.Builder.migration(migration: AutomaticSchemaMigration, resolveEmbeddedObjectConstraints: Boolean)`. (Issue [#1464](https://github.com/realm/realm-kotlin/issues/1464)
+* [Sync] Add support for customizing authorization headers and adding additional custom headers to all Atlas App service requests with `AppConfiguration.Builder.authorizationHeaderName()` and `AppConfiguration.Builder.addCustomRequestHeader(...)`. (Issue [#1453](https://github.com/realm/realm-kotlin/pull/1453))
+* [Sync] Added support for manually triggering a reconnect attempt for Device Sync. This is done through a new `App.Sync.reconnect()` method. This method is also now called automatically when a mobile device toggles off airplane mode. (Issue [#1479](https://github.com/realm/realm-kotlin/issues/1479))
+
+### Fixed
+* Rare corruption causing 'Invalid streaming format cookie'-exception. Typically following compact, convert or copying to a new file. (Issue [#1440](https://github.com/realm/realm-kotlin/issues/1440))
+* Compiler error when using Kotlin 1.9.0 and backlinks. (Issue [#1469](https://github.com/realm/realm-kotlin/issues/1469))
+* Leaking `JVMScheduler` instances. In certain circumstances, it could lead to a JNI crash. (Issue [#1463](https://github.com/realm/realm-kotlin/pull/1463))
+* [Sync] Changing a subscriptions query type or query itself will now trigger the `WaitForSync.FIRST_TIME` behaviour, rather than only checking changes to the name. (Issues [#1466](https://github.com/realm/realm-kotlin/issues/1466))
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.20.0, commit c258e2681bca5fb33bbd23c112493817b43bfa86.
 
 
 ## 1.10.2 (2023-07-21)

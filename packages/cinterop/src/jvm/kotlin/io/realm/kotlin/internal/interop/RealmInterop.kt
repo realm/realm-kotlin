@@ -27,13 +27,10 @@ import io.realm.kotlin.internal.interop.sync.JVMSyncSessionTransferCompletionCal
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
-import io.realm.kotlin.internal.interop.sync.ProtocolClientErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.mongodb.kbson.ObjectId
 
@@ -172,6 +169,10 @@ actual object RealmInterop {
         realmc.realm_config_set_migration_function(config.cptr(), callback)
     }
 
+    actual fun realm_config_set_automatic_backlink_handling(config: RealmConfigurationPointer, enabled: Boolean) {
+        realmc.realm_config_set_automatic_backlink_handling(config.cptr(), enabled)
+    }
+
     actual fun realm_config_set_data_initialization_function(config: RealmConfigurationPointer, callback: DataInitializationCallback) {
         realmc.realm_config_set_data_initialization_function(config.cptr(), callback)
     }
@@ -180,7 +181,16 @@ actual object RealmInterop {
         realmc.realm_config_set_in_memory(config.cptr(), inMemory)
     }
 
-    actual fun realm_open(config: RealmConfigurationPointer, dispatcher: CoroutineDispatcher?): Pair<LiveRealmPointer, Boolean> {
+    actual fun realm_create_scheduler(): RealmSchedulerPointer =
+        LongPointerWrapper(realmc.realm_create_generic_scheduler())
+
+    actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer =
+        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)))
+
+    actual fun realm_open(
+        config: RealmConfigurationPointer,
+        scheduler: RealmSchedulerPointer,
+    ): Pair<LiveRealmPointer, Boolean> {
         // Configure callback to track if the file was created as part of opening
         var fileCreated = false
         val callback = DataInitializationCallback {
@@ -188,14 +198,9 @@ actual object RealmInterop {
         }
         realm_config_set_data_initialization_function(config, callback)
 
-        // create a custom Scheduler for JVM if a Coroutine Dispatcher is provided other wise
-        // pass null to use the generic one
-        val realmPtr = LongPointerWrapper<LiveRealmT>(
-            realmc.open_realm_with_scheduler(
-                (config as LongPointerWrapper).ptr,
-                if (dispatcher != null) JVMScheduler(dispatcher) else null
-            )
-        )
+        realmc.realm_config_set_scheduler(config.cptr(), scheduler.cptr())
+        val realmPtr = LongPointerWrapper<LiveRealmT>(realmc.realm_open(config.cptr()))
+
         // Ensure that we can read version information, etc.
         realm_begin_read(realmPtr)
         return Pair(realmPtr, fileCreated)
@@ -1336,15 +1341,13 @@ actual object RealmInterop {
 
     actual fun realm_sync_session_handle_error_for_testing(
         syncSession: RealmSyncSessionPointer,
-        errorCode: ProtocolClientErrorCode,
-        category: SyncErrorCodeCategory,
+        error: ErrorCode,
         errorMessage: String,
         isFatal: Boolean
     ) {
         realmc.realm_sync_session_handle_error_for_testing(
             syncSession.cptr(),
-            errorCode.nativeValue,
-            category.nativeValue,
+            error.nativeValue,
             errorMessage,
             isFatal
         )
@@ -1392,12 +1395,6 @@ actual object RealmInterop {
         baseUrl?.let { realmc.realm_app_config_set_base_url(config, it) }
 
         // Sync Connection Parameters
-        connectionParams.localAppName?.let { appName ->
-            realmc.realm_app_config_set_local_app_name(config, appName)
-        }
-        connectionParams.localAppVersion?.let { appVersion ->
-            realmc.realm_app_config_set_local_app_name(config, appVersion)
-        }
         realmc.realm_app_config_set_sdk(config, connectionParams.sdkName)
         realmc.realm_app_config_set_sdk_version(config, connectionParams.sdkVersion)
         realmc.realm_app_config_set_platform_version(config, connectionParams.platformVersion)
@@ -1562,6 +1559,17 @@ actual object RealmInterop {
             serializedEjsonPayload,
             callback
         )
+    }
+
+    actual fun realm_app_sync_client_reconnect(app: RealmAppPointer) {
+        realmc.realm_app_sync_client_reconnect(app.cptr())
+    }
+    actual fun realm_app_sync_client_has_sessions(app: RealmAppPointer): Boolean {
+        return realmc.realm_app_sync_client_has_sessions(app.cptr())
+    }
+
+    actual fun realm_app_sync_client_wait_for_sessions_to_terminate(app: RealmAppPointer) {
+        realmc.realm_app_sync_client_wait_for_sessions_to_terminate(app.cptr())
     }
 
     actual fun realm_sync_config_new(user: RealmUserPointer, partition: String): RealmSyncConfigurationPointer {
@@ -2093,13 +2101,8 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
 
     fun notifyCore(schedulerPointer: Long) {
-        val function: suspend CoroutineScope.() -> Unit = {
+        scope.launch {
             realmc.invoke_core_notify_callback(schedulerPointer)
         }
-        scope.launch(
-            scope.coroutineContext,
-            CoroutineStart.DEFAULT,
-            function
-        )
     }
 }

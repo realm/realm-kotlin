@@ -60,7 +60,7 @@ import io.realm.kotlin.internal.geo.UnmanagedGeoPolygon
  *         GeoPoint.create(4.0, 1.0)
  *     ))
  * )
- * val restaurants = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
+ * val restaurants = realm.query<Restaurant>("location GEOWITHIN $0", searchArea).find()
  * * ```
  */
 @ExperimentalGeoSpatialApi
@@ -88,7 +88,8 @@ public interface GeoPolygon {
      *     GeoPoint.create(0.0, 0.0)
      * )
      * val searchArea = GeoPolygon.create(outerRing)
-     * val results = realm.query<Restaurant>("location GEOWITHIN searchArea").find()
+     * val results = realm.query<Restaurant>("location GEOWITHIN $searchArea").find()
+     * ```
      */
     override fun toString(): String
 

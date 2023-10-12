@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.internal.interop.sync
 
+import io.realm.kotlin.internal.interop.CoreError
 import io.realm.kotlin.internal.interop.SyncSessionTransferCompletionCallback
 
 // Interface used internally as a bridge between Kotlin (JVM) and JNI.
@@ -28,7 +29,7 @@ internal class JVMSyncSessionTransferCompletionCallback(
     fun onSuccess() {
         callback.invoke(null)
     }
-    fun onError(category: Int, value: Int, message: String) {
-        callback.invoke(SyncErrorCode.newInstance(category, value, message))
+    fun onError(categoryFlags: Int, value: Int, message: String) {
+        callback.invoke(CoreError(categoryFlags, value, message))
     }
 }

@@ -17,8 +17,8 @@
 
 package io.realm.kotlin.test.mongodb.common
 
-import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
@@ -29,9 +29,9 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
-import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
@@ -142,7 +142,7 @@ class AppConfigurationTests {
     @Test
     fun syncRootDirectory() {
         val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-        val expectedRoot = "${appFilesDirectory()}${PATH_SEPARATOR}myCustomDir"
+        val expectedRoot = pathOf(appFilesDirectory(), "myCustomDir")
         val config = builder
             .syncRootDirectory(expectedRoot)
             .build()
@@ -160,23 +160,20 @@ class AppConfigurationTests {
     // the configured `AppConfiguration.syncRootDir`
     @Test
     fun syncRootDirectory_appendDirectoryToPath() = runBlocking {
-        val expectedRoot = "${appFilesDirectory()}${PATH_SEPARATOR}myCustomDir"
-        val app = TestApp(builder = {
+        val expectedRoot = pathOf(appFilesDirectory(), "myCustomDir")
+        TestApp("syncRootDirectory_appendDirectoryToPath", builder = {
             it.syncRootDirectory(expectedRoot)
-        })
-        val (email, password) = TestHelper.randomEmail() to "password1234"
-        val user = app.createUserAndLogIn(email, password)
-        try {
+        }).use { app ->
+            val (email, password) = TestHelper.randomEmail() to "password1234"
+            val user = app.createUserAndLogIn(email, password)
             assertEquals(expectedRoot, app.configuration.syncRootDirectory)
             // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
             // the configured `AppConfiguration.syncRootDir`
             val partitionValue = TestHelper.randomPartitionValue()
             val suffix =
-                "${PATH_SEPARATOR}myCustomDir${PATH_SEPARATOR}mongodb-realm${PATH_SEPARATOR}${user.app.configuration.appId}${PATH_SEPARATOR}${user.id}${PATH_SEPARATOR}s_$partitionValue.realm"
+                pathOf("", "myCustomDir", "mongodb-realm", user.app.configuration.appId, user.id, "s_$partitionValue.realm")
             val config = SyncConfiguration.Builder(user, partitionValue, schema = setOf()).build()
             assertTrue(config.path.endsWith(suffix), "Failed: ${config.path} vs. $suffix")
-        } finally {
-            app.asTestApp.close()
         }
     }
 
@@ -381,21 +378,16 @@ class AppConfigurationTests {
 //
     // Check that custom headers and auth header renames are correctly used for HTTP requests.
     @Test
-    fun customHeadersTest() {
-        var app: App? = null
-        try {
-            runBlocking {
-                app = TestApp(
-                    builder = { builder ->
-                        builder.customRequestHeaders {
-                            put(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)
-                        }.authorizationHeaderName(AUTH_HEADER_NAME)
-                    }
-                )
-                doCustomHeaderTest(app!!)
+    fun customHeadersTest() = runBlocking {
+        TestApp(
+            "customHeadersTest",
+            builder = { builder ->
+                builder.customRequestHeaders {
+                    put(CUSTOM_HEADER_NAME, CUSTOM_HEADER_VALUE)
+                }.authorizationHeaderName(AUTH_HEADER_NAME)
             }
-        } finally {
-            assertFailsWith<ServiceException> { app?.close() }
+        ).use { app ->
+            doCustomHeaderTest(app)
         }
     }
 

@@ -114,7 +114,7 @@ abstract class CollectionTests(
             )
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode)
-        assertTrue(result.messages.contains("Unsupported type for ${collectionType.description}: 'A'"))
+        assertTrue(result.messages.contains("Unsupported type for ${collectionType.description}: 'A'"), result.messages)
     }
 
     // ------------------------------------------------

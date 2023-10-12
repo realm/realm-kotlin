@@ -73,7 +73,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         val appDispatcher = appNetworkDispatcherFactory.create()
         val networkTransport = networkTransportFactory(appDispatcher)
         val appConfigPointer: RealmAppConfigurationPointer =
-            initializeRealmAppConfig(appName, appVersion, bundleId, networkTransport)
+            initializeRealmAppConfig(bundleId, networkTransport)
         var applicationInfo: String? = null
         // Define user agent strings sent when making the WebSocket connection to Device Sync
         if (appName != null || appVersion == null) {
@@ -121,8 +121,6 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     // Only freeze anything after all properties are setup as this triggers freezing the actual
     // AppConfigurationImpl instance itself
     private fun initializeRealmAppConfig(
-        localAppName: String?,
-        localAppVersion: String?,
         bundleId: String,
         networkTransport: NetworkTransport
     ): RealmAppConfigurationPointer {
@@ -133,8 +131,6 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             connectionParams = SyncConnectionParams(
                 sdkVersion = SDK_VERSION,
                 bundleId = bundleId,
-                localAppName = localAppName,
-                localAppVersion = localAppVersion,
                 platformVersion = OS_VERSION,
                 device = DEVICE_MANUFACTURER,
                 deviceVersion = DEVICE_MODEL,

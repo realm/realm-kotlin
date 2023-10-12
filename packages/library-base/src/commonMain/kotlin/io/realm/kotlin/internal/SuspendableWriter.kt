@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.threadId
 import io.realm.kotlin.internal.schema.RealmClassImpl
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
+import io.realm.kotlin.internal.util.LiveRealmContext
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
@@ -43,13 +44,26 @@ import kotlin.reflect.KClass
  *   it's thread.
  *
  * @param owner The Realm instance needed for emitting updates.
- * @param dispatcher The dispatcher on which to execute all the writers operations on.
+ * @param scheduler The scheduler on which to execute all the writers operations on.
  */
-internal class SuspendableWriter(private val owner: RealmImpl, val dispatcher: CoroutineDispatcher) :
+internal class SuspendableWriter(
+    private val owner: RealmImpl,
+    private val scheduler: LiveRealmContext,
+) :
     LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
 
-    internal inner class WriterRealm : LiveRealm(owner, owner.configuration, dispatcher), InternalMutableRealm, InternalTypedRealm, WriteTransactionManager {
+    val dispatcher: CoroutineDispatcher = scheduler.dispatcher
+
+    internal inner class WriterRealm :
+        LiveRealm(
+            owner = owner,
+            configuration = owner.configuration,
+            scheduler = scheduler
+        ),
+        InternalMutableRealm,
+        InternalTypedRealm,
+        WriteTransactionManager {
 
         override val realmReference: LiveRealmReference
             get() = super.realmReference

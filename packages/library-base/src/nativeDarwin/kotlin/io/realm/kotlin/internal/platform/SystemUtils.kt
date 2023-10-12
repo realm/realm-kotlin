@@ -29,6 +29,7 @@ import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.posix.memcpy
 import platform.posix.pthread_threadid_np
+import kotlin.native.identityHashCode
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
 
@@ -67,7 +68,7 @@ public actual fun epochInSeconds(): Long =
  * without considering having to pass negative nanoseconds.
  */
 @Suppress("MagicNumber")
-internal actual fun currentTime(): RealmInstant {
+public actual fun currentTime(): RealmInstant {
     val secs: Double = NSDate().timeIntervalSince1970
     return when {
         // We can't convert the MIN value to ms - it is initialized with Long.MIN_VALUE and
@@ -192,3 +193,5 @@ private fun NSData.toByteArray(): ByteArray = ByteArray(this@toByteArray.length.
 }
 
 public actual fun isWindows(): Boolean = false
+
+internal actual fun identityHashCode(obj: Any?): Int = obj.identityHashCode()

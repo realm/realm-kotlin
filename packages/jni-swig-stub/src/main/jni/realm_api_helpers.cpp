@@ -317,8 +317,8 @@ void invoke_core_notify_callback(int64_t scheduler) {
     realm_scheduler_perform_work(reinterpret_cast<realm_scheduler_t *>(scheduler));
 }
 
-realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler) {
-    auto config = reinterpret_cast<realm_config_t *>(config_ptr);
+realm_scheduler_t*
+realm_create_scheduler(jobject dispatchScheduler) {
     if (dispatchScheduler) {
         auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
         auto scheduler = realm_scheduler_new(
@@ -330,13 +330,9 @@ realm_t *open_realm_with_scheduler(int64_t config_ptr, jobject dispatchScheduler
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
         );
         jvmScheduler->set_scheduler(scheduler);
-        realm_config_set_scheduler(config, scheduler);
-    } else {
-        // TODO refactor to use public C-API https://github.com/realm/realm-kotlin/issues/496
-        auto scheduler =  new realm_scheduler_t{realm::util::Scheduler::make_generic()};
-        realm_config_set_scheduler(config, scheduler);
+        return scheduler;
     }
-    return realm_open(config);
+    throw std::runtime_error("Null dispatchScheduler");
 }
 
 jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
@@ -718,12 +714,11 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
+    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
 
-    jint category = static_cast<jint>(error.error_code.category);
-    jint value = error.error_code.value;
-    jstring msg = to_jstring(jenv, error.error_code.message);
-    jstring detailed_msg = to_jstring(jenv, error.detailed_message);
+    jint category = static_cast<jint>(error.status.categories);
+    jint value = static_cast<jint>(error.status.error);
+    jstring msg = to_jstring(jenv, error.status.message);
     jstring joriginal_file_path = nullptr;
     jstring jrecovery_file_path = nullptr;
     jboolean is_fatal = error.is_fatal;
@@ -797,7 +792,6 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             category,
             value,
             msg,
-            detailed_msg,
             joriginal_file_path,
             jrecovery_file_path,
             is_fatal,
@@ -831,7 +825,7 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                         });
 }
 
-void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error) {
+void transfer_completion_callback(void* userdata, realm_error_t* error) {
     auto env = get_env(true);
     static JavaMethod java_success_callback_method(env,
                                            JavaClassGlobalDef::sync_session_transfer_completion_callback(),
@@ -842,8 +836,8 @@ void transfer_completion_callback(void* userdata, realm_sync_error_code_t* error
                                                    "onError",
                                                    "(IILjava/lang/String;)V");
     if (error) {
-        jint category = static_cast<jint>(error->category);
-        jint value = error->value;
+        jint category = static_cast<jint>(error->categories);
+        jint value = error->error;
         jstring msg = to_jstring(env, error->message);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_error_callback_method, category, value, msg);
     } else {
@@ -916,7 +910,7 @@ after_client_reset(void* userdata, realm_t* before_realm,
     realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, &scheduler);
     auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
-
+    realm_close(after_realm_ptr);
     if (env->ExceptionCheck()) {
         std::string exception_message = get_exception_message(env);
         std::string message_template = "An error has occurred in the 'onAfter' callback: ";
@@ -1057,4 +1051,9 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error) {
     static JavaMethod java_callback_method(env, JavaClassGlobalDef::sync_thread_observer(), "onError", "(Ljava/lang/String;)V");
     env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method, to_jstring(env, msg));
     jni_check_exception(env);
+}
+
+realm_scheduler_t*
+realm_create_generic_scheduler() {
+    return new realm_scheduler_t { realm::util::Scheduler::make_dummy() };
 }

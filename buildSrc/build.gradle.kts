@@ -29,6 +29,11 @@ gradlePlugin {
     }
 }
 
+java {
+    sourceCompatibility = Versions.sourceCompatibilityVersion
+    targetCompatibility = Versions.targetCompatibilityVersion
+}
+
 repositories {
     google()
     gradlePluginPortal()

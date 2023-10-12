@@ -36,6 +36,7 @@ import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
+import io.realm.kotlin.internal.interop.use
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
@@ -47,7 +48,7 @@ import kotlin.reflect.KClass
 
 // TODO Public due to being accessed from `library-sync`
 @Suppress("LongParameterList")
-public open class ConfigurationImpl constructor(
+public open class ConfigurationImpl(
     directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,
@@ -60,6 +61,7 @@ public open class ConfigurationImpl constructor(
     private val userEncryptionKey: ByteArray?,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     private val userMigration: RealmMigration?,
+    automaticBacklinkHandling: Boolean,
     initialDataCallback: InitialDataCallback?,
     override val isFlexibleSyncConfiguration: Boolean,
     inMemory: Boolean,
@@ -107,11 +109,14 @@ public open class ConfigurationImpl constructor(
 
     override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         val configPtr = realm.configuration.createNativeConfiguration()
-        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr)
-        val liveRealmReference = LiveRealmReference(realm, dbPointer)
-        val frozenReference = liveRealmReference.snapshot(realm)
-        liveRealmReference.close()
-        return frozenReference to fileCreated
+        return RealmInterop.realm_create_scheduler()
+            .use { scheduler ->
+                val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
+                val liveRealmReference = LiveRealmReference(realm, dbPointer)
+                val frozenReference = liveRealmReference.snapshot(realm)
+                liveRealmReference.close()
+                frozenReference to fileCreated
+            }
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
@@ -218,6 +223,7 @@ public open class ConfigurationImpl constructor(
             migrationCallback?.let {
                 RealmInterop.realm_config_set_migration_function(nativeConfig, it)
             }
+            RealmInterop.realm_config_set_automatic_backlink_handling(nativeConfig, automaticBacklinkHandling)
 
             userEncryptionKey?.let { key: ByteArray ->
                 RealmInterop.realm_config_set_encryption_key(nativeConfig, key)

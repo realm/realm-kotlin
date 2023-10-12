@@ -21,10 +21,12 @@ package io.realm.kotlin.test.mongodb
 
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
@@ -50,6 +52,15 @@ val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 val TEST_SERVER_BASE_URL = SyncServerConfig.url
 const val DEFAULT_PASSWORD = "password1234"
 
+// Expose a try-with-resource pattern for Test Apps
+inline fun App.use(action: (App) -> Unit) {
+    try {
+        action(this)
+    } finally {
+        this.close()
+    }
+}
+
 /**
  * This class merges the classes [App] and [AppAdmin] making it easier to create an App that can be
  * used for testing.
@@ -62,6 +73,8 @@ open class TestApp private constructor(
     pairAdminApp: Pair<App, AppAdmin>
 ) : App by pairAdminApp.first, AppAdmin by pairAdminApp.second {
 
+    var mutex = SynchronizableObject()
+    var isClosed: Boolean = false
     val app: App = pairAdminApp.first
 
     /**
@@ -75,10 +88,13 @@ open class TestApp private constructor(
      **/
     @Suppress("LongParameterList")
     constructor(
+        testId: String?,
         appName: String = TEST_APP_PARTITION,
-        dispatcher: CoroutineDispatcher = singleThreadDispatcher("test-app-dispatcher"),
+        dispatcher: CoroutineDispatcher = singleThreadDispatcher("$testId-dispatcher"),
         logLevel: LogLevel? = LogLevel.WARN,
-        builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = { it },
+        builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = {
+            it.syncRootDirectory(PlatformUtils.createTempDir("$appName-$testId"))
+        },
         debug: Boolean = false,
         customLogger: RealmLogger? = null,
         networkTransport: NetworkTransport? = null,
@@ -109,39 +125,47 @@ open class TestApp private constructor(
     }
 
     override fun close() {
-        // This is needed to "properly reset" all sessions across tests since deleting users
-        // directly using the REST API doesn't do the trick
-        runBlocking {
-            while (currentUser != null) {
-                (currentUser as User).logOut()
+        mutex.withLock {
+            if (isClosed) {
+                return
             }
-            deleteAllUsers()
+
+            app.sync.waitForSessionsToTerminate()
+
+            // This is needed to "properly reset" all sessions across tests since deleting users
+            // directly using the REST API doesn't do the trick
+            runBlocking {
+                try {
+                    while (currentUser != null) {
+                        (currentUser as User).logOut()
+                    }
+                    deleteAllUsers()
+                } catch (ex: Exception) {
+                    // Some tests might render the server inaccessible, preventing us from
+                    // deleting users. Assume those tests know what they are doing and
+                    // ignore errors here.
+                    RealmLog.warn("Server side users could not be deleted: $ex")
+                }
+            }
+
+            if (dispatcher is CloseableCoroutineDispatcher) {
+                dispatcher.close()
+            }
+            app.close()
+
+            // Close network client resources
+            closeClient()
+
+            // Make sure to clear cached apps before deleting files
+            RealmInterop.realm_clear_cached_apps()
+
+            // Delete metadata Realm files
+            PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
+            isClosed = true
         }
-
-        if (dispatcher is CloseableCoroutineDispatcher) {
-            dispatcher.close()
-        }
-        app.close()
-
-        // Close network client resources
-        closeClient()
-
-        // Make sure to clear cached apps before deleting files
-        RealmInterop.realm_clear_cached_apps()
-
-        // Delete metadata Realm files
-        PlatformUtils.deleteTempDir("${configuration.syncRootDirectory}/mongodb-realm")
     }
 
     companion object {
-        // Expose a try-with-resource pattern for Apps
-        inline fun TestApp.use(action: (TestApp) -> Unit) {
-            try {
-                action(this)
-            } finally {
-                this.close()
-            }
-        }
 
         @Suppress("LongParameterList")
         fun build(

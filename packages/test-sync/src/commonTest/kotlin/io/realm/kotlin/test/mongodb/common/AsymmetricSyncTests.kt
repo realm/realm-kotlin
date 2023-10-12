@@ -97,19 +97,14 @@ class AsymmetricSyncTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = setOf(
-                Measurement::class,
-                Device::class,
-                BackupDevice::class,
-                DeviceParent::class
-            )
+            schema = FLX_SYNC_SCHEMA
         ).initialSubscriptions {
             it.query<DeviceParent>().subscribe()
         }.build()
@@ -299,11 +294,7 @@ class AsymmetricSyncTests {
     fun asymmetricSchema() = runBlocking {
         config = SyncConfiguration.Builder(
             app.login(Credentials.anonymous()),
-            schema = setOf(
-                AsymmetricA::class,
-                EmbeddedB::class,
-                StandardC::class,
-            )
+            schema = FLX_SYNC_SCHEMA
         ).build()
         Realm.open(config).use {
             it.write {

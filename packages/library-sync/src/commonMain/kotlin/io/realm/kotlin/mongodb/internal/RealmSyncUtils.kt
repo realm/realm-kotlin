@@ -1,14 +1,11 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.internal.interop.AppCallback
+import io.realm.kotlin.internal.interop.CoreError
 import io.realm.kotlin.internal.interop.ErrorCategory
 import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.sync.AppError
-import io.realm.kotlin.internal.interop.sync.ProtocolConnectionErrorCode
-import io.realm.kotlin.internal.interop.sync.ProtocolSessionErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncError
-import io.realm.kotlin.internal.interop.sync.SyncErrorCode
-import io.realm.kotlin.internal.interop.sync.SyncErrorCodeCategory
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
@@ -80,64 +77,26 @@ internal fun <T, R> channelResultCallback(
 
 internal fun convertSyncError(syncError: SyncError): SyncException {
     val errorCode = syncError.errorCode
-    // FIXME Client Reset errors are just reported as normal Sync Errors for now.
-    //  Will be fixed by https://github.com/realm/realm-kotlin/issues/417
     val message = createMessageFromSyncError(errorCode)
-    return when (errorCode.category) {
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CLIENT -> {
-            // See https://github.com/realm/realm-core/blob/master/src/realm/sync/client_base.hpp#L73
-            // For now, it is unclear how to categorize these, so for now, just report as generic
-            // errors.
-            SyncException(message)
+    return when (errorCode.errorCode) {
+        ErrorCode.RLM_ERR_WRONG_SYNC_TYPE -> WrongSyncTypeException(message)
+
+        ErrorCode.RLM_ERR_INVALID_SUBSCRIPTION_QUERY -> {
+            // Flexible Sync Query was rejected by the server
+            BadFlexibleSyncQueryException(message)
         }
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_CONNECTION -> {
-            // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L200
-            // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
-            // as guide for how to categorize Connection type errors.
-            when (errorCode.code) {
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_UNKNOWN_MESSAGE, // Unknown type of input message
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_SYNTAX, // Bad syntax in input message head
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_WRONG_PROTOCOL_VERSION, // Wrong protocol version (CLIENT) (obsolete)
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_SESSION_IDENT, // Bad session identifier in input message
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_REUSE_OF_SESSION_IDENT, // Overlapping reuse of session identifier (BIND)
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BOUND_IN_OTHER_SESSION, // Client file bound in other session (IDENT)
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_MESSAGE_ORDER, // Bad input message order
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_DECOMPRESSION, // Error in decompression (UPLOAD)
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_CHANGESET_HEADER_SYNTAX, // Bad syntax in a changeset header (UPLOAD)
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_BAD_CHANGESET_SIZE -> { // Bad size specified in changeset header (UPLOAD)
-                    UnrecoverableSyncException(message)
-                }
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC, // Connected with wrong wire protocol - should switch to FLX sync
-                ProtocolConnectionErrorCode.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS -> { // Connected with wrong wire protocol - should switch to PBS
-                    WrongSyncTypeException(message)
-                }
-                else -> SyncException(message)
-            }
-        }
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SESSION -> {
-            // See https://github.com/realm/realm-core/blob/master/src/realm/sync/protocol.hpp#L217
-            // Use https://docs.google.com/spreadsheets/d/1SmiRxhFpD1XojqCKC-xAjjV-LKa9azeeWHg-zgr07lE/edit
-            // as guide for how to categorize Session type errors.
-            when (errorCode.code) {
-                ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_BAD_QUERY -> { // Flexible Sync Query was rejected by the server
-                    BadFlexibleSyncQueryException(message)
-                }
-                ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_PERMISSION_DENIED ->
-                    // Permission denied errors should be unrecoverable according to Core, i.e. the
-                    // client will disconnect sync and transition to the "inactive" state
-                    UnrecoverableSyncException(message)
-                ProtocolSessionErrorCode.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE ->
-                    CompensatingWriteException(message, syncError.compensatingWrites)
-                else -> SyncException(message)
-            }
-        }
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN -> {
-            // It is unclear how to handle system level errors, so even though some of them
-            // are probably benign, report as top-level errors for now.
-            SyncException(message)
+        ErrorCode.RLM_ERR_SYNC_COMPENSATING_WRITE -> CompensatingWriteException(message, syncError.compensatingWrites)
+
+        ErrorCode.RLM_ERR_SYNC_PROTOCOL_INVARIANT_FAILED,
+        ErrorCode.RLM_ERR_SYNC_PROTOCOL_NEGOTIATION_FAILED,
+        ErrorCode.RLM_ERR_SYNC_PERMISSION_DENIED -> {
+            // Permission denied errors should be unrecoverable according to Core, i.e. the
+            // client will disconnect sync and transition to the "inactive" state
+            UnrecoverableSyncException(message)
         }
         else -> {
+            // An error happened we are not sure how to handle. Just report as a generic
+            // SyncException.
             SyncException(message)
         }
     }
@@ -277,30 +236,27 @@ internal fun convertAppError(appError: AppError): Throwable {
     }
 }
 
-internal fun createMessageFromSyncError(error: SyncErrorCode): String {
-    val categoryDesc = error.category.description ?: error.category.nativeValue.toString()
-    val errorCodeDesc: String? = error.code.description ?: when (error.category) {
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_SYSTEM,
-        SyncErrorCodeCategory.RLM_SYNC_ERROR_CATEGORY_UNKNOWN,
-        -> {
-            // We lack information about these kinds of errors,
-            // so rather than returning a potentially misleading
-            // name, just return nothing.
-            null
-        }
-        else -> "Unknown"
+internal fun createMessageFromSyncError(error: CoreError): String {
+    val categoryDesc = error.categories.description
+    val errorCodeDesc: String? = error.errorCode?.description ?: if (ErrorCategory.RLM_ERR_CAT_SYSTEM_ERROR in error.categories) {
+        // We lack information about these kinds of errors,
+        // so rather than returning a potentially misleading
+        // name, just return nothing.
+        null
+    } else {
+        "Unknown"
     }
 
     // Combine all the parts to form an error format that is human-readable.
     // An example could be this: `[Connection][WrongProtocolVersion(104)] Wrong protocol version was used: 25`
     val errorDesc: String =
-        if (errorCodeDesc == null) error.code.nativeValue.toString() else "$errorCodeDesc(${error.code.nativeValue})"
+        if (errorCodeDesc == null) error.errorCodeNativeValue.toString() else "$errorCodeDesc(${error.errorCodeNativeValue})"
 
     // Make sure that messages are uniformly formatted, so it looks nice if we append the
     // server log.
-    val msg = error.message.let { message: String ->
+    val msg = error.message?.let { message: String ->
         " $message${if (!message.endsWith(".")) "." else ""}"
-    }
+    } ?: ""
 
     return "[$categoryDesc][$errorDesc]$msg"
 }
