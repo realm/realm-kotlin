@@ -106,11 +106,16 @@ class CinteropTest {
         assertFalse(releasablePointer.released.value)
 
         // Trigger GC and wait for some time to allow it to collect the object
-        GC.collect()
-        platform.posix.sleep(5u)
+        for (i in 0..5) {
+            GC.collect()
+            platform.posix.sleep(5u)
 
-        // The pointer has not been reclaimed
-        assertTrue(releasablePointer.released.value)
+            // if reclaimed stop looping
+            if (releasablePointer.released.value) break
+        }
+
+        // The pointer has been reclaimed
+        assertTrue(releasablePointer.released.value, "Pointer was not reclaimed")
     }
 
     @Test
