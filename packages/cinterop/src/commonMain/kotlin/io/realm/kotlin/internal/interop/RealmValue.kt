@@ -63,3 +63,7 @@ expect class RealmQueryArgumentList
 sealed interface RealmQueryArgument
 class RealmQuerySingleArgument(val argument: RealmValue) : RealmQueryArgument
 class RealmQueryListArgument(val arguments: RealmValueList) : RealmQueryArgument
+
+/**
+ * Inline class used for handling C-API `realm_key_path_array_t` structs when registering notifications
+ */

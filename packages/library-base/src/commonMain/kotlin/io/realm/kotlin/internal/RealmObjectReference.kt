@@ -124,7 +124,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
         }.toTypedArray()
     }
 
-    override fun asFlow(vararg keyPath: String): Flow<ObjectChange<T>> {
+    override fun asFlow(keyPath: List<String>?): Flow<ObjectChange<T>> {
         return this.owner.owner.registerObserver(this, keyPath)
     }
 

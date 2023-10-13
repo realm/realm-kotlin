@@ -83,12 +83,13 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * the elements in a timely manner the coroutine scope will be cancelled with a
  * [CancellationException].
  *
+ * @param keyPaths TODO
  * @return a flow representing changes to the object.
  * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject]
  * from a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
  */
-public fun <T : BaseRealmObject> T.asFlow(vararg keyPaths: String): Flow<ObjectChange<T>> = runIfManaged {
+public fun <T : BaseRealmObject> T.asFlow(keyPaths: List<String>? = null): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
     return owner.owner.registerObserver(this, keyPaths) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")

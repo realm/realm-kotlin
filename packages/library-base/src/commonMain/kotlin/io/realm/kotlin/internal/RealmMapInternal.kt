@@ -61,7 +61,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmMapPointer,
     val operator: MapOperator<K, V>
-) : AbstractMutableMap<K, V>(), RealmMap<K, V>, CoreNotifiable<ManagedRealmMap<K, V>, MapChange<K, V>>, Flowable<MapChange<K, V>> {
+) : AbstractMutableMap<K, V>(), RealmMap<K, V>, CoreNotifiable<ManagedRealmMap<K, V>, MapChange<K, V>>, KeyPathFlowable<MapChange<K, V>> {
 
     private val keysPointer by lazy { RealmInterop.realm_dictionary_get_keys(nativePointer) }
     private val valuesPointer by lazy { RealmInterop.realm_dictionary_to_results(nativePointer) }

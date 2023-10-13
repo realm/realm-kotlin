@@ -49,7 +49,7 @@ import kotlin.reflect.KClass
 internal class UnmanagedRealmList<E>(
     private val backingList: MutableList<E> = mutableListOf()
 ) : RealmList<E>, InternalDeleteable, MutableList<E> by backingList {
-    override fun asFlow(): Flow<ListChange<E>> =
+    override fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 
     override fun delete() {
@@ -113,9 +113,9 @@ internal class ManagedRealmList<E>(
         return operator.set(index, element)
     }
 
-    override fun asFlow(): Flow<ListChange<E>> {
+    override fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>> {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this, arrayOf())
+        return operator.realmReference.owner.registerObserver(this, keyPaths)
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {

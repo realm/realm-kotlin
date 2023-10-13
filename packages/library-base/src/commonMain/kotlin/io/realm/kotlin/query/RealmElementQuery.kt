@@ -60,7 +60,8 @@ public interface RealmElementQuery<T : BaseRealmObject> : Deleteable {
      *
      * **It is not allowed to call [asFlow] on queries generated from a [MutableRealm].**
      *
+     * @param keyPath TODO
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
-    public fun asFlow(): Flow<ResultsChange<T>>
+    public fun asFlow(keyPath: List<String>? = null): Flow<ResultsChange<T>>
 }

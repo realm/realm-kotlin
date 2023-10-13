@@ -72,9 +72,10 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
+     * @param keyPaths TODO
      * @return a flow representing changes to the list.
      * @throws CancellationException if the stream produces changes faster than the consumer can
      * consume them and results in a buffer overflow.
      */
-    public fun asFlow(): Flow<ListChange<E>>
+    public fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>>
 }

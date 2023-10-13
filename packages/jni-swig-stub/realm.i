@@ -349,6 +349,7 @@ bool realm_object_is_valid(const realm_object_t*);
 %array_functions(realm_query_arg_t, queryArgArray);
 %array_functions(realm_user_identity_t, identityArray);
 %array_functions(realm_app_user_apikey_t, apiKeyArray);
+%array_functions(realm_key_path_array_t, keyPathArray);
 
 // Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
 %apply int64_t[] { size_t* };

@@ -46,14 +46,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 // TODO Public due to being accessed from `SyncedRealmContext`
 public class RealmImpl private constructor(
     configuration: InternalConfiguration,
-) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
+) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, KeyPathFlowable<RealmChange<Realm>> {
 
     public val notificationScheduler: LiveRealmContext =
         configuration.notificationDispatcherFactory.createLiveRealmContext()

@@ -228,9 +228,6 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
 
     switch (collection_type) {
         case RLM_COLLECTION_TYPE_NONE:
-            auto obj = reinterpret_cast<realm_object_t*>(collection_ptr)
-                    ob
-
             return realm_object_add_notification_callback(
                     reinterpret_cast<realm_object_t*>(collection_ptr),
                     user_data, // Use the callback as user data

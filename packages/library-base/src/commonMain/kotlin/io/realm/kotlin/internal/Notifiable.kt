@@ -126,7 +126,7 @@ public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<
  * @param T the type of entity that is observed.
  * @param C the type of change events emitted for the T entity.
  */
-internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Versioned, Flowable<C>
+internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Versioned, KeyPathFlowable<C>
         where T : CoreNotifiable<T, C> {
     public fun thaw(liveRealm: RealmReference): T?
     public fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer

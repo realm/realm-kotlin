@@ -69,7 +69,8 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
+     * @param keyPath TODO
      * @return a flow representing changes to the RealmResults.
      */
-    public fun asFlow(): Flow<ResultsChange<T>>
+    public fun asFlow(keyPath: List<String>?): Flow<ResultsChange<T>>
 }

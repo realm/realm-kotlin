@@ -76,5 +76,5 @@ public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
      * @return a flow representing changes to the [RealmObject] or [EmbeddedRealmObject] resulting from
      * running this query.
      */
-    public fun asFlow(vararg keyPaths: String): Flow<SingleQueryChange<T>>
+    public fun asFlow(keyPaths: List<String>? = null): Flow<SingleQueryChange<T>>
 }
