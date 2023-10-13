@@ -19,7 +19,7 @@ package io.realm.kotlin.compiler.fir
 import org.jetbrains.kotlin.GeneratedDeclarationKey
 
 /**
- * Key to mark all additions made by out compile plugin.
+ * Key to mark all additions made by our compile plugin.
  */
 object RealmPluginGeneratorKey : GeneratedDeclarationKey() {
     override fun toString(): String {

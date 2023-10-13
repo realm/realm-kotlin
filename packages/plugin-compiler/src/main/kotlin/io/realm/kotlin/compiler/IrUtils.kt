@@ -195,25 +195,26 @@ val ClassDescriptor.isEmbeddedRealmObject: Boolean
 val ClassDescriptor.isBaseRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 
-// FIXME Cannot disregard Java's constructor invocation for RealmObject()
+val realmObjectTypes = setOf(Name.identifier("RealmObject"), Name.identifier("EmbeddedRealmObject"), Name.identifier("AsymmetricRealmObject"))
+val realmObjectClassIds = realmObjectTypes.map { name -> ClassId(FqName("io.realm.kotlin.types"), name) }
+
 @OptIn(SymbolInternals::class)
 val FirClassSymbol<*>.isBaseRealmObject: Boolean
     get() = this.classKind == ClassKind.CLASS &&
-        this.fir.superTypeRefs.any {
-            // In SUPERTYPES stage
-            it is FirUserTypeRef && (
-                it.qualifier.last().name in realmObjectTypes
-                ) ||
-                // After SUPERTYPES stage
-                it is FirResolvedTypeRef && it.type.classId in realmObjectTypes.map { name ->
-                ClassId(
-                    FqName("io.realm.kotlin.types"),
-                    name
-                )
+            this.fir.superTypeRefs.any {
+                when (it) {
+                    // In SUPERTYPES stage
+                    is FirUserTypeRef -> {
+                        it.qualifier.last().name in realmObjectTypes &&
+                        // Disregard constructor invocations as that means that it is a Realm Java class
+                        !(it.source?.let { it.treeStructure.getParent(it.lighterASTNode) }?.tokenType?.let { it.debugName == "CONSTRUCTOR_CALLEE"} ?: false)
+                    }
+                    // After SUPERTYPES stage
+                    is FirResolvedTypeRef -> it.type.classId in realmObjectClassIds
+                    else -> false
+                }
             }
-        }
 
-val realmObjectTypes = setOf(Name.identifier("RealmObject"), Name.identifier("EmbeddedRealmObject"), Name.identifier("AsymmetricRealmObject"))
 
 // JetBrains already have a method `fun IrAnnotationContainer.hasAnnotation(symbol: IrClassSymbol)`
 // It is unclear exactly what the difference is and how to get a ClassSymbol from a ClassId,

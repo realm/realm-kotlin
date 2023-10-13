@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 
 /**
- * Name of methods for which we will generate default implementations for if the users have not
+ * Name of methods for which we will generate default implementations if the users have not
  * defined their own.
  */
 private val realmObjectDefaultMethods = setOf(

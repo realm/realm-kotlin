@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
  * - A [CompanionExtension] that adds a (or updates existing) companion object to
  *   RealmObject-classes and modifies it to implement the [RealmObjectCompanion] interface and its
  *   methods.
- * - A [ObjectExtension] that adds `toString`, `equals` and `hashCode` methods to
+ * - An [ObjectExtension] that adds `toString`, `equals` and `hashCode` methods to
  *   RealmObject-classes.
  *
  * All API modifications should be tagged with the [RealmPluginGeneratorKey] to make it recognizable

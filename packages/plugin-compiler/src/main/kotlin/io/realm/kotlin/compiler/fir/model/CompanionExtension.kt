@@ -55,7 +55,7 @@ class CompanionExtension(session: FirSession) : FirDeclarationGenerationExtensio
         name: Name,
         context: NestedClassGenerationContext
     ): FirClassLikeSymbol<*>? {
-        // Only generate new companion if class does not have on already
+        // Only generate new companion if class does not have one already
         val companion = (owner as? FirRegularClassSymbol)?.companionObjectSymbol
         return if (companion == null && owner.isBaseRealmObject) {
             createCompanionObject(owner, RealmPluginGeneratorKey).symbol
@@ -70,7 +70,7 @@ class CompanionExtension(session: FirSession) : FirDeclarationGenerationExtensio
             return setOf(
                 Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD,
                 Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD,
-                SpecialNames.INIT, // If from out own plugin remember to generate a default constructor
+                SpecialNames.INIT, // If from our own plugin remember to generate a default constructor
             )
         }
         return emptySet()

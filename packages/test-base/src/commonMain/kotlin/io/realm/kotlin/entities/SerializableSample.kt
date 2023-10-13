@@ -354,6 +354,6 @@ class SerializableEmbeddedObject : EmbeddedRealmObject {
 
     // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
     // they both generate a Companion.
-    // FIXME Issue reference
+    // https://youtrack.jetbrains.com/issue/KT-62194/K2-Two-compiler-plugins-interference-in-generated-companion-object
     companion object
 }
