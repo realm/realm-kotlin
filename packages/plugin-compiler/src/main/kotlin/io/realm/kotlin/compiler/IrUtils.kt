@@ -198,23 +198,26 @@ val ClassDescriptor.isBaseRealmObject: Boolean
 val realmObjectTypes = setOf(Name.identifier("RealmObject"), Name.identifier("EmbeddedRealmObject"), Name.identifier("AsymmetricRealmObject"))
 val realmObjectClassIds = realmObjectTypes.map { name -> ClassId(FqName("io.realm.kotlin.types"), name) }
 
+// This is the K2 equivalent of our PSI hack to determine if a symbol has a RealmObject base class.
+// There is currently no way to determine this within the resolved type system and there is
+// probably no such option around the corner.
+// https://kotlinlang.slack.com/archives/C03PK0PE257/p1694599154558669
 @OptIn(SymbolInternals::class)
 val FirClassSymbol<*>.isBaseRealmObject: Boolean
     get() = this.classKind == ClassKind.CLASS &&
-            this.fir.superTypeRefs.any {
-                when (it) {
-                    // In SUPERTYPES stage
-                    is FirUserTypeRef -> {
-                        it.qualifier.last().name in realmObjectTypes &&
+        this.fir.superTypeRefs.any {
+            when (it) {
+                // In SUPERTYPES stage
+                is FirUserTypeRef -> {
+                    it.qualifier.last().name in realmObjectTypes &&
                         // Disregard constructor invocations as that means that it is a Realm Java class
-                        !(it.source?.let { it.treeStructure.getParent(it.lighterASTNode) }?.tokenType?.let { it.debugName == "CONSTRUCTOR_CALLEE"} ?: false)
-                    }
-                    // After SUPERTYPES stage
-                    is FirResolvedTypeRef -> it.type.classId in realmObjectClassIds
-                    else -> false
+                        !(it.source?.let { it.treeStructure.getParent(it.lighterASTNode) }?.tokenType?.let { it.debugName == "CONSTRUCTOR_CALLEE" } ?: false)
                 }
+                // After SUPERTYPES stage
+                is FirResolvedTypeRef -> it.type.classId in realmObjectClassIds
+                else -> false
             }
-
+        }
 
 // JetBrains already have a method `fun IrAnnotationContainer.hasAnnotation(symbol: IrClassSymbol)`
 // It is unclear exactly what the difference is and how to get a ClassSymbol from a ClassId,
