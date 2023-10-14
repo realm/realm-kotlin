@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalForeignApi::class)
+
 package io.realm.kotlin.test.darwin
 
 // FIXME API-CLEANUP Do we actually want to expose this. Test should probably just be reeavluated
@@ -40,6 +42,7 @@ import io.realm.kotlin.types.TypedRealmObject
 import kotlinx.cinterop.COpaquePointerVar
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr

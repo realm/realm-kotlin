@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalForeignApi::class)
+
 package io.realm.kotlin.test.darwin
 
 import io.realm.kotlin.Realm
@@ -24,6 +26,7 @@ import io.realm.kotlin.test.platform.PlatformUtils.createTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.deleteTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.triggerGC
 import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 import platform.posix.FILE
@@ -101,7 +104,7 @@ class MemoryTests {
         referenceHolder.clear()
         triggerGC()
 
-        platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process references
+        platform.posix.sleep((1 * 5).toUInt()) // give chance to the Collector Thread to process references
 
         // We should find a way to just meassure the increase over these tests. Referencing
         //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
@@ -148,7 +151,7 @@ class MemoryTests {
         }()
 
         triggerGC()
-        platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
+        platform.posix.sleep((1 * 5).toUInt()) // give chance to the Collector Thread to process out of scope references
 
         // Referencing things like
         //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString

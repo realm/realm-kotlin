@@ -205,16 +205,16 @@ val realmObjectClassIds = realmObjectTypes.map { name -> ClassId(FqName("io.real
 @OptIn(SymbolInternals::class)
 val FirClassSymbol<*>.isBaseRealmObject: Boolean
     get() = this.classKind == ClassKind.CLASS &&
-        this.fir.superTypeRefs.any {
-            when (it) {
+        this.fir.superTypeRefs.any { typeRef ->
+            when (typeRef) {
                 // In SUPERTYPES stage
                 is FirUserTypeRef -> {
-                    it.qualifier.last().name in realmObjectTypes &&
+                    typeRef.qualifier.last().name in realmObjectTypes &&
                         // Disregard constructor invocations as that means that it is a Realm Java class
-                        !(it.source?.let { it.treeStructure.getParent(it.lighterASTNode) }?.tokenType?.let { it.debugName == "CONSTRUCTOR_CALLEE" } ?: false)
+                        !(typeRef.source?.run { treeStructure.getParent(lighterASTNode) }?.tokenType?.run { debugName == "CONSTRUCTOR_CALLEE" } ?: false)
                 }
                 // After SUPERTYPES stage
-                is FirResolvedTypeRef -> it.type.classId in realmObjectClassIds
+                is FirResolvedTypeRef -> typeRef.type.classId in realmObjectClassIds
                 else -> false
             }
         }
