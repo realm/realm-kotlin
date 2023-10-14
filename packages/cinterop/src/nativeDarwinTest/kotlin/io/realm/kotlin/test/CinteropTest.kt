@@ -119,7 +119,7 @@ class CinteropTest {
             realm_config_set_path(config, "c_api_test.realm")
             realm_config_set_schema(config, realmSchemaNew)
             realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
-            realm_config_set_schema_version(config, 1)
+            realm_config_set_schema_version(config, 1.toULong())
 
             val realm: CPointer<realm_t>? = realm_open(config)
             assertEquals(1U, realm_get_num_classes(realm))
