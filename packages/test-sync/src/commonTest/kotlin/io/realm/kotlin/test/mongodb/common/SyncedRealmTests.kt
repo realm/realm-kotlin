@@ -1402,7 +1402,6 @@ class SyncedRealmTests {
                 errorHandler = { _, error ->
                     fail(error.toString())
                 },
-                schema = FLEXIBLE_SYNC_SCHEMA,
                 initialSubscriptions = { realm: Realm ->
                     realm.query<FlexParentObject>()
                         .subscribe(name = "parentSubscription")
@@ -1414,7 +1413,6 @@ class SyncedRealmTests {
                 errorHandler = { _, error ->
                     fail(error.toString())
                 },
-                schema = FLEXIBLE_SYNC_SCHEMA
             )
 
             Realm.open(syncConfig1).use { flexRealm1: Realm ->
@@ -1457,7 +1455,6 @@ class SyncedRealmTests {
                 errorHandler = { _, error ->
                     fail(error.toString())
                 },
-                schema = FLEXIBLE_SYNC_SCHEMA,
             ) {
                 initialRealmFile("asset-fs.realm")
                 initialData {
@@ -1876,7 +1873,7 @@ class SyncedRealmTests {
         block: SyncConfiguration.Builder.() -> Unit = {},
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
-        schema = FLX_SYNC_SCHEMA
+        schema = FLEXIBLE_SYNC_SCHEMA
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
