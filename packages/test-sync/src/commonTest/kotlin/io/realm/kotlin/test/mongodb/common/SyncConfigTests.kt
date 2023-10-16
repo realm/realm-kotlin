@@ -1261,8 +1261,8 @@ class SyncConfigTests {
         val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, setOf())
             .name(fileName)
             .build()
-        val suffix = pathOf("", "mongodb-realm", user.app.configuration.appId, user.id, fileName)
+        val suffix = pathOf("", "mongodb-realm", user.app.configuration.appId, user.id, "$fileName.realm")
         assertTrue(config.path.endsWith(suffix), "${config.path} failed.")
-        assertEquals(fileName, config.name, "${config.name} failed.")
+        assertEquals("$fileName.realm", config.name, "${config.name} failed.")
     }
 }
