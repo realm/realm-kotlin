@@ -69,10 +69,7 @@ public class RealmImpl private constructor(
     private val notifierFlow: MutableSharedFlow<RealmChange<Realm>> =
         MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-    private val notifier = SuspendableNotifier(
-        owner = this,
-        scheduler = notificationScheduler,
-    )
+    private lateinit var notifier: SuspendableNotifier
     private val writer = SuspendableWriter(
         owner = this,
         scheduler = writeScheduler,
@@ -82,8 +79,6 @@ public class RealmImpl private constructor(
     // closed.
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    // Initial realm reference that would be used until the notifier or writer are available.
-    internal var initialRealmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -93,12 +88,6 @@ public class RealmImpl private constructor(
      */
     override val realmReference: FrozenRealmReference
         get() = realmReference()
-
-    // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
-    //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
-    //  would require us to sync that up. Didn't address this as we already have a todo on fixing
-    //  constructing the initial frozen version in the initialization of updatableRealm.
-    internal val versionTracker = VersionTracker(this, log)
 
     // Injection point for synchronized Realms. This property should only be used to hold state
     // required by synchronized realms. See `SyncedRealmContext` for more details.
@@ -110,7 +99,7 @@ public class RealmImpl private constructor(
         // so we can remove the file again if case opening the Realm fails.
         var realmFileCreated = false
         try {
-            runBlocking {
+            val initialRealmReference = runBlocking {
                 var assetFileCopied = false
                 configuration.initialRealmFileConfiguration?.let {
                     val path = configuration.path
@@ -130,17 +119,21 @@ public class RealmImpl private constructor(
                 }
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = assetFileCopied || fileCreated
-                versionTracker.trackReference(frozenReference)
-                initialRealmReference.value = frozenReference
+                frozenReference
+            }
+
+            notifier = SuspendableNotifier(
+                owner = this,
+                scheduler = notificationScheduler,
+                initialRealmReference
+            )
+
+            runBlocking {
                 configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }
 
             realmScope.launch {
                 notifier.realmChanged().collect {
-                    removeInitialRealmReference()
-                    // Closing this reference might be done by the GC:
-                    // https://github.com/realm/realm-kotlin/issues/1527
-                    versionTracker.closeExpiredReferences()
                     notifierFlow.emit(UpdatedRealmImpl(this@RealmImpl))
                 }
             }
@@ -229,32 +222,15 @@ public class RealmImpl private constructor(
         return notifier.registerObserver(t)
     }
 
-    /**
-     * Removes the local reference to start relying on the notifier - writer for snapshots.
-     */
-    private fun removeInitialRealmReference() {
-        if (initialRealmReference.value != null) {
-            log.trace("REMOVING INITIAL VERSION")
-            // There is at least a new version available in the notifier, stop tracking the local one
-            initialRealmReference.value = null
-        }
-    }
-
-    public fun realmReference(): FrozenRealmReference {
-        // We don't require to return the latest snapshot to the user but the closest the best.
-        // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
-        return initialRealmReference.value.let { localReference ->
-            // Find whether the user-facing, notifier or writer has the latest snapshot.
-            // Sort is stable, it will try to preserve the following order.
-            listOf(
-                { localReference } to localReference?.uncheckedVersion(),
-                { notifier.snapshot } to notifier.version,
-                { writer.snapshot } to writer.version
-            ).sortedByDescending {
-                it.second
-            }.first().first()
-        } ?: sdkError("Accessing realmReference before realm has been opened")
-    }
+    // We don't require to return the latest snapshot to the user but the closest the best.
+    // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
+    public fun realmReference(): FrozenRealmReference = listOf(
+        { notifier.snapshot } to notifier.version,
+        { writer.snapshot } to writer.version
+    ).sortedByDescending {
+        it.second
+    }.first().first()
+        ?: sdkError("Accessing realmReference before realm has been opened")
 
     public fun activeVersions(): VersionInfo = VersionInfo(
         notifier = notifier.versions(),
@@ -269,8 +245,9 @@ public class RealmImpl private constructor(
             realmPointerMutex.withLock {
                 writer.close()
                 realmScope.cancel()
-                notifier.close()
-                versionTracker.close()
+                if (this@RealmImpl::notifier.isInitialized) {
+                    notifier.close()
+                }
                 // The local realmReference is pointing to a realm reference managed by either the
                 // version tracker, writer or notifier, so it is already closed
                 super.close()

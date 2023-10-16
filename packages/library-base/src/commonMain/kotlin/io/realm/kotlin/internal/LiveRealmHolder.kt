@@ -27,6 +27,7 @@ internal abstract class LiveRealmHolder<out LiveRealm> {
 
     abstract val realmInitializer: Lazy<LiveRealm>
     abstract val realm: io.realm.kotlin.internal.LiveRealm
+    protected abstract val hasInitialRealm: Boolean
 
     /**
      * Current version of the frozen snapshot reference of the live realm. This is not guaranteed
@@ -34,21 +35,21 @@ internal abstract class LiveRealmHolder<out LiveRealm> {
      * request a more recent GC-tracked snapshot from the [LiveRealmHolder] through [snapshot].
      */
     val version: VersionId?
-        get() = if (realmInitializer.isInitialized()) { realm.snapshotVersion } else null
+        get() = if (hasInitialRealm || realmInitializer.isInitialized()) { realm.snapshotVersion } else null
 
     /**
      * Returns a GC-tracked snapshot from the underlying [realm]. See [LiveRealm.gcTrackedSnapshot]
      * for details of the tracking.
      */
     val snapshot: FrozenRealmReference?
-        get() = if (realmInitializer.isInitialized()) {
+        get() = if (hasInitialRealm || realmInitializer.isInitialized()) {
             realm.gcTrackedSnapshot()
         } else null
 
     /**
      * Dump the current snapshot and tracked versions of the LiveRealm used for debugging purpose.
      */
-    fun versions(): VersionData? = if (realmInitializer.isInitialized()) {
+    fun versions(): VersionData? = if (hasInitialRealm || realmInitializer.isInitialized()) {
         realm.versions()
     } else {
         null

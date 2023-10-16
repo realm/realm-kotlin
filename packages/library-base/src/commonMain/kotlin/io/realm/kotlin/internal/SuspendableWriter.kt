@@ -49,11 +49,12 @@ import kotlin.reflect.KClass
 internal class SuspendableWriter(
     private val owner: RealmImpl,
     private val scheduler: LiveRealmContext,
-) :
-    LiveRealmHolder<SuspendableWriter.WriterRealm>() {
+) : LiveRealmHolder<SuspendableWriter.WriterRealm>() {
     private val tid: ULong
 
     val dispatcher: CoroutineDispatcher = scheduler.dispatcher
+
+    override val hasInitialRealm: Boolean = false
 
     internal inner class WriterRealm :
         LiveRealm(
