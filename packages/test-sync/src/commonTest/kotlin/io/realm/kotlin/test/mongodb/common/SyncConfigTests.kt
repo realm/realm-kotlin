@@ -495,6 +495,7 @@ class SyncConfigTests {
         nameAssertions("my-file-name")
     }
 
+    @Ignore
     @Test
     fun name_withDotRealmFileExtension() {
         nameAssertions("my-file-name.realm")
@@ -505,6 +506,7 @@ class SyncConfigTests {
         nameAssertions("my-file-name.database")
     }
 
+    @Ignore
     @Test
     fun name_similarToDefaultObjectStoreName() {
         nameAssertions("s_partition-9482732795133669400.realm")

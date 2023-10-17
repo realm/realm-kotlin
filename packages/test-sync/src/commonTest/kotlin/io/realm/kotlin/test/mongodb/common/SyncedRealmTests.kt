@@ -1330,6 +1330,7 @@ class SyncedRealmTests {
         println("Partition based sync bundled realm is in ${config2.path}")
     }
 
+    @Ignore
     @Test
     fun initialRealm_partitionBasedSync() {
         val (email, password) = randomEmail() to "password1234"

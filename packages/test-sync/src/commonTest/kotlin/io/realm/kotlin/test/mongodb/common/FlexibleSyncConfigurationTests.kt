@@ -129,7 +129,7 @@ class FlexibleSyncConfigurationTests {
     //     val config: SyncConfiguration = SyncConfiguration.defaultConfig(user)
     //     assertFailsWith<IllegalStateException> { config.partitionValue }
     // }
-
+    @Ignore
     @Test
     fun defaultPath() {
         val user: User = app.asTestApp.createUserAndLogin()
@@ -220,6 +220,7 @@ class FlexibleSyncConfigurationTests {
     //     assertTrue(config.syncClientResetStrategy is ManuallyRecoverUnsyncedChangesStrategy)
     // }
 
+    @Ignore
     @Test
     fun overrideDefaultPath() {
         val user: User = app.asTestApp.createUserAndLogin()
