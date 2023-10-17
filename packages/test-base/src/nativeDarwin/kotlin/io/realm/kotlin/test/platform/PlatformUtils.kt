@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.platform
 
+import io.realm.kotlin.test.util.Utils
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
@@ -35,7 +36,8 @@ import kotlin.time.Duration
 actual object PlatformUtils {
     actual fun createTempDir(prefix: String, readOnly: Boolean): String {
         // X is a special char which will be replace by mkdtemp template
-        val mask = prefix.replace('X', 'Z', ignoreCase = true)
+        val suffix = "-${Utils.createRandomString(4)}"
+        val mask = prefix.plus(suffix).replace('X', 'Z', ignoreCase = true)
         val path = "${platform.Foundation.NSTemporaryDirectory()}$mask"
         platform.posix.mkdtemp(path.cstr)
         if (readOnly) {
