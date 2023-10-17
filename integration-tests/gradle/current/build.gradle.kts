@@ -15,23 +15,17 @@
  * limitations under the License.
  */
 
+plugins {
+    id("realm-lint")
+}
+
 // Explicitly adding the plugin to the classpath as it makes it easier to control the version
 // centrally (don't need version in the 'plugins' block). Further, snapshots are not published with
 // marker interface so would need to be added to the classpath manually anyway.
 buildscript {
-    extra["realmVersion"] = Realm.version
-
-    repositories {
-            maven(url = "file://${rootProject.rootDir.absolutePath}/../../../packages/build/m2-buildrepo")
-            gradlePluginPortal()
-            google()
-            mavenCentral()
-        }
-        dependencies {
-            classpath("com.android.tools.build:gradle:${Versions.Android.buildTools}")
-            classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${Versions.kotlin}")
-            classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
-        }
+    dependencies {
+        classpath("io.realm.kotlin:gradle-plugin:${Realm.version}")
+    }
 }
 group = "io.realm.test"
 version = Realm.version
