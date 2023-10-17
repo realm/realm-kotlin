@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 # This script updates Gradle Wrappers in this repository.
 # To run it:
@@ -31,7 +31,7 @@ echo
 read -n1 -r -p "Press any key to continue..." key
 
 for i in $(find $(pwd) -type f -name gradlew); do
-    if [[ $i != *min-android-sample/gradlew ]]; then
+    if [[ $i != *min-android-sample/gradlew && $i != *integration-tests/gradle/gradle*/gradlew ]]; then
         cd $(dirname $i)
         pwd
         ./gradlew wrapper --gradle-version=$GRADLE_VERSION --distribution-type all

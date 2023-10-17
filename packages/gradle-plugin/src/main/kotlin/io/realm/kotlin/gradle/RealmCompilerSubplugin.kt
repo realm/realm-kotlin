@@ -17,12 +17,12 @@
 package io.realm.kotlin.gradle
 
 import com.android.build.gradle.BaseExtension
+import io.realm.kotlin.gradle.analytics.AnalyticsErrorCatcher
 import io.realm.kotlin.gradle.analytics.AnalyticsService
 import io.realm.kotlin.gradle.analytics.AnalyticsService.Companion.UNKNOWN
 import io.realm.kotlin.gradle.analytics.AnalyticsService.Companion.unknown
 import io.realm.kotlin.gradle.analytics.BuilderId
 import io.realm.kotlin.gradle.analytics.ComputerId
-import io.realm.kotlin.gradle.analytics.ErrorWrapper
 import io.realm.kotlin.gradle.analytics.HOST_ARCH_NAME
 import io.realm.kotlin.gradle.analytics.HOST_OS_NAME
 import io.realm.kotlin.gradle.analytics.ProjectConfiguration
@@ -58,7 +58,7 @@ internal val gradleVersion: GradleVersion = GradleVersion.current().baseVersion
 internal val gradle70: GradleVersion = GradleVersion.version("7.0")
 internal val gradle75: GradleVersion = GradleVersion.version("7.5")
 
-class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin, ErrorWrapper {
+class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin, AnalyticsErrorCatcher {
 
     /**
      * Flag indicating whether we should submit analytics data to the remote endpoint
@@ -73,7 +73,7 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin, ErrorWrapper {
      * Flag to control if an exception in analytics collection should be causing the whole build to
      * fail or just be logged and submitted as [UNKNOWN].
      */
-    override var failOnError: Boolean = false
+    override var failOnAnalyticsError: Boolean = false
 
     private var analyticsServiceProvider: Provider<AnalyticsService>? = null
 
@@ -107,12 +107,12 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin, ErrorWrapper {
         val bundleId = target.rootProject.name + ":" + target.name
         anonymizedBundleId = hexStringify(sha256Hash(bundleId.toByteArray()))
 
-        printAnalytics = target.providers.environmentVariable("REALM_PRINT_ANALYTICS").safeProvider().getOrElse("false").equals("true", ignoreCase = true)
-        submitAnalytics = !target.gradle.startParameter.isOffline && !target.providers.environmentVariable("REALM_DISABLE_ANALYTICS").safeProvider().getOrElse("false").equals("true", ignoreCase = true)
-        // We never want to break a user's build if collecting/submitting some data fail, but this
-        // flag can be used to treat any error in collecting as a fatal error that should break the
-        // build. This allows us to catch errors during development and on CI builds.
-        failOnError = target.providers.environmentVariable("REALM_ANALYTICS_FAILONERROR").safeProvider().getOrElse("false").equals("true", ignoreCase = true)
+        printAnalytics = target.providers.environmentVariable("REALM_PRINT_ANALYTICS").getBoolean()
+        submitAnalytics = !target.gradle.startParameter.isOffline && !target.providers.environmentVariable("REALM_DISABLE_ANALYTICS").getBoolean()
+        // We never want to break a user's build if collecting/submitting some data fail, so by
+        // default we are suppressing errors. This flag can control if errors are suppressed or will
+        // break the build. This allows us to catch errors during development and on CI builds.
+        failOnAnalyticsError = target.providers.environmentVariable("REALM_FAIL_ON_ANALYTICS_ERRORS").getBoolean()
 
         // Only register analytics service provider if we either want to submit or print the info
         if (submitAnalytics || printAnalytics) {
@@ -153,10 +153,10 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin, ErrorWrapper {
             // option is propagated to the actual tasks to ensure that the don't break build if
             // collection fail.
             val userId: String = target.providers.of(ComputerId::class.java) {
-                it.parameters.failOnError.set(failOnError)
+                it.parameters.failOnAnalyticsError.set(failOnAnalyticsError)
             }.safeProvider().get()
             val builderId: String = target.providers.of(BuilderId::class.java) {
-                it.parameters.failOnError.set(failOnError)
+                it.parameters.failOnAnalyticsError.set(failOnAnalyticsError)
             }.safeProvider().get()
 
             val languageVersion =
@@ -355,3 +355,6 @@ fun androidArch(target: String): String = when (target) {
     "x86_64" -> io.realm.kotlin.gradle.analytics.Architecture.X64.serializedName
     else -> unknown(target)
 }
+
+fun Provider<String>.getBoolean(): Boolean =
+    this.safeProvider().getOrElse("false").equals("true", ignoreCase = true)

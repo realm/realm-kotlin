@@ -194,19 +194,19 @@ abstract class AnalyticsService : BuildService<ProjectConfiguration> {
     }
 }
 
-interface ErrorWrapper {
+interface AnalyticsErrorCatcher {
     /**
      * Property controlling whether an error happening in the code `block` of [withDefaultOnError]
      * should be causing thrown or ignored and reported as the `default` value instead.
      */
-    val failOnError: Boolean
+    val failOnAnalyticsError: Boolean
 
     /**
      * Utility method to wrap property collection in a common pattern that either returns a default
-     * value or rethrows if collection gathering throws depending on the [failOnError] property.
+     * value or rethrows if collection gathering throws depending on the [failOnAnalyticsError] property.
      */
     fun <T> withDefaultOnError(name: String, default: T, block: () -> T): T =
-        when (failOnError) {
+        when (failOnAnalyticsError) {
             true -> block()
             false -> try {
                 block()
@@ -221,7 +221,7 @@ interface ErrorWrapper {
  * and fail the build.
  */
 interface HostIdentifierParameters : ValueSourceParameters {
-    val failOnError: Property<Boolean>
+    val failOnAnalyticsError: Property<Boolean>
 }
 
 /**
@@ -255,12 +255,12 @@ interface Executor {
 /**
  * Common abstraction of tasks that collects host identifiers through various exec/file operations.
  */
-abstract class HostIdentifier : ValueSource<String, HostIdentifierParameters>, Executor, ErrorWrapper {
+abstract class HostIdentifier : ValueSource<String, HostIdentifierParameters>, Executor, AnalyticsErrorCatcher {
 
     @get:Inject
     abstract override val execOperations: ExecOperations
-    override val failOnError: Boolean
-        get() = parameters.failOnError.get()
+    override val failOnAnalyticsError: Boolean
+        get() = parameters.failOnAnalyticsError.get()
 
     val identifier: String
         get() {
