@@ -27,7 +27,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
   * AtomicFu 0.18.3 and above.
   * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
 * Minimum Kbson 0.3.0.
-* Minimum Gradle version: 7.1.
+* Minimum Gradle version: 6.8.3.
 * Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
 
