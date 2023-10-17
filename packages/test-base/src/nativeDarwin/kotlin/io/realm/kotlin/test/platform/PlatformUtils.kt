@@ -20,7 +20,6 @@ import io.realm.kotlin.test.util.Utils
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
 import kotlinx.cinterop.cValue
-import kotlinx.cinterop.cstr
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
 import kotlinx.cinterop.value
@@ -35,11 +34,12 @@ import kotlin.time.Duration
 
 actual object PlatformUtils {
     actual fun createTempDir(prefix: String, readOnly: Boolean): String {
-        // X is a special char which will be replace by mkdtemp template
-        val suffix = "-${Utils.createRandomString(4)}"
-        val mask = prefix.plus(suffix).replace('X', 'Z', ignoreCase = true)
-        val path = "${platform.Foundation.NSTemporaryDirectory()}$mask"
-        platform.posix.mkdtemp(path.cstr)
+        // Currently we cannot template using platform.posix.mkdtemp
+        // the return value is not of use.
+        val suffix = "-${Utils.createRandomString(6)}"
+        val path = "${platform.Foundation.NSTemporaryDirectory()}$prefix$suffix"
+        platform.posix.mkdir(path, 448.toUShort())
+
         if (readOnly) {
             platform.posix.chmod(path, (S_IRUSR or S_IRGRP or S_IROTH).toUShort())
         }
