@@ -26,6 +26,7 @@ import kotlinx.cinterop.value
 import platform.posix.S_IRGRP
 import platform.posix.S_IROTH
 import platform.posix.S_IRUSR
+import platform.posix.S_IRWXU
 import platform.posix.nanosleep
 import platform.posix.pthread_threadid_np
 import platform.posix.timespec
@@ -38,7 +39,7 @@ actual object PlatformUtils {
         // the return value is not of use.
         val suffix = "-${Utils.createRandomString(6)}"
         val path = "${platform.Foundation.NSTemporaryDirectory()}$prefix$suffix"
-        platform.posix.mkdir(path, 448.toUShort())
+        platform.posix.mkdir(path, S_IRWXU.toUShort())
 
         if (readOnly) {
             platform.posix.chmod(path, (S_IRUSR or S_IRGRP or S_IROTH).toUShort())
