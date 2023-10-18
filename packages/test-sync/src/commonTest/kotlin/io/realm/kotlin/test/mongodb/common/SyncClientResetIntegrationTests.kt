@@ -534,7 +534,11 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
 
-                // TODO We must not need this. Force updating the instance pointer.
+                // Object count down to 0 just after the reset
+                assertEquals(0, objectChannel.receiveOrFail().list.size)
+
+                // TODO https://github.com/realm/realm-core/issues/7065
+                // We must not need this. Force updating the instance pointer.
                 realm.write { }
 
                 // Validate Realm instance has been correctly updated

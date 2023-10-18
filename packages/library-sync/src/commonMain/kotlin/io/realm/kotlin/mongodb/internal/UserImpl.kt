@@ -49,7 +49,7 @@ public class UserImpl(
     override val loggedIn: Boolean
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
     override val provider: AuthenticationProvider
-        get() = AuthenticationProviderImpl.fromId(RealmInterop.realm_user_get_auth_provider(nativePointer))
+        get() = identities.first().provider
     override val accessToken: String
         get() = RealmInterop.realm_user_get_access_token(nativePointer)
     override val refreshToken: String

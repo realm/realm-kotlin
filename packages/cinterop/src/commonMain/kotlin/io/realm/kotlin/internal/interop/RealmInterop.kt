@@ -546,7 +546,6 @@ expect object RealmInterop {
     // User
     fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
     fun realm_user_get_identity(user: RealmUserPointer): String
-    fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider
     fun realm_user_get_access_token(user: RealmUserPointer): String
     fun realm_user_get_refresh_token(user: RealmUserPointer): String
     fun realm_user_get_device_id(user: RealmUserPointer): String
