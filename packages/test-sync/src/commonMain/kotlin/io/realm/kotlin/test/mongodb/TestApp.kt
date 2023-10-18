@@ -199,18 +199,18 @@ open class TestApp private constructor(
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .networkTransport(networkTransport)
                 .ejson(ejson)
-            if (SyncServerConfig.usePlatformNetworking) {
-                config.usePlatformNetworking()
-            }
-            config.apply {
-                if (logLevel != null) {
-                    log(
-                        logLevel,
-                        if (customLogger == null) emptyList<RealmLogger>()
-                        else listOf<RealmLogger>(customLogger)
-                    )
+                .apply {
+                    if (logLevel != null) {
+                        log(
+                            logLevel,
+                            if (customLogger == null) emptyList<RealmLogger>()
+                            else listOf<RealmLogger>(customLogger)
+                        )
+                    }
+                    if (SyncServerConfig.usePlatformNetworking) {
+                        usePlatformNetworking()
+                    }
                 }
-            }
 
             val app = App.create(
                 builder(config)

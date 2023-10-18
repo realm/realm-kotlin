@@ -2724,107 +2724,110 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         webSocketTransport: WebSocketTransport
     ) {
-        val realmSyncSocketNew: CPointer<realm_sync_socket_t>? =
-            realm_wrapper.realm_sync_socket_new(
-                userdata = StableRef.create(webSocketTransport).asCPointer(),
-                userdata_free = staticCFunction { userdata: CPointer<out CPointed>? ->
-                    safeUserData<WebSocketTransport>(userdata).close()
-                    disposeUserData<WebSocketTransport>(userdata)
-                },
-                post_func = staticCFunction { userdata: CPointer<out CPointed>?, syncSocketCallback: CPointer<realm_sync_socket_post_callback_t>? ->
-                    val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
-                        realm_wrapper.realm_sync_socket_post_complete(
-                            syncSocketCallback,
-                            if (cancelled) WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED.asNativeEnum else WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
-                            ""
-                        )
-                    }
-
-                    safeUserData<WebSocketTransport>(userdata).post(
-                        CPointerWrapper(StableRef.create(callback).asCPointer())
-                    )
-                },
-                create_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, delayInMilliseconds: uint64_t, syncSocketCallback: CPointer<realm_sync_socket_timer_callback_t>? ->
-                    val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
-                        if (cancelled) {
-                            realm_wrapper.realm_sync_socket_timer_canceled(syncSocketCallback)
-                        } else {
-                            realm_wrapper.realm_sync_socket_timer_complete(
+        val realmSyncSocketNew: CPointer<realm_sync_socket_t> =
+            checkedPointerResult(
+                realm_wrapper.realm_sync_socket_new(
+                    userdata = StableRef.create(webSocketTransport).asCPointer(),
+                    userdata_free = staticCFunction { userdata: CPointer<out CPointed>? ->
+                        safeUserData<WebSocketTransport>(userdata).close()
+                        disposeUserData<WebSocketTransport>(userdata)
+                    },
+                    post_func = staticCFunction { userdata: CPointer<out CPointed>?, syncSocketCallback: CPointer<realm_sync_socket_post_callback_t>? ->
+                        val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
+                            realm_wrapper.realm_sync_socket_post_complete(
                                 syncSocketCallback,
-                                WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
+                                if (cancelled) WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED.asNativeEnum else WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
                                 ""
                             )
                         }
-                    }
 
-                    safeUserData<WebSocketTransport>(userdata).let { ws ->
-                        val job: CancellableTimer = ws.createTimer(
-                            delayInMilliseconds.toLong(),
+                        safeUserData<WebSocketTransport>(userdata).post(
                             CPointerWrapper(StableRef.create(callback).asCPointer())
                         )
-                        StableRef.create(job).asCPointer()
-                    }
-                },
-                cancel_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? ->
-                    safeUserData<CancellableTimer>(timer).cancel()
-                },
-                free_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? ->
-                    disposeUserData<WebSocketTransport>(timer)
-                },
-                websocket_connect_func = staticCFunction { userdata: CPointer<out CPointed>?, endpoint: CValue<realm_wrapper.realm_websocket_endpoint_t>, observer: CPointer<realm_wrapper.realm_websocket_observer_t>? ->
-                    safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
-                        endpoint.useContents {
-                            val managedObserver = WebSocketObserver(CPointerWrapper(observer))
-
-                            val supportedProtocols = mutableListOf<String>()
-                            for (i in 0 until this.num_protocols.toInt()) {
-                                val protocol: CPointer<ByteVarOf<Byte>>? = this.protocols?.get(i)
-                                supportedProtocols.add(protocol.safeKString())
-                            }
-                            val webSocketClient: WebSocketClient = websocketTransport.connect(
-                                managedObserver,
-                                this.path.safeKString(),
-                                this.address.safeKString(),
-                                this.port.toLong(),
-                                this.is_ssl,
-                                this.num_protocols.toLong(),
-                                supportedProtocols.joinToString(", ")
-                            )
-                            StableRef.create(webSocketClient).asCPointer()
-                        }
-                    }
-                },
-                websocket_write_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t?, data: CPointer<ByteVar>?, length: size_t, callback: CPointer<realm_sync_socket_write_callback_t>? ->
-                    val postWriteCallback: WebsocketFunctionHandlerCallback =
-                        { cancelled, status, reason ->
-                            realm_wrapper.realm_sync_socket_write_complete(
-                                callback,
-                                if (cancelled) WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED.asNativeEnum else WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
-                                reason
-                            )
-                        }
-
-                    safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
-                        safeUserData<WebSocketClient>(websocket).let { webSocketClient ->
-                            data?.readBytes(length.toInt())?.run {
-                                websocketTransport.write(
-                                    webSocketClient,
-                                    this,
-                                    length.toLong(),
-                                    CPointerWrapper(
-                                        StableRef.create(postWriteCallback).asCPointer()
-                                    )
+                    },
+                    create_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, delayInMilliseconds: uint64_t, syncSocketCallback: CPointer<realm_sync_socket_timer_callback_t>? ->
+                        val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
+                            if (cancelled) {
+                                realm_wrapper.realm_sync_socket_timer_canceled(syncSocketCallback)
+                            } else {
+                                realm_wrapper.realm_sync_socket_timer_complete(
+                                    syncSocketCallback,
+                                    WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
+                                    ""
                                 )
                             }
                         }
+
+                        safeUserData<WebSocketTransport>(userdata).let { ws ->
+                            val job: CancellableTimer = ws.createTimer(
+                                delayInMilliseconds.toLong(),
+                                CPointerWrapper(StableRef.create(callback).asCPointer())
+                            )
+                            StableRef.create(job).asCPointer()
+                        }
+                    },
+                    cancel_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? ->
+                        safeUserData<CancellableTimer>(timer).cancel()
+                    },
+                    free_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? ->
+                        disposeUserData<WebSocketTransport>(timer)
+                    },
+                    websocket_connect_func = staticCFunction { userdata: CPointer<out CPointed>?, endpoint: CValue<realm_wrapper.realm_websocket_endpoint_t>, observer: CPointer<realm_wrapper.realm_websocket_observer_t>? ->
+                        safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
+                            endpoint.useContents {
+                                val managedObserver = WebSocketObserver(CPointerWrapper(observer))
+
+                                val supportedProtocols = mutableListOf<String>()
+                                for (i in 0 until this.num_protocols.toInt()) {
+                                    val protocol: CPointer<ByteVarOf<Byte>>? =
+                                        this.protocols?.get(i)
+                                    supportedProtocols.add(protocol.safeKString())
+                                }
+                                val webSocketClient: WebSocketClient = websocketTransport.connect(
+                                    managedObserver,
+                                    this.path.safeKString(),
+                                    this.address.safeKString(),
+                                    this.port.toLong(),
+                                    this.is_ssl,
+                                    this.num_protocols.toLong(),
+                                    supportedProtocols.joinToString(", ")
+                                )
+                                StableRef.create(webSocketClient).asCPointer()
+                            }
+                        }
+                    },
+                    websocket_write_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t?, data: CPointer<ByteVar>?, length: size_t, callback: CPointer<realm_sync_socket_write_callback_t>? ->
+                        val postWriteCallback: WebsocketFunctionHandlerCallback =
+                            { cancelled, status, reason ->
+                                realm_wrapper.realm_sync_socket_write_complete(
+                                    callback,
+                                    if (cancelled) WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED.asNativeEnum else WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
+                                    reason
+                                )
+                            }
+
+                        safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
+                            safeUserData<WebSocketClient>(websocket).let { webSocketClient ->
+                                data?.readBytes(length.toInt())?.run {
+                                    websocketTransport.write(
+                                        webSocketClient,
+                                        this,
+                                        length.toLong(),
+                                        CPointerWrapper(
+                                            StableRef.create(postWriteCallback).asCPointer()
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        Unit
+                    },
+                    websocket_free_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t? ->
+                        safeUserData<WebSocketClient>(websocket).closeWebsocket()
+                        disposeUserData<WebSocketClient>(websocket)
                     }
-                    Unit
-                },
-                websocket_free_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t? ->
-                    safeUserData<WebSocketClient>(websocket).closeWebsocket()
-                    disposeUserData<WebSocketClient>(websocket)
-                }
-            )
+                )
+            ) ?: error("Couldn't create Sync Socket")
         realm_wrapper.realm_sync_client_config_set_sync_socket(
             syncClientConfig.cptr(),
             realmSyncSocketNew

@@ -65,18 +65,18 @@ public class KtorWebSocketTransport(
         delayInMilliseconds: Long,
         handlerCallback: RealmWebsocketHandlerCallbackPointer
     ): CancellableTimer {
-        val atomic: AtomicRef<RealmWebsocketHandlerCallbackPointer?> = atomic(handlerCallback)
+        val atomicCallback: AtomicRef<RealmWebsocketHandlerCallbackPointer?> = atomic(handlerCallback)
         return CancellableTimer(
             scope.launch {
                 delay(delayInMilliseconds)
-                atomic.getAndSet(null)?.run {
-                    runCallback(handlerCallback)
+                atomicCallback.getAndSet(null)?.run {
+                    runCallback(this)
                 }
             }
         ) { // Cancel lambda
             scope.launch {
-                atomic.getAndSet(null)?.run {
-                    runCallback(handlerCallback, cancelled = true)
+                atomicCallback.getAndSet(null)?.run {
+                    runCallback(this, cancelled = true)
                 }
             }
         }

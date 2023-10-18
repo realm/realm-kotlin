@@ -314,7 +314,7 @@ buildkonfig {
             buildConfigField(Type.STRING, "privateApiKey", "")
         }
         buildConfigField(Type.STRING, "clusterName", getPropertyValue("syncTestClusterName") ?: "")
-        buildConfigField(Type.BOOLEAN, "usePlatformNetworking",  getPropertyValue("REALM_USE_PLATFORM_NETWORKING")?.toLowerCaseAsciiOnly() ?: "false")
+        buildConfigField(Type.BOOLEAN, "usePlatformNetworking",  getPropertyValue("syncUsePlatformNetworking") ?: "false")
     }
 }
 

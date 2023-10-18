@@ -684,33 +684,28 @@ static void websocket_post_func(realm_userdata_t userdata,
                                 realm_sync_socket_post_callback_t* realm_callback) {
     // Some calls to 'post' happens from the external commit helper which is not necessarily attached yet to a JVM thread
     auto jenv = get_env(true, true); // attach as daemon thread
-    static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
-    static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
 
     WebsocketFunctionHandlerCallback* lambda = new WebsocketFunctionHandlerCallback([realm_callback=std::move(realm_callback)](bool cancelled, int status, const char* reason) {
         realm_sync_socket_post_complete(realm_callback,
                                         cancelled ? realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED : realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_SUCCESS,
                                         "");
     });
-    jobject pointer = jenv->NewObject(native_pointer_class, native_pointer_constructor,
-                                     reinterpret_cast<jlong>(lambda), false);
+    jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
 
-    static JavaClass jvm_websocket_transport_class (jenv, "io/realm/kotlin/internal/interop/sync/WebSocketTransport");
-    static JavaMethod post_method (jenv, jvm_websocket_transport_class, "post",
+    static JavaMethod post_method (jenv, JavaClassGlobalDef::sync_websocket_client(), "post",
                                                      "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
     jobject websocket_transport = static_cast<jobject>(userdata);
-    jenv->CallVoidMethod(websocket_transport, post_method, pointer);
+    jenv->CallVoidMethod(websocket_transport, post_method, lambda_callback_pointer_wrapper);
+    jni_check_exception(jenv);
 
-    jenv->DeleteLocalRef(pointer);
+    jenv->DeleteLocalRef(lambda_callback_pointer_wrapper);
 }
 
 static realm_sync_socket_timer_t websocket_create_timer_func(
         realm_userdata_t userdata, uint64_t delay_ms, realm_sync_socket_timer_callback_t* realm_callback) {
     // called from main thread/event loop which should be already attached to JVM
     auto jenv = get_env(false);
-    static JavaClass native_pointer_class(jenv,
-                                          "io/realm/kotlin/internal/interop/LongPointerWrapper");
-    static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
+
     WebsocketFunctionHandlerCallback *lambda = new WebsocketFunctionHandlerCallback(
             [realm_callback = std::move(realm_callback)](bool cancel, int status,
                                                          const char *reason) {
@@ -722,16 +717,15 @@ static realm_sync_socket_timer_t websocket_create_timer_func(
                                                      "");
                 }
             });
-    jobject pointer = jenv->NewObject(native_pointer_class, native_pointer_constructor,
-                                      reinterpret_cast<jlong>(lambda), false);
+    jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
 
-    static JavaClass jvm_websocket_transport_class (jenv, "io/realm/kotlin/internal/interop/sync/WebSocketTransport");
-    static JavaMethod create_timer_method (jenv, jvm_websocket_transport_class, "createTimer",
+    static JavaMethod create_timer_method (jenv, JavaClassGlobalDef::sync_websocket_client(), "createTimer",
                                                      "(JLio/realm/kotlin/internal/interop/NativePointer;)Lio/realm/kotlin/internal/interop/sync/CancellableTimer;");
     jobject websocket_transport = static_cast<jobject>(userdata);
-    jobject cancellable_timer = jenv->CallObjectMethod(websocket_transport, create_timer_method, jlong(delay_ms), pointer);
+    jobject cancellable_timer = jenv->CallObjectMethod(websocket_transport, create_timer_method, jlong(delay_ms), lambda_callback_pointer_wrapper);
+    jni_check_exception(jenv);
 
-    jenv->DeleteLocalRef(pointer);
+    jenv->DeleteLocalRef(lambda_callback_pointer_wrapper);
     return reinterpret_cast<realm_sync_socket_timer_t>(jenv->NewGlobalRef(cancellable_timer));
 }
 
@@ -745,6 +739,7 @@ static void websocket_cancel_timer_func(realm_userdata_t userdata,
         static JavaMethod cancel_method(jenv, cancellable_timer_class, "cancel",
                                                "()V");
         jenv->CallVoidMethod(cancellable_timer, cancel_method);
+        jni_check_exception(jenv);
 
         jenv->DeleteGlobalRef(cancellable_timer);
     }
@@ -756,18 +751,14 @@ static realm_sync_socket_websocket_t websocket_connect_func(
 
     auto jenv = get_env(false);
 
-    static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
-    static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
-    jobject observer_pointer = jenv->NewObject(native_pointer_class, native_pointer_constructor,
-                                      reinterpret_cast<jlong>(realm_websocket_observer), false);
+    jobject observer_pointer = wrap_pointer(jenv,reinterpret_cast<jlong>(realm_websocket_observer));
 
     static JavaClass websocket_observer_class(jenv, "io/realm/kotlin/internal/interop/sync/WebSocketObserver");
     static JavaMethod websocket_observer_constructor(jenv, websocket_observer_class, "<init>",
                                                                          "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
     jobject websocket_observer = jenv->NewObject(websocket_observer_class, websocket_observer_constructor, observer_pointer);
 
-    static JavaClass websocket_transport_class(jenv, "io/realm/kotlin/internal/interop/sync/WebSocketTransport");
-    static JavaMethod connect_method(jenv, websocket_transport_class, "connect",
+    static JavaMethod connect_method(jenv, JavaClassGlobalDef::sync_websocket_client(), "connect",
                                                         "(Lio/realm/kotlin/internal/interop/sync/WebSocketObserver;Ljava/lang/String;Ljava/lang/String;JZJLjava/lang/String;)Lio/realm/kotlin/internal/interop/sync/WebSocketClient;");
     jobject websocket_transport = static_cast<jobject>(userdata);
 
@@ -784,6 +775,8 @@ static realm_sync_socket_websocket_t websocket_connect_func(
                                                       endpoint.is_ssl,
                                                       jlong(endpoint.num_protocols),
                                                       to_jstring(jenv, supported_protocol.str().c_str()));
+    jni_check_exception(jenv);
+
     realm_sync_socket_websocket_t global_websocket_ref = reinterpret_cast<realm_sync_socket_websocket_t>(jenv->NewGlobalRef(websocket_client));
 
     jenv->DeleteLocalRef(websocket_observer);
@@ -798,15 +791,12 @@ static void websocket_async_write_func(realm_userdata_t userdata,
                                  realm_sync_socket_write_callback_t* realm_callback) {
     auto jenv = get_env(false);
 
-    static JavaClass native_pointer_class(jenv, "io/realm/kotlin/internal/interop/LongPointerWrapper");
-    static JavaMethod native_pointer_constructor(jenv, native_pointer_class, "<init>", "(JZ)V");
     WebsocketFunctionHandlerCallback* lambda = new WebsocketFunctionHandlerCallback([realm_callback=std::move(realm_callback)](bool cancelled, int status, const char* reason) {
         realm_sync_socket_write_complete(realm_callback,
                                          cancelled ? realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED: realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_SUCCESS,
                                          "");
     });
-    jobject callback_pointer = jenv->NewObject(native_pointer_class, native_pointer_constructor,
-                                      reinterpret_cast<jlong>(lambda), false);
+    jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
 
     static jclass websocket_transport_class = jenv->FindClass("io/realm/kotlin/internal/interop/sync/WebSocketTransport");
     static jmethodID write_method = jenv->GetMethodID(websocket_transport_class, "write",
@@ -820,9 +810,12 @@ static void websocket_async_write_func(realm_userdata_t userdata,
                          static_cast<jobject>(websocket_userdata),
                          byteArray,
                          jlong(size),
-                         callback_pointer);
+                         lambda_callback_pointer_wrapper);
+    jni_check_exception(jenv);
 
     jenv->DeleteLocalRef(byteArray);
+    jenv->DeleteLocalRef(lambda_callback_pointer_wrapper);
+
 }
 
 static void realm_sync_websocket_free(realm_userdata_t userdata,
@@ -834,6 +827,7 @@ static void realm_sync_websocket_free(realm_userdata_t userdata,
 
         jobject websocket_client = static_cast<jobject>(websocket_userdata);
         jenv->CallVoidMethod(websocket_client, close_method);
+        jni_check_exception(jenv);
 
         jenv->DeleteGlobalRef(websocket_client);
     }
@@ -848,6 +842,7 @@ static void realm_sync_userdata_free(realm_userdata_t userdata) {
 
         jobject websocket_transport = static_cast<jobject>(userdata);
         jenv->CallVoidMethod(websocket_transport, close_method);
+        jni_check_exception(jenv);
 
         jenv->DeleteGlobalRef(websocket_transport);
     }
@@ -895,6 +890,8 @@ realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jo
                                   websocket_connect_func/*websocket_connect_func*/,
                                   websocket_async_write_func/*websocket_write_func*/,
                                   realm_sync_websocket_free/*websocket_free_func*/);
+    jni_check_exception(jenv);
+
     realm_sync_client_config_set_sync_socket(reinterpret_cast<realm_sync_client_config_t*>(sync_client_config_ptr)/*config*/, socket_provider);
     realm_release(socket_provider);
     return socket_provider;
