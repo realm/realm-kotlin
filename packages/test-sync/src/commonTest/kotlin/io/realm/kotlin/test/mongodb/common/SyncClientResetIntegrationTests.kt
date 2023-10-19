@@ -59,7 +59,6 @@ import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -451,7 +450,6 @@ class SyncClientResetIntegrationTests {
         channel.close()
     }
 
-    @Ignore
     @Test
     fun discardUnsyncedChanges_discards_attemptRecover_pbs() {
         performPbsTest { syncMode, app, user, builder ->
@@ -459,7 +457,6 @@ class SyncClientResetIntegrationTests {
         }
     }
 
-    @Ignore
     @Test
     fun discardUnsyncedChanges_discards_attemptRecover_flx() {
         performFlxTest { syncMode, app, user, builder ->

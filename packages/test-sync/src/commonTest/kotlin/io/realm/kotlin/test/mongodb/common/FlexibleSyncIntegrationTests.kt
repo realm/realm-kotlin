@@ -331,7 +331,7 @@ class FlexibleSyncIntegrationTests {
 
             val exception: CompensatingWriteException = channel.receiveOrFail()
 
-            assertTrue(exception.message!!.startsWith("[Sync][CompensatingWrite(1033)] Client attempted a write that is not allowed; it has been reverted Logs:"), exception.message)
+            assertTrue(exception.message!!.startsWith("[Sync][CompensatingWrite(1033)] Client attempted a write that is outside of permissions or query filters; it has been reverted Logs:"), exception.message)
             assertEquals(1, exception.writes.size)
 
             exception.writes[0].run {

@@ -692,7 +692,7 @@ static void websocket_post_func(realm_userdata_t userdata,
     });
     jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
 
-    static JavaMethod post_method (jenv, JavaClassGlobalDef::sync_websocket_client(), "post",
+    static JavaMethod post_method(jenv, JavaClassGlobalDef::sync_websocket_transport(), "post",
                                                      "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
     jobject websocket_transport = static_cast<jobject>(userdata);
     jenv->CallVoidMethod(websocket_transport, post_method, lambda_callback_pointer_wrapper);
@@ -719,7 +719,7 @@ static realm_sync_socket_timer_t websocket_create_timer_func(
             });
     jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
 
-    static JavaMethod create_timer_method (jenv, JavaClassGlobalDef::sync_websocket_client(), "createTimer",
+    static JavaMethod create_timer_method (jenv, JavaClassGlobalDef::sync_websocket_transport(), "createTimer",
                                                      "(JLio/realm/kotlin/internal/interop/NativePointer;)Lio/realm/kotlin/internal/interop/sync/CancellableTimer;");
     jobject websocket_transport = static_cast<jobject>(userdata);
     jobject cancellable_timer = jenv->CallObjectMethod(websocket_transport, create_timer_method, jlong(delay_ms), lambda_callback_pointer_wrapper);
@@ -758,7 +758,7 @@ static realm_sync_socket_websocket_t websocket_connect_func(
                                                                          "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
     jobject websocket_observer = jenv->NewObject(websocket_observer_class, websocket_observer_constructor, observer_pointer);
 
-    static JavaMethod connect_method(jenv, JavaClassGlobalDef::sync_websocket_client(), "connect",
+    static JavaMethod connect_method(jenv, JavaClassGlobalDef::sync_websocket_transport(), "connect",
                                                         "(Lio/realm/kotlin/internal/interop/sync/WebSocketObserver;Ljava/lang/String;Ljava/lang/String;JZJLjava/lang/String;)Lio/realm/kotlin/internal/interop/sync/WebSocketClient;");
     jobject websocket_transport = static_cast<jobject>(userdata);
 
@@ -798,8 +798,7 @@ static void websocket_async_write_func(realm_userdata_t userdata,
     });
     jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
 
-    static jclass websocket_transport_class = jenv->FindClass("io/realm/kotlin/internal/interop/sync/WebSocketTransport");
-    static jmethodID write_method = jenv->GetMethodID(websocket_transport_class, "write",
+    static jmethodID write_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_transport(), "write",
                                                       "(Lio/realm/kotlin/internal/interop/sync/WebSocketClient;[BJLio/realm/kotlin/internal/interop/NativePointer;)V");
     jobject websocket_transport = static_cast<jobject>(userdata);
 
@@ -822,8 +821,7 @@ static void realm_sync_websocket_free(realm_userdata_t userdata,
                                       realm_sync_socket_websocket_t websocket_userdata) {
     if (websocket_userdata != nullptr) {
         auto jenv = get_env(false);
-        static jclass websocket_client_class = jenv->FindClass("io/realm/kotlin/internal/interop/sync/WebSocketClient");
-        static jmethodID close_method = jenv->GetMethodID(websocket_client_class, "closeWebsocket", "()V");
+        static jmethodID close_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_client(), "closeWebsocket", "()V");
 
         jobject websocket_client = static_cast<jobject>(websocket_userdata);
         jenv->CallVoidMethod(websocket_client, close_method);
@@ -837,8 +835,7 @@ static void realm_sync_userdata_free(realm_userdata_t userdata) {
     if (userdata != nullptr) {
         auto jenv = get_env(false);
 
-        static jclass websocket_client_class = jenv->FindClass("io/realm/kotlin/internal/interop/sync/WebSocketTransport");
-        static jmethodID close_method = jenv->GetMethodID(websocket_client_class, "close", "()V");
+        static jmethodID close_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_transport(), "close", "()V");
 
         jobject websocket_transport = static_cast<jobject>(userdata);
         jenv->CallVoidMethod(websocket_transport, close_method);
