@@ -83,7 +83,7 @@ public interface User {
      * Returns the provider type used to log the user in.
      * If a user logs out, the authentication provider last used to log the user in will still be returned.
      */
-    @Deprecated("Property not stable, users might have multiple providers.", ReplaceWith("identities"))
+    @Deprecated("Users might have multiple providers. This will return the provider of the first identity of the user", ReplaceWith("identities"))
     public val provider: AuthenticationProvider
 
     /**

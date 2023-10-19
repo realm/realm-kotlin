@@ -134,6 +134,7 @@ class SyncClientResetIntegrationTests {
 
                 block(syncMode, app, user, configBuilderGenerator(user))
             } finally {
+                logChannel.close()
                 app.close()
             }
         }
@@ -443,10 +444,11 @@ class SyncClientResetIntegrationTests {
 
                 // Validate Realm instance has been correctly updated
                 assertEquals(0, objectChannel.receiveOrFail().list.size)
-
+                objectChannel.close()
                 job.cancel()
             }
         }
+        channel.close()
     }
 
     @Ignore
@@ -543,10 +545,11 @@ class SyncClientResetIntegrationTests {
 
                 // Validate Realm instance has been correctly updated
                 assertEquals(1, objectChannel.receiveOrFail().list.size)
-
+                objectChannel.close()
                 job.cancel()
             }
         }
+        channel.close()
     }
 
     @Test
@@ -618,6 +621,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     @Test
@@ -693,6 +697,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     @Test
@@ -766,6 +771,8 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
+
+        channel.close()
     }
 
     @Test
@@ -853,6 +860,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     // ---------------------------------------------------------------------------------------
@@ -961,6 +969,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1013,6 +1022,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     // ---------------------------------------------------------------------------------------
@@ -1073,6 +1083,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1124,6 +1135,7 @@ class SyncClientResetIntegrationTests {
                 assertTrue(exception.message!!.contains("Simulate Client Reset"))
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1182,6 +1194,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1252,6 +1265,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     // ---------------------------------------------------------------------------------------
@@ -1314,6 +1328,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_AFTER_RECOVERY, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1381,6 +1396,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_AFTER_DISCARD, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1455,5 +1471,6 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 }
