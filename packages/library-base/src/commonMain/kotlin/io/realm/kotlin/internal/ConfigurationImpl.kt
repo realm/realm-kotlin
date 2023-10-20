@@ -34,9 +34,9 @@ import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.MigrationCallback
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
-import io.realm.kotlin.internal.interop.use
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
@@ -107,17 +107,14 @@ public open class ConfigurationImpl(
         return configInitializer(nativeConfig)
     }
 
-    override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
+    override suspend fun openRealm(realm: RealmImpl): Triple<FrozenRealmReference, Boolean, RealmSchedulerPointer> {
         val configPtr = realm.configuration.createNativeConfiguration()
-        return RealmInterop.realm_create_scheduler()
-            .use { scheduler ->
-                val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
-                val liveRealmReference = LiveRealmReference(realm, dbPointer)
-                val frozenReference = liveRealmReference.snapshot(realm)
-                liveRealmReference.close()
-                dbPointer.release()
-                frozenReference to fileCreated
-            }
+        val scheduler = RealmInterop.realm_create_scheduler()
+        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
+        val liveRealmReference = LiveRealmReference(realm, dbPointer)
+        val frozenReference = liveRealmReference.snapshot(realm)
+        liveRealmReference.close()
+        return Triple(frozenReference, fileCreated, scheduler)
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {

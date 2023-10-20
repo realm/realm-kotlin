@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmAsyncOpenTaskPointer
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.interop.RealmSyncConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmSyncSessionPointer
 import io.realm.kotlin.internal.interop.SyncAfterClientResetHandler
@@ -69,7 +70,7 @@ internal class SyncConfigurationImpl(
     override val initialRemoteData: InitialRemoteDataConfiguration?
 ) : InternalConfiguration by configuration, SyncConfiguration {
 
-    override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
+    override suspend fun openRealm(realm: RealmImpl): Triple<FrozenRealmReference, Boolean, RealmSchedulerPointer> {
         // Partition-based Realms with `waitForInitialRemoteData` enabled will use
         // async open first do download the server side Realm. This is much faster than
         // creating the Realm locally first and then downloading (and integrating) changes into
@@ -131,8 +132,8 @@ internal class SyncConfigurationImpl(
         // So there are two possibilities for the file to be created:
         // 1) .waitForInitialRemoteData caused async open to be used, which created the file.
         // 2) The synced Realm was opened locally first (without async open), which then created the file.
-        val result: Pair<FrozenRealmReference, Boolean> = configuration.openRealm(realm)
-        return Pair(result.first, result.second || asyncOpenCreatedRealmFile.value)
+        val result: Triple<FrozenRealmReference, Boolean, RealmSchedulerPointer> = configuration.openRealm(realm)
+        return Triple(result.first, result.second || asyncOpenCreatedRealmFile.value, result.third)
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {

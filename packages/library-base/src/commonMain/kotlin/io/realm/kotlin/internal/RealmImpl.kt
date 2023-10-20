@@ -22,6 +22,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
@@ -95,6 +96,13 @@ public class RealmImpl private constructor(
     override val realmReference: FrozenRealmReference
         get() = realmReference()
 
+    // TODO We have to keep this scheduler alive while the initial realm is open. We have no notification
+    // from core when we can release, to be safe we will tie its lifecycle to the user-facing Realm.
+    // Releasing this scheduler might incur in race-conditions, leading to core crashing.
+    // For example after a client reset it might try to notify with this scheduler that might have been
+    // released.
+    private lateinit var initialScheduler: RealmSchedulerPointer
+
     // TODO Bit of an overkill to have this as we are only catching the initial frozen version.
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
     //  would require us to sync that up. Didn't address this as we already have a todo on fixing
@@ -129,7 +137,8 @@ public class RealmImpl private constructor(
                         }
                     }
                 }
-                val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
+                val (frozenReference, fileCreated, scheduler) = configuration.openRealm(this@RealmImpl)
+                initialScheduler = scheduler
                 realmFileCreated = assetFileCopied || fileCreated
                 versionTracker.trackAndCloseExpiredReferences(frozenReference)
                 _realmReference.value = frozenReference
@@ -279,7 +288,6 @@ public class RealmImpl private constructor(
         if (!realmStateFlow.tryEmit(State.CLOSED)) {
             log.warn("Cannot signal internal close")
         }
-
         notificationScheduler.close()
         writeScheduler.close()
     }
