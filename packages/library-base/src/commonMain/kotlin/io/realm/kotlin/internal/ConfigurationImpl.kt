@@ -115,6 +115,7 @@ public open class ConfigurationImpl(
                 val liveRealmReference = LiveRealmReference(realm, dbPointer)
                 val frozenReference = liveRealmReference.snapshot(realm)
                 liveRealmReference.close()
+                dbPointer.release()
                 frozenReference to fileCreated
             }
     }
