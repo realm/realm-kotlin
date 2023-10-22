@@ -185,8 +185,12 @@ expect object RealmInterop {
     fun realm_config_set_in_memory(config: RealmConfigurationPointer, inMemory: Boolean)
     fun realm_schema_validate(schema: RealmSchemaPointer, mode: SchemaValidationMode): Boolean
 
-    fun realm_create_scheduler(): RealmSchedulerPointer
-    fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer
+    fun realm_create_scheduler(name: String = "no-name"): RealmSchedulerPointer
+    fun realm_create_scheduler(
+        dispatcher: CoroutineDispatcher,
+        name: String = "no-name"
+    ): RealmSchedulerPointer
+
     /**
      * Open a realm on the current thread.
      *

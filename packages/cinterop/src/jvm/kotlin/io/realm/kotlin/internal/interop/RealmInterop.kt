@@ -210,11 +210,22 @@ actual object RealmInterop {
         realmc.realm_config_set_in_memory(config.cptr(), inMemory)
     }
 
-    actual fun realm_create_scheduler(): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_create_generic_scheduler())
+    actual fun realm_create_scheduler(name: String): RealmSchedulerPointer =
+        LongPointerWrapper(
+            realmc.realm_create_generic_scheduler().also {
+                println("Scheduler $name pointer : $it")
+            }
+        )
 
-    actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)))
+    actual fun realm_create_scheduler(
+        dispatcher: CoroutineDispatcher,
+        name: String,
+    ): RealmSchedulerPointer =
+        LongPointerWrapper(
+            realmc.realm_create_scheduler(JVMScheduler(dispatcher)).also {
+                println("Scheduler $name pointer: $it")
+            }
+        )
 
     actual fun realm_open(
         config: RealmConfigurationPointer,
@@ -2144,6 +2155,7 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
 
     fun notifyCore(schedulerPointer: Long) {
+        println("Scheduler invoke: $schedulerPointer")
         scope.launch {
             realmc.invoke_core_notify_callback(schedulerPointer)
         }

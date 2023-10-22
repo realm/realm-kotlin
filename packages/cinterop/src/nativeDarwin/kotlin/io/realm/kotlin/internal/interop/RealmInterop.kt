@@ -541,14 +541,14 @@ actual object RealmInterop {
         return Pair(realmPtr, fileCreated.value)
     }
 
-    actual fun realm_create_scheduler(): RealmSchedulerPointer {
+    actual fun realm_create_scheduler(name: String): RealmSchedulerPointer {
         // If there is no notification dispatcher use the default scheduler.
         // Re-verify if this is actually needed when notification scheduler is fully in place.
         val scheduler = checkedPointerResult(realm_wrapper.realm_scheduler_make_default())
         return CPointerWrapper<RealmSchedulerT>(scheduler)
     }
 
-    actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer {
+    actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher, name: String): RealmSchedulerPointer {
         printlntid("createSingleThreadDispatcherScheduler")
         val scheduler = SingleThreadDispatcherScheduler(tid(), dispatcher)
 

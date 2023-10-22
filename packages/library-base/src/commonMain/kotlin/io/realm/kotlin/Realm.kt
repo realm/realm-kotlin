@@ -120,7 +120,7 @@ public interface Realm : TypedRealm {
             if (!fileExists(configuration.path)) return false
             val config = (configuration as InternalConfiguration)
 
-            return RealmInterop.realm_create_scheduler()
+            return RealmInterop.realm_create_scheduler("compact-realm")
                 .use { scheduler ->
                     val (dbPointer, _) = RealmInterop.realm_open(
                         config = config.createNativeConfiguration(),

@@ -42,10 +42,11 @@ public fun interface CoroutineDispatcherFactory {
         public fun managed(name: String, threads: Int = 1): CoroutineDispatcherFactory {
             return CoroutineDispatcherFactory {
                 ManagedDispatcherHolder(
-                    when (threads) {
+                    dispatcher = when (threads) {
                         1 -> singleThreadDispatcher(name)
                         else -> multiThreadDispatcher(threads)
-                    }
+                    },
+                    name = name
                 )
             }
         }
@@ -56,7 +57,7 @@ public fun interface CoroutineDispatcherFactory {
          */
         public fun unmanaged(dispatcher: CoroutineDispatcher): CoroutineDispatcherFactory {
             return CoroutineDispatcherFactory {
-                UnmanagedDispatcherHolder(dispatcher)
+                UnmanagedDispatcherHolder(dispatcher, "unmanaged")
             }
         }
     }
@@ -85,6 +86,8 @@ public sealed interface DispatcherHolder {
      */
     public val dispatcher: CoroutineDispatcher
 
+    public val name: String
+
     /**
      * Mark the dispatcher as no longer being used. For internal dispatchers, this will also
      * close them.
@@ -95,12 +98,14 @@ public sealed interface DispatcherHolder {
 @OptIn(ExperimentalCoroutinesApi::class)
 private class ManagedDispatcherHolder(
     override val dispatcher: CloseableCoroutineDispatcher,
+    override val name: String,
 ) : DispatcherHolder {
     override fun close(): Unit = dispatcher.close()
 }
 
 private class UnmanagedDispatcherHolder(
-    override val dispatcher: CoroutineDispatcher
+    override val dispatcher: CoroutineDispatcher,
+    override val name: String,
 ) : DispatcherHolder {
     override fun close(): Unit = Unit
 }
@@ -115,7 +120,7 @@ public class LiveRealmContext(
 
     public val scheduler: RealmSchedulerPointer = runBlocking {
         withContext(dispatcherHolder.dispatcher) {
-            RealmInterop.realm_create_scheduler(dispatcher)
+            RealmInterop.realm_create_scheduler(dispatcher, dispatcherHolder.name)
         }
     }
 
