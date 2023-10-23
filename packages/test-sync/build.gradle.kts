@@ -123,7 +123,6 @@ kotlin {
     // JVM specific KotlinCompilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
-        kotlinOptions.freeCompilerArgs += "-opt-in=org.mongodb.kbson.ExperimentalKBsonSerializerApi"
     }
 }
 

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalForeignApi::class)
-
 package io.realm.kotlin.test.darwin
 
 import io.realm.kotlin.Realm
@@ -26,7 +24,6 @@ import io.realm.kotlin.test.platform.PlatformUtils.createTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.deleteTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.triggerGC
 import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.toKString
 import platform.posix.FILE

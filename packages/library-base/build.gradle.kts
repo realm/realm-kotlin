@@ -44,14 +44,6 @@ kotlin {
     macosX64()
     macosArm64()
 
-    targets.all {
-        compilations.all {
-            kotlinOptions {
-                freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
-            }
-        }
-    }
-
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -137,6 +129,10 @@ kotlin {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     kotlinOptions {
         freeCompilerArgs += listOf("-module-name", "io.realm.kotlin.library")
+    }
+}
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
+    kotlinOptions {
         freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
     }
 }
