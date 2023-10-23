@@ -44,15 +44,12 @@ internal abstract class LiveRealm(
     val owner: RealmImpl,
     configuration: InternalConfiguration,
     private val scheduler: LiveRealmContext,
-    initialSnapshot: FrozenRealmReference? = null
 ) : BaseRealmImpl(configuration) {
 
     private val realmChangeRegistration: NotificationToken
     private val schemaChangeRegistration: NotificationToken
 
-    internal val versionTracker = VersionTracker(this, owner.log).apply {
-        initialSnapshot?.let { trackReference(it) }
-    }
+    internal val versionTracker = VersionTracker(this, owner.log)
 
     override val realmReference: LiveRealmReference by lazy {
         val (dbPointer, _) = RealmInterop.realm_open(
@@ -69,7 +66,7 @@ internal abstract class LiveRealm(
      * [gcTrackedSnapshot] then the old reference will be closed, allowing Core to release the
      * underlying resources of the no-longer referenced version.
      */
-    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(initialSnapshot ?: realmReference.snapshot(owner))
+    private val _snapshot: AtomicRef<FrozenRealmReference> = atomic(realmReference.snapshot(owner))
     /**
      * Flag used to control whether to close or track the [_snapshot] when advancing to a newer
      * version.

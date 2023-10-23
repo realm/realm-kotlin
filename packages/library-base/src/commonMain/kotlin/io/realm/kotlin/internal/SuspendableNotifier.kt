@@ -37,11 +37,7 @@ import kotlinx.coroutines.withContext
 internal class SuspendableNotifier(
     private val owner: RealmImpl,
     private val scheduler: LiveRealmContext,
-    private val initialSnapshot: FrozenRealmReference,
 ) : LiveRealmHolder<LiveRealm>() {
-
-    override val hasInitialRealm: Boolean = true
-
     // Flow used to emit events when the version of the live realm is updated
     // Adding extra buffer capacity as we are otherwise never able to emit anything
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
@@ -58,7 +54,6 @@ internal class SuspendableNotifier(
         owner = owner,
         configuration = owner.configuration,
         scheduler = scheduler,
-        initialSnapshot = initialSnapshot
     ) {
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
@@ -80,7 +75,6 @@ internal class SuspendableNotifier(
     }
 
     override val realmInitializer = lazy<LiveRealm> { NotifierRealm() }
-
     // Must only be accessed from the dispatchers thread
     override val realm: LiveRealm by realmInitializer
 
@@ -145,7 +139,7 @@ internal class SuspendableNotifier(
         runBlocking(dispatcher) {
             // Calling close on a non initialized Realm is wasteful since before calling RealmInterop.close
             // The Realm will be first opened (RealmInterop.open) and an instance created in vain.
-            if (hasInitialRealm || realmInitializer.isInitialized()) {
+            if (realmInitializer.isInitialized()) {
                 realm.close()
             }
         }

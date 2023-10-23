@@ -75,7 +75,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
 
     fun versions(): Set<VersionId> =
         // We could actually also report freed versions here!?
-        intermediateReferences.value.mapNotNull { it.second.get()?.uncheckedVersion() }.toSet()
+        intermediateReferences.value.mapNotNull { it.second.get()?.version() }.toSet()
 
     fun close() {
         intermediateReferences.value.forEach { (pointer, _) ->
