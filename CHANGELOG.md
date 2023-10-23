@@ -1,5 +1,7 @@
 ## 1.12.0-SNAPSHOT (YYYY-MM-DD)
 
+This release upgrades the Sync metadata in a way that is not compatible with older versions. To downgrade a Sync app from this version, you'll need to manually delete the metadata folder located at `$[SYNC-ROOT-DIRECTORY]/mongodb-realm/[APP-ID]/server-utility/metadata/`. This will log out all users.
+
 ### Breaking Changes
 * None.
 
@@ -33,7 +35,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.23.1, commit 3618b2e9d679cd2880be8df17b79d4cc6d71ff76.
 
 
 ## 1.11.1 (2023-09-07)
