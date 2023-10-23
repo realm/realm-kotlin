@@ -35,7 +35,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.23.1, commit 9fe0653fef672f14c771019ba27d54d568f622d0.
+* Updated to Realm Core 13.23.1, commit 43853ebe18bd2a6873e7f300d18b6a5e614da627.
 * Update to Ktor 2.3.4.
 * Switched Ktor engine to CIO for Android and JVM to work around https://youtrack.jetbrains.com/issue/KTOR-6266. Revert to OkHttp when the issue is fixed.
 

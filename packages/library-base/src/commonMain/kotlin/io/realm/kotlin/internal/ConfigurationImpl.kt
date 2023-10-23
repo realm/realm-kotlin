@@ -109,14 +109,11 @@ public open class ConfigurationImpl(
 
     override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         val configPtr = realm.configuration.createNativeConfiguration()
-        return RealmInterop.realm_create_scheduler()
-            .use { scheduler ->
-                val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
-                val liveRealmReference = LiveRealmReference(realm, dbPointer)
-                val frozenReference = liveRealmReference.snapshot(realm)
-                liveRealmReference.close()
-                frozenReference to fileCreated
-            }
+        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, RealmInterop.realm_create_scheduler())
+        val liveRealmReference = LiveRealmReference(realm, dbPointer)
+        val frozenReference = liveRealmReference.snapshot(realm)
+        liveRealmReference.close()
+        return frozenReference to fileCreated
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {

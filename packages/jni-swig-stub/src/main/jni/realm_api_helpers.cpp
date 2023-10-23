@@ -269,6 +269,7 @@ public:
 
     ~CustomJVMScheduler() {
         get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
+        delete m_scheduler;
     }
 
     void set_scheduler(realm_scheduler_t* scheduler) {
@@ -278,7 +279,7 @@ public:
     void notify() {
         // There is currently no signaling of creation/tear down of the core notifier thread, so we
         // just attach it as a daemon thread here on first notification to allow the JVM to
-        // shutdown propertly. See https://github.com/realm/realm-core/issues/6429
+        // shutdown property. See https://github.com/realm/realm-core/issues/6429
         auto jenv = get_env(true, true, "core-notifier");
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
