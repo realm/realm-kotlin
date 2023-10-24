@@ -269,7 +269,6 @@ public:
 
     ~CustomJVMScheduler() {
         get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
-        delete m_scheduler;
     }
 
     void set_scheduler(realm_scheduler_t* scheduler) {
