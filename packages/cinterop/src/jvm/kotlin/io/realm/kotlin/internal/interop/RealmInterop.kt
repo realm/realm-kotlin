@@ -2155,8 +2155,8 @@ private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
 
     fun notifyCore(schedulerPointer: Long) {
-        println("Scheduler invoke: $schedulerPointer")
         scope.launch {
+            println("Scheduler invoke: $schedulerPointer")
             realmc.invoke_core_notify_callback(schedulerPointer)
         }
     }

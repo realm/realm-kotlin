@@ -125,6 +125,7 @@ public class LiveRealmContext(
     }
 
     override fun close() {
+        println("Scheduler release ${dispatcherHolder.name}")
         scheduler.release()
         dispatcherHolder.close()
     }
