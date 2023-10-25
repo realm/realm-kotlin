@@ -34,9 +34,9 @@ import io.realm.kotlin.internal.interop.LiveRealmPointer
 import io.realm.kotlin.internal.interop.MigrationCallback
 import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmSchedulerPointer
 import io.realm.kotlin.internal.interop.RealmSchemaPointer
 import io.realm.kotlin.internal.interop.SchemaMode
+import io.realm.kotlin.internal.interop.use
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.prepareRealmFilePath
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
@@ -107,14 +107,17 @@ public open class ConfigurationImpl(
         return configInitializer(nativeConfig)
     }
 
-    override suspend fun openRealm(realm: RealmImpl): Triple<FrozenRealmReference, Boolean, RealmSchedulerPointer> {
+    override suspend fun openRealm(realm: RealmImpl): Pair<FrozenRealmReference, Boolean> {
         val configPtr = realm.configuration.createNativeConfiguration()
-        val scheduler = RealmInterop.realm_create_scheduler("configurationImpl")
-        val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
-        val liveRealmReference = LiveRealmReference(realm, dbPointer)
-        val frozenReference = liveRealmReference.snapshot(realm)
-        liveRealmReference.close()
-        return Triple(frozenReference, fileCreated, scheduler)
+        return RealmInterop.realm_create_scheduler("configurationImpl")
+            .use { scheduler ->
+                val (dbPointer, fileCreated) = RealmInterop.realm_open(configPtr, scheduler)
+                val liveRealmReference = LiveRealmReference(realm, dbPointer)
+                val frozenReference = liveRealmReference.snapshot(realm)
+                liveRealmReference.close()
+                dbPointer.release()
+                frozenReference to fileCreated
+            }
     }
 
     override suspend fun initializeRealmData(realm: RealmImpl, realmFileCreated: Boolean) {
