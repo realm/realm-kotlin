@@ -116,5 +116,6 @@ android {
     defaultConfig {
         minSdk = Versions.Android.minSdk
         targetSdk = Versions.Android.targetSdk
+        multiDexEnabled = true
     }
 }
