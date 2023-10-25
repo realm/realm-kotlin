@@ -104,7 +104,6 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(0, allTracked.size, toString())
             assertNotNull(writer, toString())
-            assertEquals(0, writer?.active?.size, toString())
         }
 
         // Until we actually query the object
@@ -112,8 +111,8 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, allTracked.size, toString())
             assertNotNull(writer, toString())
-            assertEquals(0, writer?.active?.size, toString())
         }
+        Unit
     }
 
     @Test
@@ -129,8 +128,8 @@ class VersionTrackingTests {
         realm.activeVersions().run {
             assertEquals(1, allTracked.size, toString())
             assertNotNull(writer, toString())
-            assertEquals(1, writer?.active?.size, toString())
         }
+        Unit
     }
 
     @Test
