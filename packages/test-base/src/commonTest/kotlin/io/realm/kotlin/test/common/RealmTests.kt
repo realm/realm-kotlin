@@ -441,7 +441,7 @@ class RealmTests {
     @Suppress("LongMethod")
     fun deleteRealm() {
         val fileSystem = FileSystem.SYSTEM
-        val testDir = PlatformUtils.createTempDir("test_dir")
+        val testDir = PlatformUtils.createTempDir()
         val testDirPath = testDir.toPath()
         assertTrue(fileSystem.exists(testDirPath))
 
@@ -510,7 +510,7 @@ class RealmTests {
     @Test
     fun deleteRealm_fileDoesNotExists() {
         val fileSystem = FileSystem.SYSTEM
-        val testDir = PlatformUtils.createTempDir("test_dir")
+        val testDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
             .directory(testDir)
             .build()
