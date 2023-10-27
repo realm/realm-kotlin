@@ -143,7 +143,9 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
 //  changes as realm_collection_changes_t.
 realm_notification_token_t *
-register_results_notification_cb(realm_results_t *results, jobject callback) {
+register_results_notification_cb(realm_results_t *results,
+                                 int64_t key_path_array_ptr,
+                                 jobject callback) {
     auto jenv = get_env();
     static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
     static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
@@ -155,7 +157,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
             [](void *userdata) {
                 get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
             },
-            NULL, // See https://github.com/realm/realm-kotlin/issues/661
+            reinterpret_cast<realm_key_path_array_t*>(key_path_array_ptr),
             // change callback
             [](void *userdata, const realm_collection_changes_t *changes) {
                 // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
@@ -219,8 +221,12 @@ realm_on_dictionary_change_func_t get_on_dictionary_change() {
 }
 
 realm_notification_token_t *
-register_notification_cb(int64_t collection_ptr, realm_collection_type_e collection_type,
-                         jobject callback) {
+register_notification_cb(
+        int64_t collection_ptr,
+        realm_collection_type_e collection_type,
+        int64_t key_path_array_ptr,
+        jobject callback
+) {
     auto user_data = static_cast<jobject>(get_env()->NewGlobalRef(callback));
     auto user_data_free = [](void *userdata) {
         get_env(true)->DeleteGlobalRef(static_cast<jobject>(userdata));
@@ -232,28 +238,28 @@ register_notification_cb(int64_t collection_ptr, realm_collection_type_e collect
                     reinterpret_cast<realm_object_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
-                    NULL, // See https://github.com/realm/realm-kotlin/issues/661
+                    reinterpret_cast<realm_key_path_array_t*>(key_path_array_ptr),
                     get_on_object_change()
             );
         case RLM_COLLECTION_TYPE_LIST: return realm_list_add_notification_callback(
                     reinterpret_cast<realm_list_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
-                    NULL, // See https://github.com/realm/realm-kotlin/issues/661
+                    reinterpret_cast<realm_key_path_array_t*>(key_path_array_ptr),
                     get_on_collection_change()
             );
         case RLM_COLLECTION_TYPE_SET: return realm_set_add_notification_callback(
                     reinterpret_cast<realm_set_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
-                    NULL, // See https://github.com/realm/realm-kotlin/issues/661
+                    reinterpret_cast<realm_key_path_array_t*>(key_path_array_ptr),
                     get_on_collection_change()
             );
         case RLM_COLLECTION_TYPE_DICTIONARY: return realm_dictionary_add_notification_callback(
                     reinterpret_cast<realm_dictionary_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
-                    NULL, // See https://github.com/realm/realm-kotlin/issues/661
+                    reinterpret_cast<realm_key_path_array_t*>(key_path_array_ptr),
                     get_on_dictionary_change()
             );
     }

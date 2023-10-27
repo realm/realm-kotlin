@@ -72,5 +72,5 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      * @param keyPath TODO
      * @return a flow representing changes to the RealmResults.
      */
-    public fun asFlow(keyPath: List<String>?): Flow<ResultsChange<T>>
+    public fun asFlow(keyPaths: List<String>? = null): Flow<ResultsChange<T>>
 }

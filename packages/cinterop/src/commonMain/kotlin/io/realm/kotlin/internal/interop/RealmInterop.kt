@@ -56,6 +56,7 @@ const val UUID_BYTES_SIZE = 16
 interface CapiT
 interface RealmConfigT : CapiT
 interface RealmSchemaT : CapiT
+interface RealmObjectSchemaT : CapiT
 interface RealmT : CapiT
 interface LiveRealmT : RealmT
 interface FrozenRealmT : RealmT
@@ -69,6 +70,7 @@ interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
 interface RealmSchedulerT : CapiT
+interface RealmKeyPathArrayT : CapiT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -88,6 +90,7 @@ typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
 typealias RealmNotificationTokenPointer = NativePointer<RealmNotificationTokenT>
 typealias RealmChangesPointer = NativePointer<RealmChangesT>
 typealias RealmSchedulerPointer = NativePointer<RealmSchedulerT>
+typealias RealmKeyPathArrayPointer = NativePointer<RealmKeyPathArrayT>
 
 // Sync types
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
@@ -119,6 +122,8 @@ typealias RealmSubscriptionPointer = NativePointer<RealmSubscriptionT>
 typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscriptionSet>
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
+
+typealias RealmKeyPathArray = List<String>
 
 /**
  * Class for grouping and normalizing values we want to send as part of
@@ -436,23 +441,30 @@ expect object RealmInterop {
     fun realm_object_delete(obj: RealmObjectPointer)
 
     fun realm_object_add_notification_callback(
+        realm: RealmPointer,
+        clazz: ClassKey,
         obj: RealmObjectPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_results_add_notification_callback(
         results: RealmResultsPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_list_add_notification_callback(
         list: RealmListPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_set_add_notification_callback(
         set: RealmSetPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_dictionary_add_notification_callback(
         map: RealmMapPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_object_changes_get_modified_properties(

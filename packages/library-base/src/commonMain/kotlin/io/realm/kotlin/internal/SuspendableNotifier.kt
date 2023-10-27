@@ -4,6 +4,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmKeyPathArray
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.LiveRealmContext
@@ -93,7 +94,7 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: Array<out String>): Flow<C> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: RealmKeyPathArray?): Flow<C> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> =
                 kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
@@ -122,7 +123,7 @@ internal class SuspendableNotifier(
                                 changeFlow.emit(frozenObservable, change)
                             }
                         }
-                    token.value = NotificationToken(lifeRef.registerForNotification(interopCallback))
+                    token.value = NotificationToken(lifeRef.registerForNotification(keyPaths, interopCallback))
                 } else {
                     changeFlow.emit(null)
                 }

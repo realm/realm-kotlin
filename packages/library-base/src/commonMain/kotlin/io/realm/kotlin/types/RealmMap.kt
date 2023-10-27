@@ -55,11 +55,12 @@ public interface RealmMap<K, V> : MutableMap<K, V> {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
+     * @param keyPaths TODO
      * @return a flow representing changes to the dictionary.
      * @throws CancellationException if the stream produces changes faster than the consumer can
      * consume them and results in a buffer overflow.
      */
-    public fun asFlow(): Flow<MapChange<K, V>>
+    public fun asFlow(keyPaths: List<String>? = null): Flow<MapChange<K, V>>
 }
 
 /**

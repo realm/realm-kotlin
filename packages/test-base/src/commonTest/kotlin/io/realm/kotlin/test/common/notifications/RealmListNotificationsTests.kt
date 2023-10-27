@@ -124,7 +124,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             val channel = Channel<ListChange<*>>(capacity = 1)
             val observer = async {
                 container.objectListField
-                    .asFlow("*")
+                    .asFlow()
                     .collect { flowList ->
                         channel.send(flowList)
                     }

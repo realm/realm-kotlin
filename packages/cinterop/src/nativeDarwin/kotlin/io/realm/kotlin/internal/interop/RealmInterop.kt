@@ -1636,7 +1636,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_object_add_notification_callback(
+        realm: RealmPointer,
+        clazz: ClassKey,
         obj: RealmObjectPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1649,7 +1652,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                null, // TODO
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1670,6 +1673,7 @@ actual object RealmInterop {
 
     actual fun realm_results_add_notification_callback(
         results: RealmResultsPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1703,6 +1707,7 @@ actual object RealmInterop {
 
     actual fun realm_list_add_notification_callback(
         list: RealmListPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1735,6 +1740,7 @@ actual object RealmInterop {
 
     actual fun realm_set_add_notification_callback(
         set: RealmSetPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1768,6 +1774,7 @@ actual object RealmInterop {
 
     actual fun realm_dictionary_add_notification_callback(
         map: RealmMapPointer,
+        keyPaths: RealmKeyPathArray?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(

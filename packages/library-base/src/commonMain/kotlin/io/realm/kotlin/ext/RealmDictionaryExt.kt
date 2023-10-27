@@ -122,7 +122,7 @@ public fun <T : BaseRealmObject> RealmDictionary<T?>.query(
 /**
  * TODO
  */
-public fun <K: String, T: BaseRealmObject> RealmMap<K, T>.asFlow(vararg keyPaths: String): Flow<MapChange<K, T>> {
+public fun <K: String, T: BaseRealmObject> RealmMap<K, T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<K, T>> {
     if (this is ManagedRealmMap) {
         operator.realmReference.checkClosed()
         return operator.realmReference.owner.registerObserver(this, keyPaths)
@@ -134,7 +134,7 @@ public fun <K: String, T: BaseRealmObject> RealmMap<K, T>.asFlow(vararg keyPaths
 /**
  * TODO
  */
-public fun <T: BaseRealmObject> RealmDictionary<T>.asFlow(vararg keyPaths: String): Flow<MapChange<String, T>> {
+public fun <T: BaseRealmObject> RealmDictionary<T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<String, T>> {
     if (this is ManagedRealmDictionary) {
         operator.realmReference.checkClosed()
         return operator.realmReference.owner.registerObserver(this, keyPaths)

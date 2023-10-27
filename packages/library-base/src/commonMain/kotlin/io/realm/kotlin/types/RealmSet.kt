@@ -52,9 +52,10 @@ public interface RealmSet<E> : MutableSet<E>, Deleteable {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
+     * @param keyPaths TODO Keypaths only make sense for sets with objects? Should we capture this in the type system?
      * @return a flow representing changes to the set.
      * @throws CancellationException if the stream produces changes faster than the consumer can
      * consume them and results in a buffer overflow.
      */
-    public fun asFlow(): Flow<SetChange<E>>
+    public fun asFlow(keyPaths: List<String>? = null): Flow<SetChange<E>>
 }

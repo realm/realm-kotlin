@@ -78,7 +78,7 @@ public fun <T : BaseRealmObject> RealmList<T>.query(
 /**
  * TODO
  */
-public fun <T: BaseRealmObject> RealmList<T>.asFlow(vararg keyPaths: String): Flow<ListChange<T>> {
+public fun <T: BaseRealmObject> RealmList<T>.asFlow(keyPaths: List<String>? = null): Flow<ListChange<T>> {
     if (this is ManagedRealmList) {
         operator.realmReference.checkClosed()
         return operator.realmReference.owner.registerObserver(this, keyPaths)

@@ -22,6 +22,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmKeyPathArray
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
@@ -52,7 +53,7 @@ import kotlin.reflect.KClass
 // TODO Public due to being accessed from `SyncedRealmContext`
 public class RealmImpl private constructor(
     configuration: InternalConfiguration,
-) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, KeyPathFlowable<RealmChange<Realm>> {
+) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, SimpleFlowable<RealmChange<Realm>> {
 
     public val notificationScheduler: LiveRealmContext =
         configuration.notificationDispatcherFactory.createLiveRealmContext()
@@ -220,7 +221,10 @@ public class RealmImpl private constructor(
         )
     }
 
-    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: Array<out String>): Flow<C> {
+    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: List<String>?): Flow<C> {
+//        val splitKeyPath: RealmKeyPathArray? = keyPaths?.map {
+//            it.split(".")
+//        }
         return notifier.registerObserver(t, keyPaths)
     }
 

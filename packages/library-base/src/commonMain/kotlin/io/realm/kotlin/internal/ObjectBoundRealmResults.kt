@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.Flow
 internal class ObjectBoundRealmResults<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
     val realmResults: RealmResults<E>,
-) : RealmResults<E> by realmResults, InternalDeleteable, KeyPathFlowable<ResultsChange<E>> {
+) : RealmResults<E> by realmResults, InternalDeleteable {
 
     override val size: Int by realmResults::size
 
@@ -60,8 +60,8 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
      * values, if the object has not been deleted, if not it closes cancels the flow.
      */
 
-    override fun asFlow(): Flow<ResultsChange<E>> {
-        return realmResults.asFlow().bind(targetObject, keyPaths)
+    override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> {
+        return realmResults.asFlow(keyPaths).bind(targetObject, keyPaths)
     }
 
     override fun delete() {

@@ -77,5 +77,5 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      * @throws CancellationException if the stream produces changes faster than the consumer can
      * consume them and results in a buffer overflow.
      */
-    public fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>>
+    public fun asFlow(keyPaths: List<String>? = null): Flow<ListChange<E>>
 }
