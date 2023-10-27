@@ -34,6 +34,7 @@ import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.internal.SyncSessionImpl
+import io.realm.kotlin.mongodb.sync.ConnectionState
 import io.realm.kotlin.mongodb.sync.DiscardUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.ManuallyRecoverUnsyncedChangesStrategy
 import io.realm.kotlin.mongodb.sync.RecoverOrDiscardUnsyncedChangesStrategy
@@ -416,7 +417,7 @@ class SyncClientResetIntegrationTests {
             }
         ).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -509,7 +510,7 @@ class SyncClientResetIntegrationTests {
             }
         ).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -604,7 +605,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -674,7 +675,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -748,7 +749,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -832,7 +833,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -875,7 +876,7 @@ class SyncClientResetIntegrationTests {
     ) {
         val config = builder.build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -936,7 +937,7 @@ class SyncClientResetIntegrationTests {
             }
         ).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -987,7 +988,7 @@ class SyncClientResetIntegrationTests {
             }
         ).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -1054,7 +1055,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -1165,7 +1166,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -1227,7 +1228,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -1289,7 +1290,7 @@ class SyncClientResetIntegrationTests {
             }
         ).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -1354,7 +1355,7 @@ class SyncClientResetIntegrationTests {
             }
         ).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -1425,7 +1426,7 @@ class SyncClientResetIntegrationTests {
             }
         }).build()
 
-        Realm.open(config).use { realm ->
+        Realm.open(config).schedulerSafeUse { realm ->
             runBlocking {
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
 
@@ -1436,6 +1437,36 @@ class SyncClientResetIntegrationTests {
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
+        }
+    }
+
+    // TODO Add github core ticket
+    // Waits to close the Realm until the sync client has been paused. This prevents a race condition
+    // where the client accesses a schedulers that has been released.
+    private fun Realm.schedulerSafeUse(action: (Realm) -> Unit) {
+        val channel = Channel<Unit>(1)
+
+        runBlocking {
+            val job = async {
+                syncSession
+                    .connectionStateAsFlow()
+                    .collect {
+                        channel.trySend(Unit)
+                        if (it.newState == ConnectionState.DISCONNECTED) {
+                            channel.trySend(Unit)
+                        }
+                    }
+            }
+
+            use {
+                action(it)
+                syncSession.pause()
+            }
+
+            channel.receiveOrFail()
+
+            job.cancel()
+            channel.close()
         }
     }
 }
