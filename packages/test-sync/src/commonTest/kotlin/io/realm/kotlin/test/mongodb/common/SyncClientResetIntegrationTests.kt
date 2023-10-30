@@ -1440,7 +1440,7 @@ class SyncClientResetIntegrationTests {
         }
     }
 
-    // TODO Add github core ticket
+    // Workaround until https://github.com/realm/realm-core/issues/7094
     // Waits to close the Realm until the sync client has been paused. This prevents a race condition
     // where the client accesses a schedulers that has been released.
     private fun Realm.schedulerSafeUse(action: (Realm) -> Unit) {
