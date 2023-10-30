@@ -45,7 +45,7 @@ internal class StandaloneDynamicMutableRealm private constructor(
     ) {
     constructor(configuration: InternalConfiguration) : this(
         configuration,
-        RealmInterop.realm_create_scheduler("dynamic-standalone")
+        RealmInterop.realm_create_scheduler()
     )
 
     override fun close() {
