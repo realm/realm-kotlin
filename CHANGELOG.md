@@ -33,6 +33,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * Minimum Gradle version: 6.8.3.
 * Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
+* Minimum R8: 8.0.27.
 
 ### Internal
 * Updated to Realm Core 13.23.1, commit 3618b2e9d679cd2880be8df17b79d4cc6d71ff76.
