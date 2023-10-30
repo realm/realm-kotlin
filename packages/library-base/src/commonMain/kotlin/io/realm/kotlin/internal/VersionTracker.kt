@@ -33,7 +33,7 @@ internal typealias IntermediateReference = Pair<RealmPointer, WeakReference<Real
 internal class VersionTracker(private val owner: BaseRealmImpl, private val log: ContextLogger) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
-    private val intermediateReferences: AtomicRef<MutableSet<IntermediateReference>> =
+    private val intermediateReferences: AtomicRef<Set<IntermediateReference>> =
         atomic(mutableSetOf())
 
     fun trackReference(realmReference: FrozenRealmReference) {

@@ -248,18 +248,26 @@ public class RealmImpl private constructor(
             // Sort is stable, it will try to preserve the following order.
             listOf(
                 { localReference } to localReference?.uncheckedVersion(),
+                { writer.snapshot } to writer.version,
                 { notifier.snapshot } to notifier.version,
-                { writer.snapshot } to writer.version
             ).sortedByDescending {
                 it.second
-            }.first().first()
+            }.first().first.invoke()
         } ?: sdkError("Accessing realmReference before realm has been opened")
     }
 
-    public fun activeVersions(): VersionInfo = VersionInfo(
-        notifier = notifier.versions(),
-        writer = writer.versions()
-    )
+    public fun activeVersions(): VersionInfo {
+        val mainVersions: VersionData = VersionData(
+            current = initialRealmReference.value?.uncheckedVersion(),
+            active = versionTracker.versions()
+        )
+
+        return VersionInfo(
+            main = mainVersions,
+            notifier = notifier.versions(),
+            writer = writer.versions()
+        )
+    }
 
     override fun close() {
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
