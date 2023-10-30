@@ -8,7 +8,7 @@ This release upgrades the Sync metadata in a way that is not compatible with old
 ### Enhancements
 * Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
 * The Realm Gradle Plugin no longer has a dependency on KAPT. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
-* Support for Kotlin 1.9's experimental K2 compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
+* Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
 
 ### Fixed
 * `Realm.close()` is now idempotent.
@@ -24,7 +24,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.8.0 and above. Support for experimental K2 compilation from Kotlin 1.9.0 with `kotlin.experimental.tryK2=true`.
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
