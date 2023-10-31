@@ -23,6 +23,7 @@ import io.realm.kotlin.internal.platform.WeakReference
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 
+internal typealias IntermediateReference = Pair<RealmPointer, WeakReference<RealmReference>>
 /**
  * Bookkeeping of intermediate versions that needs to be closed when no longer referenced or when
  * explicitly closing a realm.
@@ -32,14 +33,33 @@ import kotlinx.atomicfu.atomic
 internal class VersionTracker(private val owner: BaseRealmImpl, private val log: ContextLogger) {
     // Set of currently open realms. Storing the native pointer explicitly to enable us to close
     // the realm when the RealmReference is no longer referenced anymore.
-    private val intermediateReferences: AtomicRef<Set<Pair<RealmPointer, WeakReference<RealmReference>>>> = atomic(mutableSetOf())
+    private val intermediateReferences: AtomicRef<Set<IntermediateReference>> =
+        atomic(mutableSetOf())
 
-    fun trackAndCloseExpiredReferences(realmReference: FrozenRealmReference? = null) {
-        val references = mutableSetOf<Pair<RealmPointer, WeakReference<RealmReference>>>()
-        realmReference?.let {
+    fun trackReference(realmReference: FrozenRealmReference) {
+        // We need a new object to update the atomic reference
+        val references = mutableSetOf<IntermediateReference>().apply {
+            addAll(intermediateReferences.value)
+        }
+
+        realmReference.let {
             log.trace("$owner TRACK-VERSION ${realmReference.version()}")
             references.add(Pair(realmReference.dbPointer, WeakReference(it)))
         }
+
+        intermediateReferences.value = references
+    }
+    /**
+     * Closes any realm reference that has been reclaimed by the GC.
+     *
+     * @return false if there is no reference left to clean.
+     */
+    // Closing expired references might be done by the GC:
+    // https://github.com/realm/realm-kotlin/issues/1527
+    fun closeExpiredReferences() {
+        // We need a new object to update the atomic reference
+        val references = mutableSetOf<IntermediateReference>()
+
         intermediateReferences.value.forEach { entry ->
             val (pointer, ref) = entry
             if (ref.get() == null) {
@@ -49,6 +69,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
                 references.add(entry)
             }
         }
+
         intermediateReferences.value = references
     }
 
