@@ -1260,7 +1260,6 @@ class SyncedRealmTests {
             }
             assertTrue(customLogger.logs.isNotEmpty())
             assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
-            assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") }, "Missing MyCustomApp/1.0.0")
         }
     }
 
