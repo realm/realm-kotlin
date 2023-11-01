@@ -278,11 +278,7 @@ public class RealmImpl private constructor(
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
         //  writer thread and just close the realm in writer.close()
         writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
-        realmReferenceLock.withLock {
-            if (isClosed()) {
-                return
-            }
-            isClosed.value = true
+        if (!isClosed.getAndSet(true)) {
             runBlocking {
                 writer.close()
                 realmScope.cancel()
