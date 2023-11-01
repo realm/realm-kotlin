@@ -120,7 +120,6 @@ public class LiveRealmContext(
     }
 
     override fun close() {
-        scheduler.release()
         dispatcherHolder.close()
     }
 }

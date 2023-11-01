@@ -32,7 +32,9 @@ import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.mongodb.kbson.ObjectId
+import java.util.concurrent.atomic.AtomicBoolean
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -182,10 +184,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_create_scheduler(): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_create_generic_scheduler())
+        LongPointerWrapper(realmc.realm_create_generic_scheduler(), managed = false)
 
     actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)))
+        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)), managed = false)
 
     actual fun realm_open(
         config: RealmConfigurationPointer,
@@ -199,6 +201,7 @@ actual object RealmInterop {
         realm_config_set_data_initialization_function(config, callback)
 
         realmc.realm_config_set_scheduler(config.cptr(), scheduler.cptr())
+        scheduler.release()
         val realmPtr = LongPointerWrapper<LiveRealmT>(realmc.realm_open(config.cptr()))
 
         // Ensure that we can read version information, etc.
@@ -2095,10 +2098,17 @@ fun ObjectId.asRealmObjectIdT(): realm_object_id_t {
 
 private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
+    val cancelled = AtomicBoolean(false)
 
     fun notifyCore(schedulerPointer: Long) {
         scope.launch {
-            realmc.invoke_core_notify_callback(schedulerPointer)
+            if (!cancelled.get()) {
+                realmc.invoke_core_notify_callback(schedulerPointer)
+            }
         }
+    }
+
+    fun cancel() {
+        cancelled.set(true)
     }
 }

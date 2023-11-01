@@ -125,6 +125,7 @@ import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
+import realm_wrapper.realm_work_queue_t
 import kotlin.collections.set
 import kotlin.native.internal.createCleaner
 
@@ -519,6 +520,7 @@ actual object RealmInterop {
         //  but requires opting in for @ExperimentalStdlibApi, and have really gotten it to play
         //  for default cases.
         realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler.cptr())
+        scheduler.release()
 
         val realmPtr = CPointerWrapper<LiveRealmT>(realm_wrapper.realm_open(config.cptr()))
         // Ensure that we can read version information, etc.
@@ -530,7 +532,7 @@ actual object RealmInterop {
         // If there is no notification dispatcher use the default scheduler.
         // Re-verify if this is actually needed when notification scheduler is fully in place.
         val scheduler = checkedPointerResult(realm_wrapper.realm_scheduler_make_default())
-        return CPointerWrapper<RealmSchedulerT>(scheduler)
+        return CPointerWrapper<RealmSchedulerT>(scheduler, managed = false)
     }
 
     actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer {
@@ -545,17 +547,19 @@ actual object RealmInterop {
                 // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
                 staticCFunction<COpaquePointer?, Unit> { userdata ->
                     printlntid("free")
-                    userdata?.asStableRef<SingleThreadDispatcherScheduler>()?.dispose()
+                    val asStableRef: StableRef<SingleThreadDispatcherScheduler>? = userdata?.asStableRef<SingleThreadDispatcherScheduler>()
+                    asStableRef?.get()?.cancel()
+                    asStableRef?.dispose()
                 },
 
                 // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                staticCFunction<COpaquePointer?, CPointer<realm_work_queue_t>?, Unit> { userdata, work_queue ->
                     // Must be thread safe
                     val scheduler =
                         userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                     printlntid("$scheduler notify")
                     try {
-                        scheduler.notify()
+                        scheduler.notify(work_queue)
                     } catch (e: Exception) {
                         // Should never happen, but is included for development to get some indicators
                         // on errors instead of silent crashes.
@@ -584,7 +588,7 @@ actual object RealmInterop {
 
         scheduler.set_scheduler(capi_scheduler)
 
-        return CPointerWrapper<RealmSchedulerT>(capi_scheduler)
+        return CPointerWrapper<RealmSchedulerT>(capi_scheduler, managed = false)
     }
 
     actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
@@ -3382,7 +3386,7 @@ actual object RealmInterop {
     )
 
     interface Scheduler {
-        fun notify()
+        fun notify(work_queue: CPointer<realm_work_queue_t>?)
     }
 
     class SingleThreadDispatcherScheduler(
@@ -3392,6 +3396,7 @@ actual object RealmInterop {
         val scope: CoroutineScope = CoroutineScope(dispatcher)
         val ref: CPointer<out CPointed>
         lateinit var scheduler: CPointer<realm_scheduler_t>
+        private val cancelled: AtomicBoolean = atomic(false)
 
         init {
             ref = StableRef.create(this).asCPointer()
@@ -3401,17 +3406,23 @@ actual object RealmInterop {
             this.scheduler = scheduler
         }
 
-        override fun notify() {
+        override fun notify(work_queue: CPointer<realm_work_queue_t>?) {
             scope.launch {
                 try {
                     printlntid("on dispatcher")
-                    realm_wrapper.realm_scheduler_perform_work(scheduler)
+                    if (!cancelled.value) {
+                        realm_wrapper.realm_scheduler_perform_work(work_queue)
+                    }
                 } catch (e: Exception) {
                     // Should never happen, but is included for development to get some indicators
                     // on errors instead of silent crashes.
                     e.printStackTrace()
                 }
             }
+        }
+
+        fun cancel() {
+            cancelled.value = true
         }
     }
 }
