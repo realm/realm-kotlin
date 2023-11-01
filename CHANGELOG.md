@@ -14,11 +14,11 @@ This release upgrades the Sync metadata in a way that is not compatible with old
 * Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] Manual client reset on Windows would not trigger correctly when run inside `onManualResetFallback`. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
-* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
 GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
-* [Sync] Added option to use managed WebSockets via Ktor instead of Realm's built-in WebSocket client for Sync traffic. Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)). Currently only JVM and Android platforms are supported.
+* [Sync] Added option to use managed WebSockets via Ktor instead of Realm's built-in WebSocket client for Sync traffic. Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -37,7 +37,8 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 ### Internal
 * Updated to Realm Core 13.23.1, commit 43853ebe18bd2a6873e7f300d18b6a5e614da627.
 * Update to Ktor 2.3.4.
-* Switched Ktor engine to CIO for Android and JVM to work around https://youtrack.jetbrains.com/issue/KTOR-6266. Revert to OkHttp when the issue is fixed.
+* Switched Ktor engine to CIO for Darwin to work around https://youtrack.jetbrains.com/issue/KTOR-6267.
+* Updated to CMake 3.27.7
 
 
 ## 1.11.1 (2023-09-07)

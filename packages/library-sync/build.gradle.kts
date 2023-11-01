@@ -78,8 +78,7 @@ kotlin {
         val jvm by creating {
             dependsOn(commonMain)
             dependencies {
-                // TODO revert back to okhttp when https://youtrack.jetbrains.com/issue/KTOR-6266 is fixed
-                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-okhttp:${Versions.ktor}")
             }
         }
         val jvmMain by getting {
@@ -96,7 +95,7 @@ kotlin {
         val nativeDarwin by creating {
             dependsOn(commonMain)
             dependencies {
-                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
             }
         }
         val macosX64Main by getting { dependsOn(nativeDarwin) }

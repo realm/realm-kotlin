@@ -3,7 +3,7 @@ package io.realm.kotlin.mongodb.internal
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.logging.Logger
 
 /**
@@ -21,8 +21,7 @@ internal actual class HttpClientCache actual constructor(timeoutMs: Long, custom
 }
 
 public actual fun createPlatformClient(block: HttpClientConfig<*>.() -> Unit): HttpClient {
-    // Revert to OkHttp when https://youtrack.jetbrains.com/issue/KTOR-6266 is fixed
-    return HttpClient(CIO) {
+    return HttpClient(OkHttp) {
         this.apply(block)
     }
 }
