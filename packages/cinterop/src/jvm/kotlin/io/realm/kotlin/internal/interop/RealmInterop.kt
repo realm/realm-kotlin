@@ -1157,10 +1157,6 @@ actual object RealmInterop {
         return realmc.realm_user_get_identity(user.cptr())
     }
 
-    actual fun realm_user_get_auth_provider(user: RealmUserPointer): AuthProvider {
-        return AuthProvider.of(realmc.realm_user_get_auth_provider(user.cptr()))
-    }
-
     actual fun realm_user_get_access_token(user: RealmUserPointer): String {
         return realmc.realm_user_get_access_token(user.cptr())
     }

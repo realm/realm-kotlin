@@ -25,9 +25,9 @@ import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.ext.isValid
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.version
-import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.isWindows
+import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -430,10 +430,18 @@ class RealmTests {
     }
 
     @Test
+    fun close_idempotent() {
+        realm.close()
+        assertTrue(realm.isClosed())
+        realm.close()
+        assertTrue(realm.isClosed())
+    }
+
+    @Test
     @Suppress("LongMethod")
     fun deleteRealm() {
         val fileSystem = FileSystem.SYSTEM
-        val testDir = PlatformUtils.createTempDir("test_dir")
+        val testDir = PlatformUtils.createTempDir()
         val testDirPath = testDir.toPath()
         assertTrue(fileSystem.exists(testDirPath))
 
@@ -502,7 +510,7 @@ class RealmTests {
     @Test
     fun deleteRealm_fileDoesNotExists() {
         val fileSystem = FileSystem.SYSTEM
-        val testDir = PlatformUtils.createTempDir("test_dir")
+        val testDir = PlatformUtils.createTempDir()
         val configuration = RealmConfiguration.Builder(schema = setOf(Parent::class, Child::class))
             .directory(testDir)
             .build()
@@ -524,7 +532,7 @@ class RealmTests {
         val anotherRealm = Realm.open(configA)
 
         // Deleting it without having closed it should fail.
-        assertFailsWithMessage<IllegalStateException>("Cannot delete files of an open Realm: '$tempDirA${PATH_SEPARATOR}anotherRealm.realm' is still in use") {
+        assertFailsWithMessage<IllegalStateException>("Cannot delete files of an open Realm: '${pathOf(tempDirA, "anotherRealm.realm")}' is still in use") {
             Realm.deleteRealm(configA)
         }
 

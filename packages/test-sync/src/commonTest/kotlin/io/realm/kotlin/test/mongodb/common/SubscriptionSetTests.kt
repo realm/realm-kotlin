@@ -64,7 +64,7 @@ class SubscriptionSetTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = FLX_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -192,7 +192,10 @@ class SubscriptionSetTests {
         assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
         }
-        assertTrue(subscriptions.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            subscriptions.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            subscriptions.errorMessage
+        )
         subscriptions.update {
             removeAll()
         }
@@ -258,7 +261,10 @@ class SubscriptionSetTests {
             updatedSubs.waitForSynchronization()
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
-        assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            updatedSubs.errorMessage
+        )
     }
 
     // Test case for https://github.com/realm/realm-core/issues/5504
@@ -272,7 +278,10 @@ class SubscriptionSetTests {
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
         assertEquals("TRUEPREDICATE and TRUEPREDICATE LIMIT(1)", updatedSubs.first().queryDescription)
-        assertTrue(updatedSubs.errorMessage!!.contains("Client provided query with bad syntax"))
+        assertTrue(
+            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
+            updatedSubs.errorMessage
+        )
     }
 
     @Test

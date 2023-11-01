@@ -247,6 +247,10 @@ internal open class SyncSessionImpl(
         }
     }
 
+    fun close() {
+        nativePointer.release()
+    }
+
     internal companion object {
         internal fun stateFrom(coreState: CoreSyncSessionState): SyncSession.State {
             return when (coreState) {

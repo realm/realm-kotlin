@@ -1,13 +1,27 @@
-## 1.11.2 (YYYY-MM-DD)
+## 1.12.0-SNAPSHOT (YYYY-MM-DD)
+
+This release upgrades the Sync metadata in a way that is not compatible with older versions. To downgrade a Sync app from this version, you'll need to manually delete the metadata folder located at `$[SYNC-ROOT-DIRECTORY]/mongodb-realm/[APP-ID]/server-utility/metadata/`. This will log out all users.
+
+### Breaking Changes
+* None.
 
 ### Enhancements
-* None.
+* Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
+* The Realm Gradle Plugin no longer has a dependency on KAPT. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
 
 ### Fixed
 * `Realm.getNumberOfActiveVersions` now returns the actual number of active versions. (Core issue [#6960](https://github.com/realm/realm-core/pull/6960))
 * Fixed memory leak on Darwin caused by a reference cycle between resources and the GC cleaner. (Issue [#1530](https://github.com/realm/realm-kotlin/pull/1530))
 * Fixed memory leaks on the JVM platform, see PR for more information. (Issue [#1526](https://github.com/realm/realm-kotlin/pull/1526))
 * Removed pin on the initial realm version after opening a Realm. (Issue [#1519](https://github.com/realm/realm-kotlin/pull/1519))
+* `Realm.close()` is now idempotent.
+* Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] Manual client reset on Windows would not trigger correctly when run inside `onManualResetFallback`. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
+GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -24,7 +38,7 @@
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.20.0, commit a3717e492ec606e42995169cf706a82fc1cd0698.
+* Updated to Realm Core 13.23.2, commit e6271d72308b40399890060f58a88cf568c2ee22.
 
 
 ## 1.11.1 (2023-09-07)

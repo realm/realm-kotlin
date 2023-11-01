@@ -64,7 +64,7 @@ class MutableSubscriptionSetTests {
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+            schema = FLX_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -284,7 +284,7 @@ class MutableSubscriptionSetTests {
         // Not part of schema
         realm.subscriptions.update {
             assertFailsWith<IllegalArgumentException> {
-                removeAll(io.realm.kotlin.entities.sync.ParentPk::class)
+                removeAll(io.realm.kotlin.entities.Sample::class)
             }
         }
 

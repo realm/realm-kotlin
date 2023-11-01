@@ -103,10 +103,6 @@ kotlin {
             }
         }
     }
-
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
-        kotlinOptions.jvmTarget = Versions.jvmTarget
-    }
 }
 
 // Android configuration
@@ -150,8 +146,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = Versions.sourceCompatibilityVersion
+        targetCompatibility = Versions.targetCompatibilityVersion
     }
 
     // Remove overlapping resources after adding "org.jetbrains.kotlinx:kotlinx-coroutines-test" to
