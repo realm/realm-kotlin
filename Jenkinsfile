@@ -202,7 +202,7 @@ pipeline {
                             // This will overwrite previous test results, but should be ok as we would not get here
                             // if previous stages failed.
                             {
-                                testAndCollect("packages", "cleanAllTests  -PsyncUsePlatformNetworking=true macosTest -PincludeSdkModules=false")
+                                testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false")
                             },
                         ])
                     }
@@ -222,7 +222,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", "cleanAllTests  -PsyncUsePlatformNetworking=true iosTest -PincludeSdkModules=false")
+                                testAndCollect("packages", "cleanAllTests iosTest -PincludeSdkModules=false")
                             }
                         ])
                     }
