@@ -22,6 +22,7 @@ This release upgrades the Sync metadata in a way that is not compatible with old
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
 GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
+* [Sync] Fix crash while syncing data when LogLevel was set to `Trace` or `All`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
