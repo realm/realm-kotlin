@@ -1,3 +1,29 @@
+## 1.12.1 (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None
+
+### Fixed
+* [Sync] Fix crash while syncing data when LogLevel was set to `Trace` or `All`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+
 ## 1.12.0 (2023-11-02)
 
 This release upgrades the Sync metadata in a way that is not compatible with older versions. To downgrade a Sync app from this version, you'll need to manually delete the metadata folder located at `$[SYNC-ROOT-DIRECTORY]/mongodb-realm/[APP-ID]/server-utility/metadata/`. This will log out all users.
@@ -22,7 +48,6 @@ This release upgrades the Sync metadata in a way that is not compatible with old
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
 GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
-* [Sync] Fix crash while syncing data when LogLevel was set to `Trace` or `All`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
