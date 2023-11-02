@@ -520,7 +520,6 @@ actual object RealmInterop {
         //  but requires opting in for @ExperimentalStdlibApi, and have really gotten it to play
         //  for default cases.
         realm_wrapper.realm_config_set_scheduler(config.cptr(), scheduler.cptr())
-        scheduler.release()
 
         val realmPtr = CPointerWrapper<LiveRealmT>(realm_wrapper.realm_open(config.cptr()))
         // Ensure that we can read version information, etc.
@@ -532,7 +531,7 @@ actual object RealmInterop {
         // If there is no notification dispatcher use the default scheduler.
         // Re-verify if this is actually needed when notification scheduler is fully in place.
         val scheduler = checkedPointerResult(realm_wrapper.realm_scheduler_make_default())
-        return CPointerWrapper<RealmSchedulerT>(scheduler, managed = false)
+        return CPointerWrapper<RealmSchedulerT>(scheduler)
     }
 
     actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer {
@@ -588,7 +587,7 @@ actual object RealmInterop {
 
         scheduler.set_scheduler(capi_scheduler)
 
-        return CPointerWrapper<RealmSchedulerT>(capi_scheduler, managed = false)
+        return CPointerWrapper<RealmSchedulerT>(capi_scheduler)
     }
 
     actual fun realm_open_synchronized(config: RealmConfigurationPointer): RealmAsyncOpenTaskPointer {
