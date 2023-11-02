@@ -121,7 +121,7 @@ public interface Realm : TypedRealm {
             val config = (configuration as InternalConfiguration)
 
             return RealmInterop.realm_create_scheduler()
-                .let { scheduler ->
+                .use { scheduler ->
                     val (dbPointer, _) = RealmInterop.realm_open(
                         config = config.createNativeConfiguration(),
                         scheduler = scheduler

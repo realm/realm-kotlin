@@ -39,6 +39,7 @@ internal class StandaloneDynamicMutableRealm private constructor(
         try {
             RealmInterop.realm_open(configuration.createNativeConfiguration(), scheduler)
         } catch (exception: Exception) {
+            scheduler.release()
             throw exception
         }
     ) {

@@ -184,10 +184,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_create_scheduler(): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_create_generic_scheduler(), managed = false)
+        LongPointerWrapper(realmc.realm_create_generic_scheduler())
 
     actual fun realm_create_scheduler(dispatcher: CoroutineDispatcher): RealmSchedulerPointer =
-        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)), managed = false)
+        LongPointerWrapper(realmc.realm_create_scheduler(JVMScheduler(dispatcher)))
 
     actual fun realm_open(
         config: RealmConfigurationPointer,
@@ -201,7 +201,6 @@ actual object RealmInterop {
         realm_config_set_data_initialization_function(config, callback)
 
         realmc.realm_config_set_scheduler(config.cptr(), scheduler.cptr())
-        scheduler.release()
         val realmPtr = LongPointerWrapper<LiveRealmT>(realmc.realm_open(config.cptr()))
 
         // Ensure that we can read version information, etc.
