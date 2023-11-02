@@ -76,5 +76,6 @@ class SystemNotificationTests {
             writer1.write { copyToRealm(Sample()) }
             writer2.write { copyToRealm(Sample()) }
         }
+        liveRealmContext.close()
     }
 }
