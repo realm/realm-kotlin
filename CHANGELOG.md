@@ -1,4 +1,4 @@
-## 1.12.0-SNAPSHOT (2023-11-01)
+## 1.12.0 (2023-11-02)
 
 This release upgrades the Sync metadata in a way that is not compatible with older versions. To downgrade a Sync app from this version, you'll need to manually delete the metadata folder located at `$[SYNC-ROOT-DIRECTORY]/mongodb-realm/[APP-ID]/server-utility/metadata/`. This will log out all users.
 
