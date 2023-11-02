@@ -180,7 +180,7 @@ class CinteropTest {
             )
             RealmInterop.realm_config_set_schema_version(nativeConfig, 1)
             RealmInterop.realm_create_scheduler()
-                .run { scheduler ->
+                .use { scheduler ->
                     val (realm, fileCreated) = RealmInterop.realm_open(nativeConfig, scheduler)
                     assertEquals(1L, RealmInterop.realm_get_num_classes(realm))
                     RealmInterop.realm_close(realm)

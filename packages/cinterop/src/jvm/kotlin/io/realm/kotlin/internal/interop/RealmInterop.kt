@@ -32,7 +32,6 @@ import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.mongodb.kbson.ObjectId
 import java.util.concurrent.atomic.AtomicBoolean
 
