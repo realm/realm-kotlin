@@ -35,7 +35,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.23.2, commit e6271d72308b40399890060f58a88cf568c2ee22.
+* Updated to Realm Core 13.23.2, commit ba96288b5c88096998591f94a64b0e3a00d4c92f.
 
 
 ## 1.11.1 (2023-09-07)
