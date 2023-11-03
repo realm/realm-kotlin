@@ -33,7 +33,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.mongodb.kbson.ObjectId
-import java.util.concurrent.atomic.AtomicBoolean
 
 // FIXME API-CLEANUP Rename io.realm.interop. to something with platform?
 //  https://github.com/realm/realm-kotlin/issues/56
@@ -2096,17 +2095,22 @@ fun ObjectId.asRealmObjectIdT(): realm_object_id_t {
 
 private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
-    val cancelled = AtomicBoolean(false)
+    val lock = SynchronizableObject()
+    var cancelled = false
 
     fun notifyCore(schedulerPointer: Long) {
         scope.launch {
-            if (!cancelled.get()) {
-                realmc.invoke_core_notify_callback(schedulerPointer)
+            lock.withLock {
+                if (!cancelled) {
+                    realmc.invoke_core_notify_callback(schedulerPointer)
+                }
             }
         }
     }
 
     fun cancel() {
-        cancelled.set(true)
+        lock.withLock {
+            cancelled = true
+        }
     }
 }

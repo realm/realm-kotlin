@@ -3395,7 +3395,8 @@ actual object RealmInterop {
         val scope: CoroutineScope = CoroutineScope(dispatcher)
         val ref: CPointer<out CPointed>
         lateinit var scheduler: CPointer<realm_scheduler_t>
-        private val cancelled: AtomicBoolean = atomic(false)
+        private val lock = SynchronizableObject()
+        private var cancelled = false
 
         init {
             ref = StableRef.create(this).asCPointer()
@@ -3409,8 +3410,10 @@ actual object RealmInterop {
             scope.launch {
                 try {
                     printlntid("on dispatcher")
-                    if (!cancelled.value) {
-                        realm_wrapper.realm_scheduler_perform_work(work_queue)
+                    lock.withLock {
+                        if (!cancelled) {
+                            realm_wrapper.realm_scheduler_perform_work(work_queue)
+                        }
                     }
                 } catch (e: Exception) {
                     // Should never happen, but is included for development to get some indicators
@@ -3421,7 +3424,9 @@ actual object RealmInterop {
         }
 
         fun cancel() {
-            cancelled.value = true
+            lock.withLock {
+                cancelled = true
+            }
         }
     }
 }
