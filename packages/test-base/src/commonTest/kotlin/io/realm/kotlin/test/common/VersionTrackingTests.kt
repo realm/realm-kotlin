@@ -32,6 +32,7 @@ import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -83,7 +84,7 @@ class VersionTrackingTests {
             assertEquals(1, allTracked.size)
             // The notifier might or might not had time to run
             notifier?.let {
-                assertEquals(2, it.current.version)
+                assertEquals(2, it.current?.version)
                 assertEquals(0, it.active.size)
             }
             assertNull(writer)
@@ -211,6 +212,45 @@ class VersionTrackingTests {
             samples.map { it.list.version() }.joinToString { it.toString() }
         )
     }
+
+    @Test
+    @Suppress("invisible_member", "invisible_reference")
+    fun initialVersionDereferencedAfterFirstWrite() {
+        (realm as RealmImpl).let { realm ->
+            assertNotNull(realm.initialRealmReference.value, toString())
+            assertEquals(1, realm.versionTracker.versions().size, toString())
+
+            val realmUpdates = Channel<Unit>(1)
+
+            runBlocking {
+                val deferred = async {
+                    realm.asFlow().collect {
+                        realmUpdates.trySend(Unit)
+                    }
+                }
+
+                // Wait for the notifier to start
+                realmUpdates.receiveOrFail()
+
+                realm.write { }
+
+                // Wait for the notifier to start
+                realmUpdates.receiveOrFail()
+
+                assertNull(realm.initialRealmReference.value, toString())
+                assertEquals(1, realm.versionTracker.versions().size, toString())
+
+                deferred.cancel()
+                realmUpdates.close()
+            }
+        }
+    }
+}
+
+@Suppress("invisible_member", "invisible_reference")
+internal fun Realm.userFacingRealmVersions(): Int = (this as RealmImpl).let { realm ->
+    if (realm.initialRealmReference.value != null) 1
+    else 0
 }
 
 internal fun Realm.activeVersions(): VersionInfo = (this as RealmImpl).activeVersions()

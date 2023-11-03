@@ -93,12 +93,6 @@ interface MemAllocator {
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_LINK`.
      */
     fun realmObjectTransport(value: RealmObjectInterop?): RealmValue
-
-    /**
-     * Instantiates a [RealmQueryArgumentList] representing a `realm_query_arg_t` that describe and
-     * references the incoming [RealmValueList] arguments.
-     */
-    fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList
 }
 
 /**
@@ -117,6 +111,12 @@ interface MemTrackingAllocator : MemAllocator {
      * Instantiates a [RealmValue] representing a `realm_value_t` of type `RLM_TYPE_BINARY`.
      */
     fun byteArrayTransport(value: ByteArray?): RealmValue
+
+    /**
+     * Instantiates a [RealmQueryArgumentList] representing a `realm_query_arg_t` that describe and
+     * references the incoming [RealmValueList] arguments.
+     */
+    fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList
 
     /**
      * Frees resources linked to this allocator. See implementations for more details.

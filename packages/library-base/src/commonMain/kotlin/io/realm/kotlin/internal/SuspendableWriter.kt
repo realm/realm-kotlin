@@ -59,7 +59,7 @@ internal class SuspendableWriter(
         LiveRealm(
             owner = owner,
             configuration = owner.configuration,
-            scheduler = scheduler
+            scheduler = scheduler,
         ),
         InternalMutableRealm,
         InternalTypedRealm,
@@ -85,6 +85,7 @@ internal class SuspendableWriter(
 
     // Must only be accessed from the dispatchers thread
     override val realm: WriterRealm by realmInitializer
+
     private val shouldClose = kotlinx.atomicfu.atomic<Boolean>(false)
     private val transactionMutex = Mutex(false)
 
