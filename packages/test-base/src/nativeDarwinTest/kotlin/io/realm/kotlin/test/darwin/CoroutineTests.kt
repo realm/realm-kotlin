@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import platform.CoreFoundation.CFRunLoopRun
 import platform.Foundation.NSNumber
 import platform.darwin.DISPATCH_QUEUE_PRIORITY_BACKGROUND
@@ -42,7 +43,7 @@ import kotlin.test.assertEquals
 class CoroutineTests {
 
     @Test
-    fun dispatchBetweenThreads() = runBlocking {
+    fun dispatchBetweenThreads() = runTest {
         val dispatcher1 = newSingleThreadContext("test-dispatcher-1")
         val dispatcher2 = newSingleThreadContext("test-disptacher-2")
         val tid2 = runBlocking(dispatcher2) {
