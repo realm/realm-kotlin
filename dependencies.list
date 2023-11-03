@@ -7,5 +7,8 @@ MONGODB_REALM_SERVER=2023-11-02
 # for that date within the following repositories:
 # https://github.com/10gen/baas/
 # https://github.com/10gen/baas-ui/
+# FIXME This is not updated according to MONGODB_REALM_SERVER=2023-11-02 as core's build 
+# script does not use Go 1.21.3 which is required for newer versions 
+# https://github.com/10gen/baas/blob/master/etc/docs/onboarding.md#go
 REALM_BAAS_GIT_HASH=8246fc548763eb908b8090df864e9924e3330a0d
 REALM_BAAS_UI_GIT_HASH=8a1843be2bf24f2faa705c5470a5bdd8d954f7ea
