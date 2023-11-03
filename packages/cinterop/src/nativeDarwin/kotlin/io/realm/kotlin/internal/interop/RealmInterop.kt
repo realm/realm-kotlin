@@ -111,7 +111,6 @@ import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_results_t
-import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_set_t
 import realm_wrapper.realm_string_t
@@ -161,11 +160,22 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
     if (pointer == null) throwOnError(); return pointer
 }
 
-// FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
+/**
+ * Class with a pointer reference and its status. It breaks the reference cycle between CPointerWrapper
+ * and its GC cleaner, otherwise the cleaner would never be invoked.
+ *
+ * See leaking cleaner: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.ref/create-cleaner.html
+ */
+data class ReleasablePointer(
+    private val _ptr: CPointer<out CPointed>?,
+    val released: AtomicBoolean = atomic(false)
+) {
+    fun release() {
+        if (released.compareAndSet(expect = false, update = true)) {
+            realm_release(_ptr)
+        }
+    }
 
-class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
-    private val released: AtomicBoolean = atomic(false)
-    private val _ptr = checkedPointerResult(ptr)
     val ptr: CPointer<out CPointed>?
         get() {
             return if (!released.value) {
@@ -174,23 +184,28 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
                 throw POINTER_DELETED_ERROR
             }
         }
+}
+
+// FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
+class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
+    val _ptr = ReleasablePointer(
+        checkedPointerResult(ptr)
+    )
+
+    val ptr: CPointer<out CPointed>? = _ptr.ptr
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
         createCleaner(_ptr) {
-            if (released.compareAndSet(expect = false, update = true)) {
-                realm_release(ptr)
-            }
+            it.release()
         }
     } else null
 
     override fun release() {
-        if (released.compareAndSet(expect = false, update = true)) {
-            realm_release(_ptr)
-        }
+        _ptr.release()
     }
 
-    override fun isReleased(): Boolean = released.value
+    override fun isReleased(): Boolean = _ptr.released.value
 }
 
 // Convenience type cast
@@ -585,7 +600,7 @@ actual object RealmInterop {
             )
         ) ?: error("Couldn't create scheduler")
 
-        scheduler.set_scheduler(capi_scheduler)
+        scheduler.setScheduler(capi_scheduler)
 
         return CPointerWrapper<RealmSchedulerT>(capi_scheduler)
     }
@@ -3379,11 +3394,6 @@ actual object RealmInterop {
         }
     }
 
-    data class CoreCallback(
-        val callback: realm_scheduler_notify_func_t,
-        val callbackUserdata: CPointer<out CPointed>,
-    )
-
     interface Scheduler {
         fun notify(work_queue: CPointer<realm_work_queue_t>?)
     }
@@ -3392,17 +3402,13 @@ actual object RealmInterop {
         val threadId: ULong,
         dispatcher: CoroutineDispatcher
     ) : Scheduler {
-        val scope: CoroutineScope = CoroutineScope(dispatcher)
-        val ref: CPointer<out CPointed>
-        lateinit var scheduler: CPointer<realm_scheduler_t>
+        private val scope: CoroutineScope = CoroutineScope(dispatcher)
+        val ref: CPointer<out CPointed> = StableRef.create(this).asCPointer()
+        private lateinit var scheduler: CPointer<realm_scheduler_t>
         private val lock = SynchronizableObject()
         private var cancelled = false
 
-        init {
-            ref = StableRef.create(this).asCPointer()
-        }
-
-        fun set_scheduler(scheduler: CPointer<realm_scheduler_t>) {
+        fun setScheduler(scheduler: CPointer<realm_scheduler_t>) {
             this.scheduler = scheduler
         }
 
