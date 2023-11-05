@@ -172,7 +172,8 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
 
     override fun asFlow(keyPath: List<String>?): Flow<ResultsChange<E>> {
         return realmReference.owner
-            .registerObserver(this, keyPath)
+            // TODO
+            .registerObserver(this, Pair(ClassKey(0), keyPath))
     }
 
     override fun delete() {

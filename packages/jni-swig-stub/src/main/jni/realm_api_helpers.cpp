@@ -238,7 +238,7 @@ register_notification_cb(
                     reinterpret_cast<realm_object_t*>(collection_ptr),
                     user_data, // Use the callback as user data
                     user_data_free,
-                    reinterpret_cast<realm_key_path_array_t*>(key_path_array_ptr),
+                    (key_path_array_ptr == 0) ? NULL : reinterpret_cast<realm_key_path_array_t*>(key_path_array_ptr),
                     get_on_object_change()
             );
         case RLM_COLLECTION_TYPE_LIST: return realm_list_add_notification_callback(
@@ -1060,3 +1060,22 @@ realm_scheduler_t*
 realm_create_generic_scheduler() {
     return new realm_scheduler_t { realm::util::Scheduler::make_dummy() };
 }
+
+realm_key_path_array_t*
+jni_realm_create_key_path_array(const realm_t* realm,
+                            const realm_class_key_t object_class_key,
+                            int user_key_paths_count,
+                            const char** user_key_paths)
+{
+    realm_key_path_array_t* out = nullptr;
+    bool result = realm_create_key_path_array(realm, object_class_key, user_key_paths_count, user_key_paths, &out);
+    if (result) {
+        return out;
+    } else {
+        delete(out);
+        auto env = get_env();
+        throw_last_error_as_java_exception(env);
+        return nullptr;
+    }
+}
+

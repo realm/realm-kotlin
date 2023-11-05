@@ -24,7 +24,7 @@ import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
-import io.realm.kotlin.internal.interop.RealmKeyPathArray
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
@@ -161,7 +161,8 @@ internal class ManagedRealmSet<E> constructor(
     }
 
     override fun asFlow(keyPaths: List<String>?): Flow<SetChange<E>> {
-        return operator.realmReference.owner.registerObserver(this, keyPaths)
+        // TODO
+        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmSet<E>? {
@@ -177,7 +178,7 @@ internal class ManagedRealmSet<E> constructor(
     }
 
     override fun registerForNotification(
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return RealmInterop.realm_set_add_notification_callback(nativePointer, keyPaths, callback)

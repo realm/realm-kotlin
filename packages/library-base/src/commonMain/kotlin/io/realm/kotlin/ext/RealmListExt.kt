@@ -21,6 +21,7 @@ import io.realm.kotlin.internal.ManagedRealmList
 import io.realm.kotlin.internal.UnmanagedRealmList
 import io.realm.kotlin.internal.asRealmList
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.query
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.query.RealmQuery
@@ -81,7 +82,8 @@ public fun <T : BaseRealmObject> RealmList<T>.query(
 public fun <T: BaseRealmObject> RealmList<T>.asFlow(keyPaths: List<String>? = null): Flow<ListChange<T>> {
     if (this is ManagedRealmList) {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this, keyPaths)
+        // TODO
+        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
     } else {
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
     }

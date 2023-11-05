@@ -23,6 +23,7 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
 import io.realm.kotlin.internal.interop.RealmKeyPathArray
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
@@ -107,7 +108,8 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
 
     override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> {
         realm.checkClosed()
-        return realm.owner.registerObserver(this, keyPaths)
+        // TODO
+        return realm.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
     }
 
     override fun delete() {
@@ -135,7 +137,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
 
-    override fun registerForNotification(keyPaths: RealmKeyPathArray?,
+    override fun registerForNotification(keyPaths: RealmKeyPathArrayPointer?,
                                          callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
         return RealmInterop.realm_results_add_notification_callback(nativePointer, keyPaths, callback)
     }

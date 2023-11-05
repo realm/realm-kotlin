@@ -470,6 +470,36 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
     }
 
+    @Test
+    override fun keyPath_topLevelProperty() {
+        TODO("Not yet implemented")
+    }
+
+    @Test
+    override fun keyPath_nestedProperty() {
+        TODO("Not yet implemented")
+    }
+
+    @Test
+    override fun keyPath_propertyBelowDefaultLimit() {
+        TODO("Not yet implemented")
+    }
+
+    @Test
+    override fun keyPath_unknownTopLevelProperty() {
+        TODO("Not yet implemented")
+    }
+
+    @Test
+    override fun keyPath_unknownNestedProperty() {
+        TODO("Not yet implemented")
+    }
+
+    @Test
+    override fun keyPath_invalidNestedProperty() {
+        TODO("Not yet implemented")
+    }
+
     fun RealmList<*>.removeRange(range: IntRange) {
         range.reversed().forEach { index -> removeAt(index) }
     }

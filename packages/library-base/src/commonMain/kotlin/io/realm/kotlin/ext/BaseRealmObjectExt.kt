@@ -21,6 +21,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.UnmanagedState
 import io.realm.kotlin.internal.checkNotificationsAvailable
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.realmObjectReference
 import io.realm.kotlin.internal.runIfManaged
@@ -91,5 +92,5 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  */
 public fun <T : BaseRealmObject> T.asFlow(keyPaths: List<String>? = null): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
-    return owner.owner.registerObserver(this, keyPaths) as Flow<ObjectChange<T>>
+    return owner.owner.registerObserver(this, Pair(this.metadata.classKey, keyPaths)) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")

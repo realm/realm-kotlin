@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.ManagedRealmSet
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.internal.asRealmSet
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.query
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.SetChange
@@ -81,7 +82,8 @@ public fun <T : BaseRealmObject> RealmSet<T>.query(
 public fun <T: BaseRealmObject> RealmSet<T>.asFlow(keyPaths: List<String>? = null): Flow<SetChange<T>> {
     if (this is ManagedRealmSet) {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this, keyPaths)
+        // TODO
+        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
     } else {
         throw UnsupportedOperationException("Unmanaged sets cannot be observed.")
     }

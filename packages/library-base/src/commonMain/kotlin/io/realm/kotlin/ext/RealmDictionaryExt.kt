@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.asRealmDictionary
 import io.realm.kotlin.internal.getRealm
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.query
 import io.realm.kotlin.internal.realmMapEntryOf
 import io.realm.kotlin.notifications.ListChange
@@ -125,7 +126,8 @@ public fun <T : BaseRealmObject> RealmDictionary<T?>.query(
 public fun <K: String, T: BaseRealmObject> RealmMap<K, T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<K, T>> {
     if (this is ManagedRealmMap) {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this, keyPaths)
+        // TODO Find Class Key
+        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
     } else {
         throw UnsupportedOperationException("Unmanaged maps cannot be observed.")
     }
@@ -137,7 +139,8 @@ public fun <K: String, T: BaseRealmObject> RealmMap<K, T>.asFlow(keyPaths: List<
 public fun <T: BaseRealmObject> RealmDictionary<T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<String, T>> {
     if (this is ManagedRealmDictionary) {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this, keyPaths)
+        // TODO Find Class Key
+        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
     } else {
         throw UnsupportedOperationException("Unmanaged dictionaries cannot be observed.")
     }

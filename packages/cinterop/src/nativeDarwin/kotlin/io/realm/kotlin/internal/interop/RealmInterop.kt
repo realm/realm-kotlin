@@ -1635,11 +1635,13 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
+    actual fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: RealmKeyPathArray?): RealmKeyPathArrayPointer? {
+        TODO()
+    }
+
     actual fun realm_object_add_notification_callback(
-        realm: RealmPointer,
-        clazz: ClassKey,
         obj: RealmObjectPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1673,7 +1675,7 @@ actual object RealmInterop {
 
     actual fun realm_results_add_notification_callback(
         results: RealmResultsPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1707,7 +1709,7 @@ actual object RealmInterop {
 
     actual fun realm_list_add_notification_callback(
         list: RealmListPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1740,7 +1742,7 @@ actual object RealmInterop {
 
     actual fun realm_set_add_notification_callback(
         set: RealmSetPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1774,7 +1776,7 @@ actual object RealmInterop {
 
     actual fun realm_dictionary_add_notification_callback(
         map: RealmMapPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(

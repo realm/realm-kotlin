@@ -440,31 +440,30 @@ expect object RealmInterop {
     ): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
+    fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: RealmKeyPathArray?): RealmKeyPathArrayPointer?
     fun realm_object_add_notification_callback(
-        realm: RealmPointer,
-        clazz: ClassKey,
         obj: RealmObjectPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_results_add_notification_callback(
         results: RealmResultsPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_list_add_notification_callback(
         list: RealmListPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_set_add_notification_callback(
         set: RealmSetPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_dictionary_add_notification_callback(
         map: RealmMapPointer,
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_object_changes_get_modified_properties(

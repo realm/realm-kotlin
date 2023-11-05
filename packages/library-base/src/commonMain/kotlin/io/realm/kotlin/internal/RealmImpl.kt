@@ -21,6 +21,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmKeyPathArray
 import io.realm.kotlin.internal.interop.SynchronizableObject
@@ -221,10 +222,7 @@ public class RealmImpl private constructor(
         )
     }
 
-    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: List<String>?): Flow<C> {
-//        val splitKeyPath: RealmKeyPathArray? = keyPaths?.map {
-//            it.split(".")
-//        }
+    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: Pair<ClassKey, List<String>?>): Flow<C> {
         return notifier.registerObserver(t, keyPaths)
     }
 

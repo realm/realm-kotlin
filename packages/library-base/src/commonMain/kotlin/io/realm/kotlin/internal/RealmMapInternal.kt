@@ -32,6 +32,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert_embedded
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
 import io.realm.kotlin.internal.interop.RealmKeyPathArray
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -102,11 +103,12 @@ internal abstract class ManagedRealmMap<K, V> constructor(
 
     override fun asFlow(keyPaths: List<String>?): Flow<MapChange<K, V>> {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this, keyPaths)
+        // TODO
+        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
     }
 
     override fun registerForNotification(
-        keyPaths: RealmKeyPathArray?,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer =
         RealmInterop.realm_dictionary_add_notification_callback(nativePointer, keyPaths, callback)

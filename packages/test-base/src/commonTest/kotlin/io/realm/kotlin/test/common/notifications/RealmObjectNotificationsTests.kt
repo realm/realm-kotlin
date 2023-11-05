@@ -42,6 +42,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -303,22 +304,22 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     }
 
     @Test
-    fun keyPath_allTopLevelProperties() = runBlocking {
+    override fun keyPath_topLevelProperty() = runBlocking<Unit> {
         val c = Channel<ObjectChange<Sample>>(1)
-        val obj: Sample = realm.write {
-            copyToRealm(Sample())
-        }
+        val obj: Sample = realm.write { copyToRealm(Sample()) }
         val observer = async {
             obj.asFlow(listOf("stringField")).collect {
                 c.trySend(it)
             }
-            fail("Flow should not be canceled.")
         }
-        c.receiveOrFail().let { objectChange ->
-            assertIs<InitialObject<Sample>>(objectChange)
+        assertIs<InitialObject<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(obj)!!.intField = 42
         }
         realm.write {
-            findLatest(obj)!!.nullableStringField = "Bar"
+            // Update field that should trigger a notification
+            findLatest(obj)!!.stringField = "Bar"
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
@@ -326,19 +327,133 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                 is UpdatedObject -> {
                     assertEquals(1, objectChange.changedFields.size)
                     assertEquals("stringField", objectChange.changedFields.first())
+                    assertEquals("Bar", objectChange.obj.stringField)
                 }
-                else -> TODO()
+                else -> fail("Unexpected change: $objectChange")
             }
-            assertEquals("Bar", objectChange.obj.stringField)
         }
-        realm.close()
         observer.cancel()
         c.close()
-        Unit
     }
 
     @Test
-    fun keyPath_singleTopLevelProperty() {
+    override fun keyPath_nestedProperty() = runBlocking<Unit> {
+        val c = Channel<ObjectChange<Sample>>(1)
+        val obj: Sample = realm.write {
+            copyToRealm(Sample().apply {
+                this.stringField = "parent"
+                this.nullableObject = Sample().apply {
+                    this.stringField = "child"
+                }
+            })
+        }
+        val observer = async {
+            obj.asFlow(listOf("nullableObject.stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialObject<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(obj)!!.stringField = "Parent change"
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(obj)!!.nullableObject!!.stringField = "Bar"
+        }
+        c.receiveOrFail().let { objectChange ->
+            assertIs<UpdatedObject<Sample>>(objectChange)
+            when(objectChange) {
+                is UpdatedObject -> {
+                    // Core will only report something changed to the top-level property.
+                    assertEquals(1, objectChange.changedFields.size)
+                    assertEquals("nullableObject", objectChange.changedFields.first())
+                    assertEquals("Bar", objectChange.obj.nullableObject!!.stringField)
+                }
+                else -> fail("Unexpected change: $objectChange")
+            }
+        }
+        observer.cancel()
+        c.close()
+    }
 
+    @Test
+    override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
+        val c = Channel<ObjectChange<Sample>>(1)
+        val obj: Sample = realm.write {
+            copyToRealm(Sample().apply {
+                this.stringField = "parent"
+                this.nullableObject = Sample().apply {
+                    this.stringField = "child"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child-child"
+                        this.nullableObject = Sample().apply {
+                            this.stringField = "child-child-child"
+                            this.nullableObject = Sample().apply {
+                                this.stringField = "child-child-child"
+                                this.nullableObject = Sample().apply {
+                                    this.stringField = "BottomChild"
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        }
+        val observer = async {
+            obj.asFlow(listOf("nullableObject.nullableObject.nullableObject.nullableObject.nullableObject.stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialObject<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(obj)!!.stringField = "Parent change"
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(obj)!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.stringField = "Bar"
+        }
+        c.receiveOrFail().let { objectChange ->
+            assertIs<UpdatedObject<Sample>>(objectChange)
+            when(objectChange) {
+                is UpdatedObject -> {
+                    // Core will only report something changed to the top-level property.
+                    assertEquals(1, objectChange.changedFields.size)
+                    assertEquals("nullableObject", objectChange.changedFields.first())
+                    assertEquals("Bar", objectChange.obj.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.stringField)
+                }
+                else -> fail("Unexpected change: $objectChange")
+            }
+        }
+        observer.cancel()
+        c.close()
+    }
+
+    @Test
+    override fun keyPath_unknownTopLevelProperty() = runBlocking<Unit> {
+        val obj: Sample = realm.write { copyToRealm(Sample()) }
+        assertFailsWith<IllegalArgumentException>() {
+            obj.asFlow(listOf("foo"))
+        }
+    }
+
+    @Test
+    override fun keyPath_unknownNestedProperty() = runBlocking<Unit> {
+        val obj: Sample = realm.write { copyToRealm(Sample()) }
+        assertFailsWith<IllegalArgumentException>() {
+            obj.asFlow(listOf("nullableObject.foo"))
+        }
+    }
+
+    @Test
+    override fun keyPath_invalidNestedProperty() = runBlocking<Unit> {
+        val obj: Sample = realm.write { copyToRealm(Sample()) }
+        assertFailsWith<IllegalArgumentException> {
+            obj.asFlow(listOf("nullableObject.intField.foo"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            obj.asFlow(listOf("nullableObject.intListField.foo"))
+        }
     }
 }
