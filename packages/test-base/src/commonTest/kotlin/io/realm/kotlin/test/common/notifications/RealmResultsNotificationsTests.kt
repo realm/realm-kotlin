@@ -22,10 +22,14 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
+import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ListChangeSet.Range
+import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.common.OBJECT_VALUES
@@ -44,6 +48,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -389,32 +394,158 @@ class RealmResultsNotificationsTests : FlowableTests {
     }
 
     @Test
-    override fun keyPath_topLevelProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_topLevelProperty() = runBlocking<Unit> {
+        val c = Channel<ResultsChange<Sample>>(1)
+        realm.write { copyToRealm(Sample()) }
+        val results = realm.query<Sample>().find()
+        val observer = async {
+            results.asFlow(listOf("stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialResults<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(results.first())!!.intField = 42
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(results.first())!!.stringField = "Bar"
+        }
+        c.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<Sample>>(resultsChange)
+            when(resultsChange) {
+                is UpdatedResults -> {
+                    assertEquals(1, resultsChange.changes.size)
+                }
+                else -> fail("Unexpected change: $resultsChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_nestedProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_nestedProperty() = runBlocking<Unit> {
+        val c = Channel<ResultsChange<Sample>>(1)
+        realm.write {
+            copyToRealm(Sample().apply {
+                this.stringField = "parent"
+                this.nullableObject = Sample().apply {
+                    this.stringField = "child"
+                }
+            })
+        }
+        val results = realm.query<Sample>("stringField != 'child'").find()
+        assertEquals(1, results.size)
+        val observer = async {
+            results.asFlow(listOf("nullableObject.stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialResults<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(results.first())!!.stringField = "Parent change"
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(results.first())!!.nullableObject!!.stringField = "Bar"
+        }
+        c.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<Sample>>(resultsChange)
+            when(resultsChange) {
+                is UpdatedResults -> {
+                    assertEquals(1, resultsChange.changes.size)
+                }
+                else -> fail("Unexpected change: $resultsChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_propertyBelowDefaultLimit() {
-        TODO("Not yet implemented")
+    override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
+        val c = Channel<ResultsChange<Sample>>(1)
+        realm.write {
+            copyToRealm(Sample().apply {
+                this.intField = 1
+                this.stringField = "parent"
+                this.nullableObject = Sample().apply {
+                    this.stringField = "child"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child-child"
+                        this.nullableObject = Sample().apply {
+                            this.stringField = "child-child-child"
+                            this.nullableObject = Sample().apply {
+                                this.stringField = "child-child-child"
+                                this.nullableObject = Sample().apply {
+                                    this.stringField = "BottomChild"
+                                }
+                            }
+                        }
+                    }
+                }
+            })
+        }
+        val results = realm.query<Sample>("intField = 1").find()
+        assertEquals(1, results.size)
+        val observer = async {
+            results.asFlow(listOf("nullableObject.nullableObject.nullableObject.nullableObject.nullableObject.stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialResults<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(results.first())!!.stringField = "Parent change"
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(results.first())!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.stringField = "Bar"
+        }
+        c.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<Sample>>(resultsChange)
+            when(resultsChange) {
+                is ResultsChange<*> -> {
+                    // Core will only report something changed to the top-level property.
+                    assertEquals(1, resultsChange.changes.size)
+                }
+                else -> fail("Unexpected change: $resultsChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_unknownTopLevelProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_unknownTopLevelProperty() = runBlocking<Unit> {
+        realm.write { copyToRealm(Sample()) }
+        val results = realm.query<Sample>()
+        assertFailsWith<IllegalArgumentException>() {
+            results.asFlow(listOf("foo"))
+        }
     }
 
     @Test
-    override fun keyPath_unknownNestedProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_unknownNestedProperty() = runBlocking<Unit> {
+        realm.write { copyToRealm(Sample()) }
+        val results = realm.query<Sample>()
+        assertFailsWith<IllegalArgumentException>() {
+            results.asFlow(listOf("nullableObject.foo"))
+        }
     }
 
     @Test
-    override fun keyPath_invalidNestedProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_invalidNestedProperty() = runBlocking<Unit> {
+        realm.write { copyToRealm(Sample()) }
+        val results = realm.query<Sample>()
+        assertFailsWith<IllegalArgumentException> {
+            results.asFlow(listOf("nullableObject.intField.foo"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            results.asFlow(listOf("nullableObject.intListField.foo"))
+        }
     }
 }
