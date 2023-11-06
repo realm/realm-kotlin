@@ -22,7 +22,6 @@ import io.realm.kotlin.entities.dictionary.DictionaryEmbeddedLevel1
 import io.realm.kotlin.entities.dictionary.RealmDictionaryContainer
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.notifications.DeletedMap
-import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.InitialMap
 import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.notifications.UpdatedMap
@@ -436,11 +435,15 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun keyPath_topLevelProperty() = runBlocking<Unit> {
         val c = Channel<MapChange<String, RealmDictionaryContainer?>>(1)
-        val dict: RealmDictionary<RealmDictionaryContainer?> = realm.write { copyToRealm(RealmDictionaryContainer().apply {
-            this.nullableObjectDictionaryField = realmDictionaryOf(
-                "1" to RealmDictionaryContainer().apply { this.stringField = "dict-item-1" },
+        val dict: RealmDictionary<RealmDictionaryContainer?> = realm.write {
+            copyToRealm(
+                RealmDictionaryContainer().apply {
+                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                        "1" to RealmDictionaryContainer().apply { this.stringField = "dict-item-1" },
+                    )
+                }
             )
-        })}.nullableObjectDictionaryField
+        }.nullableObjectDictionaryField
         val observer = async {
             dict.asFlow(listOf("stringField")).collect {
                 c.trySend(it)
@@ -457,7 +460,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { mapChange ->
             assertIs<UpdatedMap<String, RealmDictionaryContainer?>>(mapChange)
-            when(mapChange) {
+            when (mapChange) {
                 is UpdatedMap -> {
                     assertEquals(1, mapChange.changes.size)
                     assertEquals("1", mapChange.changes.first())
@@ -473,17 +476,19 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_nestedProperty() = runBlocking<Unit> {
         val c = Channel<MapChange<String, RealmDictionaryContainer?>>(1)
         val dict = realm.write {
-            copyToRealm(RealmDictionaryContainer().apply {
-                this.stringField = "parent"
-                this.nullableObjectDictionaryField = realmDictionaryOf(
-                    "1" to RealmDictionaryContainer().apply {
-                        this.stringField = "child"
-                        this.nullableObjectDictionaryField = realmDictionaryOf(
-                            "1-inner" to RealmDictionaryContainer().apply { this.stringField = "list-item-1" }
-                        )
-                    }
-                )
-            })
+            copyToRealm(
+                RealmDictionaryContainer().apply {
+                    this.stringField = "parent"
+                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                        "1" to RealmDictionaryContainer().apply {
+                            this.stringField = "child"
+                            this.nullableObjectDictionaryField = realmDictionaryOf(
+                                "1-inner" to RealmDictionaryContainer().apply { this.stringField = "list-item-1" }
+                            )
+                        }
+                    )
+                }
+            )
         }.nullableObjectDictionaryField
         assertEquals(1, dict.size)
         val observer = async {
@@ -502,7 +507,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { mapChange ->
             assertIs<UpdatedMap<String, RealmDictionaryContainer>>(mapChange)
-            when(mapChange) {
+            when (mapChange) {
                 is UpdatedMap -> {
                     assertEquals(1, mapChange.changes.size)
                 }
@@ -517,28 +522,42 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
         val c = Channel<MapChange<String, RealmDictionaryContainer?>>(1)
         val dict = realm.write {
-            copyToRealm(RealmDictionaryContainer().apply {
-                this.id = 1
-                this.stringField = "parent"
-                this.nullableObjectDictionaryField = realmDictionaryOf("parent" to RealmDictionaryContainer().apply {
-                    this.stringField = "child"
-                    this.nullableObjectDictionaryField = realmDictionaryOf("child" to RealmDictionaryContainer().apply {
-                        this.stringField = "child-child"
-                        this.nullableObjectDictionaryField = realmDictionaryOf("child-child" to RealmDictionaryContainer().apply {
-                            this.stringField = "child-child-child"
-                            this.nullableObjectDictionaryField = realmDictionaryOf("child-child-child" to RealmDictionaryContainer().apply {
-                                this.stringField = "child-child-child-child"
-                                this.nullableObjectDictionaryField = realmDictionaryOf("child-child-child-child" to RealmDictionaryContainer().apply {
-                                    this.stringField = "child-child-child-child-child"
-                                    this.nullableObjectDictionaryField = realmDictionaryOf("child-child-child-child-child" to RealmDictionaryContainer().apply {
-                                        this.stringField = "BottomChild"
-                                    })
-                                })
-                            })
-                        })
-                    })
-                })
-            })
+            copyToRealm(
+                RealmDictionaryContainer().apply {
+                    this.id = 1
+                    this.stringField = "parent"
+                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                        "parent" to RealmDictionaryContainer().apply {
+                            this.stringField = "child"
+                            this.nullableObjectDictionaryField = realmDictionaryOf(
+                                "child" to RealmDictionaryContainer().apply {
+                                    this.stringField = "child-child"
+                                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                                        "child-child" to RealmDictionaryContainer().apply {
+                                            this.stringField = "child-child-child"
+                                            this.nullableObjectDictionaryField = realmDictionaryOf(
+                                                "child-child-child" to RealmDictionaryContainer().apply {
+                                                    this.stringField = "child-child-child-child"
+                                                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                                                        "child-child-child-child" to RealmDictionaryContainer().apply {
+                                                            this.stringField = "child-child-child-child-child"
+                                                            this.nullableObjectDictionaryField = realmDictionaryOf(
+                                                                "child-child-child-child-child" to RealmDictionaryContainer().apply {
+                                                                    this.stringField = "BottomChild"
+                                                                }
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
         }.nullableObjectDictionaryField
         val observer = async {
             dict.asFlow(listOf("nullableObjectDictionaryField.nullableObjectDictionaryField.nullableObjectDictionaryField.nullableObjectDictionaryField.nullableObjectDictionaryField.stringField")).collect {
@@ -562,7 +581,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { mapChange ->
             assertIs<UpdatedMap<String, RealmDictionaryContainer?>>(mapChange)
-            when(mapChange) {
+            when (mapChange) {
                 is MapChange -> {
                     // Core will only report something changed to the top-level property.
                     assertEquals(1, mapChange.changes.size)

@@ -349,12 +349,15 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun keyPath_topLevelProperty() = runBlocking<Unit> {
         val c = Channel<SetChange<RealmSetContainer>>(1)
-        val obj = realm.write { copyToRealm(RealmSetContainer().apply {
-            this.objectSetField = realmSetOf(
-                RealmSetContainer().apply { this.stringField = "list-item-1" },
-                RealmSetContainer().apply { this.stringField = "list-item-2" }
+        val obj = realm.write {
+            copyToRealm(
+                RealmSetContainer().apply {
+                    this.objectSetField = realmSetOf(
+                        RealmSetContainer().apply { this.stringField = "list-item-1" },
+                        RealmSetContainer().apply { this.stringField = "list-item-2" }
+                    )
+                }
             )
-        })
         }
         val set: RealmSet<RealmSetContainer> = obj.objectSetField
         val observer = async {
@@ -373,7 +376,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedSet<RealmSetContainer>>(listChange)
-            when(listChange) {
+            when (listChange) {
                 is UpdatedSet -> {
                     assertEquals(0, listChange.deletions)
                     assertEquals(0, listChange.insertions)
@@ -389,17 +392,19 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_nestedProperty() = runBlocking<Unit> {
         val c = Channel<SetChange<RealmSetContainer>>(1)
         val set = realm.write {
-            copyToRealm(RealmSetContainer().apply {
-                this.stringField = "parent"
-                this.objectSetField = realmSetOf(
-                    RealmSetContainer().apply {
-                        this.stringField = "child"
-                        this.objectSetField = realmSetOf(
-                            RealmSetContainer().apply { this.stringField = "list-item-1" }
-                        )
-                    }
-                )
-            })
+            copyToRealm(
+                RealmSetContainer().apply {
+                    this.stringField = "parent"
+                    this.objectSetField = realmSetOf(
+                        RealmSetContainer().apply {
+                            this.stringField = "child"
+                            this.objectSetField = realmSetOf(
+                                RealmSetContainer().apply { this.stringField = "list-item-1" }
+                            )
+                        }
+                    )
+                }
+            )
         }.objectSetField
         assertEquals(1, set.size)
         val observer = async {
@@ -418,7 +423,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { setChange ->
             assertIs<UpdatedSet<RealmSetContainer>>(setChange)
-            when(setChange) {
+            when (setChange) {
                 is UpdatedSet -> {
                     assertEquals(0, setChange.insertions)
                     assertEquals(0, setChange.deletions)
@@ -434,28 +439,42 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
         val c = Channel<SetChange<RealmSetContainer>>(1)
         val list = realm.write {
-            copyToRealm(RealmSetContainer().apply {
-                this.id = 1
-                this.stringField = "parent"
-                this.objectSetField = realmSetOf(RealmSetContainer().apply {
-                    this.stringField = "child"
-                    this.objectSetField = realmSetOf(RealmSetContainer().apply {
-                        this.stringField = "child-child"
-                        this.objectSetField = realmSetOf(RealmSetContainer().apply {
-                            this.stringField = "child-child-child"
-                            this.objectSetField = realmSetOf(RealmSetContainer().apply {
-                                this.stringField = "child-child-child-child"
-                                this.objectSetField = realmSetOf(RealmSetContainer().apply {
-                                    this.stringField = "child-child-child-child-child"
-                                    this.objectSetField = realmSetOf(RealmSetContainer().apply {
-                                        this.stringField = "BottomChild"
-                                    })
-                                })
-                            })
-                        })
-                    })
-                })
-            })
+            copyToRealm(
+                RealmSetContainer().apply {
+                    this.id = 1
+                    this.stringField = "parent"
+                    this.objectSetField = realmSetOf(
+                        RealmSetContainer().apply {
+                            this.stringField = "child"
+                            this.objectSetField = realmSetOf(
+                                RealmSetContainer().apply {
+                                    this.stringField = "child-child"
+                                    this.objectSetField = realmSetOf(
+                                        RealmSetContainer().apply {
+                                            this.stringField = "child-child-child"
+                                            this.objectSetField = realmSetOf(
+                                                RealmSetContainer().apply {
+                                                    this.stringField = "child-child-child-child"
+                                                    this.objectSetField = realmSetOf(
+                                                        RealmSetContainer().apply {
+                                                            this.stringField = "child-child-child-child-child"
+                                                            this.objectSetField = realmSetOf(
+                                                                RealmSetContainer().apply {
+                                                                    this.stringField = "BottomChild"
+                                                                }
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
         }.objectSetField
         val observer = async {
             list.asFlow(listOf("objectSetField.objectSetField.objectSetField.objectSetField.objectSetField.stringField")).collect {
@@ -474,7 +493,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedSet<RealmSetContainer>>(listChange)
-            when(listChange) {
+            when (listChange) {
                 is SetChange -> {
                     // Core will only report something changed to the top-level property.
                     assertEquals(0, listChange.insertions)

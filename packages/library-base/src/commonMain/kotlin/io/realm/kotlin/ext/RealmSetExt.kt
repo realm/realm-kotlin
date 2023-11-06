@@ -17,14 +17,12 @@
 package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
-import io.realm.kotlin.internal.ManagedRealmList
 import io.realm.kotlin.internal.ManagedRealmSet
 import io.realm.kotlin.internal.UnmanagedRealmSet
 import io.realm.kotlin.internal.asRealmSet
 import io.realm.kotlin.internal.getRealm
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.query
-import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
@@ -79,7 +77,7 @@ public fun <T : BaseRealmObject> RealmSet<T>.query(
 /**
  * TODO
  */
-public fun <T: BaseRealmObject> RealmSet<T>.asFlow(keyPaths: List<String>? = null): Flow<SetChange<T>> {
+public fun <T : BaseRealmObject> RealmSet<T>.asFlow(keyPaths: List<String>? = null): Flow<SetChange<T>> {
     if (this is ManagedRealmSet) {
         operator.realmReference.checkClosed()
         // TODO

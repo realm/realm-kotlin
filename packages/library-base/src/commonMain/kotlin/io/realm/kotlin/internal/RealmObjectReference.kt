@@ -21,7 +21,6 @@ import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmKeyPathArray
 import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -106,8 +105,10 @@ public class RealmObjectReference<T : BaseRealmObject>(
             } as RealmObjectReference<T>?
     }
 
-    override fun registerForNotification(keyPaths: RealmKeyPathArrayPointer?,
-                                         callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
+    override fun registerForNotification(
+        keyPaths: RealmKeyPathArrayPointer?,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
         // We should never get here unless it is a managed object as unmanaged doesn't support observing
         return RealmInterop.realm_object_add_notification_callback(
             this.objectPointer,

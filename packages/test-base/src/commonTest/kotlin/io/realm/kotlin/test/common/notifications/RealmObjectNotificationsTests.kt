@@ -323,7 +323,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
-            when(objectChange) {
+            when (objectChange) {
                 is UpdatedObject -> {
                     assertEquals(1, objectChange.changedFields.size)
                     assertEquals("stringField", objectChange.changedFields.first())
@@ -340,12 +340,14 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_nestedProperty() = runBlocking<Unit> {
         val c = Channel<ObjectChange<Sample>>(1)
         val obj: Sample = realm.write {
-            copyToRealm(Sample().apply {
-                this.stringField = "parent"
-                this.nullableObject = Sample().apply {
-                    this.stringField = "child"
+            copyToRealm(
+                Sample().apply {
+                    this.stringField = "parent"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child"
+                    }
                 }
-            })
+            )
         }
         val observer = async {
             obj.asFlow(listOf("nullableObject.stringField")).collect {
@@ -363,7 +365,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
-            when(objectChange) {
+            when (objectChange) {
                 is UpdatedObject -> {
                     // Core will only report something changed to the top-level property.
                     assertEquals(1, objectChange.changedFields.size)
@@ -381,24 +383,26 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
         val c = Channel<ObjectChange<Sample>>(1)
         val obj: Sample = realm.write {
-            copyToRealm(Sample().apply {
-                this.stringField = "parent"
-                this.nullableObject = Sample().apply {
-                    this.stringField = "child"
+            copyToRealm(
+                Sample().apply {
+                    this.stringField = "parent"
                     this.nullableObject = Sample().apply {
-                        this.stringField = "child-child"
+                        this.stringField = "child"
                         this.nullableObject = Sample().apply {
-                            this.stringField = "child-child-child"
+                            this.stringField = "child-child"
                             this.nullableObject = Sample().apply {
                                 this.stringField = "child-child-child"
                                 this.nullableObject = Sample().apply {
-                                    this.stringField = "BottomChild"
+                                    this.stringField = "child-child-child"
+                                    this.nullableObject = Sample().apply {
+                                        this.stringField = "BottomChild"
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            })
+            )
         }
         val observer = async {
             obj.asFlow(listOf("nullableObject.nullableObject.nullableObject.nullableObject.nullableObject.stringField")).collect {
@@ -416,7 +420,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { objectChange ->
             assertIs<UpdatedObject<Sample>>(objectChange)
-            when(objectChange) {
+            when (objectChange) {
                 is UpdatedObject -> {
                     // Core will only report something changed to the top-level property.
                     assertEquals(1, objectChange.changedFields.size)

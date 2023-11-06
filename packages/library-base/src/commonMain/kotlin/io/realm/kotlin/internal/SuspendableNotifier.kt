@@ -3,12 +3,10 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
-import io.realm.kotlin.internal.interop.NativePointer
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmKeyPathArray
 import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
-import io.realm.kotlin.internal.interop.RealmKeyPathArrayT
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.LiveRealmContext

@@ -21,16 +21,12 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
-import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
-import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.ListChangeSet.Range
-import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedList
-import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.test.common.OBJECT_VALUES
 import io.realm.kotlin.test.common.OBJECT_VALUES2
 import io.realm.kotlin.test.common.OBJECT_VALUES3
@@ -479,12 +475,15 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun keyPath_topLevelProperty() = runBlocking<Unit> {
         val c = Channel<ListChange<RealmListContainer>>(1)
-        val obj = realm.write { copyToRealm(RealmListContainer().apply {
-                this.objectListField = realmListOf(
-                    RealmListContainer().apply { this.stringField = "list-item-1" },
-                    RealmListContainer().apply { this.stringField = "list-item-2" }
-                )
-            })
+        val obj = realm.write {
+            copyToRealm(
+                RealmListContainer().apply {
+                    this.objectListField = realmListOf(
+                        RealmListContainer().apply { this.stringField = "list-item-1" },
+                        RealmListContainer().apply { this.stringField = "list-item-2" }
+                    )
+                }
+            )
         }
         val list: RealmList<RealmListContainer> = obj.objectListField
         val observer = async {
@@ -503,7 +502,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedList<Sample>>(listChange)
-            when(listChange) {
+            when (listChange) {
                 is UpdatedList -> {
                     assertEquals(1, listChange.changes.size)
                 }
@@ -518,17 +517,19 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_nestedProperty() = runBlocking<Unit> {
         val c = Channel<ListChange<RealmListContainer>>(1)
         val list = realm.write {
-            copyToRealm(RealmListContainer().apply {
-                this.stringField = "parent"
-                this.objectListField = realmListOf(
-                    RealmListContainer().apply {
-                        this.stringField = "child"
-                        this.objectListField = realmListOf(
-                            RealmListContainer().apply { this.stringField = "list-item-1" }
-                        )
-                    }
-                )
-            })
+            copyToRealm(
+                RealmListContainer().apply {
+                    this.stringField = "parent"
+                    this.objectListField = realmListOf(
+                        RealmListContainer().apply {
+                            this.stringField = "child"
+                            this.objectListField = realmListOf(
+                                RealmListContainer().apply { this.stringField = "list-item-1" }
+                            )
+                        }
+                    )
+                }
+            )
         }.objectListField
         assertEquals(1, list.size)
         val observer = async {
@@ -547,7 +548,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedList<RealmListContainer>>(listChange)
-            when(listChange) {
+            when (listChange) {
                 is UpdatedList -> {
                     assertEquals(1, listChange.changes.size)
                 }
@@ -562,28 +563,42 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
     override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
         val c = Channel<ListChange<RealmListContainer>>(1)
         val list = realm.write {
-            copyToRealm(RealmListContainer().apply {
-                this.id = 1
-                this.stringField = "parent"
-                this.objectListField = realmListOf(RealmListContainer().apply {
-                        this.stringField = "child"
-                        this.objectListField = realmListOf(RealmListContainer().apply {
-                            this.stringField = "child-child"
-                            this.objectListField = realmListOf(RealmListContainer().apply {
-                                this.stringField = "child-child-child"
-                                this.objectListField = realmListOf(RealmListContainer().apply {
-                                    this.stringField = "child-child-child-child"
-                                    this.objectListField = realmListOf(RealmListContainer().apply {
-                                        this.stringField = "child-child-child-child-child"
-                                        this.objectListField = realmListOf(RealmListContainer().apply {
-                                            this.stringField = "BottomChild"
-                                        })
-                                    })
-                                })
-                            })
-                        })
-                    })
-            })
+            copyToRealm(
+                RealmListContainer().apply {
+                    this.id = 1
+                    this.stringField = "parent"
+                    this.objectListField = realmListOf(
+                        RealmListContainer().apply {
+                            this.stringField = "child"
+                            this.objectListField = realmListOf(
+                                RealmListContainer().apply {
+                                    this.stringField = "child-child"
+                                    this.objectListField = realmListOf(
+                                        RealmListContainer().apply {
+                                            this.stringField = "child-child-child"
+                                            this.objectListField = realmListOf(
+                                                RealmListContainer().apply {
+                                                    this.stringField = "child-child-child-child"
+                                                    this.objectListField = realmListOf(
+                                                        RealmListContainer().apply {
+                                                            this.stringField = "child-child-child-child-child"
+                                                            this.objectListField = realmListOf(
+                                                                RealmListContainer().apply {
+                                                                    this.stringField = "BottomChild"
+                                                                }
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
         }.objectListField
         val observer = async {
             list.asFlow(listOf("objectListField.objectListField.objectListField.objectListField.objectListField.stringField")).collect {
@@ -602,7 +617,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         c.receiveOrFail().let { listChange ->
             assertIs<UpdatedList<RealmListContainer>>(listChange)
-            when(listChange) {
+            when (listChange) {
                 is ListChange -> {
                     // Core will only report something changed to the top-level property.
                     assertEquals(1, listChange.changes.size)

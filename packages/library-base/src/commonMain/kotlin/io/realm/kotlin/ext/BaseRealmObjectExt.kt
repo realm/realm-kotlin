@@ -21,7 +21,6 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.internal.UnmanagedState
 import io.realm.kotlin.internal.checkNotificationsAvailable
-import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.realmObjectReference
 import io.realm.kotlin.internal.runIfManaged

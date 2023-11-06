@@ -24,12 +24,9 @@ import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.notifications.InitialObject
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ListChangeSet.Range
-import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.ResultsChange
-import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.common.OBJECT_VALUES
@@ -414,7 +411,7 @@ class RealmResultsNotificationsTests : FlowableTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when(resultsChange) {
+            when (resultsChange) {
                 is UpdatedResults -> {
                     assertEquals(1, resultsChange.changes.size)
                 }
@@ -429,12 +426,14 @@ class RealmResultsNotificationsTests : FlowableTests {
     override fun keyPath_nestedProperty() = runBlocking<Unit> {
         val c = Channel<ResultsChange<Sample>>(1)
         realm.write {
-            copyToRealm(Sample().apply {
-                this.stringField = "parent"
-                this.nullableObject = Sample().apply {
-                    this.stringField = "child"
+            copyToRealm(
+                Sample().apply {
+                    this.stringField = "parent"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child"
+                    }
                 }
-            })
+            )
         }
         val results = realm.query<Sample>("stringField != 'child'").find()
         assertEquals(1, results.size)
@@ -454,7 +453,7 @@ class RealmResultsNotificationsTests : FlowableTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when(resultsChange) {
+            when (resultsChange) {
                 is UpdatedResults -> {
                     assertEquals(1, resultsChange.changes.size)
                 }
@@ -469,25 +468,27 @@ class RealmResultsNotificationsTests : FlowableTests {
     override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
         val c = Channel<ResultsChange<Sample>>(1)
         realm.write {
-            copyToRealm(Sample().apply {
-                this.intField = 1
-                this.stringField = "parent"
-                this.nullableObject = Sample().apply {
-                    this.stringField = "child"
+            copyToRealm(
+                Sample().apply {
+                    this.intField = 1
+                    this.stringField = "parent"
                     this.nullableObject = Sample().apply {
-                        this.stringField = "child-child"
+                        this.stringField = "child"
                         this.nullableObject = Sample().apply {
-                            this.stringField = "child-child-child"
+                            this.stringField = "child-child"
                             this.nullableObject = Sample().apply {
                                 this.stringField = "child-child-child"
                                 this.nullableObject = Sample().apply {
-                                    this.stringField = "BottomChild"
+                                    this.stringField = "child-child-child"
+                                    this.nullableObject = Sample().apply {
+                                        this.stringField = "BottomChild"
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            })
+            )
         }
         val results = realm.query<Sample>("intField = 1").find()
         assertEquals(1, results.size)
@@ -507,7 +508,7 @@ class RealmResultsNotificationsTests : FlowableTests {
         }
         c.receiveOrFail().let { resultsChange ->
             assertIs<UpdatedResults<Sample>>(resultsChange)
-            when(resultsChange) {
+            when (resultsChange) {
                 is ResultsChange<*> -> {
                     // Core will only report something changed to the top-level property.
                     assertEquals(1, resultsChange.changes.size)

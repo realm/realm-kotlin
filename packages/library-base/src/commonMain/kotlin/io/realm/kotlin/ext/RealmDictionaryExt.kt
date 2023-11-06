@@ -18,7 +18,6 @@ package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ManagedRealmDictionary
-import io.realm.kotlin.internal.ManagedRealmList
 import io.realm.kotlin.internal.ManagedRealmMap
 import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
@@ -27,7 +26,6 @@ import io.realm.kotlin.internal.getRealm
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.query
 import io.realm.kotlin.internal.realmMapEntryOf
-import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
@@ -123,7 +121,7 @@ public fun <T : BaseRealmObject> RealmDictionary<T?>.query(
 /**
  * TODO
  */
-public fun <K: String, T: BaseRealmObject> RealmMap<K, T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<K, T>> {
+public fun <K : String, T : BaseRealmObject> RealmMap<K, T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<K, T>> {
     if (this is ManagedRealmMap) {
         operator.realmReference.checkClosed()
         // TODO Find Class Key
@@ -136,7 +134,7 @@ public fun <K: String, T: BaseRealmObject> RealmMap<K, T>.asFlow(keyPaths: List<
 /**
  * TODO
  */
-public fun <T: BaseRealmObject> RealmDictionary<T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<String, T>> {
+public fun <T : BaseRealmObject> RealmDictionary<T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<String, T>> {
     if (this is ManagedRealmDictionary) {
         operator.realmReference.checkClosed()
         // TODO Find Class Key

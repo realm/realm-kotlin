@@ -31,7 +31,6 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert_embedded
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
-import io.realm.kotlin.internal.interop.RealmKeyPathArray
 import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
