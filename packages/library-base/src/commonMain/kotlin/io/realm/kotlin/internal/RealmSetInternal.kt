@@ -161,8 +161,14 @@ internal class ManagedRealmSet<E> constructor(
     }
 
     override fun asFlow(keyPaths: List<String>?): Flow<SetChange<E>> {
-        // TODO
-        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
+        val classKey: ClassKey = keyPaths?.let {
+            if (operator is RealmObjectSetOperator) {
+                operator.classKey
+            } else {
+                throw IllegalArgumentException("Keypaths are only supported for sets of objects.")
+            }
+        } ?: ClassKey(0)
+        return operator.realmReference.owner.registerObserver(this, Pair(classKey, keyPaths))
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmSet<E>? {

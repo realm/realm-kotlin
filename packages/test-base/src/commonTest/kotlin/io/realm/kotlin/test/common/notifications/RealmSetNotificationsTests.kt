@@ -19,6 +19,7 @@ package io.realm.kotlin.test.common.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.set.RealmSetContainer
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.notifications.DeletedSet
 import io.realm.kotlin.notifications.InitialSet
 import io.realm.kotlin.notifications.SetChange
@@ -29,6 +30,7 @@ import io.realm.kotlin.test.common.SET_OBJECT_VALUES3
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.types.RealmSet
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
@@ -41,6 +43,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -344,32 +347,170 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
     }
 
     @Test
-    override fun keyPath_topLevelProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_topLevelProperty() = runBlocking<Unit> {
+        val c = Channel<SetChange<RealmSetContainer>>(1)
+        val obj = realm.write { copyToRealm(RealmSetContainer().apply {
+            this.objectSetField = realmSetOf(
+                RealmSetContainer().apply { this.stringField = "list-item-1" },
+                RealmSetContainer().apply { this.stringField = "list-item-2" }
+            )
+        })
+        }
+        val set: RealmSet<RealmSetContainer> = obj.objectSetField
+        val observer = async {
+            set.asFlow(listOf("stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialSet<RealmSetContainer>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(set.first())!!.id = 42
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(set.first())!!.stringField = "Foo"
+        }
+        c.receiveOrFail().let { listChange ->
+            assertIs<UpdatedSet<RealmSetContainer>>(listChange)
+            when(listChange) {
+                is UpdatedSet -> {
+                    assertEquals(0, listChange.deletions)
+                    assertEquals(0, listChange.insertions)
+                }
+                else -> fail("Unexpected change: $listChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_nestedProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_nestedProperty() = runBlocking<Unit> {
+        val c = Channel<SetChange<RealmSetContainer>>(1)
+        val set = realm.write {
+            copyToRealm(RealmSetContainer().apply {
+                this.stringField = "parent"
+                this.objectSetField = realmSetOf(
+                    RealmSetContainer().apply {
+                        this.stringField = "child"
+                        this.objectSetField = realmSetOf(
+                            RealmSetContainer().apply { this.stringField = "list-item-1" }
+                        )
+                    }
+                )
+            })
+        }.objectSetField
+        assertEquals(1, set.size)
+        val observer = async {
+            set.asFlow(listOf("objectSetField.stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialSet<RealmSetContainer>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(set.first())!!.id = 1
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(set.first())!!.objectSetField.first().stringField = "Bar"
+        }
+        c.receiveOrFail().let { setChange ->
+            assertIs<UpdatedSet<RealmSetContainer>>(setChange)
+            when(setChange) {
+                is UpdatedSet -> {
+                    assertEquals(0, setChange.insertions)
+                    assertEquals(0, setChange.deletions)
+                }
+                else -> fail("Unexpected change: $setChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_propertyBelowDefaultLimit() {
-        TODO("Not yet implemented")
+    override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
+        val c = Channel<SetChange<RealmSetContainer>>(1)
+        val list = realm.write {
+            copyToRealm(RealmSetContainer().apply {
+                this.id = 1
+                this.stringField = "parent"
+                this.objectSetField = realmSetOf(RealmSetContainer().apply {
+                    this.stringField = "child"
+                    this.objectSetField = realmSetOf(RealmSetContainer().apply {
+                        this.stringField = "child-child"
+                        this.objectSetField = realmSetOf(RealmSetContainer().apply {
+                            this.stringField = "child-child-child"
+                            this.objectSetField = realmSetOf(RealmSetContainer().apply {
+                                this.stringField = "child-child-child-child"
+                                this.objectSetField = realmSetOf(RealmSetContainer().apply {
+                                    this.stringField = "child-child-child-child-child"
+                                    this.objectSetField = realmSetOf(RealmSetContainer().apply {
+                                        this.stringField = "BottomChild"
+                                    })
+                                })
+                            })
+                        })
+                    })
+                })
+            })
+        }.objectSetField
+        val observer = async {
+            list.asFlow(listOf("objectSetField.objectSetField.objectSetField.objectSetField.objectSetField.stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialSet<RealmSetContainer>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(list.first())!!.stringField = "Parent change"
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            val obj = findLatest(list.first())!!.objectSetField.first().objectSetField.first().objectSetField.first().objectSetField.first().objectSetField.first()
+            obj.stringField = "Bar"
+        }
+        c.receiveOrFail().let { listChange ->
+            assertIs<UpdatedSet<RealmSetContainer>>(listChange)
+            when(listChange) {
+                is SetChange -> {
+                    // Core will only report something changed to the top-level property.
+                    assertEquals(0, listChange.insertions)
+                    assertEquals(0, listChange.deletions)
+                }
+                else -> fail("Unexpected change: $listChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_unknownTopLevelProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_unknownTopLevelProperty() = runBlocking<Unit> {
+        val set = realm.write { copyToRealm(RealmSetContainer()) }.objectSetField
+        assertFailsWith<IllegalArgumentException>() {
+            set.asFlow(listOf("foo"))
+        }
     }
 
     @Test
-    override fun keyPath_unknownNestedProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_unknownNestedProperty() = runBlocking<Unit> {
+        val set = realm.write { copyToRealm(RealmSetContainer()) }.objectSetField
+        assertFailsWith<IllegalArgumentException>() {
+            set.asFlow(listOf("objectSetField.foo"))
+        }
     }
 
     @Test
-    override fun keyPath_invalidNestedProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_invalidNestedProperty() = runBlocking<Unit> {
+        val set = realm.write { copyToRealm(RealmSetContainer()) }.objectSetField
+        assertFailsWith<IllegalArgumentException> {
+            set.asFlow(listOf("id.foo"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            set.asFlow(listOf("objectSetField.intSetField.foo"))
+        }
     }
 }

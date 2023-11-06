@@ -117,8 +117,14 @@ internal class ManagedRealmList<E>(
 
     override fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>> {
         operator.realmReference.checkClosed()
-        // TODO
-        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
+        val classKey: ClassKey = keyPaths?.let {
+            if (operator is RealmObjectListOperator) {
+                operator.classKey
+            } else {
+                throw IllegalArgumentException("Keypaths are only supported for lists of objects.")
+            }
+        } ?: ClassKey(0)
+        return operator.realmReference.owner.registerObserver(this, Pair(classKey, keyPaths))
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {
