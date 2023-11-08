@@ -444,8 +444,6 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
         jenv->DeleteLocalRef(temp_string);
     }
 }
-// -- End
-
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
 %typemap(jni) char ** "jobjectArray"
@@ -458,10 +456,7 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 %typemap(javaout) char ** {
 return $jnicall;
 }
-
-
-
-
+// -- End
 
 // FIXME OPTIMIZE Support getting/setting multiple attributes. Ignored for now due to incorrect
 //  type cast in Swig-generated wrapper for "const realm_property_key_t*" which is not cast

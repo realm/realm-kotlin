@@ -1072,7 +1072,6 @@ jni_realm_create_key_path_array(const realm_t* realm,
     if (result) {
         return out;
     } else {
-        delete(out);
         auto env = get_env();
         throw_last_error_as_java_exception(env);
         return nullptr;

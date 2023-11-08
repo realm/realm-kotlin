@@ -58,8 +58,10 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
      */
     override fun asFlow(keyPaths: List<String>?): Flow<SingleQueryChange<E>> {
         var oldHead: E? = null
-        // TODO
-        return realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
+        val keyPathInfo = keyPaths?.let {
+            Pair(classKey, it)
+        }
+        return realmReference.owner.registerObserver(this, keyPathInfo)
             // Convert into flow of result head
             .map { resultChange: ResultsChange<E> -> resultChange.list.firstOrNull() }
             // Only react when head is changed

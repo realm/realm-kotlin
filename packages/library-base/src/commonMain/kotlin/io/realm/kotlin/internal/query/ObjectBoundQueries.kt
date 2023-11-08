@@ -48,7 +48,6 @@ internal class ObjectBoundQuery<E : BaseRealmObject>(
         realmQuery.query(filter, *arguments)
     )
 
-    // TODO
     override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> = realmQuery.asFlow().bind(
         targetObject,
         keyPaths
@@ -118,7 +117,6 @@ internal class ObjectBoundRealmScalarNullableQuery<E>(
     val targetObject: RealmObjectReference<*>,
     val realmQuery: RealmScalarNullableQuery<E>
 ) : RealmScalarNullableQuery<E> by realmQuery {
-    // TODO is it correct to set keyPaths to null?
     override fun asFlow(): Flow<E?> = realmQuery.asFlow().bind(targetObject, null)
 }
 
@@ -126,6 +124,5 @@ internal class ObjectBoundRealmScalarQuery<E>(
     val targetObject: RealmObjectReference<*>,
     val realmQuery: RealmScalarQuery<E>
 ) : RealmScalarQuery<E> by realmQuery {
-    // TODO is it correct to set keyPaths to null?
     override fun asFlow(): Flow<E> = realmQuery.asFlow().bind(targetObject, null)
 }

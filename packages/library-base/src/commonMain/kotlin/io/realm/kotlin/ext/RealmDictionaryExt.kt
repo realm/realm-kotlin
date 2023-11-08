@@ -18,25 +18,20 @@ package io.realm.kotlin.ext
 
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ManagedRealmDictionary
-import io.realm.kotlin.internal.ManagedRealmMap
 import io.realm.kotlin.internal.RealmMapMutableEntry
 import io.realm.kotlin.internal.UnmanagedRealmDictionary
 import io.realm.kotlin.internal.asRealmDictionary
 import io.realm.kotlin.internal.getRealm
-import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.query
 import io.realm.kotlin.internal.realmMapEntryOf
-import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmDictionaryMutableEntry
 import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmMap
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
-import kotlinx.coroutines.flow.Flow
 
 /**
  * Instantiates an **unmanaged** [RealmDictionary] from a variable number of [Pair]s of [String]
@@ -117,29 +112,3 @@ public fun <T : BaseRealmObject> RealmDictionary<T?>.query(
     } else {
         throw IllegalArgumentException("Unmanaged dictionary values cannot be queried.")
     }
-
-/**
- * TODO
- */
-public fun <K : String, T : BaseRealmObject> RealmMap<K, T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<K, T>> {
-    if (this is ManagedRealmMap) {
-        operator.realmReference.checkClosed()
-        // TODO Find Class Key
-        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
-    } else {
-        throw UnsupportedOperationException("Unmanaged maps cannot be observed.")
-    }
-}
-
-/**
- * TODO
- */
-public fun <T : BaseRealmObject> RealmDictionary<T>.asFlow(keyPaths: List<String>? = null): Flow<MapChange<String, T>> {
-    if (this is ManagedRealmDictionary) {
-        operator.realmReference.checkClosed()
-        // TODO Find Class Key
-        return operator.realmReference.owner.registerObserver(this, Pair(ClassKey(0), keyPaths))
-    } else {
-        throw UnsupportedOperationException("Unmanaged dictionaries cannot be observed.")
-    }
-}

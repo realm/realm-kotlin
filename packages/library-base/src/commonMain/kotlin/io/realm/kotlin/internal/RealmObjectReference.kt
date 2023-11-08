@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.Callback
-import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -130,9 +129,11 @@ public class RealmObjectReference<T : BaseRealmObject>(
         }.toTypedArray()
     }
 
-    override fun asFlow(keyPath: List<String>?): Flow<ObjectChange<T>> {
-        // TODO
-        return this.owner.owner.registerObserver(this, Pair(ClassKey(0), keyPath))
+    override fun asFlow(keyPaths: List<String>?): Flow<ObjectChange<T>> {
+        val keyPathInfo = keyPaths?.let {
+            Pair(metadata.classKey, it)
+        }
+        return this.owner.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun delete() {

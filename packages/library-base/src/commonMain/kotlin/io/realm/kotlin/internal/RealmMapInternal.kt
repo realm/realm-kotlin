@@ -102,14 +102,15 @@ internal abstract class ManagedRealmMap<K, V> constructor(
 
     override fun asFlow(keyPaths: List<String>?): Flow<MapChange<K, V>> {
         operator.realmReference.checkClosed()
-        val classKey: ClassKey = keyPaths?.let {
-            if (operator is RealmObjectMapOperator) {
+        val keyPathInfo = keyPaths?.let {
+            val classKey = if (operator is RealmObjectMapOperator) {
                 operator.classKey
             } else {
-                throw IllegalArgumentException("Keypaths are only supported for maps containing objects.")
+                throw IllegalArgumentException("Keypaths are only supported for maps of objects.")
             }
-        } ?: ClassKey(0)
-        return operator.realmReference.owner.registerObserver(this, Pair(classKey, keyPaths))
+            Pair(classKey, keyPaths)
+        }
+        return operator.realmReference.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun registerForNotification(

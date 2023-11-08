@@ -96,7 +96,7 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: Pair<ClassKey, RealmKeyPathArray?>): Flow<C> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: Pair<ClassKey, RealmKeyPathArray>?): Flow<C> {
         val keypathsPtr: RealmKeyPathArrayPointer? = keyPaths?.let { RealmInterop.create_key_paths_array(realm.owner.realmReference.dbPointer, keyPaths.first, keyPaths.second) }
         return callbackFlow {
             val token: AtomicRef<Cancellable> =

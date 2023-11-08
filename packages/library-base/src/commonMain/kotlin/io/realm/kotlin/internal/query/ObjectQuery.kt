@@ -171,9 +171,9 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         QueryResultNotifiable(resultsPointer, classKey, clazz, mediator)
 
     override fun asFlow(keyPath: List<String>?): Flow<ResultsChange<E>> {
+        val keyPathInfo = keyPath?.let { Pair(classKey, it) }
         return realmReference.owner
-            // TODO
-            .registerObserver(this, Pair(ClassKey(0), keyPath))
+            .registerObserver(this, keyPathInfo)
     }
 
     override fun delete() {
