@@ -744,6 +744,7 @@ class SyncedRealmTests {
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
             Realm.open(config1).use { realm ->
+                realm.syncSession.downloadAllServerChanges(30.seconds)
                 realm.write {
                     realm.query<SyncObjectWithAllTypes>()
                         .first()
@@ -760,6 +761,7 @@ class SyncedRealmTests {
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
             Realm.open(config2).use { realm ->
+                realm.syncSession.downloadAllServerChanges(30.seconds)
                 realm.write {
                     realm.query<SyncObjectWithAllTypes>()
                         .first()
