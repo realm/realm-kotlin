@@ -27,7 +27,6 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 // Platform independent helper methods
 object Utils {
