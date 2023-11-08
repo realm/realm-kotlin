@@ -22,6 +22,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
@@ -99,7 +100,7 @@ suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, m
             receive()
         }
     } catch (e: CancellationException) {
-        @Suppress("TooGenericExceptionThrown")
-        throw RuntimeException("$message", e)
+        @Suppress("TooGenericExceptionThrown", "invisible_member")
+        throw TimeoutCancellationException("$message")
     }
 }
