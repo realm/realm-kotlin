@@ -698,7 +698,8 @@ class SyncedRealmTests {
     fun mutableRealmInt_convergesAcrossClients() = runBlocking {
         val oldLevel = RealmLog.level
         RealmLog.level = LogLevel.ALL
-        try {// Updates and initial data upload are carried out using this config
+        try {
+            // Updates and initial data upload are carried out using this config
             val config0 = createPartitionSyncConfig(
                 user = app.createUserAndLogIn(randomEmail(), "password1234"),
                 partitionValue = partitionValue,
