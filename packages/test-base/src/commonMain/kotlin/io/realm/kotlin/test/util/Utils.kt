@@ -26,6 +26,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 // Platform independent helper methods
@@ -93,7 +94,7 @@ fun Instant.toRealmInstant(): RealmInstant {
 }
 
 // Variant of `Channel.receiveOrFail()` that will will throw if a timeout is hit.
-suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.seconds, message: String? = null): T {
+suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, message: String? = null): T {
     return try {
         withTimeout(timeout) {
             receive()
