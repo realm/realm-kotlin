@@ -301,7 +301,8 @@ return $jnicall;
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
                realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
                realm_sync_session_connection_state_notification_token_t*,
-               realm_dictionary_changes_t*, realm_scheduler_t*, realm_key_path_array_t* };
+               realm_dictionary_changes_t*, realm_scheduler_t*, realm_sync_socket_t*,
+               realm_key_path_array_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -330,6 +331,11 @@ bool realm_object_is_valid(const realm_object_t*);
     }
     jresult = (jboolean)result;
 }
+
+%typemap(javaimports) realm_sync_socket_callback_result %{
+import static io.realm.kotlin.internal.interop.realm_errno_e.*;
+%}
+
 // Just showcasing a wrapping concept. Maybe we should just go with `long` (apply void* as above)
 //%typemap(jstype) realm_t* "LongPointerWrapper"
 //%typemap(javain) realm_t* "$javainput.ptr()"
@@ -501,4 +507,3 @@ return $jnicall;
 %include "realm.h"
 %include "realm/error_codes.h"
 %include "src/main/jni/realm_api_helpers.h"
-

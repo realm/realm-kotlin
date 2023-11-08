@@ -56,7 +56,7 @@ internal class SuspendableNotifier(
     private inner class NotifierRealm : LiveRealm(
         owner = owner,
         configuration = owner.configuration,
-        scheduler = scheduler
+        scheduler = scheduler,
     ) {
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher

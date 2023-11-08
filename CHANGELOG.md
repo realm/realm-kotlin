@@ -1,4 +1,33 @@
-## 1.12.0-SNAPSHOT (YYYY-MM-DD)
+## 1.13.0-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+
+### Internal
+* None.
+
+
+## 1.12.0 (2023-11-02)
 
 This release upgrades the Sync metadata in a way that is not compatible with older versions. To downgrade a Sync app from this version, you'll need to manually delete the metadata folder located at `$[SYNC-ROOT-DIRECTORY]/mongodb-realm/[APP-ID]/server-utility/metadata/`. This will log out all users.
 
@@ -10,6 +39,10 @@ This release upgrades the Sync metadata in a way that is not compatible with old
 * The Realm Gradle Plugin no longer has a dependency on KAPT. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
 
 ### Fixed
+* `Realm.getNumberOfActiveVersions` now returns the actual number of active versions. (Core issue [#6960](https://github.com/realm/realm-core/pull/6960))
+* Fixed memory leak on Darwin caused by a reference cycle between resources and the GC cleaner. (Issue [#1530](https://github.com/realm/realm-kotlin/pull/1530))
+* Fixed memory leaks on the JVM platform, see PR for more information. (Issue [#1526](https://github.com/realm/realm-kotlin/pull/1526))
+* Removed pin on the initial realm version after opening a Realm. (Issue [#1519](https://github.com/realm/realm-kotlin/pull/1519))
 * `Realm.close()` is now idempotent.
 * Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
@@ -34,7 +67,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * Minimum Android SDK: 16.
 
 ### Internal
-* Updated to Realm Core 13.23.1, commit 3618b2e9d679cd2880be8df17b79d4cc6d71ff76.
+* Updated to Realm Core 13.23.2, commit e6271d72308b40399890060f58a88cf568c2ee22.
 
 
 ## 1.11.1 (2023-09-07)

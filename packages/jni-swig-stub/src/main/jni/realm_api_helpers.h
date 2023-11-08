@@ -150,4 +150,10 @@ jni_realm_create_key_path_array(const realm_t* realm,
                             const char** user_key_paths
 );
 
+void
+realm_property_info_t_cleanup(realm_property_info_t* value);
+
+void
+realm_class_info_t_cleanup(realm_class_info_t * value);
+
 #endif //TEST_REALM_API_HELPERS_H

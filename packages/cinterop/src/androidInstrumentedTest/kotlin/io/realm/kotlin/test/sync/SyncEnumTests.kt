@@ -28,6 +28,7 @@ import io.realm.kotlin.internal.interop.realm_sync_errno_connection_e
 import io.realm.kotlin.internal.interop.realm_sync_errno_session_e
 import io.realm.kotlin.internal.interop.realm_sync_session_resync_mode_e
 import io.realm.kotlin.internal.interop.realm_sync_session_state_e
+import io.realm.kotlin.internal.interop.realm_sync_socket_callback_result_e
 import io.realm.kotlin.internal.interop.realm_user_state_e
 import io.realm.kotlin.internal.interop.realm_web_socket_errno_e
 import io.realm.kotlin.internal.interop.sync.AuthProvider
@@ -38,6 +39,7 @@ import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.SyncConnectionErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncSessionErrorCode
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
+import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
 import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import org.junit.Test
 import kotlin.reflect.KClass
@@ -132,6 +134,13 @@ class SyncEnumTests {
     fun syncSessionConnectionState() {
         checkEnum(realm_sync_connection_state_e::class) { nativeValue ->
             CoreConnectionState.of(nativeValue)
+        }
+    }
+
+    @Test
+    fun websocketResultCode() {
+        checkEnum(realm_sync_socket_callback_result_e::class) { nativeValue ->
+            WebsocketCallbackResult.of(nativeValue)
         }
     }
 
