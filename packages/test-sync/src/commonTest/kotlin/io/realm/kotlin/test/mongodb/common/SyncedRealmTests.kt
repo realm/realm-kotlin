@@ -32,7 +32,6 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -696,99 +695,87 @@ class SyncedRealmTests {
     @Suppress("LongMethod")
     @Test
     fun mutableRealmInt_convergesAcrossClients() = runBlocking {
-        val oldLevel = RealmLog.level
-        RealmLog.level = LogLevel.ALL
-        try {
-            // Updates and initial data upload are carried out using this config
-            val config0 = createPartitionSyncConfig(
-                user = app.createUserAndLogIn(randomEmail(), "password1234"),
-                partitionValue = partitionValue,
-                name = "db1",
-            )
+        // Updates and initial data upload are carried out using this config
+        val config0 = createPartitionSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db1",
+        )
 
-            // Config for update 1
-            val config1 = createPartitionSyncConfig(
-                user = app.createUserAndLogIn(randomEmail(), "password1234"),
-                partitionValue = partitionValue,
-                name = "db2",
-            )
+        // Config for update 1
+        val config1 = createPartitionSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db2",
+        )
 
-            // Config for update 2
-            val config2 = createPartitionSyncConfig(
-                user = app.createUserAndLogIn(randomEmail(), "password1234"),
-                partitionValue = partitionValue,
-                name = "db3",
-            )
+        // Config for update 2
+        val config2 = createPartitionSyncConfig(
+            user = app.createUserAndLogIn(randomEmail(), "password1234"),
+            partitionValue = partitionValue,
+            name = "db3",
+        )
 
-            val counterValue = Channel<Long>(1)
+        val counterValue = Channel<Long>(1)
 
-            // Asynchronously receive updates
-            val updates = async {
-                Realm.open(config0).use { realm ->
+        // Asynchronously receive updates
+        val updates = async {
+            Realm.open(config0).use { realm ->
+                realm.query<SyncObjectWithAllTypes>()
+                    .first()
+                    .asFlow()
+                    .collect {
+                        if (it.obj != null) {
+                            val counter = it.obj!!.mutableRealmIntField
+                            counterValue.trySend(counter.get())
+                        }
+                    }
+            }
+        }
+
+        // Upload initial data - blocking to ensure the two clients find an object to update
+        val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
+        Realm.open(config0).use { realm ->
+            realm.writeBlocking { copyToRealm(masterObject) }
+            realm.syncSession.uploadAllLocalChanges()
+        }
+        assertEquals(42, counterValue.receiveOrFail(message = "Failed to receive 42"))
+
+        // Increment counter asynchronously after download initial data (1)
+        val increment1 = async {
+            Realm.open(config1).use { realm ->
+                realm.write {
                     realm.query<SyncObjectWithAllTypes>()
                         .first()
-                        .asFlow()
-                        .collect {
-                            if (it.obj != null) {
-                                val counter = it.obj!!.mutableRealmIntField
-                                counterValue.trySend(counter.get())
-                            }
-                        }
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
                 }
+                realm.syncSession.uploadAllLocalChanges(10.seconds)
             }
-
-            // Upload initial data - blocking to ensure the two clients find an object to update
-            val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
-            Realm.open(config0).use { realm ->
-                realm.writeBlocking { copyToRealm(masterObject) }
-                realm.syncSession.uploadAllLocalChanges()
-            }
-            assertEquals(42, counterValue.receiveOrFail(message = "Failed to receive 42"))
-
-            // Increment counter asynchronously after download initial data (1)
-            val increment1 = async {
-                Realm.open(config1).use { realm ->
-                    realm.syncSession.downloadAllServerChanges(30.seconds)
-                    realm.write {
-                        realm.query<SyncObjectWithAllTypes>()
-                            .first()
-                            .find()
-                            .let { assertNotNull(findLatest(assertNotNull(it))) }
-                            .mutableRealmIntField
-                            .increment(1)
-                    }
-                }
-            }
-            assertEquals(43, counterValue.receiveOrFail(message = "Failed to receive 43"))
-
-            // Increment counter asynchronously after download initial data (2)
-            val increment2 = async {
-                Realm.open(config2).use { realm ->
-                    println("realm2 open")
-                    realm.syncSession.downloadAllServerChanges(30.seconds)
-
-                    println("realm2 remote data downloaded")
-                    realm.write {
-                        realm.query<SyncObjectWithAllTypes>()
-                            .first()
-                            .find()
-                            .let { assertNotNull(findLatest(assertNotNull(it))) }
-                            .mutableRealmIntField
-                            .increment(1)
-                        println("realm2 incremented")
-                    }
-                    realm.syncSession.uploadAllLocalChanges(10.seconds)
-                    println("realm2 increment uploaded")
-                }
-            }
-            assertEquals(44, counterValue.receiveOrFail(message = "Failed to receive 44"))
-
-            increment1.cancel()
-            increment2.cancel()
-            updates.cancel()
-        } finally {
-            RealmLog.level = oldLevel
         }
+        assertEquals(43, counterValue.receiveOrFail(message = "Failed to receive 43"))
+
+        // Increment counter asynchronously after download initial data (2)
+        val increment2 = async {
+            Realm.open(config2).use { realm ->
+                realm.write {
+                    realm.query<SyncObjectWithAllTypes>()
+                        .first()
+                        .find()
+                        .let { assertNotNull(findLatest(assertNotNull(it))) }
+                        .mutableRealmIntField
+                        .increment(1)
+                }
+                realm.syncSession.uploadAllLocalChanges(10.seconds)
+            }
+        }
+        assertEquals(44, counterValue.receiveOrFail(message = "Failed to receive 44"))
+
+        increment1.cancel()
+        increment2.cancel()
+        updates.cancel()
     }
 
     private fun createWriteCopyLocalConfig(
