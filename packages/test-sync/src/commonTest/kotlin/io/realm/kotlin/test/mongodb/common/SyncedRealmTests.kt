@@ -764,7 +764,10 @@ class SyncedRealmTests {
             // Increment counter asynchronously after download initial data (2)
             val increment2 = async {
                 Realm.open(config2).use { realm ->
+                    println("realm2 open")
                     realm.syncSession.downloadAllServerChanges(30.seconds)
+
+                    println("realm2 remote data downloaded")
                     realm.write {
                         realm.query<SyncObjectWithAllTypes>()
                             .first()
@@ -772,7 +775,10 @@ class SyncedRealmTests {
                             .let { assertNotNull(findLatest(assertNotNull(it))) }
                             .mutableRealmIntField
                             .increment(1)
+                        println("realm2 incremented")
                     }
+                    realm.syncSession.uploadAllLocalChanges(10.seconds)
+                    println("realm2 increment uploaded")
                 }
             }
             assertEquals(44, counterValue.receiveOrFail(message = "Failed to receive 44"))
