@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Added support for keypaths in `asFlow()` methods on objects. This makes it possible to control which properties will trigger change events, including properties on objects below the default nested limit of 4. (Issue [#661](https://github.com/realm/realm-kotlin/issues/661))
 
 ### Fixed
 * None.
