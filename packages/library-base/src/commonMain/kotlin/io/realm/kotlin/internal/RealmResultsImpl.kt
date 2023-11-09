@@ -107,7 +107,10 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
 
     override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> {
         realm.checkClosed()
-        return realm.owner.registerObserver(this, Pair(classKey, keyPaths))
+        val keyPathInfo = keyPaths?.let {
+            Pair(classKey, keyPaths)
+        }
+        return realm.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun delete() {

@@ -5,7 +5,6 @@ import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
-import io.realm.kotlin.internal.interop.RealmKeyPathArray
 import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
@@ -96,7 +95,7 @@ internal class SuspendableNotifier(
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: Pair<ClassKey, RealmKeyPathArray>?): Flow<C> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: Pair<ClassKey, List<String>>?): Flow<C> {
         val keypathsPtr: RealmKeyPathArrayPointer? = keyPaths?.let { RealmInterop.create_key_paths_array(realm.owner.realmReference.dbPointer, keyPaths.first, keyPaths.second) }
         return callbackFlow {
             val token: AtomicRef<Cancellable> =

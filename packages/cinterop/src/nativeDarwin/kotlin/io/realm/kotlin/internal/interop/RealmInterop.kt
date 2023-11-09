@@ -45,6 +45,7 @@ import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.LongVar
@@ -70,6 +71,7 @@ import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
+import kotlinx.cinterop.toCStringArray
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
@@ -103,6 +105,7 @@ import realm_wrapper.realm_http_header_t
 import realm_wrapper.realm_http_request_method
 import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
+import realm_wrapper.realm_key_path_array_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
 import realm_wrapper.realm_object_id_t
@@ -1653,8 +1656,13 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
-    actual fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: RealmKeyPathArray?): RealmKeyPathArrayPointer? {
-        TODO()
+    actual fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer {
+        memScoped {
+            val kps: CPointer<CPointerVarOf<CPointer<ByteVarOf<Byte>>>> = keyPaths.toCStringArray(this)
+            val kp = allocArray<CPointerVar<realm_key_path_array_t>>(1)
+            checkedBooleanResult(realm_wrapper.realm_create_key_path_array(realm.cptr(), clazz.key.toUInt(), keyPaths.size, kps, kp))
+            return CPointerWrapper(kp[0])
+        }
     }
 
     actual fun realm_object_add_notification_callback(
@@ -1672,7 +1680,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // TODO
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1706,7 +1714,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1739,7 +1747,7 @@ actual object RealmInterop {
                     userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1773,7 +1781,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1807,7 +1815,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()

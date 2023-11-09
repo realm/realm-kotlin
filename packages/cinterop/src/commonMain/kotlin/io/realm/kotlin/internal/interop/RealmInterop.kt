@@ -123,8 +123,6 @@ typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscript
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
 
-typealias RealmKeyPathArray = List<String>
-
 /**
  * Class for grouping and normalizing values we want to send as part of
  * logging in Sync Users.
@@ -440,7 +438,7 @@ expect object RealmInterop {
     ): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
-    fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: RealmKeyPathArray): RealmKeyPathArrayPointer
+    fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer
     fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
         keyPaths: RealmKeyPathArrayPointer?,

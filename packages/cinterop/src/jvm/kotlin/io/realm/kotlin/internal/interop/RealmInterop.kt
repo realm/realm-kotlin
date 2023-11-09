@@ -813,11 +813,9 @@ actual object RealmInterop {
         return realmc.realm_dictionary_is_valid(dictionary.cptr())
     }
 
-    actual fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: RealmKeyPathArray?): RealmKeyPathArrayPointer? {
-        return keyPaths?.let {
-            val ptr = realmc.jni_realm_create_key_path_array(realm.cptr(), clazz.key, keyPaths.size, keyPaths.toTypedArray())
-            return LongPointerWrapper(ptr)
-        }
+    actual fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer {
+        val ptr = realmc.jni_realm_create_key_path_array(realm.cptr(), clazz.key, keyPaths.size, keyPaths.toTypedArray())
+        return LongPointerWrapper(ptr)
     }
 
     actual fun realm_object_add_notification_callback(
