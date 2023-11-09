@@ -2156,10 +2156,22 @@ fun ObjectId.asRealmObjectIdT(): realm_object_id_t {
 
 private class JVMScheduler(dispatcher: CoroutineDispatcher) {
     val scope: CoroutineScope = CoroutineScope(dispatcher)
+    val lock = SynchronizableObject()
+    var cancelled = false
 
     fun notifyCore(schedulerPointer: Long) {
         scope.launch {
-            realmc.invoke_core_notify_callback(schedulerPointer)
+            lock.withLock {
+                if (!cancelled) {
+                    realmc.invoke_core_notify_callback(schedulerPointer)
+                }
+            }
+        }
+    }
+
+    fun cancel() {
+        lock.withLock {
+            cancelled = true
         }
     }
 }

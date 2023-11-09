@@ -45,6 +45,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class VersionTrackingTests {
     private lateinit var initialLogLevel: LogLevel
@@ -150,7 +151,8 @@ class VersionTrackingTests {
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
-            assertEquals(1, allTracked.size, toString())
+            // Initially tracked version from user facing realm might have been released by now
+            assertTrue(allTracked.size <= 1, toString())
             assertNotNull(notifier, toString())
             assertEquals(0, notifier?.active?.size, toString())
             assertNotNull(writer, toString())
