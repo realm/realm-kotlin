@@ -736,7 +736,7 @@ class SyncedRealmTests {
             realm.writeBlocking { copyToRealm(masterObject) }
             realm.syncSession.uploadAllLocalChanges()
         }
-        assertEquals(42, counterValue.receiveOrFail(), "Failed to receive 42")
+        assertEquals(42, counterValue.receiveOrFail(message = "Failed to receive 42"))
 
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
@@ -750,9 +750,10 @@ class SyncedRealmTests {
                         .mutableRealmIntField
                         .increment(1)
                 }
+                realm.syncSession.uploadAllLocalChanges(10.seconds)
             }
         }
-        assertEquals(43, counterValue.receiveOrFail(), "Failed to receive 43")
+        assertEquals(43, counterValue.receiveOrFail(message = "Failed to receive 43"))
 
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
@@ -766,9 +767,10 @@ class SyncedRealmTests {
                         .mutableRealmIntField
                         .increment(1)
                 }
+                realm.syncSession.uploadAllLocalChanges(10.seconds)
             }
         }
-        assertEquals(44, counterValue.receiveOrFail(), "Failed to receive 44")
+        assertEquals(44, counterValue.receiveOrFail(message = "Failed to receive 44"))
 
         increment1.cancel()
         increment2.cancel()
