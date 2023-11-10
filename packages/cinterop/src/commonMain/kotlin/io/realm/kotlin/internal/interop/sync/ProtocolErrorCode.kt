@@ -124,3 +124,22 @@ expect enum class WebsocketErrorCode : CodeDescription {
         internal fun of(nativeValue: Int): WebsocketErrorCode?
     }
 }
+
+/**
+ * Wrapper for C-API `realm_sync_socket_callback_result`
+ * See https://github.com/realm/realm-core/blob/master/src/realm/error_codes.h#L298
+ */
+expect enum class WebsocketCallbackResult : CodeDescription {
+    RLM_ERR_SYNC_SOCKET_SUCCESS,
+    RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED,
+    RLM_ERR_SYNC_SOCKET_RUNTIME,
+    RLM_ERR_SYNC_SOCKET_OUT_OF_MEMORY,
+    RLM_ERR_SYNC_SOCKET_ADDRESS_SPACE_EXHAUSTED,
+    RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED,
+    RLM_ERR_SYNC_SOCKET_NOT_SUPPORTED,
+    RLM_ERR_SYNC_SOCKET_INVALID_ARGUMENT;
+
+    companion object {
+        fun of(nativeValue: Int): WebsocketCallbackResult?
+    }
+}

@@ -120,6 +120,15 @@ class MemoryTests {
         @OptIn(ExperimentalStdlibApi::class)
         println("NEW_MEMORY_MODEL: " + isExperimentalMM())
 
+        // Referencing things like
+        //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
+        //   platform.Foundation.NSFileManager.defaultManager
+        // as done in Darwin SystemUtils.kt and initialized lazily, so do a full realm-lifecycle
+        // to only measure increases over the actual test
+        // - Ensure that we clean up any released memory to get a nice baseline
+        platform.posix.sleep((1 * 5).toUInt()) // give chance to the Collector Thread to process out of scope references
+        triggerGC()
+        // - Record the baseline
         val initialAllocation = parseSizeString(runSystemCommand(amountOfMemoryMappedInProcessCMD))
 
         val referenceHolder = mutableListOf<Sample>();
@@ -150,11 +159,6 @@ class MemoryTests {
         triggerGC()
         platform.posix.sleep((1 * 5).toUInt()) // give chance to the Collector Thread to process out of scope references
 
-        // Referencing things like
-        //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
-        //   platform.Foundation.NSFileManager.defaultManager
-        // as done in Darwin SystemUtils.kt cause allocations so we just assert the increase over
-        // the test
         val allocation = parseSizeString(runSystemCommand(amountOfMemoryMappedInProcessCMD))
         assertEquals(initialAllocation, allocation, "mmap allocation exceeds expectations: initial=$initialAllocation current=$allocation")
     }

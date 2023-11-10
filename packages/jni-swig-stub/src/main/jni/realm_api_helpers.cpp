@@ -264,6 +264,7 @@ public:
         JNIEnv *jenv = get_env();
         jclass jvm_scheduler_class = jenv->FindClass("io/realm/kotlin/internal/interop/JVMScheduler");
         m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(J)V");
+        m_cancel_method = jenv->GetMethodID(jvm_scheduler_class, "cancel", "()V");
         m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
     }
 
@@ -271,18 +272,14 @@ public:
         get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
     }
 
-    void set_scheduler(realm_scheduler_t* scheduler) {
-        m_scheduler = scheduler;
-    }
-
-    void notify() {
+    void notify(realm_work_queue_t* work_queue) {
         // There is currently no signaling of creation/tear down of the core notifier thread, so we
         // just attach it as a daemon thread here on first notification to allow the JVM to
         // shutdown propertly. See https://github.com/realm/realm-core/issues/6429
         auto jenv = get_env(true, true, "core-notifier");
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
-                             reinterpret_cast<jlong>(m_scheduler));
+                             reinterpret_cast<jlong>(work_queue));
     }
 
     bool is_on_thread() const noexcept {
@@ -293,12 +290,18 @@ public:
         return true;
     }
 
+    void cancel() {
+        auto jenv = get_env(true, true, "core-notifier");
+        jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_cancel_method);
+        jni_check_exception(jenv);
+    }
+
 
 private:
     std::thread::id m_id;
     jmethodID m_notify_method;
+    jmethodID m_cancel_method;
     jobject m_jvm_dispatch_scheduler;
-    realm_scheduler_t *m_scheduler;
 };
 
 // Note: using jlong here will create a linker issue
@@ -309,8 +312,8 @@ private:
 //
 // I suspect this could be related to the fact that jni.h defines jlong differently between Android (typedef int64_t)
 // and JVM which is a (typedef long long) resulting in a different signature of the method that could be found by the linker.
-void invoke_core_notify_callback(int64_t scheduler) {
-    realm_scheduler_perform_work(reinterpret_cast<realm_scheduler_t *>(scheduler));
+void invoke_core_notify_callback(int64_t work_queue) {
+    realm_scheduler_perform_work(reinterpret_cast<realm_work_queue_t *>(work_queue));
 }
 
 realm_scheduler_t*
@@ -319,13 +322,16 @@ realm_create_scheduler(jobject dispatchScheduler) {
         auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
         auto scheduler = realm_scheduler_new(
                 jvmScheduler,
-                [](void *userdata) { delete(static_cast<CustomJVMScheduler *>(userdata)); },
-                [](void *userdata) { static_cast<CustomJVMScheduler *>(userdata)->notify(); },
+                [](void *userdata) {
+                    auto jvmScheduler = static_cast<CustomJVMScheduler *>(userdata);
+                    jvmScheduler->cancel();
+                    delete(jvmScheduler);
+                },
+                [](void *userdata, realm_work_queue_t* work_queue) { static_cast<CustomJVMScheduler *>(userdata)->notify(work_queue); },
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->is_on_thread(); },
                 [](const void *userdata, const void *userdata_other) { return userdata == userdata_other; },
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
         );
-        jvmScheduler->set_scheduler(scheduler);
         return scheduler;
     }
     throw std::runtime_error("Null dispatchScheduler");
@@ -721,10 +727,10 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     jboolean is_unrecognized_by_client = error.is_unrecognized_by_client;
     jboolean is_client_reset_requested = error.is_client_reset_requested;
 
-    auto user_info_map = new std::map<std::string, std::string>();
+    auto user_info_map = std::map<std::string, std::string>();
     for (int i = 0; i < error.user_info_length; i++) {
         realm_sync_error_user_info_t user_info = error.user_info_map[i];
-        user_info_map->insert(std::make_pair(user_info.key, user_info.value));
+        user_info_map.insert(std::make_pair(user_info.key, user_info.value));
     }
 
     static JavaMethod core_compensating_write_info_constructor(
@@ -766,16 +772,16 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     // mark the file for deletion. Having 'original path' in the user_info_map is a side effect of
     // using the same code for client reset.
     if (error.user_info_length > 0) {
-        auto end_it = user_info_map->end();
+        auto end_it = user_info_map.end();
 
-        auto original_it = user_info_map->find(error.c_original_file_path_key);
+        auto original_it = user_info_map.find(error.c_original_file_path_key);
         if (end_it != original_it) {
             auto original_file_path = original_it->second;
             joriginal_file_path = to_jstring(jenv, original_file_path);
         }
 
         // Sync errors may not have the path to the recovery file unless a Client Reset is requested
-        auto recovery_it = user_info_map->find(error.c_recovery_file_path_key);
+        auto recovery_it = user_info_map.find(error.c_recovery_file_path_key);
         if (error.is_client_reset_requested && (end_it != recovery_it)) {
             auto recovery_file_path = recovery_it->second;
             jrecovery_file_path = to_jstring(jenv, recovery_file_path);
@@ -1052,4 +1058,18 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error) {
 realm_scheduler_t*
 realm_create_generic_scheduler() {
     return new realm_scheduler_t { realm::util::Scheduler::make_dummy() };
+}
+
+void
+realm_property_info_t_cleanup(realm_property_info_t* value) {
+    delete[] value->link_origin_property_name;
+    delete[] value->link_target;
+    delete[] value->name;
+    delete[] value->public_name;
+}
+
+void
+realm_class_info_t_cleanup(realm_class_info_t * value) {
+    delete[] value->primary_key;
+    delete[] value->name;
 }
