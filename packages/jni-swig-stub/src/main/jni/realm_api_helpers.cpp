@@ -34,6 +34,18 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
                            managed);
 }
 
+inline jboolean jni_check_exception(JNIEnv *jenv = get_env(), bool registrable_callback_error = false) {
+    if (jenv->ExceptionCheck()) {
+        jthrowable exception = jenv->ExceptionOccurred();
+        jenv->ExceptionClear();
+        // setting the user code error is only propagated on certain callbacks.
+        if (registrable_callback_error)
+            realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
+        return false;
+    }
+    return true;
+}
+
 inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
     // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
     // maps to the core error.
@@ -55,32 +67,23 @@ inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
             error_path,
             static_cast<jobject>(error.usercode_error)
     );
-    (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    if (error.usercode_error) {
+        (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    }
+    jni_check_exception(jenv);
     return jenv->PopLocalFrame(exception);
 }
 
 bool throw_last_error_as_java_exception(JNIEnv *jenv) {
     realm_error_t error;
     if (realm_get_last_error(&error)) {
-        jenv->PushLocalFrame(1);
         jobject exception = create_java_exception(jenv, error);
         realm_clear_last_error();
         (jenv)->Throw(reinterpret_cast<jthrowable>(exception));
-        jenv->PopLocalFrame(NULL);
         return true;
     } else {
         return false;
     }
-}
-
-inline jboolean jni_check_exception(JNIEnv *jenv = get_env()) {
-    if (jenv->ExceptionCheck()) {
-        jthrowable exception = jenv->ExceptionOccurred();
-        jenv->ExceptionClear();
-        realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
-        return false;
-    }
-    return true;
 }
 
 inline std::string get_exception_message(JNIEnv *env) {
@@ -95,16 +98,12 @@ inline std::string get_exception_message(JNIEnv *env) {
 }
 
 inline void system_out_println(JNIEnv *env, std::string message) {
-    env->PushLocalFrame(10);
-
     jclass system_class = env->FindClass("java/lang/System");
     jfieldID field_id = env->GetStaticFieldID(system_class, "out", "Ljava/io/PrintStream;");
     jobject system_out = env->GetStaticObjectField(system_class, field_id);
     jclass print_stream_class = env->FindClass("java/io/PrintStream");
     jmethodID method_id = env->GetMethodID(print_stream_class, "println", "(Ljava/lang/String;)V");
     env->CallVoidMethod(system_out, method_id, to_jstring(env, message));
-
-    env->PopLocalFrame(NULL);
 }
 
 void
@@ -113,7 +112,7 @@ realm_changed_callback(void* userdata) {
     static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function0");
     static JavaMethod java_callback_method(env, java_callback_class, "invoke",
                                            "()Ljava/lang/Object;");
-    // TODOO Align exceptions handling https://github.com/realm/realm-kotlin/issues/665
+    // TODO Align exceptions handling https://github.com/realm/realm-kotlin/issues/665
     jni_check_exception(env);
     env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method);
     jni_check_exception(env);
@@ -125,11 +124,13 @@ schema_changed_callback(void* userdata, const realm_schema_t* new_schema) {
     static JavaClass java_callback_class(env, "kotlin/jvm/functions/Function1");
     static JavaMethod java_callback_method(env, java_callback_class, "invoke",
                                            "(Ljava/lang/Object;)Ljava/lang/Object;");
+    env->PushLocalFrame(1);
     jobject schema_pointer_wrapper = wrap_pointer(env,reinterpret_cast<jlong>(new_schema));
-    // TODOO Align exceptions handling https://github.com/realm/realm-kotlin/issues/665
+    // TODO Align exceptions handling https://github.com/realm/realm-kotlin/issues/665
     jni_check_exception(env);
     env->CallObjectMethod(static_cast<jobject>(userdata), java_callback_method, schema_pointer_wrapper);
     jni_check_exception(env);
+    env->PopLocalFrame(NULL);
 }
 
 bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
@@ -140,11 +141,14 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
                                            "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)V");
     // These realm/schema pointers are only valid for the duraction of the
     // migration so don't let ownership follow the NativePointer-objects
+    env->PushLocalFrame(3);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method,
-                                        wrap_pointer(env, reinterpret_cast<jlong>(old_realm), false),
-                                        wrap_pointer(env, reinterpret_cast<jlong>(new_realm), false),
-                                        wrap_pointer(env, reinterpret_cast<jlong>(schema))
+                        wrap_pointer(env, reinterpret_cast<jlong>(old_realm), false),
+                        wrap_pointer(env, reinterpret_cast<jlong>(new_realm), false),
+                        wrap_pointer(env, reinterpret_cast<jlong>(schema))
     );
+    jni_check_exception(env, true);
+    env->PopLocalFrame(NULL);
     return jni_check_exception(env);
 }
 
@@ -174,6 +178,7 @@ register_results_notification_cb(realm_results_t *results, jobject callback) {
                 jenv->CallVoidMethod(static_cast<jobject>(userdata),
                                      on_change_method,
                                      reinterpret_cast<jlong>(changes));
+                jni_check_exception(jenv);
             }
     );
 }
@@ -191,6 +196,7 @@ realm_on_object_change_func_t get_on_object_change() {
         jenv->CallVoidMethod(static_cast<jobject>(userdata),
                              on_change_method,
                              reinterpret_cast<jlong>(changes));
+        jni_check_exception(jenv);
     };
 }
 
@@ -207,6 +213,7 @@ realm_on_collection_change_func_t get_on_collection_change() {
         jenv->CallVoidMethod(static_cast<jobject>(userdata),
                              on_change_method,
                              reinterpret_cast<jlong>(changes));
+        jni_check_exception(jenv);
     };
 }
 
@@ -223,6 +230,7 @@ realm_on_dictionary_change_func_t get_on_dictionary_change() {
         jenv->CallVoidMethod(static_cast<jobject>(userdata),
                              on_change_method,
                              reinterpret_cast<jlong>(changes));
+        jni_check_exception(jenv);
     };
 }
 
@@ -291,6 +299,7 @@ public:
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
                              reinterpret_cast<jlong>(m_scheduler));
+        jni_check_exception(jenv);
     }
 
     bool is_on_thread() const noexcept {
@@ -345,8 +354,7 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
                                                 "newInstance",
                                                 "(IIILjava/lang/String;Ljava/lang/String;)Lio/realm/kotlin/internal/interop/sync/AppError;",
                                                 true);
-    env->PushLocalFrame(6);
-
+    env->PushLocalFrame(3);
     jint category = static_cast<jint>(error->categories);
     jint code = static_cast<jint>(error->error);
     jint httpCode = static_cast<jint>(error->http_status_code);
@@ -360,7 +368,7 @@ jobject convert_to_jvm_app_error(JNIEnv* env, const realm_app_error_t* error) {
                           httpCode,
                           message,
                           serverLogs);
-
+    jni_check_exception(env);
     return env->PopLocalFrame(result);
 }
 
@@ -374,8 +382,10 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
     static JavaClass unit_class(env, "kotlin/Unit");
     static JavaMethod unit_constructor(env, unit_class, "<init>", "()V");
 
+    env->PushLocalFrame(1);
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
+        env->PopLocalFrame(NULL);
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
         jobject app_error = convert_to_jvm_app_error(env, error);
@@ -384,6 +394,8 @@ void app_complete_void_callback(void *userdata, const realm_app_error_t *error) 
         jobject unit = env->NewObject(unit_class, unit_constructor);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, unit);
     }
+    jni_check_exception(env);
+    env->PopLocalFrame(NULL);
 }
 
 void app_complete_result_callback(void* userdata, void* result, const realm_app_error_t* error) {
@@ -396,8 +408,10 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
     static JavaClass native_pointer_class(env, "io/realm/kotlin/internal/interop/LongPointerWrapper");
     static JavaMethod native_pointer_constructor(env, native_pointer_class, "<init>", "(JZ)V");
 
+    env->PushLocalFrame(1);
     if (env->ExceptionCheck()) {
         env->ExceptionDescribe();
+        env->PopLocalFrame(NULL);
         throw std::runtime_error("An unexpected Error was thrown from Java. See LogCat");
     } else if (error) {
         jobject app_exception = convert_to_jvm_app_error(env, error);
@@ -409,10 +423,11 @@ void app_complete_result_callback(void* userdata, void* result, const realm_app_
                                          reinterpret_cast<jlong>(cloned_result), false);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, pointer);
     }
+    jni_check_exception(env);
+    env->PopLocalFrame(NULL);
 }
 
 jobject create_api_key_wrapper(JNIEnv* env, const realm_app_user_apikey_t* key_data) {
-    env->PushLocalFrame(5);
     static JavaClass api_key_wrapper_class(env, "io/realm/kotlin/internal/interop/sync/ApiKeyWrapper");
     static JavaMethod api_key_wrapper_constructor(env, api_key_wrapper_class, "<init>", "([BLjava/lang/String;Ljava/lang/String;Z)V");
     auto id_size = sizeof(key_data->id.bytes);
@@ -428,7 +443,7 @@ jobject create_api_key_wrapper(JNIEnv* env, const realm_app_user_apikey_t* key_d
                           name,
                           disabled,
                           false);
-    return env->PopLocalFrame(result);
+    return result;
 }
 
 void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* apikey, const realm_app_error_t* error) {
@@ -437,15 +452,16 @@ void app_apikey_callback(realm_userdata_t userdata, realm_app_user_apikey_t* api
                                           "(Lio/realm/kotlin/internal/interop/sync/AppError;)V");
     static JavaMethod java_notify_onsuccess(env, JavaClassGlobalDef::app_callback(), "onSuccess",
                                             "(Ljava/lang/Object;)V");
+    env->PushLocalFrame(1);
     if (error) {
         jobject app_exception = convert_to_jvm_app_error(env, error);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
-        jni_check_exception(env);
     } else {
         jobject api_key_wrapper_obj = create_api_key_wrapper(env, apikey);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, api_key_wrapper_obj);
-        jni_check_exception(env);
     }
+    jni_check_exception(env);
+    env->PopLocalFrame(NULL);
 }
 
 void app_string_callback(realm_userdata_t userdata, const char *serialized_ejson_response,
@@ -465,16 +481,15 @@ void app_string_callback(realm_userdata_t userdata, const char *serialized_ejson
             "(Ljava/lang/Object;)V"
     );
 
-    env->PushLocalFrame(5);
+    env->PushLocalFrame(1);
     if (error) {
         jobject app_exception = convert_to_jvm_app_error(env, error);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
-        jni_check_exception(env);
     } else {
         jstring jserialized_ejson_response = to_jstring(env, serialized_ejson_response);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, jserialized_ejson_response);
-        jni_check_exception(env);
     }
+    jni_check_exception(env);
     env->PopLocalFrame(NULL);
 }
 
@@ -487,11 +502,10 @@ void app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t
     static JavaMethod java_notify_onsuccess(env, JavaClassGlobalDef::app_callback(), "onSuccess",
                                             "(Ljava/lang/Object;)V");
 
-    env->PushLocalFrame(5);
+    env->PushLocalFrame(1);
     if (error) {
         jobject app_exception = convert_to_jvm_app_error(env, error);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onerror, app_exception);
-        jni_check_exception(env);
     } else {
         // Create Object[] array
         jobjectArray key_array = env->NewObjectArray(count, api_key_wrapper_class, nullptr);
@@ -506,8 +520,8 @@ void app_apikey_list_callback(realm_userdata_t userdata, realm_app_user_apikey_t
 
         // Return Object[] to Kotlin
         env->CallVoidMethod(static_cast<jobject>(userdata), java_notify_onsuccess, key_array);
-        jni_check_exception(env);
     }
+    jni_check_exception(env);
     env->PopLocalFrame(NULL);
 }
 
@@ -518,18 +532,17 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
 
     jobject callback = static_cast<jobject>(userdata);
     jboolean result = env->CallBooleanMethod(callback, java_should_compact_method, jlong(total_bytes), jlong(used_bytes));
-    return jni_check_exception(env) && result;
+    return jni_check_exception(env, true) && result;
 }
 
-bool realm_data_initialization_callback(void* userdata, realm_t* realm) {
+bool realm_data_initialization_callback(void* userdata, realm_t*) {
     auto env = get_env(true);
     static JavaClass java_data_init_class(env, "io/realm/kotlin/internal/interop/DataInitializationCallback");
     static JavaMethod java_data_init_method(env, java_data_init_class, "invoke", "()V");
 
-    (void)realm; // Ignore Realm as we don't expose the Realm in this callback right now.
     jobject callback = static_cast<jobject>(userdata);
     env->CallVoidMethod(callback, java_data_init_method);
-    return jni_check_exception(env);
+    return jni_check_exception(env, true);
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
@@ -567,9 +580,9 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
                                  JavaClassGlobalDef::java_util_hashmap(),
                                  "put",
                                  "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-    jenv->PushLocalFrame(1);
 
     size_t map_size = request.num_headers;
+    jenv->PushLocalFrame(1);
     jobject request_headers = jenv->NewObject(JavaClassGlobalDef::java_util_hashmap(), init, (jsize) map_size);
     for (int i = 0; i < map_size; i++) {
         jenv->PushLocalFrame(2);
@@ -580,7 +593,7 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
         jstring value = to_jstring(jenv, header_pair.value);
 
         jenv->CallObjectMethod(request_headers, put_method, key, value);
-
+        jni_check_exception(jenv);
         jenv->PopLocalFrame(NULL);
     }
 
@@ -593,6 +606,7 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
                                   to_jstring(jenv, request.body),
                                   j_response_callback
     );
+    jni_check_exception(jenv);
     jenv->PopLocalFrame(NULL);
 }
 
@@ -702,39 +716,37 @@ realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
 }
 
 void set_log_callback(jint j_log_level, jobject log_callback) {
-    auto jenv = get_env(false);
-    auto log_level = static_cast<realm_log_level_e>(j_log_level);
-    realm_set_log_callback([](void *userdata, realm_log_level_e level, const char *message) {
-                                   auto log_callback = static_cast<jobject>(userdata);
-                                   auto jenv = get_env(true);
+auto jenv = get_env(false);
+auto log_level = static_cast<realm_log_level_e>(j_log_level);
+realm_set_log_callback([](void *userdata, realm_log_level_e level, const char *message) {
+                               auto log_callback = static_cast<jobject>(userdata);
+                               auto jenv = get_env(true);
 
-                                   jenv->PushLocalFrame(1);
 
-                                   auto java_level = static_cast<jshort>(level);
-                                   static JavaMethod log_method(jenv,
-                                                                JavaClassGlobalDef::log_callback(),
-                                                                "log",
-                                                                "(SLjava/lang/String;)V");
+                               auto java_level = static_cast<jshort>(level);
+                               static JavaMethod log_method(jenv,
+                                                            JavaClassGlobalDef::log_callback(),
+                                                            "log",
+                                                            "(SLjava/lang/String;)V");
 
-                                   jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, message));
-
-                                   jni_check_exception(jenv);
-
-                                   jenv->PopLocalFrame(NULL);
-                              },
-                              log_level,
-                              jenv->NewGlobalRef(log_callback), // userdata is the log callback
-                              [](void* userdata) {
-                                  // The log callback is a static global method that is intended to
-                                  // live for the lifetime of the application. On JVM it looks like
-                                  // is being destroyed after the JNIEnv has been destroyed, which
-                                  // will e.g. crash the Gradle test setup. So instead, we just do a
-                                  // best effort of cleaning up the registered callback.
-                                  JNIEnv *env = get_env_or_null();
-                                  if (env) {
-                                      env->DeleteGlobalRef(static_cast<jobject>(userdata));
-                                  }
-                              });
+                               jenv->PushLocalFrame(1);
+                               jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, message));
+                               jni_check_exception(jenv);
+                               jenv->PopLocalFrame(NULL);
+                          },
+                          log_level,
+                          jenv->NewGlobalRef(log_callback), // userdata is the log callback
+                          [](void* userdata) {
+                              // The log callback is a static global method that is intended to
+                              // live for the lifetime of the application. On JVM it looks like
+                              // is being destroyed after the JNIEnv has been destroyed, which
+                              // will e.g. crash the Gradle test setup. So instead, we just do a
+                              // best effort of cleaning up the registered callback.
+                              JNIEnv *env = get_env_or_null();
+                              if (env) {
+                                  env->DeleteGlobalRef(static_cast<jobject>(userdata));
+                              }
+                          });
 }
 
 jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error) {
@@ -766,7 +778,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             "(Ljava/lang/String;Ljava/lang/String;J)V"
     );
 
-    jenv->PushLocalFrame(5);
+    jenv->PushLocalFrame(3);
     auto j_compensating_write_info_array = jenv->NewObjectArray(
             error.compensating_writes_length,
             JavaClassGlobalDef::core_compensating_write_info(),
@@ -819,21 +831,22 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         }
     }
 
-    return jenv->PopLocalFrame(
-            jenv->NewObject(
-                    JavaClassGlobalDef::sync_error(),
-                    sync_error_constructor,
-                    category,
-                    value,
-                    msg,
-                    joriginal_file_path,
-                    jrecovery_file_path,
-                    is_fatal,
-                    is_unrecognized_by_client,
-                    is_client_reset_requested,
-                    j_compensating_write_info_array
-                )
-            );
+    jobject result = jenv->NewObject(
+            JavaClassGlobalDef::sync_error(),
+            sync_error_constructor,
+            category,
+            value,
+            msg,
+            joriginal_file_path,
+            jrecovery_file_path,
+            is_fatal,
+            is_unrecognized_by_client,
+            is_client_reset_requested,
+            j_compensating_write_info_array
+    );
+
+    jni_check_exception(jenv);
+    return jenv->PopLocalFrame(result);
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
@@ -855,6 +868,7 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                                                  sync_error_method,
                                                                  session_pointer_wrapper,
                                                                  sync_error);
+                                            jni_check_exception(jenv);
                                             jenv->PopLocalFrame(NULL);
                                         },
                                         static_cast<jobject>(get_env()->NewGlobalRef(error_handler)),
@@ -878,6 +892,7 @@ void transfer_completion_callback(void* userdata, realm_error_t* error) {
         jint value = error->error;
         env->PushLocalFrame(1);
         env->CallVoidMethod(static_cast<jobject>(userdata), java_error_callback_method, category, value, to_jstring(env, error->message));
+        jni_check_exception(env);
         env->PopLocalFrame(NULL);
     } else {
         env->CallVoidMethod(static_cast<jobject>(userdata), java_success_callback_method);
@@ -894,8 +909,8 @@ void realm_subscriptionset_changed_callback(void* userdata, realm_flx_sync_subsc
             JavaClassGlobalDef::function1Method(env),
             state_value
     );
-    env->PopLocalFrame(NULL);
     jni_check_exception(env);
+    env->PopLocalFrame(NULL);
 }
 
 void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_t* realm, const realm_async_error_t* error) {
@@ -916,9 +931,8 @@ void realm_async_open_task_callback(void* userdata, realm_thread_safe_reference_
         realm_release(realm);
     }
     env->CallVoidMethod(callback, java_invoke_method, exception);
-    env->PopLocalFrame(NULL);
-
     jni_check_exception(env);
+    env->PopLocalFrame(NULL);
 }
 
 bool
@@ -928,18 +942,19 @@ before_client_reset(void* userdata, realm_t* before_realm) {
                                                     JavaClassGlobalDef::sync_before_client_reset(),
                                                     "onBeforeReset",
                                                     "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
-    env->PushLocalFrame(5);
-    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    env->PushLocalFrame(1);
+    jobject before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
+    jni_check_exception(env);
+    env->PopLocalFrame(NULL);
 
-    auto result = true;
+    bool result = true;
     if (env->ExceptionCheck()) {
         std::string exception_message = get_exception_message(env);
         std::string message_template = "An error has occurred in the 'onBefore' callback: ";
         system_out_println(env, message_template.append(exception_message));
         result = false;
     }
-    env->PopLocalFrame(NULL);
     return result;
 }
 
@@ -951,24 +966,25 @@ after_client_reset(void* userdata, realm_t* before_realm,
                                                    JavaClassGlobalDef::sync_after_client_reset(),
                                                    "onAfterReset",
                                                    "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Z)V");
-    auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
+    env->PushLocalFrame(2);
+    jobject before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     // Reuse the scheduler from the beforeRealm, otherwise Core will attempt to recreate a new one,
     // which will fail on platforms that hasn't defined a default scheduler factory.
     realm_scheduler_t scheduler = realm_scheduler(before_realm->get()->scheduler());
     realm_t* after_realm_ptr = realm_from_thread_safe_reference(after_realm, &scheduler);
 
-    env->PushLocalFrame(5);
-    auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
+    jobject after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
+    jni_check_exception(env);
+    env->PopLocalFrame(NULL);
     realm_close(after_realm_ptr);
-    auto result = true;
+    bool result = true;
     if (env->ExceptionCheck()) {
         std::string exception_message = get_exception_message(env);
         std::string message_template = "An error has occurred in the 'onAfter' callback: ";
         system_out_println(env, message_template.append(exception_message));
         result = false;
     }
-    env->PopLocalFrame(NULL);
     return result;
 }
 
@@ -1023,20 +1039,20 @@ realm_sync_session_register_progress_notifier_wrapper(
         realm_sync_session_t* session, realm_sync_progress_direction_e direction, bool is_streaming, jobject callback
 ) {
     auto jenv = get_env(true);
-    jlong jresult = 0 ;
-    realm_sync_session_connection_state_notification_token_t *result = 0 ;
-    result = realm_sync_session_register_progress_notifier(
-            session,
-            realm_sync_session_progress_notifier_callback,
-            direction,
-            is_streaming,
-            static_cast<jobject>(jenv->NewGlobalRef(
-                    callback)),
-            [](void *userdata) {
-                get_env(true)->DeleteGlobalRef(
-                        static_cast<jobject>(userdata));
-            }
-    );
+    jlong jresult = 0;
+    realm_sync_session_connection_state_notification_token_t *result =
+            realm_sync_session_register_progress_notifier(
+                    session,
+                    realm_sync_session_progress_notifier_callback,
+                    direction,
+                    is_streaming,
+                    static_cast<jobject>(jenv->NewGlobalRef(
+                            callback)),
+                    [](void *userdata) {
+                        get_env(true)->DeleteGlobalRef(
+                                static_cast<jobject>(userdata));
+                    }
+            );
     if (!result) {
         bool exception_thrown = throw_last_error_as_java_exception(jenv);
         if (exception_thrown) {
