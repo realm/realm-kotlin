@@ -1,4 +1,4 @@
-## 1.12.1 (YYYY-MM-DD)
+## 1.12.1-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
@@ -7,6 +7,7 @@
 * None
 
 ### Fixed
+* Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
 * [Sync] Fix crash while syncing data when LogLevel was set to `Trace` or `All`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
 
 ### Compatibility
@@ -22,6 +23,9 @@
 * Minimum Gradle version: 6.8.3.
 * Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
+
+### Internal
+* Updated to Realm Core 13.23.3, commit 7556b535aa7b27d49c13444894f7e9db778b3203.
 
 
 ## 1.12.0 (2023-11-02)

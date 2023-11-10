@@ -280,6 +280,7 @@ public:
         JNIEnv *jenv = get_env();
         jclass jvm_scheduler_class = jenv->FindClass("io/realm/kotlin/internal/interop/JVMScheduler");
         m_notify_method = jenv->GetMethodID(jvm_scheduler_class, "notifyCore", "(J)V");
+        m_cancel_method = jenv->GetMethodID(jvm_scheduler_class, "cancel", "()V");
         m_jvm_dispatch_scheduler = jenv->NewGlobalRef(dispatchScheduler);
     }
 
@@ -287,18 +288,14 @@ public:
         get_env(true)->DeleteGlobalRef(m_jvm_dispatch_scheduler);
     }
 
-    void set_scheduler(realm_scheduler_t* scheduler) {
-        m_scheduler = scheduler;
-    }
-
-    void notify() {
+    void notify(realm_work_queue_t* work_queue) {
         // There is currently no signaling of creation/tear down of the core notifier thread, so we
         // just attach it as a daemon thread here on first notification to allow the JVM to
         // shutdown propertly. See https://github.com/realm/realm-core/issues/6429
         auto jenv = get_env(true, true, "core-notifier");
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
-                             reinterpret_cast<jlong>(m_scheduler));
+                             reinterpret_cast<jlong>(work_queue));
         jni_check_exception(jenv);
     }
 
@@ -310,12 +307,18 @@ public:
         return true;
     }
 
+    void cancel() {
+        auto jenv = get_env(true, true, "core-notifier");
+        jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_cancel_method);
+        jni_check_exception(jenv);
+    }
+
 
 private:
     std::thread::id m_id;
     jmethodID m_notify_method;
+    jmethodID m_cancel_method;
     jobject m_jvm_dispatch_scheduler;
-    realm_scheduler_t *m_scheduler;
 };
 
 // Note: using jlong here will create a linker issue
@@ -326,8 +329,8 @@ private:
 //
 // I suspect this could be related to the fact that jni.h defines jlong differently between Android (typedef int64_t)
 // and JVM which is a (typedef long long) resulting in a different signature of the method that could be found by the linker.
-void invoke_core_notify_callback(int64_t scheduler) {
-    realm_scheduler_perform_work(reinterpret_cast<realm_scheduler_t *>(scheduler));
+void invoke_core_notify_callback(int64_t work_queue) {
+    realm_scheduler_perform_work(reinterpret_cast<realm_work_queue_t *>(work_queue));
 }
 
 realm_scheduler_t*
@@ -336,13 +339,16 @@ realm_create_scheduler(jobject dispatchScheduler) {
         auto jvmScheduler = new CustomJVMScheduler(dispatchScheduler);
         auto scheduler = realm_scheduler_new(
                 jvmScheduler,
-                [](void *userdata) { delete(static_cast<CustomJVMScheduler *>(userdata)); },
-                [](void *userdata) { static_cast<CustomJVMScheduler *>(userdata)->notify(); },
+                [](void *userdata) {
+                    auto jvmScheduler = static_cast<CustomJVMScheduler *>(userdata);
+                    jvmScheduler->cancel();
+                    delete(jvmScheduler);
+                },
+                [](void *userdata, realm_work_queue_t* work_queue) { static_cast<CustomJVMScheduler *>(userdata)->notify(work_queue); },
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->is_on_thread(); },
                 [](const void *userdata, const void *userdata_other) { return userdata == userdata_other; },
                 [](void *userdata) { return static_cast<CustomJVMScheduler *>(userdata)->can_invoke(); }
         );
-        jvmScheduler->set_scheduler(scheduler);
         return scheduler;
     }
     throw std::runtime_error("Null dispatchScheduler");

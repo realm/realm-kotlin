@@ -21,8 +21,10 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -92,8 +94,12 @@ fun Instant.toRealmInstant(): RealmInstant {
 }
 
 // Variant of `Channel.receiveOrFail()` that will will throw if a timeout is hit.
-suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes): T {
-    return withTimeout(timeout) {
-        receive()
+suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, message: String? = null): T {
+    return select {
+        this@receiveOrFail.onReceive { it }
+        onTimeout(timeout) {
+            @Suppress("invisible_member")
+            throw TimeoutCancellationException("Timeout: $message")
+        }
     }
 }
