@@ -139,7 +139,7 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
     static JavaClass java_callback_class(env, "io/realm/kotlin/internal/interop/MigrationCallback");
     static JavaMethod java_callback_method(env, java_callback_class, "migrate",
                                            "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/NativePointer;)V");
-    // These realm/schema pointers are only valid for the duraction of the
+    // These realm/schema pointers are only valid for the duration of the
     // migration so don't let ownership follow the NativePointer-objects
     env->PushLocalFrame(3);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_callback_method,
@@ -147,9 +147,9 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
                         wrap_pointer(env, reinterpret_cast<jlong>(new_realm), false),
                         wrap_pointer(env, reinterpret_cast<jlong>(schema))
     );
-    jni_check_exception(env, true);
+    bool failed = jni_check_exception(env, true);
     env->PopLocalFrame(NULL);
-    return jni_check_exception(env);
+    return failed;
 }
 
 // TODO OPTIMIZE Abstract pattern for all notification registrations for collections that receives
