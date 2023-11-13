@@ -67,7 +67,7 @@ class CoroutineTests {
     @Test
     @Ignore
     fun dispatchQueueScheduler() {
-        val queue = dispatch_get_global_queue(NSNumber(DISPATCH_QUEUE_PRIORITY_BACKGROUND).integerValue, 0.toULong())
+        val queue = dispatch_get_global_queue(NSNumber(DISPATCH_QUEUE_PRIORITY_BACKGROUND).integerValue, 0UL)
         val dispatcher = NsQueueDispatcher(queue)
         CoroutineScope(dispatcher).async {
             printlntid("async")

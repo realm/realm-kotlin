@@ -22,6 +22,10 @@ import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_LISTOF
 import io.realm.kotlin.compiler.ClassIds.PERSISTED_NAME_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.FqNames.PACKAGE_TYPES
+import io.realm.kotlin.compiler.Names.ASYMMETRIC_REALM_OBJECT
+import io.realm.kotlin.compiler.Names.EMBEDDED_REALM_OBJECT
+import io.realm.kotlin.compiler.Names.REALM_OBJECT
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -111,6 +115,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes.SUPER_TYPE_LIST
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.KotlinType
@@ -195,8 +200,8 @@ val ClassDescriptor.isEmbeddedRealmObject: Boolean
 val ClassDescriptor.isBaseRealmObject: Boolean
     get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
 
-val realmObjectTypes = setOf(Name.identifier("RealmObject"), Name.identifier("EmbeddedRealmObject"), Name.identifier("AsymmetricRealmObject"))
-val realmObjectClassIds = realmObjectTypes.map { name -> ClassId(FqName("io.realm.kotlin.types"), name) }
+val realmObjectTypes: Set<Name> = setOf(REALM_OBJECT, EMBEDDED_REALM_OBJECT, ASYMMETRIC_REALM_OBJECT)
+val realmObjectClassIds = realmObjectTypes.map { name -> ClassId(PACKAGE_TYPES, name) }
 
 // This is the K2 equivalent of our PSI hack to determine if a symbol has a RealmObject base class.
 // There is currently no way to determine this within the resolved type system and there is
@@ -211,7 +216,11 @@ val FirClassSymbol<*>.isBaseRealmObject: Boolean
                 is FirUserTypeRef -> {
                     typeRef.qualifier.last().name in realmObjectTypes &&
                         // Disregard constructor invocations as that means that it is a Realm Java class
-                        !(typeRef.source?.run { treeStructure.getParent(lighterASTNode) }?.tokenType?.run { debugName == "CONSTRUCTOR_CALLEE" } ?: false)
+                        !(
+                            typeRef.source?.run { treeStructure.getParent(lighterASTNode) }
+                                ?.let { it == KtStubElementTypes.CONSTRUCTOR_CALLEE }
+                                ?: false
+                            )
                 }
                 // After SUPERTYPES stage
                 is FirResolvedTypeRef -> typeRef.type.classId in realmObjectClassIds

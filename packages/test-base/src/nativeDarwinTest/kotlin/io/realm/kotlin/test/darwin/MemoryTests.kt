@@ -101,7 +101,7 @@ class MemoryTests {
         referenceHolder.clear()
         triggerGC()
 
-        platform.posix.sleep((1 * 5).toUInt()) // give chance to the Collector Thread to process references
+        platform.posix.sleep(1U * 5U) // give chance to the Collector Thread to process references
 
         // We should find a way to just meassure the increase over these tests. Referencing
         //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
@@ -157,7 +157,7 @@ class MemoryTests {
         }()
 
         triggerGC()
-        platform.posix.sleep((1 * 5).toUInt()) // give chance to the Collector Thread to process out of scope references
+        platform.posix.sleep(1U * 5U) // give chance to the Collector Thread to process out of scope references
 
         val allocation = parseSizeString(runSystemCommand(amountOfMemoryMappedInProcessCMD))
         assertEquals(initialAllocation, allocation, "mmap allocation exceeds expectations: initial=$initialAllocation current=$allocation")
