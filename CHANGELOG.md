@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* Fix compiler crash caused by a change in Kotlin 1.9.20 ((toIrConst moved under common IrUtils)[https://github.com/JetBrains/kotlin/commit/ca8db7d0b83f6dfd6afcea7a5fe7556d38f325d8]). (Issue [#1566](https://github.com/realm/realm-kotlin/issues/1566))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -36,7 +36,7 @@
 * None.
 
 ### Fixed
-* Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
+* Fix crashes caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
