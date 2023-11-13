@@ -8,7 +8,7 @@
 
 ### Fixed
 * Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
-* [Sync] Fix crash while syncing data when LogLevel was set to `Trace` or `All`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
+* [Sync] Fix crash when syncing data if the log level was set to `LogLevel.TRACE` or `LogLevel.ALL`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
