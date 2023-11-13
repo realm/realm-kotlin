@@ -218,7 +218,7 @@ val FirClassSymbol<*>.isBaseRealmObject: Boolean
                         // Disregard constructor invocations as that means that it is a Realm Java class
                         !(
                             typeRef.source?.run { treeStructure.getParent(lighterASTNode) }
-                                ?.let { it == KtStubElementTypes.CONSTRUCTOR_CALLEE }
+                                ?.tokenType?.let { it == KtStubElementTypes.CONSTRUCTOR_CALLEE }
                                 ?: false
                             )
                 }

@@ -139,7 +139,7 @@ internal open class SyncSessionImpl(
         }
     }
 
-    @Suppress("invisible_member") // To be able to use RealmImpl.scopedFlow from library-base
+    @Suppress("invisible_member", "invisible_reference") // To be able to use RealmImpl.scopedFlow from library-base
     override fun connectionStateAsFlow(): Flow<ConnectionStateChange> = realm.scopedFlow {
         callbackFlow {
             val token: AtomicRef<Cancellable> = kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
