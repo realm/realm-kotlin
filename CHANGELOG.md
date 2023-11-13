@@ -22,7 +22,7 @@
 * Minimum Gradle version: 6.8.3.
 * Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
-* Minimum R8: 8.0.27.
+* Minimum R8: 8.0.34.
 
 ### Internal
 * None.
