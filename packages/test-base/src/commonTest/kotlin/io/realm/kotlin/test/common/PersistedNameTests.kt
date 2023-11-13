@@ -27,6 +27,9 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.asDynamicRealm
 import io.realm.kotlin.migration.AutomaticSchemaMigration
+import io.realm.kotlin.query.max
+import io.realm.kotlin.query.min
+import io.realm.kotlin.query.sum
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -74,6 +77,54 @@ class PersistedNameTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
+    }
+
+    // --------------------------------------------------
+    // Aggregators
+    // --------------------------------------------------
+
+    @Test
+    fun aggregators_byPublicName() {
+        realm.writeBlocking {
+            copyToRealm(PersistedNameSample())
+        }
+
+        assertEquals(
+            expected = 10,
+            actual = realm.query<PersistedNameSample>().sum<Int>("publicNameIntField").find()
+        )
+
+        assertEquals(
+            expected = 10,
+            actual = realm.query<PersistedNameSample>().max<Int>("publicNameIntField").find()
+        )
+
+        assertEquals(
+            expected = 10,
+            actual = realm.query<PersistedNameSample>().min<Int>("publicNameIntField").find()
+        )
+    }
+
+    @Test
+    fun aggregators_byPersistedName() {
+        realm.writeBlocking {
+            copyToRealm(PersistedNameSample())
+        }
+
+        assertEquals(
+            expected = 10,
+            actual = realm.query<PersistedNameSample>().sum<Int>("persistedNameIntField").find()
+        )
+
+        assertEquals(
+            expected = 10,
+            actual = realm.query<PersistedNameSample>().max<Int>("persistedNameIntField").find()
+        )
+
+        assertEquals(
+            expected = 10,
+            actual = realm.query<PersistedNameSample>().min<Int>("persistedNameIntField").find()
+        )
     }
 
     // --------------------------------------------------
@@ -479,6 +530,9 @@ class PersistedNameSample : RealmObject {
     // the underlying schema due to being equal to the persisted name.
     @PersistedName("sameName2")
     var sameName2 = "Realm"
+
+    @PersistedName("persistedNameIntField")
+    var publicNameIntField: Int = 10
 }
 
 class PersistedNameParentSample(var id: Int) : RealmObject {
