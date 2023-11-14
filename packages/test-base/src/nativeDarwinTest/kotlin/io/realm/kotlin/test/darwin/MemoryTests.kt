@@ -19,6 +19,7 @@ package io.realm.kotlin.test.darwin
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils.createTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.deleteTempDir
 import io.realm.kotlin.test.platform.PlatformUtils.triggerGC
@@ -33,6 +34,7 @@ import platform.posix.popen
 import kotlin.math.roundToInt
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -57,6 +59,63 @@ class MemoryTests {
 
     // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
     @Test
+    @Ignore // Investigate https://github.com/realm/realm-kotlin/issues/327
+    fun garbageCollectorShouldFreeNativeResources() {
+        @OptIn(ExperimentalStdlibApi::class)
+        println("NEW_MEMORY_MODEL: " + isExperimentalMM())
+
+        val referenceHolder = mutableListOf<Sample>();
+        {
+            val realm = openRealmFromTmpDir()
+            // TODO use Realm.delete once this is implemented
+            realm.writeBlocking {
+                delete(query<Sample>())
+            }
+
+            // allocating a 1 MB string
+            val oneMBstring = StringBuilder("").apply {
+                for (i in 1..4096) {
+                    // 128 length (256 bytes)
+                    append("v7TPOZtm50q8kMBoKiKRaD2JhXgjM6OUNzHojXuFXvxdtwtN9fCVIW4njdwVdZ9aChvXCtW4nzUYeYWbI6wuSspbyjvACtMtjQTtOoe12ZEPZPII6PAFTfbrQQxc3ymJ")
+                }
+            }.toString()
+
+            // inserting ~ 100MB of data
+            val elements: List<Sample> =
+                realm.writeBlocking {
+                    IntRange(1, 100).map {
+                        copyToRealm(Sample()).apply {
+                            stringField = oneMBstring
+                        }
+                    }
+                }
+            referenceHolder.addAll(elements)
+        }()
+        assertEquals(
+            "99.0M",
+            runSystemCommand(amountOfMemoryMappedInProcessCMD),
+            "We should have at least 99 MB allocated as mmap"
+        )
+        // After releasing all the 'realm_object_create' reference the Realm should be closed and the
+        // no memory mapped file is allocated in the process
+        referenceHolder.clear()
+        triggerGC()
+
+        platform.posix.sleep(1U * 5U) // give chance to the Collector Thread to process references
+
+        // We should find a way to just meassure the increase over these tests. Referencing
+        //   NSProcessInfo.Companion.processInfo().operatingSystemVersionString
+        // as done in Darwin SystemUtils.kt can also cause allocations. Thus, just lazy evaluating
+        // those system constants for now to avoid affecting the tests.
+        assertEquals(
+            "",
+            runSystemCommand(amountOfMemoryMappedInProcessCMD),
+            "Freeing the references should close the Realm so no memory mapped allocation should be present"
+        )
+    }
+
+    // TODO Only run on macOS, filter using https://developer.apple.com/documentation/foundation/nsprocessinfo/3608556-iosapponmac when upgrading to XCode 12
+    @Test
     fun closeShouldFreeMemory() {
         @OptIn(ExperimentalStdlibApi::class)
         println("NEW_MEMORY_MODEL: " + isExperimentalMM())
@@ -67,7 +126,7 @@ class MemoryTests {
         // as done in Darwin SystemUtils.kt and initialized lazily, so do a full realm-lifecycle
         // to only measure increases over the actual test
         // - Ensure that we clean up any released memory to get a nice baseline
-        platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
+        platform.posix.sleep((1 * 5).toUInt()) // give chance to the Collector Thread to process out of scope references
         triggerGC()
         // - Record the baseline
         val initialAllocation = parseSizeString(runSystemCommand(amountOfMemoryMappedInProcessCMD))
@@ -98,7 +157,7 @@ class MemoryTests {
         }()
 
         triggerGC()
-        platform.posix.sleep(1 * 5) // give chance to the Collector Thread to process out of scope references
+        platform.posix.sleep(1U * 5U) // give chance to the Collector Thread to process out of scope references
 
         val allocation = parseSizeString(runSystemCommand(amountOfMemoryMappedInProcessCMD))
         assertEquals(initialAllocation, allocation, "mmap allocation exceeds expectations: initial=$initialAllocation current=$allocation")

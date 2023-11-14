@@ -247,6 +247,7 @@ pipeline {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("integration-tests/gradle-plugin-test", "integrationTest")
+                        testAndCollect("integration-tests/gradle-plugin-test", "-Pkotlin.experimental.tryK2=true integrationTest")
                     }
                 }
                 stage('Tests Android Sample App') {
@@ -268,6 +269,7 @@ pipeline {
                     when { expression { runTests } }
                     steps {
                         testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
+                        testAndCollect("examples/realm-java-compatibility", "-Pkotlin.experimental.tryK2=true connectedAndroidTest")
                     }
                 }
                 stage('Track build metrics') {
