@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* None.
+* `RealmInstant.now` used an API (`java.time.Clock.systemUTC().instant()`) introduced in API 26, current minSDK is 16. (Issue [#1564](https://github.com/realm/realm-kotlin/issues/1564))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
