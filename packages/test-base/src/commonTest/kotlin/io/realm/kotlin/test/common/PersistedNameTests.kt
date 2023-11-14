@@ -232,9 +232,7 @@ class PersistedNameTests {
 
         assertNotNull(dynamicSample)
         assertEquals("Realm", dynamicSample.getValue("persistedNameStringField"))
-        assertFailsWithMessage<IllegalArgumentException>("Schema for type 'AlternativePersistedNameSample' doesn't contain a property named 'publicNameStringField'") {
-            dynamicSample.getValue("publicNameStringField")
-        }
+        assertEquals("Realm", dynamicSample.getValue("publicNameStringField"))
     }
 
     // --------------------------------------------------
