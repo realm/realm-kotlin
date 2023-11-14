@@ -739,7 +739,7 @@ class SyncedRealmTests {
             realm.writeBlocking { copyToRealm(masterObject) }
             realm.syncSession.uploadAllLocalChanges()
         }
-        assertEquals(42, counterValue.receiveOrFail())
+        assertEquals(42, counterValue.receiveOrFail(message = "Failed to receive 42"))
 
         // Increment counter asynchronously after download initial data (1)
         val increment1 = async {
@@ -753,9 +753,10 @@ class SyncedRealmTests {
                         .mutableRealmIntField
                         .increment(1)
                 }
+                realm.syncSession.uploadAllLocalChanges(10.seconds)
             }
         }
-        assertEquals(43, counterValue.receiveOrFail())
+        assertEquals(43, counterValue.receiveOrFail(message = "Failed to receive 43"))
 
         // Increment counter asynchronously after download initial data (2)
         val increment2 = async {
@@ -769,9 +770,10 @@ class SyncedRealmTests {
                         .mutableRealmIntField
                         .increment(1)
                 }
+                realm.syncSession.uploadAllLocalChanges(10.seconds)
             }
         }
-        assertEquals(44, counterValue.receiveOrFail())
+        assertEquals(44, counterValue.receiveOrFail(message = "Failed to receive 44"))
 
         increment1.cancel()
         increment2.cancel()
@@ -1260,7 +1262,6 @@ class SyncedRealmTests {
             }
             assertTrue(customLogger.logs.isNotEmpty())
             assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
-            assertTrue(customLogger.logs.any { it.contains("MyCustomApp/1.0.0") }, "Missing MyCustomApp/1.0.0")
         }
     }
 

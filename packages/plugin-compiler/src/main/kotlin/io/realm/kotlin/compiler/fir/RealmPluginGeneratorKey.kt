@@ -14,13 +14,15 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal
+package io.realm.kotlin.compiler.fir
 
-import io.realm.kotlin.VersionId
+import org.jetbrains.kotlin.GeneratedDeclarationKey
 
 /**
- * Version meta data for a single instance.
+ * Key to mark all additions made by our compile plugin.
  */
-public data class VersionData(val current: VersionId?, val active: Set<VersionId>) {
-    val versions: Set<VersionId> = (current?.let { setOf(it) } ?: emptySet()) + active
+object RealmPluginGeneratorKey : GeneratedDeclarationKey() {
+    override fun toString(): String {
+        return "RealmApiGenerator"
+    }
 }
