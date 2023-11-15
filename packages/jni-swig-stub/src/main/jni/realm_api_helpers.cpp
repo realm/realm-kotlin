@@ -46,6 +46,14 @@ inline jboolean jni_check_exception(JNIEnv *jenv = get_env(), bool registrable_c
     return true;
 }
 
+inline void push_local_frame(JNIEnv *jenv, jint frame_size) {
+    if (jenv->PushLocalFrame(frame_size) != 0) {
+        jni_check_exception(jenv);
+        jenv->ExceptionDescribe();
+        throw std::runtime_error("Failed pushing a local frame with size " + std::to_string(frame_size));
+    }
+}
+
 inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
     // Invoke CoreErrorConverter.asThrowable() to retrieve an exception instance that
     // maps to the core error.
@@ -55,7 +63,7 @@ inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
                                               "asThrowable",
                                               "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)Ljava/lang/Throwable;", true);
 
-    jenv->PushLocalFrame(3);
+    push_local_frame(jenv, 3);
     jstring error_message = (jenv)->NewStringUTF(error.message);
     jstring error_path = (jenv)->NewStringUTF(error.path);
     jobject exception = (jenv)->CallStaticObjectMethod(
@@ -588,10 +596,10 @@ static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transpo
                                  "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
     size_t map_size = request.num_headers;
-    jenv->PushLocalFrame(1);
+    push_local_frame(jenv, 1);
     jobject request_headers = jenv->NewObject(JavaClassGlobalDef::java_util_hashmap(), init, (jsize) map_size);
     for (int i = 0; i < map_size; i++) {
-        jenv->PushLocalFrame(2);
+        push_local_frame(jenv, 2);
 
         realm_http_header_t header_pair = request.headers[i];
 
@@ -691,7 +699,7 @@ static void network_request_lambda_function(void* userdata,
         static jmethodID response_callback_constructor = jenv->GetMethodID(response_callback_class,
                                                                            "<init>",
                                                                            "(Lio/realm/kotlin/internal/interop/sync/NetworkTransport;J)V");
-        jenv->PushLocalFrame(1);
+        push_local_frame(jenv, 1);
         jobject response_callback = jenv->NewObject(response_callback_class,
                                                     response_callback_constructor,
                                                     reinterpret_cast<jobject>(userdata),
@@ -735,7 +743,7 @@ realm_set_log_callback([](void *userdata, realm_log_level_e level, const char *m
                                                             "log",
                                                             "(SLjava/lang/String;)V");
 
-                               jenv->PushLocalFrame(1);
+                               push_local_frame(jenv, 1);
                                jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, message));
                                jni_check_exception(jenv);
                                jenv->PopLocalFrame(NULL);
@@ -784,7 +792,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             "(Ljava/lang/String;Ljava/lang/String;J)V"
     );
 
-    jenv->PushLocalFrame(3);
+    push_local_frame(jenv, 3);
     auto j_compensating_write_info_array = jenv->NewObjectArray(
             error.compensating_writes_length,
             JavaClassGlobalDef::core_compensating_write_info(),
@@ -794,7 +802,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     for (int index = 0; index < error.compensating_writes_length; index++) {
         realm_sync_error_compensating_write_info_t& compensating_write_info = error.compensating_writes[index];
 
-        jenv->PushLocalFrame(3);
+        push_local_frame(jenv, 3);
 
         auto reason = to_jstring(jenv, compensating_write_info.reason);
         auto object_name = to_jstring(jenv, compensating_write_info.object_name);
@@ -865,7 +873,7 @@ void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_hand
                                                                                 "onSyncError",
                                                                                 "(Lio/realm/kotlin/internal/interop/NativePointer;Lio/realm/kotlin/internal/interop/sync/SyncError;)V");
 
-                                            jenv->PushLocalFrame(2);
+                                            push_local_frame(jenv, 2);
 
                                             jobject session_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(session));
                                             jobject sync_error = convert_to_jvm_sync_error(jenv, error);
