@@ -2657,9 +2657,9 @@ actual object RealmInterop {
         return CPointerWrapper(
             realm_wrapper.realm_sync_session_register_progress_notifier(
                 syncSession.cptr(),
-                staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, transferred_bytes, total_bytes ->
+                staticCFunction<COpaquePointer?, ULong, ULong, Double, Unit> { userData, transferred_bytes, total_bytes, progress_estimate ->
                     safeUserData<ProgressCallback>(userData).run {
-                        onChange(transferred_bytes.toLong(), total_bytes.toLong())
+                        onChange(transferred_bytes.toLong(), total_bytes.toLong(), progress_estimate)
                     }
                 },
                 direction.nativeValue,

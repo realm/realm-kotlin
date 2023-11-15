@@ -85,7 +85,7 @@ fun interface AsyncOpenCallback {
 }
 
 fun interface ProgressCallback {
-    fun onChange(transferredBytes: Long, totalBytes: Long)
+    fun onChange(transferredBytes: Long, totalBytes: Long, progressEstimate: Double)
 }
 
 fun interface ConnectionStateChangeCallback {
