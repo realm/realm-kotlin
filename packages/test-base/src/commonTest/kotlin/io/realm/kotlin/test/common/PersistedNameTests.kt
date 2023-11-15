@@ -232,6 +232,8 @@ class PersistedNameTests {
 
         assertNotNull(dynamicSample)
         assertEquals("Realm", dynamicSample.getValue("persistedNameStringField"))
+        // We can access property via the public name because the dynamic Realm is build upon a typed
+        // Realm via the extension function `asDynamicRealm`.
         assertEquals("Realm", dynamicSample.getValue("publicNameStringField"))
     }
 

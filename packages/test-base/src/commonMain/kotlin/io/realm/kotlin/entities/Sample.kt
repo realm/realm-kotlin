@@ -180,7 +180,7 @@ class Sample : RealmObject {
     val setBacklinks by backlinks(Sample::objectSetField)
 
     @PersistedName("persistedStringField")
-    var publicStringField = ""
+    var publicStringField = "Realm"
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.
