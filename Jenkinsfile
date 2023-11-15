@@ -84,8 +84,11 @@ pipeline {
           ANDROID_NDK="${NDK_HOME}"
           ANDROID_NDK_HOME="${NDK_HOME}"
           REALM_DISABLE_ANALYTICS=true
+          REALM_PRINT_ANALYTICS=true
+          REALM_FAIL_ON_ANALYTICS_ERRORS=false
           JAVA_8='/Library/Java/JavaVirtualMachines/jdk1.8.0_301.jdk/Contents/Home'
           JAVA_11='/Library/Java/JavaVirtualMachines/jdk-11.0.12.jdk/Contents/Home'
+          JAVA_17='/Library/Java/JavaVirtualMachines/jdk-17.0.2.jdk/Contents/Home'
           JAVA_HOME="${JAVA_11}"
     }
     stages {
@@ -246,8 +249,14 @@ pipeline {
                 stage('Gradle Plugin Integration Tests') {
                     when { expression { runTests } }
                     steps {
-                        testAndCollect("integration-tests/gradle-plugin-test", "integrationTest")
-                        testAndCollect("integration-tests/gradle-plugin-test", "-Pkotlin.experimental.tryK2=true integrationTest")
+                        testAndCollect("integration-tests/gradle/current", "integrationTest")
+                        testAndCollect("integration-tests/gradle/current", "-Pkotlin.experimental.tryK2=true integrationTest")
+                        testAndCollect("integration-tests/gradle/gradle6-test", "integrationTest")
+                        testAndCollect("integration-tests/gradle/gradle71-test", "integrationTest")
+                        testAndCollect("integration-tests/gradle/gradle75-test", "integrationTest")
+                        withEnv(["JAVA_HOME=${JAVA_17}"]) {
+                            testAndCollect("integration-tests/gradle/gradle8-test", "integrationTest")
+                        }
                     }
                 }
                 stage('Tests Android Sample App') {
