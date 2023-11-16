@@ -87,7 +87,7 @@ internal class MutableSubscriptionSetImpl<T : BaseRealm>(
         return result
     }
 
-    @Suppress("invisible_member")
+    @Suppress("invisible_member", "invisible_reference")
     override fun <T : RealmObject> removeAll(type: KClass<T>): Boolean {
         var result = false
         val objectType = io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(type).`io_realm_kotlin_className`
