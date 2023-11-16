@@ -58,8 +58,8 @@ import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-internal const val TEST_SIZE = 500
-internal val TIMEOUT = 30.seconds
+private const val TEST_SIZE = 500
+private val TIMEOUT = 30.seconds
 
 class ProgressListenerTests {
 
