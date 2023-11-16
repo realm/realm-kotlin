@@ -17,6 +17,7 @@
 package io.realm.kotlin.compiler
 
 import com.google.auto.service.AutoService
+import io.realm.kotlin.compiler.fir.model.RealmModelRegistrar
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.com.intellij.openapi.extensions.LoadingOrder
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrarAdapter
 import org.jetbrains.kotlin.resolve.extensions.SyntheticResolveExtension
 
 /**
@@ -76,6 +78,11 @@ class Registrar : ComponentRegistrar {
                 LoadingOrder.LAST,
                 project
             )
+
+            // K2: Register extension that modifies the API similarly to the above two
+            // SyntheticResolveExtensions
+            FirExtensionRegistrarAdapter.registerExtension(project, RealmModelRegistrar())
+
             // Adds RealmObjectInternal properties, rewires accessors and adds static companion
             // properties and methods
             getExtensionPoint(IrGenerationExtension.extensionPointName).registerExtension(

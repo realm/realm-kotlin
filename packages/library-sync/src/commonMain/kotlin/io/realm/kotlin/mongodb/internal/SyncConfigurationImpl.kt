@@ -222,7 +222,7 @@ internal class SyncConfigurationImpl(
                             initializerHelper.onSyncError(session, frozenAppPointer, error)
                         }
                     } catch (ex: Exception) {
-                        @Suppress("invisible_member")
+                        @Suppress("invisible_member", "invisible_reference")
                         RealmLog.error("Error thrown and ignored in `onManualResetFallback`: $ex")
                     }
                 } else {

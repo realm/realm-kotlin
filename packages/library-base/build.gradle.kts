@@ -120,7 +120,12 @@ kotlin {
 // name and build type variant as a suffix, this default behaviour can cause mismatch at runtime https://github.com/realm/realm-kotlin/issues/621
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     kotlinOptions {
-        freeCompilerArgs = listOf("-module-name", "io.realm.kotlin.library")
+        freeCompilerArgs += listOf("-module-name", "io.realm.kotlin.library")
+    }
+}
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
     }
 }
 

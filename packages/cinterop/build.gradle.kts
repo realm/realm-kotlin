@@ -273,6 +273,7 @@ kotlin {
         compilations.all {
             kotlinOptions {
                 freeCompilerArgs += listOf("-opt-in=kotlin.ExperimentalUnsignedTypes")
+                freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
             }
         }
     }

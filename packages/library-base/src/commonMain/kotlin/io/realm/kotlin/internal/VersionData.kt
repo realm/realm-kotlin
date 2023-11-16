@@ -21,6 +21,6 @@ import io.realm.kotlin.VersionId
 /**
  * Version meta data for a single instance.
  */
-public data class VersionData(val current: VersionId, val active: Set<VersionId>) {
-    val versions: Set<VersionId> = setOf(current) + active
+public data class VersionData(val current: VersionId?, val active: Set<VersionId>) {
+    val versions: Set<VersionId> = (current?.let { setOf(it) } ?: emptySet()) + active
 }

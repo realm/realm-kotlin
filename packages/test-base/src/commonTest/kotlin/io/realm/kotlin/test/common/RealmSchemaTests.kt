@@ -211,7 +211,7 @@ class RealmSchemaTests {
     @Suppress("NestedBlockDepth")
     fun schema_optionCoverage() {
         // Property options
-        @Suppress("invisible_member")
+        @Suppress("invisible_member", "invisible_reference")
         val propertyTypeMap =
             RealmPropertyType.subTypes.map { it to RealmStorageType.values().toMutableSet() }
                 .toMap().toMutableMap()
