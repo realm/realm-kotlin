@@ -122,7 +122,7 @@ jobs:
 
     - name: Save JVM packages
       uses: actions/upload-artifact@v3
-      if: steps.jvm-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jvm-cache.outputs.cache-hit == 'true'
       with:
         name: packages-jvm-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
@@ -131,7 +131,7 @@ jobs:
     - name: Delete downloaded JVM cache files
       id: delete-cache-jvm
       uses: JesseTG/rm@v1.0.3
-      if: steps.jvm-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jvm-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/build/m2-buildrepo
 
@@ -147,7 +147,7 @@ jobs:
 
     - name: Save JNI Stub packages
       uses: actions/upload-artifact@v3
-      if: steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
       with:
         name: jni-stub-${{ steps.find-library-version.outputs.label }}
         path: ./packages/jni-swig-stub/build/generated/sources/jni/*
@@ -156,7 +156,7 @@ jobs:
     - name: Delete downloaded JVM cache files
       id: delete-cache-jni-stub
       uses: JesseTG/rm@v1.0.3
-      if: steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jni-swig-stub-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/jni-swig-stub/build/generated/sources/jni
 
@@ -172,7 +172,7 @@ jobs:
 
     - name: Save JNI Linux lib package
       uses: actions/upload-artifact@v3
-      if: steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-linux-lib-${{ steps.find-library-version.outputs.label }}
         path: ./packages/cinterop/src/jvmMain/linux-build-dir/**/*
@@ -181,7 +181,7 @@ jobs:
     - name: Delete downloaded JVM cache files
       id: delete-cache-linux-lib
       uses: JesseTG/rm@v1.0.3
-      if: steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/cinterop/src/jvmMain/linux-build-dir
 
@@ -197,7 +197,7 @@ jobs:
 
     - name: Save Android packages
       uses: actions/upload-artifact@v3
-      if: steps.android-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.android-cache.outputs.cache-hit == 'true'
       with:
         name: packages-android-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
@@ -206,7 +206,7 @@ jobs:
     - name: Delete downloaded Android cache files
       id: delete-cache-android
       uses: JesseTG/rm@v1.0.3
-      if: steps.android-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.android-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/build/m2-buildrepo
 
@@ -222,7 +222,7 @@ jobs:
 
     - name: Save Android Test APK
       uses: actions/upload-artifact@v3
-      if: steps.android-test-base-apk.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.android-test-base-apk.outputs.cache-hit == 'true'
       with:
         name: android-base-test-apk-${{ steps.find-library-version.outputs.label }}
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
@@ -231,7 +231,7 @@ jobs:
     - name: Delete Android Test APK cache files
       id: delete-cache-android-base-test-apk
       uses: JesseTG/rm@v1.0.3
-      if: steps.android-test-base-apk.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.android-test-base-apk.outputs.cache-hit == 'true'
       with:
         path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
 
@@ -247,7 +247,7 @@ jobs:
 
     - name: Save MacOS arm64 packages
       uses: actions/upload-artifact@v3
-      if: steps.macos-arm64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-macos-arm64-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
@@ -256,7 +256,7 @@ jobs:
     - name: Delete downloaded MacOS arm64 cache files
       id: delete-cache-macos-arm64
       uses: JesseTG/rm@v1.0.3
-      if: steps.macos-arm64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.macos-arm64-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/build/m2-buildrepo
 
@@ -272,7 +272,7 @@ jobs:
 
     - name: Save MacOS x64 packages
       uses: actions/upload-artifact@v3
-      if: steps.macos-x64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-macos-x64-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
@@ -281,7 +281,7 @@ jobs:
     - name: Delete downloaded MacOS x64 cache files
       id: delete-cache-macos-x64
       uses: JesseTG/rm@v1.0.3
-      if: steps.macos-x64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.macos-x64-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/build/m2-buildrepo
 
@@ -297,7 +297,7 @@ jobs:
 
     - name: Save iOS arm64 packages
       uses: actions/upload-artifact@v3
-      if: steps.ios-arm64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-ios-arm64-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
@@ -306,7 +306,7 @@ jobs:
     - name: Delete downloaded iOS arm64 cache files
       id: delete-cache-ios-arm64
       uses: JesseTG/rm@v1.0.3
-      if: steps.ios-arm64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.ios-arm64-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/build/m2-buildrepo
 
@@ -322,7 +322,7 @@ jobs:
 
     - name: Save iOS x64 packages
       uses: actions/upload-artifact@v3
-      if: steps.ios-x64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
       with:
         name: packages-ios-x64-${{ steps.find-library-version.outputs.label }}
         path: ./packages/build/m2-buildrepo/**/* 
@@ -331,7 +331,7 @@ jobs:
     - name: Delete downloaded iOS x64 cache files
       id: delete-cache-ios-x64
       uses: JesseTG/rm@v1.0.3
-      if: steps.ios-x64-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.ios-x64-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/build/m2-buildrepo
 
@@ -348,7 +348,7 @@ jobs:
 
     - name: Save JNI Windows lib package
       uses: actions/upload-artifact@v3
-      if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
         path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll
@@ -357,6 +357,6 @@ jobs:
     - name: Delete downloaded JNI Windows lib cache files
       id: delete-cache-windows-lib
       uses: JesseTG/rm@v1.0.3
-      if: steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
+      if: !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
         path: ./packages/cinterop/src/jvmMain/windows-build-dir
