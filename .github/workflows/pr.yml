@@ -22,7 +22,7 @@ jobs:
   build-jni-swig-stub:
     runs-on: ubuntu-latest
     needs: check-cache
-    if: !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -75,11 +75,12 @@ jobs:
   build-jvm-linux-native-lib:
     runs-on: ubuntu-latest
     needs: [check-cache, build-jni-swig-stub]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled') &&
-        needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -131,11 +132,12 @@ jobs:
   build-jvm-windows-native-lib:
     runs-on: windows-latest
     needs: [check-cache, build-jni-swig-stub]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled') &&
-        needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -193,11 +195,12 @@ jobs:
   build-jvm-packages:
     runs-on: macos-latest
     needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled') &&
-        needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -300,7 +303,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-cache
     # needs: static-analysis
-    if: !cancelled() && needs.check-cache.outputs.packages-android-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-android-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -426,7 +429,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: !cancelled() && needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -512,7 +515,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: !cancelled() && needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -590,7 +593,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: !cancelled() && needs.check-cache.outputs.packages-ios-x64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-x64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -668,7 +671,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: !cancelled() && needs.check-cache.outputs.packages-ios-arm64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-arm64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -750,10 +753,11 @@ jobs:
     timeout-minutes: 60
     runs-on: macos-latest
     needs: [check-cache, build-android-packages, build-jvm-packages]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -824,10 +828,11 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     needs: [ check-cache, build-android-packages, build-jvm-packages ]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -872,10 +877,11 @@ jobs:
     # TODO Do we need to wait for all matrix builds?
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
     needs: [check-cache, build-macos-x64-packages] #, build-macos-arm64-packages] 
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -929,10 +935,11 @@ jobs:
     # TODO Do we need to wait for all matrix builds?
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
     needs: [check-cache, build-macos-x64-packages, build-ios-x64-packages] # , build-ios-arm64-packages] 
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -991,10 +998,11 @@ jobs:
  
     runs-on: ${{ matrix.os }}
     needs: [check-cache, build-jvm-packages]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -1035,10 +1043,11 @@ jobs:
   package-all-artifacts: 
     runs-on: ubuntu-latest
     needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -1096,10 +1105,11 @@ jobs:
   integration-tests:
     uses: ./.github/workflows/include-integration-tests.yml
     needs: [check-cache, package-all-artifacts]
-    if: always() && 
-        !cancelled() && 
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
@@ -1117,11 +1127,12 @@ jobs:
              test-android-packages-device-farm,
              package-all-artifacts
            ]
-    if: always() && 
-        !cancelled() && 
-        endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-        !contains(needs.*.result, 'failure') && 
-        !contains(needs.*.result, 'cancelled')
+    if: |
+      always() && 
+      !cancelled() && 
+      endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     secrets: inherit
     with:
