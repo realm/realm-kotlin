@@ -1073,10 +1073,9 @@ jni_realm_create_key_path_array(const realm_t* realm,
                             int user_key_paths_count,
                             const char** user_key_paths)
 {
-    realm_key_path_array_t* out = nullptr;
-    bool result = realm_create_key_path_array(realm, object_class_key, user_key_paths_count, user_key_paths, &out);
+    realm_key_path_array_t* result = realm_create_key_path_array(realm, object_class_key, user_key_paths_count, user_key_paths);
     if (result) {
-        return out;
+        return result ;
     } else {
         auto env = get_env();
         throw_last_error_as_java_exception(env);

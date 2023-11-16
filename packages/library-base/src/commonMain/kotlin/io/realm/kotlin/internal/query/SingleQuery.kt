@@ -87,9 +87,9 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
                 } else {
                     oldHead = newHead
                     if (!oldHeadDeleted) {
-                        newHead.asFlow()
+                        newHead.asFlow(keyPaths)
                     } else {
-                        newHead.asFlow().onStart { emit(DeletedObjectImpl()) }
+                        newHead.asFlow(keyPaths).onStart { emit(DeletedObjectImpl()) }
                     }
                 }
             }

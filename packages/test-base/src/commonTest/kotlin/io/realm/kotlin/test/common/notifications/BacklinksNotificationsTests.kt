@@ -19,6 +19,7 @@ package io.realm.kotlin.test.common.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.notifications.InitialResults
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
@@ -410,32 +411,174 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
     }
 
     @Test
-    override fun keyPath_topLevelProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_topLevelProperty() = runBlocking<Unit> {
+        val c = Channel<ResultsChange<Sample>>(1)
+        realm.write {
+            copyToRealm(
+                Sample().apply {
+                    this.stringField = "parent"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child"
+                    }
+                }
+            )
+        }
+        val result: RealmResults<Sample> = realm.query<Sample>("stringField = 'child'").find()
+        assertEquals(1, result.first().objectBacklinks.size)
+        val observer = async {
+            result.asFlow(listOf("objectBacklinks")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialResults<Sample>>(c.receiveOrFail())
+        realm.write {
+            val child = findLatest(result.first())!!
+            assertEquals("child", child.stringField)
+            copyToRealm(
+                Sample().apply {
+                    this.stringField = "newParent"
+                    this.nullableObject = child
+                }
+            )
+        }
+        c.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<Sample>>(resultsChange)
+            when (resultsChange) {
+                is UpdatedResults -> {
+                    assertEquals(0, resultsChange.insertions.size)
+                    assertEquals(1, resultsChange.changes.size)
+                    assertEquals(0, resultsChange.deletions.size)
+                    assertEquals(2, resultsChange.list.first().objectBacklinks.size)
+                }
+                else -> fail("Unexpected change: $resultsChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_nestedProperty() {
-        TODO("Not yet implemented")
+    override fun keyPath_nestedProperty() = runBlocking<Unit> {
+        val c = Channel<ResultsChange<Sample>>(1)
+        realm.write {
+            copyToRealm(
+                Sample().apply {
+                    this.stringField = "parent"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child"
+                    }
+                }
+            )
+        }
+        val result: RealmResults<Sample> = realm.query<Sample>("stringField = 'child'").find()
+        assertEquals(1, result.first().objectBacklinks.size)
+        val observer = async {
+            result.asFlow(listOf("objectBacklinks.intField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialResults<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(result.first())!!.booleanField = false
+        }
+        realm.write {
+            findLatest(result.first())!!.objectBacklinks.first().intField = 1
+        }
+        c.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<Sample>>(resultsChange)
+            when (resultsChange) {
+                is UpdatedResults -> {
+                    assertEquals(0, resultsChange.insertions.size)
+                    assertEquals(1, resultsChange.changes.size)
+                    assertEquals(0, resultsChange.deletions.size)
+                    assertEquals(1, resultsChange.list.first().objectBacklinks.size)
+                }
+                else -> fail("Unexpected change: $resultsChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_propertyBelowDefaultLimit() {
-        TODO("Not yet implemented")
+    override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
+        val c = Channel<ResultsChange<Sample>>(1)
+        realm.write {
+            copyToRealm(
+                Sample().apply {
+                    this.intField = 1
+                    this.stringField = "parent"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child"
+                        this.nullableObject = Sample().apply {
+                            this.stringField = "child-child"
+                            this.nullableObject = Sample().apply {
+                                this.stringField = "child-child-child"
+                                this.nullableObject = Sample().apply {
+                                    this.stringField = "child-child-child"
+                                    this.nullableObject = Sample().apply {
+                                        this.stringField = "BottomChild"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        val results = realm.query<Sample>("stringField = 'BottomChild'").find()
+        val observer = async {
+            results.asFlow(listOf("objectBacklinks.objectBacklinks.objectBacklinks.objectBacklinks.objectBacklinks.stringField")).collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialResults<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(results.first())!!.booleanField = true
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(results.first())!!
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .stringField = "Bar"
+        }
+        c.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<Sample>>(resultsChange)
+            when (resultsChange) {
+                is ResultsChange<*> -> {
+                    assertEquals(0, resultsChange.insertions.size)
+                    assertEquals(1, resultsChange.changes.size)
+                    assertEquals(0, resultsChange.deletions.size)
+                    assertEquals(1, resultsChange.list.first().objectBacklinks.size)
+                }
+                else -> fail("Unexpected change: $resultsChange")
+            }
+        }
+        observer.cancel()
+        c.close()
     }
 
     @Test
-    override fun keyPath_unknownTopLevelProperty() {
-        TODO("Not yet implemented")
+    @Ignore // Already covered by RealmResultsNotificationTests
+    override fun keyPath_unknownTopLevelProperty() = runBlocking<Unit> {
+        TODO()
     }
 
     @Test
-    override fun keyPath_unknownNestedProperty() {
-        TODO("Not yet implemented")
+    @Ignore // Already covered by RealmResultsNotificationTests
+    override fun keyPath_unknownNestedProperty() = runBlocking<Unit> {
+        TODO()
     }
 
     @Test
-    override fun keyPath_invalidNestedProperty() {
-        TODO("Not yet implemented")
+    @Ignore // Already covered by RealmResultsNotificationTests
+    override fun keyPath_invalidNestedProperty() = runBlocking<Unit> {
+        TODO()
     }
 }
