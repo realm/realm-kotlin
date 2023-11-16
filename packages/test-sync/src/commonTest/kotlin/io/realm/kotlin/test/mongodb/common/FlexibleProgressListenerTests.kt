@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
@@ -29,7 +28,6 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
-import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.use
@@ -47,29 +45,24 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
-import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-internal const val TEST_SIZE = 500
-internal val TIMEOUT = 30.seconds
-
-class ProgressListenerTests {
+@Ignore // To be enabled when flexible sync supports progress listeners
+class FlexibleProgressListenerTests {
 
     private lateinit var app: TestApp
-    private lateinit var partitionValue: String
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
-        partitionValue = ObjectId().toString()
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
     }
 
     @AfterTest
@@ -126,8 +119,9 @@ class ProgressListenerTests {
             uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
 
             Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-                val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
-                    .completionCounter()
+                val flow =
+                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                        .completionCounter()
                 withTimeout(TIMEOUT) {
                     flow.takeWhile { completed -> completed < 3 }
                         .collect { completed ->
@@ -191,7 +185,8 @@ class ProgressListenerTests {
                     }
             }
 
-            val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+            val flow =
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
             withTimeout(TIMEOUT) {
                 flow.first { it.isTransferComplete }
             }
@@ -206,7 +201,8 @@ class ProgressListenerTests {
 
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             // Setup a flow that we are just going to cancel
-            val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+            val flow =
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
             supervisorScope {
                 val mutex = Mutex(true)
                 val task = async {
@@ -237,25 +233,14 @@ class ProgressListenerTests {
                 assertTrue { realm.syncSession.downloadAllServerChanges() }
                 // Ensure that progress listeners are triggered at least one time even though there
                 // is no data
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES).first()
-                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).first()
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY).first()
-                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY).first()
-            }
-        }
-    }
-
-    @Test
-    fun throwsOnFlexibleSync() = runBlocking {
-        TestApp("throwsOnFlexibleSync", TEST_APP_FLEX).use {
-            val user = app.createUserAndLogIn()
-            val configuration: SyncConfiguration = SyncConfiguration.create(user, FLX_SYNC_SCHEMA)
-            Realm.open(configuration).use { realm ->
-                assertFailsWithMessage<UnsupportedOperationException>(
-                    "Progress listeners are not supported for Flexible Sync"
-                ) {
-                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
-                }
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
+                    .first()
+                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
+                    .first()
+                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                    .first()
+                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+                    .first()
             }
         }
     }
@@ -266,7 +251,8 @@ class ProgressListenerTests {
             val user = app.createUserAndLogIn()
             val realm = Realm.open(createSyncConfig(user))
             try {
-                val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                val flow =
+                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
                 val job = async {
                     withTimeout(10.seconds) {
                         flow.collect { }
@@ -310,17 +296,12 @@ class ProgressListenerTests {
             .map { (_, completed) -> completed }
 
     private fun createSyncConfig(
-        user: User,
-        partitionValue: String = getTestPartitionValue()
+        user: User
     ): SyncConfiguration {
-        return SyncConfiguration.Builder(user, partitionValue, io.realm.kotlin.test.mongodb.common.PARTITION_SYNC_SCHEMA)
+        return SyncConfiguration.Builder(user, FLX_SYNC_SCHEMA)
+            .initialSubscriptions {
+                add(it.query<SyncObjectWithAllTypes>())
+            }
             .build()
-    }
-
-    private fun getTestPartitionValue(): String {
-        if (!this::partitionValue.isInitialized) {
-            fail("Test not setup correctly. Partition value is missing")
-        }
-        return partitionValue
     }
 }

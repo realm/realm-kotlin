@@ -109,6 +109,9 @@ internal open class SyncSessionImpl(
         direction: Direction,
         progressMode: ProgressMode,
     ): Flow<Progress> {
+        if ((configuration as InternalConfiguration).isFlexibleSyncConfiguration) {
+            throw UnsupportedOperationException("Progress listeners are not supported for Flexible Sync.")
+        }
         return realm.scopedFlow {
             callbackFlow {
                 val token: AtomicRef<Cancellable> =
