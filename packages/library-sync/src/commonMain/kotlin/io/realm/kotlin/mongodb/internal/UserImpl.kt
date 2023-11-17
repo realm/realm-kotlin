@@ -48,6 +48,7 @@ public class UserImpl(
         get() = RealmInterop.realm_user_get_identity(nativePointer)
     override val loggedIn: Boolean
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
+    @Deprecated("Property not stable, users might have multiple providers.", ReplaceWith("User.identities"))
     override val provider: AuthenticationProvider
         get() = identities.first().provider
     override val accessToken: String
