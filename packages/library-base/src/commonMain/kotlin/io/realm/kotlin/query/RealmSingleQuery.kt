@@ -72,9 +72,13 @@ public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
-     * @param keyPaths TODO
+     * @param keyPaths An optional list of properties that defines when a change to the object will
+     * result in a change being emitted. Nested properties can be defined using a dotted
+     * syntex, e.g. `parent.child.name`. If no keypaths are provided, changes to all top-level
+     * properties and nested properties 4 levels down will trigger a change.
      * @return a flow representing changes to the [RealmObject] or [EmbeddedRealmObject] resulting from
      * running this query.
+     * @throws IllegalArgumentException if an invalid keypath is provided.
      */
     public fun asFlow(keyPaths: List<String>? = null): Flow<SingleQueryChange<T>>
 }

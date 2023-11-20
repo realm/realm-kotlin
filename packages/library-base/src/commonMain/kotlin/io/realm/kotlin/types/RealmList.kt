@@ -74,10 +74,10 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      *
      * @param keyPaths An optional list of properties that defines when a change to the object will
      * result in a change being emitted. Nested properties can be defined using a dotted
-     * syntex, e.g. `parent.child.name`. If no keypaths are provided, changes to all top-level
+     * syntax, e.g. `parent.child.name`. If no keypaths are provided, changes to all top-level
      * properties and nested properties 4 levels down will trigger a change.
      * @return a flow representing changes to the list.
-     * @throws IllegalArgumentException if keypaths are provided for lists not containing objects.
+     * @throws IllegalArgumentException if an invalid keypath is provided.
      * @throws CancellationException if the stream produces changes faster than the consumer can
      * consume them and results in a buffer overflow.
      */

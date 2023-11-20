@@ -423,8 +423,9 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 /* This cleans up the memory we malloc'd before the function call */
 %typemap(freearg) char ** {
     int i;
-    for (i=0; i<size$argnum-1; i++)
-    free($1[i]);
+    for (i=0; i<size$argnum-1; i++) {
+        free($1[i]);
+    }
     free($1);
 }
 
@@ -454,7 +455,7 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
    and vice versa */
 %typemap(javain) char ** "$javainput"
 %typemap(javaout) char ** {
-return $jnicall;
+    return $jnicall;
 }
 // -- End
 

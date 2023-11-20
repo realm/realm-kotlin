@@ -438,7 +438,7 @@ expect object RealmInterop {
     ): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
-    fun create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer
+    fun realm_create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer
     fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
         keyPaths: RealmKeyPathArrayPointer?,
