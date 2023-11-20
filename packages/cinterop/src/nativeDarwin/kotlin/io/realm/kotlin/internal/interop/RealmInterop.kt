@@ -105,7 +105,6 @@ import realm_wrapper.realm_http_header_t
 import realm_wrapper.realm_http_request_method
 import realm_wrapper.realm_http_request_t
 import realm_wrapper.realm_http_response_t
-import realm_wrapper.realm_key_path_array_t
 import realm_wrapper.realm_link_t
 import realm_wrapper.realm_list_t
 import realm_wrapper.realm_object_id_t
