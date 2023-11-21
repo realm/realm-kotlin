@@ -39,9 +39,14 @@ import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.SyncTimeoutOptions
+import io.realm.kotlin.mongodb.sync.SyncTimeoutOptionsBuilder
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -102,6 +107,23 @@ public interface AppConfiguration {
      */
     public val httpLogObfuscator: HttpLogObfuscator?
 
+    /**
+     * If enabled (the default), a single connection is used for all Realms opened
+     * with a single sync user. If disabled, a separate connection is used for each
+     * Realm.
+     *
+     * Session multiplexing reduces resources used and typically improves
+     * performance. When multiplexing is enabled, the connection is not immediately
+     * closed when the last session is closed, and instead remains open for
+     * [SyncTimeoutOptions.connectionLingerTime] defined in [syncTimeoutOptions].
+     */
+    public val enableSessionMultiplexing: Boolean
+
+    /**
+     * The configured timeouts for various aspects of the sync connection from realms.
+     */
+    public val syncTimeoutOptions: SyncTimeoutOptions
+
     public companion object {
         /**
          * The default url for App Services applications.
@@ -149,6 +171,8 @@ public interface AppConfiguration {
         private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
         private val customRequestHeaders = mutableMapOf<String, String>()
         private var authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME
+        private var enableSessionMultiplexing: Boolean = true
+        private var syncTimeoutOptions: SyncTimeoutOptions = SyncTimeoutOptionsBuilder().build()
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -326,6 +350,33 @@ public interface AppConfiguration {
         }
 
         /**
+         * If enabled (the default), a single connection is used for all Realms opened
+         * with a single sync user. If disabled, a separate connection is used for each
+         * Realm.
+         *
+         * Session multiplexing reduces resources used and typically improves
+         * performance. When multiplexing is enabled, the connection is not immediately
+         * closed when the last session is closed, and instead remains open for
+         * [SyncTimeoutOptions.connectionLingerTime] as defined by [syncTimeouts] (30 seconds by
+         * default).
+         */
+        public fun enableSessionMultiplexing(enabled: Boolean): Builder {
+            this.enableSessionMultiplexing = enabled
+            return this
+        }
+
+        /**
+         *  Configure the assorted types of connection timeouts for sync connections.
+         *  See [SyncTimeoutOptionsBuilder] for a description of each option.
+         */
+        public fun syncTimeouts(action: SyncTimeoutOptionsBuilder.()->Unit): Builder {
+            val builder = SyncTimeoutOptionsBuilder()
+            action(builder)
+            syncTimeoutOptions = builder.build()
+            return this
+        }
+
+        /**
          * Allows defining a custom network transport. It is used by some tests that require simulating
          * network responses.
          */
@@ -411,6 +462,8 @@ public interface AppConfiguration {
                 httpLogObfuscator = httpLogObfuscator,
                 customRequestHeaders = customRequestHeaders,
                 authorizationHeaderName = authorizationHeaderName,
+                enableSessionMultiplexing = enableSessionMultiplexing,
+                syncTimeoutOptions = syncTimeoutOptions,
             )
         }
     }

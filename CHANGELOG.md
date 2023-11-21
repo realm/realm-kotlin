@@ -5,6 +5,11 @@
 
 ### Enhancements
 * Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
+* [Sync] Added support for multiplexing sync connections. When enabled (the default), a single
+  connection is used per sync user rather than one per synchronized Realm. This
+  reduces resource consumption when multiple Realms are opened and will
+  typically improve performance. The behavior can be controlled through [AppConfiguration.Builder.enableSessionMultiplexing]. (Issue [#XXXX]())  
+* [Sync] Various sync timeout options can now be configured through `AppConfiguration.Builder.syncTimeouts()`. (Issue [#971](https://github.com/realm/realm-kotlin/issues/971)).
 
 ### Fixed
 * None.

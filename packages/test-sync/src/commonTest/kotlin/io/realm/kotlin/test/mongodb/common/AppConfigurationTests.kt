@@ -41,12 +41,15 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private const val CUSTOM_HEADER_NAME = "Foo"
 private const val CUSTOM_HEADER_VALUE = "bar"
@@ -490,4 +493,51 @@ class AppConfigurationTests {
     @Ignore // TODO
     fun dispatcher() {
     }
+
+    @Test
+    fun multiplexing_default() {
+        val config = AppConfiguration.Builder("foo").build()
+        assertTrue(config.enableSessionMultiplexing)
+    }
+
+    @Test
+    fun multiplexing() {
+        val config = AppConfiguration.Builder("foo")
+            .enableSessionMultiplexing(false)
+            .build()
+        assertFalse(config.enableSessionMultiplexing)
+    }
+
+    @Test
+    fun syncTimeOutOptions_default() {
+        val config = AppConfiguration.Builder("foo").build()
+        with(config.syncTimeoutOptions) {
+            assertEquals(2.minutes, connectTimeout)
+            assertEquals(30.seconds, connectionLingerTime)
+            assertEquals(1.minutes, pingKeepalivePeriod)
+            assertEquals(2.minutes, pongKeepalivePeriod)
+            assertEquals(1.minutes, fastReconnectLimit)
+        }
+    }
+
+    @Test
+    fun syncTimeOutOptions() {
+        val config = AppConfiguration.Builder("foo")
+            .syncTimeouts {
+                connectTimeout = 1.seconds
+                connectionLingerTime = 1.seconds
+                pingKeepalivePeriod = 1.seconds
+                pongKeepalivePeriod = 1.seconds
+                fastReconnectLimit = 1.seconds
+            }
+            .build()
+        with(config.syncTimeoutOptions) {
+            assertEquals(1.seconds, connectTimeout)
+            assertEquals(1.seconds, connectionLingerTime)
+            assertEquals(1.seconds, pingKeepalivePeriod)
+            assertEquals(1.seconds, pongKeepalivePeriod)
+            assertEquals(1.seconds, fastReconnectLimit)
+        }
+    }
+
 }
