@@ -48,6 +48,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -540,4 +541,25 @@ class AppConfigurationTests {
         }
     }
 
+    @Test
+    fun syncTimeOutOptions_throwsIfValuesAreOutOfRange() {
+        AppConfiguration.Builder("foo")
+            .syncTimeouts {
+                assertFailsWith<IllegalArgumentException> {
+                    connectTimeout = 999.milliseconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    connectionLingerTime = 0.seconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    pingKeepalivePeriod = 5.seconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    pongKeepalivePeriod = 5.seconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    pongKeepalivePeriod = 1.seconds
+                }
+            }
+    }
 }

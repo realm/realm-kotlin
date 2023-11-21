@@ -44,9 +44,6 @@ import io.realm.kotlin.mongodb.sync.SyncTimeoutOptionsBuilder
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * An **AppConfiguration** is used to setup linkage to an Atlas App Services Application.
@@ -369,7 +366,7 @@ public interface AppConfiguration {
          *  Configure the assorted types of connection timeouts for sync connections.
          *  See [SyncTimeoutOptionsBuilder] for a description of each option.
          */
-        public fun syncTimeouts(action: SyncTimeoutOptionsBuilder.()->Unit): Builder {
+        public fun syncTimeouts(action: SyncTimeoutOptionsBuilder.() -> Unit): Builder {
             val builder = SyncTimeoutOptionsBuilder()
             action(builder)
             syncTimeoutOptions = builder.build()
