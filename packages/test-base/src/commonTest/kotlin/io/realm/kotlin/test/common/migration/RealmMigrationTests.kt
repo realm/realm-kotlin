@@ -89,7 +89,7 @@ class RealmMigrationTests {
                     assertNull(newSchema["SchemaVariations"])
                 }
             }
-        )
+        ).close()
     }
 
     // TODO Test all schema modifications (theoretically test core behavior, so postponed for now)
