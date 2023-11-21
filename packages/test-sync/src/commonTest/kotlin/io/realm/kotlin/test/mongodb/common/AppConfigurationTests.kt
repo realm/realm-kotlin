@@ -60,11 +60,6 @@ private const val APP_ID = "app-id"
 
 class AppConfigurationTests {
 
-//    val looperThread = BlockingLooperThread()
-//
-//    @get:Rule
-//    val tempFolder = TemporaryFolder()
-
     @Test
     fun authorizationHeaderName() {
         val config1 = AppConfiguration.Builder(APP_ID).build()
@@ -525,19 +520,19 @@ class AppConfigurationTests {
     fun syncTimeOutOptions() {
         val config = AppConfiguration.Builder("foo")
             .syncTimeouts {
-                connectTimeout = 1.seconds
-                connectionLingerTime = 1.seconds
-                pingKeepalivePeriod = 1.seconds
-                pongKeepalivePeriod = 1.seconds
-                fastReconnectLimit = 1.seconds
+                connectTimeout = 10.seconds
+                connectionLingerTime = 10.seconds
+                pingKeepalivePeriod = 10.seconds
+                pongKeepalivePeriod = 10.seconds
+                fastReconnectLimit = 10.seconds
             }
             .build()
         with(config.syncTimeoutOptions) {
-            assertEquals(1.seconds, connectTimeout)
-            assertEquals(1.seconds, connectionLingerTime)
-            assertEquals(1.seconds, pingKeepalivePeriod)
-            assertEquals(1.seconds, pongKeepalivePeriod)
-            assertEquals(1.seconds, fastReconnectLimit)
+            assertEquals(10.seconds, connectTimeout)
+            assertEquals(10.seconds, connectionLingerTime)
+            assertEquals(10.seconds, pingKeepalivePeriod)
+            assertEquals(10.seconds, pongKeepalivePeriod)
+            assertEquals(10.seconds, fastReconnectLimit)
         }
     }
 
