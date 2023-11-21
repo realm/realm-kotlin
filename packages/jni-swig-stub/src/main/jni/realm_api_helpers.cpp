@@ -35,7 +35,11 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
 }
 
 inline jboolean jni_check_exception(JNIEnv *jenv = get_env(), bool registrable_callback_error = false) {
+    // FIXME https://github.com/realm/realm-kotlin/issues/665 This function is catching and swallowing
+    //  the exception. This behavior could leave the SDK in an illegal state.
     if (jenv->ExceptionCheck()) {
+        // Print the exception stacktrace in stderr.
+        jenv->ExceptionDescribe();
         jthrowable exception = jenv->ExceptionOccurred();
         jenv->ExceptionClear();
         // setting the user code error is only propagated on certain callbacks.
@@ -49,7 +53,6 @@ inline jboolean jni_check_exception(JNIEnv *jenv = get_env(), bool registrable_c
 inline void push_local_frame(JNIEnv *jenv, jint frame_size) {
     if (jenv->PushLocalFrame(frame_size) != 0) {
         jni_check_exception(jenv);
-        jenv->ExceptionDescribe();
         throw std::runtime_error("Failed pushing a local frame with size " + std::to_string(frame_size));
     }
 }
