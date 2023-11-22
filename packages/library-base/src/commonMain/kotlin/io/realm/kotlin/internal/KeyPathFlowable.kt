@@ -31,7 +31,3 @@ import kotlinx.coroutines.flow.Flow
 internal interface KeyPathFlowable<T> {
     fun asFlow(keyPaths: List<String>? = null): Flow<T>
 }
-
-internal interface Flowable<T> {
-    fun asFlow(): Flow<T>
-}

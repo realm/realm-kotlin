@@ -2974,7 +2974,7 @@ class QueryTests {
                 findLatest(obj)!!.intField = 42
             }
             realm.writeBlocking {
-                // Should not trigger notification
+                // Should trigger notification
                 findLatest(obj)!!.stringField = "update"
             }
             channel.receiveOrFail().let { resultsChange ->

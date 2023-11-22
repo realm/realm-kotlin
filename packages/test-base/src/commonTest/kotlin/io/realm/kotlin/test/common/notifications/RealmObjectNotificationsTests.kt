@@ -380,6 +380,61 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     }
 
     @Test
+    override fun keyPath_defaultDepth() = runBlocking<Unit> {
+        val c = Channel<ObjectChange<Sample>>(1)
+        val obj: Sample = realm.write {
+            copyToRealm(
+                Sample().apply {
+                    this.stringField = "parent"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child"
+                        this.nullableObject = Sample().apply {
+                            this.stringField = "child-child"
+                            this.nullableObject = Sample().apply {
+                                this.stringField = "child-child-child"
+                                this.nullableObject = Sample().apply {
+                                    this.stringField = "child-child-child"
+                                    this.nullableObject = Sample().apply {
+                                        this.stringField = "BottomChild"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        val observer = async {
+            // Default keypath
+            obj.asFlow().collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialObject<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(obj)!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.nullableObject!!.intField = 1
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(obj)!!.stringField = "Parent change"
+        }
+        c.receiveOrFail().let { objectChange ->
+            assertIs<UpdatedObject<Sample>>(objectChange)
+            when (objectChange) {
+                is UpdatedObject -> {
+                    // Default value is Realm, so if this event is triggered by the first write
+                    // this assert will fail
+                    assertEquals("Parent change", objectChange.obj.stringField)
+                }
+                else -> fail("Unexpected change: $objectChange")
+            }
+        }
+        observer.cancel()
+        c.close()
+    }
+
+    @Test
     override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
         val c = Channel<ObjectChange<Sample>>(1)
         val obj: Sample = realm.write {

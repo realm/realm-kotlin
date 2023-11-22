@@ -143,12 +143,6 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error);
 realm_scheduler_t*
 realm_create_generic_scheduler();
 
-realm_key_path_array_t*
-jni_realm_create_key_path_array(const realm_t* realm,
-                                const realm_class_key_t object_class_key,
-                                int user_key_paths_count,
-                                const char** user_key_paths);
-
 void
 realm_property_info_t_cleanup(realm_property_info_t* value);
 

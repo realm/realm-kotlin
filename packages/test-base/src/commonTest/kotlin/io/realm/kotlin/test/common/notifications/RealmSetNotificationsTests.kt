@@ -436,6 +436,82 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
     }
 
     @Test
+    override fun keyPath_defaultDepth() = runBlocking<Unit> {
+        val c = Channel<SetChange<RealmSetContainer>>(1)
+        val objectSet: RealmSet<RealmSetContainer> = realm.write {
+            copyToRealm(
+                RealmSetContainer().apply {
+                    this.id = 1
+                    this.stringField = "parent"
+                    this.objectSetField = realmSetOf(
+                        RealmSetContainer().apply {
+                            this.stringField = "child"
+                            this.objectSetField = realmSetOf(
+                                RealmSetContainer().apply {
+                                    this.stringField = "child-child"
+                                    this.objectSetField = realmSetOf(
+                                        RealmSetContainer().apply {
+                                            this.stringField = "child-child-child"
+                                            this.objectSetField = realmSetOf(
+                                                RealmSetContainer().apply {
+                                                    this.stringField = "child-child-child-child"
+                                                    this.objectSetField = realmSetOf(
+                                                        RealmSetContainer().apply {
+                                                            this.stringField = "child-child-child-child-child"
+                                                            this.objectSetField = realmSetOf(
+                                                                RealmSetContainer().apply {
+                                                                    this.stringField = "BottomChild"
+                                                                }
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+        }.objectSetField
+        val observer = async {
+            // Default keypath
+            objectSet.asFlow().collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialSet<RealmSetContainer>>(c.receiveOrFail())
+        realm.write {
+            // Update below the default limit should not trigger a notification
+            val obj = findLatest(objectSet.first())!!.objectSetField.first().objectSetField.first().objectSetField.first().objectSetField.first().objectSetField.first()
+            obj.stringField = "Bar"
+        }
+        realm.write {
+            findLatest(objectSet.first())!!.stringField = "Bar"
+        }
+        realm.write {
+        }
+        c.receiveOrFail().let { setChange ->
+            assertIs<UpdatedSet<RealmSetContainer>>(setChange)
+            when (setChange) {
+                is SetChange -> {
+                    // Core will only report something changed to the top-level property.
+                    assertEquals(0, setChange.insertions)
+                    assertEquals(0, setChange.deletions)
+                    // Default value is Realm, so if this event is triggered by the first write
+                    // this assert will fail
+                    assertEquals("Bar", setChange.set.first().stringField)
+                }
+                else -> fail("Unexpected change: $setChange")
+            }
+        }
+        observer.cancel()
+        c.close()
+    }
+
+    @Test
     override fun keyPath_propertyBelowDefaultLimit() = runBlocking<Unit> {
         val c = Channel<SetChange<RealmSetContainer>>(1)
         val list = realm.write {

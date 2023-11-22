@@ -56,7 +56,6 @@ const val UUID_BYTES_SIZE = 16
 interface CapiT
 interface RealmConfigT : CapiT
 interface RealmSchemaT : CapiT
-interface RealmObjectSchemaT : CapiT
 interface RealmT : CapiT
 interface LiveRealmT : RealmT
 interface FrozenRealmT : RealmT

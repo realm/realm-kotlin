@@ -96,7 +96,6 @@ internal class CountQuery<E : BaseRealmObject> constructor(
     override fun asFlow(): Flow<Long> {
         realmReference.checkClosed()
         return realmReference.owner
-            // TODO
             .registerObserver(this, null)
             .map {
                 it.list.size.toLong()

@@ -72,12 +72,14 @@ public interface RealmList<E> : MutableList<E>, Deleteable {
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
-     * @param keyPaths An optional list of properties that defines when a change to the object will
-     * result in a change being emitted. Nested properties can be defined using a dotted
-     * syntax, e.g. `parent.child.name`. If no keypaths are provided, changes to all top-level
-     * properties and nested properties 4 levels down will trigger a change.
+     * @param keyPaths An optional list of model class properties that defines when a change to
+     * objects inside the list will result in a change being emitted. Nested properties can be
+     * defined using a dotted syntax, e.g. `parent.child.name`. If no keypaths are provided, changes
+     * to all top-level properties and nested properties up to 4 levels down will trigger a change.
+     * Keypaths are only supported for lists of objects.
      * @return a flow representing changes to the list.
-     * @throws IllegalArgumentException if an invalid keypath is provided.
+     * @throws IllegalArgumentException if an invalid keypath is provided or the RealmList does not
+     * contain realm objects.
      * @throws CancellationException if the stream produces changes faster than the consumer can
      * consume them and results in a buffer overflow.
      */

@@ -33,6 +33,7 @@ import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
@@ -162,11 +163,8 @@ internal class ManagedRealmSet<E> constructor(
 
     override fun asFlow(keyPaths: List<String>?): Flow<SetChange<E>> {
         val keyPathInfo = keyPaths?.let {
-            val classKey = if (operator is RealmObjectSetOperator) {
-                operator.classKey
-            } else {
-                throw IllegalArgumentException("Keypaths are only supported for sets of objects.")
-            }
+            Validation.isType<RealmObjectSetOperator<*>>(operator, "Keypaths are only supported for sets of objects.")
+            val classKey = operator.classKey
             Pair(classKey, keyPaths)
         }
         return operator.realmReference.owner.registerObserver(this, keyPathInfo)

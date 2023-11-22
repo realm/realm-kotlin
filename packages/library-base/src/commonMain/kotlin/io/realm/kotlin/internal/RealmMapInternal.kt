@@ -40,6 +40,7 @@ import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.notifications.MapChangeSet
 import io.realm.kotlin.notifications.internal.DeletedDictionaryImpl
@@ -103,11 +104,8 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     override fun asFlow(keyPaths: List<String>?): Flow<MapChange<K, V>> {
         operator.realmReference.checkClosed()
         val keyPathInfo = keyPaths?.let {
-            val classKey = if (operator is RealmObjectMapOperator) {
-                operator.classKey
-            } else {
-                throw IllegalArgumentException("Keypaths are only supported for maps of objects.")
-            }
+            Validation.isType<RealmObjectMapOperator<*, *>>(operator, "Keypaths are only supported for maps of objects.")
+            val classKey = operator.classKey // if (operator is RealmObjectMapOperator) {
             Pair(classKey, keyPaths)
         }
         return operator.realmReference.owner.registerObserver(this, keyPathInfo)

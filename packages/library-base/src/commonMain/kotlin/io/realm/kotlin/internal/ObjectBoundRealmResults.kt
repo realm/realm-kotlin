@@ -61,7 +61,7 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
      */
 
     override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> {
-        return realmResults.asFlow(keyPaths).bind(targetObject, keyPaths)
+        return realmResults.asFlow(keyPaths).bind(targetObject)
     }
 
     override fun delete() {
@@ -79,7 +79,6 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
  * deleted. It is used on sub-queries and backlinks.
  */
 internal fun <T> Flow<T>.bind(
-    reference: RealmObjectReference<out BaseRealmObject>,
-    keyPaths: List<String>?
+    reference: RealmObjectReference<out BaseRealmObject>
 ): Flow<T> =
-    this.terminateWhen(reference.asFlow(keyPaths)) { it is DeletedObject }
+    this.terminateWhen(reference.asFlow()) { it is DeletedObject }

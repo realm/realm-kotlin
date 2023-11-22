@@ -49,24 +49,6 @@ interface FlowableTests {
     @Test
     fun closingRealmDoesNotCancelFlows()
 
-    @Test
-    fun keyPath_topLevelProperty()
-
-    @Test
-    fun keyPath_nestedProperty()
-
-    @Test
-    fun keyPath_propertyBelowDefaultLimit()
-
-    @Test
-    fun keyPath_unknownTopLevelProperty()
-
-    @Test
-    fun keyPath_unknownNestedProperty()
-
-    @Test
-    fun keyPath_invalidNestedProperty()
-
     // @Test
     // fun addChangeListener_emitOnProvidedDispatcher() {
     //     // FIXME Implement in another PR

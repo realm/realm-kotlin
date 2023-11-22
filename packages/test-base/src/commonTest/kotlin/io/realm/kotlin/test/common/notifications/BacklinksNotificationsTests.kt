@@ -493,6 +493,72 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     assertEquals(1, resultsChange.changes.size)
                     assertEquals(0, resultsChange.deletions.size)
                     assertEquals(1, resultsChange.list.first().objectBacklinks.size)
+                    // This starts at 42, s if the first write triggers a change event, it will
+                    // catch it here.
+                    assertEquals(resultsChange.list.first().objectBacklinks.first().intField, 1)
+                }
+                else -> fail("Unexpected change: $resultsChange")
+            }
+        }
+        observer.cancel()
+        c.close()
+    }
+
+    @Test
+    override fun keyPath_defaultDepth() = runBlocking<Unit> {
+        val c = Channel<ResultsChange<Sample>>(1)
+        realm.write {
+            copyToRealm(
+                Sample().apply {
+                    this.intField = 1
+                    this.stringField = "parent"
+                    this.nullableObject = Sample().apply {
+                        this.stringField = "child"
+                        this.nullableObject = Sample().apply {
+                            this.stringField = "child-child"
+                            this.nullableObject = Sample().apply {
+                                this.stringField = "child-child-child"
+                                this.nullableObject = Sample().apply {
+                                    this.stringField = "child-child-child"
+                                    this.nullableObject = Sample().apply {
+                                        this.stringField = "BottomChild"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        val results = realm.query<Sample>("stringField = 'BottomChild'").find()
+        val observer = async {
+            // Default keypath
+            results.asFlow().collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialResults<Sample>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            findLatest(results.first())!!
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .objectBacklinks.first()
+                .stringField = "Bar"
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(results.first())!!.intField = 1
+        }
+        c.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<Sample>>(resultsChange)
+            when (resultsChange) {
+                is ResultsChange<*> -> {
+                    // Default value is 42, so if this event is triggered by the first write
+                    // this assert will fail
+                    assertEquals(1, resultsChange.list.first().intField)
                 }
                 else -> fail("Unexpected change: $resultsChange")
             }

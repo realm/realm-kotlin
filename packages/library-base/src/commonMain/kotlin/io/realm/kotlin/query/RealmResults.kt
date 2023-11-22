@@ -69,7 +69,13 @@ public interface RealmResults<T : BaseRealmObject> : List<T>, Deleteable, Versio
      * the elements in a timely manner the coroutine scope will be cancelled with a
      * [CancellationException].
      *
-     * @param keyPath TODO
+     * @param keyPaths An optional list of model class properties that defines when a change to
+     * objects inside the RealmResults will result in a change being emitted. Nested properties can
+     * be defined using a dotted syntax, e.g. `parent.child.name`. If no keypaths are provided,
+     * changes to all top-level properties and nested properties up to 4 levels down will trigger a
+     * change.
+     * @return a flow representing changes to the list.
+     * @throws IllegalArgumentException if an invalid keypath is provided.
      * @return a flow representing changes to the RealmResults.
      */
     public fun asFlow(keyPaths: List<String>? = null): Flow<ResultsChange<T>>

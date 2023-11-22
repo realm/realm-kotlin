@@ -33,6 +33,7 @@ import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
@@ -117,11 +118,8 @@ internal class ManagedRealmList<E>(
     override fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>> {
         operator.realmReference.checkClosed()
         val keyPathInfo = keyPaths?.let {
-            val classKey = if (operator is RealmObjectListOperator) {
-                operator.classKey
-            } else {
-                throw IllegalArgumentException("Keypaths are only supported for lists of objects.")
-            }
+            Validation.isType<RealmObjectListOperator<*>>(operator, "Keypaths are only supported for lists of objects.")
+            val classKey = operator.classKey
             Pair(classKey, keyPaths)
         }
         return operator.realmReference.owner.registerObserver(this, keyPathInfo)

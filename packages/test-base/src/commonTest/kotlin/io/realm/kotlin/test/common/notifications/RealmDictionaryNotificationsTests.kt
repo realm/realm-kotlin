@@ -464,6 +464,9 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 is UpdatedMap -> {
                     assertEquals(1, mapChange.changes.size)
                     assertEquals("1", mapChange.changes.first())
+                    // This starts as Realm, so if the first write triggers a change event, it will
+                    // catch it here.
+                    assertEquals("Foo", mapChange.map["1"]!!.stringField)
                 }
                 else -> fail("Unexpected change: $mapChange")
             }
@@ -510,6 +513,85 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             when (mapChange) {
                 is UpdatedMap -> {
                     assertEquals(1, mapChange.changes.size)
+                }
+                else -> fail("Unexpected change: $mapChange")
+            }
+        }
+        observer.cancel()
+        c.close()
+    }
+
+    @Test
+    override fun keyPath_defaultDepth() = runBlocking<Unit> {
+        val c = Channel<MapChange<String, RealmDictionaryContainer?>>(1)
+        val dict = realm.write {
+            copyToRealm(
+                RealmDictionaryContainer().apply {
+                    this.id = 1
+                    this.stringField = "parent"
+                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                        "parent" to RealmDictionaryContainer().apply {
+                            this.stringField = "child"
+                            this.nullableObjectDictionaryField = realmDictionaryOf(
+                                "child" to RealmDictionaryContainer().apply {
+                                    this.stringField = "child-child"
+                                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                                        "child-child" to RealmDictionaryContainer().apply {
+                                            this.stringField = "child-child-child"
+                                            this.nullableObjectDictionaryField = realmDictionaryOf(
+                                                "child-child-child" to RealmDictionaryContainer().apply {
+                                                    this.stringField = "child-child-child-child"
+                                                    this.nullableObjectDictionaryField = realmDictionaryOf(
+                                                        "child-child-child-child" to RealmDictionaryContainer().apply {
+                                                            this.stringField = "child-child-child-child-child"
+                                                            this.nullableObjectDictionaryField = realmDictionaryOf(
+                                                                "child-child-child-child-child" to RealmDictionaryContainer().apply {
+                                                                    this.stringField = "BottomChild"
+                                                                }
+                                                            )
+                                                        }
+                                                    )
+                                                }
+                                            )
+                                        }
+                                    )
+                                }
+                            )
+                        }
+                    )
+                }
+            )
+        }.nullableObjectDictionaryField
+        val observer = async {
+            // Default keypath
+            dict.asFlow().collect {
+                c.trySend(it)
+            }
+        }
+        assertIs<InitialMap<String, RealmDictionaryContainer?>>(c.receiveOrFail())
+        realm.write {
+            // Update field that should not trigger a notification
+            val obj = findLatest(dict.values.first()!!)!!
+                .nullableObjectDictionaryField.values.first()!!
+                .nullableObjectDictionaryField.values.first()!!
+                .nullableObjectDictionaryField.values.first()!!
+                .nullableObjectDictionaryField.values.first()!!
+                .nullableObjectDictionaryField.values.first()!!
+            obj.stringField = "Bar"
+        }
+        realm.write {
+            // Update field that should trigger a notification
+            findLatest(dict.values.first()!!)!!.stringField = "Parent change"
+        }
+        c.receiveOrFail().let { mapChange ->
+            assertIs<UpdatedMap<String, RealmDictionaryContainer?>>(mapChange)
+            when (mapChange) {
+                is MapChange -> {
+                    // Core will only report something changed to the top-level property.
+                    assertEquals(1, mapChange.changes.size)
+                    // Default value is Realm, so if this event is triggered by the first write
+                    // this assert will fail
+                    assertEquals("Parent change", mapChange.map.values.first()!!.stringField)
                 }
                 else -> fail("Unexpected change: $mapChange")
             }

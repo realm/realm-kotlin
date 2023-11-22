@@ -189,49 +189,13 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     @Ignore
     override fun closeRealmInsideFlowThrows() {
-        // Keypaths not supported by Realm notifications
+        TODO("Wait for a Global change listener to become available")
     }
 
     @Test
     @Ignore
     override fun closingRealmDoesNotCancelFlows() {
-        // Keypaths not supported by Realm notifications
-    }
-
-    @Test
-    @Ignore
-    override fun keyPath_topLevelProperty() {
-        // Keypaths not supported by Realm notifications
-    }
-
-    @Test
-    @Ignore
-    override fun keyPath_nestedProperty() {
-        // Keypaths not supported by Realm notifications
-    }
-
-    @Test
-    @Ignore
-    override fun keyPath_propertyBelowDefaultLimit() {
-        // Keypaths not supported by Realm notifications
-    }
-
-    @Test
-    @Ignore
-    override fun keyPath_unknownTopLevelProperty() {
-        // Keypaths not supported by Realm notifications
-    }
-
-    @Test
-    @Ignore
-    override fun keyPath_unknownNestedProperty() {
-        // Keypaths not supported by Realm notifications
-    }
-
-    @Test
-    @Ignore
-    override fun keyPath_invalidNestedProperty() {
-        // Keypaths not supported by Realm notifications
+        TODO("Wait for a Global change listener to become available")
     }
 
     @Test
