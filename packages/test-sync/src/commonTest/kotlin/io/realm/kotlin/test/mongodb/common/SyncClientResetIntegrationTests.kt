@@ -741,7 +741,7 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
-                assertIs<java.lang.IllegalStateException>(exception.cause)
+                assertIs<IllegalStateException>(exception.cause)
                 assertEquals(
                     "User exception",
                     exception.cause?.message
@@ -758,7 +758,7 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
-                assertIs<java.lang.IllegalStateException>(exception.cause)
+                assertIs<IllegalStateException>(exception.cause)
                 assertEquals(
                     "User exception",
                     exception.cause?.message

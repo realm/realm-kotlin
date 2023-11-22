@@ -2487,8 +2487,11 @@ actual object RealmInterop {
                         isFatal = is_fatal,
                         isUnrecognizedByClient = is_unrecognized_by_client,
                         isClientResetRequested = is_client_reset_requested,
-                        compensatingWrites = compensatingWrites
-                    )
+                        compensatingWrites = compensatingWrites,
+                        userError = usercode_error?.asStableRef<Throwable>()?.get()
+                    ).also {
+                        usercode_error?.let { disposeUserData<Throwable>(it) }
+                    }
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))
@@ -2518,16 +2521,10 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_before_client_reset_handler(
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm ->
-                val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
-
-                // Check if exceptions have been thrown, return true if all went as it should
-                try {
-                    beforeCallback.onBeforeReset(beforeDb)
+                stableUserDataWithErrorPropagation<SyncBeforeClientResetHandler>(userData) {
+                    val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                    onBeforeReset(beforeDb)
                     true
-                } catch (e: Throwable) {
-                    println(e.message)
-                    false
                 }
             },
             StableRef.create(beforeHandler).asCPointer(),
@@ -2544,22 +2541,19 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_after_client_reset_handler(
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
-                val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                stableUserDataWithErrorPropagation<SyncAfterClientResetHandler>(userData) {
+                    val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
 
-                // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
-                val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
-                val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
+                    // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
+                    val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
+                    val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
 
-                // Check if exceptions have been thrown, return true if all went as it should
-                try {
-                    afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
-                    true
-                } catch (e: Throwable) {
-                    println(e.message)
-                    false
-                } finally {
-                    realm_wrapper.realm_close(afterRealmPtr)
+                    try {
+                        onAfterReset(beforeDb, afterDb, didRecover)
+                        true
+                    } finally {
+                        realm_wrapper.realm_close(afterRealmPtr)
+                    }
                 }
             },
             StableRef.create(afterHandler).asCPointer(),
