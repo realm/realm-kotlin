@@ -90,15 +90,6 @@ inline std::string get_exception_message(JNIEnv *env) {
     return env->GetStringUTFChars(message, NULL);
 }
 
-inline void system_out_println(JNIEnv *env, std::string message) {
-    jclass system_class = env->FindClass("java/lang/System");
-    jfieldID field_id = env->GetStaticFieldID(system_class, "out", "Ljava/io/PrintStream;");
-    jobject system_out = env->GetStaticObjectField(system_class, field_id);
-    jclass print_stream_class = env->FindClass("java/io/PrintStream");
-    jmethodID method_id = env->GetMethodID(print_stream_class, "println", "(Ljava/lang/String;)V");
-    env->CallVoidMethod(system_out, method_id, to_jstring(env, message));
-}
-
 void
 realm_changed_callback(void* userdata) {
     auto env = get_env(true);
@@ -716,7 +707,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
+    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;Ljava/lang/Throwable;)V");
 
     jint category = static_cast<jint>(error.status.categories);
     jint value = static_cast<jint>(error.status.error);
@@ -788,7 +779,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
         }
     }
 
-    return jenv->NewObject(
+    jobject result = jenv->NewObject(
             JavaClassGlobalDef::sync_error(),
             sync_error_constructor,
             category,
@@ -799,8 +790,13 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             is_fatal,
             is_unrecognized_by_client,
             is_client_reset_requested,
-            j_compensating_write_info_array
+            j_compensating_write_info_array,
+            static_cast<jobject>(error.usercode_error)
     );
+
+    jni_check_exception(jenv);
+    jenv->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    return result;
 }
 
 void sync_set_error_handler(realm_sync_config_t* sync_config, jobject error_handler) {
@@ -887,14 +883,7 @@ before_client_reset(void* userdata, realm_t* before_realm) {
                                                     "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
     auto before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
-    if (env->ExceptionCheck()) {
-        std::string exception_message = get_exception_message(env);
-        std::string message_template = "An error has occurred in the 'onBefore' callback: ";
-        system_out_println(env, message_template.append(exception_message));
-        return false;
-    }
-
-    return true;
+    return jni_check_exception(env);
 }
 
 bool
@@ -913,14 +902,7 @@ after_client_reset(void* userdata, realm_t* before_realm,
     auto after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
     realm_close(after_realm_ptr);
-    if (env->ExceptionCheck()) {
-        std::string exception_message = get_exception_message(env);
-        std::string message_template = "An error has occurred in the 'onAfter' callback: ";
-        system_out_println(env, message_template.append(exception_message));
-        return false;
-    }
-
-    return true;
+    return jni_check_exception(env);
 }
 
 void
