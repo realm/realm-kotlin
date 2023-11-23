@@ -162,6 +162,25 @@ jobs:
         run: ./gradlew assemble
 
   gradle-plugin-integration:
+    strategy:
+      matrix:
+        type: [current, currentK2, gradle6, gradle71, gradle75]
+        include:
+          - type: current
+            path: integration-tests/gradle/current
+            arguments: integrationTest
+          - type: currentK2
+            path: integration-tests/gradle/current
+            arguments: -Pkotlin.experimental.tryK2=true integrationTest
+          - type: gradle6
+            path: integration-tests/gradle/gradle6-test
+            arguments: integrationTest
+          - type: gradle71
+            path: integration-tests/gradle/gradle71-test
+            arguments: integrationTest
+          - type: gradle75
+            path: integration-tests/gradle/gradle75-test
+            arguments: integrationTest
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
@@ -198,4 +217,4 @@ jobs:
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd integration-tests/gradle-plugin-test && ./gradlew integrationTest --info
+          script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info
