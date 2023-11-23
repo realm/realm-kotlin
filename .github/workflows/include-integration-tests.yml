@@ -218,3 +218,49 @@ jobs:
           ram-size: 2048M
           heap-size: 1024M
           script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info
+
+  gradle-plugin-integration-java-17:
+    strategy:
+      matrix:
+        type: [gradle8]
+        include:
+          - type: gradle8
+            path: integration-tests/gradle/gradle8-test
+            arguments: integrationTest
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: all-packages-${{ inputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Run Gradle Plugin Test project
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis # default is not available on 33 yet.
+          arch: x86_64
+          profile: Nexus 6
+          disk-size: 4096M
+          ram-size: 2048M
+          heap-size: 1024M
+          script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info          
