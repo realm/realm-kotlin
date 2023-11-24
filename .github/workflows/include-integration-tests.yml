@@ -217,12 +217,19 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30 # Must match value used by in rest of script
+          api-level: 30
+          target: aosp_atd
+          arch: x86        
+          disk-size: 4096M
+          ram-size: 2048M
+          heap-size: 1024M
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          channel: canary
           script: echo "Generated AVD snapshot for caching."
 
+      # TODO Can we read api level from Config.kt
       - name: Run Gradle Plugin Test project
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -231,13 +238,15 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 30
-          target: default
-          arch: x86_64
+          api-level: 30 # Must be 30 to support aosp_atd
+          target: aosp_atd
+          arch: x86        
+          # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info
+          channel: canary
+          script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info    
 
   gradle-plugin-integration-java-17:
     strategy:
@@ -284,12 +293,19 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30 # Must match value used by in rest of script
+          api-level: 30
+          target: aosp_atd
+          arch: x86        
+          disk-size: 4096M
+          ram-size: 2048M
+          heap-size: 1024M
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          channel: canary
           script: echo "Generated AVD snapshot for caching."
 
+      # TODO Can we read api level from Config.kt
       - name: Run Gradle Plugin Test project
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -298,10 +314,12 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 30
-          target: default
-          arch: x86_64
+          api-level: 30 # Must be 30 to support aosp_atd
+          target: aosp_atd
+          arch: x86        
+          # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
+          channel: canary
           script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info          
