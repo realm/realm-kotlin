@@ -786,6 +786,25 @@ jobs:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
+      - name: AVD cache
+        uses: actions/cache@v3
+        id: avd-cache
+        with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+          key: android-emulator-avd-33
+
+      - name: create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33 # Must match value used by in rest of script
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: echo "Generated AVD snapshot for caching."
+
       # TODO Can we read api level from Config.kt
       - name: Run Integration Tests
         env:
@@ -794,6 +813,7 @@ jobs:
         with:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          force-avd-creation: false
           api-level: 33
           target: default
           arch: x86_64          
