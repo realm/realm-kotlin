@@ -239,7 +239,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: ${{ github.job.name }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -356,7 +356,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: ${{ github.job.name }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -468,7 +468,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: ${{ github.job.name }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -554,7 +554,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: ${{ github.job.name }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -632,7 +632,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: ${{ github.job.name }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -710,7 +710,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: ${{ github.job.name }}
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
