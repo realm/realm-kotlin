@@ -113,7 +113,6 @@ jobs:
           api-level: 33
           target: google_apis # default is not available on 33 yet.
           arch: x86_64
-          profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
@@ -218,7 +217,7 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33 # Must match value used by in rest of script
+          api-level: 30 # Must match value used by in rest of script
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
@@ -232,10 +231,9 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 33
+          api-level: 30
           target: default
           arch: x86_64
-          profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
@@ -286,7 +284,7 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33 # Must match value used by in rest of script
+          api-level: 30 # Must match value used by in rest of script
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
@@ -300,10 +298,9 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 33
+          api-level: 30
           target: default
           arch: x86_64
-          profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
