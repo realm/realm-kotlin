@@ -790,9 +790,9 @@ jobs:
         uses: actions/cache@v3
         id: avd-cache
         with:
-        path: |
-          ~/.android/avd/*
-          ~/.android/adb*
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
           key: android-emulator-avd-33
 
       - name: create AVD and generate snapshot for caching
