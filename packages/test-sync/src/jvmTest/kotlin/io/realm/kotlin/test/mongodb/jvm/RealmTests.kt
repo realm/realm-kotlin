@@ -21,9 +21,11 @@ import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
+import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -41,7 +43,11 @@ class RealmTests {
         val app = TestApp("cleanupAllRealmThreadsOnClose")
         val user = app.login(Credentials.anonymous())
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))
-        Realm.open(configuration).close()
+        Realm.open(configuration).use {
+            // we make sure Schema is exchanged correctly
+            it.syncSession.uploadAllLocalChanges()
+            it.syncSession.downloadAllServerChanges()
+        }
         app.close()
 
         // Wait max 30 seconds for threads to settle

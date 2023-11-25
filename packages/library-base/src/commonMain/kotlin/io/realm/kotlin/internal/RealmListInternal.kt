@@ -207,7 +207,7 @@ internal interface ListOperator<E> : CollectionOperator<E, RealmListPointer> {
 
     fun get(index: Int): E
 
-    // TODO OPTIMIZE We technically don't need update policy and cache for primitie lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
+    // TODO OPTIMIZE We technically don't need update policy and cache for primitive lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
     fun insert(
         index: Int,
         element: E,

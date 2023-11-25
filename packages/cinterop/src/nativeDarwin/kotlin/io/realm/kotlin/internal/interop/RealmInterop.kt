@@ -2818,7 +2818,7 @@ actual object RealmInterop {
                         Unit
                     },
                     websocket_free_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t? ->
-                        safeUserData<WebSocketClient>(websocket).closeWebsocket()
+                        safeUserData<WebSocketClient>(websocket).close()
                         disposeUserData<WebSocketClient>(websocket)
                     }
                 )

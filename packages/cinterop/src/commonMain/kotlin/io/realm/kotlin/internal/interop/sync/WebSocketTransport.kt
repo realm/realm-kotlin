@@ -38,10 +38,7 @@ interface WebSocketTransport {
         reason: String = ""
     ) {
         RealmInterop.realm_sync_socket_callback_complete(
-            handlerCallback,
-            cancelled,
-            status,
-            reason
+            handlerCallback, cancelled, status, reason
         )
     }
 
@@ -60,7 +57,12 @@ class CancellableTimer(
 
 interface WebSocketClient {
     fun send(message: ByteArray, handlerCallback: RealmWebsocketHandlerCallbackPointer)
-    fun closeWebsocket()
+    fun close()
+}
+
+interface WebsocketEngine {
+    fun shutdown()
+    fun <T> getEngine(timeoutMs: Long = 0): T
 }
 
 class WebSocketObserver(private val webSocketObserverPointer: RealmWebsocketProviderPointer) {
@@ -78,10 +80,7 @@ class WebSocketObserver(private val webSocketObserverPointer: RealmWebsocketProv
 
     fun onClose(wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {
         RealmInterop.realm_sync_socket_websocket_closed(
-            webSocketObserverPointer,
-            wasClean,
-            errorCode,
-            reason
+            webSocketObserverPointer, wasClean, errorCode, reason
         )
     }
 }

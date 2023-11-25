@@ -821,7 +821,7 @@ static void realm_sync_websocket_free(realm_userdata_t userdata,
                                       realm_sync_socket_websocket_t websocket_userdata) {
     if (websocket_userdata != nullptr) {
         auto jenv = get_env(false);
-        static jmethodID close_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_client(), "closeWebsocket", "()V");
+        static jmethodID close_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_client(), "close", "()V");
 
         jobject websocket_client = static_cast<jobject>(websocket_userdata);
         jenv->CallVoidMethod(websocket_client, close_method);

@@ -45,7 +45,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
-val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partion-based Sync
+val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partition-based Sync
 val TEST_APP_FLEX = syncServerAppName("flx") // With Flexible Sync
 val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 

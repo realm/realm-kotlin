@@ -944,10 +944,12 @@ class SyncedRealmTests {
             val (email1, password1) = randomEmail() to "password1234"
             val user = flexApp.createUserAndLogIn(email1, password1)
             val localConfig = createWriteCopyLocalConfig("local.realm")
-            val syncConfig = createPartitionSyncConfig(
+            val syncConfig = createFlexibleSyncConfig(
                 user = user,
                 name = "sync.realm",
-                partitionValue = partitionValue,
+                initialSubscriptions = {
+                    it.query<FlexParentObject>().subscribe(name = "parentSubscription")
+                }
             )
             Realm.open(syncConfig).use { flexSyncRealm: Realm ->
                 flexSyncRealm.writeBlocking {
@@ -957,6 +959,10 @@ class SyncedRealmTests {
                         }
                     )
                 }
+
+                flexSyncRealm.syncSession.uploadAllLocalChanges(30.seconds)
+                flexSyncRealm.syncSession.downloadAllServerChanges(30.seconds)
+
                 // Copy to local Realm
                 flexSyncRealm.writeCopyTo(localConfig)
             }

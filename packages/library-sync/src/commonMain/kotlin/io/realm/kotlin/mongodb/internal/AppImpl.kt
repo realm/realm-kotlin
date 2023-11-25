@@ -178,9 +178,6 @@ public class AppImpl(
         networkTransport.close()
         nativePointer.release()
         NetworkStateObserver.removeListener(connectionListener)
-        // It's important to close the transport *after* we delete the App, since SyncSession dtor
-        // still relies on the event loop (powered by the coroutines) to post function handler to be executed.
-        websocketTransport?.close()
     }
 
     internal companion object {

@@ -38,8 +38,8 @@ import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
-import io.realm.kotlin.mongodb.internal.KtorWebSocketTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
+import io.realm.kotlin.mongodb.internal.RealmWebSocketTransport
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
@@ -408,7 +408,7 @@ public interface AppConfiguration {
 
             val websocketTransport: ((DispatcherHolder) -> WebSocketTransport)? =
                 if (usePlatformNetworking) { dispatcherHolder ->
-                    websocketTransport ?: KtorWebSocketTransport(
+                    websocketTransport ?: RealmWebSocketTransport(
                         timeoutMs = 60000,
                         dispatcherHolder = dispatcherHolder
                     )
