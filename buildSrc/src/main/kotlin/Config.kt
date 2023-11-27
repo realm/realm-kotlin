@@ -128,7 +128,7 @@ object Versions {
     // When updating the Kotlin version, also remember to update /examples/min-android-sample/build.gradle.kts
     const val kotlin = "1.9.0" // https://github.com/JetBrains/kotlin and https://kotlinlang.org/docs/releases.html#release-details
     const val kotlinJvmTarget = "1.8" // Which JVM bytecode version is kotlin compiled to.
-    const val latestKotlin = "1.9.20-Beta" // https://kotlinlang.org/docs/eap.html#build-details
+    const val latestKotlin = "1.9.20" // https://kotlinlang.org/docs/eap.html#build-details
     const val kotlinCompileTesting = "1.5.0" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
     const val ktor = "2.1.2" // https://github.com/ktorio/ktor
