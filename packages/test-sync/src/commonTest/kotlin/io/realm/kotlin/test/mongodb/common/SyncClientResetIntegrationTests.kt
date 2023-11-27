@@ -160,7 +160,7 @@ class SyncClientResetIntegrationTests {
                 configBuilderGenerator = { user ->
                     return@TestEnvironment SyncConfiguration.Builder(
                         user,
-                        FLX_SYNC_SCHEMA
+                        FLEXIBLE_SYNC_SCHEMA
                     ).initialSubscriptions { realm ->
                         realm.query<FlexParentObject>(
                             "section = $0 AND name = $1",
@@ -215,7 +215,7 @@ class SyncClientResetIntegrationTests {
                 return@TestEnvironment SyncConfiguration.Builder(
                     user,
                     TestHelper.randomPartitionValue(),
-                    schema = PARTITION_SYNC_SCHEMA
+                    schema = PARTITION_BASED_SCHEMA
                 )
             },
             insertElement = { realm: Realm ->

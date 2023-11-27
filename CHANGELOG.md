@@ -4,16 +4,17 @@
 * None.
 
 ### Enhancements
-* None.
+* Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
 
 ### Fixed
 * `RealmInstant.now` used an API (`java.time.Clock.systemUTC().instant()`) introduced in API 26, current minSDK is 16. (Issue [#1564](https://github.com/realm/realm-kotlin/issues/1564))
+* Fix compiler crash caused by a change in Kotlin 1.9.20 ((toIrConst moved under common IrUtils)[https://github.com/JetBrains/kotlin/commit/ca8db7d0b83f6dfd6afcea7a5fe7556d38f325d8]). (Issue [#1566](https://github.com/realm/realm-kotlin/issues/1566))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
@@ -22,6 +23,7 @@
 * Minimum Gradle version: 6.8.3.
 * Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
 
 ### Internal
 * None.
@@ -36,7 +38,7 @@
 * None.
 
 ### Fixed
-* Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
+* Fix crashes caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -85,7 +87,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Kotlin 1.8.20 and above. The K2 compiler is not supported yet.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.

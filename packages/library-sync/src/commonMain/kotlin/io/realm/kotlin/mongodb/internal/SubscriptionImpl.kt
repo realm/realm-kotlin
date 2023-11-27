@@ -42,7 +42,7 @@ internal class SubscriptionImpl(
     // Trim the query to match the output of RealmQuery.description()
     override val queryDescription: String = RealmInterop.realm_sync_subscription_query_string(nativePointer).trim()
 
-    @Suppress("invisible_member")
+    @Suppress("invisible_member", "invisible_reference")
     override fun <T : RealmObject> asQuery(type: KClass<T>): RealmQuery<T> {
         // TODO Check for invalid combinations of Realm and type once we properly support
         // DynamicRealm

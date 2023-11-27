@@ -51,8 +51,8 @@ class RealmModelSyntheticMethodsExtension : SyntheticResolveExtension {
             !isNestedInRealmModelClass(thisDescriptor) && /* do not override nested class methods */
             result.isEmpty() /* = no method has been declared in the current class */
         ) {
-            when (name.identifier) {
-                "toString" -> {
+            when (name) {
+                Names.REALM_OBJECT_TO_STRING_METHOD -> {
                     result.add(
                         createMethod(
                             classDescriptor = thisDescriptor,
@@ -62,7 +62,7 @@ class RealmModelSyntheticMethodsExtension : SyntheticResolveExtension {
                         )
                     )
                 }
-                "equals" -> {
+                Names.REALM_OBJECT_EQUALS -> {
                     result.add(
                         createMethod(
                             classDescriptor = thisDescriptor,
@@ -72,7 +72,7 @@ class RealmModelSyntheticMethodsExtension : SyntheticResolveExtension {
                         )
                     )
                 }
-                "hashCode" -> {
+                Names.REALM_OBJECT_HASH_CODE -> {
                     result.add(
                         createMethod(
                             classDescriptor = thisDescriptor,

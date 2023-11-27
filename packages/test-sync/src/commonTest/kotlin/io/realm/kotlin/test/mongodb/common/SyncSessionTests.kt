@@ -258,13 +258,13 @@ class SyncSessionTests {
         val config1 = SyncConfiguration.Builder(
             user1,
             partitionValue,
-            schema = FLX_SYNC_SCHEMA
+            schema = PARTITION_BASED_SCHEMA
         ).name("user1.realm")
             .build()
         val config2 = SyncConfiguration.Builder(
             user2,
             partitionValue,
-            schema = FLX_SYNC_SCHEMA
+            schema = PARTITION_BASED_SCHEMA
         ).name("user2.realm")
             .build()
 
@@ -320,7 +320,7 @@ class SyncSessionTests {
         val user = app.createUserAndLogIn(email, password)
         val channel = Channel<SyncSession>(1)
         val config = SyncConfiguration.Builder(
-            schema = PARTITION_SYNC_SCHEMA,
+            schema = PARTITION_BASED_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).errorHandler { session, _ ->
@@ -382,7 +382,7 @@ class SyncSessionTests {
     @Test
     fun syncingObjectIdFromMongoDB() = runBlocking {
         val adminApi = app.asTestApp
-        val config = SyncConfiguration.Builder(user, partitionValue, schema = PARTITION_SYNC_SCHEMA).build()
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = PARTITION_BASED_SCHEMA).build()
         Realm.open(config).use { realm ->
             val json: JsonObject = adminApi.insertDocument(
                 ObjectIdPk::class.simpleName!!,
@@ -427,7 +427,7 @@ class SyncSessionTests {
             val config = SyncConfiguration.Builder(
                 user,
                 partitionValue,
-                schema = PARTITION_SYNC_SCHEMA
+                schema = PARTITION_BASED_SCHEMA
             )
                 .build()
             Realm.open(config).use { realm ->
@@ -481,7 +481,7 @@ class SyncSessionTests {
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = app.createUserAndLogIn(email, password)
         val config1 = SyncConfiguration.Builder(
-            schema = FLX_SYNC_SCHEMA,
+            schema = FLEXIBLE_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).name("test1.realm").build()

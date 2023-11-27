@@ -136,14 +136,14 @@ class CinteropTest {
             classes[0].apply {
                 name = "foo".cstr.ptr
                 primary_key = "".cstr.ptr
-                num_properties = 1.toULong()
-                num_computed_properties = 0.toULong()
+                num_properties = 1UL
+                num_computed_properties = 0UL
                 flags = RLM_CLASS_NORMAL.toInt()
             }
 
             val classProperties: CPointer<CPointerVarOf<CPointer<realm_property_info_t>>> =
                 cValuesOf(prop_1_1.ptr).ptr
-            val realmSchemaNew = realm_schema_new(classes, 1.toULong(), classProperties)
+            val realmSchemaNew = realm_schema_new(classes, 1UL, classProperties)
 
             assertNoError()
             assertTrue(
@@ -157,7 +157,7 @@ class CinteropTest {
             realm_config_set_path(config, "c_api_test.realm")
             realm_config_set_schema(config, realmSchemaNew)
             realm_config_set_schema_mode(config, realm_schema_mode_e.RLM_SCHEMA_MODE_AUTOMATIC)
-            realm_config_set_schema_version(config, 1)
+            realm_config_set_schema_version(config, 1UL)
 
             val realm: CPointer<realm_t>? = realm_open(config)
             assertEquals(1U, realm_get_num_classes(realm))
