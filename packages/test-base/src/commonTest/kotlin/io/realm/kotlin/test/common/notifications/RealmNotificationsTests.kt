@@ -22,6 +22,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.InitialRealm
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
@@ -73,7 +74,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(0)
+            val c = Channel<RealmChange<Realm>>(1)
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -93,7 +94,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun asFlow() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(0)
+            val c = Channel<RealmChange<Realm>>(1)
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -122,18 +123,22 @@ class RealmNotificationsTests : FlowableTests {
 
     @Test
     override fun cancelAsFlow() = runBlocking<Unit> {
-        val c1 = Channel<RealmChange<Realm>>(0)
-        val c2 = Channel<RealmChange<Realm>>(0)
+        val c1 = Channel<RealmChange<Realm>>(1)
+        val c2 = Channel<RealmChange<Realm>>(1)
         val startingVersion = realm.version()
 
         val observer1 = async {
             realm.asFlow().collect {
+                @Suppress("invisible_member", "invisible_reference")
+                RealmLog.error("Received from realm1.asFlow(). Sending: $it")
                 c1.send(it)
             }
         }
         val observer2Cancelled = Mutex(false)
         val observer2 = async {
             realm.asFlow().collect {
+                @Suppress("invisible_member", "invisible_reference")
+                RealmLog.error("Received from realm2.asFlow(). Sending: $it")
                 if (!observer2Cancelled.isLocked) {
                     c2.send(it)
                 } else {
