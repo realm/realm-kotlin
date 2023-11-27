@@ -73,7 +73,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(1)
+            val c = Channel<RealmChange<Realm>>(0)
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -93,7 +93,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun asFlow() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(1)
+            val c = Channel<RealmChange<Realm>>(0)
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -122,8 +122,8 @@ class RealmNotificationsTests : FlowableTests {
 
     @Test
     override fun cancelAsFlow() = runBlocking<Unit> {
-        val c1 = Channel<RealmChange<Realm>>(1)
-        val c2 = Channel<RealmChange<Realm>>(1)
+        val c1 = Channel<RealmChange<Realm>>(0)
+        val c2 = Channel<RealmChange<Realm>>(0)
         val startingVersion = realm.version()
 
         val observer1 = async {
