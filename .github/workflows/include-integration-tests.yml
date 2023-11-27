@@ -117,10 +117,10 @@ jobs:
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: 33
           target: default
           # target: aosp_atd
-          arch: x86        
+          arch: x86_64       
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
@@ -139,10 +139,10 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 30 # Must be 30 to support aosp_atd
+          api-level: 33 # Must be 30 to support aosp_atd
           target: default
           # target: aosp_atd
-          arch: x86        
+          arch: x86_64        
           # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
@@ -236,31 +236,31 @@ jobs:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
-      - name: AVD cache
-        uses: actions/cache@v3
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: android-emulator-avd-33
+      # - name: AVD cache
+      #   uses: actions/cache@v3
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: android-emulator-avd-33
 
-      - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          target: default
-          # target: aosp_atd
-          arch: x86        
-          disk-size: 4096M
-          ram-size: 2048M
-          heap-size: 1024M
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
-          channel: canary
-          script: echo "Generated AVD snapshot for caching."
+      # - name: create AVD and generate snapshot for caching
+      #   if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 33
+      #     target: default
+      #     # target: aosp_atd
+      #     arch: x86_64        
+      #     disk-size: 4096M
+      #     ram-size: 2048M
+      #     heap-size: 1024M
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: true
+      #     channel: canary
+      #     script: echo "Generated AVD snapshot for caching."
 
       # TODO Can we read api level from Config.kt
       - name: Run Gradle Plugin Test project
@@ -271,10 +271,10 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 30 # Must be 30 to support aosp_atd
+          api-level: 33 # Must be 30 to support aosp_atd
           target: default
           # target: aosp_atd
-          arch: x86        
+          arch: x86_64        
           # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
@@ -314,31 +314,31 @@ jobs:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
-      - name: AVD cache
-        uses: actions/cache@v3
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: android-emulator-avd-33
+      # - name: AVD cache
+      #   uses: actions/cache@v3
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: android-emulator-avd-33
 
-      - name: create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 30
-          target: default
-          # target: aosp_atd
-          arch: x86        
-          disk-size: 4096M
-          ram-size: 2048M
-          heap-size: 1024M
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
-          channel: canary
-          script: echo "Generated AVD snapshot for caching."
+      # - name: create AVD and generate snapshot for caching
+      #   if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 30
+      #     target: default
+      #     # target: aosp_atd
+      #     arch: x86        
+      #     disk-size: 4096M
+      #     ram-size: 2048M
+      #     heap-size: 1024M
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: true
+      #     channel: canary
+      #     script: echo "Generated AVD snapshot for caching."
 
       # TODO Can we read api level from Config.kt
       - name: Run Gradle Plugin Test project
@@ -349,10 +349,10 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 30 # Must be 30 to support aosp_atd
+          api-level: 33 # Must be 30 to support aosp_atd
           target: default
           # target: aosp_atd
-          arch: x86        
+          arch: x86_64        
           # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
