@@ -171,7 +171,7 @@ class VersionTrackingTests {
 
         // Listening to object causes tracking of all versions even if not returned by the write
         val samples = mutableListOf<ResultsChange<Sample>>()
-        val channel = Channel<ResultsChange<Sample>>(1)
+        val channel = Channel<ResultsChange<Sample>>(0)
         val initialVersion = realm.version().version
         val writes = 5
         val objectListener = async {
@@ -222,7 +222,7 @@ class VersionTrackingTests {
             assertNotNull(realm.initialRealmReference.value, toString())
             assertEquals(1, realm.versionTracker.versions().size, toString())
 
-            val realmUpdates = Channel<Unit>(1)
+            val realmUpdates = Channel<Unit>(0)
 
             runBlocking {
                 val deferred = async {
