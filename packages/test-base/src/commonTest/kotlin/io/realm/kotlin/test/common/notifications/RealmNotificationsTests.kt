@@ -121,69 +121,67 @@ class RealmNotificationsTests : FlowableTests {
     }
 
     @Test
-    override fun cancelAsFlow() {
-        runBlocking {
-            val c1 = Channel<RealmChange<Realm>>(1)
-            val c2 = Channel<RealmChange<Realm>>(1)
-            val startingVersion = realm.version()
+    override fun cancelAsFlow() = runBlocking<Unit> {
+        val c1 = Channel<RealmChange<Realm>>(1)
+        val c2 = Channel<RealmChange<Realm>>(1)
+        val startingVersion = realm.version()
 
-            val observer1 = async {
-                realm.asFlow().collect {
-                    c1.send(it)
-                }
+        val observer1 = async {
+            realm.asFlow().collect {
+                c1.send(it)
             }
-            val observer2Cancelled = Mutex(false)
-            val observer2 = async {
-                realm.asFlow().collect {
-                    if (!observer2Cancelled.isLocked) {
-                        c2.send(it)
-                    } else {
-                        fail("Should not receive notifications on a canceled scope")
-                    }
-                }
-            }
-
-            // We should first receive an initial Realm notification.
-            c1.receiveOrFail().let { realmChange ->
-                assertIs<InitialRealm<Realm>>(realmChange)
-                assertEquals(startingVersion, realmChange.realm.version())
-            }
-
-            c2.receiveOrFail().let { realmChange ->
-                assertIs<InitialRealm<Realm>>(realmChange)
-                assertEquals(startingVersion, realmChange.realm.version())
-            }
-
-            realm.write { /* Do nothing */ }
-
-            // Now we we should receive an updated Realm change notification.
-            c1.receiveOrFail().let { realmChange ->
-                assertIs<UpdatedRealm<Realm>>(realmChange)
-                assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
-            }
-
-            c2.receiveOrFail().let { realmChange ->
-                assertIs<UpdatedRealm<Realm>>(realmChange)
-                assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
-            }
-
-            // Stop one observer and ensure that we dont receive any more notifications in that scope
-            observer2.cancel()
-            observer2Cancelled.lock()
-
-            realm.write { /* Do nothing */ }
-
-            // But unclosed channels should receive notifications
-            c1.receiveOrFail().let { realmChange ->
-                assertIs<UpdatedRealm<Realm>>(realmChange)
-                assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
-            }
-
-            realm.write { /* Do nothing */ }
-            observer1.cancel()
-            c1.close()
-            c2.close()
         }
+        val observer2Cancelled = Mutex(false)
+        val observer2 = async {
+            realm.asFlow().collect {
+                if (!observer2Cancelled.isLocked) {
+                    c2.send(it)
+                } else {
+                    fail("Should not receive notifications on a canceled scope")
+                }
+            }
+        }
+
+        // We should first receive an initial Realm notification.
+        c1.receiveOrFail(message = "Did not receive Initial event on Channel 1").let { realmChange ->
+            assertIs<InitialRealm<Realm>>(realmChange)
+            assertEquals(startingVersion, realmChange.realm.version())
+        }
+
+        c2.receiveOrFail(message = "Did not receive Initial event on Channel 2").let { realmChange ->
+            assertIs<InitialRealm<Realm>>(realmChange)
+            assertEquals(startingVersion, realmChange.realm.version())
+        }
+
+        realm.write { /* Do nothing */ }
+
+        // Now we we should receive an updated Realm change notification.
+        c1.receiveOrFail(message = "Did not receive Update event on Channel 1").let { realmChange ->
+            assertIs<UpdatedRealm<Realm>>(realmChange)
+            assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
+        }
+
+        c2.receiveOrFail(message = "Did not receive Update event on Channel 2").let { realmChange ->
+            assertIs<UpdatedRealm<Realm>>(realmChange)
+            assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
+        }
+
+        // Stop one observer and ensure that we dont receive any more notifications in that scope
+        observer2.cancel()
+        observer2Cancelled.lock()
+
+        realm.write { /* Do nothing */ }
+
+        // But unclosed channels should receive notifications
+        c1.receiveOrFail(message = "Did not receive 2nd Update event on Channel 1").let { realmChange ->
+            assertIs<UpdatedRealm<Realm>>(realmChange)
+            assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
+        }
+
+        realm.write { /* Do nothing */ }
+        observer1.cancel()
+        c1.close()
+        c2.close()
     }
 
     @Test

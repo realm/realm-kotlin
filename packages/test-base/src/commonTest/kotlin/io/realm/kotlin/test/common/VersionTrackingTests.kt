@@ -232,12 +232,12 @@ class VersionTrackingTests {
                 }
 
                 // Wait for the notifier to start
-                realmUpdates.receiveOrFail()
+                realmUpdates.receiveOrFail(message = "Initial event was not received")
 
                 realm.write { }
 
                 // Wait for the notifier to start
-                realmUpdates.receiveOrFail()
+                realmUpdates.receiveOrFail(message = "Update event was not received")
 
                 assertNull(realm.initialRealmReference.value, toString())
                 assertEquals(1, realm.versionTracker.versions().size, toString())

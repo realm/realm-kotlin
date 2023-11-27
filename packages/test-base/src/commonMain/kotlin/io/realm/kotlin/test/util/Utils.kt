@@ -99,7 +99,7 @@ suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, m
         this@receiveOrFail.onReceive { it }
         onTimeout(timeout) {
             @Suppress("invisible_member")
-            throw TimeoutCancellationException("Timeout: $message")
+            throw TimeoutCancellationException("Timeout after $timeout: ${if (message.isNullOrBlank()) "<no message>" else message}")
         }
     }
 }
