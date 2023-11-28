@@ -38,13 +38,16 @@ inline jboolean jni_check_exception(JNIEnv *jenv = get_env(), bool registrable_c
     // FIXME https://github.com/realm/realm-kotlin/issues/665 This function is catching and swallowing
     //  the exception. This behavior could leave the SDK in an illegal state.
     if (jenv->ExceptionCheck()) {
-        // Print the exception stacktrace in stderr.
-        jenv->ExceptionDescribe();
-        jthrowable exception = jenv->ExceptionOccurred();
-        jenv->ExceptionClear();
-        // setting the user code error is only propagated on certain callbacks.
-        if (registrable_callback_error)
+        if (registrable_callback_error) {
+            // setting the user code error is only propagated on certain callbacks.
+            jthrowable exception = jenv->ExceptionOccurred();
+            jenv->ExceptionClear();
             realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
+        } else {
+            // Print the exception stacktrace in stderr.
+            jenv->ExceptionDescribe();
+            jenv->ExceptionClear();
+        }
         return false;
     }
     return true;
