@@ -111,7 +111,7 @@ public interface AppConfiguration {
      *
      * Session multiplexing reduces resources used and typically improves
      * performance. When multiplexing is enabled, the connection is not immediately
-     * closed when the last session is closed, and instead remains open for
+     * closed when the last session is closed, but remains open for
      * [SyncTimeoutOptions.connectionLingerTime] defined in [syncTimeoutOptions].
      */
     public val enableSessionMultiplexing: Boolean
