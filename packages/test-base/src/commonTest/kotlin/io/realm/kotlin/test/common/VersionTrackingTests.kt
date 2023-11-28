@@ -33,7 +33,6 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.test.common.notifications.TestChannel
 import io.realm.kotlin.test.platform.PlatformUtils
-import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
