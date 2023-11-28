@@ -35,6 +35,7 @@ import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
+import io.realm.kotlin.mongodb.sync.SyncTimeoutOptions
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
@@ -56,6 +57,8 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val httpLogObfuscator: HttpLogObfuscator?,
     override val customRequestHeaders: Map<String, String>,
     override val authorizationHeaderName: String,
+    override val enableSessionMultiplexing: Boolean,
+    override val syncTimeoutOptions: SyncTimeoutOptions,
 ) : AppConfiguration {
 
     /**
@@ -154,9 +157,6 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                     syncRootDirectory
                 )
 
-                // Disable multiplexing. See https://github.com/realm/realm-core/issues/6656
-                RealmInterop.realm_sync_client_config_set_multiplex_sessions(syncClientConfig, false)
-
                 encryptionKey?.let {
                     RealmInterop.realm_sync_client_config_set_metadata_encryption_key(
                         syncClientConfig,
@@ -177,6 +177,31 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                         it
                     )
                 }
+
+                // Setup multiplexing
+                RealmInterop.realm_sync_client_config_set_multiplex_sessions(syncClientConfig, enableSessionMultiplexing)
+
+                // Setup SyncTimeoutOptions
+                RealmInterop.realm_sync_client_config_set_connect_timeout(
+                    syncClientConfig,
+                    syncTimeoutOptions.connectTimeout.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_connection_linger_time(
+                    syncClientConfig,
+                    syncTimeoutOptions.connectionLingerTime.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_ping_keepalive_period(
+                    syncClientConfig,
+                    syncTimeoutOptions.pingKeepalivePeriod.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_pong_keepalive_timeout(
+                    syncClientConfig,
+                    syncTimeoutOptions.pongKeepalivePeriod.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_fast_reconnect_limit(
+                    syncClientConfig,
+                    syncTimeoutOptions.fastReconnectLimit.inWholeMilliseconds.toULong()
+                )
             }
 
     internal companion object {
