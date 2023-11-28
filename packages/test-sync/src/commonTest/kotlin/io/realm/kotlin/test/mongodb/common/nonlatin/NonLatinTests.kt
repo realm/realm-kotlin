@@ -10,11 +10,11 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -69,7 +69,7 @@ class NonLatinTests {
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
 
-            val channel = Channel<ObjectIdPk>(1)
+            val channel = TestChannel<ObjectIdPk>()
             val job = async {
                 realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {

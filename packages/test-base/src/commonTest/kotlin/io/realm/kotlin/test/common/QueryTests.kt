@@ -45,6 +45,7 @@ import io.realm.kotlin.query.sum
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.ObjectId
@@ -342,7 +343,7 @@ class QueryTests {
 
     @Test
     fun asFlow_initialResults() {
-        val channel = Channel<ResultsChange<QuerySample>>(1)
+        val channel = TestChannel<ResultsChange<QuerySample>>()
 
         runBlocking {
             val observer = async {
@@ -366,7 +367,7 @@ class QueryTests {
 
     @Test
     fun asFlow() {
-        val channel = Channel<ResultsChange<QuerySample>>(1)
+        val channel = TestChannel<ResultsChange<QuerySample>>()
 
         runBlocking {
             val observer = async {
@@ -399,7 +400,7 @@ class QueryTests {
 
     @Test
     fun asFlow_deleteObservable() {
-        val channel = Channel<ResultsChange<QuerySample>>(1)
+        val channel = TestChannel<ResultsChange<QuerySample>>()
 
         runBlocking {
             realm.writeBlocking {
@@ -1003,7 +1004,7 @@ class QueryTests {
 
     @Test
     fun count_asFlow_initialValue() {
-        val channel = Channel<Long>(1)
+        val channel = TestChannel<Long>()
 
         runBlocking {
             val observer = async {
@@ -1025,7 +1026,7 @@ class QueryTests {
 
     @Test
     fun count_asFlow() {
-        val channel = Channel<Long>(1)
+        val channel = TestChannel<Long>()
 
         runBlocking {
             val observer = async {
@@ -1052,7 +1053,7 @@ class QueryTests {
 
     @Test
     fun count_asFlow_deleteObservable() {
-        val channel = Channel<Long>(1)
+        val channel = TestChannel<Long>()
 
         runBlocking {
             realm.write {
@@ -1085,8 +1086,8 @@ class QueryTests {
     @Test
     fun count_asFlow_cancel() {
         runBlocking {
-            val channel1 = Channel<Long?>(1)
-            val channel2 = Channel<Long?>(1)
+            val channel1 = TestChannel<Long?>()
+            val channel2 = TestChannel<Long?>()
 
             val observer1 = async {
                 realm.query<QuerySample>()
@@ -2315,7 +2316,7 @@ class QueryTests {
 
     @Test
     fun playground_multiThreadScenario() {
-        val channel = Channel<RealmResults<QuerySample>>(1)
+        val channel = TestChannel<RealmResults<QuerySample>>()
         var query: RealmQuery<QuerySample>? = null
         val scope = singleThreadDispatcher("1")
         val intValue = 666
@@ -2577,7 +2578,7 @@ class QueryTests {
         type: AggregatorQueryType,
         propertyDescriptor: PropertyDescriptor
     ) {
-        val channel = Channel<Any?>(1)
+        val channel = TestChannel<Any?>()
         val expectedAggregate = when (type) {
             AggregatorQueryType.MIN -> expectedMin(propertyDescriptor.clazz)
             AggregatorQueryType.MAX -> expectedMax(propertyDescriptor.clazz)
@@ -2727,7 +2728,7 @@ class QueryTests {
         type: AggregatorQueryType,
         propertyDescriptor: PropertyDescriptor
     ) {
-        val channel = Channel<Any?>(1)
+        val channel = TestChannel<Any?>()
         val expectedAggregate = when (type) {
             AggregatorQueryType.MIN -> expectedMin(propertyDescriptor.clazz)
             AggregatorQueryType.MAX -> expectedMax(propertyDescriptor.clazz)
@@ -2825,8 +2826,8 @@ class QueryTests {
         type: AggregatorQueryType,
         propertyDescriptor: PropertyDescriptor
     ) {
-        val channel1 = Channel<Any?>(1)
-        val channel2 = Channel<Any?>(1)
+        val channel1 = TestChannel<Any?>()
+        val channel2 = TestChannel<Any?>()
 
         runBlocking {
             // Subscribe to flow 1

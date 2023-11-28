@@ -36,12 +36,12 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
@@ -318,7 +318,7 @@ class SyncSessionTests {
         // See 'canWritePartition' in TestAppInitializer.kt.
         val (email, password) = "test_nowrite_noread_${TestHelper.randomEmail()}" to "password1234"
         val user = app.createUserAndLogIn(email, password)
-        val channel = Channel<SyncSession>(1)
+        val channel = TestChannel<SyncSession>()
         val config = SyncConfiguration.Builder(
             schema = PARTITION_BASED_SCHEMA,
             user = user,
@@ -396,7 +396,7 @@ class SyncSessionTests {
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
 
-            val channel = Channel<ObjectIdPk>(1)
+            val channel = TestChannel<ObjectIdPk>()
             val job = async {
                 realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {
@@ -477,7 +477,7 @@ class SyncSessionTests {
     @Test
     fun getConfiguration_inErrorHandlerThrows() = runBlocking {
         // Open and close a realm with a schema.
-        val channel = Channel<SyncSession>(1)
+        val channel = TestChannel<SyncSession>()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = app.createUserAndLogIn(email, password)
         val config1 = SyncConfiguration.Builder(

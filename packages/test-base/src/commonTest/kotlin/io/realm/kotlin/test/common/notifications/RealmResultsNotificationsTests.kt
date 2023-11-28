@@ -34,6 +34,7 @@ import io.realm.kotlin.test.common.OBJECT_VALUES3
 import io.realm.kotlin.test.common.utils.FlowableTests
 import io.realm.kotlin.test.common.utils.assertIsChangeSet
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -75,7 +76,7 @@ class RealmResultsNotificationsTests : FlowableTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<ResultsChange<Sample>>(1)
+            val c = TestChannel<ResultsChange<Sample>>()
             val observer = async {
                 realm.query<Sample>()
                     .asFlow()
@@ -274,8 +275,8 @@ class RealmResultsNotificationsTests : FlowableTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            val c1 = Channel<ResultsChange<Sample>>(1)
-            val c2 = Channel<ResultsChange<Sample>>(1)
+            val c1 = TestChannel<ResultsChange<Sample>>()
+            val c2 = TestChannel<ResultsChange<Sample>>()
 
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })

@@ -49,6 +49,7 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeFlexibleSync
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializePartitionSync
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
@@ -934,7 +935,7 @@ class SyncClientResetIntegrationTests {
     private fun manuallyRecoverUnsyncedChanges_reported(
         builder: SyncConfiguration.Builder
     ) {
-        val channel = Channel<ClientResetRequiredException>(1)
+        val channel = TestChannel<ClientResetRequiredException>()
 
         val config = builder.syncClientResetStrategy(
             object : ManuallyRecoverUnsyncedChangesStrategy {
@@ -989,7 +990,7 @@ class SyncClientResetIntegrationTests {
         user: User,
         builder: SyncConfiguration.Builder
     ) {
-        val channel = Channel<ClientResetRequiredException>(1)
+        val channel = TestChannel<ClientResetRequiredException>()
 
         val config = builder.syncClientResetStrategy(
             object : ManuallyRecoverUnsyncedChangesStrategy {
@@ -1100,7 +1101,7 @@ class SyncClientResetIntegrationTests {
     private fun recoverUnsyncedChanges_resetErrorHandled(
         builder: SyncConfiguration.Builder
     ) {
-        val channel = Channel<ClientResetRequiredException>(1)
+        val channel = TestChannel<ClientResetRequiredException>()
         val config = builder.syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onBeforeReset()")

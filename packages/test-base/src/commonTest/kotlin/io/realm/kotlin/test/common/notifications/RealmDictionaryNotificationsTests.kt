@@ -28,6 +28,7 @@ import io.realm.kotlin.test.common.DICTIONARY_KEYS_FOR_NULLABLE
 import io.realm.kotlin.test.common.NULLABLE_DICTIONARY_OBJECT_VALUES
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -347,8 +348,8 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             val container = realm.write {
                 copyToRealm(RealmDictionaryContainer())
             }
-            val channel1 = Channel<MapChange<String, *>>(1)
-            val channel2 = Channel<MapChange<String, *>>(1)
+            val channel1 = TestChannel<MapChange<String, *>>()
+            val channel2 = TestChannel<MapChange<String, *>>()
             val observer1 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()

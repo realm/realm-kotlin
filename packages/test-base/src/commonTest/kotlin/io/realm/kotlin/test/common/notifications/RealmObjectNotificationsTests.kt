@@ -26,10 +26,10 @@ import io.realm.kotlin.notifications.ObjectChange
 import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.update
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.single
@@ -75,7 +75,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<ObjectChange<Sample>>(1)
+            val c = TestChannel<ObjectChange<Sample>>()
             val obj = realm.write {
                 copyToRealm(
                     Sample().apply { stringField = "Foo" }
@@ -100,7 +100,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun asFlow() {
         runBlocking {
-            val c = Channel<ObjectChange<Sample>>(1)
+            val c = TestChannel<ObjectChange<Sample>>()
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
@@ -154,8 +154,8 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
-            val c1 = Channel<ObjectChange<Sample>>(1)
-            val c2 = Channel<ObjectChange<Sample>>(1)
+            val c1 = TestChannel<ObjectChange<Sample>>()
+            val c2 = TestChannel<ObjectChange<Sample>>()
             val observer1 = async {
                 obj.asFlow().collect {
                     c1.trySend(it)
@@ -206,8 +206,8 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun deleteEntity() {
         runBlocking {
-            val c1 = Channel<ObjectChange<Sample>>(1)
-            val c2 = Channel<Unit>(1)
+            val c1 = TestChannel<ObjectChange<Sample>>()
+            val c2 = TestChannel<Unit>()
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }
@@ -282,7 +282,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun closingRealmDoesNotCancelFlows() {
         runBlocking {
-            val c = Channel<ObjectChange<Sample>>(1)
+            val c = TestChannel<ObjectChange<Sample>>()
             val obj: Sample = realm.write {
                 copyToRealm(Sample().apply { stringField = "Foo" })
             }

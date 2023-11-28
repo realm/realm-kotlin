@@ -32,10 +32,10 @@ import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
@@ -171,7 +171,7 @@ class VersionTrackingTests {
 
         // Listening to object causes tracking of all versions even if not returned by the write
         val samples = mutableListOf<ResultsChange<Sample>>()
-        val channel = Channel<ResultsChange<Sample>>(1)
+        val channel = TestChannel<ResultsChange<Sample>>()
         val initialVersion = realm.version().version
         val writes = 5
         val objectListener = async {
@@ -222,7 +222,7 @@ class VersionTrackingTests {
             assertNotNull(realm.initialRealmReference.value, toString())
             assertEquals(1, realm.versionTracker.versions().size, toString())
 
-            val realmUpdates = Channel<Unit>(1)
+            val realmUpdates = TestChannel<Unit>()
 
             runBlocking {
                 val deferred = async {

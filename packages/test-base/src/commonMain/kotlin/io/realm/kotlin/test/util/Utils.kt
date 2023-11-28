@@ -22,9 +22,9 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.selects.onTimeout
-import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -93,13 +93,28 @@ fun Instant.toRealmInstant(): RealmInstant {
     }
 }
 
+/**
+ * Channel implementation specifically suited for tests. Its size is unlimited, but will fail
+ * the test if canceled while still containing unconsumed elements.
+ */
+inline fun <T> TestChannel(): Channel<T> {
+    return Channel<T>(capacity = Channel.UNLIMITED, onBufferOverflow = BufferOverflow.SUSPEND) {
+        throw AssertionError("Failed to deliver: $it")
+    }
+}
+
 // Variant of `Channel.receiveOrFail()` that will will throw if a timeout is hit.
 suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, message: String? = null): T {
-    return select {
-        this@receiveOrFail.onReceive { it }
-        onTimeout(timeout) {
-            @Suppress("invisible_member")
-            throw TimeoutCancellationException("Timeout: $message")
+    try {
+        return withTimeout(timeout) {
+            // Note, using `select` with `onReceive` seems to cause some tests to hang for unknown
+            // reasons. Right now the hypothesis is that because `onReceive` does not consume the
+            // elements, it is causing some kind of race condition we have not been able to
+            // find. For previous iterations of this method, see the Git history.
+            this@receiveOrFail.receive()
         }
+    } catch (ex: TimeoutCancellationException) {
+        @Suppress("invisible_reference", "invisible_member")
+        throw TimeoutCancellationException("Timeout after $timeout: ${if (message.isNullOrBlank()) "<no message>" else message}")
     }
 }

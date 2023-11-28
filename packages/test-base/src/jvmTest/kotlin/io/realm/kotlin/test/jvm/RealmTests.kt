@@ -22,11 +22,11 @@ import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -109,7 +109,7 @@ class RealmTests {
             Realm.open(configuration).close()
             // ClosableCoroutineDispatcher doesn't expose whether or not it has been closed, so test
             // if it has been closed by running work on it.
-            val channel = Channel<Int>(1)
+            val channel = TestChannel<Int>()
             async(notificationDispatcher) {
                 channel.send(1)
             }

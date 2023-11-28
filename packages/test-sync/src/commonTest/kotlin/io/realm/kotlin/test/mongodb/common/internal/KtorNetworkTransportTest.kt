@@ -30,9 +30,9 @@ import io.realm.kotlin.test.mongodb.util.BaasApp
 import io.realm.kotlin.test.mongodb.util.KtorTestAppInitializer.initialize
 import io.realm.kotlin.test.mongodb.util.Service
 import io.realm.kotlin.test.mongodb.util.TEST_METHODS
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CloseableCoroutineDispatcher
-import kotlinx.coroutines.channels.Channel
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -86,7 +86,7 @@ internal class KtorNetworkTransportTest {
         val url = "$endpoint?success=true"
         for (method in TEST_METHODS) {
             val body = if (emptyBodyMethods.contains(method)) "" else "{ \"body\" : \"some content\" }"
-            val response = Channel<Response>(1).use { channel ->
+            val response = TestChannel<Response>().use { channel ->
                 transport.sendRequest(
                     method.value.lowercase(),
                     url,
@@ -107,7 +107,7 @@ internal class KtorNetworkTransportTest {
         for (method in TEST_METHODS) {
             val body = if (emptyBodyMethods.contains(method)) "" else "{ \"body\" : \"some content\" }"
 
-            val response = Channel<Response>(1).use { channel ->
+            val response = TestChannel<Response>().use { channel ->
                 transport.sendRequest(
                     method.value.lowercase(),
                     url,
@@ -131,7 +131,7 @@ internal class KtorNetworkTransportTest {
         for (method in TEST_METHODS) {
             val body = if (emptyBodyMethods.contains(method)) "" else "Boom!"
 
-            val response = Channel<Response>(1).use { channel ->
+            val response = TestChannel<Response>().use { channel ->
                 transport.sendRequest(
                     method.value.lowercase(),
                     url,
