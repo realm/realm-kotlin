@@ -110,7 +110,8 @@ suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, m
             this@receiveOrFail.receive()
         }
     } catch (ex: TimeoutCancellationException) {
-        throw AssertionError("Timeout after $timeout: ${if (message.isNullOrBlank()) "<no message>" else message}")
+        @Suppress("invisible_reference", "invisible_member")
+        throw TimeoutCancellationException("Timeout after $timeout: ${if (message.isNullOrBlank()) "<no message>" else message}")
     }
 //    return select {
 //        this@receiveOrFail.onReceive {
