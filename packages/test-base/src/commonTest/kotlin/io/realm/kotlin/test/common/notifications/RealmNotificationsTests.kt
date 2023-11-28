@@ -130,6 +130,7 @@ class RealmNotificationsTests : FlowableTests {
             realm.asFlow().collect {
                 println("Received from realm1.asFlow(). Sending: $it")
                 c1.send(it)
+                println("Sent message from realm1.asFlow(): $it")
             }
         }
         val observer2Cancelled = Mutex(false)
@@ -138,6 +139,7 @@ class RealmNotificationsTests : FlowableTests {
                 println("Received from realm2.asFlow(). Sending: $it")
                 if (!observer2Cancelled.isLocked) {
                     c2.send(it)
+                    println("Sent message from realm2.asFlow(): $it")
                 } else {
                     fail("Should not receive notifications on a canceled scope")
                 }
@@ -148,39 +150,46 @@ class RealmNotificationsTests : FlowableTests {
         c1.receiveOrFail(message = "Did not receive Initial event on Channel 1").let { realmChange ->
             assertIs<InitialRealm<Realm>>(realmChange)
             assertEquals(startingVersion, realmChange.realm.version())
+            assertEquals(0, realmChange.realm.query(Sample::class).count().find(), "Realm already contained data?!?")
         }
 
         c2.receiveOrFail(message = "Did not receive Initial event on Channel 2").let { realmChange ->
             assertIs<InitialRealm<Realm>>(realmChange)
             assertEquals(startingVersion, realmChange.realm.version())
+            assertEquals(0, realmChange.realm.query(Sample::class).count().find(), "Realm already contained data?!?")
         }
 
-        realm.write { /* Do nothing */ }
+        realm.write {
+            copyToRealm(Sample())
+        }
 
         // Now we we should receive an updated Realm change notification.
         c1.receiveOrFail(message = "Did not receive Update event on Channel 1").let { realmChange ->
             assertIs<UpdatedRealm<Realm>>(realmChange)
             assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
+            assertEquals(1, realmChange.realm.query(Sample::class).count().find(), "Unexpected size of Realm?!?")
         }
 
         c2.receiveOrFail(message = "Did not receive Update event on Channel 2").let { realmChange ->
             assertIs<UpdatedRealm<Realm>>(realmChange)
             assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
+            assertEquals(1, realmChange.realm.query(Sample::class).count().find(), "Unexpected size of Realm?!?")
         }
 
         // Stop one observer and ensure that we dont receive any more notifications in that scope
         observer2.cancel()
         observer2Cancelled.lock()
 
-        realm.write { /* Do nothing */ }
+        realm.write {
+            copyToRealm(Sample())
+        }
 
         // But unclosed channels should receive notifications
         c1.receiveOrFail(message = "Did not receive 2nd Update event on Channel 1").let { realmChange ->
             assertIs<UpdatedRealm<Realm>>(realmChange)
             assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
+            assertEquals(2, realmChange.realm.query(Sample::class).count().find(), "Unexpected size of Realm?!?")
         }
-
-        realm.write { /* Do nothing */ }
         observer1.cancel()
         c1.close()
         c2.close()
