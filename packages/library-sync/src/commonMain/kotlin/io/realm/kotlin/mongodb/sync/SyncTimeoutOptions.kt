@@ -40,7 +40,7 @@ public data class SyncTimeoutOptions(
      * How long to wait between each ping message sent to the server. The client periodically
      * sends ping messages to the server to check if the connection is still alive. Shorter
      * periods make connection state change notifications more responsive at the cost of
-     * battery life (as the antenna will have to wake up more often).
+     * more trafic.
      */
     val pingKeepalivePeriod: Duration,
 
@@ -54,7 +54,7 @@ public data class SyncTimeoutOptions(
     /**
      * When a client first connects to the server, it downloads all data from the server
      * before it begins to upload local changes. This typically reduces the total amount
-     * of merging needed and  gets the local client into a useful state faster. If a
+     * of merging needed and gets the local client into a useful state faster. If a
      * disconnect and reconnect happens within the time span of the fast reconnect limit,
      * this is skipped and the session behaves as if it were continuously
      * connected.

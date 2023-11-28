@@ -347,13 +347,13 @@ public interface AppConfiguration {
         }
 
         /**
-         * If enabled (the default), a single connection is used for all Realms opened
+         * If enabled, a single connection is used for all Realms opened
          * with a single sync user. If disabled, a separate connection is used for each
          * Realm.
          *
          * Session multiplexing reduces resources used and typically improves
          * performance. When multiplexing is enabled, the connection is not immediately
-         * closed when the last session is closed, and instead remains open for
+         * closed when the last session is closed, but remains open for
          * [SyncTimeoutOptions.connectionLingerTime] as defined by [syncTimeouts] (30 seconds by
          * default).
          */

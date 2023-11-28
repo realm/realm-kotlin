@@ -32,7 +32,7 @@ public class SyncTimeoutOptionsBuilder {
      * the time to resolve the network address, the TCP connect operation, the SSL
      * handshake, and the WebSocket handshake.
      *
-     * Only values >= 1 second is allowed. Default is 2 minutes.
+     * Only values >= 1 second are allowed. Default is 2 minutes.
      *
      * @throws IllegalArgumentException if the duration is outside the allowed range.
      */
