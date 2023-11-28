@@ -28,11 +28,11 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.test.common.utils.FlowableTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.sync.Mutex
@@ -47,12 +47,6 @@ import kotlin.test.assertIs
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-
-inline fun <T> TestChannel(): Channel<T> {
-    return Channel<T>(capacity = Channel.UNLIMITED, onBufferOverflow = BufferOverflow.SUSPEND) {
-        fail("Failed to deliver: $it")
-    }
-}
 
 class RealmNotificationsTests : FlowableTests {
 
