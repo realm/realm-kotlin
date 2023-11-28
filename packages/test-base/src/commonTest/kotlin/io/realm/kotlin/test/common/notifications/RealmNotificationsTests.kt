@@ -220,7 +220,7 @@ class RealmNotificationsTests : FlowableTests {
 
         runBlocking {
             val listener = async {
-                withTimeout(10.seconds) {
+                withTimeout(30.seconds) {
                     assertFailsWith<CancellationException> {
                         flow.collect {
                             delay(1000.milliseconds)

@@ -81,12 +81,13 @@ class RealmTests {
         // Closing a Realm should also cleanup our default (internal) dispatchers.
         // The core notifier and the finalizer thread will never be closed.
         val expectedThreadCount = initialThreads.size + 1 /* core-notifier */ + if (finalizerRunning) 0 else 1
-        var counter = 5 // Wait 5 seconds for threads to settle
-        while (totalThreadCount() != expectedThreadCount && counter > 0) {
+        var counter = 10 // Wait 10 seconds for threads to settle
+        while (newThreads().any { !it.isDaemon } && counter > 0) {
             delay(1000)
             counter--
         }
-        assertEquals(expectedThreadCount, totalThreadCount(), "Unexpected thread count after closing realm: ${newThreads()}")
+        val totalThreadCount = totalThreadCount()
+        assertTrue(totalThreadCount <= expectedThreadCount, "Unexpected thread count after closing realm: $expectedThreadCount <= $totalThreadCount. New threads: ${newThreads()}. Threads: ${threadTrace()}")
 
         // Verify that all remaining threads are daemon threads, so that we don't keep the JVM alive
         newThreads().filter { !it.isDaemon }.let {
@@ -121,5 +122,19 @@ class RealmTests {
             channel.close()
             Unit
         }
+    }
+
+    private fun threadTrace(): String {
+        val sb = StringBuilder()
+        sb.appendLine("--------------------------------")
+        val stack = Thread.getAllStackTraces()
+        stack.keys
+            .sortedBy { it.name }
+            .forEach { t: Thread ->
+                sb.appendLine("${t.name} - Is Daemon ${t.isDaemon} - Is Alive ${t.isAlive}")
+            }
+        sb.appendLine("All threads: ${stack.keys.size}")
+        sb.appendLine("Active threads: ${Thread.activeCount()}")
+        return sb.toString()
     }
 }

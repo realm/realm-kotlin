@@ -300,32 +300,30 @@ public interface Configuration {
         } as S
 
         /**
-         * Dispatcher used to run background writes to the Realm.
+         * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
+         * Realm objects from any thread, but the underlying logic will run on this dispatcher
+         * before any changes are returned to the receiving context.
          *
          * Defaults to a single threaded dispatcher started when the configuration is built.
          *
          * NOTE On Android the dispatcher's thread must have an initialized
          * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
          *
-         * @param dispatcher dispatcher on which writes are run. It is required to be backed by a
-         * single thread only.
+         * @param dispatcher dispatcher on which notifications are run. It is required to be backed
+         * by a single thread only.
          */
         internal fun notificationDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.notificationDispatcher = dispatcher
         } as S
 
         /**
-         * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
-         * Realm objects from any thread, but the underlying logic will run on this dispatcher
-         * before any changes are returned to the caller thread.
-         *
-         * Defaults to a single threaded dispatcher started when the configuration is built.
+         * Dispatcher used to run background writes to the Realm.         *
          *
          * NOTE On Android the dispatcher's thread must have an initialized
          * [Looper](https://developer.android.com/reference/android/os/Looper#prepare()).
          *
-         * @param dispatcher Dispatcher on which notifications are run. It is required to be backed
-         * by a single thread only.
+         * @param dispatcher dispatcher on which writes are run. It is required to be backed by a
+         * single thread only.
          */
         internal fun writeDispatcher(dispatcher: CoroutineDispatcher) = apply {
             this.writeDispatcher = dispatcher
