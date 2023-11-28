@@ -105,7 +105,7 @@ public interface AppConfiguration {
     public val httpLogObfuscator: HttpLogObfuscator?
 
     /**
-     * If enabled (the default), a single connection is used for all Realms opened
+     * If enabled, a single connection is used for all Realms opened
      * with a single sync user. If disabled, a separate connection is used for each
      * Realm.
      *

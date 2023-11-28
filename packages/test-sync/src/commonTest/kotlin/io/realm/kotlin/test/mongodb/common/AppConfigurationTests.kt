@@ -499,9 +499,9 @@ class AppConfigurationTests {
     @Test
     fun multiplexing() {
         val config = AppConfiguration.Builder("foo")
-            .enableSessionMultiplexing(false)
+            .enableSessionMultiplexing(true)
             .build()
-        assertFalse(config.enableSessionMultiplexing)
+        assertTrue(config.enableSessionMultiplexing)
     }
 
     @Test

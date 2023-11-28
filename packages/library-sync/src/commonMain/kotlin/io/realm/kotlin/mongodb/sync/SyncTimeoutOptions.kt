@@ -20,6 +20,8 @@ import kotlin.time.Duration
 /**
  * The configured timeouts for various aspects of the sync connection between synchronized realms
  * and App Services.
+ *
+ * @see [io.realm.kotlin.mongodb.AppConfiguration.Builder.syncTimeouts]
  */
 public data class SyncTimeoutOptions(
 
