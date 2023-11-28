@@ -25,6 +25,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -95,6 +96,9 @@ fun Instant.toRealmInstant(): RealmInstant {
 
 // Variant of `Channel.receiveOrFail()` that will will throw if a timeout is hit.
 suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, message: String? = null): T {
+//    return withTimeout(timeout) {
+//        this@receiveOrFail.receive()
+//    }
     return select {
         this@receiveOrFail.onReceive {
             println("Got: $it")

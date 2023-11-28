@@ -48,6 +48,12 @@ import kotlin.test.fail
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+inline fun <T> TestChannel(): Channel<T> {
+    return Channel<T>(capacity = Channel.UNLIMITED, onBufferOverflow = BufferOverflow.SUSPEND) {
+        fail("Failed to deliver: $it")
+    }
+}
+
 class RealmNotificationsTests : FlowableTests {
 
     lateinit var tmpDir: String
@@ -74,7 +80,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(1)
+            val c = TestChannel<RealmChange<Realm>>()
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -94,7 +100,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun asFlow() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(1)
+            val c = TestChannel<RealmChange<Realm>>()
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -123,8 +129,8 @@ class RealmNotificationsTests : FlowableTests {
 
     @Test
     override fun cancelAsFlow() = runBlocking<Unit> {
-        val c1 = Channel<RealmChange<Realm>>(1)
-        val c2 = Channel<RealmChange<Realm>>(1)
+        val c1 = TestChannel<RealmChange<Realm>>()
+        val c2 = TestChannel<RealmChange<Realm>>()
         val startingVersion = realm.version()
 
         val observer1 = async {
