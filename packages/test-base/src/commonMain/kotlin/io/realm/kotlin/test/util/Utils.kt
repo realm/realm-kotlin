@@ -96,7 +96,10 @@ fun Instant.toRealmInstant(): RealmInstant {
 // Variant of `Channel.receiveOrFail()` that will will throw if a timeout is hit.
 suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, message: String? = null): T {
     return select {
-        this@receiveOrFail.onReceive { it }
+        this@receiveOrFail.onReceive {
+            println("Got: $it")
+            it
+        }
         onTimeout(timeout) {
             @Suppress("invisible_member")
             throw TimeoutCancellationException("Timeout after $timeout: ${if (message.isNullOrBlank()) "<no message>" else message}")

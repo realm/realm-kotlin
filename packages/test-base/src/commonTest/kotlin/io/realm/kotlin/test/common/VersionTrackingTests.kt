@@ -229,7 +229,7 @@ class VersionTrackingTests {
                     realm.asFlow().collect {
                         @Suppress("invisible_member", "invisible_reference")
                         RealmLog.error("Received from realm.asFlow(). Sending: $it")
-                        realmUpdates.trySend(Unit)
+                        realmUpdates.send(Unit)
                     }
                 }
 
