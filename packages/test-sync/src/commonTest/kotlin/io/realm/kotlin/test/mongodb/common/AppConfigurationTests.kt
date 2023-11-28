@@ -493,7 +493,7 @@ class AppConfigurationTests {
     @Test
     fun multiplexing_default() {
         val config = AppConfiguration.Builder("foo").build()
-        assertTrue(config.enableSessionMultiplexing)
+        assertFalse(config.enableSessionMultiplexing)
     }
 
     @Test

@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.mongodb.sync
 
+import io.realm.kotlin.internal.util.Validation
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
@@ -38,9 +39,7 @@ public class SyncTimeoutOptionsBuilder {
      */
     public var connectTimeout: Duration = 2.minutes
         set(value) {
-            if (value < 1.seconds) {
-                throw IllegalArgumentException("connectTimeout only support durations >= 1 second. This was: $value")
-            }
+            Validation.require(value >= 1.seconds) { "connectTimeout only support durations >= 1 second. This was: $value" }
             field = value
         }
 
@@ -55,9 +54,7 @@ public class SyncTimeoutOptionsBuilder {
      */
     public var connectionLingerTime: Duration = 30.seconds
         set(value) {
-            if (value <= 0.milliseconds) {
-                throw IllegalArgumentException("connectionLingerTime must be a positive duration > 0. This was: $value")
-            }
+            Validation.require(value > 0.milliseconds) { "connectionLingerTime must be a positive duration > 0. This was: $value" }
             field = value
         }
 
@@ -73,9 +70,7 @@ public class SyncTimeoutOptionsBuilder {
      */
     public var pingKeepalivePeriod: Duration = 1.minutes
         set(value) {
-            if (value <= 5.seconds) {
-                throw IllegalArgumentException("pingKeepalivePeriod must be a positive duration > 5 seconds. This was: $value")
-            }
+            Validation.require(value > 5.seconds) { "pingKeepalivePeriod must be a positive duration > 5 seconds. This was: $value" }
             field = value
         }
 
@@ -90,9 +85,7 @@ public class SyncTimeoutOptionsBuilder {
      */
     public var pongKeepalivePeriod: Duration = 2.minutes
         set(value) {
-            if (value <= 5.seconds) {
-                throw IllegalArgumentException("pongKeepalivePeriod must be a positive duration > 5 seconds. This was: $value")
-            }
+            Validation.require(value > 5.seconds) { "pongKeepalivePeriod must be a positive duration > 5 seconds. This was: $value" }
             field = value
         }
 
@@ -110,9 +103,7 @@ public class SyncTimeoutOptionsBuilder {
      */
     public var fastReconnectLimit: Duration = 1.minutes
         set(value) {
-            if (value <= 1.seconds) {
-                throw IllegalArgumentException("fastReconnectLimit must be a positive duration > 1 second. This was: $value")
-            }
+            Validation.require(value > 1.seconds) { "fastReconnectLimit must be a positive duration > 1 second. This was: $value" }
             field = value
         }
 

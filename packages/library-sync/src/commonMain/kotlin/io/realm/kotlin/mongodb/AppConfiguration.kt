@@ -168,7 +168,7 @@ public interface AppConfiguration {
         private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
         private val customRequestHeaders = mutableMapOf<String, String>()
         private var authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME
-        private var enableSessionMultiplexing: Boolean = true
+        private var enableSessionMultiplexing: Boolean = false
         private var syncTimeoutOptions: SyncTimeoutOptions = SyncTimeoutOptionsBuilder().build()
 
         /**
