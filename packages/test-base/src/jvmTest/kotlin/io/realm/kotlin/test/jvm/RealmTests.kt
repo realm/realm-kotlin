@@ -81,7 +81,7 @@ class RealmTests {
         // Closing a Realm should also cleanup our default (internal) dispatchers.
         // The core notifier and the finalizer thread will never be closed.
         val expectedThreadCount = initialThreads.size + 1 /* core-notifier */ + if (finalizerRunning) 0 else 1
-        var counter = 10 // Wait 5 seconds for threads to settle
+        var counter = 10 // Wait 10 seconds for threads to settle
         while (newThreads().any { !it.isDaemon } && counter > 0) {
             delay(1000)
             counter--

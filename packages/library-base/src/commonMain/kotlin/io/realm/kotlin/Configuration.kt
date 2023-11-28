@@ -302,7 +302,7 @@ public interface Configuration {
         /**
          * Dispatcher on which Realm notifications are run. It is possible to listen for changes to
          * Realm objects from any thread, but the underlying logic will run on this dispatcher
-         * before any changes are returned to the caller thread.
+         * before any changes are returned to the receiving context.
          *
          * Defaults to a single threaded dispatcher started when the configuration is built.
          *
