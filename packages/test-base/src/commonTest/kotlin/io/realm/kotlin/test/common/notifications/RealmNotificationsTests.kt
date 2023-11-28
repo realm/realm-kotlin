@@ -22,7 +22,6 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.asFlow
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.notifications.InitialRealm
 import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
@@ -129,16 +128,14 @@ class RealmNotificationsTests : FlowableTests {
 
         val observer1 = async {
             realm.asFlow().collect {
-                @Suppress("invisible_member", "invisible_reference")
-                RealmLog.error("Received from realm1.asFlow(). Sending: $it")
+                println("Received from realm1.asFlow(). Sending: $it")
                 c1.send(it)
             }
         }
         val observer2Cancelled = Mutex(false)
         val observer2 = async {
             realm.asFlow().collect {
-                @Suppress("invisible_member", "invisible_reference")
-                RealmLog.error("Received from realm2.asFlow(). Sending: $it")
+                println("Received from realm2.asFlow(). Sending: $it")
                 if (!observer2Cancelled.isLocked) {
                     c2.send(it)
                 } else {
