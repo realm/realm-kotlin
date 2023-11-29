@@ -121,7 +121,7 @@ class RealmNotificationsTests : FlowableTests {
         }
     }
 
-    // Test 3
+    // Test 4
     @Test
     override fun cancelAsFlow() = runBlocking<Unit> {
         val c1 = TestChannel<RealmChange<Realm>>()
