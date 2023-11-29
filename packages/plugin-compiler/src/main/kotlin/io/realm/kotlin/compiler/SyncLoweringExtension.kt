@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetObjectValueImpl
-import org.jetbrains.kotlin.ir.interpreter.toIrConstOrNull
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.companionObject
@@ -147,10 +147,11 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
                     }
                     putValueArgument(
                         expression.valueArgumentsCount,
-                        bundleId.toIrConstOrNull(
+                        IrConstImpl.string(
+                            startOffset,
+                            endOffset,
                             pluginContext.irBuiltIns.stringType,
-                            expression.startOffset,
-                            expression.endOffset,
+                            bundleId
                         )
                     )
                 }

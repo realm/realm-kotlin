@@ -60,7 +60,7 @@ class EmbeddedRealmObjectTests {
 
     @AfterTest
     fun tearDown() {
-        if (this::realm.isInitialized && !realm.isClosed()) {
+        if (this::realm.isInitialized) {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)

@@ -5,9 +5,15 @@
 
 ### Enhancements
 * Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
+* [Sync] Added support for multiplexing sync connections. When enabled, a single
+  connection is used per sync user rather than one per synchronized Realm. This
+  reduces resource consumption when multiple Realms are opened and will
+  typically improve performance. The behavior can be controlled through [AppConfiguration.Builder.enableSessionMultiplexing]. It will be made the default
+  in a future release. (Issue [#1578](https://github.com/realm/realm-kotlin/pull/1578))  
+* [Sync] Various sync timeout options can now be configured through `AppConfiguration.Builder.syncTimeouts()`. (Issue [#971](https://github.com/realm/realm-kotlin/issues/971)).
 
 ### Fixed
-* None.
+* Fix compiler crash caused by a change in Kotlin 1.9.20 ((toIrConst moved under common IrUtils)[https://github.com/JetBrains/kotlin/commit/ca8db7d0b83f6dfd6afcea7a5fe7556d38f325d8]). (Issue [#1566](https://github.com/realm/realm-kotlin/issues/1566))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -37,7 +43,7 @@
 * None.
 
 ### Fixed
-* Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
+* Fix crashes caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
