@@ -36,6 +36,7 @@ import io.realm.kotlin.internal.interop.SyncErrorCallback
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.platform.fileExists
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
@@ -52,8 +53,11 @@ import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.BsonValue
@@ -194,10 +198,33 @@ internal class SyncConfigurationImpl(
             SyncErrorCallback { pointer: RealmSyncSessionPointer, error: SyncError ->
                 val session = SyncSessionImpl(pointer)
                 val syncError = convertSyncError(error)
-
-                // Notify before/after callbacks too if error is client reset
                 if (error.isClientResetRequested) {
-                    initializerHelper.onSyncError(session, frozenAppPointer, error)
+                    // If a Client Reset happened, we only get here if `onManualResetFallback` needs
+                    // to be called. This means there is a high likelihood that users will want to
+                    // call ClientResetRequiredException.executeClientReset() inside the callback.
+                    //
+                    // In order to do that, they will need to close the Realm first.
+                    //
+                    // On POSIX this will work fine, but on Windows this will fail as the
+                    // C++ session still holds a DBPointer preventing the release of the file during
+                    // the callback.
+                    //
+                    // So, in order to prevent errors on Windows, we are running the Kotlin callback
+                    // on a separate worker thread. This will allow Core to finish its callback so
+                    // when we close the Realm from the worker thread, the underlying
+                    // session can also be fully freed.
+                    //
+                    // Given that we do not make any promises regarding which thread the callback
+                    // is running on. This should be fine.
+                    @OptIn(DelicateCoroutinesApi::class)
+                    try {
+                        GlobalScope.launch {
+                            initializerHelper.onSyncError(session, frozenAppPointer, error)
+                        }
+                    } catch (ex: Exception) {
+                        @Suppress("invisible_member", "invisible_reference")
+                        RealmLog.error("Error thrown and ignored in `onManualResetFallback`: $ex")
+                    }
                 } else {
                     userErrorHandler.onError(session, syncError)
                 }

@@ -46,7 +46,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
@@ -55,8 +54,6 @@ import kotlin.reflect.KClass
 public class RealmImpl private constructor(
     configuration: InternalConfiguration,
 ) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
-
-    private val realmPointerMutex = Mutex()
 
     public val notificationScheduler: LiveRealmContext =
         configuration.notificationDispatcherFactory.createLiveRealmContext()
@@ -82,9 +79,9 @@ public class RealmImpl private constructor(
     // closed.
     internal val realmStateFlow =
         MutableSharedFlow<State>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-
-    private var _realmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
-    private val realmReferenceLock = SynchronizableObject()
+    // Initial realm reference that would be used until the notifier or writer are available.
+    internal var initialRealmReference: AtomicRef<FrozenRealmReference?> = atomic(null)
+    private val isClosed = atomic(false)
 
     /**
      * The current Realm reference that points to the underlying frozen C++ SharedRealm.
@@ -99,11 +96,12 @@ public class RealmImpl private constructor(
     //  Maybe we could just rely on the notifier to issue the initial frozen version, but that
     //  would require us to sync that up. Didn't address this as we already have a todo on fixing
     //  constructing the initial frozen version in the initialization of updatableRealm.
-    private val versionTracker = VersionTracker(this, log)
+    internal val versionTracker = VersionTracker(this, log)
 
     // Injection point for synchronized Realms. This property should only be used to hold state
     // required by synchronized realms. See `SyncedRealmContext` for more details.
-    public var syncContext: AtomicRef<Any?> = atomic(null)
+    @OptIn(ExperimentalStdlibApi::class)
+    public var syncContext: AtomicRef<AutoCloseable?> = atomic(null)
 
     init {
         @Suppress("TooGenericExceptionCaught")
@@ -131,13 +129,17 @@ public class RealmImpl private constructor(
                 }
                 val (frozenReference, fileCreated) = configuration.openRealm(this@RealmImpl)
                 realmFileCreated = assetFileCopied || fileCreated
-                versionTracker.trackAndCloseExpiredReferences(frozenReference)
-                _realmReference.value = frozenReference
+                versionTracker.trackReference(frozenReference)
+                initialRealmReference.value = frozenReference
                 configuration.initializeRealmData(this@RealmImpl, realmFileCreated)
             }
 
             realmScope.launch {
                 notifier.realmChanged().collect {
+                    removeInitialRealmReference()
+                    // Closing this reference might be done by the GC:
+                    // https://github.com/realm/realm-kotlin/issues/1527
+                    versionTracker.closeExpiredReferences()
                     notifierFlow.emit(UpdatedRealmImpl(this@RealmImpl))
                 }
             }
@@ -226,62 +228,75 @@ public class RealmImpl private constructor(
         return notifier.registerObserver(t)
     }
 
-    public fun realmReference(): FrozenRealmReference {
-        realmReferenceLock.withLock {
-            val value1 = _realmReference.value
-            // We don't consider advancing the version if is is already closed.
-            value1?.let {
-                if (it.isClosed()) return it
-            }
-
-            // Consider versions of current realm, notifier and writer to identify if we should
-            // advance the user facing realms version to a newer frozen snapshot.
-            val version = value1?.version()
-            val notifierSnapshot = notifier.version
-            val writerSnapshot = writer.version
-
-            var newest: LiveRealmHolder<LiveRealm>? = null
-            if (notifierSnapshot != null && version != null && notifierSnapshot > version) {
-                newest = notifier
-            }
-            @Suppress("ComplexCondition")
-            if (writerSnapshot != null && version != null && ((writerSnapshot > version) || (notifierSnapshot != null && writerSnapshot > notifierSnapshot))) {
-                newest = writer
-            }
-            if (newest != null) {
-                _realmReference.value = newest.snapshot
-                log.debug("$this ADVANCING $version -> ${_realmReference.value?.version()}")
-            }
+    /**
+     * Removes the local reference to start relying on the notifier - writer for snapshots.
+     */
+    private fun removeInitialRealmReference() {
+        if (initialRealmReference.value != null) {
+            log.trace("REMOVING INITIAL VERSION")
+            // There is at least a new version available in the notifier, stop tracking the local one
+            initialRealmReference.value = null
         }
-        return _realmReference.value ?: sdkError("Accessing realmReference before realm has been opened")
+    }
+
+    public fun realmReference(): FrozenRealmReference {
+        // We don't require to return the latest snapshot to the user but the closest the best.
+        // `initialRealmReference` is accessed from different threads, grab a copy to safely operate on it.
+        return initialRealmReference.value.let { localReference ->
+            // Find whether the user-facing, notifier or writer has the latest snapshot.
+            // Sort is stable, it will try to preserve the following order.
+            listOf(
+                { localReference } to localReference?.uncheckedVersion(),
+                { writer.snapshot } to writer.version,
+                { notifier.snapshot } to notifier.version,
+            ).sortedByDescending {
+                it.second
+            }.first().first.invoke()
+        } ?: sdkError("Accessing realmReference before realm has been opened")
     }
 
     public fun activeVersions(): VersionInfo {
-        val mainVersions: VersionData? = _realmReference.value?.let { VersionData(it.uncheckedVersion(), versionTracker.versions()) }
-        return VersionInfo(mainVersions, notifier.versions(), writer.versions())
+        val mainVersions: VersionData = VersionData(
+            current = initialRealmReference.value?.uncheckedVersion(),
+            active = versionTracker.versions()
+        )
+
+        return VersionInfo(
+            main = mainVersions,
+            notifier = notifier.versions(),
+            writer = writer.versions()
+        )
+    }
+
+    override fun isClosed(): Boolean {
+        // We cannot rely on `realmReference()` here. If something happens during open, this might
+        // not be available and will throw, so we need to track closed state separately.
+        return isClosed.value
     }
 
     override fun close() {
         // TODO Reconsider this constraint. We have the primitives to check is we are on the
         //  writer thread and just close the realm in writer.close()
         writer.checkInTransaction("Cannot close the Realm while inside a transaction block")
-        runBlocking {
-            realmPointerMutex.withLock {
+        if (!isClosed.getAndSet(true)) {
+            runBlocking {
                 writer.close()
                 realmScope.cancel()
                 notifier.close()
                 versionTracker.close()
+                @OptIn(ExperimentalStdlibApi::class)
+                syncContext.value?.close()
                 // The local realmReference is pointing to a realm reference managed by either the
                 // version tracker, writer or notifier, so it is already closed
                 super.close()
             }
-        }
-        if (!realmStateFlow.tryEmit(State.CLOSED)) {
-            log.warn("Cannot signal internal close")
-        }
+            if (!realmStateFlow.tryEmit(State.CLOSED)) {
+                log.warn("Cannot signal internal close")
+            }
 
-        notificationScheduler.close()
-        writeScheduler.close()
+            notificationScheduler.close()
+            writeScheduler.close()
+        }
     }
 
     internal companion object {

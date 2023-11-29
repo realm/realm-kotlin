@@ -56,9 +56,10 @@ public class ClientResetRequiredException constructor(
      * associated to the session in which this error is generated **must be closed**. Not doing so
      * might result in unexpected file system errors.
      *
+     * @return `true` if the Client Reset succeeded, `false` if not.
      * @throws IllegalStateException if not all instances have been closed.
      */
-    public fun executeClientReset() {
-        RealmInterop.realm_sync_immediately_run_file_actions(appPointer, originalFilePath)
+    public fun executeClientReset(): Boolean {
+        return RealmInterop.realm_sync_immediately_run_file_actions(appPointer, originalFilePath)
     }
 }

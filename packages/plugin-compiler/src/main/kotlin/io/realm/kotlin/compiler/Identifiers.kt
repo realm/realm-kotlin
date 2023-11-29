@@ -26,6 +26,10 @@ import org.jetbrains.kotlin.name.Name
 internal object Names {
     const val REALM_SYNTHETIC_PROPERTY_PREFIX = "io_realm_kotlin_"
 
+    val REALM_OBJECT: Name = Name.identifier("RealmObject")
+    val EMBEDDED_REALM_OBJECT: Name = Name.identifier("EmbeddedRealmObject")
+    val ASYMMETRIC_REALM_OBJECT: Name = Name.identifier("AsymmetricRealmObject")
+
     val REALM_OBJECT_COMPANION_CLASS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}class")
     val REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER: Name =
@@ -40,6 +44,9 @@ internal object Names {
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}schema")
     val REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}newInstance")
+    val REALM_OBJECT_TO_STRING_METHOD = Name.identifier("toString")
+    val REALM_OBJECT_EQUALS = Name.identifier("equals")
+    val REALM_OBJECT_HASH_CODE = Name.identifier("hashCode")
 
     val SET = Name.special("<set-?>")
 
@@ -90,11 +97,12 @@ internal object FqNames {
     val PACKAGE_KBSON = FqName("org.mongodb.kbson")
     val PACKAGE_KOTLIN_COLLECTIONS = FqName("kotlin.collections")
     val PACKAGE_KOTLIN_REFLECT = FqName("kotlin.reflect")
-    val PACKAGE_TYPES = FqName("io.realm.kotlin.types")
+    val PACKAGE_TYPES: FqName = FqName("io.realm.kotlin.types")
     val PACKAGE_REALM_INTEROP = FqName("io.realm.kotlin.internal.interop")
     val PACKAGE_REALM_INTERNAL = FqName("io.realm.kotlin.internal")
     val PACKAGE_MONGODB = FqName("io.realm.kotlin.mongodb")
     val PACKAGE_MONGODB_INTERNAL = FqName("io.realm.kotlin.mongodb.internal")
+    val APP_CONFIGURATION_BUILDER = FqName("AppConfiguration.Builder")
 }
 
 object ClassIds {
@@ -160,5 +168,5 @@ object ClassIds {
     val APP_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppImpl"))
     val APP_CONFIGURATION = ClassId(PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
     val APP_CONFIGURATION_IMPL = ClassId(PACKAGE_MONGODB_INTERNAL, Name.identifier("AppConfigurationImpl"))
-    val APP_CONFIGURATION_BUILDER = ClassId(FqName("io.realm.kotlin.mongodb.AppConfiguration"), FqName("Builder"), true)
+    val APP_CONFIGURATION_BUILDER = ClassId(PACKAGE_MONGODB, FqNames.APP_CONFIGURATION_BUILDER, false)
 }

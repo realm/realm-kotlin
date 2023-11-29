@@ -153,6 +153,11 @@ class SerializationTests {
             RealmInstant::class -> dataSet.map {
                 (it as RealmInstant?)?.restrictToMillisPrecision() as T
             }
+            RealmAny::class -> dataSet.map {
+                if ((it as? RealmAny)?.type == RealmAny.Type.TIMESTAMP) {
+                    RealmAny.create((it.asRealmInstant()!!.restrictToMillisPrecision()))as T
+                } else { it }
+            }
             else -> dataSet
         }
 
@@ -190,6 +195,12 @@ class SerializationTests {
         override val dataSetToLoad: List<Pair<String, T>> = when (classifier) {
             RealmInstant::class -> dataSet.map { entry ->
                 entry.first to (entry.second as RealmInstant?)?.restrictToMillisPrecision() as T
+            }
+            RealmAny::class -> dataSet.map { entry ->
+                val (key, value) = entry
+                if ((value as? RealmAny)?.type == RealmAny.Type.TIMESTAMP) {
+                    key to RealmAny.create((value.asRealmInstant()!!.restrictToMillisPrecision()))as T
+                } else { entry }
             }
             else -> dataSet
         }

@@ -386,12 +386,12 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 
             // Create a configuration pointing to the metadata Realm for that app
-            val lastSetSchemaVersion = 6L
+            val lastSetSchemaVersion = 7L
             val metadataDir = "${app.configuration.syncRootDirectory}/mongodb-realm/${app.configuration.appId}/server-utility/metadata/"
             val config = RealmConfiguration
                 .Builder(setOf())
@@ -423,7 +423,7 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 

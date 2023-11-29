@@ -61,8 +61,6 @@ import kotlin.time.Duration.Companion.seconds
 private const val TEST_SIZE = 500
 private val TIMEOUT = 30.seconds
 
-private val schema = setOf(SyncObjectWithAllTypes::class)
-
 class ProgressListenerTests {
 
     private lateinit var app: TestApp
@@ -242,7 +240,7 @@ class ProgressListenerTests {
     fun throwsOnFlexibleSync() = runBlocking {
         TestApp("throwsOnFlexibleSync", TEST_APP_FLEX).use {
             val user = app.createUserAndLogIn()
-            val configuration: SyncConfiguration = SyncConfiguration.create(user, schema)
+            val configuration: SyncConfiguration = SyncConfiguration.create(user, FLEXIBLE_SYNC_SCHEMA)
             Realm.open(configuration).use { realm ->
                 assertFailsWithMessage<UnsupportedOperationException>(
                     "Progress listeners are not supported for Flexible Sync"
@@ -306,7 +304,7 @@ class ProgressListenerTests {
         user: User,
         partitionValue: String = getTestPartitionValue()
     ): SyncConfiguration {
-        return SyncConfiguration.Builder(user, partitionValue, schema)
+        return SyncConfiguration.Builder(user, partitionValue, PARTITION_BASED_SCHEMA)
             .build()
     }
 

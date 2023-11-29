@@ -50,6 +50,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
+import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 
 @Suppress("MagicNumber")
@@ -65,7 +66,9 @@ class SerializableSample : RealmObject {
     var floatField: Float = 3.14f
     var doubleField: Double = 1.19840122
     var decimal128Field: Decimal128 = Decimal128("1.8446744073709551618E-6157")
-    var timestampField: RealmInstant = RealmInstant.from(100, 1000)
+    // We will loose nano second precision when we round trip these, so framework only works for
+    // timestamps with 0-nanosecond fraction.
+    var timestampField: RealmInstant = RealmInstant.from(100, 1000000)
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f1f77bcf86cd799439011")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
@@ -212,7 +215,7 @@ class SerializableSample : RealmObject {
         )
 
         @Suppress("UNCHECKED_CAST")
-        val listNullableProperties = mapOf(
+        val listNullableProperties: Map<KClass<out Any>, KMutableProperty1<SerializableSample, MutableCollection<Any?>>> = mapOf(
             String::class to SerializableSample::nullableStringListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Byte::class to SerializableSample::nullableByteListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
             Char::class to SerializableSample::nullableCharListField as KMutableProperty1<SerializableSample, MutableCollection<Any?>>,
@@ -348,4 +351,9 @@ class SerializableSample : RealmObject {
 @Serializable
 class SerializableEmbeddedObject : EmbeddedRealmObject {
     var name: String = "hello world"
+
+    // Supplying custom companion object to work around that multiple K2 FIR extension clashes if
+    // they both generate a Companion.
+    // https://youtrack.jetbrains.com/issue/KT-62194/K2-Two-compiler-plugins-interference-in-generated-companion-object
+    companion object
 }

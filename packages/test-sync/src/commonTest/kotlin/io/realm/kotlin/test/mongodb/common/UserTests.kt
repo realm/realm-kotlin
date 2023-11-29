@@ -20,7 +20,6 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
-import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AuthenticationProvider
@@ -388,7 +387,7 @@ class UserTests {
             val config = SyncConfiguration.create(
                 user1,
                 TestHelper.randomPartitionValue(),
-                setOf(SyncObjectWithAllTypes::class)
+                PARTITION_BASED_SCHEMA
             )
             Realm.open(config).close()
             assertTrue(fileExists(config.path))
@@ -409,7 +408,7 @@ class UserTests {
             val config = SyncConfiguration.create(
                 user1,
                 TestHelper.randomPartitionValue(),
-                setOf(SyncObjectWithAllTypes::class)
+                PARTITION_BASED_SCHEMA
             )
             Realm.open(config).close()
             user1.logOut()

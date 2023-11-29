@@ -61,6 +61,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.fail
@@ -421,6 +422,74 @@ class RealmAnyTests {
             containerObserver.cancel()
             sampleChannel.close()
             containerChannel.close()
+        }
+    }
+
+    @Test
+    fun equals() {
+        RealmAny.Type.values().forEach { type ->
+            when (type) {
+                RealmAny.Type.INT -> {
+                    assertEquals(RealmAny.create(1), RealmAny.create(Char(1)))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toByte()))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toShort()))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toInt()))
+                    assertEquals(RealmAny.create(1), RealmAny.create(1.toLong()))
+                    assertNotEquals(RealmAny.create(1), RealmAny.create(2))
+                }
+                RealmAny.Type.BOOL -> {
+                    assertEquals(RealmAny.create(true), RealmAny.create(true))
+                    assertNotEquals(RealmAny.create(true), RealmAny.create(false))
+                }
+                RealmAny.Type.STRING -> {
+                    assertEquals(RealmAny.create("Realm"), RealmAny.create("Realm"))
+                    assertNotEquals(RealmAny.create("Realm"), RealmAny.create("Not Realm"))
+                }
+                RealmAny.Type.BINARY -> {
+                    assertEquals(
+                        RealmAny.create(byteArrayOf(1, 2)), RealmAny.create(byteArrayOf(1, 2))
+                    )
+                    assertNotEquals(
+                        RealmAny.create(byteArrayOf(1, 2)), RealmAny.create(byteArrayOf(2, 1))
+                    )
+                }
+                RealmAny.Type.TIMESTAMP -> {
+                    val now = RealmInstant.now()
+                    assertEquals(RealmAny.create(now), RealmAny.create(now))
+                    assertNotEquals(RealmAny.create(RealmInstant.from(1, 1)), RealmAny.create(now))
+                }
+                RealmAny.Type.FLOAT -> {
+                    assertEquals(RealmAny.create(1.5f), RealmAny.create(1.5f))
+                    assertNotEquals(RealmAny.create(1.2f), RealmAny.create(1.3f))
+                }
+                RealmAny.Type.DOUBLE -> {
+                    assertEquals(RealmAny.create(1.5), RealmAny.create(1.5))
+                    assertNotEquals(RealmAny.create(1.2), RealmAny.create(1.3))
+                }
+                RealmAny.Type.DECIMAL128 -> {
+                    assertEquals(RealmAny.create(Decimal128("1E64")), RealmAny.create(Decimal128("1E64")))
+                    assertNotEquals(RealmAny.create(Decimal128("1E64")), RealmAny.create(Decimal128("-1E64")))
+                }
+                RealmAny.Type.OBJECT_ID -> {
+                    val value = ObjectId()
+                    assertEquals(RealmAny.create(value), RealmAny.create(value))
+                    assertNotEquals(RealmAny.create(ObjectId()), RealmAny.create(value))
+                }
+                RealmAny.Type.UUID -> {
+                    val value = RealmUUID.random()
+                    assertEquals(RealmAny.create(value), RealmAny.create(value))
+                    assertNotEquals(RealmAny.create(RealmUUID.random()), RealmAny.create(value))
+                }
+                RealmAny.Type.OBJECT -> {
+                    val realmObject = Sample()
+                    // Same object is equal
+                    assertEquals(RealmAny.create(realmObject), RealmAny.create(realmObject))
+                    // Different kind of objects are not equal
+                    assertNotEquals(RealmAny.create(RealmAnyContainer()), RealmAny.create(realmObject))
+                    // Different objects of same type are not equal
+                    assertNotEquals(RealmAny.create(Sample()), RealmAny.create(realmObject))
+                }
+            }
         }
     }
 

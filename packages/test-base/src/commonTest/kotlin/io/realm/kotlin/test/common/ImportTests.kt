@@ -61,6 +61,9 @@ class ImportTests {
 
     @AfterTest
     fun tearDown() {
+        if (this::realm.isInitialized) {
+            realm.close()
+        }
         PlatformUtils.deleteTempDir(tmpDir)
     }
 

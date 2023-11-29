@@ -149,14 +149,15 @@ class MemoryTests {
 
             // Perform various writes and deletes and garbage collect the references to allow core to
             // release the underlying versions
+            val referenceHolder = mutableListOf<MemoryTest>()
             for (i in 1..3) {
-                val referenceHolder = mutableListOf<MemoryTest>()
-                realm.writeBlocking {
-                    for (i in 1..10) {
+                for (i in 1..10) {
+                    val y: MemoryTest = realm.writeBlocking {
                         copyToRealm(MemoryTest()).apply {
                             stringField = oneMBstring
-                        }.also { referenceHolder.add(it) }
+                        }
                     }
+                    referenceHolder.add(y)
                 }
                 realm.writeBlocking {
                     delete(query<MemoryTest>("stringField != 'INITIAL'"))
