@@ -74,7 +74,7 @@ class NonLatinTests {
                 realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {
                         if (it.obj != null) {
-                            channel.trySend(it.obj!!)
+                            channel.send(it.obj!!)
                         }
                     }
             }

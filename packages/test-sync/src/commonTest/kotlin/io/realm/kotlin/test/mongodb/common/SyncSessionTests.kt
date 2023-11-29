@@ -324,7 +324,7 @@ class SyncSessionTests {
             user = user,
             partitionValue = partitionValue
         ).errorHandler { session, _ ->
-            channel.trySend(session)
+            channel.send(session)
         }.build()
 
         var realm: Realm? = null
@@ -401,7 +401,7 @@ class SyncSessionTests {
                 realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {
                         if (it.obj != null) {
-                            channel.trySend(it.obj!!)
+                            channel.send(it.obj!!)
                         }
                     }
             }
@@ -499,7 +499,7 @@ class SyncSessionTests {
             partitionValue = partitionValue
         )
             .name("test2.realm")
-            .errorHandler { session, _ -> channel.trySend(session) }
+            .errorHandler { session, _ -> channel.send(session) }
             .build()
         Realm.open(config2).use { realm2 ->
             // Await the sync session sent.

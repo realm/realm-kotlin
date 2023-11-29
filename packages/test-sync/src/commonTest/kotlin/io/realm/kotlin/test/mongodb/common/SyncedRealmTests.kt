@@ -316,7 +316,7 @@ class SyncedRealmTests {
             user = user,
             partitionValue = partitionValue
         ).errorHandler { _, error ->
-            channel.trySend(error)
+            channel.send(error)
         }.build()
 
         runBlocking {
@@ -325,7 +325,7 @@ class SyncedRealmTests {
                     // Make sure that the test eventually fail. Coroutines can cancel a delay
                     // so this doesn't always block the test for 10 seconds.
                     delay(10 * 1000)
-                    channel.trySend(AssertionError("Realm was successfully opened"))
+                    channel.send(AssertionError("Realm was successfully opened"))
                 }
             }
 
@@ -368,7 +368,7 @@ class SyncedRealmTests {
             ).name("test2.realm")
                 .errorHandler(object : ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
-                        channel.trySend(error)
+                        channel.send(error)
                     }
                 }).build()
             val realm2 = Realm.open(config2)
@@ -724,7 +724,7 @@ class SyncedRealmTests {
                     .collect {
                         if (it.obj != null) {
                             val counter = it.obj!!.mutableRealmIntField
-                            counterValue.trySend(counter.get())
+                            counterValue.send(counter.get())
                         }
                     }
             }

@@ -92,7 +92,7 @@ internal class KtorNetworkTransportTest {
                     url,
                     mapOf(),
                     body
-                ) { response -> channel.trySend(response) }
+                ) { response -> channel.send(response) }
                 channel.receiveOrFail()
             }
             assertEquals(200, response.httpResponseCode, "$method failed")
@@ -113,7 +113,7 @@ internal class KtorNetworkTransportTest {
                     url,
                     mapOf(),
                     body
-                ) { response -> channel.trySend(response) }
+                ) { response -> channel.send(response) }
                 channel.receiveOrFail()
             }
             assertEquals(500, response.httpResponseCode, "$method failed")
@@ -137,7 +137,7 @@ internal class KtorNetworkTransportTest {
                     url,
                     mapOf(),
                     body
-                ) { response -> channel.trySend(response) }
+                ) { response -> channel.send(response) }
                 channel.receiveOrFail()
             }
             assertEquals(200, response.httpResponseCode, "$method failed")

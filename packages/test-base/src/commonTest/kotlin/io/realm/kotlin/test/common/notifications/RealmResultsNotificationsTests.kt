@@ -81,7 +81,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                 realm.query<Sample>()
                     .asFlow()
                     .collect {
-                        c.trySend(it)
+                        c.send(it)
                     }
             }
 
@@ -109,7 +109,7 @@ class RealmResultsNotificationsTests : FlowableTests {
                     .sort("stringField")
                     .asFlow()
                     .collect {
-                        c.trySend(it)
+                        c.send(it)
                     }
             }
 
@@ -286,14 +286,14 @@ class RealmResultsNotificationsTests : FlowableTests {
                 realm.query<Sample>()
                     .asFlow()
                     .collect {
-                        c1.trySend(it)
+                        c1.send(it)
                     }
             }
             val observer2 = async {
                 realm.query<Sample>()
                     .asFlow()
                     .collect {
-                        c2.trySend(it)
+                        c2.send(it)
                     }
             }
 
@@ -334,10 +334,10 @@ class RealmResultsNotificationsTests : FlowableTests {
                     .asFlow()
                     .collect {
                         when (counter.incrementAndGet()) {
-                            1 -> c.trySend(it.list.size)
+                            1 -> c.send(it.list.size)
                             2 -> {
                                 realm.close()
-                                c.trySend(-1)
+                                c.send(-1)
                                 println("realm closed")
                             }
                         }

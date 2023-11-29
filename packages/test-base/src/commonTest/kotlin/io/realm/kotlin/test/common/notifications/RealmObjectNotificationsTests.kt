@@ -83,7 +83,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             }
             val observer = async {
                 obj.asFlow().collect {
-                    c.trySend(it)
+                    c.send(it)
                 }
             }
 
@@ -106,7 +106,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             }
             val observer = async {
                 obj.asFlow().collect {
-                    c.trySend(it)
+                    c.send(it)
                 }
             }
 
@@ -158,12 +158,12 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             val c2 = TestChannel<ObjectChange<Sample>>()
             val observer1 = async {
                 obj.asFlow().collect {
-                    c1.trySend(it)
+                    c1.send(it)
                 }
             }
             val observer2 = async {
                 obj.asFlow().collect {
-                    c2.trySend(it)
+                    c2.send(it)
                 }
             }
             // First event should be the initial value
@@ -288,7 +288,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
             }
             val observer = async {
                 obj.asFlow().collect {
-                    c.trySend(it)
+                    c.send(it)
                 }
                 fail("Flow should not be canceled.")
             }

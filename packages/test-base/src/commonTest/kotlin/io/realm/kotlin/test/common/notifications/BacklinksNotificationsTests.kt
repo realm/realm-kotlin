@@ -88,7 +88,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     results
                         .asFlow()
                         .collect {
-                            c.trySend(it)
+                            c.send(it)
                         }
                 }
 
@@ -140,7 +140,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     results
                         .asFlow()
                         .collect {
-                            c.trySend(it)
+                            c.send(it)
                         }
                 }
 
@@ -179,7 +179,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
             val c = Channel<ResultsChange<Sample>>(capacity = 5)
             val collection = async {
                 target.objectBacklinks.asFlow().collect {
-                    c.trySend(it)
+                    c.send(it)
                 }
             }
 
@@ -239,12 +239,12 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
 
                 val observer1 = async {
                     results.asFlow().collect {
-                        c1.trySend(it)
+                        c1.send(it)
                     }
                 }
                 val observer2 = async {
                     results.asFlow().collect {
-                        c2.trySend(it)
+                        c2.send(it)
                     }
                 }
 
@@ -289,10 +289,10 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     results
                         .asFlow()
                         .onCompletion {
-                            c.trySend(null)
+                            c.send(null)
                         }
                         .collect {
-                            c.trySend(it)
+                            c.send(it)
                         }
                 }
 
@@ -301,10 +301,10 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                         .query("TRUEPREDICATE")
                         .asFlow()
                         .onCompletion {
-                            sc.trySend(null)
+                            sc.send(null)
                         }
                         .collect {
-                            sc.trySend(it)
+                            sc.send(it)
                         }
                 }
 

@@ -354,14 +354,14 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        channel1.trySend(mapChange)
+                        channel1.send(mapChange)
                     }
             }
             val observer2 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        channel2.trySend(mapChange)
+                        channel2.send(mapChange)
                     }
             }
 
@@ -417,7 +417,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        channel.trySend(mapChange)
+                        channel.send(mapChange)
                     }
                 fail("Flow should not be canceled.")
             }

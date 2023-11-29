@@ -313,14 +313,14 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        channel1.trySend(flowList)
+                        channel1.send(flowList)
                     }
             }
             val observer2 = async {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        channel2.trySend(flowList)
+                        channel2.send(flowList)
                     }
             }
 
@@ -457,7 +457,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        channel.trySend(flowList)
+                        channel.send(flowList)
                     }
                 fail("Flow should not be canceled.")
             }

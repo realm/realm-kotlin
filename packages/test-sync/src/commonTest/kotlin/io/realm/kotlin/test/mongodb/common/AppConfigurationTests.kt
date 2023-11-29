@@ -410,7 +410,7 @@ class AppConfigurationTests {
                         "$AUTH_HEADER_NAME: "
                     )
                 ) {
-                    channel.trySend(true)
+                    channel.send(true)
                 }
             }
         }

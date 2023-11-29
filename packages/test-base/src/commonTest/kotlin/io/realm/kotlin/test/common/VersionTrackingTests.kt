@@ -227,7 +227,7 @@ class VersionTrackingTests {
             runBlocking {
                 val deferred = async {
                     realm.asFlow().collect {
-                        realmUpdates.trySend(Unit)
+                        realmUpdates.send(Unit)
                     }
                 }
 
