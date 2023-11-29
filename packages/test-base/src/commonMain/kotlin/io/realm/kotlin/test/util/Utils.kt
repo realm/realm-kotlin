@@ -113,15 +113,4 @@ suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, m
         @Suppress("invisible_reference", "invisible_member")
         throw TimeoutCancellationException("Timeout after $timeout: ${if (message.isNullOrBlank()) "<no message>" else message}")
     }
-//    return select {
-//        this@receiveOrFail.onReceive {
-//            println("Got: $it")
-// //            receive() // Make sure to empty the channel
-//             it
-//        }
-//        onTimeout(timeout) {
-//            @Suppress("invisible_member")
-//            throw TimeoutCancellationException()
-//        }
-//    }
 }
