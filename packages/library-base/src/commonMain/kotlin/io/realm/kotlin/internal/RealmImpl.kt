@@ -136,6 +136,7 @@ public class RealmImpl private constructor(
 
             realmScope.launch {
                 notifier.realmChanged().collect {
+                    println("Notifier received realmChanged() event: $it")
                     removeInitialRealmReference()
                     // Closing this reference might be done by the GC:
                     // https://github.com/realm/realm-kotlin/issues/1527
