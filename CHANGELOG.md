@@ -43,7 +43,8 @@
 * None.
 
 ### Fixed
-* Fix crashes caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
+* Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
+* Fix NPE when applying query aggregators on classes annotated with `@PersistedName`. (Issue [1569](https://github.com/realm/realm-kotlin/pull/1569))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.

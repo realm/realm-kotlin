@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmPointer
+import io.realm.kotlin.internal.interop.SCHEMA_NO_VALUE
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
@@ -64,6 +65,7 @@ public interface ClassMetadata {
 
 public interface PropertyMetadata {
     public val name: String
+    public val publicName: String
     public val key: PropertyKey
     public val collectionType: CollectionType
     public val type: PropertyType
@@ -154,7 +156,7 @@ public class CachedClassMetadata(
         primaryKeyProperty = properties.firstOrNull { it.isPrimaryKey }
         isEmbeddedRealmObject = classInfo.isEmbedded
 
-        nameMap = properties.associateBy { it.name }
+        nameMap = properties.associateBy { it.name } + properties.filterNot { it.publicName == SCHEMA_NO_VALUE }.associateBy { it.publicName }
         keyMap = properties.associateBy { it.key }
         propertyMap = properties.associateBy { it.accessor }
     }
@@ -169,6 +171,7 @@ public class CachedPropertyMetadata(
     override val accessor: KProperty1<BaseRealmObject, Any?>? = null
 ) : PropertyMetadata {
     override val name: String = propertyInfo.name
+    override val publicName: String = propertyInfo.publicName
     override val key: PropertyKey = propertyInfo.key
     override val collectionType: CollectionType = propertyInfo.collectionType
     override val type: PropertyType = propertyInfo.type
