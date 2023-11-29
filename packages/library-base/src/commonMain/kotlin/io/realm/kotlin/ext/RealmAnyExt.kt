@@ -45,7 +45,6 @@ public fun realmAnyOf(value: Any?): RealmAny? {
         is RealmUUID -> RealmAny.create(value)
         is RealmObject -> RealmAny.create(value)
         is DynamicRealmObject -> RealmAny.create(value)
-        is Set<*> -> RealmAny.create(value.map { realmAnyOf(it) }.toRealmSet())
         is List<*> -> RealmAny.create(value.map { realmAnyOf(it) }.toRealmList())
         is Map<*, *> -> RealmAny.create(
             value.map { (mapKey, mapValue) ->
@@ -60,15 +59,6 @@ public fun realmAnyOf(value: Any?): RealmAny? {
         else -> throw IllegalArgumentException("Cannot create RealmAny from '$value'")
     }
 }
-
-/**
- * Create a [RealmAny] containing a [RealmSet] of all arguments wrapped as [RealmAny]s.
- * @param values elements of the set.
- *
- * See [RealmAny.create] for [RealmSet] constraints and examples of usage.
- */
-public fun realmAnySetOf(vararg values: Any?): RealmAny =
-    RealmAny.create(values.map { realmAnyOf(it) }.toRealmSet())
 
 /**
  * Create a [RealmAny] containing a [RealmList] of all arguments wrapped as [RealmAny]s.

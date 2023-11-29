@@ -379,7 +379,6 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                 Type.OBJECT_ID -> RealmAny.create(it.objectId!!)
                 Type.UUID -> RealmAny.create(it.uuid!!)
                 Type.OBJECT -> RealmAny.create(it.realmObject!!)
-                Type.SET -> RealmAny.create(it.set!!)
                 Type.LIST -> RealmAny.create(it.list!!)
                 Type.DICTIONARY -> RealmAny.create(it.dictionary!!)
             }
@@ -406,7 +405,6 @@ public object RealmAnyKSerializer : KSerializer<RealmAny> {
                     )
                     Type.UUID -> uuid = value.asRealmUUID()
                     Type.OBJECT -> realmObject = value.asRealmObject()
-                    Type.SET -> set = value.asSet()
                     Type.LIST -> list = value.asList()
                     Type.DICTIONARY -> dictionary = value.asDictionary()
                 }

@@ -1345,9 +1345,8 @@ internal class RealmAnyListTester constructor(
                     expected.asRealmObject<RealmListContainer>().stringField,
                     actual.asRealmObject<RealmListContainer>().stringField
                 )
-                // FIXME Should we rather test nested collections somewhere else?
-                RealmAny.Type.SET -> TODO()
-                RealmAny.Type.LIST -> TODO()
+                // Collections in RealmAny are tested separately in RealmAnyNestedCollectionTests
+                RealmAny.Type.LIST,
                 RealmAny.Type.DICTIONARY -> TODO()
             }
         } else if (expected != null || actual != null) {

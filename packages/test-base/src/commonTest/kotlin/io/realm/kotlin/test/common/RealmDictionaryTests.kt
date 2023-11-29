@@ -3078,9 +3078,9 @@ internal class RealmAnyDictionaryTester(
                 assertEquals(expectedObj.stringField, assertNotNull(actualObj).stringField)
             }
             null -> assertNull(actualValue)
-            RealmAny.Type.SET,
+            // Collections in RealmAny are tested separately in RealmAnyNestedCollectionTests
             RealmAny.Type.LIST,
-            RealmAny.Type.DICTIONARY -> {} // Tested separately in RealmAnyNestedCollectionTests
+            RealmAny.Type.DICTIONARY -> {}
         }
     }
 }

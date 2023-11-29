@@ -24,15 +24,12 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
-import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmAny
-import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -65,100 +62,6 @@ class RealmAnyNestedCollectionTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
-    }
-
-    @Test
-    fun setInRealmAny_copyToRealm() = runBlocking {
-        val sample = Sample().apply { stringField = "SAMPLE" }
-        realm.write {
-            val instance = JsonStyleRealmObject().apply {
-                value = RealmAny.create(
-                    realmSetOf(
-                        RealmAny.create(5),
-                        RealmAny.create("Realm"),
-                        RealmAny.create(sample),
-                    )
-                )
-            }
-            copyToRealm(instance)
-        }
-        val managedSample: Sample = realm.query<Sample>().find().single()
-        val anyValue: RealmAny = realm.query<JsonStyleRealmObject>().find().single().value!!
-        assertEquals(RealmAny.Type.SET, anyValue.type)
-        anyValue.asSet().let { embeddedSet ->
-            assertEquals(3, embeddedSet.size)
-            assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-            assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-            assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
-        }
-    }
-
-    @Test
-    fun setInRealmAny_assignment() = runBlocking {
-        val sample = Sample().apply { stringField = "SAMPLE" }
-        realm.write {
-            val managedInstance = copyToRealm(JsonStyleRealmObject())
-            managedInstance.value = RealmAny.create(
-                realmSetOf(
-                    RealmAny.create(5),
-                    RealmAny.create("Realm"),
-                    RealmAny.create(sample),
-                )
-            )
-        }
-        val managedSample: Sample = realm.query<Sample>().find().single()
-        val anyValue: RealmAny = realm.query<JsonStyleRealmObject>().find().single().value!!
-        anyValue.asSet().let { embeddedSet ->
-            assertEquals(3, embeddedSet.size)
-            assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-            assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-            assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
-        }
-    }
-
-    @Test
-    fun setInRealmAny_throwsOnNestedCollections_copyToRealm() = runBlocking<Unit> {
-        realm.write {
-            JsonStyleRealmObject(ObjectId().toString()).apply {
-                value =
-                    RealmAny.create(realmSetOf(RealmAny.create(realmListOf(RealmAny.create(5)))))
-            }.let {
-                assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                    copyToRealm(it)
-                }
-            }
-            JsonStyleRealmObject(ObjectId().toString()).apply {
-                value = RealmAny.create(
-                    realmSetOf(
-                        RealmAny.create(realmDictionaryOf("key" to RealmAny.create(5)))
-                    )
-                )
-            }.let {
-                assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                    copyToRealm(it)
-                }
-            }
-        }
-    }
-
-    @Test
-    fun setInRealmAny_throwsOnNestedCollections_add() = runBlocking<Unit> {
-        realm.write {
-            val instance = copyToRealm(
-                JsonStyleRealmObject().apply { value = RealmAny.create(realmSetOf()) }
-            )
-            val set = instance.value!!.asSet()
-
-            val realmAnyList = RealmAny.create(realmListOf())
-            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(realmAnyList)
-            }
-
-            val realmAnyDictionary = RealmAny.create(realmDictionaryOf())
-            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(realmAnyDictionary)
-            }
-        }
     }
 
     @Test
@@ -206,14 +109,6 @@ class RealmAnyNestedCollectionTests {
                                 RealmAny.create(sample),
                             )
                         ),
-                        // Embedded set
-                        RealmAny.create(
-                            realmSetOf(
-                                RealmAny.create(5),
-                                RealmAny.create("Realm"),
-                                RealmAny.create(sample),
-                            )
-                        ),
                         // Embedded map
                         RealmAny.create(
                             realmDictionaryOf(
@@ -243,13 +138,7 @@ class RealmAnyNestedCollectionTests {
                 assertEquals(RealmAny.create("Realm"), embeddedList[1])
                 assertEquals("SAMPLE", embeddedList[2]!!.asRealmObject<Sample>().stringField)
             }
-            it[4]!!.asSet().let { embeddedSet ->
-                assertEquals(3, embeddedSet.size)
-                assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-                assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-                assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
-            }
-            it[5]!!.asDictionary().toMutableMap().let { embeddedDict ->
+            it[4]!!.asDictionary().toMutableMap().let { embeddedDict ->
                 assertEquals(RealmAny.create(5), embeddedDict["keyInt"])
                 assertEquals(RealmAny.create("Realm"), embeddedDict["keyString"])
                 assertEquals(
@@ -280,16 +169,6 @@ class RealmAnyNestedCollectionTests {
                         )
                     ),
                 )
-                // Embedded set
-                add(
-                    RealmAny.create(
-                        realmSetOf(
-                            RealmAny.create(5),
-                            RealmAny.create("Realm"),
-                            RealmAny.create(sample),
-                        )
-                    ),
-                )
                 // Embedded map
                 add(
                     RealmAny.create(
@@ -313,13 +192,7 @@ class RealmAnyNestedCollectionTests {
                 assertEquals(RealmAny.create("Realm"), embeddedList[1])
                 assertEquals("SAMPLE", embeddedList[2]!!.asRealmObject<Sample>().stringField)
             }
-            it[4]!!.asSet().let { embeddedSet ->
-                assertEquals(3, embeddedSet.size)
-                assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-                assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-                assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
-            }
-            it[5]!!.asDictionary().toMutableMap().let { embeddedDict ->
+            it[4]!!.asDictionary().toMutableMap().let { embeddedDict ->
                 assertEquals(RealmAny.create(5), embeddedDict["keyInt"])
                 assertEquals(RealmAny.create("Realm"), embeddedDict["keyString"])
                 assertEquals(
@@ -358,17 +231,6 @@ class RealmAnyNestedCollectionTests {
                         )
                     ),
                 )
-                // Embedded set
-                set(
-                    1,
-                    RealmAny.create(
-                        realmSetOf(
-                            RealmAny.create(5),
-                            RealmAny.create("Realm"),
-                            RealmAny.create(sample),
-                        )
-                    ),
-                )
                 // Embedded map
                 set(
                     2,
@@ -389,12 +251,6 @@ class RealmAnyNestedCollectionTests {
             it[0]!!.asList().let { embeddedList ->
                 assertEquals(RealmAny.create(5), embeddedList[0])
                 assertEquals("SAMPLE", embeddedList[1]!!.asRealmObject<Sample>().stringField)
-            }
-            it[1]!!.asSet().let { embeddedSet ->
-                assertEquals(3, embeddedSet.size)
-                assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-                assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-                assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
             }
             it[2]!!.asDictionary().toMutableMap().let { embeddedDict ->
                 assertEquals(RealmAny.create(5), embeddedDict["keyInt"])
@@ -452,13 +308,6 @@ class RealmAnyNestedCollectionTests {
                 value = RealmAny.create(
                     realmDictionaryOf(
                         "keyInt" to RealmAny.create(5),
-                        "keySet" to RealmAny.create(
-                            realmSetOf(
-                                RealmAny.create(5),
-                                RealmAny.create("Realm"),
-                                RealmAny.create(sample),
-                            )
-                        ),
                         "keyList" to RealmAny.create(
                             realmListOf(
                                 RealmAny.create(5),
@@ -486,14 +335,8 @@ class RealmAnyNestedCollectionTests {
         assertEquals(RealmAny.Type.DICTIONARY, anyValue.type)
         val managedSample: Sample = realm.query<Sample>().find().single()
         anyValue.asDictionary().run {
-            assertEquals(4, size)
+            assertEquals(3, size)
             assertEquals(5, get("keyInt")!!.asInt())
-            get("keySet")!!.asSet().let { embeddedSet ->
-                assertEquals(3, embeddedSet.size)
-                assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-                assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-                assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
-            }
             get("keyList")!!.asList().let { embeddedList ->
                 assertEquals(RealmAny.create(5), embeddedList[0])
                 assertEquals(RealmAny.create("Realm"), embeddedList[1])
@@ -518,7 +361,6 @@ class RealmAnyNestedCollectionTests {
                 JsonStyleRealmObject().apply {
                     // Assigning dictionary with nested lists and dictionaries
                     value = realmAnyDictionaryOf(
-                        "keySet" to realmAnySetOf(5, "Realm", sample),
                         "keyList" to realmAnyListOf(5, "Realm", sample),
                         "keyDictionary" to realmAnyDictionaryOf(
                             "keyInt" to 5,
@@ -536,17 +378,9 @@ class RealmAnyNestedCollectionTests {
         val anyValue: RealmAny = jsonStyleRealmObject.value!!
         assertEquals(RealmAny.Type.DICTIONARY, anyValue.type)
         anyValue.asDictionary().values.run {
-            assertEquals(3, size)
+            assertEquals(2, size)
             forEach { value ->
                 when (value?.type) {
-                    RealmAny.Type.SET -> {
-                        value.asSet().let { embeddedSet ->
-                            assertEquals(3, embeddedSet.size)
-                            assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-                            assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-                            assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
-                        }
-                    }
                     RealmAny.Type.LIST -> {
                         value.asList().let { embeddedList ->
                             assertEquals(RealmAny.create(5), embeddedList[0])
@@ -583,7 +417,6 @@ class RealmAnyNestedCollectionTests {
             query<JsonStyleRealmObject>().find().single().value!!.asDictionary().run {
                 val sample = copyToRealm(Sample().apply { stringField = "SAMPLE" })
                 put("keyInt", RealmAny.create(5))
-                put("keySet", realmAnySetOf(5, "Realm", sample))
                 put("keyList", realmAnyListOf(5, "Realm", sample))
                 put(
                     "keyDictionary",
@@ -602,14 +435,8 @@ class RealmAnyNestedCollectionTests {
         val anyValue: RealmAny = jsonStyleRealmObject.value!!
         assertEquals(RealmAny.Type.DICTIONARY, anyValue.type)
         anyValue.asDictionary().run {
-            assertEquals(4, size)
+            assertEquals(3, size)
             assertEquals(5, get("keyInt")!!.asInt())
-            get("keySet")!!.asSet().let { embeddedSet ->
-                assertEquals(3, embeddedSet.size)
-                assertTrue { embeddedSet.contains(RealmAny.create(5)) }
-                assertTrue { embeddedSet.contains(RealmAny.create("Realm")) }
-                assertTrue { embeddedSet.contains(RealmAny.create(managedSample)) }
-            }
             get("keyList")!!.asList().let { embeddedList ->
                 assertEquals(RealmAny.create(5), embeddedList[0])
                 assertEquals(RealmAny.create("Realm"), embeddedList[1])
@@ -696,9 +523,6 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun query_ThrowsOnNestedCollectionArguments() {
         assertFailsWithMessage<IllegalArgumentException>("Invalid query argument: Cannot pass unmanaged collections as input argument") {
-            realm.query<JsonStyleRealmObject>("value == $0", RealmAny.create(realmSetOf()))
-        }
-        assertFailsWithMessage<IllegalArgumentException>("Invalid query argument: Cannot pass unmanaged collections as input argument") {
             realm.query<JsonStyleRealmObject>("value == $0", RealmAny.create(realmListOf()))
         }
         assertFailsWithMessage<IllegalArgumentException>("Invalid query argument: Cannot pass unmanaged collections as input argument") {
@@ -709,12 +533,6 @@ class RealmAnyNestedCollectionTests {
     @Test
     fun query() = runBlocking<Unit> {
         realm.write {
-            copyToRealm(
-                JsonStyleRealmObject().apply {
-                    id = "SET"
-                    value = realmAnySetOf(1, 2, 3)
-                }
-            )
             copyToRealm(
                 JsonStyleRealmObject().apply {
                     id = "LIST"
@@ -735,7 +553,6 @@ class RealmAnyNestedCollectionTests {
                 JsonStyleRealmObject().apply {
                     id = "EMBEDDED"
                     value = realmAnyListOf(
-                        setOf(1, 2, 3),
                         listOf(4, 5, 6),
                         mapOf(
                             "key1" to 7,
@@ -747,7 +564,7 @@ class RealmAnyNestedCollectionTests {
             )
         }
 
-        assertEquals(4, realm.query<JsonStyleRealmObject>().find().size)
+        assertEquals(3, realm.query<JsonStyleRealmObject>().find().size)
 
         // Matching lists
         realm.query<JsonStyleRealmObject>("value[0] == 4").find().single().run {

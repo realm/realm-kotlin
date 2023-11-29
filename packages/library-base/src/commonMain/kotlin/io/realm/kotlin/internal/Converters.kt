@@ -29,7 +29,6 @@ import io.realm.kotlin.internal.interop.RealmQueryArgument
 import io.realm.kotlin.internal.interop.RealmQueryArgumentList
 import io.realm.kotlin.internal.interop.RealmQueryListArgument
 import io.realm.kotlin.internal.interop.RealmQuerySingleArgument
-import io.realm.kotlin.internal.interop.RealmSetPointer
 import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.ValueType
@@ -115,7 +114,6 @@ internal inline fun realmValueToRealmAny(
     owner: RealmReference,
     issueDynamicObject: Boolean,
     issueDynamicMutableObject: Boolean,
-    getSetFunction: () -> RealmSetPointer = { error("Cannot handled embedded sets") },
     getListFunction: () -> RealmListPointer = { error("Cannot handled embedded lists") },
     getDictionaryFunction: () -> RealmMapPointer = { error("Cannot handled embedded dictionaries") },
 ): RealmAny? {
@@ -151,11 +149,6 @@ internal inline fun realmValueToRealmAny(
                     RealmAny.create(realmObject!! as RealmObject, clazz as KClass<out RealmObject>)
                 }
             }
-            ValueType.RLM_TYPE_SET -> {
-                val nativePointer = getSetFunction()
-                val operator = realmAnySetOperator(mediator, owner, nativePointer, issueDynamicObject, issueDynamicMutableObject)
-                return RealmAny.create(ManagedRealmSet(parent, nativePointer, operator))
-            }
             ValueType.RLM_TYPE_LIST -> {
                 val nativePointer = getListFunction()
                 val operator = realmAnyListOperator(mediator, owner, nativePointer, issueDynamicObject, issueDynamicMutableObject)
@@ -176,7 +169,6 @@ internal fun <T> MemTrackingAllocator.realmAnyHandler(
     value: RealmAny?,
     primitiveValueAsRealmValueHandler: (RealmValue) -> T = { throw IllegalArgumentException("Operation not support for primitive values") },
     referenceAsRealmAnyHandler: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for objects") },
-    setAsRealmAnyHandler: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for sets") },
     listAsRealmAnyHandler: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for lists") },
     dictionaryAsRealmAnyHandler: (RealmAny) -> T = { throw IllegalArgumentException("Operation not support for dictionaries") },
 ): T {
@@ -198,10 +190,6 @@ internal fun <T> MemTrackingAllocator.realmAnyHandler(
 
         io.realm.kotlin.types.RealmAny.Type.OBJECT -> {
             referenceAsRealmAnyHandler(value)
-        }
-
-        io.realm.kotlin.types.RealmAny.Type.SET -> {
-            setAsRealmAnyHandler(value)
         }
 
         io.realm.kotlin.types.RealmAny.Type.LIST -> {
@@ -508,7 +496,6 @@ internal inline fun MemTrackingAllocator.realmAnyToRealmValueWithoutImport(value
                 val objRef = realmObjectToRealmReferenceOrError(value.asRealmObject())
                 realmObjectTransport(objRef)
             }
-            RealmAny.Type.SET,
             RealmAny.Type.LIST,
             RealmAny.Type.DICTIONARY ->
                 throw IllegalArgumentException("Cannot pass unmanaged collections as input argument")

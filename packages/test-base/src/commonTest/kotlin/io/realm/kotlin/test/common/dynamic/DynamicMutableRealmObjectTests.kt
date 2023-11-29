@@ -1387,47 +1387,6 @@ class DynamicMutableRealmObjectTests {
     }
 
     @Test
-    fun testSetsInRealmAny() {
-        val dynamicSampleInner = dynamicMutableRealm.copyToRealm(
-            DynamicMutableRealmObject.create(
-                "Sample",
-                "stringField" to "INNER"
-            )
-        )
-        dynamicMutableRealm.copyToRealm(
-            DynamicMutableRealmObject.create(
-                "Sample",
-                "nullableRealmAnyField" to RealmAny.create(
-                    realmSetOf(
-                        RealmAny.create(
-                            dynamicSampleInner
-                        )
-                    )
-                )
-            )
-        ).let {
-            val set = it.getNullableValue<RealmAny>("nullableRealmAnyField")!!.asSet()
-            // Verify that we get mutable instances out of the set
-            val setObject = set.first()!!.asRealmObject<DynamicMutableRealmObject>()
-            assertIs<DynamicMutableRealmObject>(setObject)
-            assertEquals("INNER", setObject.getValue("stringField"))
-            setObject.set("stringField", "UPDATED_INNER")
-            // Verify that we can add elements to the set
-            set.add(RealmAny.create(dynamicSampleInner))
-            // Verify that we cannot add nested collections
-            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(RealmAny.create(realmSetOf()))
-            }
-            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(RealmAny.create(realmListOf()))
-            }
-            assertFailsWithMessage<IllegalArgumentException>("Sets cannot contain other collections") {
-                set.add(RealmAny.create(realmDictionaryOf()))
-            }
-        }
-    }
-
-    @Test
     fun testNestedCollectionsInListInRealmAny() {
         val dynamicSampleInner = dynamicMutableRealm.copyToRealm(
             DynamicMutableRealmObject.create("Sample", "stringField" to "INNER")
@@ -1437,16 +1396,6 @@ class DynamicMutableRealmObjectTests {
                 "Sample",
                 "nullableRealmAnyField" to RealmAny.create(
                     realmListOf(
-                        RealmAny.create(
-                            realmSetOf(
-                                RealmAny.create(
-                                    DynamicMutableRealmObject.create(
-                                        "Sample",
-                                        "stringField" to "INNER_SET"
-                                    )
-                                )
-                            )
-                        ),
                         RealmAny.create(
                             realmListOf(
                                 RealmAny.create(
@@ -1472,22 +1421,15 @@ class DynamicMutableRealmObjectTests {
             )
         ).let {
             val list = it.getNullableValue<RealmAny>("nullableRealmAnyField")!!.asList()
-            // Verify that we get mutable instances out of the set
-            list[0]!!.asSet().let { embeddedSet ->
-                val o = embeddedSet.first()!!
-                    .asRealmObject<DynamicMutableRealmObject>()
-                assertIs<DynamicMutableRealmObject>(o)
-                assertEquals("INNER_SET", o.getValue("stringField"))
-                embeddedSet.add(RealmAny.Companion.create(dynamicSampleInner))
-            }
-            list[1]!!.asList().let { embeddedList ->
+            // Verify that we get mutable instances out of the collections
+            list[0]!!.asList().let { embeddedList ->
                 val o = embeddedList.first()!!
                     .asRealmObject<DynamicMutableRealmObject>()
                 assertIs<DynamicMutableRealmObject>(o)
                 assertEquals("INNER_LIST", o.getValue("stringField"))
                 embeddedList.add(RealmAny.Companion.create(dynamicSampleInner))
             }
-            list[2]!!.asDictionary().let { embeddedDictionary ->
+            list[1]!!.asDictionary().let { embeddedDictionary ->
                 val o = embeddedDictionary["key"]!!
                     .asRealmObject<DynamicMutableRealmObject>()
                 assertIs<DynamicMutableRealmObject>(o)
@@ -1511,16 +1453,6 @@ class DynamicMutableRealmObjectTests {
                 "Sample",
                 "nullableRealmAnyField" to RealmAny.create(
                     realmDictionaryOf(
-                        "set" to RealmAny.create(
-                            realmSetOf(
-                                RealmAny.create(
-                                    DynamicMutableRealmObject.create(
-                                        "Sample",
-                                        "stringField" to "INNER_SET"
-                                    )
-                                )
-                            )
-                        ),
                         "list" to RealmAny.create(
                             realmListOf(
                                 RealmAny.create(
@@ -1546,14 +1478,7 @@ class DynamicMutableRealmObjectTests {
             )
         ).let {
             val dict = it.getNullableValue<RealmAny>("nullableRealmAnyField")!!.asDictionary()
-            // Verify that we get mutable instances out of the set
-            dict["set"]!!.asSet().let { embeddedSet ->
-                val o = embeddedSet.first()!!
-                    .asRealmObject<DynamicMutableRealmObject>()
-                assertIs<DynamicMutableRealmObject>(o)
-                assertEquals("INNER_SET", o.getValue("stringField"))
-                embeddedSet.add(RealmAny.Companion.create(dynamicSampleInner))
-            }
+            // Verify that we get mutable instances out of the collections
             dict["list"]!!.asList().let { embeddedList ->
                 val o = embeddedList.first()!!
                     .asRealmObject<DynamicMutableRealmObject>()

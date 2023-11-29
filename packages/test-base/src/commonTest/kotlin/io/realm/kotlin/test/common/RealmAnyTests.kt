@@ -489,6 +489,9 @@ class RealmAnyTests {
                     // Different objects of same type are not equal
                     assertNotEquals(RealmAny.create(Sample()), RealmAny.create(realmObject))
                 }
+                // Collections in RealmAny are tested in RealmAnyNestedCollections.kt
+                RealmAny.Type.LIST,
+                RealmAny.Type.DICTIONARY -> {}
             }
         }
     }

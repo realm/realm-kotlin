@@ -34,7 +34,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Support for RealmLists, RealmSets and RealmDictionaries in `RealmAny`. This is only supported in the local database, Device Sync support will come in a future release. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
+* Updated to Realm Core 14.0.0-beta, commit 4926641c6cf2948fa494624ee802bb8cbc21387f.
 
 
 ## 1.12.1-SNAPSHOT (YYYY-MM-DD)

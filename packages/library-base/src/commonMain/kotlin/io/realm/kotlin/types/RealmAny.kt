@@ -137,7 +137,7 @@ public interface RealmAny {
      * Supported Realm data types that can be stored in a `RealmAny` instance.
      */
     public enum class Type {
-        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, SET, LIST, DICTIONARY;
+        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, LIST, DICTIONARY;
     }
 
     /**
@@ -257,12 +257,6 @@ public interface RealmAny {
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `T`.
      */
     public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
-
-    /**
-     * Returns the value from this `RealmAny` as a [RealmSet] containing new [RealmAny]s.
-     * @throws [IllegalStateException] if the stored value is not a set.
-     */
-    public fun asSet(): RealmSet<RealmAny?>
 
     /**
      * Returns the value from this `RealmAny` as a [RealmList] containing new [RealmAny]s.
@@ -386,34 +380,6 @@ public interface RealmAny {
          */
         public fun create(realmObject: DynamicRealmObject): RealmAny =
             RealmAnyImpl(Type.OBJECT, DynamicRealmObject::class, realmObject)
-
-        /**
-         * Creates an unmanaged `RealmAny` instance from a [RealmSet] of [RealmAny] values.
-         *
-         * To create a [RealmAny] containing a [RealmSet] of arbitrary values wrapped in [RealmAny]s
-         * use the [io.realm.kotlin.ext.realmAnySetOf].
-         *
-         * **NOTE:** Realm does not support to having other collections ([RealmSet], [RealmList] and
-         * [RealmDictionary]) in a [RealmSet]. These kind of structures can be built in a [RealmAny]
-         * but will fail if imported to realm.
-         *
-         * Example:
-         * ```
-         * class SampleObject() : RealmObject {
-         *     val realmAnyField: RealmAny? = null
-         * }
-         * val realmObject = copyToRealm(SampleObject())
-         *
-         * // Sets with non-collection types can be built and imported into realm.
-         * realmObject.realmAnyField = realmAnySetOf(1, "Realm", realmObject)
-         *
-         * // Sets with collection types can be built but cannot be imported into realm.
-         * val setsWithCollections = realmAnySetOf(realmSetOf(), realmListOf(), realmDictionaryOf())
-         * realmObject.realmAnyField = setsWithCollections // Will throw IllegalArgumentExcception
-         * ```
-         */
-        public fun create(value: RealmSet<RealmAny?>): RealmAny =
-            RealmAnyImpl(Type.SET, RealmAny::class, value)
 
         /**
          * Creates an unmanaged `RealmAny` instance from a [RealmList] of [RealmAny] values.

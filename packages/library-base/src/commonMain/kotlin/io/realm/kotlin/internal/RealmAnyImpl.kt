@@ -22,7 +22,6 @@ import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
@@ -92,8 +91,6 @@ internal class RealmAnyImpl<T : Any> constructor(
         val getValue = getValue(RealmAny.Type.OBJECT)
         return clazz.cast(getValue)
     }
-
-    override fun asSet(): RealmSet<RealmAny?> = getValue(RealmAny.Type.SET) as RealmSet<RealmAny?>
 
     override fun asList(): RealmList<RealmAny?> =
         getValue(RealmAny.Type.LIST) as RealmList<RealmAny?>
