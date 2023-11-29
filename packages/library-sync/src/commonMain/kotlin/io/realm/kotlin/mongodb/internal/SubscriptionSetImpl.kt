@@ -88,10 +88,10 @@ internal class SubscriptionSetImpl<T : BaseRealm>(
                     val callback = SubscriptionSetCallback { state ->
                         when (state) {
                             CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_COMPLETE -> {
-                                channel.send(true)
+                                channel.trySend(true)
                             }
                             CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_ERROR -> {
-                                channel.send(false)
+                                channel.trySend(false)
                             }
                             else -> {
                                 // Ignore all other states, wait for either complete or error.
