@@ -90,12 +90,12 @@ public class OkHttpWebsocketClient(
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
         super.onClosing(webSocket, code, reason)
-        logger.warn("onClosing code = $code reason = $reason")
+        logger.debug("onClosing code = $code reason = $reason")
     }
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         super.onClosed(webSocket, code, reason)
-        logger.warn("onClosed code = $code reason = $reason")
+        logger.debug("onClosed code = $code reason = $reason")
         if (!isClosed.getAndSet(true)) {
             scope.launch {
                 if (!isClosed.getAndSet(true)) {
@@ -125,34 +125,58 @@ public class OkHttpWebsocketClient(
 
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
         super.onFailure(webSocket, t, response)
-        logger.warn("onFailure throwable ${t.message} websocket closed? = ${isClosed.get()}")
+        logger.debug("onFailure throwable ${t.message} websocket closed? = ${isClosed.get()}")
         if (!isClosed.get()) {
             scope.launch {
-                observer.onError()
+                if (!isClosed.get()) {
+                    observer.onError()
+                }
             }
         }
     }
 
     override fun send(message: ByteArray, handlerCallback: RealmWebsocketHandlerCallbackPointer) {
-        scope.launch {
-            try {
-                webSocket.send(message.toByteString())
-                runCallback(
-                    handlerCallback, false, WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS, ""
-                )
-            } catch (e: Exception) {
-                runCallback(
-                    handlerCallback,
-                    false,
-                    WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_RUNTIME,
-                    "Sending Frame exception: ${e.message}"
-                )
+        if (!isClosed.get()) {
+            scope.launch {
+                try {
+                    if (!isClosed.get()) {
+                        webSocket.send(message.toByteString())
+                        runCallback(
+                            handlerCallback,
+                            false,
+                            WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS,
+                            ""
+                        )
+                    } else {
+                        runCallback(
+                            handlerCallback,
+                            false,
+                            WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED,
+                            "Connection already closed"
+                        )
+                    }
+
+                } catch (e: Exception) {
+                    runCallback(
+                        handlerCallback,
+                        false,
+                        WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_RUNTIME,
+                        "Sending Frame exception: ${e.message}"
+                    )
+                }
             }
+        } else {
+            runCallback(
+                handlerCallback,
+                false,
+                WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED,
+                "Connection already closed"
+            )
         }
     }
 
     override fun close() {
-        logger.warn("close")
+        logger.debug("close")
         if (!isClosed.getAndSet(true) && ::webSocket.isInitialized) { // Generalise :webSocket.isInitialized whenever it is used
             scope.launch {
                 webSocket.close(
@@ -187,6 +211,7 @@ private object OkHttpEngine : WebsocketEngine {
 public actual fun websocketEngine(): WebsocketEngine {
     return OkHttpEngine
 }
+
 @Suppress("LongParameterList")
 public actual fun platformWebsocketClient(
     observer: WebSocketObserver,
