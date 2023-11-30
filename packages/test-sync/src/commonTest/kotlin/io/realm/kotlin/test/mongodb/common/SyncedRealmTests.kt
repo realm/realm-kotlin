@@ -1373,16 +1373,11 @@ class SyncedRealmTests {
         ) {
             waitForInitialRemoteData(30.seconds)
             initialData {
-                // Verify that initial data is running before data is synced
-                assertEquals(0, query<ParentPk>().find().size)
+                // Verify that initial data is running after data is synced
+                assertEquals(4, query<ParentPk>().find().size)
             }
         }
-        Realm.open(config2).use {
-            runBlocking {
-                it.syncSession.downloadAllServerChanges(30.seconds)
-                assertEquals(4, it.query<ParentPk>().find().size)
-            }
-        }
+        Realm.open(config2).use { }
     }
 
     @Test
