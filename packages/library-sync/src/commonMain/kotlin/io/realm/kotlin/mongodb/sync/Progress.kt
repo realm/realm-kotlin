@@ -28,7 +28,12 @@ public data class Progress(
      * Total number of transferable bytes (bytes that have been transferred + pending bytes not
      * yet transferred).
      */
-    val transferableBytes: ULong
+    val transferableBytes: ULong,
+
+    /**
+     * Transfer progress estimation ranged from 0.0 to 1.0.
+     */
+    val progressEstimate: Double,
 ) {
     /**
      * Property indicating if all pending bytes have been transferred.

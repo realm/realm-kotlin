@@ -97,12 +97,17 @@ class ProgressListenerTests {
                     // We are not sure when the realm actually knows of the remote changes and consider
                     // them current, so wait a bit
                     delay(10.seconds)
-                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
-                        .run {
-                            withTimeout(TIMEOUT) {
-                                assertTrue(last().isTransferComplete)
+                    realm.syncSession.progressAsFlow(
+                        Direction.DOWNLOAD,
+                        ProgressMode.CURRENT_CHANGES
+                    ).run {
+                        withTimeout(TIMEOUT) {
+                            last().let { progress: Progress ->
+                                assertTrue(progress.isTransferComplete)
+                                assertEquals(1.0, progress.progressEstimate)
                             }
                         }
+                    }
                     // Progress.isTransferComplete does not guarantee that changes are integrated and
                     // visible in the realm
                     realm.syncSession.downloadAllServerChanges(TIMEOUT)
@@ -142,11 +147,15 @@ class ProgressListenerTests {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
                 realm.writeSampleData(TEST_SIZE, idOffset = TEST_SIZE * i, timeout = TIMEOUT)
-                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).run {
-                    withTimeout(TIMEOUT) {
-                        assertTrue(last().isTransferComplete)
+                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
+                    .run {
+                        withTimeout(TIMEOUT) {
+                            last().let {
+                                assertTrue(it.isTransferComplete)
+                                assertEquals(1.0, it.progressEstimate)
+                            }
+                        }
                     }
-                }
             }
         }
     }
@@ -284,7 +293,7 @@ class ProgressListenerTests {
         }
     }
 
-    // Operator that will return a flow that emits an incresing integer on each completion event
+    // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
         filter { it.isTransferComplete }
             .distinctUntilChanged()
