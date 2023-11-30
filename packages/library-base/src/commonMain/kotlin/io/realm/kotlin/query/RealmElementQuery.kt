@@ -20,12 +20,15 @@ import io.realm.kotlin.Deleteable
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.notifications.InitialResults
+import io.realm.kotlin.notifications.ListChange
+import io.realm.kotlin.notifications.ProjectionsChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
+import kotlin.reflect.KClass
 
 /**
  * Query returning [RealmResults].
@@ -63,4 +66,15 @@ public interface RealmElementQuery<T : BaseRealmObject> : Deleteable {
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
      */
     public fun asFlow(): Flow<ResultsChange<T>>
+
+    /**
+     * TODO
+     */
+    public fun <T: Any> find(projection: KClass<T>): List<T>
+
+    /**
+     * TODO
+     */
+    public fun <T: Any> asFlow(projection: KClass<T>): ProjectionsChange<T>
+
 }

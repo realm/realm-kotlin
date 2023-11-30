@@ -14,6 +14,7 @@ import io.realm.kotlin.internal.interop.RealmQueryPointer
 import io.realm.kotlin.internal.realmObjectReference
 import io.realm.kotlin.internal.runIfManaged
 import io.realm.kotlin.internal.toRealmObject
+import io.realm.kotlin.notifications.ProjectionChange
 import io.realm.kotlin.notifications.ResultsChange
 import io.realm.kotlin.notifications.SingleQueryChange
 import io.realm.kotlin.notifications.internal.DeletedObjectImpl
@@ -43,6 +44,10 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
             mediator = mediator,
             realm = realmReference
         )
+    }
+
+    override fun <T : Any> find(projection: KClass<T>): List<T> {
+        TODO("Not yet implemented")
     }
 
     /**
@@ -90,6 +95,10 @@ internal class SingleQuery<E : BaseRealmObject> constructor(
                     }
                 }
             }
+    }
+
+    override fun <T : Any> asFlow(projection: KClass<T>): ProjectionChange<T> {
+        TODO("Not yet implemented")
     }
 
     /**

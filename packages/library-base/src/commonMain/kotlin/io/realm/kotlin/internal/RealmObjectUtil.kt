@@ -25,7 +25,10 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmObjectPointer
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrNull
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
+import io.realm.kotlin.internal.platform.realmProjectionCompanionOrNull
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmProjectionFactory
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 internal fun <T : BaseRealmObject> RealmObjectInternal.manage(
@@ -116,6 +119,11 @@ internal inline fun KClass<*>.realmObjectCompanionOrNull(): RealmObjectCompanion
 internal inline fun <reified T : BaseRealmObject> KClass<T>.realmObjectCompanionOrThrow(): RealmObjectCompanion {
     return realmObjectCompanionOrThrow(this)
 }
+
+public inline fun <O: TypedRealmObject, T: Any> KClass<T>.realmProjectionCompanionOrNull(): RealmProjectionFactory<O, T>? {
+    return realmProjectionCompanionOrNull(this)
+}
+
 
 /**
  * Convenience property to get easy access to the RealmObjectReference of a BaseRealmObject.

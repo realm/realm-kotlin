@@ -18,6 +18,8 @@ package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.RealmObjectCompanion
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmProjectionFactory
+import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
 /**
@@ -31,3 +33,8 @@ internal expect fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): Real
  * Returns the [RealmObjectCompanion] associated with a given [BaseRealmObject]'s [KClass].
  */
 internal expect fun <T : BaseRealmObject> realmObjectCompanionOrThrow(clazz: KClass<T>): RealmObjectCompanion
+
+/**
+ * TODO
+ */
+public expect fun <O: TypedRealmObject, T: Any> realmProjectionCompanionOrNull(clazz: KClass<T>): RealmProjectionFactory<O, T>?

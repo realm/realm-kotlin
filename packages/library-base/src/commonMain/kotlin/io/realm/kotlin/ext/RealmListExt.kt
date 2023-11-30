@@ -29,6 +29,7 @@ import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.TypedRealmObject
+import kotlin.reflect.KClass
 
 /**
  * Instantiates an **unmanaged** [RealmList].
@@ -72,3 +73,10 @@ public fun <T : BaseRealmObject> RealmList<T>.query(
     } else {
         throw IllegalArgumentException("Unmanaged list cannot be queried")
     }
+
+/**
+ * TODO Docs
+ */
+public inline fun <reified O : TypedRealmObject, T: Any> RealmList<O>.projectInto(target: KClass<T>): List<T> {
+    TODO()
+}
