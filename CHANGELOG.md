@@ -13,6 +13,7 @@
 * [Sync] Various sync timeout options can now be configured through `AppConfiguration.Builder.syncTimeouts()`. (Issue [#971](https://github.com/realm/realm-kotlin/issues/971)).
 
 ### Fixed
+* `RealmInstant.now` used an API (`java.time.Clock.systemUTC().instant()`) introduced in API 26, current minSDK is 16. (Issue [#1564](https://github.com/realm/realm-kotlin/issues/1564))
 * Fix compiler crash caused by a change in Kotlin 1.9.20 ((toIrConst moved under common IrUtils)[https://github.com/JetBrains/kotlin/commit/ca8db7d0b83f6dfd6afcea7a5fe7556d38f325d8]). (Issue [#1566](https://github.com/realm/realm-kotlin/issues/1566))
 
 ### Compatibility
