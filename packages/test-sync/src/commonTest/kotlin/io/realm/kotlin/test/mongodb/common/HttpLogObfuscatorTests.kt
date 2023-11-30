@@ -64,24 +64,24 @@ class HttpLogObfuscatorTests {
         ) {
             message?.also {
                 if (it.contains(""""password":"***"""")) {
-                    channel.send(Operation.OBFUSCATED_PASSWORD)
+                    channel.trySend(Operation.OBFUSCATED_PASSWORD)
                 } else if (it.contains(""""access_token":"***","refresh_token":"***"""")) {
-                    channel.send(Operation.OBFUSCATED_ACCESS_AND_REFRESH_TOKENS)
+                    channel.trySend(Operation.OBFUSCATED_ACCESS_AND_REFRESH_TOKENS)
                 } else if (it.contains(""""key":"***"""")) {
-                    channel.send(Operation.OBFUSCATED_API_KEY)
+                    channel.trySend(Operation.OBFUSCATED_API_KEY)
                 } else if (it.contains(""""id_token":"***"""")) {
-                    channel.send(Operation.OBFUSCATED_APPLE_OR_GOOGLE_ID_TOKEN)
+                    channel.trySend(Operation.OBFUSCATED_APPLE_OR_GOOGLE_ID_TOKEN)
                 } else if (it.contains(""""accessToken":"***"""")) {
-                    channel.send(Operation.OBFUSCATED_FACEBOOK)
+                    channel.trySend(Operation.OBFUSCATED_FACEBOOK)
                 } else if (it.contains(""""authCode":"***"""")) {
-                    channel.send(Operation.OBFUSCATED_GOOGLE_AUTH_CODE)
+                    channel.trySend(Operation.OBFUSCATED_GOOGLE_AUTH_CODE)
                 } else if (it.contains(""""token":"***"""")) {
-                    channel.send(Operation.OBFUSCATED_JWT)
+                    channel.trySend(Operation.OBFUSCATED_JWT)
                 } else if (
                     it.contains(""""arguments":[***]""") ||
                     it.contains("BODY START\n***\nBODY END")
                 ) {
-                    channel.send(Operation.OBFUSCATED_CUSTOM_FUNCTION)
+                    channel.trySend(Operation.OBFUSCATED_CUSTOM_FUNCTION)
                 } else if (it.contains(""""password":"$password"""")) {
                     channel.cancel(CancellationException("Password was not obfuscated: $message"))
                 } else if (it.contains(""""(("access_token"):(".+?")),(("refresh_token"):(".+?"))""".toRegex())) {

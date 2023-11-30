@@ -39,6 +39,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
@@ -324,7 +325,7 @@ class SyncSessionTests {
             user = user,
             partitionValue = partitionValue
         ).errorHandler { session, _ ->
-            channel.send(session)
+            channel.trySendOrFail(session)
         }.build()
 
         var realm: Realm? = null
@@ -499,7 +500,7 @@ class SyncSessionTests {
             partitionValue = partitionValue
         )
             .name("test2.realm")
-            .errorHandler { session, _ -> channel.send(session) }
+            .errorHandler { session, _ -> channel.trySendOrFail(session) }
             .build()
         Realm.open(config2).use { realm2 ->
             // Await the sync session sent.

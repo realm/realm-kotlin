@@ -63,6 +63,7 @@ import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -316,7 +317,7 @@ class SyncedRealmTests {
             user = user,
             partitionValue = partitionValue
         ).errorHandler { _, error ->
-            channel.send(error)
+            channel.trySendOrFail(error)
         }.build()
 
         runBlocking {
@@ -368,7 +369,7 @@ class SyncedRealmTests {
             ).name("test2.realm")
                 .errorHandler(object : ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
-                        channel.send(error)
+                        channel.trySendOrFail(error)
                     }
                 }).build()
             val realm2 = Realm.open(config2)
@@ -579,7 +580,7 @@ class SyncedRealmTests {
             fileSystem.list(syncDir)
                 .also { testDirPathList ->
                     assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
-                    readyToCloseChannel.send(Unit)
+                    readyToCloseChannel.trySendOrFail(Unit)
                 }
             testRealm.close()
             closedChannel.receiveOrFail()

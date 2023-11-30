@@ -36,6 +36,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -410,7 +411,7 @@ class AppConfigurationTests {
                         "$AUTH_HEADER_NAME: "
                     )
                 ) {
-                    channel.send(true)
+                    channel.trySendOrFail(true)
                 }
             }
         }
