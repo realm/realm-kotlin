@@ -67,6 +67,7 @@ import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -1363,6 +1364,7 @@ class SyncedRealmTests {
             }
         }
 
+        val initialDataVerified = atomic(false)
         val config2 = createPartitionSyncConfig(
             user = user, partitionValue = partitionValue, name = "db2",
             errorHandler = object : SyncSession.ErrorHandler {
@@ -1375,9 +1377,11 @@ class SyncedRealmTests {
             initialData {
                 // Verify that initial data is running after data is synced
                 assertEquals(4, query<ParentPk>().find().size)
+                initialDataVerified.value = true
             }
         }
         Realm.open(config2).use { }
+        assertTrue { initialDataVerified.value }
     }
 
     @Test
