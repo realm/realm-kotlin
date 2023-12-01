@@ -43,7 +43,7 @@ actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM
 
 // The value to pass to JNI functions that accept longs as replacements for pointers and need
 // to represent null.
-val NULL_POINTER_VALUE = 0L
+const val NULL_POINTER_VALUE = 0L
 
 /**
  * JVM/Android interop implementation.
