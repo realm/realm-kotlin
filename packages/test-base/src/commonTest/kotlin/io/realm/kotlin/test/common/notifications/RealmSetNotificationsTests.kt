@@ -349,17 +349,16 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
     @Test
     override fun keyPath_topLevelProperty() = runBlocking<Unit> {
         val c = Channel<SetChange<RealmSetContainer>>(1)
-        val obj = realm.write {
+        val set: RealmSet<RealmSetContainer> = realm.write {
             copyToRealm(
                 RealmSetContainer().apply {
                     this.objectSetField = realmSetOf(
-                        RealmSetContainer().apply { this.stringField = "list-item-1" },
-                        RealmSetContainer().apply { this.stringField = "list-item-2" }
+                        RealmSetContainer().apply { this.stringField = "set-item-1" },
+                        RealmSetContainer().apply { this.stringField = "set-item-2" }
                     )
                 }
             )
-        }
-        val set: RealmSet<RealmSetContainer> = obj.objectSetField
+        }.objectSetField
         val observer = async {
             set.asFlow(listOf("stringField")).collect {
                 c.trySend(it)
@@ -374,14 +373,15 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
             // Update field that should trigger a notification
             findLatest(set.first())!!.stringField = "Foo"
         }
-        c.receiveOrFail().let { listChange ->
-            assertIs<UpdatedSet<RealmSetContainer>>(listChange)
-            when (listChange) {
+        c.receiveOrFail().let { setChange ->
+            assertIs<UpdatedSet<RealmSetContainer>>(setChange)
+            when (setChange) {
                 is UpdatedSet -> {
-                    assertEquals(0, listChange.deletions)
-                    assertEquals(0, listChange.insertions)
+                    assertEquals(0, setChange.deletions)
+                    assertEquals(0, setChange.insertions)
+                    assertNotNull(setChange.set.firstOrNull { it.stringField == "Foo" })
                 }
-                else -> fail("Unexpected change: $listChange")
+                else -> fail("Unexpected change: $setChange")
             }
         }
         observer.cancel()
@@ -427,6 +427,7 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
                 is UpdatedSet -> {
                     assertEquals(0, setChange.insertions)
                     assertEquals(0, setChange.deletions)
+                    assertEquals("Bar", setChange.set.first().objectSetField.first().stringField)
                 }
                 else -> fail("Unexpected change: $setChange")
             }
@@ -567,15 +568,25 @@ class RealmSetNotificationsTests : RealmEntityNotificationTests {
             val obj = findLatest(list.first())!!.objectSetField.first().objectSetField.first().objectSetField.first().objectSetField.first().objectSetField.first()
             obj.stringField = "Bar"
         }
-        c.receiveOrFail().let { listChange ->
-            assertIs<UpdatedSet<RealmSetContainer>>(listChange)
-            when (listChange) {
+        c.receiveOrFail().let { setChange ->
+            assertIs<UpdatedSet<RealmSetContainer>>(setChange)
+            when (setChange) {
                 is SetChange -> {
                     // Core will only report something changed to the top-level property.
-                    assertEquals(0, listChange.insertions)
-                    assertEquals(0, listChange.deletions)
+                    assertEquals(0, setChange.insertions)
+                    assertEquals(0, setChange.deletions)
+                    assertEquals(
+                        "Bar",
+                        setChange.set.first()
+                            .objectSetField.first()
+                            .objectSetField.first()
+                            .objectSetField.first()
+                            .objectSetField.first()
+                            .objectSetField.first()
+                            .stringField
+                    )
                 }
-                else -> fail("Unexpected change: $listChange")
+                else -> fail("Unexpected change: $setChange")
             }
         }
         observer.cancel()

@@ -85,7 +85,8 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  *
  * @param keyPaths An optional list of properties that defines when a change to the object will
  * result in a change being emitted. Nested properties can be defined using a dotted
- * syntax, e.g. `parent.child.name`. If no keypaths are provided, changes to all top-level
+ * syntax, e.g. `parent.child.name`. Wildcards `*` can be be used to capture all properties at a
+ * given level, e.g. `child.*` or `*.*`. If no keypaths are provided, changes to all top-level
  * properties and nested properties 4 levels down will trigger a change.
  * @return a flow representing changes to the object.
  * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject]

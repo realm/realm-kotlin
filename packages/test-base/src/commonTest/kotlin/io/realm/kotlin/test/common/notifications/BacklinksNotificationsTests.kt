@@ -40,6 +40,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -493,7 +494,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     assertEquals(1, resultsChange.changes.size)
                     assertEquals(0, resultsChange.deletions.size)
                     assertEquals(1, resultsChange.list.first().objectBacklinks.size)
-                    // This starts at 42, s if the first write triggers a change event, it will
+                    // This starts at 42, if the first write triggers a change event, it will
                     // catch it here.
                     assertEquals(resultsChange.list.first().objectBacklinks.first().intField, 1)
                 }
@@ -519,7 +520,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                             this.nullableObject = Sample().apply {
                                 this.stringField = "child-child-child"
                                 this.nullableObject = Sample().apply {
-                                    this.stringField = "child-child-child"
+                                    this.stringField = "child-child-child-child"
                                     this.nullableObject = Sample().apply {
                                         this.stringField = "BottomChild"
                                     }
@@ -582,7 +583,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                             this.nullableObject = Sample().apply {
                                 this.stringField = "child-child-child"
                                 this.nullableObject = Sample().apply {
-                                    this.stringField = "child-child-child"
+                                    this.stringField = "child-child-child-child"
                                     this.nullableObject = Sample().apply {
                                         this.stringField = "BottomChild"
                                     }
@@ -631,20 +632,29 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
     }
 
     @Test
-    @Ignore // Already covered by RealmResultsNotificationTests
     override fun keyPath_unknownTopLevelProperty() = runBlocking<Unit> {
-        TODO()
+        val results = realm.query<Sample>()
+        assertFailsWith<IllegalArgumentException>() {
+            results.asFlow(listOf("foo"))
+        }
     }
 
     @Test
-    @Ignore // Already covered by RealmResultsNotificationTests
     override fun keyPath_unknownNestedProperty() = runBlocking<Unit> {
-        TODO()
+        val results = realm.query<Sample>()
+        assertFailsWith<IllegalArgumentException>() {
+            results.asFlow(listOf("objectBacklinks.foo"))
+        }
     }
 
     @Test
-    @Ignore // Already covered by RealmResultsNotificationTests
     override fun keyPath_invalidNestedProperty() = runBlocking<Unit> {
-        TODO()
+        val results = realm.query<Sample>()
+        assertFailsWith<IllegalArgumentException> {
+            results.asFlow(listOf("objectBacklinks.intField.foo"))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            results.asFlow(listOf("objectBacklinks.intListField.foo"))
+        }
     }
 }

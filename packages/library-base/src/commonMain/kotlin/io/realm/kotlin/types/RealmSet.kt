@@ -54,9 +54,10 @@ public interface RealmSet<E> : MutableSet<E>, Deleteable {
      *
      * @param keyPaths An optional list of model class properties that defines when a change to
      * objects inside the set will result in a change being emitted. Nested properties can be
-     * defined using a dotted syntax, e.g. `parent.child.name`. If no keypaths are provided, changes
-     * to all top-level properties and nested properties up to 4 levels down will trigger a change.
-     * Keypaths are only supported for sets of objects.
+     * defined using a dotted syntax, e.g. `parent.child.name`. Wildcards `*` can be be used
+     * to capture all properties at a given level, e.g. `child.*` or `*.*`. If no keypaths
+     * are provided, changes to all top-level properties and nested properties up to 4 levels down
+     * will trigger a change. Keypaths are only supported for sets containing realm objects.
      * @return a flow representing changes to the set.
      * @throws IllegalArgumentException if an invalid keypath is provided or the set does not
      * contain realm objects.

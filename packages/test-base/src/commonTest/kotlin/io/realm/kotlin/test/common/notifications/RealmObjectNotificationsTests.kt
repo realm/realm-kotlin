@@ -393,7 +393,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                             this.nullableObject = Sample().apply {
                                 this.stringField = "child-child-child"
                                 this.nullableObject = Sample().apply {
-                                    this.stringField = "child-child-child"
+                                    this.stringField = "child-child-child-child"
                                     this.nullableObject = Sample().apply {
                                         this.stringField = "BottomChild"
                                     }
@@ -448,7 +448,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
                             this.nullableObject = Sample().apply {
                                 this.stringField = "child-child-child"
                                 this.nullableObject = Sample().apply {
-                                    this.stringField = "child-child-child"
+                                    this.stringField = "child-child-child-child"
                                     this.nullableObject = Sample().apply {
                                         this.stringField = "BottomChild"
                                     }

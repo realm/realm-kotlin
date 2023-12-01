@@ -26,7 +26,7 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 13.24.0, commit 3bc7ce91fa67b38f3ff433e6372f741a7c906f2b.
+* Updated to Realm Core 13.24.0, commit e593a5f19d0dc205db931ec5618a8c10c95cac90.
 
 
 ## 1.12.1-SNAPSHOT (YYYY-MM-DD)

@@ -216,7 +216,6 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     override fun asFlow(): Flow<T> {
         realmReference.checkClosed()
         return realmReference.owner
-            // TODO
             .registerObserver(this, null)
             .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()

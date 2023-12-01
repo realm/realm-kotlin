@@ -1658,7 +1658,7 @@ actual object RealmInterop {
     actual fun realm_create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer {
         memScoped {
             val userKeyPaths: CPointer<CPointerVarOf<CPointer<ByteVarOf<Byte>>>> = keyPaths.toCStringArray(this)
-            val keyPathPointer = realm_wrapper.realm_create_key_path_array(realm.cptr(), clazz.key.toUInt(), keyPaths.size, userKeyPaths)
+            val keyPathPointer = realm_wrapper.realm_create_key_path_array(realm.cptr(), clazz.key.toUInt(), keyPaths.size.toULong(), userKeyPaths)
             return CPointerWrapper(keyPathPointer)
         }
     }
