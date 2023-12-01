@@ -4,6 +4,7 @@
 * None.
 
 ### Enhancements
+* Added support for keypaths in `asFlow()` methods on objects and queries. This makes it possible to control which properties will trigger change events, including properties on objects below the default nested limit of 4. (Issue [#661](https://github.com/realm/realm-kotlin/issues/661))
 * Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
 * [Sync] Added support for multiplexing sync connections. When enabled, a single
   connection is used per sync user rather than one per synchronized Realm. This
@@ -32,7 +33,7 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.24.0, commit e593a5f19d0dc205db931ec5618a8c10c95cac90.
 
 
 ## 1.12.1-SNAPSHOT (YYYY-MM-DD)

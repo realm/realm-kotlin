@@ -31,6 +31,7 @@ import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert
 import io.realm.kotlin.internal.interop.RealmInterop.realm_dictionary_insert_embedded
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmMapPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -39,6 +40,7 @@ import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.notifications.MapChange
 import io.realm.kotlin.notifications.MapChangeSet
 import io.realm.kotlin.notifications.internal.DeletedDictionaryImpl
@@ -61,7 +63,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
     internal val parent: RealmObjectReference<*>,
     internal val nativePointer: RealmMapPointer,
     val operator: MapOperator<K, V>
-) : AbstractMutableMap<K, V>(), RealmMap<K, V>, CoreNotifiable<ManagedRealmMap<K, V>, MapChange<K, V>>, Flowable<MapChange<K, V>> {
+) : AbstractMutableMap<K, V>(), RealmMap<K, V>, CoreNotifiable<ManagedRealmMap<K, V>, MapChange<K, V>> {
 
     private val keysPointer by lazy { RealmInterop.realm_dictionary_get_keys(nativePointer) }
     private val valuesPointer by lazy { RealmInterop.realm_dictionary_to_results(nativePointer) }
@@ -99,15 +101,20 @@ internal abstract class ManagedRealmMap<K, V> constructor(
 
     override fun remove(key: K): V? = operator.remove(key)
 
-    override fun asFlow(): Flow<MapChange<K, V>> {
+    override fun asFlow(keyPaths: List<String>?): Flow<MapChange<K, V>> {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this)
+        val keyPathInfo = keyPaths?.let {
+            Validation.isType<RealmObjectMapOperator<*, *>>(operator, "Keypaths are only supported for maps of objects.")
+            Pair(operator.classKey, keyPaths)
+        }
+        return operator.realmReference.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun registerForNotification(
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer =
-        RealmInterop.realm_dictionary_add_notification_callback(nativePointer, callback)
+        RealmInterop.realm_dictionary_add_notification_callback(nativePointer, keyPaths, callback)
 
     internal fun isValid(): Boolean =
         !nativePointer.isReleased() && RealmInterop.realm_dictionary_is_valid(nativePointer)
@@ -618,7 +625,7 @@ internal class EmbeddedRealmObjectMapOperator<K, V : BaseRealmObject> constructo
 internal class UnmanagedRealmDictionary<V>(
     dictionary: Map<String, V> = mutableMapOf()
 ) : RealmDictionary<V>, MutableMap<String, V> by dictionary.toMutableMap() {
-    override fun asFlow(): Flow<MapChange<String, V>> =
+    override fun asFlow(keyPaths: List<String>?): Flow<MapChange<String, V>> =
         throw UnsupportedOperationException("Unmanaged dictionaries cannot be observed.")
 
     override fun toString(): String = entries.joinToString { (key, value) -> "[$key,$value]" }

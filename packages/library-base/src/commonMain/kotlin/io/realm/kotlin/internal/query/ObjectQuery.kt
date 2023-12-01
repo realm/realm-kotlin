@@ -170,9 +170,10 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
     override fun notifiable(): Notifiable<RealmResultsImpl<E>, ResultsChange<E>> =
         QueryResultNotifiable(resultsPointer, classKey, clazz, mediator)
 
-    override fun asFlow(): Flow<ResultsChange<E>> {
+    override fun asFlow(keyPath: List<String>?): Flow<ResultsChange<E>> {
+        val keyPathInfo = keyPath?.let { Pair(classKey, it) }
         return realmReference.owner
-            .registerObserver(this)
+            .registerObserver(this, keyPathInfo)
     }
 
     override fun delete() {
