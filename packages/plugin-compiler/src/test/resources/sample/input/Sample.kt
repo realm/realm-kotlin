@@ -30,10 +30,13 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.RealmTypeAdapter
 import io.realm.kotlin.types.annotations.Ignore
 import io.realm.kotlin.types.annotations.Index
 import io.realm.kotlin.types.annotations.PrimaryKey
 import io.realm.kotlin.types.annotations.PersistedName
+import io.realm.kotlin.types.annotations.TypeAdapter
+import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import java.util.*
@@ -201,7 +204,25 @@ class Sample : RealmObject {
     @PersistedName("persistedNameLinkingObjectsField")
     val publicNameLinkingObjectsField by backlinks(Sample::objectSetField)
 
+    @TypeAdapter(adapter = RealmInstantBsonDateTimeAdapterSingleton::class)
+    var singletonAdaptedRealmInstant: BsonDateTime = BsonDateTime()
+
+    @TypeAdapter(adapter = RealmInstantBsonDateTimeAdapterInstanced::class)
+    var instancedAdaptedRealmInstant: BsonDateTime = BsonDateTime()
+
     fun dumpSchema(): String = "${Sample.`io_realm_kotlin_schema`()}"
+}
+
+object RealmInstantBsonDateTimeAdapterSingleton: RealmTypeAdapter<RealmInstant, BsonDateTime> {
+    override fun fromRealm(realmValue: RealmInstant): BsonDateTime = BsonDateTime(100)
+
+    override fun toRealm(value: BsonDateTime): RealmInstant = RealmInstant.now()
+}
+
+class RealmInstantBsonDateTimeAdapterInstanced: RealmTypeAdapter<RealmInstant, BsonDateTime> {
+    override fun fromRealm(realmValue: RealmInstant): BsonDateTime = BsonDateTime(100)
+
+    override fun toRealm(value: BsonDateTime): RealmInstant = RealmInstant.now()
 }
 
 class Child : RealmObject {

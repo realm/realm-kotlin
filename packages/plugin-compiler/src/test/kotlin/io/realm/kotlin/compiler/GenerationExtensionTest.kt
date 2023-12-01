@@ -319,7 +319,11 @@ class GenerationExtensionTest {
             // @PersistedName annotated fields
             "persistedNameStringField" to PropertyType.RLM_PROPERTY_TYPE_STRING,
             "persistedNameChildField" to PropertyType.RLM_PROPERTY_TYPE_OBJECT,
-            "persistedNameLinkingObjectsField" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
+            "persistedNameLinkingObjectsField" to PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
+
+            // Adapted types
+            "singletonAdaptedRealmInstant" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+            "instancedAdaptedRealmInstant" to PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
         )
         assertEquals(expectedProperties.size, properties.size)
         properties.map { property ->

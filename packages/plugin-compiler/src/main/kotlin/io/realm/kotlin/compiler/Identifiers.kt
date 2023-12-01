@@ -69,6 +69,9 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
     val REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT = Name.identifier("setEmbeddedRealmObject")
 
+    val REALM_TYPE_ADAPTER_FROM_REALM = Name.identifier("fromRealm")
+    val REALM_TYPE_ADAPTER_TO_REALM = Name.identifier("toRealm")
+
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
@@ -146,6 +149,7 @@ object ClassIds {
     val PERSISTED_NAME_ANNOTATION = ClassId(FqNames.PACKAGE_ANNOTATIONS, Name.identifier("PersistedName"))
     val TRANSIENT_ANNOTATION = ClassId(FqName("kotlin.jvm"), Name.identifier("Transient"))
     val MODEL_OBJECT_ANNOTATION = ClassId(FqName("io.realm.kotlin.internal.platform"), Name.identifier("ModelObject"))
+    val TYPE_ADAPTER_ANNOTATION = ClassId(FqNames.PACKAGE_ANNOTATIONS, Name.identifier("TypeAdapter"))
     val PROPERTY_INFO_CREATE = CallableId(FqName("io.realm.kotlin.internal.schema"), Name.identifier("createPropertyInfo"))
     val CLASS_KIND_TYPE = ClassId(FqName("io.realm.kotlin.schema"), Name.identifier("RealmClassKind"))
 

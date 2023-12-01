@@ -24,6 +24,7 @@ import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
+import io.realm.kotlin.types.RealmTypeAdapter
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
@@ -88,6 +89,19 @@ public interface RealmConfiguration : Configuration {
          */
         public fun directory(directoryPath: String): Builder =
             apply { this.directory = directoryPath }
+
+        // TODO misplaced, move around
+        public class TypeAdapterBuilder {
+            internal val adapters: MutableList<RealmTypeAdapter<*, *>> = mutableListOf()
+            public fun add(adapter: RealmTypeAdapter<*,*>) {
+                adapters.add(adapter)
+            }
+        }
+
+        public fun typeAdapters(block: TypeAdapterBuilder.()->Unit): Builder =
+            apply {
+                this.typeAdapters = TypeAdapterBuilder().apply(block).adapters
+            }
 
         /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of
@@ -192,7 +206,8 @@ public interface RealmConfiguration : Configuration {
                 initialDataCallback,
                 inMemory,
                 initialRealmFileConfiguration,
-                realmLogger
+                realmLogger,
+                typeAdapters,
             )
         }
     }

@@ -36,6 +36,7 @@ import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.RealmTypeAdapter
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.geo.GeoBox
 import io.realm.kotlin.types.geo.GeoCircle
@@ -258,6 +259,32 @@ internal object IntConverter : CoreIntConverter, CompositeConverter<Int, Long>()
 // Top level methods to allow inlining from compiler plugin
 public inline fun intToLong(value: Int?): Long? = value?.toLong()
 public inline fun longToInt(value: Long?): Int? = value?.toInt()
+
+public inline fun toRealm(
+    obj: RealmObjectReference<out BaseRealmObject>,
+    converterClass: KClass<RealmTypeAdapter<Any, Any>>,
+    userValue: Any,
+): Any {
+    val adapter = obj.owner.owner
+        .configuration
+        .adapters
+        .first { it::class == converterClass } as RealmTypeAdapter<Any, Any>
+
+    return adapter.toRealm(userValue)
+}
+
+public inline fun fromRealm(
+    obj: RealmObjectReference<out BaseRealmObject>,
+    converterClass: KClass<RealmTypeAdapter<*, *>>,
+    realmValue: Any,
+): Any {
+    val adapter = obj.owner.owner
+        .configuration
+        .adapters
+        .first { it::class == converterClass } as RealmTypeAdapter<Any, Any>
+
+    return adapter.fromRealm(realmValue)
+}
 
 internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>() {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =

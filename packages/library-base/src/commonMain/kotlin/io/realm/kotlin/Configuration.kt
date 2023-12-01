@@ -25,6 +25,7 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
@@ -238,6 +239,7 @@ public interface Configuration {
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
         protected var initialRealmFileConfiguration: InitialRealmFileConfiguration? = null
+        protected var typeAdapters: List<RealmTypeAdapter<*, *>> = listOf()
 
         /**
          * Sets the filename of the realm file.

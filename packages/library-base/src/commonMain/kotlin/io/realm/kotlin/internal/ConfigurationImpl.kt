@@ -45,6 +45,7 @@ import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlin.reflect.KClass
 
 // TODO Public due to being accessed from `library-sync`
@@ -67,7 +68,8 @@ public open class ConfigurationImpl(
     override val isFlexibleSyncConfiguration: Boolean,
     inMemory: Boolean,
     initialRealmFileConfiguration: InitialRealmFileConfiguration?,
-    logger: ContextLogger
+    logger: ContextLogger,
+    override val adapters: List<RealmTypeAdapter<*, *>>,
 ) : InternalConfiguration {
 
     override val path: String

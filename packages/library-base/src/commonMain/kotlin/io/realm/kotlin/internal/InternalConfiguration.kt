@@ -21,6 +21,7 @@ import io.realm.kotlin.internal.interop.RealmConfigurationPointer
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlin.reflect.KClass
 
 /**
@@ -36,6 +37,7 @@ public interface InternalConfiguration : Configuration {
     public val writeDispatcherFactory: CoroutineDispatcherFactory
     public val schemaMode: SchemaMode
     public val logger: ContextLogger
+    public val adapters: List<RealmTypeAdapter<*, *>>
 
     // Temporary work-around for https://github.com/realm/realm-kotlin/issues/724
     public val isFlexibleSyncConfiguration: Boolean

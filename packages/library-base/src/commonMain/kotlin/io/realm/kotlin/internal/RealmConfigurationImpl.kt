@@ -25,6 +25,7 @@ import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.migration.RealmMigration
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlin.reflect.KClass
 
 public const val REALM_FILE_EXTENSION: String = ".realm"
@@ -47,7 +48,8 @@ internal class RealmConfigurationImpl(
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
     override val initialRealmFileConfiguration: InitialRealmFileConfiguration?,
-    logger: ContextLogger
+    logger: ContextLogger,
+    adapters: List<RealmTypeAdapter<*, *>>
 ) : ConfigurationImpl(
     directory,
     name,
@@ -69,6 +71,7 @@ internal class RealmConfigurationImpl(
     false,
     inMemory,
     initialRealmFileConfiguration,
-    logger
+    logger,
+    adapters,
 ),
     RealmConfiguration
