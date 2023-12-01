@@ -105,8 +105,7 @@ internal abstract class ManagedRealmMap<K, V> constructor(
         operator.realmReference.checkClosed()
         val keyPathInfo = keyPaths?.let {
             Validation.isType<RealmObjectMapOperator<*, *>>(operator, "Keypaths are only supported for maps of objects.")
-            val classKey = operator.classKey // if (operator is RealmObjectMapOperator) {
-            Pair(classKey, keyPaths)
+            Pair(operator.classKey, keyPaths)
         }
         return operator.realmReference.owner.registerObserver(this, keyPathInfo)
     }

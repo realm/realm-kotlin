@@ -3029,55 +3029,53 @@ class QueryTests {
 
     // Smoke-test for wildcards.
     @Test
-    fun keyPath_usingWildCards() {
+    fun keyPath_usingWildCards() = runBlocking {
         val channel = Channel<ResultsChange<QuerySample>>(1)
-        runBlocking {
-            val observer = async {
-                realm.query<QuerySample>("stringField = 'parent'")
-                    // Should match what the notifier is doing by default
-                    .asFlow(listOf("*.*.*.*"))
-                    .collect { results ->
-                        assertNotNull(results)
-                        channel.send(results)
-                    }
-            }
-            channel.receiveOrFail().let { resultsChange ->
-                assertIs<InitialResults<*>>(resultsChange)
-                assertTrue(resultsChange.list.isEmpty())
-            }
-            val obj = realm.writeBlocking {
-                copyToRealm(
-                    QuerySample().apply {
-                        stringField = "parent"
-                        nullableRealmObject = QuerySample().apply {
-                            stringField = "child"
-                        }
-                    }
-                )
-            }
-            channel.receiveOrFail().let { resultsChange ->
-                assertIs<UpdatedResults<*>>(resultsChange)
-                assertEquals(1, resultsChange.list.size)
-            }
-            realm.writeBlocking {
-                findLatest(obj)!!.intField = 42
-            }
-            channel.receiveOrFail().let { resultsChange ->
-                assertIs<UpdatedResults<*>>(resultsChange)
-                assertEquals(1, resultsChange.list.size)
-                assertEquals(42, resultsChange.list.first().intField)
-            }
-            realm.writeBlocking {
-                findLatest(obj)!!.nullableRealmObject!!.stringField = "update"
-            }
-            channel.receiveOrFail().let { resultsChange ->
-                assertIs<UpdatedResults<*>>(resultsChange)
-                assertEquals(1, resultsChange.list.size)
-                assertEquals("update", resultsChange.list.first().nullableRealmObject!!.stringField)
-            }
-            observer.cancel()
-            channel.close()
+        val observer = async {
+            realm.query<QuerySample>("stringField = 'parent'")
+                // Should match what the notifier is doing by default
+                .asFlow(listOf("*.*.*.*"))
+                .collect { results ->
+                    assertNotNull(results)
+                    channel.send(results)
+                }
         }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<InitialResults<*>>(resultsChange)
+            assertTrue(resultsChange.list.isEmpty())
+        }
+        val obj = realm.write {
+            copyToRealm(
+                QuerySample().apply {
+                    stringField = "parent"
+                    nullableRealmObject = QuerySample().apply {
+                        stringField = "child"
+                    }
+                }
+            )
+        }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<*>>(resultsChange)
+            assertEquals(1, resultsChange.list.size)
+        }
+        realm.write {
+            findLatest(obj)!!.intField = 42
+        }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<*>>(resultsChange)
+            assertEquals(1, resultsChange.list.size)
+            assertEquals(42, resultsChange.list.first().intField)
+        }
+        realm.write {
+            findLatest(obj)!!.nullableRealmObject!!.stringField = "update"
+        }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<*>>(resultsChange)
+            assertEquals(1, resultsChange.list.size)
+            assertEquals("update", resultsChange.list.first().nullableRealmObject!!.stringField)
+        }
+        observer.cancel()
+        channel.close()
     }
 
     // ----------------

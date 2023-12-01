@@ -119,8 +119,7 @@ internal class ManagedRealmList<E>(
         operator.realmReference.checkClosed()
         val keyPathInfo = keyPaths?.let {
             Validation.isType<RealmObjectListOperator<*>>(operator, "Keypaths are only supported for lists of objects.")
-            val classKey = operator.classKey
-            Pair(classKey, keyPaths)
+            Pair(operator.classKey, keyPaths)
         }
         return operator.realmReference.owner.registerObserver(this, keyPathInfo)
     }
