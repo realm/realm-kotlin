@@ -3029,7 +3029,7 @@ class QueryTests {
 
     // Smoke-test for wildcards.
     @Test
-    fun keyPath_usingWildCards() = runBlocking {
+    fun keyPath_usingWildCards() = runBlocking<Unit> {
         val channel = Channel<ResultsChange<QuerySample>>(1)
         val observer = async {
             realm.query<QuerySample>("stringField = 'parent'")
