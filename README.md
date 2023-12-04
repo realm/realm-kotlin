@@ -328,6 +328,9 @@ SDK supports. In the matrix below, you will find the minimum supported version f
 
 | Realm Version | Requirements                                                                                                                                                                                             |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1.13.0        | <ul><li>Kotlin 1.9.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
+| 1.12.0        | <ul><li>Kotlin 1.8.20+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
+| 1.11.0        | <ul><li>Kotlin 1.8.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
 | 1.10.0        | <ul><li>Kotlin 1.8.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
 | 1.9.0         | <ul><li>Kotlin 1.8.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.8.3 - 7.6.1.</li><li>The new memory model only.</li></ul>         |
 | 1.8.0         | <ul><li>Kotlin 1.7.20+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.6.4+.</li><li>Gradle 6.7.1 - 7.6.1.</li><li>The new memory model only.</li></ul>         |

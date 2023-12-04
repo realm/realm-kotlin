@@ -2946,6 +2946,138 @@ class QueryTests {
         }
     }
 
+    @Test
+    fun asFlow_results_withKeyPath() {
+        val channel = Channel<ResultsChange<QuerySample>>(1)
+        runBlocking {
+            val observer = async {
+                realm.query<QuerySample>()
+                    .asFlow(listOf("stringField"))
+                    .collect { results ->
+                        assertNotNull(results)
+                        channel.send(results)
+                    }
+            }
+            channel.receiveOrFail().let { resultsChange ->
+                assertIs<InitialResults<*>>(resultsChange)
+                assertTrue(resultsChange.list.isEmpty())
+            }
+            val obj = realm.writeBlocking {
+                copyToRealm(QuerySample())
+            }
+            channel.receiveOrFail().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
+                assertEquals(1, resultsChange.list.size)
+            }
+            realm.writeBlocking {
+                // Should not trigger notification
+                findLatest(obj)!!.intField = 42
+            }
+            realm.writeBlocking {
+                // Should trigger notification
+                findLatest(obj)!!.stringField = "update"
+            }
+            channel.receiveOrFail().let { resultsChange ->
+                assertIs<UpdatedResults<*>>(resultsChange)
+                assertEquals(1, resultsChange.list.size)
+                assertEquals("update", resultsChange.list.first().stringField)
+            }
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    @Test
+    fun asFlow_objectBound_withKeyPath() {
+        val channel = Channel<SingleQueryChange<QuerySample>>(1)
+        runBlocking {
+            val observer = async {
+                realm.query<QuerySample>()
+                    .first()
+                    .asFlow(listOf("stringField"))
+                    .collect { change ->
+                        assertNotNull(change)
+                        channel.send(change)
+                    }
+            }
+            channel.receiveOrFail().let { objChange ->
+                assertIs<PendingObject<*>>(objChange)
+            }
+            val obj = realm.writeBlocking {
+                copyToRealm(QuerySample())
+            }
+            channel.receiveOrFail().let { objChange ->
+                assertIs<InitialObject<*>>(objChange)
+            }
+            realm.writeBlocking {
+                // Should not trigger notification
+                findLatest(obj)!!.intField = 42
+            }
+            realm.writeBlocking {
+                // Should trigger notification
+                findLatest(obj)!!.stringField = "update"
+            }
+            channel.receiveOrFail().let { objChange ->
+                assertIs<UpdatedObject<*>>(objChange)
+                assertEquals(1, objChange.changedFields.size)
+                assertEquals("stringField", objChange.changedFields.first())
+            }
+            observer.cancel()
+            channel.close()
+        }
+    }
+
+    // Smoke-test for wildcards.
+    @Test
+    fun keyPath_usingWildCards() = runBlocking<Unit> {
+        val channel = Channel<ResultsChange<QuerySample>>(1)
+        val observer = async {
+            realm.query<QuerySample>("stringField = 'parent'")
+                // Should match what the notifier is doing by default
+                .asFlow(listOf("*.*.*.*"))
+                .collect { results ->
+                    assertNotNull(results)
+                    channel.send(results)
+                }
+        }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<InitialResults<*>>(resultsChange)
+            assertTrue(resultsChange.list.isEmpty())
+        }
+        val obj = realm.write {
+            copyToRealm(
+                QuerySample().apply {
+                    stringField = "parent"
+                    nullableRealmObject = QuerySample().apply {
+                        stringField = "child"
+                    }
+                }
+            )
+        }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<*>>(resultsChange)
+            assertEquals(1, resultsChange.list.size)
+        }
+        realm.write {
+            findLatest(obj)!!.intField = 42
+        }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<*>>(resultsChange)
+            assertEquals(1, resultsChange.list.size)
+            assertEquals(42, resultsChange.list.first().intField)
+        }
+        realm.write {
+            findLatest(obj)!!.nullableRealmObject!!.stringField = "update"
+        }
+        channel.receiveOrFail().let { resultsChange ->
+            assertIs<UpdatedResults<*>>(resultsChange)
+            assertEquals(1, resultsChange.list.size)
+            assertEquals("update", resultsChange.list.first().nullableRealmObject!!.stringField)
+        }
+        observer.cancel()
+        channel.close()
+    }
+
     // ----------------
     // Coercion helpers
     // ----------------

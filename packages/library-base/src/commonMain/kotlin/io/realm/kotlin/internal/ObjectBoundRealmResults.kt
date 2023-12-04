@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.Flow
 internal class ObjectBoundRealmResults<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
     val realmResults: RealmResults<E>,
-) : RealmResults<E> by realmResults, InternalDeleteable, Flowable<ResultsChange<E>> {
+) : RealmResults<E> by realmResults, InternalDeleteable {
 
     override val size: Int by realmResults::size
 
@@ -60,8 +60,8 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
      * values, if the object has not been deleted, if not it closes cancels the flow.
      */
 
-    override fun asFlow(): Flow<ResultsChange<E>> {
-        return realmResults.asFlow().bind(targetObject)
+    override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> {
+        return realmResults.asFlow(keyPaths).bind(targetObject)
     }
 
     override fun delete() {
@@ -78,5 +78,7 @@ internal class ObjectBoundRealmResults<E : BaseRealmObject>(
  * Binds a flow to an object lifecycle. It allows flows on queries to complete once the object gets
  * deleted. It is used on sub-queries and backlinks.
  */
-internal fun <T> Flow<T>.bind(reference: RealmObjectReference<out BaseRealmObject>): Flow<T> =
+internal fun <T> Flow<T>.bind(
+    reference: RealmObjectReference<out BaseRealmObject>
+): Flow<T> =
     this.terminateWhen(reference.asFlow()) { it is DeletedObject }
