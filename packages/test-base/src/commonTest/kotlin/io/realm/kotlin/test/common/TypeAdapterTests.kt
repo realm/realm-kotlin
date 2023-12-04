@@ -28,6 +28,24 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+/**
+ * This test suite should cover these points
+ * Schema validation
+ * Singleton / instanced adapters
+ * All types including collections
+ * Nullability
+ * Default values
+ * Compatibility with other annotations:
+ * - PrimaryKey
+ * - Index
+ * - Fulltext search
+ * - PersistedName
+ * - Ignore
+ * Backlinks
+ * missing instance type adapters
+ * copyFromRealm
+ * access objects realm?
+ */
 class TypeAdapterTests {
     private lateinit var tmpDir: String
     private lateinit var realm: Realm
@@ -53,22 +71,6 @@ class TypeAdapterTests {
         }
         PlatformUtils.deleteTempDir(tmpDir)
     }
-
-    /**
-     * We shall cover with these tests:
-     *
-     * Singleton / instanced adapters
-     * All types including collections
-     * Nullability
-     * Default values
-     * Compatibility with other annotations:
-     * - PrimaryKey
-     * - Index
-     * - Fulltext search
-     * - PersistedName
-     * - Ignore
-     * Backlinks
-     */
 
     @Test
     fun useSingletonAdapter() {

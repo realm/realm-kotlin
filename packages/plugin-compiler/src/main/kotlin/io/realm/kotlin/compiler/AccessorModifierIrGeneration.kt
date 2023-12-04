@@ -73,7 +73,6 @@ import org.jetbrains.kotlin.ir.builders.irGet
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irLetS
-import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -109,6 +108,8 @@ import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
+import org.jetbrains.kotlin.ir.types.superTypes
+import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.parentAsClass
@@ -123,7 +124,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.StarProjectionImpl
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
-import java.lang.IllegalStateException
+import kotlin.IllegalStateException
 import kotlin.collections.set
 
 /**
@@ -413,7 +414,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             fromRealmValue = longToChar,
                             toPublic = null,
                             setFunction = setValue,
-//                            fromPublic = charToLong,
                             fromPublic = { _, value ->
                                 irCall(callee = charToLong).apply {
                                     putValueArgument(0, value)
@@ -436,7 +436,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             fromRealmValue = longToShort,
                             toPublic = null,
                             setFunction = setValue,
-//                            fromPublic = shortToLong,
                             fromPublic = { _, value ->
                                 irCall(callee = shortToLong).apply {
                                     putValueArgument(0, value)
@@ -459,7 +458,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             fromRealmValue = longToInt,
                             toPublic = null,
                             setFunction = setValue,
-//                            fromPublic = intToLong,
                             fromPublic = { _, value ->
                                 irCall(callee = intToLong).apply {
                                     putValueArgument(0, value)
@@ -736,77 +734,86 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     declaration.hasAnnotation(TYPE_ADAPTER_ANNOTATION) -> {
                         logDebug("Object property named ${declaration.name} is an adapted type.")
 
-                        // TODO check nullability
-
-                        // 1. Extract what is the actual schema property
-                        // TODO extract the type from the annotation, by now hardcoded one
-                        val schemaProperty = SchemaProperty(
-                            propertyType = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
-                            declaration = declaration,
-                            collectionType = CollectionType.NONE
-                        )
-                        fields[name] = schemaProperty
-                        // 2. Modify the accessor to use the type adapter. The type adapter might or
-                        // not be provided (singleton vs class)
-
-                        val adapterClassReference = declaration.getAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrClassReference
+                        val adapterClassReference =
+                            declaration.getAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
+                                .getValueArgument(0)!! as IrClassReference
                         val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
 
-                        // check kind (object / class)
-                        when (adapterClass.kind) {
-                            ClassKind.CLASS -> {
-                                modifyAccessor(
-                                    property = schemaProperty,
-                                    getFunction = getInstant,
-                                    fromRealmValue = null,
-                                    toPublic = {objReference, realmValue ->
-                                        irCall(callee = providedAdapterFromRealm).apply {
-                                            // pass the class from the annotation
-                                            putValueArgument(0, objReference)
-                                            putValueArgument(1, adapterClassReference)
-                                            putValueArgument(2, realmValue)
-                                        }
-                                    },
-                                    setFunction = setValue,
-                                    fromPublic = { objReference, publicValue ->
-                                        irCall(callee = providedAdapterToRealm).apply {
-                                            // pass the class from the annotation
-                                            putValueArgument(0, objReference)
-                                            putValueArgument(1, adapterClassReference)
-                                            putValueArgument(2, publicValue)
-                                        }
-                                    },
-                                    toRealmValue = null
-                                )
-                            }
-                            ClassKind.OBJECT -> {
-                                val fromRealm = adapterClass.lookupFunction(REALM_TYPE_ADAPTER_FROM_REALM)
-                                val toRealm = adapterClass.lookupFunction(REALM_TYPE_ADAPTER_TO_REALM)
+                        // TODO find correct super type adapter type, might be multiple ones
+                        val (realmType: IrTypeArgument, userType) =
+                            (adapterClassReference.symbol.superTypes().first() as IrSimpleType)
+                                .arguments
+                                .let { arguments ->
+                                    arguments[0] to arguments[1]
+                                }
 
-                                modifyAccessor(
-                                    property = schemaProperty,
-                                    getFunction = getInstant,
-                                    fromRealmValue = null,
-                                    toPublic = { _, realmValue ->
-                                        irCall(callee = fromRealm).apply {
-                                            putValueArgument(0, realmValue)
-                                            dispatchReceiver = irGetObject(adapterClass.symbol)
-                                        }
-                                    },
-                                    setFunction = setValue,
-                                    fromPublic = { _, publicValue ->
-                                        irCall(callee = toRealm).apply {
-                                            putValueArgument(0, publicValue)
-                                            dispatchReceiver = irGetObject(adapterClass.symbol)
-                                        }
-                                    },
-                                    toRealmValue = null
-                                )
+                        // TODO check nullability
+                        // 1. Extract what is the actual schema property
+                        // TODO extract the type from the annotation, by now hardcoded one
+
+                        val schemaProperty =
+                            retrieveSchemaProperty(declaration, realmType.typeOrNull!!)
+
+                        if(schemaProperty!= null) {
+                            fields[name] = schemaProperty!!
+                            // 2. Modify the accessor to use the type adapter. The type adapter might or
+                            // not be provided (singleton vs class)
+
+                            // check kind (object / class)
+                            when (adapterClass.kind) {
+                                ClassKind.CLASS -> {
+                                    modifyAccessor(
+                                        property = schemaProperty,
+                                        getFunction = getInstant,
+                                        fromRealmValue = null,
+                                        toPublic = {objReference, realmValue ->
+                                            irCall(callee = providedAdapterFromRealm).apply {
+                                                // pass the class from the annotation
+                                                putValueArgument(0, objReference)
+                                                putValueArgument(1, adapterClassReference)
+                                                putValueArgument(2, realmValue)
+                                            }
+                                        },
+                                        setFunction = setValue,
+                                        fromPublic = { objReference, publicValue ->
+                                            irCall(callee = providedAdapterToRealm).apply {
+                                                // pass the class from the annotation
+                                                putValueArgument(0, objReference)
+                                                putValueArgument(1, adapterClassReference)
+                                                putValueArgument(2, publicValue)
+                                            }
+                                        },
+                                        toRealmValue = null
+                                    )
+                                }
+                                ClassKind.OBJECT -> {
+                                    val fromRealm = adapterClass.lookupFunction(REALM_TYPE_ADAPTER_FROM_REALM)
+                                    val toRealm = adapterClass.lookupFunction(REALM_TYPE_ADAPTER_TO_REALM)
+
+                                    modifyAccessor(
+                                        property = schemaProperty,
+                                        getFunction = getInstant,
+                                        fromRealmValue = null,
+                                        toPublic = { _, realmValue ->
+                                            irCall(callee = fromRealm).apply {
+                                                putValueArgument(0, realmValue)
+                                                dispatchReceiver = irGetObject(adapterClass.symbol)
+                                            }
+                                        },
+                                        setFunction = setValue,
+                                        fromPublic = { _, publicValue ->
+                                            irCall(callee = toRealm).apply {
+                                                putValueArgument(0, publicValue)
+                                                dispatchReceiver = irGetObject(adapterClass.symbol)
+                                            }
+                                        },
+                                        toRealmValue = null
+                                    )
+                                }
+                                else -> throw IllegalStateException("Unsupported type")
                             }
-                            else -> throw IllegalStateException("Unsupported type")
                         }
                     }
-
                     else -> {
                         logError("Realm does not support persisting properties of this type. Mark the field with `@Ignore` to suppress this error.", declaration.locationOf())
                     }
@@ -816,6 +823,74 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             }
         })
     }
+
+    private fun retrieveSchemaProperty(property: IrProperty, type: IrType): SchemaProperty? =
+        when {
+            type.isLong() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isBoolean() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_BOOL,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isString() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_STRING,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isByteArray() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_BINARY,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isRealmAny() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_MIXED,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isRealmInstant() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isFloat() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isDouble() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+//                type.isLinkingObject() ->PropertyType.RLM_PROPERTY_TYPE_OBJECT // TODO should be supported (I think so)
+//                type.isRealmInstant() ->PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS // TODO should be supported (Unsure write some API)
+            type.isDecimal128() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isObjectId() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            type.isRealmUUID() -> SchemaProperty(
+                propertyType = PropertyType.RLM_PROPERTY_TYPE_UUID,
+                declaration = property,
+                collectionType = CollectionType.NONE
+            )
+            else -> {
+                logError(
+                    "Invalid type parameter, only Realm types are supported", // TODO find a better error message
+                    property.locationOf()
+                )
+                null
+            }
+        }
 
     private fun processCollectionField(
         collectionType: CollectionType,

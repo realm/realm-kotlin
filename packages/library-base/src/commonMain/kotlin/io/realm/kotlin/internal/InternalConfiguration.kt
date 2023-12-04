@@ -37,6 +37,8 @@ public interface InternalConfiguration : Configuration {
     public val writeDispatcherFactory: CoroutineDispatcherFactory
     public val schemaMode: SchemaMode
     public val logger: ContextLogger
+    // TODO make it a map
+//    public val adapters: Map<KClass<RealmTypeAdapter<*, *>>, RealmTypeAdapter<*, *>>
     public val adapters: List<RealmTypeAdapter<*, *>>
 
     // Temporary work-around for https://github.com/realm/realm-kotlin/issues/724
