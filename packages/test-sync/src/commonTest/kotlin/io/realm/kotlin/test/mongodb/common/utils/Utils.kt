@@ -15,6 +15,12 @@
  */
 package io.realm.kotlin.test.mongodb.common.utils
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 
@@ -47,3 +53,10 @@ fun <T : Throwable> assertFailsWithMessage(exceptionClass: KClass<T>, exceptionM
 
 inline fun <reified T : Throwable> assertFailsWithMessage(exceptionMessage: String, noinline block: () -> Unit): T =
     assertFailsWithMessage(T::class, exceptionMessage, block)
+
+inline fun <reified T : Throwable> CoroutineScope.assertFailsWithMessage(exceptionMessage: String, noinline block: suspend CoroutineScope.() -> Unit): T =
+    assertFailsWithMessage(T::class, exceptionMessage) {
+        runBlocking(this.coroutineContext) {
+            block()
+        }
+    }

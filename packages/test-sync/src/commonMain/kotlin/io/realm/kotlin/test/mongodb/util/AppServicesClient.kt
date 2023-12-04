@@ -623,7 +623,7 @@ class AppServicesClient(
         } ?: throw IllegalStateException("Unexpected result: $result")
     }
 
-    private suspend fun BaasApp.deleteDocument(
+    suspend fun BaasApp.deleteDocument(
         db: String,
         clazz: String,
         query: String

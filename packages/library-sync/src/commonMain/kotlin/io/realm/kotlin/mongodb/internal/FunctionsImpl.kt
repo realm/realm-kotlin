@@ -28,12 +28,14 @@ internal class FunctionsImpl(
     @PublishedApi
     internal suspend fun callInternal(
         name: String,
+        serviceName: String? = null,
         serializedEjsonArgs: String
     ): String = Channel<Result<String>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
             name = name,
+            serviceName = serviceName,
             serializedEjsonArgs = serializedEjsonArgs,
             callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
                 // First we decode from ejson -> BsonValue

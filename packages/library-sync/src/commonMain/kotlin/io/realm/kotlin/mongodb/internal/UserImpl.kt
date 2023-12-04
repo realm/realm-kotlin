@@ -28,6 +28,9 @@ import io.realm.kotlin.mongodb.UserIdentity
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.mongo.MongoClient
+import io.realm.kotlin.mongodb.mongo.MongoCollection
+import io.realm.kotlin.mongodb.mongo.MongoDatabase
 import kotlinx.coroutines.channels.Channel
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
@@ -181,6 +184,8 @@ public class UserImpl(
             }
         }
     }
+
+    override fun mongoClient(serviceName: String): MongoClient = MongoClientImpl(this, serviceName)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

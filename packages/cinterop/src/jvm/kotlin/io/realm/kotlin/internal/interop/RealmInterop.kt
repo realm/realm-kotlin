@@ -1618,10 +1618,11 @@ actual object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         name: String,
+        serviceName: String?,
         serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
-        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, null, callback)
+        realmc.realm_app_call_function(app.cptr(), user.cptr(), name, serializedEjsonArgs, serviceName, callback)
     }
 
     actual fun realm_app_call_reset_password_function(

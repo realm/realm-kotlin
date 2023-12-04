@@ -20,6 +20,7 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
+import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 
 /**
@@ -200,6 +201,10 @@ public interface User {
      * communicating with App Services. See [AppException] for details.
      */
     public suspend fun linkCredentials(credentials: Credentials): User
+
+    // TODO Doc
+    // TODO serializer argument
+    public fun mongoClient(serviceName: String): MongoClient
 
     /**
      * Two Users are considered equal if they have the same user identity and are associated
