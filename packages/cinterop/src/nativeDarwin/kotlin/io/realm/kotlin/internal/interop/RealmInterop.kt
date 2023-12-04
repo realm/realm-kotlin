@@ -45,6 +45,7 @@ import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointed
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.CPointerVar
+import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
 import kotlinx.cinterop.LongVar
@@ -70,6 +71,7 @@ import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
+import kotlinx.cinterop.toCStringArray
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
@@ -1707,8 +1709,17 @@ actual object RealmInterop {
         checkedBooleanResult(realm_wrapper.realm_object_delete(obj.cptr()))
     }
 
+    actual fun realm_create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer {
+        memScoped {
+            val userKeyPaths: CPointer<CPointerVarOf<CPointer<ByteVarOf<Byte>>>> = keyPaths.toCStringArray(this)
+            val keyPathPointer = realm_wrapper.realm_create_key_path_array(realm.cptr(), clazz.key.toUInt(), keyPaths.size.toULong(), userKeyPaths)
+            return CPointerWrapper(keyPathPointer)
+        }
+    }
+
     actual fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1721,7 +1732,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1742,6 +1753,7 @@ actual object RealmInterop {
 
     actual fun realm_results_add_notification_callback(
         results: RealmResultsPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1754,7 +1766,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1775,6 +1787,7 @@ actual object RealmInterop {
 
     actual fun realm_list_add_notification_callback(
         list: RealmListPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1786,7 +1799,7 @@ actual object RealmInterop {
                     userdata?.asStableRef<Callback<RealmChangesPointer>>()?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1807,6 +1820,7 @@ actual object RealmInterop {
 
     actual fun realm_set_add_notification_callback(
         set: RealmSetPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1819,7 +1833,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()
@@ -1840,6 +1854,7 @@ actual object RealmInterop {
 
     actual fun realm_dictionary_add_notification_callback(
         map: RealmMapPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return CPointerWrapper(
@@ -1852,7 +1867,7 @@ actual object RealmInterop {
                         ?.dispose()
                         ?: error("Notification callback data should never be null")
                 },
-                null, // See https://github.com/realm/realm-kotlin/issues/661
+                keyPaths?.cptr(),
                 staticCFunction { userdata, change -> // Change callback
                     try {
                         userdata?.asStableRef<Callback<RealmChangesPointer>>()

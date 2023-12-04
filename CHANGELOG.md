@@ -1,4 +1,4 @@
-## 1.13.0-NEXTMAJORCORE-SNAPSHOT (YYYY-MM-DD)
+## 1.14.0-NEXTMAJORCORE-SNAPSHOT (YYYY-MM-DD)
 
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it. Downgrading to a previous file format is not possible.
 
@@ -7,16 +7,9 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ### Enhancements
 * Support for RealmLists, RealmSets and RealmDictionaries in `RealmAny`. This is only supported in the local database, Device Sync support will come in a future release. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
-* Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
-* [Sync] Added support for multiplexing sync connections. When enabled, a single
-  connection is used per sync user rather than one per synchronized Realm. This
-  reduces resource consumption when multiple Realms are opened and will
-  typically improve performance. The behavior can be controlled through [AppConfiguration.Builder.enableSessionMultiplexing]. It will be made the default
-  in a future release. (Issue [#1578](https://github.com/realm/realm-kotlin/pull/1578))  
-* [Sync] Various sync timeout options can now be configured through `AppConfiguration.Builder.syncTimeouts()`. (Issue [#971](https://github.com/realm/realm-kotlin/issues/971)).
 
 ### Fixed
-* Fix compiler crash caused by a change in Kotlin 1.9.20 ((toIrConst moved under common IrUtils)[https://github.com/JetBrains/kotlin/commit/ca8db7d0b83f6dfd6afcea7a5fe7556d38f325d8]). (Issue [#1566](https://github.com/realm/realm-kotlin/issues/1566))
+* None.
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -37,23 +30,33 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Updated to Realm Core 14.0.0-beta, commit 4926641c6cf2948fa494624ee802bb8cbc21387f.
 
 
-## 1.12.1-SNAPSHOT (YYYY-MM-DD)
+## 1.13.0 (2023-12-01)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* None.
+* Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
+* Added support for keypaths in `asFlow()` methods on objects and queries. This makes it possible to control which properties will trigger change events, including properties on objects below the default nested limit of 4. (Issue [#661](https://github.com/realm/realm-kotlin/issues/661))
+* [Sync] Added support for multiplexing sync connections. When enabled, a single
+  connection is used per sync user rather than one per synchronized Realm. This
+  reduces resource consumption when multiple Realms are opened and will
+  typically improve performance. The behavior can be controlled through [AppConfiguration.Builder.enableSessionMultiplexing]. It will be made the default
+  in a future release. (Issue [#1578](https://github.com/realm/realm-kotlin/pull/1578))  
+* [Sync] Various sync timeout options can now be configured through `AppConfiguration.Builder.syncTimeouts()`. (Issue [#971](https://github.com/realm/realm-kotlin/issues/971)).
 
 ### Fixed
+* `RealmInstant.now` used an API (`java.time.Clock.systemUTC().instant()`) introduced in API 26, current minSDK is 16. (Issue [#1564](https://github.com/realm/realm-kotlin/issues/1564))
+* Fix compiler crash caused by a change in Kotlin 1.9.20 ((toIrConst moved under common IrUtils)[https://github.com/JetBrains/kotlin/commit/ca8db7d0b83f6dfd6afcea7a5fe7556d38f325d8]). (Issue [#1566](https://github.com/realm/realm-kotlin/issues/1566))
 * Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
 * Fix NPE when applying query aggregators on classes annotated with `@PersistedName`. (Issue [1569](https://github.com/realm/realm-kotlin/pull/1569))
+* [Sync] Fix crash when syncing data if the log level was set to `LogLevel.TRACE` or `LogLevel.ALL`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
@@ -62,9 +65,10 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum Gradle version: 6.8.3.
 * Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 13.23.3, commit 7556b535aa7b27d49c13444894f7e9db778b3203.
+* Updated to Realm Core 13.24.0, commit e593a5f19d0dc205db931ec5618a8c10c95cac90.
 
 
 ## 1.12.0 (2023-11-02)

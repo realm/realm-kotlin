@@ -62,7 +62,7 @@ val HOST_OS: OperatingSystem = findHostOs()
 
 object Realm {
     val ciBuild = (System.getenv("JENKINS_HOME") != null || System.getenv("CI") != null)
-    const val version = "1.13.0-NEXTMAJORCORE-SNAPSHOT"
+    const val version = "1.14.0-NEXTMAJORCORE-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
     const val pluginPortalId = "io.realm.kotlin"

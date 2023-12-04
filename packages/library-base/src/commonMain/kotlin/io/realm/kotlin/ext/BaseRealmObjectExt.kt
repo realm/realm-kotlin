@@ -83,12 +83,22 @@ public fun BaseRealmObject.isValid(): Boolean = runIfManaged {
  * the elements in a timely manner the coroutine scope will be cancelled with a
  * [CancellationException].
  *
+ * @param keyPaths An optional list of properties that defines when a change to the object will
+ * result in a change being emitted. Nested properties can be defined using a dotted
+ * syntax, e.g. `parent.child.name`. Wildcards `*` can be be used to capture all properties at a
+ * given level, e.g. `child.*` or `*.*`. If no keypaths are provided, changes to all top-level
+ * properties and nested properties 4 levels down will trigger a change.
  * @return a flow representing changes to the object.
  * @throws UnsupportedOperationException if called on a live [RealmObject] or [EmbeddedRealmObject]
  * from a write transaction ([Realm.write]) or on a [DynamicRealmObject] inside a migration
  * ([AutomaticSchemaMigration.migrate]).
+ * @throws IllegalArgumentException if an invalid keypath is provided.
  */
-public fun <T : BaseRealmObject> T.asFlow(): Flow<ObjectChange<T>> = runIfManaged {
+public fun <T : BaseRealmObject> T.asFlow(keyPaths: List<String>? = null): Flow<ObjectChange<T>> = runIfManaged {
     checkNotificationsAvailable()
-    return owner.owner.registerObserver(this) as Flow<ObjectChange<T>>
+    val keyPathInfo = keyPaths?.let {
+        Pair(this.metadata.classKey, keyPaths)
+    }
+
+    return owner.owner.registerObserver(this, keyPathInfo) as Flow<ObjectChange<T>>
 } ?: throw IllegalStateException("Changes cannot be observed on unmanaged objects.")
