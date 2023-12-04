@@ -90,17 +90,12 @@ public interface RealmConfiguration : Configuration {
         public fun directory(directoryPath: String): Builder =
             apply { this.directory = directoryPath }
 
-        // TODO misplaced, move around
-        public class TypeAdapterBuilder {
-            internal val adapters: MutableMap<KClass<*>, RealmTypeAdapter<*, *>> = mutableMapOf()
-            public fun add(adapter: RealmTypeAdapter<*,*>) {
-                adapters[adapter::class] = adapter
-            }
-        }
-
+        /**
+         * TODO
+         */
         public fun typeAdapters(block: TypeAdapterBuilder.()->Unit): Builder =
             apply {
-                this.typeAdapters = TypeAdapterBuilder().apply(block).adapters
+                this.typeAdapters = TypeAdapterBuilder().apply(block).typeAdapters
             }
 
         /**

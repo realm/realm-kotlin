@@ -69,7 +69,7 @@ public open class ConfigurationImpl(
     inMemory: Boolean,
     initialRealmFileConfiguration: InitialRealmFileConfiguration?,
     logger: ContextLogger,
-    override val adapters: Map<KClass<*>, RealmTypeAdapter<*, *>>,
+    override val typeAdapters: List<RealmTypeAdapter<*, *>>,
 ) : InternalConfiguration {
 
     override val path: String
@@ -104,6 +104,7 @@ public open class ConfigurationImpl(
     override val initialDataCallback: InitialDataCallback?
     override val inMemory: Boolean
     override val initialRealmFileConfiguration: InitialRealmFileConfiguration?
+    override val typeAdapterMap: Map<KClass<*>, RealmTypeAdapter<*, *>>
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
         val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()
@@ -150,6 +151,7 @@ public open class ConfigurationImpl(
         this.initialDataCallback = initialDataCallback
         this.inMemory = inMemory
         this.initialRealmFileConfiguration = initialRealmFileConfiguration
+        this.typeAdapterMap = typeAdapters.associateBy { it::class }
 
         // We need to freeze `compactOnLaunchCallback` reference on initial thread for Kotlin Native
         val compactCallback = compactOnLaunchCallback?.let { callback ->

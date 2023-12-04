@@ -267,7 +267,7 @@ public inline fun toRealm(
 ): Any? {
     val adapter = obj.owner.owner
         .configuration
-        .adapters.let { adapters ->
+        .typeAdapterMap.let { adapters ->
             require(adapters.contains(adapterClass)) {"User provided adaptes don't contains adapter ${adapterClass.simpleName}"}
             adapters[adapterClass] as RealmTypeAdapter<Any?, Any?>
         }
@@ -282,7 +282,7 @@ public inline fun fromRealm(
 ): Any? {
     val adapter = obj.owner.owner
         .configuration
-        .adapters.let { adapters ->
+        .typeAdapterMap.let { adapters ->
             require(adapters.contains(adapterClass)) {"User provided adaptes don't contains adapter ${adapterClass.simpleName}"}
             adapters[adapterClass] as RealmTypeAdapter<Any?, Any?>
         }

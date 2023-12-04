@@ -50,6 +50,17 @@ public fun interface CompactOnLaunchCallback {
     public fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
 }
 
+
+/**
+ * TODO
+ */
+public class TypeAdapterBuilder {
+    internal val typeAdapters: MutableList<RealmTypeAdapter<*, *>> = mutableListOf()
+    public fun add(adapter: RealmTypeAdapter<*,*>) {
+        typeAdapters.add(adapter)
+    }
+}
+
 /**
  * This interface is used to write data to a Realm file when the file is first created.
  * It will be used in a way similar to using [Realm.writeBlocking].
@@ -198,6 +209,11 @@ public interface Configuration {
     public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
     /**
+     * TODO
+     */
+    public val typeAdapters: List<RealmTypeAdapter<*, *>>
+
+    /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
      *
@@ -239,7 +255,7 @@ public interface Configuration {
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
         protected var initialRealmFileConfiguration: InitialRealmFileConfiguration? = null
-        protected var typeAdapters: Map<KClass<*>, RealmTypeAdapter<*, *>> = mapOf()
+        protected var typeAdapters: List<RealmTypeAdapter<*, *>> = listOf()
 
         /**
          * Sets the filename of the realm file.

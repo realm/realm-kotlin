@@ -37,7 +37,7 @@ public interface InternalConfiguration : Configuration {
     public val writeDispatcherFactory: CoroutineDispatcherFactory
     public val schemaMode: SchemaMode
     public val logger: ContextLogger
-    public val adapters: Map<KClass<*>, RealmTypeAdapter<*, *>>
+    public val typeAdapterMap: Map<KClass<*>, RealmTypeAdapter<*, *>>
 
     // Temporary work-around for https://github.com/realm/realm-kotlin/issues/724
     public val isFlexibleSyncConfiguration: Boolean

@@ -49,7 +49,7 @@ internal class RealmConfigurationImpl(
     inMemory: Boolean,
     override val initialRealmFileConfiguration: InitialRealmFileConfiguration?,
     logger: ContextLogger,
-    adapters: Map<KClass<*>, RealmTypeAdapter<*, *>>
+    typeAdapters: List<RealmTypeAdapter<*, *>>
 ) : ConfigurationImpl(
     directory,
     name,
@@ -72,6 +72,6 @@ internal class RealmConfigurationImpl(
     inMemory,
     initialRealmFileConfiguration,
     logger,
-    adapters,
+    typeAdapters,
 ),
     RealmConfiguration
