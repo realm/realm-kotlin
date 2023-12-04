@@ -118,7 +118,6 @@ import realm_wrapper.realm_property_info_t
 import realm_wrapper.realm_query_arg_t
 import realm_wrapper.realm_release
 import realm_wrapper.realm_results_t
-import realm_wrapper.realm_scheduler_notify_func_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_set_t
 import realm_wrapper.realm_string_t
@@ -138,6 +137,7 @@ import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
 import realm_wrapper.realm_version_id_t
+import realm_wrapper.realm_work_queue_t
 import kotlin.collections.set
 import kotlin.native.internal.createCleaner
 
@@ -173,11 +173,22 @@ private fun <T : CPointed> checkedPointerResult(pointer: CPointer<T>?): CPointer
     if (pointer == null) throwOnError(); return pointer
 }
 
-// FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
+/**
+ * Class with a pointer reference and its status. It breaks the reference cycle between CPointerWrapper
+ * and its GC cleaner, otherwise the cleaner would never be invoked.
+ *
+ * See leaking cleaner: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.native.ref/create-cleaner.html
+ */
+data class ReleasablePointer(
+    private val _ptr: CPointer<out CPointed>?,
+    val released: AtomicBoolean = atomic(false)
+) {
+    fun release() {
+        if (released.compareAndSet(expect = false, update = true)) {
+            realm_release(_ptr)
+        }
+    }
 
-class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
-    private val released: AtomicBoolean = atomic(false)
-    private val _ptr = checkedPointerResult(ptr)
     val ptr: CPointer<out CPointed>?
         get() {
             return if (!released.value) {
@@ -186,23 +197,28 @@ class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean 
                 throw POINTER_DELETED_ERROR
             }
         }
+}
+
+// FIXME API-INTERNAL Consider making NativePointer/CPointerWrapper generic to enforce typing
+class CPointerWrapper<T : CapiT>(ptr: CPointer<out CPointed>?, managed: Boolean = true) : NativePointer<T> {
+    val _ptr = ReleasablePointer(
+        checkedPointerResult(ptr)
+    )
+
+    val ptr: CPointer<out CPointed>? = _ptr.ptr
 
     @OptIn(ExperimentalStdlibApi::class)
     val cleaner = if (managed) {
         createCleaner(_ptr) {
-            if (released.compareAndSet(expect = false, update = true)) {
-                realm_release(ptr)
-            }
+            it.release()
         }
     } else null
 
     override fun release() {
-        if (released.compareAndSet(expect = false, update = true)) {
-            realm_release(_ptr)
-        }
+        _ptr.release()
     }
 
-    override fun isReleased(): Boolean = released.value
+    override fun isReleased(): Boolean = _ptr.released.value
 }
 
 // Convenience type cast
@@ -558,17 +574,19 @@ actual object RealmInterop {
                 // free: realm_wrapper.realm_free_userdata_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
                 staticCFunction<COpaquePointer?, Unit> { userdata ->
                     printlntid("free")
-                    userdata?.asStableRef<SingleThreadDispatcherScheduler>()?.dispose()
+                    val stableSchedulerRef: StableRef<SingleThreadDispatcherScheduler>? = userdata?.asStableRef<SingleThreadDispatcherScheduler>()
+                    stableSchedulerRef?.get()?.cancel()
+                    stableSchedulerRef?.dispose()
                 },
 
                 // notify: realm_wrapper.realm_scheduler_notify_func_t? /* = kotlinx.cinterop.CPointer<kotlinx.cinterop.CFunction<(kotlinx.cinterop.COpaquePointer? /* = kotlinx.cinterop.CPointer<out kotlinx.cinterop.CPointed>? */) -> kotlin.Unit>>? */,
-                staticCFunction<COpaquePointer?, Unit> { userdata ->
+                staticCFunction<COpaquePointer?, CPointer<realm_work_queue_t>?, Unit> { userdata, work_queue ->
                     // Must be thread safe
                     val scheduler =
                         userdata!!.asStableRef<SingleThreadDispatcherScheduler>().get()
                     printlntid("$scheduler notify")
                     try {
-                        scheduler.notify()
+                        scheduler.notify(work_queue)
                     } catch (e: Exception) {
                         // Should never happen, but is included for development to get some indicators
                         // on errors instead of silent crashes.
@@ -595,7 +613,7 @@ actual object RealmInterop {
             )
         ) ?: error("Couldn't create scheduler")
 
-        scheduler.set_scheduler(capi_scheduler)
+        scheduler.setScheduler(capi_scheduler)
 
         return CPointerWrapper<RealmSchedulerT>(capi_scheduler)
     }
@@ -1980,7 +1998,7 @@ actual object RealmInterop {
                 realm_wrapper.realm_app_get_all_users(
                     app.cptr(),
                     null,
-                    0,
+                    0UL,
                     capacityCount.ptr
                 )
             )
@@ -2436,6 +2454,26 @@ actual object RealmInterop {
             syncClientConfig.cptr(),
             applicationInfo
         )
+    }
+
+    actual fun realm_sync_client_config_set_connect_timeout(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong) {
+        realm_wrapper.realm_sync_client_config_set_connect_timeout(syncClientConfig.cptr(), timeoutMs)
+    }
+
+    actual fun realm_sync_client_config_set_connection_linger_time(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong) {
+        realm_wrapper.realm_sync_client_config_set_connection_linger_time(syncClientConfig.cptr(), timeoutMs)
+    }
+
+    actual fun realm_sync_client_config_set_ping_keepalive_period(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong) {
+        realm_wrapper.realm_sync_client_config_set_ping_keepalive_period(syncClientConfig.cptr(), timeoutMs)
+    }
+
+    actual fun realm_sync_client_config_set_pong_keepalive_timeout(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong) {
+        realm_wrapper.realm_sync_client_config_set_pong_keepalive_timeout(syncClientConfig.cptr(), timeoutMs)
+    }
+
+    actual fun realm_sync_client_config_set_fast_reconnect_limit(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong) {
+        realm_wrapper.realm_sync_client_config_set_fast_reconnect_limit(syncClientConfig.cptr(), timeoutMs)
     }
 
     actual fun realm_sync_config_set_error_handler(
@@ -3531,41 +3569,44 @@ actual object RealmInterop {
         }
     }
 
-    data class CoreCallback(
-        val callback: realm_scheduler_notify_func_t,
-        val callbackUserdata: CPointer<out CPointed>,
-    )
-
     interface Scheduler {
-        fun notify()
+        fun notify(work_queue: CPointer<realm_work_queue_t>?)
     }
 
     class SingleThreadDispatcherScheduler(
         val threadId: ULong,
         dispatcher: CoroutineDispatcher
     ) : Scheduler {
-        val scope: CoroutineScope = CoroutineScope(dispatcher)
-        val ref: CPointer<out CPointed>
-        lateinit var scheduler: CPointer<realm_scheduler_t>
+        private val scope: CoroutineScope = CoroutineScope(dispatcher)
+        val ref: CPointer<out CPointed> = StableRef.create(this).asCPointer()
+        private lateinit var scheduler: CPointer<realm_scheduler_t>
+        private val lock = SynchronizableObject()
+        private var cancelled = false
 
-        init {
-            ref = StableRef.create(this).asCPointer()
-        }
-
-        fun set_scheduler(scheduler: CPointer<realm_scheduler_t>) {
+        fun setScheduler(scheduler: CPointer<realm_scheduler_t>) {
             this.scheduler = scheduler
         }
 
-        override fun notify() {
+        override fun notify(work_queue: CPointer<realm_work_queue_t>?) {
             scope.launch {
                 try {
                     printlntid("on dispatcher")
-                    realm_wrapper.realm_scheduler_perform_work(scheduler)
+                    lock.withLock {
+                        if (!cancelled) {
+                            realm_wrapper.realm_scheduler_perform_work(work_queue)
+                        }
+                    }
                 } catch (e: Exception) {
                     // Should never happen, but is included for development to get some indicators
                     // on errors instead of silent crashes.
                     e.printStackTrace()
                 }
+            }
+        }
+
+        fun cancel() {
+            lock.withLock {
+                cancelled = true
             }
         }
     }

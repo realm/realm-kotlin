@@ -17,8 +17,8 @@ public actual fun platformWebsocketClient(
     address: String,
     port: Long,
     isSsl: Boolean,
-    supportedProtocols: String,
+    supportedSyncProtocols: String,
     transport: RealmWebSocketTransport
 ): WebSocketClient = TODO()
 
-public actual fun websocketEngine(): WebsocketEngine = TODO()
+public actual fun websocketEngine(timeoutMs: Long): WebsocketEngine = TODO()

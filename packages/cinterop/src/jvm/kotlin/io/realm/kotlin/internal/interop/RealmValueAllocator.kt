@@ -93,28 +93,6 @@ object JvmMemAllocator : MemAllocator {
             link = realmc.realm_object_as_link(it.objectPointer.cptr())
         }
 
-    override fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList {
-        val cArgs = realmc.new_queryArgArray(queryArgs.size)
-        queryArgs.mapIndexed { index, arg ->
-            val queryArg = realm_query_arg_t().apply {
-                when (arg) {
-                    is RealmQueryListArgument -> {
-                        nb_args = arg.arguments.size.toLong()
-                        is_list = true
-                        this.arg = arg.arguments.head
-                    }
-                    is RealmQuerySingleArgument -> {
-                        nb_args = 1
-                        is_list = false
-                        this.arg = arg.argument.value
-                    }
-                }
-            }
-            realmc.queryArgArray_setitem(cArgs, index, queryArg)
-        }
-        return RealmQueryArgumentList(queryArgs.size.toLong(), cArgs)
-    }
-
     private inline fun <T> createTransport(
         value: T?,
         type: Int,
@@ -151,6 +129,32 @@ class JvmMemTrackingAllocator : MemAllocator by JvmMemAllocator, MemTrackingAllo
             }
         }
 
+    override fun queryArgsOf(queryArgs: List<RealmQueryArgument>): RealmQueryArgumentList {
+        val cArgs = realmc.new_queryArgArray(queryArgs.size)
+        queryArgs.mapIndexed { index, arg ->
+            val queryArg = realm_query_arg_t().apply {
+                when (arg) {
+                    is RealmQueryListArgument -> {
+                        nb_args = arg.arguments.size.toLong()
+                        is_list = true
+                        this.arg = arg.arguments.head
+
+                        scope.manageQueryListArgument(arg)
+                    }
+                    is RealmQuerySingleArgument -> {
+                        nb_args = 1
+                        is_list = false
+                        this.arg = arg.argument.value
+                    }
+                }
+            }
+            realmc.queryArgArray_setitem(cArgs, index, queryArg)
+        }
+        return RealmQueryArgumentList(queryArgs.size.toLong(), cArgs).also {
+            scope.manageQueryArgumentList(it)
+        }
+    }
+
     /**
      * Frees resources linked to this allocator's [scope], more specifically strings and binary
      * buffers. See [MemScope.free] for more details.
@@ -180,16 +184,28 @@ class JvmMemTrackingAllocator : MemAllocator by JvmMemAllocator, MemTrackingAllo
      * copied out afterwards).
      */
     class MemScope {
-        val values: MutableSet<RealmValueT> = mutableSetOf()
+        val values: MutableSet<Any> = mutableSetOf()
 
         fun manageRealmValue(value: RealmValueT): RealmValueT {
             values.add(value)
             return value
         }
 
+        fun manageQueryArgumentList(value: RealmQueryArgumentList): RealmQueryArgumentList = value.also {
+            values.add(value)
+        }
+
+        fun manageQueryListArgument(value: RealmQueryListArgument): RealmQueryListArgument = value.also {
+            values.add(value)
+        }
+
         fun free() {
-            values.map {
-                realmc.realm_value_t_cleanup(it)
+            values.forEach {
+                when (it) {
+                    is RealmValueT -> realmc.realm_value_t_cleanup(it)
+                    is RealmQueryArgumentList -> realmc.delete_queryArgArray(it.head)
+                    is RealmQueryListArgument -> realmc.delete_valueArray(it.arguments.head)
+                }
             }
         }
     }

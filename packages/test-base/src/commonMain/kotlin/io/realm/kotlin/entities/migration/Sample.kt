@@ -17,10 +17,14 @@
 package io.realm.kotlin.entities.migration
 
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
 
 @Suppress("MagicNumber")
 class Sample : RealmObject {
     var name: String = "Migration"
     var stringField: String = "Realm"
     var intField: Int = 42
+
+    @PersistedName("persistedStringField")
+    var publicStringField = ""
 }

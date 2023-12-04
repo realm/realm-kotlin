@@ -137,6 +137,12 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error);
 realm_scheduler_t*
 realm_create_generic_scheduler();
 
+void
+realm_property_info_t_cleanup(realm_property_info_t* value);
+
+void
+realm_class_info_t_cleanup(realm_class_info_t * value);
+
 realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jobject websocket_transport);
 
 void realm_sync_websocket_callback_complete(bool cancelled, int64_t lambda_ptr, int status, const char* reason);

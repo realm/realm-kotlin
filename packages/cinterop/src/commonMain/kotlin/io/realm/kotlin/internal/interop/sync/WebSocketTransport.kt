@@ -21,7 +21,7 @@ interface WebSocketTransport {
         port: Long,
         isSsl: Boolean,
         numProtocols: Long,
-        supportedProtocols: String
+        supportedSyncProtocols: String
     ): WebSocketClient
 
     fun write(
@@ -62,7 +62,7 @@ interface WebSocketClient {
 
 interface WebsocketEngine {
     fun shutdown()
-    fun <T> getEngine(timeoutMs: Long = 0): T
+    fun <T> getInstance(): T
 }
 
 class WebSocketObserver(private val webSocketObserverPointer: RealmWebsocketProviderPointer) {

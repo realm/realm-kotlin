@@ -43,10 +43,10 @@ class RealmInMemoryTests {
 
     @AfterTest
     fun tearDown() {
-        PlatformUtils.deleteTempDir(tmpDir)
         if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test

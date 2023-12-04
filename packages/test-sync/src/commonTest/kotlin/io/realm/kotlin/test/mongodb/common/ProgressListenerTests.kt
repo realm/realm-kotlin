@@ -240,7 +240,7 @@ class ProgressListenerTests {
     fun throwsOnFlexibleSync() = runBlocking {
         TestApp("throwsOnFlexibleSync", TEST_APP_FLEX).use {
             val user = app.createUserAndLogIn()
-            val configuration: SyncConfiguration = SyncConfiguration.create(user, FLX_SYNC_SCHEMA)
+            val configuration: SyncConfiguration = SyncConfiguration.create(user, FLEXIBLE_SYNC_SCHEMA)
             Realm.open(configuration).use { realm ->
                 assertFailsWithMessage<UnsupportedOperationException>(
                     "Progress listeners are not supported for Flexible Sync"
@@ -304,7 +304,7 @@ class ProgressListenerTests {
         user: User,
         partitionValue: String = getTestPartitionValue()
     ): SyncConfiguration {
-        return SyncConfiguration.Builder(user, partitionValue, io.realm.kotlin.test.mongodb.common.PARTITION_SYNC_SCHEMA)
+        return SyncConfiguration.Builder(user, partitionValue, PARTITION_BASED_SCHEMA)
             .build()
     }
 

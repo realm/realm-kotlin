@@ -26,7 +26,9 @@ import org.jetbrains.kotlin.config.CompilerConfigurationKey
 
 // Must match io.realm.kotlin.gradle.RealmCompilerSubplugin.bundleId
 const val BUNDLE_ID_KEY = "bundleId"
+const val FEATURE_LIST_PATH_KEY = "featureListPath"
 val bundleIdConfigurationKey: CompilerConfigurationKey<String> = CompilerConfigurationKey<String>("io.realm.kotlin.bundleId")
+val featureListPathConfigurationKey: CompilerConfigurationKey<String> = CompilerConfigurationKey<String>("io.realm.kotlin.featureListPath")
 
 @OptIn(ExperimentalCompilerApi::class)
 @AutoService(CommandLineProcessor::class)
@@ -39,7 +41,14 @@ class RealmCommandLineProcessor : CommandLineProcessor {
             valueDescription = "Anonymized Bundle Id",
             required = false,
             allowMultipleOccurrences = false
-        )
+        ),
+        CliOption(
+            optionName = "featureListPath",
+            description = "Feature List Path",
+            valueDescription = "Feature List Path",
+            required = false,
+            allowMultipleOccurrences = false
+        ),
     )
 
     override fun processOption(
@@ -47,9 +56,11 @@ class RealmCommandLineProcessor : CommandLineProcessor {
         value: String,
         configuration: CompilerConfiguration
     ) {
-        when {
-            option.optionName == BUNDLE_ID_KEY ->
+        when (option.optionName) {
+            BUNDLE_ID_KEY ->
                 configuration.put(bundleIdConfigurationKey, value)
+            FEATURE_LIST_PATH_KEY ->
+                configuration.put(featureListPathConfigurationKey, value)
             else -> super.processOption(option, value, configuration)
         }
     }

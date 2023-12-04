@@ -64,7 +64,7 @@ kotlin {
                 implementation("com.google.android.material:material:1.2.0")
             }
         }
-        val androidTest by getting {
+        val androidInstrumentedTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
                 implementation("junit:junit:4.12")

@@ -41,12 +41,16 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNotSame
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 private const val CUSTOM_HEADER_NAME = "Foo"
 private const val CUSTOM_HEADER_VALUE = "bar"
@@ -55,11 +59,6 @@ private const val AUTH_HEADER_NAME = "RealmAuth"
 private const val APP_ID = "app-id"
 
 class AppConfigurationTests {
-
-//    val looperThread = BlockingLooperThread()
-//
-//    @get:Rule
-//    val tempFolder = TemporaryFolder()
 
     @Test
     fun authorizationHeaderName() {
@@ -489,5 +488,73 @@ class AppConfigurationTests {
 
     @Ignore // TODO
     fun dispatcher() {
+    }
+
+    @Test
+    fun multiplexing_default() {
+        val config = AppConfiguration.Builder("foo").build()
+        assertFalse(config.enableSessionMultiplexing)
+    }
+
+    @Test
+    fun multiplexing() {
+        val config = AppConfiguration.Builder("foo")
+            .enableSessionMultiplexing(true)
+            .build()
+        assertTrue(config.enableSessionMultiplexing)
+    }
+
+    @Test
+    fun syncTimeOutOptions_default() {
+        val config = AppConfiguration.Builder("foo").build()
+        with(config.syncTimeoutOptions) {
+            assertEquals(2.minutes, connectTimeout)
+            assertEquals(30.seconds, connectionLingerTime)
+            assertEquals(1.minutes, pingKeepalivePeriod)
+            assertEquals(2.minutes, pongKeepalivePeriod)
+            assertEquals(1.minutes, fastReconnectLimit)
+        }
+    }
+
+    @Test
+    fun syncTimeOutOptions() {
+        val config = AppConfiguration.Builder("foo")
+            .syncTimeouts {
+                connectTimeout = 10.seconds
+                connectionLingerTime = 10.seconds
+                pingKeepalivePeriod = 10.seconds
+                pongKeepalivePeriod = 10.seconds
+                fastReconnectLimit = 10.seconds
+            }
+            .build()
+        with(config.syncTimeoutOptions) {
+            assertEquals(10.seconds, connectTimeout)
+            assertEquals(10.seconds, connectionLingerTime)
+            assertEquals(10.seconds, pingKeepalivePeriod)
+            assertEquals(10.seconds, pongKeepalivePeriod)
+            assertEquals(10.seconds, fastReconnectLimit)
+        }
+    }
+
+    @Test
+    fun syncTimeOutOptions_throwsIfValuesAreOutOfRange() {
+        AppConfiguration.Builder("foo")
+            .syncTimeouts {
+                assertFailsWith<IllegalArgumentException> {
+                    connectTimeout = 999.milliseconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    connectionLingerTime = 0.seconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    pingKeepalivePeriod = 5.seconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    pongKeepalivePeriod = 5.seconds
+                }
+                assertFailsWith<IllegalArgumentException> {
+                    pongKeepalivePeriod = 1.seconds
+                }
+            }
     }
 }

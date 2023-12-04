@@ -54,7 +54,7 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         RealmInterop.realm_query_find_all(queryPointer)
     }
 
-    private val classMetadata: ClassMetadata? = realmReference.schemaMetadata[clazz.simpleName!!]
+    private val classMetadata: ClassMetadata? = realmReference.schemaMetadata[classKey]
 
     internal constructor(
         realmReference: RealmReference,

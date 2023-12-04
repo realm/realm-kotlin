@@ -35,7 +35,7 @@ import io.realm.kotlin.log.RealmLog
  * An **initializer** for Sync specific functionality that does not fit into the `RealmInitializer`
  * in cinterop.o allow Realm to access context properties.
  */
-class RealmSyncInitializer : Initializer<Context> {
+internal class RealmSyncInitializer : Initializer<Context> {
 
     companion object {
         @Suppress("DEPRECATION") // Should only be called below API 21
@@ -82,7 +82,7 @@ class RealmSyncInitializer : Initializer<Context> {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP /* 21 */) {
                     val request = NetworkRequest.Builder()
                         .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP /* 23 */) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M /* 23 */) {
                         request.addCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
                     }
                     RealmLog.info("Register ConnectivityManager network callbacks")
