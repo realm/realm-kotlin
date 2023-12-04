@@ -470,7 +470,7 @@ public interface AppConfiguration {
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
                 appNetworkDispatcherFactory = appNetworkDispatcherFactory,
                 networkTransportFactory = networkTransport,
-                webSocketTransport = websocketTransport,
+                websocketTransport = websocketTransport,
                 syncRootDirectory = syncRootDirectory,
                 logger = logConfig,
                 appName = appName,
