@@ -69,7 +69,7 @@ public open class ConfigurationImpl(
     inMemory: Boolean,
     initialRealmFileConfiguration: InitialRealmFileConfiguration?,
     logger: ContextLogger,
-    override val adapters: List<RealmTypeAdapter<*, *>>,
+    override val adapters: Map<KClass<*>, RealmTypeAdapter<*, *>>,
 ) : InternalConfiguration {
 
     override val path: String

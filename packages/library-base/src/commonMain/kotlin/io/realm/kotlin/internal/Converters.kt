@@ -262,26 +262,30 @@ public inline fun longToInt(value: Long?): Int? = value?.toInt()
 
 public inline fun toRealm(
     obj: RealmObjectReference<out BaseRealmObject>,
-    converterClass: KClass<RealmTypeAdapter<Any, Any>>,
-    userValue: Any,
-): Any {
+    adapterClass: KClass<*>,
+    userValue: Any?,
+): Any? {
     val adapter = obj.owner.owner
         .configuration
-        .adapters
-        .first { it::class == converterClass } as RealmTypeAdapter<Any, Any>
+        .adapters.let { adapters ->
+            require(adapters.contains(adapterClass)) {"User provided adaptes don't contains adapter ${adapterClass.simpleName}"}
+            adapters[adapterClass] as RealmTypeAdapter<Any?, Any?>
+        }
 
     return adapter.toRealm(userValue)
 }
 
 public inline fun fromRealm(
     obj: RealmObjectReference<out BaseRealmObject>,
-    converterClass: KClass<RealmTypeAdapter<*, *>>,
+    adapterClass: KClass<*>,
     realmValue: Any,
-): Any {
+): Any? {
     val adapter = obj.owner.owner
         .configuration
-        .adapters
-        .first { it::class == converterClass } as RealmTypeAdapter<Any, Any>
+        .adapters.let { adapters ->
+            require(adapters.contains(adapterClass)) {"User provided adaptes don't contains adapter ${adapterClass.simpleName}"}
+            adapters[adapterClass] as RealmTypeAdapter<Any?, Any?>
+        }
 
     return adapter.fromRealm(realmValue)
 }

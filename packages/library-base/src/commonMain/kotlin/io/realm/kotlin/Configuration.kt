@@ -239,7 +239,7 @@ public interface Configuration {
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
         protected var initialRealmFileConfiguration: InitialRealmFileConfiguration? = null
-        protected var typeAdapters: List<RealmTypeAdapter<*, *>> = listOf()
+        protected var typeAdapters: Map<KClass<*>, RealmTypeAdapter<*, *>> = mapOf()
 
         /**
          * Sets the filename of the realm file.

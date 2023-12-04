@@ -92,9 +92,9 @@ public interface RealmConfiguration : Configuration {
 
         // TODO misplaced, move around
         public class TypeAdapterBuilder {
-            internal val adapters: MutableList<RealmTypeAdapter<*, *>> = mutableListOf()
+            internal val adapters: MutableMap<KClass<*>, RealmTypeAdapter<*, *>> = mutableMapOf()
             public fun add(adapter: RealmTypeAdapter<*,*>) {
-                adapters.add(adapter)
+                adapters[adapter::class] = adapter
             }
         }
 
