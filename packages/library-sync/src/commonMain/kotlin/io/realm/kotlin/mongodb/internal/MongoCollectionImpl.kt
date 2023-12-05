@@ -26,7 +26,7 @@ import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
 
 @PublishedApi
-internal class MongoCollectionImpl(
+internal open class MongoCollectionImpl(
 
     @PublishedApi internal val database: MongoDatabaseImpl,
     override val name: String,

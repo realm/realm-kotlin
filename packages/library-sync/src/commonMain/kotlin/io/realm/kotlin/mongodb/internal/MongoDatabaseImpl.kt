@@ -18,6 +18,9 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
+import io.realm.kotlin.mongodb.mongo.TypedMongoCollection
+import io.realm.kotlin.mongodb.mongo.TypedMongoCollectionImpl
+import org.mongodb.kbson.BsonValue
 
 @PublishedApi
 internal class MongoDatabaseImpl(
@@ -27,4 +30,12 @@ internal class MongoDatabaseImpl(
 ) : MongoDatabase {
     override fun collection(collectionName: String): MongoCollection =
         MongoCollectionImpl(this, collectionName)
+
+    override fun typedCollectionbson(collectionName: String): TypedMongoCollection<BsonValue, BsonValue> {
+        return TypedMongoCollectionImpl(collection(collectionName) as MongoCollectionImpl)
+    }
+
+    override fun <T, R> typedCollection(collectionName: String): TypedMongoCollection<T, R> {
+        return TypedMongoCollectionImpl(collection(collectionName) as MongoCollectionImpl)
+    }
 }

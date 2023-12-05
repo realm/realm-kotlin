@@ -16,6 +16,9 @@
 
 package io.realm.kotlin.mongodb.mongo
 
+import org.mongodb.kbson.BsonValue
+import kotlin.jvm.JvmName
+
 /**
  * A handle to a remote **Atlas App Service database** that provides access to its [MongoCollection]s.
  */
@@ -27,5 +30,8 @@ public interface MongoDatabase {
     public val name: String
 
     public fun collection(collectionName: String): MongoCollection
+    public fun typedCollectionbson(collectionName: String): TypedMongoCollection<BsonValue, BsonValue>
+    public fun <T, R> typedCollection(collectionName: String): TypedMongoCollection<T, R>
 
 }
+

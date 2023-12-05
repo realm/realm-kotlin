@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// TODO - QUESTIONS
+//  - should we allow serialization of update, sort and projection arguments?
 package io.realm.kotlin.mongodb.mongo
 
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
@@ -21,6 +23,7 @@ import io.realm.kotlin.mongodb.internal.MongoCollectionImpl
 import io.realm.kotlin.mongodb.internal.call
 import io.realm.kotlin.mongodb.internal.serializerOrRealmBuiltInSerializer
 import kotlinx.serialization.KSerializer
+import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBoolean
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonInt64
@@ -28,6 +31,7 @@ import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 import org.mongodb.kbson.serialization.decodeFromBsonValue
+import kotlin.jvm.JvmName
 
 public interface MongoCollection {
 
@@ -37,22 +41,33 @@ public interface MongoCollection {
 //    public suspend fun findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): BsonValue {
 //        TODO()
 //    }
+    @ExperimentalRealmSerializerApi
+    public fun <T, K> typedCollection(): TypedMongoCollection<T, K> = TypedMongoCollectionImpl<T, K>(this as MongoCollectionImpl)
 }
 
-public interface TypedMongoCollection<T> {
+public interface TypedMongoCollection<T, K>: MongoCollection { }
 
-}
-
+@PublishedApi
+internal class TypedMongoCollectionImpl<T, K>(collectionImpl: MongoCollectionImpl): TypedMongoCollection<T, K>, MongoCollectionImpl(collectionImpl.database, collectionImpl.name)
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @ExperimentalRealmSerializerApi
-public suspend inline fun <reified R> MongoCollection.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): R {
-    return EJson.decodeFromBsonValue((this as MongoCollectionImpl).call("findOne") {
+public suspend inline fun <reified R> MongoCollection.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, serializer: KSerializer<R>? = null): R {
+    val value = (this as MongoCollectionImpl).call("findOne") {
         filter?.let { put("query", it) }
         projection?.let { put("projection", it) }
         sort?.let { put("sort", it) }
-    })
+    }
+    return decodeFromBsonValue(value, serializer)
 }
+
+@OptIn(ExperimentalKBsonSerializerApi::class)
+@PublishedApi
+internal inline fun <reified R> MongoCollection.decodeFromBsonValue(bsonValue: BsonValue, serializer: KSerializer<R>? = null): R {
+    val serializer = serializer ?: (this as MongoCollectionImpl).functions.app.configuration.ejson.serializersModule.serializerOrRealmBuiltInSerializer()
+    return (this as MongoCollectionImpl).functions.app.configuration.ejson.decodeFromBsonValue(serializer, bsonValue)
+}
+
 
 public class ClientOption {
 
@@ -95,9 +110,6 @@ internal class FindOptionsInternal: FindOneOptions, FilterOptionInternal, LimitO
     override var limit: Long? = null
 }
 
-//public suspend inline fun count(filter: Bson = {}, limit: Int = 0 ): Long
-// query
-// limit
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @ExperimentalRealmSerializerApi
 public suspend inline fun <T> MongoCollection.count(filter: BsonDocument, limit: Long): Long {
@@ -127,6 +139,18 @@ public suspend inline fun <reified T> MongoCollection.findOne(configuration: Fin
     return EJson.decodeFromBsonValue(response)
 }
 
+@OptIn(ExperimentalKBsonSerializerApi::class)
+@ExperimentalRealmSerializerApi
+public suspend inline fun <reified T> MongoCollection.find(filter: BsonDocument? = null, limit: Long? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): List<T> {
+    val objects =  (this as MongoCollectionImpl).call("find") {
+        filter?.let { put("query", it) }
+        projection?.let { put("projection", it) }
+        sort?.let { put("sort", it) }
+        limit?.let { put("limit", BsonInt64(limit)) }
+    }.asArray().toList()
+    return if (T::class == BsonValue::class) { objects as List<T> } else {objects.map {EJson.decodeFromBsonValue(it) } }
+}
+
 //@ExperimentalRealmSerializerApi
 //@OptIn(ExperimentalKBsonSerializerApi::class)
 //public suspend inline fun <reified T, reified R> MongoCollection.insertOne(document: T): R {
@@ -149,8 +173,15 @@ public suspend inline fun <reified T> MongoCollection.findOne(configuration: Fin
 //    }.asDocument().get("insertedId")!!.asObjectId()
 //}
 
-// insertOne(doc:): Bson(insertedId)
-// document
+@ExperimentalRealmSerializerApi
+@OptIn(ExperimentalKBsonSerializerApi::class)
+public suspend inline fun <reified T> MongoCollection.aggregate(pipeline: List<BsonDocument>): List<T> {
+    val insertedId: List<BsonValue> = (this as MongoCollectionImpl).call("aggregate") {
+        put("pipeline", BsonArray(pipeline))
+    }.asArray().toList()
+    return if (T::class == BsonValue::class) { insertedId as List<T> } else { insertedId.map { EJson.decodeFromBsonValue(it) } }
+}
+
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
 public suspend inline fun <reified T, reified R : Any> MongoCollection.insertOne(document: T): R {
@@ -167,6 +198,30 @@ public suspend inline fun <reified T, reified R : Any> MongoCollection.insertOne
 
 // Annoying that you cannot to this without assignment/return type
 // collection.insertMany(listOf(SyncDog()))
+@OptIn(ExperimentalKBsonSerializerApi::class)
+@JvmName("asdf")
+@ExperimentalRealmSerializerApi
+public suspend inline fun <reified T, reified R : Any> TypedMongoCollection<T, R>.insertMany(
+    documents: Collection<T>,
+): List<R> {
+    val encodedDocument: BsonValue = EJson.encodeToBsonValue(
+        EJson.serializersModule.serializerOrRealmBuiltInSerializer(),
+        documents
+    )
+    val insertedId: List<BsonValue> = (this as MongoCollectionImpl).call("insertMany") {
+        put("documents", encodedDocument)
+    }.asDocument().get("insertedIds")!!.asArray().toList()
+    return if (R::class == BsonValue::class) {
+        insertedId as List<R>
+    } else {
+        insertedId.map { decodeFromBsonValue(it) }
+    }
+}
+
+@ExperimentalRealmSerializerApi
+public suspend inline fun <reified T, reified R : Any> TypedMongoCollection<*, *>.insertMany(documents: Collection<T>): List<R> =
+    (this as TypedMongoCollectionImpl<T, R>).insertMany<T, R>(documents)
+
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
 public suspend inline fun <reified T, reified R : Any> MongoCollection.insertMany(documents: Collection<T>): List<R> {
@@ -248,7 +303,6 @@ public suspend inline fun <reified R : Any> MongoCollection.updateMany(
     return if (R::class == BsonValue::class) { insertedId as R } else { EJson.decodeFromBsonValue(insertedId) }
 }
 
-// findOneAndUpdate(filter, update, options(projections, sort, upsert: Boolean, returnNewDoc)): T
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
 public suspend inline fun <reified R : Any> MongoCollection.findOneAndUpdate(
@@ -259,29 +313,21 @@ public suspend inline fun <reified R : Any> MongoCollection.findOneAndUpdate(
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
 ): R {
-    val insertedId: BsonValue = (this as MongoCollectionImpl).call("findOneAndUpdate") {
+    val updatedDocument: BsonValue = (this as MongoCollectionImpl).call("findOneAndUpdate") {
         put("filter", filter)
         put("update", update)
         projection?.let { put("projection", projection)}
         sort?.let { put("sort", sort)}
         put("upsert", BsonBoolean(upsert))
         put("returnNewDoc", BsonBoolean(returnNewDoc))
-    }//.get("insertedIds")!!.asArray().toList()
-    // {"matchedCount":{"$numberInt":"0"},"modifiedCount":{"$numberInt":"0"}}
-
+    }
     return if (R::class == BsonValue::class) {
-        insertedId as R
+        updatedDocument as R
     } else {
-        EJson.decodeFromBsonValue(insertedId)
+        EJson.decodeFromBsonValue(updatedDocument)
     }
 }
-// findOneAndReplace(filter, update, options(projections, sort, upsert: Boolean, returnNewDoc)): T
-// filter
-// update : BsonDocu
-// upsert: Boolean
-// returnNewDoc: Boolean
-// projection
-// sort
+
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
 public suspend inline fun <reified R : Any> MongoCollection.findOneAndReplace(
@@ -292,52 +338,38 @@ public suspend inline fun <reified R : Any> MongoCollection.findOneAndReplace(
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
 ): R {
-    val insertedId: BsonValue = (this as MongoCollectionImpl).call("findOneAndReplace") {
+    // If returnNewDoc==true then the returned document is after the update otherwise it is from
+    // before the update
+    val updatedDocument: BsonValue = (this as MongoCollectionImpl).call("findOneAndReplace") {
         put("filter", filter)
         put("update", update)
         projection?.let { put("projection", projection)}
         sort?.let { put("sort", sort)}
         put("upsert", BsonBoolean(upsert))
         put("returnNewDoc", BsonBoolean(returnNewDoc))
-    }//.get("insertedIds")!!.asArray().toList()
-    // {"matchedCount":{"$numberInt":"0"},"modifiedCount":{"$numberInt":"0"}}
-
+    }
     return if (R::class == BsonValue::class) {
-        insertedId as R
+        updatedDocument as R
     } else {
-        EJson.decodeFromBsonValue(insertedId)
+        EJson.decodeFromBsonValue(updatedDocument)
     }
 }
 
-// findOneAndDelete(filter, options(projections, sort, upsert: Boolean, returnNewDoc)): T
-// filter
-// upsert: Boolean
-// returnNewDoc: Boolean
-// projection
-// sort
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
 public suspend inline fun <reified R : Any> MongoCollection.findOneAndDelete(
     filter: BsonDocument,
-    update: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
-    upsert: Boolean = false,
 ): R {
-    val insertedId: BsonValue = (this as MongoCollectionImpl).call("findOneAndDelete") {
+    val deletedDocument: BsonValue = (this as MongoCollectionImpl).call("findOneAndDelete") {
         put("filter", filter)
-        put("update", update)
         projection?.let { put("projection", projection)}
         sort?.let { put("sort", sort)}
-        put("upsert", BsonBoolean(upsert))
-    }//.get("insertedIds")!!.asArray().toList()
-    // {"matchedCount":{"$numberInt":"0"},"modifiedCount":{"$numberInt":"0"}}
-
+    }
     return if (R::class == BsonValue::class) {
-        insertedId as R
+        deletedDocument as R
     } else {
-        EJson.decodeFromBsonValue(insertedId)
+        EJson.decodeFromBsonValue(deletedDocument)
     }
 }
-
-// watch??

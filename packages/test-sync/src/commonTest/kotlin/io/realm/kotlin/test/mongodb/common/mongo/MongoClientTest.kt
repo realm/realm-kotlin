@@ -27,8 +27,11 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
+import io.realm.kotlin.mongodb.mongo.TypedMongoCollection
+import io.realm.kotlin.mongodb.mongo.aggregate
 import io.realm.kotlin.mongodb.mongo.deleteMany
 import io.realm.kotlin.mongodb.mongo.deleteOne
+import io.realm.kotlin.mongodb.mongo.find
 import io.realm.kotlin.mongodb.mongo.findOne
 import io.realm.kotlin.mongodb.mongo.findOneAndDelete
 import io.realm.kotlin.mongodb.mongo.findOneAndReplace
@@ -162,6 +165,11 @@ class MongoClientTest {
         // Projection select field
         // Limit
         // Sort
+        val y: BsonDocument = collection.findOne<BsonDocument>(filter = BsonDocument("name", "dog-0"))
+
+        val y2: BsonValue = collection.findOne<BsonValue>(filter = BsonDocument("name", "dog-0"))
+        println(y)
+        println(y2)
     }
 
     @OptIn(ExperimentalKBsonSerializerApi::class)
@@ -310,6 +318,16 @@ class MongoClientTest {
 //            }
 //        }
 //    }
+
+    @Test
+    fun find() = runBlocking<Unit> {
+        RealmLog.level = LogLevel.ALL
+        assertTrue { collection.find<SyncDog>().isEmpty() }
+
+        val x: List<ObjectId> = collection.insertMany(listOf(SyncDog("dog1"), SyncDog("dog2")))
+        assertEquals(2, collection.find<SyncDog>().size)
+    }
+
 //
 //    @Test
 //    fun find() {
@@ -374,6 +392,18 @@ class MongoClientTest {
 //        }
 //    }
 //
+
+    @Test
+    fun aggregate() = runBlocking<Unit> {
+        RealmLog.level = LogLevel.ALL
+        collection.aggregate<SyncDog>(listOf())
+
+        val x: List<ObjectId> = collection.insertMany(listOf(SyncDog(name = "dog1"), SyncDog(name = "dog2")))
+        collection.aggregate<SyncDog>(listOf())
+
+
+        collection.aggregate<SyncDog>(listOf(BsonDocument("\$sort", BsonDocument("name", -1)), BsonDocument("\$limit", 1)))
+    }
 //    @Test
 //    fun aggregate() {
 //        with(getCollectionInternal()) {
@@ -453,6 +483,9 @@ class MongoClientTest {
         // Option 3 - Automatically serialized object
         val x2: ObjectId = collection.insertOne(SyncDog("sadf"))
         println(x2)
+
+        val x3: ObjectId = collection.insertOne(BsonDocument("""{ "name" : "asdf" }"""))
+        println(x2)
     }
 
 //
@@ -507,7 +540,20 @@ class MongoClientTest {
         println(x)
         println(y)
 
+        val typedCollection = collection.typedCollection<SyncDog, ObjectId>()
+        val z: List<ObjectId> = typedCollection.insertMany(listOf(SyncDog("sadf")))
+        val tyz = typedCollection.insertMany<SyncDog, BsonValue>(listOf(SyncDog("sadf")))
+
+        val bsonSyncDogs /*: TypedMongoCollection<BsonValue, BsonValue> */ = database.typedCollectionbson("SyncDog")
+        val insertMany /*: List<BsonValue> */ = bsonSyncDogs.insertMany(listOf(BsonDocument("name", "x")))
+
+        val syncDogs: TypedMongoCollection<SyncDog, ObjectId> = database.typedCollection<SyncDog, ObjectId>("SyncDog")
+
+        val objectIds = syncDogs.insertMany(listOf(SyncDog("name")))
+
+        val objectIds2: List<ObjectId> = syncDogs.insertMany<BsonValue, ObjectId>(listOf(BsonDocument("name", "asdf")))
     }
+
 //
 //    @Test
 //    fun insertMany_singleDocument() {
@@ -1261,7 +1307,6 @@ class MongoClientTest {
         val x: SyncDog = collection.findOneAndDelete<SyncDog>(
             BsonDocument(),
             BsonDocument("""{ "name": "dog1" }"""),
-            upsert = true
         )
     }
     //
