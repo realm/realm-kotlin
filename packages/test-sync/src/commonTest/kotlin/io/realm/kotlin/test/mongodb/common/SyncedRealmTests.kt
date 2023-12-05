@@ -959,9 +959,6 @@ class SyncedRealmTests {
                     )
                 }
 
-                flexSyncRealm.syncSession.uploadAllLocalChanges(30.seconds)
-                flexSyncRealm.syncSession.downloadAllServerChanges(30.seconds)
-
                 // Copy to local Realm
                 flexSyncRealm.writeCopyTo(localConfig)
             }
