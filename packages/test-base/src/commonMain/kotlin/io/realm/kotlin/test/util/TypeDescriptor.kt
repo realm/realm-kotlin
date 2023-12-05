@@ -384,8 +384,8 @@ object TypeDescriptor {
             return when (collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> element
                 CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$element>"
-                CollectionType.RLM_COLLECTION_TYPE_SET -> TODO()
-                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> TODO()
+                CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<$element>"
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> "RealmDictionary<$element>"
                 else -> throw IllegalArgumentException("Wrong collection type: $collectionType")
             }
         }

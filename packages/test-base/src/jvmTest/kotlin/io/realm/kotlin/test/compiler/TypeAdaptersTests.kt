@@ -41,6 +41,7 @@ import kotlin.test.assertTrue
  *  - [x] Adapter annotation on unsupported types: delegate, function etc
  *  - [ ] Adapters type supportness
  *  - [ ] Instanced and singleton adapters
+ *  - [ ] Other annotations Ignore, Index etc
  */
 class TypeAdaptersTests {
     // TODO: Can we make it fail when declaring type adapters rather than when we apply them?
@@ -141,14 +142,8 @@ class TypeAdaptersTests {
         )
 
         allFieldTypes
-            .filter { type: TypeDescriptor.RealmFieldType ->
-                // TODO at some point test collections
-                type.collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE ||
-                type.collectionType == CollectionType.RLM_COLLECTION_TYPE_LIST
-            }
             .filterNot { type ->
-                // TODO tidy list unsupported types in TypeDescriptor
-                type.elementType.classifier == MutableRealmInt::class ||
+//                // TODO tidy list unsupported types in TypeDescriptor
                 type.elementType.classifier == RealmObject::class
             }
             .forEach { type ->
@@ -158,13 +153,17 @@ class TypeAdaptersTests {
 
                 val kotlinLiteral = type.toKotlinLiteral()
 
+                println(kotlinLiteral)
+
                 val result = compileFromSource(
                     plugins = listOf(io.realm.kotlin.compiler.Registrar()),
                     source = SourceFile.kotlin(
                         "typeadapter_supportness_$kotlinLiteral.kt",
                         """
                     import io.realm.kotlin.types.RealmAny
+                    import io.realm.kotlin.types.RealmDictionary
                     import io.realm.kotlin.types.RealmList
+                    import io.realm.kotlin.types.RealmSet
                     import io.realm.kotlin.types.RealmInstant
                     import io.realm.kotlin.types.MutableRealmInt
                     import io.realm.kotlin.types.RealmObject
