@@ -143,7 +143,8 @@ class TypeAdaptersTests {
         allFieldTypes
             .filter { type: TypeDescriptor.RealmFieldType ->
                 // TODO at some point test collections
-                type.collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE
+                type.collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE ||
+                type.collectionType == CollectionType.RLM_COLLECTION_TYPE_LIST
             }
             .filterNot { type ->
                 // TODO tidy list unsupported types in TypeDescriptor
@@ -163,6 +164,7 @@ class TypeAdaptersTests {
                         "typeadapter_supportness_$kotlinLiteral.kt",
                         """
                     import io.realm.kotlin.types.RealmAny
+                    import io.realm.kotlin.types.RealmList
                     import io.realm.kotlin.types.RealmInstant
                     import io.realm.kotlin.types.MutableRealmInt
                     import io.realm.kotlin.types.RealmObject
