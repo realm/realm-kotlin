@@ -16,6 +16,9 @@
 
 package io.realm.kotlin.mongodb.mongo
 
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
+
 /**
  * The remote MongoClient used for working with data in MongoDB remotely via Realm.
  */
@@ -23,5 +26,6 @@ public interface MongoClient {
 
     public val serviceName: String
 
-    public fun database(databaseName: String): MongoDatabase
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    public fun database(databaseName: String, eJson: EJson? = null): MongoDatabase
 }

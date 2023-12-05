@@ -22,6 +22,8 @@ import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
@@ -203,8 +205,8 @@ public interface User {
     public suspend fun linkCredentials(credentials: Credentials): User
 
     // TODO Doc
-    // TODO serializer argument
-    public fun mongoClient(serviceName: String): MongoClient
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    public fun mongoClient(serviceName: String, eJson: EJson? = null): MongoClient
 
     /**
      * Two Users are considered equal if they have the same user identity and are associated

@@ -18,24 +18,23 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
-import io.realm.kotlin.mongodb.mongo.TypedMongoCollection
-import io.realm.kotlin.mongodb.mongo.TypedMongoCollectionImpl
 import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 @PublishedApi
-internal class MongoDatabaseImpl(
+@OptIn(ExperimentalKBsonSerializerApi::class)
+internal class MongoDatabaseImpl constructor(
     @PublishedApi
     internal val client: MongoClientImpl,
     override val name: String,
+    val eJson: EJson,
 ) : MongoDatabase {
-    override fun collection(collectionName: String): MongoCollection =
-        MongoCollectionImpl(this, collectionName)
 
-    override fun typedCollectionbson(collectionName: String): TypedMongoCollection<BsonValue, BsonValue> {
-        return TypedMongoCollectionImpl(collection(collectionName) as MongoCollectionImpl)
+    override fun collection(collectionName: String): MongoCollection<BsonValue, BsonValue> {
+        return MongoCollectionImpl(this, collectionName, this.eJson)
     }
 
-    override fun <T, R> typedCollection(collectionName: String): TypedMongoCollection<T, R> {
-        return TypedMongoCollectionImpl(collection(collectionName) as MongoCollectionImpl)
-    }
+    override fun <T, K> collection(collectionName: String, eJson: EJson?): MongoCollection<T, K> =
+        MongoCollectionImpl(this, collectionName, eJson ?: this.eJson)
 }

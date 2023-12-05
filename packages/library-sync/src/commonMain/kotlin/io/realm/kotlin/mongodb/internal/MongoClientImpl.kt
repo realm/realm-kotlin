@@ -18,11 +18,18 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
+@OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
 internal class MongoClientImpl(
-    @PublishedApi
-    internal val user: UserImpl, override val serviceName: String) : MongoClient {
-    override fun database(databaseName: String): MongoDatabase = MongoDatabaseImpl(this, databaseName)
+    internal val user: UserImpl,
+    override val serviceName: String,
+    val eJson: EJson,
+) : MongoClient {
+
+    override fun database(databaseName: String, eJson: EJson?): MongoDatabase =
+        MongoDatabaseImpl(this, databaseName, eJson ?: this.eJson)
 
 }

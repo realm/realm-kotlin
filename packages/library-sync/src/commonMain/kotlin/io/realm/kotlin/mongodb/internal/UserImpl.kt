@@ -32,6 +32,8 @@ import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
 import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -185,7 +187,8 @@ public class UserImpl(
         }
     }
 
-    override fun mongoClient(serviceName: String): MongoClient = MongoClientImpl(this, serviceName)
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    override fun mongoClient(serviceName: String, eJson: EJson?): MongoClient = MongoClientImpl(this, serviceName, eJson ?: app.configuration.ejson)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

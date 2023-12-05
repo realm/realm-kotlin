@@ -17,49 +17,94 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
-import io.realm.kotlin.mongodb.ext.CallBuilder
 import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.mongodb.mongo.MongoCollection
+import io.realm.kotlin.mongodb.mongo.insertMany
+import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonInt64
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
+import org.mongodb.kbson.serialization.decodeFromBsonValue
+import org.mongodb.kbson.serialization.encodeToBsonValue
 
+@OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
 @PublishedApi
-internal open class MongoCollectionImpl(
-
+internal class MongoCollectionImpl<T, K> @OptIn(ExperimentalKBsonSerializerApi::class) constructor(
     @PublishedApi internal val database: MongoDatabaseImpl,
     override val name: String,
-) : MongoCollection {
+    val eJson: EJson,
+): MongoCollection<T, K> {
 
     val client = this.database.client
     val user = client.user
     val functions = user.functions
+
 
     val defaults: Map<String, BsonValue> = mapOf(
             "database" to BsonString(database.name),
             "collection" to BsonString(name),
         )
 
-    override suspend fun count(filter: BsonDocument?, limit: Long?): Int {
-        @OptIn(ExperimentalRealmSerializerApi::class)
-        return user.functions.call("count") {
+    @ExperimentalRealmSerializerApi
+    private suspend inline fun <reified R> call(name: String, crossinline document: MutableMap<String, BsonValue>.()-> Unit): R {
+        return user.functions.call(name) {
             serviceName(client.serviceName)
-            val args = defaults.toMutableMap()
-            limit?.let { args.put("limit", BsonInt64(limit)) }
-            filter?.let { args.put("query", it) }
-            add(BsonDocument(args))
+            val doc = defaults.toMutableMap()
+            document(doc)
+            add(doc)
         }
     }
+
+    @PublishedApi
+    internal suspend fun count(filter: BsonDocument? = null, limit: Long? = null): Long {
+        return call("count") {
+            filter?.let { put("query", it) }
+            limit?.let { put("limit", BsonInt64(it)) }
+        }
+    }
+
+    @PublishedApi
+    internal suspend fun findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): BsonValue =
+        call("findOne") {
+            filter?.let { put("query", it) }
+            projection?.let { put("projection", it) }
+            sort?.let { put("sort", it) }
+        }
+
+    @PublishedApi
+    internal suspend fun find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null): BsonValue =
+        call("find") {
+            filter?.let { put("query", it) }
+            projection?.let { put("projection", it) }
+            sort?.let { put("sort", it) }
+            limit?.let { put("limit", BsonInt64(it)) }
+        }
+
+    @PublishedApi
+    internal suspend fun aggregate(pipeline: List<BsonDocument>): List<BsonValue> =
+        call<BsonValue>("aggregate") { put("pipeline", BsonArray(pipeline)) }.asArray().toList()
+
+    @PublishedApi
+    internal suspend fun insertOne(document: BsonDocument): BsonValue =
+        call<BsonValue>("insertOne") { put("document", document) }.asDocument()["insertedId"]!!
+
+    @PublishedApi
+    internal suspend fun insertMany(documents: List<BsonDocument>): List<BsonValue> =
+        call<BsonValue>("insertMany") {
+            put("documents", BsonArray(documents))
+        }.asDocument().get("insertedIds")!!.asArray().toList()
 }
 
-@ExperimentalRealmSerializerApi
+@OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
-internal suspend inline fun MongoCollectionImpl.call(name: String, crossinline document: MutableMap<String, BsonValue>.()-> Unit): BsonValue {
-    return user.functions.call(name) {
-        serviceName(client.serviceName)
-        val doc = this@call.defaults.toMutableMap()
-        document(doc)
-        add(doc)
-    }
+internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bsonValue: BsonValue): R {
+    return eJson.decodeFromBsonValue(bsonValue)
+}
+@OptIn(ExperimentalKBsonSerializerApi::class)
+@PublishedApi
+internal inline fun <reified R : Any> MongoCollectionImpl<*, *>.encodeToBsonValue(value: R): BsonValue {
+    return eJson.encodeToBsonValue(value)
 }

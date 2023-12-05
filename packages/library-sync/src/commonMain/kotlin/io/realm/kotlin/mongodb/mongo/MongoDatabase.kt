@@ -16,7 +16,10 @@
 
 package io.realm.kotlin.mongodb.mongo
 
+import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import org.mongodb.kbson.BsonValue
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 import kotlin.jvm.JvmName
 
 /**
@@ -29,9 +32,10 @@ public interface MongoDatabase {
      */
     public val name: String
 
-    public fun collection(collectionName: String): MongoCollection
-    public fun typedCollectionbson(collectionName: String): TypedMongoCollection<BsonValue, BsonValue>
-    public fun <T, R> typedCollection(collectionName: String): TypedMongoCollection<T, R>
+    public fun collection(collectionName: String): MongoCollection<BsonValue, BsonValue>
+
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    public fun <T, K> collection(collectionName: String, eJson: EJson? = null): MongoCollection<T, K>
 
 }
 
