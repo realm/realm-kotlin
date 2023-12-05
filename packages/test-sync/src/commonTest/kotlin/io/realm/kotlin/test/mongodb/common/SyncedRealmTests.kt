@@ -256,9 +256,9 @@ class SyncedRealmTests {
                 }
             }
         } finally {
+            c.cancel()
             realm1.close()
             observer.cancel()
-            c.cancel()
         }
     }
 
