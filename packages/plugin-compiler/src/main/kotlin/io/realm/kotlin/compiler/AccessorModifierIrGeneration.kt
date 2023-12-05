@@ -93,6 +93,7 @@ import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.isBoolean
@@ -752,7 +753,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         // TODO extract the type from the annotation, by now hardcoded one
 
                         val schemaProperty =
-                            retrieveSchemaProperty(declaration, realmType.typeOrNull!!)
+                            retrieveSchemaProperty(declaration, realmType.typeOrNull!!.makeNotNull())
 
                         if(schemaProperty!= null) {
                             fields[name] = schemaProperty!!
@@ -826,6 +827,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private fun retrieveSchemaProperty(property: IrProperty, type: IrType): SchemaProperty? =
         when {
+            // TODO should we allow these realm int subtypes?
+            type.isChar() ||
+            type.isByte() ||
+            type.isShort() ||
+            type.isInt() ||
             type.isLong() -> SchemaProperty(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                 declaration = property,
@@ -873,7 +879,8 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 declaration = property,
                 collectionType = CollectionType.NONE
             )
-            type.isObjectId() -> SchemaProperty(
+            type.isObjectId() ||
+            type.isRealmObjectId() -> SchemaProperty(
                 propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                 declaration = property,
                 collectionType = CollectionType.NONE
@@ -885,7 +892,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             )
             else -> {
                 logError(
-                    "Invalid type parameter, only Realm types are supported", // TODO find a better error message
+                    "Invalid type parameter '${type.classFqName}', only Realm types are supported", // TODO find a better error message
                     property.locationOf()
                 )
                 null
