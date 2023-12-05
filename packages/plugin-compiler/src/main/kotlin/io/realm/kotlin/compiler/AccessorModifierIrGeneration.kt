@@ -301,14 +301,12 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val typeAdapterMethodReferences = if(declaration.hasAnnotation(TYPE_ADAPTER_ANNOTATION)) {
                     logDebug("Object property named ${declaration.name} is an adapted type.")
 
-                    // TODO throw on unsupported types
-
                     val adapterClassReference =
                         declaration.getAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
                             .getValueArgument(0)!! as IrClassReference
                     val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
 
-                    // TODO find correct super type adapter type, might be multiple ones
+                    // TODO find correct super type adapter type, might be multiple ones because inheritance
                     val (realmType: IrTypeArgument, userType) =
                         (adapterClassReference.symbol.superTypes().first() as IrSimpleType)
                             .arguments
@@ -316,11 +314,18 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 arguments[0] to arguments[1]
                             }
 
-                    // TODO throw proper error on null
-                    // replace the property type with the one from the type adapter
-                    realmType.typeOrNull!!.let {
-                        propertyType = it.makeNotNull()
-                        nullable = it.isNullable()
+                    // Replace the property type with the one from the type adapter
+                    realmType.typeOrNull.let {
+                        if(it != null) {
+                            propertyType = it.makeNotNull()
+                            if(propertyType.isChar() || propertyType.isByte() || propertyType.isShort() || propertyType.isInt() || propertyType.isMutableRealmInteger()) {
+                                // TODO improve messaging
+                                logError("Unsupported Realm storage type. Use `Long` instead", declaration.locationOf())
+                            }
+                            nullable = it.isNullable()
+                        } else {
+                            logError("Could not retrieve the storage type.")
+                        }
                     }
 
                     when (adapterClass.kind) {

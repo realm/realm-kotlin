@@ -143,8 +143,13 @@ class TypeAdaptersTests {
 
         allFieldTypes
             .filterNot { type ->
-//                // TODO tidy list unsupported types in TypeDescriptor
-                type.elementType.classifier == RealmObject::class
+                // TODO tidy list unsupported types in TypeDescriptor
+                type.elementType.classifier == RealmObject::class ||
+                type.elementType.classifier == Byte::class ||
+                type.elementType.classifier == Char::class ||
+                type.elementType.classifier == Short::class ||
+                type.elementType.classifier == Int::class ||
+                type.elementType.classifier == MutableRealmInt::class
             }
             .forEach { type ->
                 val elementType = type.elementType
