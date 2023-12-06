@@ -380,6 +380,8 @@ public interface AppConfiguration {
         /**
          * Platform Networking offer improved support for proxies and firewalls that require authentication,
          * instead of Realm's built-in WebSocket client for Sync traffic. This will become the default in a future version.
+         *
+         * Note: Only Android and JVM targets are supported so far.
          */
         public fun usePlatformNetworking(enable: Boolean = true): Builder =
             apply {
