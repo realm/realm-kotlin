@@ -46,9 +46,10 @@ tasks.register("publishCIPackages") {
         "macosArm64",
         "android",
         "metadata",
-        "compiler-plugin",
-        "gradle-plugin"
+        "compilerPlugin",
+        "gradlePlugin"
     )
+
     val mainHostTarget: Set<String> = setOf("metadata") // "kotlinMultiplatform"
 
     val isMainHost: Boolean? = if (project.properties.containsKey("realm.kotlin.mainHost"))  {
