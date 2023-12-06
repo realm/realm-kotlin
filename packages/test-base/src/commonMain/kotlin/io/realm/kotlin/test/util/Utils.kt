@@ -98,9 +98,15 @@ fun Instant.toRealmInstant(): RealmInstant {
  * Channel implementation specifically suited for tests. Its size is unlimited, but will fail
  * the test if canceled while still containing unconsumed elements.
  */
-inline fun <T> TestChannel(): Channel<T> {
-    return Channel<T>(capacity = Channel.UNLIMITED, onBufferOverflow = BufferOverflow.SUSPEND) {
-        throw AssertionError("Failed to deliver: $it")
+inline fun <T> TestChannel(
+    capacity: Int = Channel.UNLIMITED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+    failIfBufferIsEmptyOnCancel: Boolean = true
+): Channel<T> {
+    return Channel<T>(capacity = capacity, onBufferOverflow = onBufferOverflow) {
+        if (failIfBufferIsEmptyOnCancel) {
+            throw AssertionError("Failed to deliver: $it")
+        }
     }
 }
 

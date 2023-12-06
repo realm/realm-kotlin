@@ -221,7 +221,10 @@ class SyncedRealmTests {
             partitionValue = partitionValue
         )
         val realm1 = Realm.open(config1)
-        val c = TestChannel<RealmChange<Realm>>()
+        // We don't fully control all events from the server, so do not check the
+        // for an empty buffer because we might accidentally see multiple updates
+        // from the server.
+        val c = TestChannel<RealmChange<Realm>>(failIfBufferIsEmptyOnCancel = false)
         val observer = async {
             realm1.asFlow().collect {
                 c.send(it)
