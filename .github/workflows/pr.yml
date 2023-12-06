@@ -289,7 +289,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -PcopyJvmABIs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm,gradlePlugin,compilerPlugin -PcopyJvmABIs=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3

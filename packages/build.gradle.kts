@@ -21,7 +21,6 @@ plugins {
     `java-gradle-plugin`
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
-    id("com.dorongold.task-tree") version "2.1.0"
 }
 
 allprojects {
@@ -46,10 +45,11 @@ tasks.register("publishCIPackages") {
         "macosX64",
         "macosArm64",
         "android",
-        "metadata"
+        "metadata",
+        "compiler-plugin",
+        "gradle-plugin"
     )
     val mainHostTarget: Set<String> = setOf("metadata") // "kotlinMultiplatform"
-
 
     val isMainHost: Boolean? = if (project.properties.containsKey("realm.kotlin.mainHost"))  {
         project.properties["realm.kotlin.mainHost"] == "true"
@@ -71,20 +71,9 @@ tasks.register("publishCIPackages") {
         null -> availableTargets
     }
 
-    // FIXME: We probably don't need to publish plugin and compiler plugins for each node?
-    dependsOn(":gradle-plugin:publishAllPublicationsToTestRepository")
-    dependsOn(":plugin-compiler:publishAllPublicationsToTestRepository")
-    dependsOn(":plugin-compiler-shaded:publishAllPublicationsToTestRepository")
     if (wantedTargets.contains("jvm") || wantedTargets.contains("android")) {
         dependsOn(":jni-swig-stub:publishAllPublicationsToTestRepository")
     }
-
-
-    // TODO When/How to build this?
-    dependsOn(":cinterop:publishKotlinMultiplatformPublicationToTestRepository")
-    dependsOn(":library-base:publishKotlinMultiplatformPublicationToTestRepository")
-    dependsOn(":library-sync:publishKotlinMultiplatformPublicationToTestRepository")
-
     wantedTargets.forEach { target: String ->
         when(target) {
             "iosArm64" -> {
@@ -138,6 +127,15 @@ tasks.register("publishCIPackages") {
                     ":library-base:publishKotlinMultiplatformPublicationToTestRepository",
                     ":library-sync:publishKotlinMultiplatformPublicationToTestRepository",
                 )
+            }
+            "compiler-plugin" -> {
+                dependsOn(
+                    ":plugin-compiler:publishAllPublicationsToTestRepository",
+                    ":plugin-compiler-shaded:publishAllPublicationsToTestRepository"
+                )
+            }
+            "gradle-plugin" -> {
+                dependsOn(":gradle-plugin:publishAllPublicationsToTestRepository")
             }
             else -> {
                 throw IllegalArgumentException("Unsupported target: $target")
