@@ -129,13 +129,13 @@ tasks.register("publishCIPackages") {
                     ":library-sync:publishKotlinMultiplatformPublicationToTestRepository",
                 )
             }
-            "compiler-plugin" -> {
+            "compilerPlugin" -> {
                 dependsOn(
                     ":plugin-compiler:publishAllPublicationsToTestRepository",
                     ":plugin-compiler-shaded:publishAllPublicationsToTestRepository"
                 )
             }
-            "gradle-plugin" -> {
+            "gradlePlugin" -> {
                 dependsOn(":gradle-plugin:publishAllPublicationsToTestRepository")
             }
             else -> {
