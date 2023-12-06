@@ -95,7 +95,7 @@ kotlin {
         val nativeDarwin by creating {
             dependsOn(commonMain)
             dependencies {
-                implementation("io.ktor:ktor-client-cio:${Versions.ktor}")
+                implementation("io.ktor:ktor-client-darwin:${Versions.ktor}")
             }
         }
         val macosX64Main by getting { dependsOn(nativeDarwin) }

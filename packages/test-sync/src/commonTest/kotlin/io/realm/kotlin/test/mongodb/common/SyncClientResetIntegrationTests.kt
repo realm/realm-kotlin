@@ -413,46 +413,37 @@ class SyncClientResetIntegrationTests {
 
         Realm.open(config).use { realm ->
             runBlocking {
-                println("<<<<<<<<<<<<<<<<< S1")
                 realm.syncSession.downloadAllServerChanges(defaultTimeout)
-                println("<<<<<<<<<<<<<<<<< S2")
+
                 // This channel helps to validate that the Realm gets updated
                 val objectChannel: Channel<ResultsChange<out RealmObject>> = newChannel()
+
                 val job = async {
-                    println("<<<<<<<<<<<<<<<<< S3")
                     getObjects(realm)
                         .asFlow()
                         .collect {
-                            println("<<<<<<<<<<<<<<<<< SEND $it")
                             objectChannel.trySend(it)
                         }
                 }
 
-                println("<<<<<<<<<<<<<<<<< S4")
                 // No initial data
                 assertEquals(0, objectChannel.receiveOrFail().list.size)
-                println("<<<<<<<<<<<<<<<<< S5")
+
                 app.triggerClientReset(syncMode, realm.syncSession, user.id) {
-                    println("<<<<<<<<<<<<<<<<< S6")
                     insertElement(realm)
-                    println("<<<<<<<<<<<<<<<<< S7")
                     assertEquals(1, objectChannel.receiveOrFail().list.size)
-                    println("<<<<<<<<<<<<<<<<< S8")
                 }
-                println("<<<<<<<<<<<<<<<<< S9")
+
                 // Validate that the client reset was triggered successfully
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
-                println("<<<<<<<<<<<<<<<<< S10")
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
-                println("<<<<<<<<<<<<<<<<< S11")
+
                 // TODO We must not need this. Force updating the instance pointer.
                 realm.write { }
-                println("<<<<<<<<<<<<<<<<< S12")
+
                 // Validate Realm instance has been correctly updated
                 assertEquals(0, objectChannel.receiveOrFail().list.size)
-                println("<<<<<<<<<<<<<<<<< S13")
                 objectChannel.close()
-                println("<<<<<<<<<<<<<<<<< S14")
                 job.cancel()
             }
         }

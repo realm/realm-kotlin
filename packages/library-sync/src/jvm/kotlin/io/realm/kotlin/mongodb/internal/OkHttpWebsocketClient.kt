@@ -18,6 +18,7 @@ import okio.ByteString
 import okio.ByteString.Companion.toByteString
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.random.Random
 
 @Suppress("LongParameterList")
 public class OkHttpWebsocketClient(
@@ -42,7 +43,7 @@ public class OkHttpWebsocketClient(
     ) -> Unit
 ) : WebSocketClient, WebSocketListener() {
 
-    private val logger = ContextLogger("Websocket")
+    private val logger = ContextLogger("Websocket-${Random.nextInt()}")
 
     /**
      * [WebsocketEngine] responsible of establishing the connection, sending and receiving websocket Frames.
@@ -91,6 +92,7 @@ public class OkHttpWebsocketClient(
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
         super.onMessage(webSocket, bytes)
+        logger.debug("onMessage: ${bytes.toByteArray().decodeToString()} isClosed = ${isClosed.get()} observerIsClosed = ${observerIsClosed.get()}")
 
         runIfNotClosing {
             val shouldClose: Boolean = observer.onNewMessage(bytes.toByteArray())
@@ -147,6 +149,8 @@ public class OkHttpWebsocketClient(
     }
 
     override fun send(message: ByteArray, handlerCallback: RealmWebsocketHandlerCallbackPointer) {
+        logger.debug("send: ${message.decodeToString()} isClosed = ${isClosed.get()} observerIsClosed = ${observerIsClosed.get()}")
+
         // send any queued Frames even if the Core observer is closed, but only if the websocket is still open, this can be a message like 'unbind'
         // which instruct the Sync server to terminate the Sync Session (server will respond by 'unbound').
         if (!isClosed.get()) {
@@ -178,12 +182,14 @@ public class OkHttpWebsocketClient(
                 }
             }
         } else {
-            runCallback(
-                handlerCallback,
-                observerIsClosed.get(), // if the Core observer is closed we run this callback as cancelled (to free underlying resources)
-                WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED,
-                "Connection already closed"
-            )
+            scope.launch {
+                runCallback(
+                    handlerCallback,
+                    observerIsClosed.get(), // if the Core observer is closed we run this callback as cancelled (to free underlying resources)
+                    WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED,
+                    "Connection already closed"
+                )
+            }
         }
     }
 

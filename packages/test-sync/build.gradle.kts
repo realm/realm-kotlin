@@ -17,7 +17,6 @@
 
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithSimulatorTests
 import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
