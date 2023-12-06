@@ -44,6 +44,10 @@ import org.mongodb.kbson.ObjectId
 actual val INVALID_CLASS_KEY: ClassKey by lazy { ClassKey(realmc.getRLM_INVALID_CLASS_KEY()) }
 actual val INVALID_PROPERTY_KEY: PropertyKey by lazy { PropertyKey(realmc.getRLM_INVALID_PROPERTY_KEY()) }
 
+// The value to pass to JNI functions that accept longs as replacements for pointers and need
+// to represent null.
+const val NULL_POINTER_VALUE = 0L
+
 /**
  * JVM/Android interop implementation.
  *
@@ -816,14 +820,22 @@ actual object RealmInterop {
         return realmc.realm_dictionary_is_valid(dictionary.cptr())
     }
 
+    actual fun realm_create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer {
+        val ptr = realmc.realm_create_key_path_array(realm.cptr(), clazz.key, keyPaths.size.toLong(), keyPaths.toTypedArray())
+        return LongPointerWrapper(ptr)
+    }
+
     actual fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
+
         return LongPointerWrapper(
             realmc.register_notification_cb(
                 obj.cptr(),
                 CollectionType.RLM_COLLECTION_TYPE_NONE.nativeValue,
+                keyPaths?.cptr() ?: NULL_POINTER_VALUE,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
                         callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
@@ -836,11 +848,13 @@ actual object RealmInterop {
 
     actual fun realm_results_add_notification_callback(
         results: RealmResultsPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_results_notification_cb(
                 results.cptr(),
+                keyPaths?.cptr() ?: NULL_POINTER_VALUE,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
                         callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
@@ -853,12 +867,14 @@ actual object RealmInterop {
 
     actual fun realm_list_add_notification_callback(
         list: RealmListPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_notification_cb(
                 list.cptr(),
                 CollectionType.RLM_COLLECTION_TYPE_LIST.nativeValue,
+                keyPaths?.cptr() ?: NULL_POINTER_VALUE,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
                         callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
@@ -871,12 +887,14 @@ actual object RealmInterop {
 
     actual fun realm_set_add_notification_callback(
         set: RealmSetPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_notification_cb(
                 set.cptr(),
                 CollectionType.RLM_COLLECTION_TYPE_SET.nativeValue,
+                keyPaths?.cptr() ?: NULL_POINTER_VALUE,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
                         callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
@@ -889,12 +907,14 @@ actual object RealmInterop {
 
     actual fun realm_dictionary_add_notification_callback(
         map: RealmMapPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
         return LongPointerWrapper(
             realmc.register_notification_cb(
                 map.cptr(),
                 CollectionType.RLM_COLLECTION_TYPE_DICTIONARY.nativeValue,
+                keyPaths?.cptr() ?: NULL_POINTER_VALUE,
                 object : NotificationCallback {
                     override fun onChange(pointer: Long) {
                         callback.onChange(LongPointerWrapper(realmc.realm_clone(pointer), true))
