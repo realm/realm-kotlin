@@ -17,10 +17,11 @@
 package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.mongodb.mongo.MongoCollection
-import io.realm.kotlin.mongodb.mongo.insertMany
 import org.mongodb.kbson.BsonArray
+import org.mongodb.kbson.BsonBoolean
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonInt64
 import org.mongodb.kbson.BsonString
@@ -32,7 +33,7 @@ import org.mongodb.kbson.serialization.encodeToBsonValue
 
 @OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
 @PublishedApi
-internal class MongoCollectionImpl<T, K> @OptIn(ExperimentalKBsonSerializerApi::class) constructor(
+internal class MongoCollectionImpl<T, K> constructor(
     @PublishedApi internal val database: MongoDatabaseImpl,
     override val name: String,
     val eJson: EJson,
@@ -43,12 +44,16 @@ internal class MongoCollectionImpl<T, K> @OptIn(ExperimentalKBsonSerializerApi::
     val functions = user.functions
 
 
-    val defaults: Map<String, BsonValue> = mapOf(
+    private val defaults: Map<String, BsonValue> = mapOf(
             "database" to BsonString(database.name),
             "collection" to BsonString(name),
         )
 
-    @ExperimentalRealmSerializerApi
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    override fun <T, K> collection(eJson: EJson?): MongoCollection<T, K> {
+        return MongoCollectionImpl(this.database, this.name, eJson ?: this.eJson)
+    }
+
     private suspend inline fun <reified R> call(name: String, crossinline document: MutableMap<String, BsonValue>.()-> Unit): R {
         return user.functions.call(name) {
             serviceName(client.serviceName)
@@ -95,16 +100,118 @@ internal class MongoCollectionImpl<T, K> @OptIn(ExperimentalKBsonSerializerApi::
     internal suspend fun insertMany(documents: List<BsonDocument>): List<BsonValue> =
         call<BsonValue>("insertMany") {
             put("documents", BsonArray(documents))
-        }.asDocument().get("insertedIds")!!.asArray().toList()
+        }.asDocument()["insertedIds"]!!.asArray().toList()
+
+    @PublishedApi
+    internal suspend fun deleteOne(filter: BsonDocument): Boolean {
+        val deletedCountBson = call<BsonValue>("deleteOne") {
+            put("query", filter)
+        }.asDocument()["deletedCount"]!!
+        val deletedCount = decodeFromBsonValue<Long>(deletedCountBson)
+        return when (deletedCount) {
+            0L -> false
+            1L -> true
+            else -> throw ServiceException("Unexpected response from deleteOne: deletedCount=${deletedCount}")
+        }
+    }
+
+    @PublishedApi
+    internal suspend fun deleteMany(filter: BsonDocument): Long {
+        val deletedCountBson = call<BsonValue>("deleteMany") {
+            put("query", filter)
+        }.asDocument()["deletedCount"]!!
+        return decodeFromBsonValue(deletedCountBson)
+    }
+
+    @PublishedApi
+    internal suspend fun updateOne( filter: BsonDocument, update: BsonDocument, upsert: Boolean = false ): BsonValue {
+        val deletedCountBson = call<BsonValue>("updateOne") {
+            put("query", filter)
+            put("update", update)
+            put("upsert", BsonBoolean(upsert))
+        }
+        TODO()
+        return decodeFromBsonValue(deletedCountBson)
+    }
+
+    @PublishedApi
+    internal suspend fun updateMany( filter: BsonDocument, update: BsonDocument, upsert: Boolean = false ): BsonValue {
+        val deletedCountBson = call<BsonValue>("updateMany") {
+            put("query", filter)
+            put("update", update)
+            put("upsert", BsonBoolean(upsert))
+        }
+        TODO()
+        return decodeFromBsonValue(deletedCountBson)
+    }
+
+    @PublishedApi
+    internal suspend fun findOneAndUpdate(
+        filter: BsonDocument,
+        update: BsonDocument,
+        projection: BsonDocument? = null,
+        sort: BsonDocument? = null,
+        upsert: Boolean = false,
+        returnNewDoc: Boolean = false,
+    ): BsonValue = call("findOneAndUpdate") {
+        put("filter", filter)
+        put("update", update)
+        projection?.let { put("projection", projection)}
+        sort?.let { put("sort", sort)}
+        put("upsert", BsonBoolean(upsert))
+        put("returnNewDoc", BsonBoolean(returnNewDoc))
+    }
+
+    @PublishedApi
+    internal suspend fun findOneAndReplace(
+        filter: BsonDocument,
+        update: BsonDocument,
+        projection: BsonDocument? = null,
+        sort: BsonDocument? = null,
+        upsert: Boolean = false,
+        returnNewDoc: Boolean = false,
+    ): BsonValue = call("findOneAndReplace") {
+        put("filter", filter)
+        put("update", update)
+        projection?.let { put("projection", projection)}
+        sort?.let { put("sort", sort)}
+        put("upsert", BsonBoolean(upsert))
+        put("returnNewDoc", BsonBoolean(returnNewDoc))
+    }
+    
+    @PublishedApi
+    internal suspend fun findOneAndDelete(
+        filter: BsonDocument,
+        projection: BsonDocument? = null,
+        sort: BsonDocument? = null,
+    ): BsonValue = call("findOneAndDelete") {
+        put("filter", filter)
+        projection?.let { put("projection", projection)}
+        sort?.let { put("sort", sort)}
+    }
 }
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
-internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bsonValue: BsonValue): R {
-    return eJson.decodeFromBsonValue(bsonValue)
+internal inline fun <reified R : Any> MongoCollectionImpl<*, *>.encodeToBsonValue(value: R): BsonValue {
+    return eJson.encodeToBsonValue(value)
 }
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
-internal inline fun <reified R : Any> MongoCollectionImpl<*, *>.encodeToBsonValue(value: R): BsonValue {
-    return eJson.encodeToBsonValue(value)
+internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bsonValue: BsonValue): R {
+    return if (bsonValue is R) {
+        bsonValue
+    } else {
+        eJson.decodeFromBsonValue(bsonValue)
+    }
+}
+
+@OptIn(ExperimentalKBsonSerializerApi::class)
+@PublishedApi
+internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValueList(bsonValues: List<BsonValue>): List<R> {
+    return if (R::class == BsonValue::class) {
+        bsonValues as List<R>
+    } else {
+        bsonValues.map { eJson.decodeFromBsonValue(it) }
+    }
 }
