@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_set_get
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmSetPointer
@@ -32,6 +33,7 @@ import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.notifications.SetChange
 import io.realm.kotlin.notifications.internal.DeletedSetImpl
 import io.realm.kotlin.notifications.internal.InitialSetImpl
@@ -49,7 +51,7 @@ import kotlin.reflect.KClass
 internal class UnmanagedRealmSet<E>(
     private val backingSet: MutableSet<E> = mutableSetOf()
 ) : RealmSet<E>, InternalDeleteable, MutableSet<E> by backingSet {
-    override fun asFlow(): Flow<SetChange<E>> {
+    override fun asFlow(keyPaths: List<String>?): Flow<SetChange<E>> {
         throw UnsupportedOperationException("Unmanaged sets cannot be observed.")
     }
 
@@ -159,8 +161,12 @@ internal class ManagedRealmSet<E> constructor(
         }
     }
 
-    override fun asFlow(): Flow<SetChange<E>> {
-        return operator.realmReference.owner.registerObserver(this)
+    override fun asFlow(keyPaths: List<String>?): Flow<SetChange<E>> {
+        val keyPathInfo = keyPaths?.let {
+            Validation.isType<RealmObjectSetOperator<*>>(operator, "Keypaths are only supported for sets of objects.")
+            Pair(operator.classKey, keyPaths)
+        }
+        return operator.realmReference.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmSet<E>? {
@@ -176,9 +182,10 @@ internal class ManagedRealmSet<E> constructor(
     }
 
     override fun registerForNotification(
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
-        return RealmInterop.realm_set_add_notification_callback(nativePointer, callback)
+        return RealmInterop.realm_set_add_notification_callback(nativePointer, keyPaths, callback)
     }
 
     override fun changeFlow(scope: ProducerScope<SetChange<E>>): ChangeFlow<ManagedRealmSet<E>, SetChange<E>> =

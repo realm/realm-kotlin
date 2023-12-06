@@ -25,6 +25,7 @@ import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_get
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_set_embedded
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
@@ -32,6 +33,7 @@ import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
 import io.realm.kotlin.internal.query.ObjectQuery
+import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.internal.DeletedListImpl
 import io.realm.kotlin.notifications.internal.InitialListImpl
@@ -49,7 +51,7 @@ import kotlin.reflect.KClass
 internal class UnmanagedRealmList<E>(
     private val backingList: MutableList<E> = mutableListOf()
 ) : RealmList<E>, InternalDeleteable, MutableList<E> by backingList {
-    override fun asFlow(): Flow<ListChange<E>> =
+    override fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>> =
         throw UnsupportedOperationException("Unmanaged lists cannot be observed.")
 
     override fun delete() {
@@ -113,9 +115,13 @@ internal class ManagedRealmList<E>(
         return operator.set(index, element)
     }
 
-    override fun asFlow(): Flow<ListChange<E>> {
+    override fun asFlow(keyPaths: List<String>?): Flow<ListChange<E>> {
         operator.realmReference.checkClosed()
-        return operator.realmReference.owner.registerObserver(this)
+        val keyPathInfo = keyPaths?.let {
+            Validation.isType<RealmObjectListOperator<*>>(operator, "Keypaths are only supported for lists of objects.")
+            Pair(operator.classKey, keyPaths)
+        }
+        return operator.realmReference.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun freeze(frozenRealm: RealmReference): ManagedRealmList<E>? {
@@ -131,9 +137,10 @@ internal class ManagedRealmList<E>(
     }
 
     override fun registerForNotification(
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer {
-        return RealmInterop.realm_list_add_notification_callback(nativePointer, callback)
+        return RealmInterop.realm_list_add_notification_callback(nativePointer, keyPaths, callback)
     }
 
     override fun changeFlow(scope: ProducerScope<ListChange<E>>): ChangeFlow<ManagedRealmList<E>, ListChange<E>> =

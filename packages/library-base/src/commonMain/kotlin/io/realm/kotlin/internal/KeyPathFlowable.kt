@@ -21,7 +21,13 @@ import kotlinx.coroutines.flow.Flow
 /**
  * A __flowable__ is an internal entity that supports listening to changes on the type [T] as a
  * [Flow].
+ *
+ * This comes in two variants: One variant for flows on things like Objects, Results and Lists that
+ * allow you to pass in keypaths to restrict notifications to certain properties and one variant
+ * for flows on entities that doesn't support this, e.g. flows on query aggregates or the Realm as
+ * whole.
  */
-internal interface Flowable<T> {
-    fun asFlow(): Flow<T>
+
+internal interface KeyPathFlowable<T> {
+    fun asFlow(keyPaths: List<String>? = null): Flow<T>
 }

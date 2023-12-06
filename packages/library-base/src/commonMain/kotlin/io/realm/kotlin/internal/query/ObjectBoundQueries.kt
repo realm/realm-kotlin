@@ -48,7 +48,9 @@ internal class ObjectBoundQuery<E : BaseRealmObject>(
         realmQuery.query(filter, *arguments)
     )
 
-    override fun asFlow(): Flow<ResultsChange<E>> = realmQuery.asFlow().bind(targetObject)
+    override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> = realmQuery.asFlow(keyPaths).bind(
+        targetObject
+    )
 
     override fun sort(property: String, sortOrder: Sort): RealmQuery<E> = ObjectBoundQuery(
         targetObject,
@@ -107,7 +109,7 @@ internal class ObjectBoundRealmSingleQuery<E : BaseRealmObject>(
     val targetObject: RealmObjectReference<*>,
     val realmQuery: RealmSingleQuery<E>
 ) : RealmSingleQuery<E> by realmQuery {
-    override fun asFlow(): Flow<SingleQueryChange<E>> = realmQuery.asFlow().bind(targetObject)
+    override fun asFlow(keyPaths: List<String>?): Flow<SingleQueryChange<E>> = realmQuery.asFlow(keyPaths).bind(targetObject)
 }
 
 internal class ObjectBoundRealmScalarNullableQuery<E>(

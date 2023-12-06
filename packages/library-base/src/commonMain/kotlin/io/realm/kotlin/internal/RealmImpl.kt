@@ -21,6 +21,7 @@ import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
+import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.copyAssetFile
@@ -46,14 +47,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 
 // TODO API-PUBLIC Document platform specific internals (RealmInitializer, etc.)
 // TODO Public due to being accessed from `SyncedRealmContext`
 public class RealmImpl private constructor(
     configuration: InternalConfiguration,
-) : BaseRealmImpl(configuration), Realm, InternalTypedRealm, Flowable<RealmChange<Realm>> {
+) : BaseRealmImpl(configuration), Realm, InternalTypedRealm {
 
     public val notificationScheduler: LiveRealmContext =
         configuration.notificationDispatcherFactory.createLiveRealmContext()
@@ -225,8 +225,8 @@ public class RealmImpl private constructor(
         )
     }
 
-    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>): Flow<C> {
-        return notifier.registerObserver(t)
+    override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: Pair<ClassKey, List<String>>?): Flow<C> {
+        return notifier.registerObserver(t, keyPaths)
     }
 
     /**

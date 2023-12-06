@@ -301,7 +301,8 @@ return $jnicall;
                realm_flx_sync_mutable_subscription_set_t*, realm_flx_sync_subscription_desc_t*,
                realm_set_t*, realm_async_open_task_t*, realm_dictionary_t*,
                realm_sync_session_connection_state_notification_token_t*,
-               realm_dictionary_changes_t*, realm_scheduler_t*, realm_sync_socket_t* };
+               realm_dictionary_changes_t*, realm_scheduler_t*, realm_sync_socket_t*,
+               realm_key_path_array_t* };
 
 // For all functions returning a pointer or bool, check for null/false and throw an error if
 // realm_get_last_error returns true.
@@ -397,6 +398,66 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 %include "enumtypeunsafe.swg"
 %javaconst(1);
 
+// Add support for String[] vs char** conversion
+// See https://www.swig.org/Doc4.0/Java.html#Java_converting_java_string_arrays
+// Begin --
+
+/* This tells SWIG to treat char ** as a special case when used as a parameter
+   in a function call */
+%typemap(in) char ** (jint size) {
+    int i = 0;
+    size = jenv->GetArrayLength($input);
+    $1 = (char **) malloc((size+1)*sizeof(char *));
+    /* make a copy of each string */
+    for (i = 0; i<size; i++) {
+        jstring j_string = (jstring)jenv->GetObjectArrayElement($input, i);
+        const char * c_string = jenv->GetStringUTFChars(j_string, 0);
+        $1[i] = (char*) malloc((strlen(c_string)+1)*sizeof(char));
+        strcpy($1[i], c_string);
+        jenv->ReleaseStringUTFChars(j_string, c_string);
+        jenv->DeleteLocalRef(j_string);
+    }
+    $1[i] = 0;
+}
+
+/* This cleans up the memory we malloc'd before the function call */
+%typemap(freearg) char ** {
+    int i;
+    for (i=0; i<size$argnum-1; i++) {
+        free($1[i]);
+    }
+    free($1);
+}
+
+/* This allows a C function to return a char ** as a Java String array */
+%typemap(out) char ** {
+    int i;
+    int len=0;
+    jstring temp_string;
+    const jclass clazz = jenv->FindClass("java/lang/String");
+
+    while ($1[len]) len++;
+    jresult = jenv->NewObjectArray(len, clazz, NULL);
+    /* exception checking omitted */
+    for (i=0; i<len; i++) {
+        temp_string = (*jenv)->NewStringUTF(*result++);
+        jenv->SetObjectArrayElement(jresult, i, temp_string);
+        jenv->DeleteLocalRef(temp_string);
+    }
+}
+
+/* These 3 typemaps tell SWIG what JNI and Java types to use */
+%typemap(jni) char ** "jobjectArray"
+%typemap(jtype) char ** "String[]"
+%typemap(jstype) char ** "String[]"
+
+/* These 2 typemaps handle the conversion of the jtype to jstype typemap type
+   and vice versa */
+%typemap(javain) char ** "$javainput"
+%typemap(javaout) char ** {
+    return $jnicall;
+}
+// -- End
 
 // FIXME OPTIMIZE Support getting/setting multiple attributes. Ignored for now due to incorrect
 //  type cast in Swig-generated wrapper for "const realm_property_key_t*" which is not cast
@@ -429,6 +490,12 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 //  corresponding typemap. Other usages will possible incur in leaking values, like in
 //  realm_convert_with_path.
 %ignore realm_convert_with_path;
+
+%ignore "realm_object_add_notification_callback";
+%ignore "realm_list_add_notification_callback";
+%ignore "realm_set_add_notification_callback";
+%ignore "realm_dictionary_add_notification_callback";
+%ignore "realm_results_add_notification_callback";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)

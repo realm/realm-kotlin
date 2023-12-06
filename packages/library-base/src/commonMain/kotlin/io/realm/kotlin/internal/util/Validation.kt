@@ -16,6 +16,9 @@
 
 package io.realm.kotlin.internal.util
 
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
+
 /**
  * Collection of validation methods to ensure uniform input validation.
  */
@@ -28,6 +31,20 @@ public object Validation {
             illegalArgument("Argument '$name' must be of type ${T::class.simpleName}")
         }
         return value
+    }
+
+    /**
+     * Verifies that a given argument has a given type. If yes, it will be implicitly cast
+     * to that type, otherwise an IllegalArgumentException is thrown with the provided error message.
+     */
+    @OptIn(ExperimentalContracts::class)
+    public inline fun <reified T : Any?> isType(arg: Any?, errorMessage: String) {
+        contract {
+            returns() implies (arg is T)
+        }
+        if (arg !is T) {
+            throw IllegalArgumentException(errorMessage)
+        }
     }
 
     public fun isEmptyString(str: String?): Boolean {
