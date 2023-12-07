@@ -372,9 +372,9 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-metadata-${{ needs.check-cache.outputs.packages-sha }}
           
-      - name: Build Kotlin Metadata package
+      - name: Build Kotlin Metadata and Gradle and Compiler Plugin
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=metadata -PignoreNativeLibs=true -Prealm.kotlin.mainHost=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -PignoreNativeLibs=true -Prealm.kotlin.mainHost=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -486,10 +486,6 @@ jobs:
         with:
           name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild
-
-      - name: Build Gradle and Compiler Plugin
-        working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
           
       - name: Build JVM Package
         working-directory: packages

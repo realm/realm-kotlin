@@ -117,7 +117,7 @@ jobs:
     #
 
     #
-    # Kotlin Metadata
+    # Kotlin Metadata and Gradle/Compiler Plugin
     #
     - name: Check Kotlin Metadata cache 
       id: kotlin-metadata-cache
