@@ -36,7 +36,6 @@ import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.runBlocking
@@ -172,7 +171,7 @@ class VersionTrackingTests {
 
         // Listening to object causes tracking of all versions even if not returned by the write
         val samples = mutableListOf<ResultsChange<Sample>>()
-        val channel = Channel<ResultsChange<Sample>>(1)
+        val channel = TestChannel<ResultsChange<Sample>>()
         val initialVersion = realm.version().version
         val writes = 5
         val objectListener = async {
@@ -228,19 +227,17 @@ class VersionTrackingTests {
             runBlocking {
                 val deferred = async {
                     realm.asFlow().collect {
-                        @Suppress("invisible_member", "invisible_reference")
-                        RealmLog.error("Received from realm.asFlow(). Sending: $it")
                         realmUpdates.send(Unit)
                     }
                 }
 
                 // Wait for the notifier to start
-                realmUpdates.receiveOrFail(message = "Initial event was not received")
+                realmUpdates.receiveOrFail(message = "Failed to receive initial event")
 
                 realm.write { }
 
                 // Wait for the notifier to start
-                realmUpdates.receiveOrFail(message = "Update event was not received")
+                realmUpdates.receiveOrFail(message = "Failed to receive update event")
 
                 assertNull(realm.initialRealmReference.value, toString())
                 assertEquals(1, realm.versionTracker.versions().size, toString())

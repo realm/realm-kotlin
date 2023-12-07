@@ -32,11 +32,11 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -301,7 +301,7 @@ class FlexibleSyncIntegrationTests {
     fun compensationWrite_writeOutsideOfSubscriptionsGetsReveredByServer() {
         val user1 = app.createUserAndLogin()
 
-        val channel = Channel<CompensatingWriteException>(1)
+        val channel = TestChannel<CompensatingWriteException>()
 
         val config1 = SyncConfiguration.Builder(user1, FLEXIBLE_SYNC_SCHEMA)
             .errorHandler { _: SyncSession, syncException: SyncException ->

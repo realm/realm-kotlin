@@ -40,11 +40,11 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.test.AfterTest
@@ -274,7 +274,7 @@ class AppTests {
 //
     @Test
     fun authenticationChangeAsFlow() = runBlocking<Unit> {
-        val c = Channel<AuthenticationChange>(1)
+        val c = TestChannel<AuthenticationChange>()
         val job = async {
             app.authenticationChangeAsFlow().collect {
                 c.send(it)
@@ -304,7 +304,7 @@ class AppTests {
 
     @Test
     fun authenticationChangeAsFlow_removeUser() = runBlocking<Unit> {
-        val c = Channel<AuthenticationChange>(1)
+        val c = TestChannel<AuthenticationChange>()
         val job = async {
             app.authenticationChangeAsFlow().collect {
                 c.send(it)
@@ -329,7 +329,7 @@ class AppTests {
 
     @Test
     fun authenticationChangeAsFlow_deleteUser() = runBlocking<Unit> {
-        val c = Channel<AuthenticationChange>(1)
+        val c = TestChannel<AuthenticationChange>()
         val job = async {
             app.authenticationChangeAsFlow().collect {
                 c.send(it)

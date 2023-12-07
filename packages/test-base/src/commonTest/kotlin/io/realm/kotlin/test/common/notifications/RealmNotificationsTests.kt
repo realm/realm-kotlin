@@ -97,13 +97,12 @@ class RealmNotificationsTests : FlowableTests {
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
-                    println("Received from realm.asFlow(): $it")
                     c.send(it)
                 }
             }
 
             // We should first receive an initial Realm notification.
-            c.receiveOrFail(message = "Failed to receive InitialEvent").let { realmChange ->
+            c.receiveOrFail(message = "Failed to receive initial event").let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
@@ -111,7 +110,7 @@ class RealmNotificationsTests : FlowableTests {
             realm.write { /* Do nothing */ }
 
             // Now we we should receive an updated Realm change notification.
-            c.receiveOrFail(message = "Failed to receive UpdateEvent").let { realmChange ->
+            c.receiveOrFail(message = "Failed to receive update event").let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
@@ -121,85 +120,69 @@ class RealmNotificationsTests : FlowableTests {
         }
     }
 
-    // Test 11
     @Test
-    override fun cancelAsFlow() = runBlocking<Unit> {
-        val c1 = TestChannel<RealmChange<Realm>>()
-        val c2 = TestChannel<RealmChange<Realm>>()
-        val startingVersion = realm.version()
+    override fun cancelAsFlow() {
+        runBlocking {
+            val c1 = TestChannel<RealmChange<Realm>>()
+            val c2 = TestChannel<RealmChange<Realm>>()
+            val startingVersion = realm.version()
 
-        val observer1 = async {
-            realm.asFlow().collect {
-                println("Received from realm1.asFlow(). Sending: $it")
-                c1.send(it)
-                println("Sent message from realm1.asFlow(): $it")
-            }
-        }
-        val observer2Cancelled = Mutex(false)
-        val observer2 = async {
-            realm.asFlow().collect {
-                println("Received from realm2.asFlow(). Sending: $it")
-                if (!observer2Cancelled.isLocked) {
-                    c2.send(it)
-                    println("Sent message from realm2.asFlow(): $it")
-                } else {
-                    fail("Should not receive notifications on a canceled scope")
+            val observer1 = async {
+                realm.asFlow().collect {
+                    c1.send(it)
                 }
             }
-        }
+            val observer2Cancelled = Mutex(false)
+            val observer2 = async {
+                realm.asFlow().collect {
+                    if (!observer2Cancelled.isLocked) {
+                        c2.send(it)
+                    } else {
+                        fail("Should not receive notifications on a canceled scope")
+                    }
+                }
+            }
 
-        // We should first receive an initial Realm notification.
-        c1.receiveOrFail(message = "Did not receive Initial event on Channel 1").let { realmChange ->
-            assertIs<InitialRealm<Realm>>(realmChange)
-            assertEquals(startingVersion, realmChange.realm.version())
-//            assertEquals(0, realmChange.realm.query(Sample::class).count().find(), "Realm already contained data?!?")
-            assertEquals(2, realmChange.realm.version().version)
-        }
+            // We should first receive an initial Realm notification.
+            c1.receiveOrFail(message = "Failed to receive initial event on Channel 1").let { realmChange ->
+                assertIs<InitialRealm<Realm>>(realmChange)
+                assertEquals(startingVersion, realmChange.realm.version())
+            }
 
-        c2.receiveOrFail(message = "Did not receive Initial event on Channel 2").let { realmChange ->
-            assertIs<InitialRealm<Realm>>(realmChange)
-            assertEquals(startingVersion, realmChange.realm.version())
-//            assertEquals(0, realmChange.realm.query(Sample::class).count().find(), "Realm already contained data?!?")
-            assertEquals(2, realmChange.realm.version().version)
-        }
+            c2.receiveOrFail(message = "Failed to receive initial event on Channel 2").let { realmChange ->
+                assertIs<InitialRealm<Realm>>(realmChange)
+                assertEquals(startingVersion, realmChange.realm.version())
+            }
 
-        realm.write {
-//            copyToRealm(Sample())
-        }
+            realm.write { /* Do nothing */ }
 
-        // Now we we should receive an updated Realm change notification.
-        c1.receiveOrFail(message = "Did not receive Update event on Channel 1").let { realmChange ->
-            assertIs<UpdatedRealm<Realm>>(realmChange)
-            assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
-//            assertEquals(1, realmChange.realm.query(Sample::class).count().find(), "Unexpected size of Realm?!?")
-            assertEquals(3, realmChange.realm.version().version)
-        }
+            // Now we we should receive an updated Realm change notification.
+            c1.receiveOrFail(message = "Failed to receive first update event on Channel 1").let { realmChange ->
+                assertIs<UpdatedRealm<Realm>>(realmChange)
+                assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
+            }
 
-        c2.receiveOrFail(message = "Did not receive Update event on Channel 2").let { realmChange ->
-            assertIs<UpdatedRealm<Realm>>(realmChange)
-            assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
-//            assertEquals(1, realmChange.realm.query(Sample::class).count().find(), "Unexpected size of Realm?!?")
-            assertEquals(3, realmChange.realm.version().version)
-        }
+            c2.receiveOrFail(message = "Failed to receive first update event on Channel 2").let { realmChange ->
+                assertIs<UpdatedRealm<Realm>>(realmChange)
+                assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
+            }
 
-        // Stop one observer and ensure that we dont receive any more notifications in that scope
-        observer2.cancel()
-        observer2Cancelled.lock()
+            // Stop one observer and ensure that we dont receive any more notifications in that scope
+            observer2.cancel()
+            observer2Cancelled.lock()
 
-        realm.write {
-//            copyToRealm(Sample())
-        }
+            realm.write { /* Do nothing */ }
 
-        // But unclosed channels should receive notifications
-        c1.receiveOrFail(message = "Did not receive 2nd Update event on Channel 1").let { realmChange ->
-            assertIs<UpdatedRealm<Realm>>(realmChange)
-            assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
-//            assertEquals(2, realmChange.realm.query(Sample::class).count().find(), "Unexpected size of Realm?!?")
-            assertEquals(4, realmChange.realm.version().version)
+            // But unclosed channels should receive notifications
+            c1.receiveOrFail(message = "Failed to receive second update event on Channel 1").let { realmChange ->
+                assertIs<UpdatedRealm<Realm>>(realmChange)
+                assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
+            }
+
+            observer1.cancel()
+            c1.close()
+            c2.close()
         }
-        observer1.cancel()
-        c1.close()
-        c2.close()
     }
 
     @Test
@@ -270,7 +253,7 @@ class RealmNotificationsTests : FlowableTests {
 
         runBlocking {
             val listener = async {
-                withTimeout(30.seconds) {
+                withTimeout(10.seconds) {
                     flow.collect {
                         delay(100.milliseconds)
                     }

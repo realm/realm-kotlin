@@ -33,6 +33,7 @@ import io.realm.kotlin.test.common.OBJECT_VALUES3
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.common.utils.assertIsChangeSet
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.async
@@ -309,20 +310,20 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             val container = realm.write {
                 copyToRealm(RealmListContainer())
             }
-            val channel1 = Channel<ListChange<*>>(1)
-            val channel2 = Channel<ListChange<*>>(1)
+            val channel1 = TestChannel<ListChange<*>>()
+            val channel2 = TestChannel<ListChange<*>>()
             val observer1 = async {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        channel1.trySend(flowList)
+                        channel1.send(flowList)
                     }
             }
             val observer2 = async {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        channel2.trySend(flowList)
+                        channel2.send(flowList)
                     }
             }
 
@@ -459,7 +460,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 container.objectListField
                     .asFlow()
                     .collect { flowList ->
-                        channel.trySend(flowList)
+                        channel.send(flowList)
                     }
                 fail("Flow should not be canceled.")
             }

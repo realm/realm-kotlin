@@ -24,6 +24,7 @@ import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ChannelResult
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Instant
 import kotlin.time.Duration
@@ -95,11 +96,31 @@ fun Instant.toRealmInstant(): RealmInstant {
 
 /**
  * Channel implementation specifically suited for tests. Its size is unlimited, but will fail
- * the test if canceled containing unconsumed elements.
+ * the test if canceled while still containing unconsumed elements.
  */
-inline fun <T> TestChannel(): Channel<T> {
-    return Channel<T>(capacity = Channel.UNLIMITED, onBufferOverflow = BufferOverflow.SUSPEND) {
-        throw AssertionError("Failed to deliver: $it")
+inline fun <T> TestChannel(
+    capacity: Int = Channel.UNLIMITED,
+    onBufferOverflow: BufferOverflow = BufferOverflow.SUSPEND,
+    failIfBufferIsEmptyOnCancel: Boolean = true
+): Channel<T> {
+    return Channel<T>(capacity = capacity, onBufferOverflow = onBufferOverflow) {
+        if (failIfBufferIsEmptyOnCancel) {
+            throw AssertionError("Failed to deliver: $it")
+        }
+    }
+}
+
+/**
+ * Helper method that will use `trySend` to send a message to a Channel and throw
+ * an error if `trySend` returns false
+ */
+inline fun <T : Any?> Channel<T>.trySendOrFail(value: T) {
+    val result: ChannelResult<Unit> = this.trySend(value)
+    if (result.isFailure) {
+        val additionalErrorInfo = result.exceptionOrNull()?.let { throwable ->
+            " An exception was thrown:\n${throwable.stackTraceToString()}"
+        } ?: ""
+        throw AssertionError("Could not send message to channel: $value.$additionalErrorInfo")
     }
 }
 
@@ -107,6 +128,10 @@ inline fun <T> TestChannel(): Channel<T> {
 suspend fun <T : Any?> Channel<T>.receiveOrFail(timeout: Duration = 1.minutes, message: String? = null): T {
     try {
         return withTimeout(timeout) {
+            // Note, using `select` with `onReceive` seems to cause some tests to hang for unknown
+            // reasons. Right now the hypothesis is that because `onReceive` does not consume the
+            // elements, it is causing some kind of race condition we have not been able to
+            // find. For previous iterations of this method, see the Git history.
             this@receiveOrFail.receive()
         }
     } catch (ex: TimeoutCancellationException) {
