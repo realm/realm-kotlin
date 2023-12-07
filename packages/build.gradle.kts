@@ -21,6 +21,7 @@ plugins {
     `java-gradle-plugin`
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
+    id("com.dorongold.task-tree") version "2.1.1"
 }
 
 allprojects {
@@ -58,7 +59,11 @@ tasks.register("publishCIPackages") {
         null
     }
     // Find user configured platforms (if any)
-    val userTargets: Set<String>? = (project.properties["realm.kotlin.targets"] as String?)?.split(",")?.toSet()
+    val userTargets: Set<String>? = (project.properties["realm.kotlin.targets"] as String?)
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.toSet()
     userTargets?.forEach {
         if (!availableTargets.contains(it)) {
             project.logger.error("Unknown publication: $it")
@@ -72,9 +77,6 @@ tasks.register("publishCIPackages") {
         null -> availableTargets
     }
 
-    if (wantedTargets.contains("jvm") || wantedTargets.contains("android")) {
-        dependsOn(":jni-swig-stub:publishAllPublicationsToTestRepository")
-    }
     wantedTargets.forEach { target: String ->
         when(target) {
             "iosArm64" -> {
@@ -96,6 +98,7 @@ tasks.register("publishCIPackages") {
             }
             "jvm" -> {
                 dependsOn(
+                    ":jni-swig-stub:publishAllPublicationsToTestRepository",
                     ":cinterop:publishJvmPublicationToTestRepository",
                     ":library-base:publishJvmPublicationToTestRepository",
                     ":library-sync:publishJvmPublicationToTestRepository",
@@ -117,6 +120,7 @@ tasks.register("publishCIPackages") {
             }
             "android" -> {
                 dependsOn(
+                    ":jni-swig-stub:publishAllPublicationsToTestRepository",
                     ":cinterop:publishAndroidReleasePublicationToTestRepository",
                     ":library-base:publishAndroidReleasePublicationToTestRepository",
                     ":library-sync:publishAndroidReleasePublicationToTestRepository",

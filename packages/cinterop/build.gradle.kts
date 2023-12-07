@@ -60,6 +60,17 @@ val buildType: BuildType = if ((System.getenv("CONFIGURATION") ?: "RELEASE").equ
     BuildType.DEBUG
 }
 
+
+fun checkIfBuildingNativeLibs(task: Task, action: Task.() -> Unit) {
+    // Whether or not to build the underlying native Realm Libs. Generally these are only
+    // needed at runtime and thus can be ignored when only building the layers on top
+    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+        action(task)
+    } else {
+        logger.warn("Ignore building native libs")
+    }
+}
+
 val corePath = "external/core"
 val absoluteCorePath = "$rootDir/$corePath"
 val jvmJniPath = "src/jvmMain/resources/jni"
@@ -366,34 +377,40 @@ if (HOST_OS.isMacOs()) {
         build_C_API_Simulator("arm64", buildType)
     }
     
-    // Building Simulator binaries for iosX64 (x86_64) and iosSimulatorArm64 (i.e Apple silicon arm64)
-    val capiSimulator by tasks.registering {
-        build_C_API_Simulator("x86_64", buildType)
-        build_C_API_Simulator("arm64", buildType)
-    }
     // Building for ios device (arm64 only)
     val capiIosArm64 by tasks.registering {
         build_C_API_iOS_Arm64(buildType)
     }
 
     tasks.named("cinteropRealm_wrapperIosArm64") {
-        dependsOn(capiIosArm64)
+        checkIfBuildingNativeLibs(this) {
+            dependsOn(capiIosArm64)
+        }
     }
 
     tasks.named("cinteropRealm_wrapperIosX64") {
-        dependsOn(capiSimulatorX64)
+        checkIfBuildingNativeLibs(this) {
+            dependsOn(capiSimulatorX64)
+        }
+
     }
 
     tasks.named("cinteropRealm_wrapperIosSimulatorArm64") {
-        dependsOn(capiSimulatorArm64)
+        checkIfBuildingNativeLibs(this) {
+            dependsOn(capiSimulatorArm64)
+        }
     }
 
     tasks.named("cinteropRealm_wrapperMacosX64") {
-        dependsOn(capiMacosUniversal)
+        checkIfBuildingNativeLibs(this) {
+            dependsOn(capiMacosUniversal)
+        }
     }
 
     tasks.named("cinteropRealm_wrapperMacosArm64") {
-        dependsOn(capiMacosUniversal)
+        checkIfBuildingNativeLibs(this) {
+            dependsOn(capiMacosUniversal)
+        }
     }
 }
 
@@ -405,26 +422,36 @@ val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     } else {
         throw IllegalStateException("Building JVM libraries on this platform is not supported: $HOST_OS")
     }
+}
 
-    // Only on CI for Snapshots and Releases which will run on MacOS.
+/**
+ * Task responsible for copying native files for all architectures into the correct location,
+ * making the library ready for distribution.
+ *
+ * The task assumes that some other task already pre-built the binaries, making this task
+ * mostly useful on CI.
+ */
+val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
     if (copyJvmABIs) {
-        if (!HOST_OS.isMacOs()) {
-            throw IllegalStateException("Creating a full JVM bundle with all architectures is " +
-                    "currently only supported on MacOs. This was: $HOST_OS")
-        }
+        // copy MacOS pre-built binaries
+        project.file("$buildDir/realmMacOsBuild/librealmc.so")
+            .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
+        genHashFile(platform = "macos", prefix = "lib", suffix = ".so")
 
         // copy Linux pre-built binaries
-        project.file("src/jvmMain/linux-build-dir/librealmc.so")
+        project.file("$buildDir/realmLinuxBuild/librealmc.so")
             .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
         genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
 
         // copy Window pre-built binaries
-        project.file("src/jvmMain/windows-build-dir/Release/realmc.dll")
+        project.file("$buildDir/realmWindowsBuild/Release/realmc.dll")
             .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
         genHashFile(platform = "windows", prefix = "", suffix = ".dll")
 
         // Register copied libraries as output
+        outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
+        outputs.file(project.file("$jvmJniPath/macos/dynamic_libraries.properties"))
         outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
         outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
         outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
@@ -461,7 +488,7 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
 fun Task.buildSharedLibrariesForJVMMacOs() {
     group = "Build"
     description = "Compile dynamic libraries loaded by the JVM fat jar for supported platforms."
-    val directory = "$buildDir/jvm_fat_jar_libs"
+    val directory = "$buildDir/realmMacOsBuild"
 
     doLast {
         exec {
@@ -491,7 +518,6 @@ fun Task.buildSharedLibrariesForJVMMacOs() {
 
         // build hash file
         genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
-
     }
 
     inputs.dir(project.file("$absoluteCorePath/src"))
@@ -708,19 +734,17 @@ afterEvaluate {
 }
 
 tasks.named("jvmMainClasses") {
-    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+    checkIfBuildingNativeLibs(this) {
         dependsOn(buildJVMSharedLibs)
-    } else {
-        logger.warn("Ignore building native libs")
     }
+    dependsOn(copyJVMSharedLibs)
 }
 
 tasks.named("jvmProcessResources") {
-    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+    checkIfBuildingNativeLibs(this) {
         dependsOn(buildJVMSharedLibs)
-    } else {
-        logger.warn("Ignore building native libs")
     }
+    dependsOn(copyJVMSharedLibs)
 }
 
 // Add generic macosTest task that execute macos tests according to the current host architecture

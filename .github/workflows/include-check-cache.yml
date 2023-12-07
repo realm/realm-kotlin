@@ -38,6 +38,8 @@ on:
         value: ${{ jobs.check-cache.outputs.jni-swig-stub-cache-hit }}
       jni-linux-lib-cache-hit: 
         value: ${{ jobs.check-cache.outputs.jni-linux-lib-cache-hit }}
+      jni-macos-lib-cache-hit: 
+        value: ${{ jobs.check-cache.outputs.jni-macos-lib-cache-hit }}
       jni-windows-lib-cache-hit: 
         value: ${{ jobs.check-cache.outputs.jni-windows-lib-cache-hit }}
       packages-sha: 
@@ -64,6 +66,7 @@ jobs:
       packages-ios-arm64-cache-hit: ${{ steps.ios-arm64-cache.outputs.cache-hit }}
       jni-swig-stub-cache-hit: ${{ steps.jni-swig-stub-cache.outputs.cache-hit }}
       jni-linux-lib-cache-hit: ${{ steps.jni-linux-lib-cache.outputs.cache-hit }}
+      jni-macos-lib-cache-hit: ${{ steps.jni-macos-lib-cache.outputs.cache-hit }}
       jni-windows-lib-cache-hit: ${{ steps.jni-windows-lib-cache.outputs.cache-hit }}
       packages-sha: ${{ steps.packages-cache-key.outputs.sha }}
       benchmarks-sha: ${{ steps.calculate-benchmarks-cache-key.outputs.sha }}
@@ -161,13 +164,38 @@ jobs:
         path: ./packages/jni-swig-stub/build/generated/sources/jni
 
     #
+    # JNI MacOS Lib
+    #    
+    - name: Check JNI MacOS lib cache 
+      id: jni-macos-lib-cache
+      uses: cmelchior/cache@main
+      with:
+        path: ./packages/cinterop/build/realmMacOsBuild
+        key: jni-macos-lib-${{ steps.packages-cache-key.outputs.sha }}
+
+    - name: Save JNI MacOS lib package
+      uses: actions/upload-artifact@v3
+      if: always() && !cancelled() && steps.jni-macos-lib-cache.outputs.cache-hit == 'true'
+      with:
+        name: jni-macos-lib-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/cinterop/build/realmMacOsBuild/**/*
+        retention-days: 1
+
+    - name: Delete downloaded JVM cache files
+      id: delete-cache-macos-lib
+      uses: JesseTG/rm@v1.0.3
+      if: always() && !cancelled() && steps.jni-macos-lib-cache.outputs.cache-hit == 'true'
+      with:
+        path: ./packages/cinterop/build/realmMacOsBuild
+
+    #
     # JNI Linux Lib
     #    
     - name: Check JNI Linux lib cache 
       id: jni-linux-lib-cache
       uses: cmelchior/cache@main
       with:
-        path: ./packages/cinterop/src/jvmMain/linux-build-dir
+        path: ./packages/cinterop/build/realmLinuxBuild
         key: jni-linux-lib-${{ steps.packages-cache-key.outputs.sha }}
 
     - name: Save JNI Linux lib package
@@ -175,7 +203,7 @@ jobs:
       if: always() && !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-linux-lib-${{ steps.find-library-version.outputs.label }}
-        path: ./packages/cinterop/src/jvmMain/linux-build-dir/**/*
+        path: ./packages/cinterop/build/realmLinuxBuild/**/*
         retention-days: 1
 
     - name: Delete downloaded JVM cache files
@@ -183,7 +211,7 @@ jobs:
       uses: JesseTG/rm@v1.0.3
       if: always() && !cancelled() && steps.jni-linux-lib-cache.outputs.cache-hit == 'true'
       with:
-        path: ./packages/cinterop/src/jvmMain/linux-build-dir
+        path: ./packages/cinterop/build/realmLinuxBuild
 
     #
     # Android
@@ -342,7 +370,7 @@ jobs:
       id: jni-windows-lib-cache
       uses: cmelchior/cache@main
       with:
-        path: ./packages/cinterop/src/jvmMain/windows-build-dir
+        path: ./packages/cinterop/build/realmWindowsBuild
         key: jni-windows-lib-${{ steps.packages-cache-key.outputs.sha }}
         enableCrossOsArchive: true
 
@@ -351,7 +379,7 @@ jobs:
       if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
         name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
-        path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll
+        path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
         retention-days: 1
 
     - name: Delete downloaded JNI Windows lib cache files
@@ -359,4 +387,4 @@ jobs:
       uses: JesseTG/rm@v1.0.3
       if: always() && !cancelled() && steps.jni-windows-lib-cache.outputs.cache-hit == 'true'
       with:
-        path: ./packages/cinterop/src/jvmMain/windows-build-dir
+        path: ./packages/cinterop/build/realmWindowsBuild
