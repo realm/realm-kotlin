@@ -394,7 +394,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -PcopyJvmABIs=true -PignoreNativeLibs=true -Prealm.kotlin.mainHost=true --no-rebuild
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm,gradlePlugin,compilerPlugin -PcopyJvmABIs=true -PignoreNativeLibs=true -Prealm.kotlin.mainHost=true --no-rebuild
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
