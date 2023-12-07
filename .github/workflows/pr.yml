@@ -242,7 +242,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job.name }}
+          key: 'jvm-macos-native-lib'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -338,7 +338,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job.name }}
+          key: 'jvm-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -392,9 +392,13 @@ jobs:
           name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmMacOsBuild
 
-      - name: Build packages
+      - name: Build Gradle and Compiler Plugin
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm,gradlePlugin,compilerPlugin -PcopyJvmABIs=true -PignoreNativeLibs=true -Prealm.kotlin.mainHost=true --no-rebuild
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+          
+      - name: Build JVM Package and Kotlin Metadata
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -PignoreNativeLibs=true -PcopyJvmABIs=true -Prealm.kotlin.mainHost=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -461,7 +465,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job.name }}
+          key: 'android-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -573,7 +577,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job.name }}
+          key: 'macos-x64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -659,7 +663,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job.name }}
+          key: 'macos-arm64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -737,7 +741,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job.name }}
+          key: 'ios-x64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -815,7 +819,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job.name }}
+          key: 'ios-arm64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH

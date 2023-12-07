@@ -435,9 +435,9 @@ val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
     if (copyJvmABIs) {
         // copy MacOS pre-built binaries
-        project.file("$buildDir/realmMacOsBuild/librealmc.so")
+        project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
             .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
-        genHashFile(platform = "macos", prefix = "lib", suffix = ".so")
+        genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
 
         // copy Linux pre-built binaries
         project.file("$buildDir/realmLinuxBuild/librealmc.so")
