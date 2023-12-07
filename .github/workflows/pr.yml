@@ -114,11 +114,13 @@ jobs:
           shell: bash
           options: -v ${{ github.workspace }}:/work
           run: |
-            cd /work/packages/cinterop/build/
+            cd /work/packages/cinterop
+            mkdir build
+            cd build
             rm -rf realmLinuxBuild
             mkdir realmLinuxBuild
             cd realmLinuxBuild
-            cmake ../../jvm
+            cmake ../../src/jvm
             make -j8
 
       - name: Upload artifacts
@@ -171,12 +173,14 @@ jobs:
         shell: powershell
         working-directory: packages
         run: |
-          cd cinterop\build
+          cd cinterop
+          mkdir build  
+          cd build
           Remove-Item -Path realmWindowsBuild -Force -Recurse -ErrorAction Ignore
           mkdir realmWindowsBuild
           cd realmWindowsBuild
           cmake `
-          ..\..\jvm `
+          ..\..\src\jvm `
           -DCMAKE_GENERATOR_PLATFORM=x64 `
           -DCMAKE_BUILD_TYPE=Release `
           -DREALM_ENABLE_SYNC=ON `
@@ -593,7 +597,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -671,7 +675,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -749,7 +753,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -827,7 +831,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
