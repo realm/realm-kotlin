@@ -297,7 +297,7 @@ jobs:
       !cancelled() && 
       !contains(needs.*.result, 'failure') && 
       !contains(needs.*.result, 'cancelled') &&
-      needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
+      needs.check-cache.outputs.packages-metadata-cache-hit != 'true'
 
     steps:
       - name: Checkout code

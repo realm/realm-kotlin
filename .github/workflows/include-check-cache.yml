@@ -20,6 +20,8 @@ on:
     outputs:  
       version-label:
         value: ${{ jobs.check-cache.outputs.version-label }}
+      packages-metadata-cache-hit:
+        value: ${{ jobs.check-cache.outputs.packages-metadata-cache-hit }}
       packages-jvm-cache-hit: 
         value: ${{ jobs.check-cache.outputs.packages-jvm-cache-hit }}
       packages-android-cache-hit: 
@@ -57,6 +59,7 @@ jobs:
       CACHE_SKIP_SAVE: true
     outputs:  
       version-label: ${{ steps.find-library-version.outputs.label }}
+      packages-metadata-cache-hit: ${{ steps.kotlin-metadata-cache.outputs.cache-hit }}
       packages-jvm-cache-hit: ${{ steps.jvm-cache.outputs.cache-hit }}
       packages-android-cache-hit: ${{ steps.android-cache.outputs.cache-hit }}
       android-test-base-apk-cache-hit: ${{ steps.android-test-base-apk.outputs.cache-hit }}
@@ -132,7 +135,7 @@ jobs:
         retention-days: 1
 
     - name: Delete downloaded JVM cache files
-      id: delete-cache-jvm
+      id: delete-cache-metadata
       uses: JesseTG/rm@v1.0.3
       if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
       with:
