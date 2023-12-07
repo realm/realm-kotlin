@@ -91,7 +91,7 @@ jobs:
       - name: Setup build cache
         uses: actions/cache@v3
         with:
-          path: ./packages/cinterop/src/jvmMain/linux-build-dir
+          path: ./packages/cinterop/build/realmLinuxBuild
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Restore JNI Swig Stubs
@@ -159,7 +159,7 @@ jobs:
       - name: Setup build cache
         uses: actions/cache@v3
         with:
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir
+          path: ./packages/cinterop/build/realmWindowsBuild
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
           enableCrossOsArchive: true
 
@@ -269,8 +269,8 @@ jobs:
       - name: Setup build cache
         uses: actions/cache@v3
         with:
-          path: ./packages/build/m2-buildrepo
-          key: packages-m2-jvm-sync-${{ needs.check-cache.outputs.packages-sha }}
+          path: ./packages/cinterop/build/realmMacOsBuild
+          key: jni-macos-lib-${{ needs.check-cache.outputs.packages-sha }}
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
