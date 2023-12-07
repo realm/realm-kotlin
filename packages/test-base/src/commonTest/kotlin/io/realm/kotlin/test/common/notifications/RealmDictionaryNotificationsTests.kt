@@ -29,6 +29,7 @@ import io.realm.kotlin.test.common.DICTIONARY_KEYS_FOR_NULLABLE
 import io.realm.kotlin.test.common.NULLABLE_DICTIONARY_OBJECT_VALUES
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmDictionary
 import kotlinx.coroutines.async
@@ -350,20 +351,20 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
             val container = realm.write {
                 copyToRealm(RealmDictionaryContainer())
             }
-            val channel1 = Channel<MapChange<String, *>>(1)
-            val channel2 = Channel<MapChange<String, *>>(1)
+            val channel1 = TestChannel<MapChange<String, *>>()
+            val channel2 = TestChannel<MapChange<String, *>>()
             val observer1 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        channel1.trySend(mapChange)
+                        channel1.send(mapChange)
                     }
             }
             val observer2 = async {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        channel2.trySend(mapChange)
+                        channel2.send(mapChange)
                     }
             }
 
@@ -419,7 +420,7 @@ class RealmDictionaryNotificationsTests : RealmEntityNotificationTests {
                 container.nullableObjectDictionaryField
                     .asFlow()
                     .collect { mapChange ->
-                        channel.trySend(mapChange)
+                        channel.send(mapChange)
                     }
                 fail("Flow should not be canceled.")
             }
