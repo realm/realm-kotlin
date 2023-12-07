@@ -952,7 +952,7 @@ jobs:
   test-android-packages-emulator:
     timeout-minutes: 60
     runs-on: macos-latest
-    needs: [check-cache, build-android-packages, build-jvm-packages]
+    needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
       !cancelled() && 
@@ -973,6 +973,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           cache-read-only: false
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo (Android)
         uses: actions/download-artifact@v3
@@ -1242,7 +1248,7 @@ jobs:
             test-title: Unit Test Results - Base JVM Windows
  
     runs-on: ${{ matrix.os }}
-    needs: [check-cache, build-jvm-packages]
+    needs: [check-cache, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
       !cancelled() && 
@@ -1263,6 +1269,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           cache-read-only: false
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo
         uses: actions/download-artifact@v3
