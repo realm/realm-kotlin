@@ -30,6 +30,7 @@ import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.update
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.single
@@ -305,7 +306,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
 
     @Test
     override fun keyPath_topLevelProperty() = runBlocking<Unit> {
-        val c = Channel<ObjectChange<Sample>>(1)
+        val c = TestChannel<ObjectChange<Sample>>()
         val obj: Sample = realm.write { copyToRealm(Sample()) }
         val observer = async {
             obj.asFlow(listOf("stringField")).collect {
