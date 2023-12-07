@@ -114,6 +114,31 @@ jobs:
     #
 
     #
+    # Kotlin Metadata
+    #
+    - name: Check Kotlin Metadata cache 
+      id: kotlin-metadata-cache
+      uses: cmelchior/cache@main
+      with:
+        path: ./packages/build/m2-buildrepo
+        key: packages-m2-metadata-${{ steps.packages-cache-key.outputs.sha }}
+
+    - name: Save Kotlin Metadata packages
+      uses: actions/upload-artifact@v3
+      if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
+      with:
+        name: packages-metadata-${{ steps.find-library-version.outputs.label }}
+        path: ./packages/build/m2-buildrepo/**/* 
+        retention-days: 1
+
+    - name: Delete downloaded JVM cache files
+      id: delete-cache-jvm
+      uses: JesseTG/rm@v1.0.3
+      if: always() && !cancelled() && steps.kotlin-metadata-cache.outputs.cache-hit == 'true'
+      with:
+        path: ./packages/build/m2-buildrepo
+
+    #
     # JVM (All platforms)
     #
     - name: Check JVM cache 
