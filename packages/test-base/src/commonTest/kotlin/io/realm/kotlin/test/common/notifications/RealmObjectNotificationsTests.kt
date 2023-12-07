@@ -306,7 +306,7 @@ class RealmObjectNotificationsTests : RealmEntityNotificationTests {
 
     @Test
     override fun keyPath_topLevelProperty() = runBlocking<Unit> {
-        val c = TestChannel<ObjectChange<Sample>>(1)
+        val c = TestChannel<ObjectChange<Sample>>()
         val obj: Sample = realm.write { copyToRealm(Sample()) }
         val observer = async {
             obj.asFlow(listOf("stringField")).collect {
