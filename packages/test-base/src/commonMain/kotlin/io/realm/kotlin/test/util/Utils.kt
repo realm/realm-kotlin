@@ -111,7 +111,7 @@ inline fun <T> TestChannel(
 }
 
 /**
- * Helper method that will use use `trySend` to send a message to a Channel and throw
+ * Helper method that will use `trySend` to send a message to a Channel and throw
  * an error if `trySend` returns false
  */
 inline fun <T : Any?> Channel<T>.trySendOrFail(value: T) {
