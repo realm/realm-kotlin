@@ -110,6 +110,7 @@ internal abstract class LiveRealm(
     init {
         @Suppress("LeakingThis") // Should be ok as we do not rely on this to be fully initialized
         val callback = WeakLiveRealmCallback(this)
+        println("Register realmChange callback: ${this.hashCode()}")
         realmChangeRegistration = NotificationToken(RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, callback::onRealmChanged))
         schemaChangeRegistration = NotificationToken(RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, callback::onSchemaChanged))
     }
@@ -148,6 +149,7 @@ internal abstract class LiveRealm(
     }
 
     internal fun unregisterCallbacks() {
+        println("Remove realmChange callback: ${this.hashCode()}")
         realmChangeRegistration.cancel()
         schemaChangeRegistration.cancel()
     }
@@ -186,7 +188,10 @@ internal abstract class LiveRealm(
     private class WeakLiveRealmCallback(liveRealm: LiveRealm) {
         val realm: WeakReference<LiveRealm> = WeakReference(liveRealm)
         fun onRealmChanged() {
-            realm.get()?.onRealmChanged() ?: println("WeakLiveRealmCallback could not find a Realm instance to call onRealmChanged On")
+            realm.get()?.let {
+                println("onRealmChanged triggered: ${it.hashCode()}")
+                it.onRealmChanged()
+            } ?: println("WeakLiveRealmCallback could not find a Realm instance to call onRealmChanged On")
         }
         fun onSchemaChanged(schema: RealmSchemaPointer) { realm.get()?.onSchemaChanged(schema) }
     }
