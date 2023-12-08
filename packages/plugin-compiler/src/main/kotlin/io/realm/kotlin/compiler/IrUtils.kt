@@ -410,6 +410,7 @@ private const val NO_ALIAS = ""
 data class SchemaProperty(
     val propertyType: PropertyType,
     val declaration: IrProperty,
+    val type: IrType,
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null,
 ) {

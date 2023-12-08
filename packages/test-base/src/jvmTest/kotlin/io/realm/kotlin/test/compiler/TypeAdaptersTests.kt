@@ -138,26 +138,32 @@ class TypeAdaptersTests {
             BsonObjectId::class to "BsonObjectId()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
-            MutableRealmInt::class to "MutableRealmInt.create(42)"
+            MutableRealmInt::class to "MutableRealmInt.create(42)",
+            RealmObject::class to "TestObject2()"
         )
 
         allFieldTypes
             .filterNot { type ->
                 // TODO tidy list unsupported types in TypeDescriptor
-                type.elementType.classifier == RealmObject::class ||
                 type.elementType.classifier == Byte::class ||
                 type.elementType.classifier == Char::class ||
                 type.elementType.classifier == Short::class ||
                 type.elementType.classifier == Int::class ||
                 type.elementType.classifier == MutableRealmInt::class
             }
+            .filter {
+                it.collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE
+            }
             .forEach { type ->
                 val elementType = type.elementType
                 val default = if (!elementType.nullable) defaults[elementType.classifier]
                     ?: error("unmapped default") else null
 
-                val kotlinLiteral = type.toKotlinLiteral()
-
+                val kotlinLiteral = if(type.elementType.classifier == RealmObject::class) {
+                    type.toKotlinLiteral().replace("RealmObject", "TestObject2")
+                } else {
+                    type.toKotlinLiteral()
+                }
                 println(kotlinLiteral)
 
                 val result = compileFromSource(
@@ -182,6 +188,10 @@ class TypeAdaptersTests {
                     class UserType
                     
                     class NonRealmType
+                    
+                    class TestObject2: RealmObject {
+                        var name: String = ""
+                    }
                     
                     class TestObject : RealmObject {
                         @TypeAdapter(adapter = ValidRealmTypeAdapter::class)

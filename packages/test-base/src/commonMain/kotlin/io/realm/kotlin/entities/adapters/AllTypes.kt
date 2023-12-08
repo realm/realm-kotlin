@@ -80,7 +80,8 @@ class AllTypes : RealmObject {
     @TypeAdapter(RealmAnyAdapter::class)
     var nullableRealmAnyField: RealmAny? = null
 
-//    var nullableObject: Sample? = null
+    @TypeAdapter(AllTypesObjectAdapter::class)
+    var nullableObject: AllTypes? = null
 //
 //    var stringListField: RealmList<String> = realmListOf()
 //    var byteListField: RealmList<Byte> = realmListOf()
@@ -236,6 +237,7 @@ class AllTypes : RealmObject {
             if (!nullableBinaryField.contentEquals(other.nullableBinaryField)) return false
         } else if (other.nullableBinaryField != null) return false
         if (nullableRealmAnyField != other.nullableRealmAnyField) return false
+        if (nullableObject != other.nullableObject) return false
 
         return true
     }
@@ -262,9 +264,9 @@ class AllTypes : RealmObject {
         result = 31 * result + (nullableUuidField?.hashCode() ?: 0)
         result = 31 * result + (nullableBinaryField?.contentHashCode() ?: 0)
         result = 31 * result + (nullableRealmAnyField?.hashCode() ?: 0)
+        result = 31 * result + (nullableObject?.hashCode() ?: 0)
         return result
     }
-
 }
 
 // Passthrough converters
@@ -393,6 +395,12 @@ object RealmAnyAdapter : RealmTypeAdapter<RealmAny?, RealmAny?> {
     override fun fromRealm(realmValue: RealmAny?): RealmAny? = realmValue?.let { realmValue.clone() }
 
     override fun toRealm(value: RealmAny?): RealmAny? = value?.let { value.clone() }
+}
+
+object AllTypesObjectAdapter : RealmTypeAdapter<AllTypes?, AllTypes?> {
+    override fun fromRealm(realmValue: AllTypes?): AllTypes? = realmValue?.let { AllTypes() }
+
+    override fun toRealm(value: AllTypes?): AllTypes? = value?.let { AllTypes() }
 }
 
 internal fun RealmAny.clone() = when(type) {
