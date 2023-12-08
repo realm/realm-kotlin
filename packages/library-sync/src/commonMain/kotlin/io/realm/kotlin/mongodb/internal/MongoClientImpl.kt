@@ -29,6 +29,8 @@ internal class MongoClientImpl(
     val eJson: EJson,
 ) : MongoClient {
 
+    val functions = FunctionsImpl(user.app, user, serviceName)
+
     override fun database(databaseName: String, eJson: EJson?): MongoDatabase =
         MongoDatabaseImpl(this, databaseName, eJson ?: this.eJson)
 }

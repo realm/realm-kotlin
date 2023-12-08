@@ -60,13 +60,13 @@ public suspend fun MongoCollection<*, *>.count(filter: BsonDocument? = null, lim
     return count(filter, limit)
 }
 
-public suspend inline fun < reified T, R : Any> MongoCollection<T, R>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T? {
+public suspend inline fun < reified T, R : Any> MongoCollection<T, R>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T {
     isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOne(filter, projection, sort))
 }
 
 @JvmName("findOneTyped")
-public suspend inline fun <reified T> MongoCollection<*, *>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T? {
+public suspend inline fun <reified T> MongoCollection<*, *>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T {
     return (this as MongoCollection<T, BsonValue>).findOne(filter, projection, sort)
 }
 
@@ -172,7 +172,7 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndU
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T? {
+): T {
     isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndUpdate(filter, update, projection, sort, upsert, returnNewDoc))
 }
@@ -186,7 +186,7 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndUpdate(
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T? {
+): T {
     return (this as MongoCollection<T, BsonValue>).findOneAndUpdate(filter, update, projection, sort, upsert, returnNewDoc)
 }
 
@@ -198,7 +198,7 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndR
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T? {
+): T {
     isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndReplace(filter, update, projection, sort, upsert, returnNewDoc))
 }
@@ -212,7 +212,7 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndReplace(
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T? {
+): T {
     return (this as MongoCollection<T, BsonValue>).findOneAndReplace(filter, update, projection, sort, upsert, returnNewDoc)
 }
 
@@ -220,7 +220,7 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndD
     filter: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
-): T? {
+): T {
     isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndDelete(filter, projection, sort))
 }
@@ -230,6 +230,6 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndDelete(
     filter: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
-): T? {
+): T {
     return (this as MongoCollection<T, BsonValue>).findOneAndDelete(filter, projection, sort)
 }

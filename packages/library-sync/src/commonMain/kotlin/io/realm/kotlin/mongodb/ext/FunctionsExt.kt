@@ -58,7 +58,7 @@ public suspend inline fun <reified T : Any?> Functions.call(
     vararg args: Any?
 ): T = with(this as FunctionsImpl) {
     val serializedEjsonArgs = Bson.toJson(BsonEncoder.encodeToBsonValue(args.toList()))
-    val encodedResult = callInternal(name, serializedEjsonArgs = serializedEjsonArgs)
+    val encodedResult = callInternal(name, serializedEjsonArgs)
 
     BsonEncoder.decodeFromBsonValue(
         resultClass = T::class,
@@ -90,52 +90,26 @@ public suspend inline fun <reified T : Any?> Functions.call(
  * @param T the function return value type.
  * @return result of the function call.
  */
-
-@ExperimentalRealmSerializerApi
-@OptIn(ExperimentalKBsonSerializerApi::class)
-public suspend fun <T> Functions.call2(
-    name: String,
-    callBuilderBlock: CallBuilder<T>.() -> Unit
-): Pair<CallBuilder<T>, String> =
-    with(this as FunctionsImpl) {
-        val builder = CallBuilder<T>(app.configuration.ejson)
-        builder
-            .apply(callBuilderBlock)
-            .run {
-                val serializedEjsonArgs: String = Bson.toJson(arguments)
-
-                val encodedResult: String = callInternal(name, serviceName = serviceName, serializedEjsonArgs = serializedEjsonArgs)
-
-                this to encodedResult
-            }
-    }
-
 @ExperimentalRealmSerializerApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
 public suspend inline fun <reified T : Any?> Functions.call(
     name: String,
-    noinline callBuilderBlock: CallBuilder<T>.() -> Unit
-): T = call2<T>(name, callBuilderBlock).run {
-    first.ejson.decodeFromString(first.returnValueSerializer ?: first.ejson.serializersModule.serializerOrRealmBuiltInSerializer(), second)
-}
-// with(this as FunctionsImpl) {
-//
-//     CallBuilder<T>(app.configuration.ejson)
-//         .apply(callBuilderBlock)
-//         .run {
-//             val serializedEjsonArgs: String = Bson.toJson(arguments)
-//
-//             val encodedResult: String = callInternal(name, serviceName = serviceName, serializedEjsonArgs = serializedEjsonArgs)
-//
-//             val returnValueSerializer: KSerializer<T> =
-//                 returnValueSerializer
-//                     ?: ejson.serializersModule.serializerOrRealmBuiltInSerializer()
-//
-//             val r: T = ejson.decodeFromString(returnValueSerializer, encodedResult)
-//             r
-//         }
+    callBuilderBlock: CallBuilder<T>.() -> Unit
+): T = with(this as FunctionsImpl) {
+    CallBuilder<T>(app.configuration.ejson)
+        .apply(callBuilderBlock)
+        .run {
+            val serializedEjsonArgs = Bson.toJson(arguments)
 
-// }
+            val encodedResult = callInternal(name, serializedEjsonArgs)
+
+            val returnValueSerializer =
+                returnValueSerializer
+                    ?: ejson.serializersModule.serializerOrRealmBuiltInSerializer()
+
+            ejson.decodeFromString(returnValueSerializer, encodedResult)
+        }
+}
 
 /**
  * Builder used to construct a call defining serializers for the different arguments and return value.
@@ -148,12 +122,6 @@ internal constructor(
     @PublishedApi
     internal val ejson: EJson,
 ) {
-    /**
-     * The name of the App Services's data source for MongoClient requests.
-     */
-    @PublishedApi
-    internal var serviceName: String? = null
-
     /**
      * Contains all given arguments transformed as [BsonValue]. The encoding is done on each [add] call
      * as in that context we have type information from the reified type.
@@ -198,13 +166,5 @@ internal constructor(
      */
     public inline fun <reified T : Any> add(argument: T, serializer: KSerializer<T>) {
         arguments.add(ejson.encodeToBsonValue(serializer, argument))
-    }
-
-//    public fun entry(key: String, value: String) {
-//        entries.put(key, value)
-//    }
-    @PublishedApi
-    internal fun serviceName(serviceName: String) {
-        this.serviceName = serviceName
     }
 }

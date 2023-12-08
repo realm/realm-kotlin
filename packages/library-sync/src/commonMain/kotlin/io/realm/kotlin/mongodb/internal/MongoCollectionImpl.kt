@@ -18,7 +18,6 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.mongodb.exceptions.ServiceException
-import io.realm.kotlin.mongodb.ext.call
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBoolean
@@ -41,7 +40,7 @@ internal class MongoCollectionImpl<T, K> constructor(
 
     val client = this.database.client
     val user = client.user
-    val functions = user.functions
+    val functions = client.functions
 
     private val defaults: Map<String, BsonValue> = mapOf(
         "database" to BsonString(database.name),
@@ -53,13 +52,11 @@ internal class MongoCollectionImpl<T, K> constructor(
         return MongoCollectionImpl(this.database, this.name, eJson ?: this.eJson)
     }
 
-    private suspend inline fun <reified R> call(name: String, crossinline document: MutableMap<String, BsonValue>.() -> Unit): R {
-        return user.functions.call(name) {
-            serviceName(client.serviceName)
-            val doc = defaults.toMutableMap()
-            document(doc)
-            add(doc)
-        }
+    private suspend inline fun <reified R> call(name: String, crossinline arguments: MutableMap<String, BsonValue>.() -> Unit): R {
+        val doc = defaults.toMutableMap()
+        arguments(doc)
+        val response = functions.callInternal(name, BsonArray(listOf(BsonDocument(doc))))
+        return decodeFromBsonValue(response)
     }
 
     @PublishedApi
