@@ -90,7 +90,7 @@ class RealmNotificationsTests : FlowableTests {
         }
     }
 
-    // Test 2
+    // Test 3
     @Test
     override fun asFlow() {
         runBlocking {
