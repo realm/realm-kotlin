@@ -23,6 +23,7 @@ import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
@@ -226,7 +227,8 @@ public class RealmImpl private constructor(
     }
 
     override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: Pair<ClassKey, List<String>>?): Flow<C> {
-        return notifier.registerObserver(t, keyPaths)
+        val keypathsPtr: RealmKeyPathArrayPointer? = keyPaths?.let { RealmInterop.realm_create_key_paths_array(realmReference.dbPointer, keyPaths.first, keyPaths.second) }
+        return notifier.registerObserver(t, keypathsPtr)
     }
 
     /**
