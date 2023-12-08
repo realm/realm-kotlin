@@ -46,7 +46,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -210,7 +210,7 @@ public class RealmImpl private constructor(
     }
 
     override fun asFlow(): Flow<RealmChange<Realm>> = scopedFlow {
-        notifierFlow.onStart { emit(InitialRealmImpl(this@RealmImpl)) }
+        notifierFlow.onSubscription { emit(InitialRealmImpl(this@RealmImpl)) }
     }
 
     override fun writeCopyTo(configuration: Configuration) {
