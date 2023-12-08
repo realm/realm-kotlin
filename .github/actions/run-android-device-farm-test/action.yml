@@ -47,9 +47,20 @@ runs:
         echo "::endgroup::"
         Import-Module AWSPowerShell
         $runs = Get-DFRunList  -Arn ${{ inputs.project-arn }}
+        echo "Runs:"
+        echo $runs
         $jobs = Get-DFJobList -Arn $runs[0].Arn
+        echo "Jobs:"
+        echo $jobs
         $suites = Get-DFSuiteList -Arn $jobs[0].Arn
-        $artifacts = Get-DFArtifactList -Arn $suites[1].Arn -Type File | Where-Object { $_.Name -EQ "Logcat" }
+        echo "Suites"
+        echo $suites
+        echo "Artifacts:"
+        $fileArtifacts = Get-DFArtifactList -Arn $suites[1].Arn -Type File
+        echo $fileArtifacts
+        $logCatArtifacts = Get-DFArtifactList -Arn $suites[1].Arn -Type File | Where-Object { $_.Name -EQ "Logcat" }
+        echo "LogCat Artifacts:"
+        echo $logCatArtifacts
         echo "::group::Logcat"
         Invoke-WebRequest -Uri $artifacts[0].Url | Select-Object -Expand RawContent
         echo "::endgroup::"
