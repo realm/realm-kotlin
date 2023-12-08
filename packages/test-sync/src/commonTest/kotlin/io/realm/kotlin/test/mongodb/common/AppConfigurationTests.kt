@@ -33,9 +33,10 @@ import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
-import kotlinx.coroutines.channels.Channel
+import io.realm.kotlin.test.util.trySendOrFail
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -393,7 +394,7 @@ class AppConfigurationTests {
     private suspend fun doCustomHeaderTest(app: App) {
         val originalLevel = RealmLog.level
         RealmLog.level = LogLevel.ALL
-        val channel = Channel<Boolean>(1)
+        val channel = TestChannel<Boolean>()
 
         val logger = object : RealmLogger {
             override val level: LogLevel = LogLevel.DEBUG
@@ -409,7 +410,7 @@ class AppConfigurationTests {
                         "$AUTH_HEADER_NAME: "
                     )
                 ) {
-                    channel.trySend(true)
+                    channel.trySendOrFail(true)
                 }
             }
         }

@@ -62,15 +62,16 @@ import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -176,7 +177,7 @@ class SyncedRealmTests {
                     name = "A"
                 }
 
-                val channel = Channel<ResultsChange<ChildPk>>(1)
+                val channel = TestChannel<ResultsChange<ChildPk>>()
 
                 // There was a race condition where construction of a query against the user facing frozen
                 // version could throw, due to the underlying version being deleted when the live realm was
@@ -226,7 +227,10 @@ class SyncedRealmTests {
             partitionValue = partitionValue
         )
         val realm1 = Realm.open(config1)
-        val c = Channel<RealmChange<Realm>>(1)
+        // We don't fully control all events from the server, so do not check
+        // for an empty buffer because we might accidentally see multiple updates
+        // from the server.
+        val c = TestChannel<RealmChange<Realm>>(failIfBufferIsEmptyOnCancel = false)
         val observer = async {
             realm1.asFlow().collect {
                 c.send(it)
@@ -261,9 +265,9 @@ class SyncedRealmTests {
                 }
             }
         } finally {
+            c.cancel()
             realm1.close()
             observer.cancel()
-            c.cancel()
         }
     }
 
@@ -309,7 +313,7 @@ class SyncedRealmTests {
 
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
-        val channel = Channel<Throwable>(1)
+        val channel = TestChannel<Throwable>()
         // Remove permissions to generate a sync error containing ONLY the original path
         // This way we assert we don't read wrong data from the user_info field
         val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
@@ -322,7 +326,7 @@ class SyncedRealmTests {
             user = user,
             partitionValue = partitionValue
         ).errorHandler { _, error ->
-            channel.trySend(error)
+            channel.trySendOrFail(error)
         }.build()
 
         runBlocking {
@@ -331,7 +335,7 @@ class SyncedRealmTests {
                     // Make sure that the test eventually fail. Coroutines can cancel a delay
                     // so this doesn't always block the test for 10 seconds.
                     delay(10 * 1000)
-                    channel.trySend(AssertionError("Realm was successfully opened"))
+                    channel.send(AssertionError("Realm was successfully opened"))
                 }
             }
 
@@ -350,7 +354,7 @@ class SyncedRealmTests {
     @Test
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
-        val channel = Channel<SyncException>(1)
+        val channel = TestChannel<SyncException>()
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -374,7 +378,7 @@ class SyncedRealmTests {
             ).name("test2.realm")
                 .errorHandler(object : ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
-                        channel.trySend(error)
+                        channel.trySendOrFail(error)
                     }
                 }).build()
             val realm2 = Realm.open(config2)
@@ -562,9 +566,9 @@ class SyncedRealmTests {
         val syncDir: Path =
             pathOf(app.configuration.syncRootDirectory, "mongodb-realm", app.configuration.appId, user.id).toPath()
 
-        val bgThreadReadyChannel = Channel<Unit>(1)
-        val readyToCloseChannel = Channel<Unit>(1)
-        val closedChannel = Channel<Unit>(1)
+        val bgThreadReadyChannel = TestChannel<Unit>()
+        val readyToCloseChannel = TestChannel<Unit>()
+        val closedChannel = TestChannel<Unit>()
 
         kotlinx.coroutines.runBlocking {
             val testRealm = Realm.open(configuration)
@@ -585,7 +589,7 @@ class SyncedRealmTests {
             fileSystem.list(syncDir)
                 .also { testDirPathList ->
                     assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
-                    readyToCloseChannel.send(Unit)
+                    readyToCloseChannel.trySendOrFail(Unit)
                 }
             testRealm.close()
             closedChannel.receiveOrFail()
@@ -719,7 +723,7 @@ class SyncedRealmTests {
             name = "db3",
         )
 
-        val counterValue = Channel<Long>(1)
+        val counterValue = TestChannel<Long>()
 
         // Asynchronously receive updates
         val updates = async {
@@ -730,7 +734,7 @@ class SyncedRealmTests {
                     .collect {
                         if (it.obj != null) {
                             val counter = it.obj!!.mutableRealmIntField
-                            counterValue.trySend(counter.get())
+                            counterValue.send(counter.get())
                         }
                     }
             }
