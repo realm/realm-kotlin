@@ -7,7 +7,7 @@
 * None.
 
 ### Fixed
-* Using keypaths in Flows could sometimes throw `java.lang.IllegalStateException: [RLM_ERR_WRONG_THREAD]: Realm accessed from incorrect thread.`. (Since 1.13.0)
+* Using keypaths in Flows could sometimes throw `java.lang.IllegalStateException: [RLM_ERR_WRONG_THREAD]: Realm accessed from incorrect thread.`. (Issue [#1594](https://github.com/realm/realm-kotlin/pull/1594, since 1.13.0)
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
