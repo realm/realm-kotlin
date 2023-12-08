@@ -20,11 +20,9 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
-import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
-import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
@@ -39,7 +37,9 @@ import kotlin.test.assertTrue
  * These tests should validate:
  *  - [x] Adapter with a non-realm type should fail
  *  - [x] Adapter annotation on unsupported types: delegate, function etc
- *  - [ ] Adapters type supportness
+ *  - [ ] Adapter on wrong type
+ *  - [x] Adapters type supportness
+ *  - [ ] Adapters type unsupportness
  *  - [ ] Instanced and singleton adapters
  *  - [ ] Other annotations Ignore, Index etc
  */

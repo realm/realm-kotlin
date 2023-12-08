@@ -17,6 +17,7 @@ package io.realm.kotlin.test.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.entities.adapters.AllTypes
 import io.realm.kotlin.entities.adapters.RealmInstantBsonDateTimeAdapterInstanced
 import io.realm.kotlin.entities.adapters.UsingInstancedAdapter
 //import io.realm.kotlin.entities.adapters.UsingInstancedAdapter
@@ -55,7 +56,7 @@ class TypeAdapterTests {
     @BeforeTest
     fun setup() {
         tmpDir = PlatformUtils.createTempDir()
-        configuration = RealmConfiguration.Builder(setOf(UsingSingletonAdapter::class, UsingInstancedAdapter::class))
+        configuration = RealmConfiguration.Builder(setOf(UsingSingletonAdapter::class, UsingInstancedAdapter::class, AllTypes::class))
             .directory(tmpDir)
             .typeAdapters {
                 add(RealmInstantBsonDateTimeAdapterInstanced())
@@ -76,32 +77,43 @@ class TypeAdapterTests {
     fun useSingletonAdapter() {
         val expectedDate = BsonDateTime()
 
-        val adapted = UsingSingletonAdapter().apply {
+        val unmanagedObject = UsingSingletonAdapter().apply {
             this.date = expectedDate
         }
-        assertEquals(expectedDate, adapted.date)
+        assertEquals(expectedDate, unmanagedObject.date)
 
-        val storedAdapted = realm.writeBlocking {
-            copyToRealm(adapted)
+        val managedObject = realm.writeBlocking {
+            copyToRealm(unmanagedObject)
         }
 
-        assertEquals(expectedDate, storedAdapted.date)
+        assertEquals(expectedDate, managedObject.date)
     }
 
     @Test
     fun useInstancedAdapter() {
         val expectedDate = BsonDateTime()
 
-        val adapted = UsingInstancedAdapter().apply {
+        val unmanagedObject = UsingInstancedAdapter().apply {
             this.date = expectedDate
         }
-        assertEquals(expectedDate, adapted.date)
+        assertEquals(expectedDate, unmanagedObject.date)
 
-        val storedAdapted = realm.writeBlocking {
-            copyToRealm(adapted)
+        val managedObject = realm.writeBlocking {
+            copyToRealm(unmanagedObject)
         }
 
-        assertEquals(expectedDate, storedAdapted.date)
+        assertEquals(expectedDate, managedObject.date)
+    }
+
+    @Test
+    fun allTypes() {
+        val unmanagedObject = AllTypes()
+
+        val managedObject = realm.writeBlocking {
+            copyToRealm(unmanagedObject)
+        }
+
+        assertEquals(unmanagedObject, managedObject)
     }
 
 }
