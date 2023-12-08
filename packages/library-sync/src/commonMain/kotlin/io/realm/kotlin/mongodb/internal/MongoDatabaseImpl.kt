@@ -18,6 +18,7 @@ package io.realm.kotlin.mongodb.internal
 
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
+import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
@@ -31,7 +32,7 @@ internal class MongoDatabaseImpl constructor(
     val eJson: EJson,
 ) : MongoDatabase {
 
-    override fun collection(collectionName: String): MongoCollection<BsonValue, BsonValue> {
+    override fun collection(collectionName: String): MongoCollection<BsonDocument, BsonValue> {
         return MongoCollectionImpl(this, collectionName, this.eJson)
     }
 

@@ -29,8 +29,6 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.mongo.MongoClient
-import io.realm.kotlin.mongodb.mongo.MongoCollection
-import io.realm.kotlin.mongodb.mongo.MongoDatabase
 import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson

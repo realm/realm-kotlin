@@ -16,11 +16,7 @@
 package io.realm.kotlin.test.mongodb.common.utils
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 

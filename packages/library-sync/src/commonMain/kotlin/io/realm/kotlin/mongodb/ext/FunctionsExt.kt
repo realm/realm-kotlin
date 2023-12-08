@@ -99,7 +99,7 @@ public suspend fun <T> Functions.call2(
 ): Pair<CallBuilder<T>, String> =
     with(this as FunctionsImpl) {
         val builder = CallBuilder<T>(app.configuration.ejson)
-            builder
+        builder
             .apply(callBuilderBlock)
             .run {
                 val serializedEjsonArgs: String = Bson.toJson(arguments)
@@ -118,24 +118,24 @@ public suspend inline fun <reified T : Any?> Functions.call(
 ): T = call2<T>(name, callBuilderBlock).run {
     first.ejson.decodeFromString(first.returnValueSerializer ?: first.ejson.serializersModule.serializerOrRealmBuiltInSerializer(), second)
 }
-//with(this as FunctionsImpl) {
+// with(this as FunctionsImpl) {
 //
-//    CallBuilder<T>(app.configuration.ejson)
-//        .apply(callBuilderBlock)
-//        .run {
-//            val serializedEjsonArgs: String = Bson.toJson(arguments)
+//     CallBuilder<T>(app.configuration.ejson)
+//         .apply(callBuilderBlock)
+//         .run {
+//             val serializedEjsonArgs: String = Bson.toJson(arguments)
 //
-//            val encodedResult: String = callInternal(name, serviceName = serviceName, serializedEjsonArgs = serializedEjsonArgs)
+//             val encodedResult: String = callInternal(name, serviceName = serviceName, serializedEjsonArgs = serializedEjsonArgs)
 //
-//            val returnValueSerializer: KSerializer<T> =
-//                returnValueSerializer
-//                    ?: ejson.serializersModule.serializerOrRealmBuiltInSerializer()
+//             val returnValueSerializer: KSerializer<T> =
+//                 returnValueSerializer
+//                     ?: ejson.serializersModule.serializerOrRealmBuiltInSerializer()
 //
-//            val r: T = ejson.decodeFromString(returnValueSerializer, encodedResult)
-//            r
-//        }
+//             val r: T = ejson.decodeFromString(returnValueSerializer, encodedResult)
+//             r
+//         }
 
-//}
+// }
 
 /**
  * Builder used to construct a call defining serializers for the different arguments and return value.
@@ -148,9 +148,12 @@ internal constructor(
     @PublishedApi
     internal val ejson: EJson,
 ) {
-//    internal val entries: MutableMap<String, String> = mutableMapOf()
-@PublishedApi
-internal var serviceName: String? =  null
+    /**
+     * The name of the App Services's data source for MongoClient requests.
+     */
+    @PublishedApi
+    internal var serviceName: String? = null
+
     /**
      * Contains all given arguments transformed as [BsonValue]. The encoding is done on each [add] call
      * as in that context we have type information from the reified type.

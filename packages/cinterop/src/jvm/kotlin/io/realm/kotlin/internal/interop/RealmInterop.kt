@@ -1614,6 +1614,7 @@ actual object RealmInterop {
         )
     }
 
+    @Suppress("LongParameterList")
     actual fun realm_app_call_function(
         app: RealmAppPointer,
         user: RealmUserPointer,

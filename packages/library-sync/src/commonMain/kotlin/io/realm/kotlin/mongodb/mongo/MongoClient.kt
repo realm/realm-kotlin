@@ -20,12 +20,23 @@ import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
 /**
- * The remote MongoClient used for working with data in MongoDB remotely via Realm.
+ * A **Mongo client** is used to access an App Service's Data Source directly without Sync support.
  */
 public interface MongoClient {
 
+    /**
+     * The name of the data source that the [MongoClient] is connecting to.
+     */
+    // FIXME Data Source name??
     public val serviceName: String
 
+    /**
+     * Get a [MongoDatabase] object to access data from the remote collections of the data source.
+     *
+     * @param databaseName name of the database from the data source.
+     * @param eJson the EJson serializer that the [MongoDatabase] should use to convert objects and
+     * primary keys with. Will default to the client's [EJson] instance.
+     */
     @OptIn(ExperimentalKBsonSerializerApi::class)
     public fun database(databaseName: String, eJson: EJson? = null): MongoDatabase
 }

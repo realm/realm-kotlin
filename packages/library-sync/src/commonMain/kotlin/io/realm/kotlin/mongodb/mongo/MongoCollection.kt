@@ -16,57 +16,73 @@
 
 // TODO - QUESTIONS
 //  - should we allow serialization of update, sort and projection arguments?
+//  - Experimental annotation as a safegaurd around all the serialization stuff? We dont support an API without Bson-serialization, so will depend on ExperimentalKBsonSerializerApi internally anyway, so can't avoid the KSerialization-dependency
+//  - Missing ignoreUnknown properties
+//  - #naming App Services seems to use "Data source", Data
 
 package io.realm.kotlin.mongodb.mongo
 
-import io.realm.kotlin.internal.util.Validation
+import io.realm.kotlin.internal.util.Validation.isType
 import io.realm.kotlin.mongodb.internal.MongoCollectionImpl
-import io.realm.kotlin.mongodb.internal.encodeToBsonValue
 import io.realm.kotlin.mongodb.internal.decodeFromBsonValue
 import io.realm.kotlin.mongodb.internal.decodeFromBsonValueList
+import io.realm.kotlin.mongodb.internal.encodeToBsonValue
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 import kotlin.jvm.JvmName
 
+/**
+ * A __mongo collection__ provides access to retrieve and update data from the database's
+ * collection with specific typed serialization.
+ *
+ * @param T the default type that remote entities of the collection will be serialized from and
+ * to.
+ * @param K the default type that primary keys will be serialized into.
+ */
 public interface MongoCollection<T, K> {
 
+    /**
+     * Name of the remote collection.
+     */
     public val name: String
 
+    /**
+     * Get an instance of the same collection with a different set of default types serialization.
+     */
     @OptIn(ExperimentalKBsonSerializerApi::class)
     public fun <T, K> collection(eJson: EJson? = null): MongoCollection<T, K>
 }
 
 public suspend fun MongoCollection<*, *>.count(filter: BsonDocument? = null, limit: Long? = null): Long {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
+    isType<MongoCollectionImpl<*, *>>(this)
     return count(filter, limit)
 }
 
-public suspend inline fun < reified T, R: Any> MongoCollection<T, R>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
+public suspend inline fun < reified T, R : Any> MongoCollection<T, R>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T? {
+    isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOne(filter, projection, sort))
 }
 
 @JvmName("findOneTyped")
-public suspend inline fun <reified T> MongoCollection<*, *>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T {
+public suspend inline fun <reified T> MongoCollection<*, *>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T? {
     return (this as MongoCollection<T, BsonValue>).findOne(filter, projection, sort)
 }
 
-public suspend inline fun <reified T, K: Any> MongoCollection<T, K>.find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null): List<T> {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
-    val objects = find(filter, projection, sort, limit).asArray().toList()
-    return decodeFromBsonValueList(objects)
+public suspend inline fun <reified T, K : Any> MongoCollection<T, K>.find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null): List<T> {
+    isType<MongoCollectionImpl<*, *>>(this)
+    return decodeFromBsonValueList(find(filter, projection, sort, limit).asArray().toList())
 }
+
 @JvmName("findTyped")
-public suspend inline fun <reified T> MongoCollection<*, *>.find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null ): List<T> {
+public suspend inline fun <reified T> MongoCollection<*, *>.find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null): List<T> {
     return (this as MongoCollection<T, BsonValue>).find(filter, projection, sort, limit)
 }
 
-public suspend inline fun <reified T, K: Any> MongoCollection<T, K>.aggregate(pipeline: List<BsonDocument>): List<T> {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
-    val objects: List<BsonValue> = aggregate(pipeline)
-    return decodeFromBsonValueList(objects)
+public suspend inline fun <reified T, K : Any> MongoCollection<T, K>.aggregate(pipeline: List<BsonDocument>): List<T> {
+    isType<MongoCollectionImpl<*, *>>(this)
+    return decodeFromBsonValueList(aggregate(pipeline))
 }
 
 @JvmName("aggregateTyped")
@@ -75,10 +91,8 @@ public suspend inline fun <reified T> MongoCollection<*, *>.aggregate(pipeline: 
 }
 
 public suspend inline fun <reified T : Any, reified R : Any> MongoCollection<T, R>.insertOne(document: T): R {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
-    val encodedDocument: BsonDocument = encodeToBsonValue(document).asDocument()
-    val insertedId = insertOne(encodedDocument)
-    return if (insertedId is R) { insertedId } else { decodeFromBsonValue(insertedId) }
+    isType<MongoCollectionImpl<*, *>>(this)
+    return decodeFromBsonValue(insertOne(encodeToBsonValue(document).asDocument()))
 }
 
 @JvmName("insertOneTyped")
@@ -89,48 +103,44 @@ public suspend inline fun <reified T : Any, reified R : Any> MongoCollection<*, 
 public suspend inline fun <reified T : Any, reified R : Any> MongoCollection<T, R>.insertMany(
     documents: Collection<T>,
 ): List<R> {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
-    val encodedDocuments: List<BsonDocument> = documents.map { encodeToBsonValue(it).asDocument() }
-    val insertedIds: List<BsonValue> = insertMany(encodedDocuments)
-    return if (R::class == BsonValue::class) {
-        insertedIds as List<R>
-    } else {
-        insertedIds.map { decodeFromBsonValue(it) }
-    }
+    isType<MongoCollectionImpl<*, *>>(this)
+    return decodeFromBsonValueList(insertMany(documents.map { encodeToBsonValue(it).asDocument() }))
 }
 
 @JvmName("insertManyTyped")
-public suspend inline fun <reified T: Any, reified R : Any> MongoCollection<*, *>.insertMany(documents: Collection<T>): List<R> {
+public suspend inline fun <reified T : Any, reified R : Any> MongoCollection<*, *>.insertMany(documents: Collection<T>): List<R> {
     return (this as MongoCollection<T, R>).insertMany(documents)
 }
 
 public suspend fun MongoCollection<*, *>.deleteOne(filter: BsonDocument): Boolean {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
+    isType<MongoCollectionImpl<*, *>>(this)
     return deleteOne(filter)
 }
 
 public suspend fun MongoCollection<*, *>.deleteMany(filter: BsonDocument): Long {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
+    isType<MongoCollectionImpl<*, *>>(this)
     return deleteMany(filter)
 }
 
 // FIXME Could just return Boolean, since matchedCount=1,modifiedCount=1 even if multiple documents should be matching :thinking:
 // FIXME Should we split into upsertOne, since response only contains 'upsertedId' if call has 'upsert:true`
-public suspend inline fun <T : Any, reified R : Any> MongoCollection<T, R>.updateOne(
+public suspend inline fun <T : Any, reified R> MongoCollection<T, R>.updateOne(
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-): List<R> {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
-    return decodeFromBsonValue(updateOne(filter, update, upsert))
+): Pair<Boolean, R?> {
+    isType<MongoCollectionImpl<*, *>>(this)
+    return updateOne(filter, update, upsert).let { (updated, asdf) ->
+        updated to asdf?.let { decodeFromBsonValue(it) }
+    }
 }
 
 @JvmName("updateOneTyped")
-public suspend inline fun <reified R : Any> MongoCollection<*, *>.updateOne(
+public suspend inline fun <reified R> MongoCollection<*, *>.updateOne(
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-): List<R> {
+): Pair<Boolean, R?> {
     return (this as MongoCollection<BsonValue, R>).updateOne(filter, update, upsert)
 }
 
@@ -138,9 +148,11 @@ public suspend inline fun <T : Any, reified R : Any> MongoCollection<T, R>.updat
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-): List<R> {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
-    return decodeFromBsonValue(updateMany(filter, update, upsert))
+): Pair<Long, R?> {
+    isType<MongoCollectionImpl<*, *>>(this)
+    return updateMany(filter, update, upsert).let { (updatedCount, upsertedId) ->
+        updatedCount to upsertedId?.let { decodeFromBsonValue(it) }
+    }
 }
 
 @JvmName("updateManyTyped")
@@ -148,10 +160,11 @@ public suspend inline fun <reified R : Any> MongoCollection<*, *>.updateMany(
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-    ): List<R> {
+): Pair<Long, R?> {
     return (this as MongoCollection<BsonValue, R>).updateMany(filter, update, upsert)
 }
 
+@Suppress("LongParameterList")
 public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndUpdate(
     filter: BsonDocument,
     update: BsonDocument,
@@ -159,11 +172,12 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndU
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
+): T? {
+    isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndUpdate(filter, update, projection, sort, upsert, returnNewDoc))
 }
 
+@Suppress("LongParameterList")
 @JvmName("findAndUpdateTyped")
 public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndUpdate(
     filter: BsonDocument,
@@ -172,10 +186,11 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndUpdate(
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
+): T? {
     return (this as MongoCollection<T, BsonValue>).findOneAndUpdate(filter, update, projection, sort, upsert, returnNewDoc)
 }
 
+@Suppress("LongParameterList")
 public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndReplace(
     filter: BsonDocument,
     update: BsonDocument,
@@ -183,11 +198,12 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndR
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
+): T? {
+    isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndReplace(filter, update, projection, sort, upsert, returnNewDoc))
 }
 
+@Suppress("LongParameterList")
 @JvmName("findAndReplaceTyped")
 public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndReplace(
     filter: BsonDocument,
@@ -196,7 +212,7 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndReplace(
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
+): T? {
     return (this as MongoCollection<T, BsonValue>).findOneAndReplace(filter, update, projection, sort, upsert, returnNewDoc)
 }
 
@@ -204,8 +220,8 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndD
     filter: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
-): T {
-    Validation.isType<MongoCollectionImpl<*, *>>(this, "MongoCollection should be an instance of MongoCollectionImpl")
+): T? {
+    isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndDelete(filter, projection, sort))
 }
 
@@ -214,6 +230,6 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndDelete(
     filter: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
-): T {
+): T? {
     return (this as MongoCollection<T, BsonValue>).findOneAndDelete(filter, projection, sort)
 }

@@ -37,24 +37,23 @@ internal class MongoCollectionImpl<T, K> constructor(
     @PublishedApi internal val database: MongoDatabaseImpl,
     override val name: String,
     val eJson: EJson,
-): MongoCollection<T, K> {
+) : MongoCollection<T, K> {
 
     val client = this.database.client
     val user = client.user
     val functions = user.functions
 
-
     private val defaults: Map<String, BsonValue> = mapOf(
-            "database" to BsonString(database.name),
-            "collection" to BsonString(name),
-        )
+        "database" to BsonString(database.name),
+        "collection" to BsonString(name),
+    )
 
     @OptIn(ExperimentalKBsonSerializerApi::class)
     override fun <T, K> collection(eJson: EJson?): MongoCollection<T, K> {
         return MongoCollectionImpl(this.database, this.name, eJson ?: this.eJson)
     }
 
-    private suspend inline fun <reified R> call(name: String, crossinline document: MutableMap<String, BsonValue>.()-> Unit): R {
+    private suspend inline fun <reified R> call(name: String, crossinline document: MutableMap<String, BsonValue>.() -> Unit): R {
         return user.functions.call(name) {
             serviceName(client.serviceName)
             val doc = defaults.toMutableMap()
@@ -111,7 +110,7 @@ internal class MongoCollectionImpl<T, K> constructor(
         return when (deletedCount) {
             0L -> false
             1L -> true
-            else -> throw ServiceException("Unexpected response from deleteOne: deletedCount=${deletedCount}")
+            else -> throw ServiceException("Unexpected response from deleteOne: deletedCount=$deletedCount")
         }
     }
 
@@ -124,27 +123,36 @@ internal class MongoCollectionImpl<T, K> constructor(
     }
 
     @PublishedApi
-    internal suspend fun updateOne( filter: BsonDocument, update: BsonDocument, upsert: Boolean = false ): BsonValue {
-        val deletedCountBson = call<BsonValue>("updateOne") {
+    internal suspend fun updateOne(filter: BsonDocument, update: BsonDocument, upsert: Boolean = false): Pair<Boolean, BsonValue?> {
+        val response: BsonValue = call("updateOne") {
             put("query", filter)
             put("update", update)
             put("upsert", BsonBoolean(upsert))
         }
-        TODO()
-        return decodeFromBsonValue(deletedCountBson)
+        return response.asDocument().run {
+            val modifiedCount: Long? = get("modifiedCount")?.let { decodeFromBsonValue<Long>(it) }
+            val modified = when (modifiedCount) {
+                0L -> false
+                1L -> true
+                else -> throw ServiceException("Unexpected response from updateOne: modifiedCount=$modifiedCount")
+            }
+            modified to (get("upsertedId"))
+        }
     }
 
     @PublishedApi
-    internal suspend fun updateMany( filter: BsonDocument, update: BsonDocument, upsert: Boolean = false ): BsonValue {
-        val deletedCountBson = call<BsonValue>("updateMany") {
+    internal suspend fun updateMany(filter: BsonDocument, update: BsonDocument, upsert: Boolean = false): Pair<Long, BsonValue?> {
+        val response = call<BsonValue>("updateMany") {
             put("query", filter)
             put("update", update)
             put("upsert", BsonBoolean(upsert))
         }
-        TODO()
-        return decodeFromBsonValue(deletedCountBson)
+        return response.asDocument().run {
+            decodeFromBsonValue<Long>(get("modifiedCount")!!) to (get("upsertedId"))
+        }
     }
 
+    @Suppress("LongParameterList")
     @PublishedApi
     internal suspend fun findOneAndUpdate(
         filter: BsonDocument,
@@ -156,12 +164,13 @@ internal class MongoCollectionImpl<T, K> constructor(
     ): BsonValue = call("findOneAndUpdate") {
         put("filter", filter)
         put("update", update)
-        projection?.let { put("projection", projection)}
-        sort?.let { put("sort", sort)}
+        projection?.let { put("projection", projection) }
+        sort?.let { put("sort", sort) }
         put("upsert", BsonBoolean(upsert))
         put("returnNewDoc", BsonBoolean(returnNewDoc))
     }
 
+    @Suppress("LongParameterList")
     @PublishedApi
     internal suspend fun findOneAndReplace(
         filter: BsonDocument,
@@ -173,12 +182,12 @@ internal class MongoCollectionImpl<T, K> constructor(
     ): BsonValue = call("findOneAndReplace") {
         put("filter", filter)
         put("update", update)
-        projection?.let { put("projection", projection)}
-        sort?.let { put("sort", sort)}
+        projection?.let { put("projection", projection) }
+        sort?.let { put("sort", sort) }
         put("upsert", BsonBoolean(upsert))
         put("returnNewDoc", BsonBoolean(returnNewDoc))
     }
-    
+
     @PublishedApi
     internal suspend fun findOneAndDelete(
         filter: BsonDocument,
@@ -186,8 +195,8 @@ internal class MongoCollectionImpl<T, K> constructor(
         sort: BsonDocument? = null,
     ): BsonValue = call("findOneAndDelete") {
         put("filter", filter)
-        projection?.let { put("projection", projection)}
-        sort?.let { put("sort", sort)}
+        projection?.let { put("projection", projection) }
+        sort?.let { put("sort", sort) }
     }
 }
 
@@ -199,8 +208,8 @@ internal inline fun <reified R : Any> MongoCollectionImpl<*, *>.encodeToBsonValu
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
 internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bsonValue: BsonValue): R {
-    return if (bsonValue is R) {
-        bsonValue
+    return if (R::class == BsonValue::class) {
+        bsonValue as R
     } else {
         eJson.decodeFromBsonValue(bsonValue)
     }

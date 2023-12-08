@@ -31,5 +31,4 @@ internal class MongoClientImpl(
 
     override fun database(databaseName: String, eJson: EJson?): MongoDatabase =
         MongoDatabaseImpl(this, databaseName, eJson ?: this.eJson)
-
 }

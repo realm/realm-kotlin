@@ -78,16 +78,16 @@ public inline fun <reified T> User.profile(serializer: KSerializer<T> = (this as
  * @param T the type to decoded the user profile.
  * @return The profile for this user.
  */
-//@ExperimentalRealmSerializerApi
-//@OptIn(ExperimentalKBsonSerializerApi::class)
-//public inline fun <reified T> User.profile(): T =
-//    profile(
-//        (this as UserImpl).app
-//            .configuration
-//            .ejson
-//            .serializersModule
-//            .serializerOrRealmBuiltInSerializer<T>()
-//    )
+// @ExperimentalRealmSerializerApi
+// @OptIn(ExperimentalKBsonSerializerApi::class)
+// public inline fun <reified T> User.profile(): T =
+//     profile(
+//         (this as UserImpl).app
+//             .configuration
+//             .ejson
+//             .serializersModule
+//             .serializerOrRealmBuiltInSerializer<T>()
+//     )
 //
 /**
  * Returns the custom user data associated with the user in the Realm App as [T].
@@ -101,16 +101,16 @@ public inline fun <reified T> User.profile(serializer: KSerializer<T> = (this as
  * @param T the type to decoded the user custom data.
  * @return The custom user data associated with the user.
  */
-//@ExperimentalRealmSerializerApi
-//@OptIn(ExperimentalKBsonSerializerApi::class)
-//public inline fun <reified T> User.customData(): T? =
-//    customData(
-//        (this as UserImpl).app
-//            .configuration
-//            .ejson
-//            .serializersModule
-//            .serializerOrRealmBuiltInSerializer<T>()
-//    )
+// @ExperimentalRealmSerializerApi
+// @OptIn(ExperimentalKBsonSerializerApi::class)
+// public inline fun <reified T> User.customData(): T? =
+//     customData(
+//         (this as UserImpl).app
+//             .configuration
+//             .ejson
+//             .serializersModule
+//             .serializerOrRealmBuiltInSerializer<T>()
+//     )
 
 /**
  * Returns the custom user data associated with the user in the Realm App as [T].
@@ -136,4 +136,3 @@ public inline fun <reified T> User.customData(serializer: KSerializer<T> = (this
             )
         }
     }
-

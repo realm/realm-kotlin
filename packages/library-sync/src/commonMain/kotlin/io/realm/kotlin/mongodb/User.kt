@@ -204,7 +204,14 @@ public interface User {
      */
     public suspend fun linkCredentials(credentials: Credentials): User
 
-    // TODO Doc
+    /**
+     * Get a [MongoClient] for accessing documents from App Service's _Data Source_.
+     *
+     * @param serviceName the name of the data service.
+     * @param eJson the EJson serializer that the [MongoClient] should use to convert objects and
+     * primary keys with. Will default to the apps [EJson] instance configured with
+     * [AppConfiguration.Builder.ejson].
+     */
     @OptIn(ExperimentalKBsonSerializerApi::class)
     public fun mongoClient(serviceName: String, eJson: EJson? = null): MongoClient
 
