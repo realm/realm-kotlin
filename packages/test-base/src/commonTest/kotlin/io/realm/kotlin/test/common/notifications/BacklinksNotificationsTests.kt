@@ -26,6 +26,7 @@ import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -83,13 +84,13 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     sample.setBacklinks
                 )
             }.forEach { results ->
-                val c = Channel<ResultsChange<Sample>>(1)
+                val c = TestChannel<ResultsChange<Sample>>()
 
                 val observer = async {
                     results
                         .asFlow()
                         .collect {
-                            c.trySend(it)
+                            c.send(it)
                         }
                 }
 
@@ -141,7 +142,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     results
                         .asFlow()
                         .collect {
-                            c.trySend(it)
+                            c.send(it)
                         }
                 }
 
@@ -180,7 +181,7 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
             val c = Channel<ResultsChange<Sample>>(capacity = 5)
             val collection = async {
                 target.objectBacklinks.asFlow().collect {
-                    c.trySend(it)
+                    c.send(it)
                 }
             }
 
@@ -235,17 +236,17 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     setBacklinks
                 )
             }.forEach { results ->
-                val c1 = Channel<ResultsChange<Sample>>(1)
-                val c2 = Channel<ResultsChange<Sample>>(1)
+                val c1 = TestChannel<ResultsChange<Sample>>()
+                val c2 = TestChannel<ResultsChange<Sample>>()
 
                 val observer1 = async {
                     results.asFlow().collect {
-                        c1.trySend(it)
+                        c1.send(it)
                     }
                 }
                 val observer2 = async {
                     results.asFlow().collect {
-                        c2.trySend(it)
+                        c2.send(it)
                     }
                 }
 
@@ -290,10 +291,10 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                     results
                         .asFlow()
                         .onCompletion {
-                            c.trySend(null)
+                            c.send(null)
                         }
                         .collect {
-                            c.trySend(it)
+                            c.send(it)
                         }
                 }
 
@@ -302,10 +303,10 @@ class BacklinksNotificationsTests : RealmEntityNotificationTests {
                         .query("TRUEPREDICATE")
                         .asFlow()
                         .onCompletion {
-                            sc.trySend(null)
+                            sc.send(null)
                         }
                         .collect {
-                            sc.trySend(it)
+                            sc.send(it)
                         }
                 }
 
