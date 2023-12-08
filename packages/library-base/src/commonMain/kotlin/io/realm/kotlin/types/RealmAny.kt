@@ -60,7 +60,6 @@ import kotlin.reflect.KClass
  *          OBJECT_ID -> doSomething(realmAny.asObjectId())
  *          REALM_UUID -> doSomething(realmAny.asRealmUUID())
  *          REALM_OBJECT -> doSomething(realmAny.asRealmObject<MyRealmObject>())
- *          SET -> doSomething(realmAny.asSet())
  *          LIST -> doSomething(realmAny.asList())
  *          DICTIONARY -> doSomething(realmAny.asDictionary())
  *      }
@@ -85,25 +84,20 @@ import kotlin.reflect.KClass
  * ```
  * `RealmAny` cannot store [EmbeddedRealmObject]s.
  *
- * `RealmAny` can contain other collections of [RealmAny]. This means that you can build nested
- * collections inside a `RealmAny`-field. The only constraint is that sets cannot contain other
- * collections, so must be at the leaf of such nested hierarchies.
+ * `RealmAny` can contain other [RealmList] and [RealmDictionary] of [RealmAny]. This means that
+ * you can build nested collections inside a `RealmAny`-field.
  * ```
  * realmObjct.realmAnyField = realmAnyListOf(
  *     // Primitive values can be added in collections
  *     1,
- *     // Sets are allowed but cannot contain nested collection types
- *     "realmSetOf(1),
  *     // Lists and dictionaries can contain other nested collection types
  *     realmListOf(
- *         realmSetOf(),
  *         realmListOf(),
  *         realmDictionaryOf()
  *     ),
  *     realmDictionaryOf(
- *         "key1" to realmSetOf(),
- *         "key2" to realmListOf(),
- *         "key3" to realmDictionaryOf())
+ *         "key1" to realmListOf(),
+ *         "key2" to realmDictionaryOf())
  * )
  * ```
  *
@@ -394,22 +388,19 @@ public interface RealmAny {
          * }
          * val realmObject = copyToRealm(SampleObject())
          *
-         * // Lists can contain other collection types, including [RealmSet]s.
+         * // List can contain other collections, but only `RealmList<RealmAny>` and
+         * // `RealmDictionary<RealmAny>`.
          * realmObject.realmAnyField = realmAnyListOf(
          *     // Primitive values
          *     1,
-         *     // Sets are allowed but cannot contain nested collection types
-         *     realmSetOf(1),
          *     // Lists and dictionaries can contain other collection types
          *     realmListOf(
-         *         realmSetOf(),
          *         realmListOf(),
          *         realmDictionaryOf()
          *     ),
          *     realmDictionaryOf(
-         *         "key1" to realmSetOf(),
-         *         "key2" to realmListOf(),
-         *         "key3" to realmDictioneryOf())
+         *         "key1" to realmListOf(),
+         *         "key2" to realmDictioneryOf())
          * )
          * ```
          */
@@ -429,21 +420,18 @@ public interface RealmAny {
          * }
          * val realmObject = copyToRealm(SampleObject())
          *
-         * // Dictionaries can contain other collection types, including [RealmSet]s.
+         * // Dictionaries can contain other collections, but only `RealmList<RealmAny>` and
+         * // `RealmDictionary<RealmAny>`.
          * realmObjct.realmAnyField = realmAnyDictionaryOf(
          *     "int" to 5,
-         *     // Sets are allowed but cannot contain nested collection types
-         *     "set" to "realmSetOf(1),
          *     // Lists and dictionaries can contain other nested collection types
          *     "list" to realmListOf(
-         *         realmSetOf(),
          *         realmListOf(),
          *         realmDictionaryOf()
          *     ),
          *     "dictionary" to realmDictionaryOf(
-         *         "key1" to realmSetOf(),
-         *         "key2" to realmListOf(),
-         *         "key3" to realmDictionaryOf())
+         *         "key1" to realmListOf(),
+         *         "key2" to realmDictionaryOf())
          * )
          * ```
          */
