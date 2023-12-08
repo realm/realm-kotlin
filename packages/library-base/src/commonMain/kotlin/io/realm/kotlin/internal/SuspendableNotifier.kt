@@ -2,7 +2,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.Callback
-import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
