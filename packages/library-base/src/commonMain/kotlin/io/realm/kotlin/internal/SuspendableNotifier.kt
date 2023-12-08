@@ -59,6 +59,7 @@ internal class SuspendableNotifier(
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
         override fun onRealmChanged() {
+            println("onRealmChanged in NotifierRealm was called")
             super.onRealmChanged()
             println("TryEmit from NotifierRealm.onRealmChanged(): ${this.hashCode()} -> ${version()}")
             if (!_realmChanged.tryEmit(version())) {

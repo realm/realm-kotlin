@@ -77,6 +77,11 @@ internal class SuspendableWriter(
         }
 
         override fun cancelWrite() { super.cancelWrite() }
+
+        override fun onRealmChanged() {
+            println("onRealmChanged in WriterRealm was called")
+            super.onRealmChanged()
+        }
     }
 
     override val realmInitializer: Lazy<WriterRealm> = lazy {
