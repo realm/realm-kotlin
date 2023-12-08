@@ -193,6 +193,12 @@ internal abstract class LiveRealm(
                 it.onRealmChanged()
             } ?: println("WeakLiveRealmCallback could not find a Realm instance to call onRealmChanged On")
         }
-        fun onSchemaChanged(schema: RealmSchemaPointer) { realm.get()?.onSchemaChanged(schema) }
+        fun onSchemaChanged(schema: RealmSchemaPointer) {
+            println("onSchemaChanged called on LiveRealm")
+            realm.get()?.let {
+                println("onSchemaChanged triggered: ${it.hashCode()}")
+                it.onSchemaChanged(schema)
+            }
+        }
     }
 }

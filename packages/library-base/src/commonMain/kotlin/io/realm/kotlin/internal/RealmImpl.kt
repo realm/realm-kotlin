@@ -136,6 +136,7 @@ public class RealmImpl private constructor(
             }
 
             realmScope.launch {
+                println("Start collecting from Notifier realmChangedFlow")
                 notifier.realmChanged().collect {
                     println("Notifier received realmChanged() event: $it")
                     removeInitialRealmReference()
