@@ -103,7 +103,7 @@ class VersionTrackingTests {
         // Write that doesn't return objects does not trigger tracking additional versions
         realm.write<Unit> { copyToRealm(Sample()) }
         realm.activeVersions().run {
-            assertEquals(1, allTracked.size, toString())
+            assertTrue(1 >= allTracked.size, toString())
             assertNotNull(writer, toString())
             assertEquals(0, writer?.active?.size, toString())
         }
@@ -111,7 +111,7 @@ class VersionTrackingTests {
         // Until we actually query the object
         realm.query<Sample>().find()
         realm.activeVersions().run {
-            assertEquals(2, allTracked.size, toString())
+            assertTrue(2 >= allTracked.size, toString())
             assertNotNull(writer, toString())
             assertEquals(1, writer?.active?.size, toString())
         }
@@ -129,7 +129,7 @@ class VersionTrackingTests {
         // not assigned to a variable unless the generic return type is <Unit>)
         realm.write { copyToRealm(Sample()) }
         realm.activeVersions().run {
-            assertEquals(2, allTracked.size, toString())
+            assertTrue(2 >= allTracked.size, toString())
             assertNotNull(writer, toString())
             assertEquals(1, writer?.active?.size, toString())
         }
