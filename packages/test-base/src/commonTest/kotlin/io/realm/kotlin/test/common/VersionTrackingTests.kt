@@ -240,7 +240,9 @@ class VersionTrackingTests {
                 realmUpdates.receiveOrFail(message = "Failed to receive update event")
 
                 assertNull(realm.initialRealmReference.value, toString())
-                assertEquals(1, realm.versionTracker.versions().size, toString())
+                val trackedVersions = realm.versionTracker.versions().size
+                // Depending on the startup sequence, the first version might or m
+                assertTrue(1 >= trackedVersions, "Was $trackedVersions, ${toString()}")
 
                 deferred.cancel()
                 realmUpdates.close()

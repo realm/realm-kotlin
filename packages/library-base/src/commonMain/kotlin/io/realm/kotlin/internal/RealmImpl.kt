@@ -46,7 +46,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.onSubscription
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -65,7 +65,7 @@ public class RealmImpl private constructor(
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationScheduler.dispatcher)
     private val notifierFlow: MutableSharedFlow<RealmChange<Realm>> =
-        MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow(onBufferOverflow = BufferOverflow.DROP_OLDEST, replay = 1)
 
     private val notifier = SuspendableNotifier(
         owner = this,
@@ -210,7 +210,14 @@ public class RealmImpl private constructor(
     }
 
     override fun asFlow(): Flow<RealmChange<Realm>> = scopedFlow {
-        notifierFlow.onSubscription { emit(InitialRealmImpl(this@RealmImpl)) }
+        val firstItem = atomic(true)
+        notifierFlow.map {
+            if (firstItem.compareAndSet(expect = true, update = false)) {
+                InitialRealmImpl(this)
+            } else {
+                it
+            }
+        }
     }
 
     override fun writeCopyTo(configuration: Configuration) {

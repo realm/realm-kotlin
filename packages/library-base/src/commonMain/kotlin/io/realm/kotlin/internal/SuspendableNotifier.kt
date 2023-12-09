@@ -44,7 +44,7 @@ internal class SuspendableNotifier(
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<VersionId>(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        extraBufferCapacity = 1
+        replay = 1
     )
 
     val dispatcher: CoroutineDispatcher = scheduler.dispatcher
@@ -92,7 +92,10 @@ internal class SuspendableNotifier(
         // Touching realm will open the underlying realm and register change listeners, but must
         // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
         if (!realmInitializer.isInitialized()) {
-            withContext(dispatcher) { realm }
+            withContext(dispatcher) {
+                realm
+                _realmChanged.emit(realm.version())
+            }
         }
         return _realmChanged.asSharedFlow()
     }
