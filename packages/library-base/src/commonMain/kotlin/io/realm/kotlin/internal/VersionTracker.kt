@@ -63,6 +63,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
         intermediateReferences.value.forEach { entry ->
             val (pointer, ref) = entry
             if (ref.get() == null) {
+                println("Attempt to report CLOSE-FREED")
                 log.trace("$owner CLOSE-FREED ${RealmInterop.realm_get_version_id(pointer)}")
                 RealmInterop.realm_close(pointer)
             } else {
