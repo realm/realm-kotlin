@@ -223,7 +223,7 @@ class RealmNotificationsTests : FlowableTests {
                 withTimeout(30.seconds) {
                     assertFailsWith<CancellationException> {
                         flow.collect {
-                            delay(1000.milliseconds)
+                            delay(2000.milliseconds)
                         }
                     }.message!!.let { message ->
                         assertEquals(
