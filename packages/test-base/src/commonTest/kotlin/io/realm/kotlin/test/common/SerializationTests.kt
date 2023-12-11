@@ -33,7 +33,6 @@ import io.realm.kotlin.entities.SerializableSample
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
-import io.realm.kotlin.ext.realmAnySetOf
 import io.realm.kotlin.internal.restrictToMillisPrecision
 import io.realm.kotlin.serializers.MutableRealmIntKSerializer
 import io.realm.kotlin.serializers.RealmAnyKSerializer
@@ -337,9 +336,6 @@ class SerializationTests {
                             nullableObject = it
                             nullableRealmAnyField = RealmAny.create(it)
                         }
-                    }
-                    RealmAny.Type.SET -> SerializableSample().apply {
-                        nullableRealmAnyField = realmAnySetOf(1, 2, 3)
                     }
                     RealmAny.Type.LIST -> SerializableSample().apply {
                         nullableRealmAnyField = realmAnyListOf(RealmAny.create(1), RealmAny.create(2))

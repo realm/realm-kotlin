@@ -345,7 +345,6 @@ internal class RealmAnySetOperator(
                 transport, null, mediator, realmReference,
                 issueDynamicObject,
                 issueDynamicMutableObject,
-                { error("Set should never container sets") },
                 { error("Set should never container lists") }
             ) { error("Set should never container dictionaries") }
         }
@@ -371,7 +370,6 @@ internal class RealmAnySetOperator(
                         realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
                     RealmInterop.realm_set_insert(nativePointer, realmObjectTransport(objRef))
                 },
-                setAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections") },
                 listAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
                 dictionaryAsRealmAnyHandler = { realmValue -> throw IllegalArgumentException("Sets cannot contain other collections ") },
             )

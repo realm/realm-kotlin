@@ -500,10 +500,6 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_set_embedded(obj.cptr(), key.key))
     }
 
-    actual fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer {
-        realmc.realm_set_set(obj.cptr(), key.key)
-        return realm_get_set(obj, key)
-    }
     actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
         realmc.realm_set_list(obj.cptr(), key.key)
         return realm_get_list(obj, key)
@@ -569,8 +565,6 @@ actual object RealmInterop {
         realmc.realm_list_get(list.cptr(), index, struct)
         return RealmValue(struct)
     }
-    actual fun realm_list_get_set(list: RealmListPointer, index: Long): RealmSetPointer =
-        LongPointerWrapper(realmc.realm_list_get_set(list.cptr(), index))
     actual fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer =
         LongPointerWrapper(realmc.realm_list_get_list(list.cptr(), index))
 
@@ -584,17 +578,11 @@ actual object RealmInterop {
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
         return LongPointerWrapper(realmc.realm_list_insert_embedded(list.cptr(), index))
     }
-    actual fun realm_list_insert_set(list: RealmListPointer, index: Long): RealmSetPointer {
-        return LongPointerWrapper(realmc.realm_list_insert_set(list.cptr(), index))
-    }
     actual fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer {
         return LongPointerWrapper(realmc.realm_list_insert_list(list.cptr(), index))
     }
     actual fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
         return LongPointerWrapper(realmc.realm_list_insert_dictionary(list.cptr(), index))
-    }
-    actual fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer {
-        return LongPointerWrapper(realmc.realm_list_set_set(list.cptr(), index))
     }
     actual fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer {
         return LongPointerWrapper(realmc.realm_list_set_list(list.cptr(), index))
@@ -758,12 +746,6 @@ actual object RealmInterop {
         realmc.realm_dictionary_find(dictionary.cptr(), mapKey.value, struct, found)
         return RealmValue(struct)
     }
-    actual fun realm_dictionary_find_set(
-        dictionary: RealmMapPointer,
-        mapKey: RealmValue
-    ): RealmSetPointer {
-        return LongPointerWrapper(realmc.realm_dictionary_get_set(dictionary.cptr(), mapKey.value))
-    }
 
     actual fun realm_dictionary_find_list(
         dictionary: RealmMapPointer,
@@ -844,9 +826,6 @@ actual object RealmInterop {
                 this.link = link
             }
         )
-    }
-    actual fun realm_dictionary_insert_set(dictionary: RealmMapPointer, mapKey: RealmValue): RealmSetPointer {
-        return LongPointerWrapper(realmc.realm_dictionary_insert_set(dictionary.cptr(), mapKey.value))
     }
 
     actual fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer {
@@ -1926,9 +1905,6 @@ actual object RealmInterop {
         realmc.realm_results_get(results.cptr(), index, value)
         return RealmValue(value)
     }
-
-    actual fun realm_results_get_set(results: RealmResultsPointer, index: Long): RealmSetPointer =
-        LongPointerWrapper(realmc.realm_results_get_set(results.cptr(), index))
 
     actual fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer =
         LongPointerWrapper(realmc.realm_results_get_list(results.cptr(), index))

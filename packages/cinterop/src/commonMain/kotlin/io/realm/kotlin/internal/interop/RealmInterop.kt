@@ -291,7 +291,6 @@ expect object RealmInterop {
         isDefault: Boolean
     )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
-    fun realm_set_set(obj: RealmObjectPointer, key: PropertyKey): RealmSetPointer
     fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
     fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
@@ -305,17 +304,14 @@ expect object RealmInterop {
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
     fun MemAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue
-    fun realm_list_get_set(list: RealmListPointer, index: Long): RealmSetPointer
     fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer
     fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
     fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
     fun realm_list_set(list: RealmListPointer, index: Long, inputTransport: RealmValue)
-    fun realm_list_insert_set(list: RealmListPointer, index: Long): RealmSetPointer
     fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer
     fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
-    fun realm_list_set_set(list: RealmListPointer, index: Long): RealmSetPointer
     fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
     fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
 
@@ -349,10 +345,6 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue
-    fun realm_dictionary_find_set(
-        dictionary: RealmMapPointer,
-        mapKey: RealmValue
-    ): RealmSetPointer
     fun realm_dictionary_find_list(
         dictionary: RealmMapPointer,
         mapKey: RealmValue
@@ -387,7 +379,6 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue
-    fun realm_dictionary_insert_set(dictionary: RealmMapPointer, mapKey: RealmValue): RealmSetPointer
     fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer
     fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
@@ -454,7 +445,6 @@ expect object RealmInterop {
 
     // FIXME OPTIMIZE Get many
     fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue
-    fun realm_results_get_set(results: RealmResultsPointer, index: Long): RealmSetPointer
     fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer
     fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer
     fun realm_results_delete_all(results: RealmResultsPointer)

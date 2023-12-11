@@ -26,7 +26,8 @@ import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
 import io.realm.kotlin.notifications.ListChange
 import io.realm.kotlin.notifications.UpdatedList
-import io.realm.kotlin.test.common.utils.RealmEntityNotificationTests
+import io.realm.kotlin.test.common.utils.DeletableEntityNotificationTests
+import io.realm.kotlin.test.common.utils.FlowableTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.types.RealmAny
@@ -44,7 +45,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
-class RealmAnyNestedListNotificationTest : RealmEntityNotificationTests {
+class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotificationTests {
 
     lateinit var tmpDir: String
     lateinit var configuration: RealmConfiguration

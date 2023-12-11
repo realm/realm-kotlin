@@ -348,7 +348,6 @@ internal class RealmAnyListOperator(
                 transport, null, mediator, realmReference,
                 issueDynamicObject,
                 issueDynamicMutableObject,
-                { RealmInterop.realm_list_get_set(nativePointer, index.toLong()) },
                 { RealmInterop.realm_list_get_list(nativePointer, index.toLong()) },
                 { RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong()) }
             )
@@ -375,16 +374,6 @@ internal class RealmAnyListOperator(
                     val objRef =
                         realmObjectToRealmReferenceWithImport(obj, mediator, realmReference, updatePolicy, cache)
                     RealmInterop.realm_list_add(nativePointer, index.toLong(), realmObjectTransport(objRef))
-                },
-                setAsRealmAnyHandler = { realmValue ->
-                    val nativePointer = RealmInterop.realm_list_insert_set(nativePointer, index.toLong())
-                    val operator = realmAnySetOperator(
-                        mediator,
-                        realmReference,
-                        nativePointer,
-                        issueDynamicObject, issueDynamicMutableObject
-                    )
-                    operator.addAll(realmValue.asSet(), updatePolicy, cache)
                 },
                 listAsRealmAnyHandler = { realmValue ->
                     val nativePointer = RealmInterop.realm_list_insert_list(nativePointer, index.toLong())
@@ -424,18 +413,6 @@ internal class RealmAnyListOperator(
                         val objRef =
                             realmObjectToRealmReferenceWithImport(realmValue.asRealmObject(), mediator, realmReference, updatePolicy, cache)
                         RealmInterop.realm_list_set(nativePointer, index.toLong(), realmObjectTransport(objRef))
-                    },
-                    setAsRealmAnyHandler = { realmValue ->
-                        // Have to clear existing elements for core to know if we are updating with a new collection
-                        RealmInterop.realm_list_set(nativePointer, index.toLong(), nullTransport())
-                        val nativePointer = RealmInterop.realm_list_set_set(nativePointer, index.toLong())
-                        val operator = realmAnySetOperator(
-                            mediator,
-                            realmReference,
-                            nativePointer,
-                            issueDynamicObject, issueDynamicMutableObject
-                        )
-                        operator.addAll(realmValue.asSet(), updatePolicy, cache)
                     },
                     listAsRealmAnyHandler = { realmValue ->
                         // Have to clear existing elements for core to know if we are updating with a new collection

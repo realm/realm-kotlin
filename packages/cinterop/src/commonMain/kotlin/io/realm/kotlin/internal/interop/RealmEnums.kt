@@ -96,6 +96,5 @@ expect enum class ValueType {
     RLM_TYPE_LINK,
     RLM_TYPE_UUID,
     RLM_TYPE_LIST,
-    RLM_TYPE_SET,
     RLM_TYPE_DICTIONARY,
 }

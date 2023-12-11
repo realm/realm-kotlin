@@ -60,7 +60,6 @@ import kotlin.reflect.KClass
  *          OBJECT_ID -> doSomething(realmAny.asObjectId())
  *          REALM_UUID -> doSomething(realmAny.asRealmUUID())
  *          REALM_OBJECT -> doSomething(realmAny.asRealmObject<MyRealmObject>())
- *          SET -> doSomething(realmAny.asSet())
  *          LIST -> doSomething(realmAny.asList())
  *          DICTIONARY -> doSomething(realmAny.asDictionary())
  *      }
@@ -85,25 +84,20 @@ import kotlin.reflect.KClass
  * ```
  * `RealmAny` cannot store [EmbeddedRealmObject]s.
  *
- * `RealmAny` can contain other collections of [RealmAny]. This means that you can build nested
- * collections inside a `RealmAny`-field. The only constraint is that sets cannot contain other
- * collections, so must be at the leaf of such nested hierarchies.
+ * `RealmAny` can contain other [RealmList] and [RealmDictionary] of [RealmAny]. This means that
+ * you can build nested collections inside a `RealmAny`-field.
  * ```
  * realmObjct.realmAnyField = realmAnyListOf(
  *     // Primitive values can be added in collections
  *     1,
- *     // Sets are allowed but cannot contain nested collection types
- *     "realmSetOf(1),
  *     // Lists and dictionaries can contain other nested collection types
  *     realmListOf(
- *         realmSetOf(),
  *         realmListOf(),
  *         realmDictionaryOf()
  *     ),
  *     realmDictionaryOf(
- *         "key1" to realmSetOf(),
- *         "key2" to realmListOf(),
- *         "key3" to realmDictionaryOf())
+ *         "key1" to realmListOf(),
+ *         "key2" to realmDictionaryOf())
  * )
  * ```
  *
@@ -137,7 +131,7 @@ public interface RealmAny {
      * Supported Realm data types that can be stored in a `RealmAny` instance.
      */
     public enum class Type {
-        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, SET, LIST, DICTIONARY;
+        INT, BOOL, STRING, BINARY, TIMESTAMP, FLOAT, DOUBLE, DECIMAL128, OBJECT_ID, UUID, OBJECT, LIST, DICTIONARY;
     }
 
     /**
@@ -257,12 +251,6 @@ public interface RealmAny {
      * @throws [IllegalStateException] if the stored value cannot be safely converted to `T`.
      */
     public fun <T : BaseRealmObject> asRealmObject(clazz: KClass<T>): T
-
-    /**
-     * Returns the value from this `RealmAny` as a [RealmSet] containing new [RealmAny]s.
-     * @throws [IllegalStateException] if the stored value is not a set.
-     */
-    public fun asSet(): RealmSet<RealmAny?>
 
     /**
      * Returns the value from this `RealmAny` as a [RealmList] containing new [RealmAny]s.
@@ -388,34 +376,6 @@ public interface RealmAny {
             RealmAnyImpl(Type.OBJECT, DynamicRealmObject::class, realmObject)
 
         /**
-         * Creates an unmanaged `RealmAny` instance from a [RealmSet] of [RealmAny] values.
-         *
-         * To create a [RealmAny] containing a [RealmSet] of arbitrary values wrapped in [RealmAny]s
-         * use the [io.realm.kotlin.ext.realmAnySetOf].
-         *
-         * **NOTE:** Realm does not support to having other collections ([RealmSet], [RealmList] and
-         * [RealmDictionary]) in a [RealmSet]. These kind of structures can be built in a [RealmAny]
-         * but will fail if imported to realm.
-         *
-         * Example:
-         * ```
-         * class SampleObject() : RealmObject {
-         *     val realmAnyField: RealmAny? = null
-         * }
-         * val realmObject = copyToRealm(SampleObject())
-         *
-         * // Sets with non-collection types can be built and imported into realm.
-         * realmObject.realmAnyField = realmAnySetOf(1, "Realm", realmObject)
-         *
-         * // Sets with collection types can be built but cannot be imported into realm.
-         * val setsWithCollections = realmAnySetOf(realmSetOf(), realmListOf(), realmDictionaryOf())
-         * realmObject.realmAnyField = setsWithCollections // Will throw IllegalArgumentExcception
-         * ```
-         */
-        public fun create(value: RealmSet<RealmAny?>): RealmAny =
-            RealmAnyImpl(Type.SET, RealmAny::class, value)
-
-        /**
          * Creates an unmanaged `RealmAny` instance from a [RealmList] of [RealmAny] values.
          *
          * To create a [RealmAny] containing a [RealmList] of arbitrary values wrapped in [RealmAny]s
@@ -428,22 +388,19 @@ public interface RealmAny {
          * }
          * val realmObject = copyToRealm(SampleObject())
          *
-         * // Lists can contain other collection types, including [RealmSet]s.
+         * // List can contain other collections, but only `RealmList<RealmAny>` and
+         * // `RealmDictionary<RealmAny>`.
          * realmObject.realmAnyField = realmAnyListOf(
          *     // Primitive values
          *     1,
-         *     // Sets are allowed but cannot contain nested collection types
-         *     realmSetOf(1),
          *     // Lists and dictionaries can contain other collection types
          *     realmListOf(
-         *         realmSetOf(),
          *         realmListOf(),
          *         realmDictionaryOf()
          *     ),
          *     realmDictionaryOf(
-         *         "key1" to realmSetOf(),
-         *         "key2" to realmListOf(),
-         *         "key3" to realmDictioneryOf())
+         *         "key1" to realmListOf(),
+         *         "key2" to realmDictioneryOf())
          * )
          * ```
          */
@@ -463,21 +420,18 @@ public interface RealmAny {
          * }
          * val realmObject = copyToRealm(SampleObject())
          *
-         * // Dictionaries can contain other collection types, including [RealmSet]s.
+         * // Dictionaries can contain other collections, but only `RealmList<RealmAny>` and
+         * // `RealmDictionary<RealmAny>`.
          * realmObjct.realmAnyField = realmAnyDictionaryOf(
          *     "int" to 5,
-         *     // Sets are allowed but cannot contain nested collection types
-         *     "set" to "realmSetOf(1),
          *     // Lists and dictionaries can contain other nested collection types
          *     "list" to realmListOf(
-         *         realmSetOf(),
          *         realmListOf(),
          *         realmDictionaryOf()
          *     ),
          *     "dictionary" to realmDictionaryOf(
-         *         "key1" to realmSetOf(),
-         *         "key2" to realmListOf(),
-         *         "key3" to realmDictionaryOf())
+         *         "key1" to realmListOf(),
+         *         "key2" to realmDictionaryOf())
          * )
          * ```
          */

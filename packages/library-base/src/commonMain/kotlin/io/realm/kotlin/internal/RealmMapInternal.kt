@@ -460,7 +460,6 @@ internal class RealmAnyMapOperator<K> constructor(
                 owner = realmReference,
                 issueDynamicObject = issueDynamicObject,
                 issueDynamicMutableObject = issueDynamicMutableObject,
-                getSetFunction = { RealmInterop.realm_results_get_set(resultsPointer, index.toLong()) },
                 getListFunction = { RealmInterop.realm_results_get_list(resultsPointer, index.toLong()) },
                 getDictionaryFunction = { RealmInterop.realm_results_get_dictionary(resultsPointer, index.toLong()) },
             )
@@ -492,7 +491,6 @@ internal class RealmAnyMapOperator<K> constructor(
         valueTransport, null, mediator, realmReference,
         issueDynamicObject,
         issueDynamicMutableObject,
-        { RealmInterop.realm_dictionary_find_set(nativePointer, keyTransport) },
         { RealmInterop.realm_dictionary_find_list(nativePointer, keyTransport) }
     ) { RealmInterop.realm_dictionary_find_dictionary(nativePointer, keyTransport) }
 
@@ -521,20 +519,6 @@ internal class RealmAnyMapOperator<K> constructor(
                     realm_dictionary_insert(nativePointer, keyTransport, transport).let { result ->
                         realmAny(result.first, keyTransport) to result.second
                     }
-                },
-                setAsRealmAnyHandler = { realmValue ->
-                    // Have to clear existing elements for core to know if we are updating with a new collection
-                    realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
-                    val previous = getInternal(key)
-                    val nativePointer = RealmInterop.realm_dictionary_insert_set(nativePointer, keyTransport)
-                    val operator = realmAnySetOperator(
-                        mediator,
-                        realmReference,
-                        nativePointer,
-                        issueDynamicObject, issueDynamicMutableObject
-                    )
-                    operator.addAll(realmValue.asSet(), updatePolicy, cache)
-                    previous to true
                 },
                 listAsRealmAnyHandler = { realmValue ->
                     // Have to clear existing elements for core to know if we are updating with a new collection
