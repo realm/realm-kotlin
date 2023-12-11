@@ -144,6 +144,7 @@ public class RealmImpl private constructor(
                     // https://github.com/realm/realm-kotlin/issues/1527
                     versionTracker.closeExpiredReferences()
                     notifierFlow.emit(UpdatedRealmImpl(this@RealmImpl))
+                    println("Emitted update from notifier")
                 }
             }
             if (!realmStateFlow.tryEmit(State.OPEN)) {
