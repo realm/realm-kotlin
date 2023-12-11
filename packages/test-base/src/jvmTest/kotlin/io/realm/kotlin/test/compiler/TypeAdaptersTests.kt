@@ -41,11 +41,12 @@ import kotlin.test.assertTrue
  *  - [x] Adapters type unsupportness
  *  - [x] Adapter not matching public type
  *  - [x] Instanced and singleton adapters
- *  - [ ] Other annotations Ignore, Index etc
+ *  - [] Other annotations Ignore, Index etc
  */
 class TypeAdaptersTests {
 
     private val typeAdapterTypes = listOf("object", "class")
+
     // TODO: Can we make it fail when declaring type adapters rather than when we apply them?
     @Test
     fun `invalid R-type unsupported persisted type`() {
@@ -72,7 +73,11 @@ class TypeAdaptersTests {
                 """.trimIndent()
                 )
             )
-            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+            assertEquals(
+                KotlinCompilation.ExitCode.COMPILATION_ERROR,
+                result.exitCode,
+                result.messages
+            )
             assertTrue(
                 result.messages.contains("Invalid type parameter 'NonRealmType', only Realm types are supported"),
                 result.messages
@@ -185,17 +190,27 @@ class TypeAdaptersTests {
                 val default = if (!elementType.nullable) defaults[elementType.classifier]
                     ?: error("unmapped default") else null
 
-                val kotlinLiteral = if(type.elementType.classifier == RealmObject::class) {
+                val kotlinLiteral = if (type.elementType.classifier == RealmObject::class) {
                     type.toKotlinLiteral().replace("RealmObject", "TestObject2")
                 } else {
                     type.toKotlinLiteral()
                 }
 
-                val result = compileFromSource(
-                    plugins = listOf(io.realm.kotlin.compiler.Registrar()),
-                    source = SourceFile.kotlin(
-                        "typeadapter_supportness_$kotlinLiteral.kt",
-                        """
+                val additionalAnnotations = mutableSetOf(
+                    "",
+                    """@PersistedName("testing")"""
+                ).apply {
+                    if (type.isIndexingSupported) add("@Index")
+                    if (type.isPrimaryKeySupported) add("@PrimaryKey")
+                    if (type.isFullTextSupported) add("@FullText")
+                }
+
+                additionalAnnotations.forEach { annotation ->
+                    val result = compileFromSource(
+                        plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+                        source = SourceFile.kotlin(
+                            "typeadapter_supportness_$kotlinLiteral.kt",
+                            """
                     import io.realm.kotlin.types.RealmAny
                     import io.realm.kotlin.types.RealmDictionary
                     import io.realm.kotlin.types.RealmList
@@ -205,6 +220,10 @@ class TypeAdaptersTests {
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.RealmTypeAdapter
                     import io.realm.kotlin.types.RealmUUID 
+                    import io.realm.kotlin.types.annotations.FullText
+                    import io.realm.kotlin.types.annotations.Index
+                    import io.realm.kotlin.types.annotations.PersistedName
+                    import io.realm.kotlin.types.annotations.PrimaryKey
                     import io.realm.kotlin.types.annotations.TypeAdapter
                     import io.realm.kotlin.types.ObjectId
                     import org.mongodb.kbson.BsonDecimal128
@@ -219,6 +238,7 @@ class TypeAdaptersTests {
                     }
                     
                     class TestObject : RealmObject {
+                        $annotation
                         @TypeAdapter(adapter = ValidRealmTypeAdapter::class)
                         var userType: UserType = UserType()
                     }
@@ -229,9 +249,10 @@ class TypeAdaptersTests {
                         override fun toRealm(value: UserType): $kotlinLiteral = TODO()
                     }
                 """.trimIndent()
+                        )
                     )
-                )
-                assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+                    assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+                }
             }
     }
 
@@ -254,7 +275,7 @@ class TypeAdaptersTests {
                 val default = if (!elementType.nullable) defaults[elementType.classifier]
                     ?: error("unmapped default") else null
 
-                val kotlinLiteral = if(type.elementType.classifier == RealmObject::class) {
+                val kotlinLiteral = if (type.elementType.classifier == RealmObject::class) {
                     type.toKotlinLiteral().replace("RealmObject", "TestObject2")
                 } else {
                     type.toKotlinLiteral()
@@ -300,7 +321,11 @@ class TypeAdaptersTests {
                 """.trimIndent()
                     )
                 )
-                assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+                assertEquals(
+                    KotlinCompilation.ExitCode.COMPILATION_ERROR,
+                    result.exitCode,
+                    result.messages
+                )
             }
     }
 }
