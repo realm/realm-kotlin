@@ -173,8 +173,8 @@ register_results_notification_cb(realm_results_t *results,
                                  int64_t key_path_array_ptr,
                                  jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
 
     return realm_results_add_notification_callback(
             results,
@@ -201,8 +201,8 @@ register_results_notification_cb(realm_results_t *results,
 
 realm_on_object_change_func_t get_on_object_change() {
     auto jenv = get_env(true);
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
     return [](realm_userdata_t userdata, const realm_object_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
@@ -218,8 +218,8 @@ realm_on_object_change_func_t get_on_object_change() {
 
 realm_on_collection_change_func_t get_on_collection_change() {
     auto jenv = get_env(true);
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
     return [](realm_userdata_t userdata, const realm_collection_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
@@ -235,8 +235,8 @@ realm_on_collection_change_func_t get_on_collection_change() {
 
 realm_on_dictionary_change_func_t get_on_dictionary_change() {
     auto jenv = get_env(true);
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
     return [](realm_userdata_t userdata, const realm_dictionary_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below

@@ -27,11 +27,11 @@ import io.realm.kotlin.notifications.RealmChange
 import io.realm.kotlin.notifications.UpdatedRealm
 import io.realm.kotlin.test.common.utils.FlowableTests
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.sync.Mutex
@@ -73,7 +73,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(1)
+            val c = TestChannel<RealmChange<Realm>>()
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -93,7 +93,7 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun asFlow() {
         runBlocking {
-            val c = Channel<RealmChange<Realm>>(1)
+            val c = TestChannel<RealmChange<Realm>>()
             val startingVersion = realm.version()
             val observer = async {
                 realm.asFlow().collect {
@@ -123,8 +123,8 @@ class RealmNotificationsTests : FlowableTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            val c1 = Channel<RealmChange<Realm>>(1)
-            val c2 = Channel<RealmChange<Realm>>(1)
+            val c1 = TestChannel<RealmChange<Realm>>()
+            val c2 = TestChannel<RealmChange<Realm>>()
             val startingVersion = realm.version()
 
             val observer1 = async {
@@ -179,7 +179,6 @@ class RealmNotificationsTests : FlowableTests {
                 assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
             }
 
-            realm.write { /* Do nothing */ }
             observer1.cancel()
             c1.close()
             c2.close()
