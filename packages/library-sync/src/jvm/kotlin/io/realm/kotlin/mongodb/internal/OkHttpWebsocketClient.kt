@@ -84,7 +84,7 @@ public class OkHttpWebsocketClient(
         this.webSocket = webSocket
 
         response.header(protocolSelectionHeader)?.let { selectedProtocol ->
-            runIfNotClosing {
+            runIfObserverNotClosed {
                 observer.onConnected(selectedProtocol)
             }
         }
@@ -92,9 +92,9 @@ public class OkHttpWebsocketClient(
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
         super.onMessage(webSocket, bytes)
-        logger.debug("onMessage: ${bytes.toByteArray().decodeToString()} isClosed = ${isClosed.get()} observerIsClosed = ${observerIsClosed.get()}")
+        logger.trace("onMessage: ${bytes.toByteArray().decodeToString()} isClosed = ${isClosed.get()} observerIsClosed = ${observerIsClosed.get()}")
 
-        runIfNotClosing {
+        runIfObserverNotClosed {
             val shouldClose: Boolean = observer.onNewMessage(bytes.toByteArray())
             if (shouldClose) {
                 webSocket.close(
@@ -116,7 +116,7 @@ public class OkHttpWebsocketClient(
 
         isClosed.set(true)
 
-        runIfNotClosing {
+        runIfObserverNotClosed {
             // It's important to rely properly the error code from the server.
             // The server will report auth errors (and a few other error types)
             // as websocket application-level errors after establishing the socket, rather than failing at the HTTP layer.
@@ -143,13 +143,13 @@ public class OkHttpWebsocketClient(
         super.onFailure(webSocket, t, response)
         logger.debug("onFailure throwable '${t.message}' isClosed = ${isClosed.get()} observerIsClosed = ${observerIsClosed.get()}")
 
-        runIfNotClosing {
+        runIfObserverNotClosed {
             observer.onError()
         }
     }
 
     override fun send(message: ByteArray, handlerCallback: RealmWebsocketHandlerCallbackPointer) {
-        logger.debug("send: ${message.decodeToString()} isClosed = ${isClosed.get()} observerIsClosed = ${observerIsClosed.get()}")
+        logger.trace("send: ${message.decodeToString()} isClosed = ${isClosed.get()} observerIsClosed = ${observerIsClosed.get()}")
 
         // send any queued Frames even if the Core observer is closed, but only if the websocket is still open, this can be a message like 'unbind'
         // which instruct the Sync server to terminate the Sync Session (server will respond by 'unbound').
@@ -211,7 +211,7 @@ public class OkHttpWebsocketClient(
     /**
      * Runs the [block] inside the transport [scope] only if Core didn't initiate the Websocket closure.
      */
-    private fun runIfNotClosing(block: () -> Unit) {
+    private fun runIfObserverNotClosed(block: () -> Unit) {
         if (!observerIsClosed.get()) { // if Core has already closed the websocket there's no point in scheduling this coroutine.
             scope.launch {
                 // The session could have been paused/closed in the meantime which will cause the WebSocket to be destroyed, as well as the 'observer',

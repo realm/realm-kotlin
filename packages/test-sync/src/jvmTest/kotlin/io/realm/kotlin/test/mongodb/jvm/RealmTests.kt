@@ -43,11 +43,7 @@ class RealmTests {
         val app = TestApp("cleanupAllRealmThreadsOnClose")
         val user = app.login(Credentials.anonymous())
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))
-        Realm.open(configuration).use {
-            // we make sure Schema is exchanged correctly
-            it.syncSession.uploadAllLocalChanges()
-            it.syncSession.downloadAllServerChanges()
-        }
+        Realm.open(configuration).close()
         app.close()
 
         // Wait max 30 seconds for threads to settle

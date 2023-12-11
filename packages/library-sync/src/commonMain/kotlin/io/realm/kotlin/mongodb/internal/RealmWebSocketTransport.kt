@@ -30,8 +30,8 @@ public class RealmWebSocketTransport(
     override fun post(handlerCallback: RealmWebsocketHandlerCallbackPointer) {
         scope.launch {
             (this as Job).invokeOnCompletion { completionHandler: Throwable? ->
-                // Only run the callback if it was not cancelled in the meantime
                 when (completionHandler) {
+                    // Only run the callback successfully if it was not cancelled in the meantime
                     null -> runCallback(handlerCallback)
                     else -> runCallback(
                         handlerCallback, cancelled = true

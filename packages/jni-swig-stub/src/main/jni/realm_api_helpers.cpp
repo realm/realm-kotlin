@@ -768,7 +768,8 @@ static void websocket_post_func(realm_userdata_t userdata,
 }
 
 static realm_sync_socket_timer_t websocket_create_timer_func(
-        realm_userdata_t userdata, uint64_t delay_ms, realm_sync_socket_timer_callback_t* realm_callback) {
+        realm_userdata_t userdata, uint64_t delay_ms,
+        realm_sync_socket_timer_callback_t *realm_callback) {
     // called from main thread/event loop which should be already attached to JVM
     auto jenv = get_env(false);
 
@@ -802,8 +803,7 @@ static void websocket_cancel_timer_func(realm_userdata_t userdata,
         jobject cancellable_timer = static_cast<jobject>(timer_userdata);
 
         static JavaClass cancellable_timer_class(jenv, "io/realm/kotlin/internal/interop/sync/CancellableTimer");
-        static JavaMethod cancel_method(jenv, cancellable_timer_class, "cancel",
-                                               "()V");
+        static JavaMethod cancel_method(jenv, cancellable_timer_class, "cancel", "()V");
         jenv->CallVoidMethod(cancellable_timer, cancel_method);
         jni_check_exception(jenv);
 
