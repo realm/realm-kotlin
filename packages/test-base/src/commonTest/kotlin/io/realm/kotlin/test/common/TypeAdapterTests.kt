@@ -22,6 +22,7 @@ import io.realm.kotlin.entities.adapters.RealmInstantBsonDateTimeAdapterInstance
 import io.realm.kotlin.entities.adapters.UsingInstancedAdapter
 //import io.realm.kotlin.entities.adapters.UsingInstancedAdapter
 import io.realm.kotlin.entities.adapters.UsingSingletonAdapter
+import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.test.platform.PlatformUtils
 import org.mongodb.kbson.BsonDateTime
 import kotlin.test.AfterTest
@@ -107,7 +108,9 @@ class TypeAdapterTests {
 
     @Test
     fun allTypes() {
-        val unmanagedObject = AllTypes()
+        val unmanagedObject = AllTypes().apply {
+            this.stringListField = realmListOf("hello", "world", "www")
+        }
 
         val managedObject = realm.writeBlocking {
             copyToRealm(unmanagedObject)

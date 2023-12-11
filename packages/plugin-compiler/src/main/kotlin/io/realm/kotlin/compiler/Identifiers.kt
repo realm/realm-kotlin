@@ -36,6 +36,8 @@ internal object Names {
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
+    val REALM_OBJECT_COMPANION_USE_CUSTOM_TYPE_MEMBER: Name =
+        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}useCustomType")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
     val REALM_OBJECT_COMPANION_CLASS_KIND: Name =
@@ -129,6 +131,7 @@ object ClassIds {
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = ClassId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("Set"))
+    val KOTLIN_COLLECTIONS_SETOF = CallableId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("setOf"))
     val KOTLIN_COLLECTIONS_LIST = ClassId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("List"))
     val KOTLIN_COLLECTIONS_LISTOF = CallableId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("listOf"))
     val KOTLIN_COLLECTIONS_MAP = ClassId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("Map"))

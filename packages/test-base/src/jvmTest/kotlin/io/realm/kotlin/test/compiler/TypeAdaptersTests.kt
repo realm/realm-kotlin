@@ -37,7 +37,7 @@ import kotlin.test.assertTrue
  * These tests should validate:
  *  - [x] Adapter with a non-realm type should fail
  *  - [x] Adapter annotation on unsupported types: delegate, function etc
- *  - [ ] Adapter on wrong type
+ *  - [ ] Adapter not matching public type
  *  - [x] Adapters type supportness
  *  - [ ] Adapters type unsupportness
  *  - [ ] Instanced and singleton adapters
@@ -150,9 +150,6 @@ class TypeAdaptersTests {
                 type.elementType.classifier == Short::class ||
                 type.elementType.classifier == Int::class ||
                 type.elementType.classifier == MutableRealmInt::class
-            }
-            .filter {
-                it.collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE
             }
             .forEach { type ->
                 val elementType = type.elementType

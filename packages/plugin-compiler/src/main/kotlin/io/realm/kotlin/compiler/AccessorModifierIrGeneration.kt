@@ -93,7 +93,6 @@ import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
-import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.originalKotlinType
@@ -111,7 +110,6 @@ import org.jetbrains.kotlin.ir.types.isString
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.superTypes
-import org.jetbrains.kotlin.ir.types.toKotlinType
 import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.defaultType
@@ -272,7 +270,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     return declaration
                 }
 
-                val propertyTypeRaw = declaration.backingField!!.type
+                var propertyTypeRaw = declaration.backingField!!.type
                 var propertyType = propertyTypeRaw.makeNotNull()
                 var nullable = propertyTypeRaw.isNullable()
                 val excludeProperty =
@@ -315,14 +313,15 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             }
 
                     // Replace the property type with the one from the type adapter
-                    realmType.typeOrNull.let {
-                        if(it != null) {
-                            propertyType = it.makeNotNull()
+                    realmType.typeOrNull.let { actualType ->
+                        if(actualType != null) {
+                            propertyTypeRaw = actualType
+                            propertyType = actualType.makeNotNull()
                             if(propertyType.isChar() || propertyType.isByte() || propertyType.isShort() || propertyType.isInt() || propertyType.isMutableRealmInteger()) {
                                 // TODO improve messaging
                                 logError("Unsupported Realm storage type. Use `Long` instead", declaration.locationOf())
                             }
-                            nullable = it.isNullable()
+                            nullable = actualType.isNullable()
                         } else {
                             logError("Could not retrieve the storage type.")
                         }
@@ -389,7 +388,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -420,7 +419,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         }
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_MIXED,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             declaration = declaration,
                             collectionType = CollectionType.NONE
                         )
@@ -442,7 +441,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_BINARY,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -462,7 +461,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_STRING,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -482,7 +481,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -506,7 +505,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -530,7 +529,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -554,7 +553,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -578,7 +577,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_INT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -598,7 +597,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_BOOL,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -618,7 +617,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_FLOAT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -638,7 +637,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_DOUBLE,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -658,7 +657,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_DECIMAL128,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -703,7 +702,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             fields[name] = SchemaProperty(
                                 propertyType = PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS,
                                 declaration = declaration,
-                                type = propertyType,
+                                computedType = propertyTypeRaw,
                                 collectionType = CollectionType.LIST,
                                 coreGenericTypes = listOf(
                                     CoreType(
@@ -719,7 +718,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -739,7 +738,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -759,7 +758,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         var schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -779,7 +778,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_UUID,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -796,22 +795,22 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                     }
                     propertyType.isRealmList() -> {
                         logDebug("RealmList property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        processCollectionField(CollectionType.LIST, fields, name, declaration, propertyType, typeAdapterMethodReferences)
+                        processCollectionField(CollectionType.LIST, fields, name, declaration, propertyTypeRaw, typeAdapterMethodReferences)
                     }
                     propertyType.isRealmSet() -> {
                         logDebug("RealmSet property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        processCollectionField(CollectionType.SET, fields, name, declaration, propertyType, typeAdapterMethodReferences)
+                        processCollectionField(CollectionType.SET, fields, name, declaration, propertyTypeRaw, typeAdapterMethodReferences)
                     }
                     propertyType.isRealmDictionary() -> {
                         logDebug("RealmDictionary property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        processCollectionField(CollectionType.DICTIONARY, fields, name, declaration, propertyType, typeAdapterMethodReferences)
+                        processCollectionField(CollectionType.DICTIONARY, fields, name, declaration, propertyTypeRaw, typeAdapterMethodReferences)
                     }
                     propertyType.isSubtypeOfClass(embeddedRealmObjectInterface) -> {
                         logDebug("Object property named ${declaration.name} is embedded and ${if (nullable) "" else "not "}nullable")
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -835,7 +834,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -845,7 +844,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         val schemaProperty = SchemaProperty(
                             propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT,
                             declaration = declaration,
-                            type = propertyType,
+                            computedType = propertyTypeRaw,
                             collectionType = CollectionType.NONE
                         )
                         fields[name] = schemaProperty
@@ -877,7 +876,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         fields: MutableMap<String, SchemaProperty>,
         name: String,
         declaration: IrProperty,
-        propertyType: IrType,
+        propertyTypeRaw: IrType,
         typeAdapterMethodReferences: TypeAdapterMethodReferences?,
     ) {
         val type: KotlinType =
@@ -903,7 +902,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val schemaProperty = SchemaProperty(
                     propertyType = genericPropertyType,
                     declaration = declaration,
-                    type = propertyType,
+                    computedType = propertyTypeRaw,
                     collectionType = collectionType,
                     coreGenericTypes = listOf(coreGenericTypes)
                 )
@@ -923,7 +922,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 // getCollection/setCollection gets/sets raw collections so it bypasses any converters in accessors
                 modifyAccessor(
                     property = schemaProperty,
-                    type = propertyType,
+                    type = propertyTypeRaw,
                     getFunction = when (collectionType) {
                         CollectionType.LIST -> getList
                         CollectionType.SET -> getSet

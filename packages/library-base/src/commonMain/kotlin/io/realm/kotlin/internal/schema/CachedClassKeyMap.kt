@@ -75,6 +75,7 @@ public interface PropertyMetadata {
     public val linkTarget: String
     public val linkOriginPropertyName: String
     public val isComputed: Boolean
+    public val usesCustomType: Boolean
     /**
      * Returns `true` if this property has been defined by the user, `false` is returned
      * if this property is only found in the on-disk schema.
@@ -146,8 +147,9 @@ public class CachedClassMetadata(
         ).let { interopProperties ->
             properties = interopProperties.map { propertyInfo: PropertyInfo ->
                 CachedPropertyMetadata(
-                    propertyInfo,
-                    companion?.io_realm_kotlin_fields?.get(propertyInfo.name)
+                    propertyInfo = propertyInfo,
+                    accessor = companion?.io_realm_kotlin_fields?.get(propertyInfo.name),
+                    usesCustomType = companion?.io_realm_kotlin_useCustomType?.contains(propertyInfo.name) ?: false,
                 )
             }
         }
@@ -168,7 +170,8 @@ public class CachedClassMetadata(
 
 public class CachedPropertyMetadata(
     propertyInfo: PropertyInfo,
-    override val accessor: KProperty1<BaseRealmObject, Any?>? = null
+    override val accessor: KProperty1<BaseRealmObject, Any?>? = null,
+    override val usesCustomType: Boolean,
 ) : PropertyMetadata {
     override val name: String = propertyInfo.name
     override val publicName: String = propertyInfo.publicName

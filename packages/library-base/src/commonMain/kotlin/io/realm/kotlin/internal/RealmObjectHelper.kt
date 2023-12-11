@@ -760,70 +760,77 @@ internal object RealmObjectHelper {
                     return@forEach // Property is only visible on disk, ignore.
                 }
             accessor as KMutableProperty1<BaseRealmObject, Any?>
-            when (property.collectionType) {
-                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
-                    PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                        val isTargetEmbedded =
-                            target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget).isEmbeddedRealmObject
-                        if (isTargetEmbedded) {
-                            val value = accessor.get(source) as EmbeddedRealmObject?
-                            setEmbeddedRealmObjectByKey(
-                                target.realmObjectReference!!,
-                                property.key,
-                                value,
-                                updatePolicy,
-                                cache
-                            )
-                        } else {
-                            val value = accessor.get(source) as RealmObject?
-                            setObjectByKey(
-                                target.realmObjectReference!!,
-                                property.key,
-                                value,
-                                updatePolicy,
-                                cache
-                            )
+
+            if(property.usesCustomType) {
+                // Passthrough values when a property uses a custom type adapter, values will be converted automatically.
+                val getterValue = accessor.get(source)
+                accessor.set(target, getterValue)
+            } else {
+                when (property.collectionType) {
+                    CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
+                        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                            val isTargetEmbedded =
+                                target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget).isEmbeddedRealmObject
+                            if (isTargetEmbedded) {
+                                val value = accessor.get(source) as EmbeddedRealmObject?
+                                setEmbeddedRealmObjectByKey(
+                                    target.realmObjectReference!!,
+                                    property.key,
+                                    value,
+                                    updatePolicy,
+                                    cache
+                                )
+                            } else {
+                                val value = accessor.get(source) as RealmObject?
+                                setObjectByKey(
+                                    target.realmObjectReference!!,
+                                    property.key,
+                                    value,
+                                    updatePolicy,
+                                    cache
+                                )
+                            }
+                        }
+                        else -> {
+                            val getterValue = accessor.get(source)
+                            accessor.set(target, getterValue)
                         }
                     }
-                    else -> {
-                        val getterValue = accessor.get(source)
-                        accessor.set(target, getterValue)
+                    CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                        // We cannot use setList as that requires the type, so we need to retrieve the
+                        // existing list, wipe it and insert new elements
+                        @Suppress("UNCHECKED_CAST")
+                        (accessor.get(target) as ManagedRealmList<Any?>)
+                            .run {
+                                clear()
+                                val elements = accessor.get(source) as RealmList<*>
+                                operator.insertAll(size, elements, updatePolicy, cache)
+                            }
                     }
+                    CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                        // We cannot use setSet as that requires the type, so we need to retrieve the
+                        // existing set, wipe it and insert new elements
+                        @Suppress("UNCHECKED_CAST")
+                        (accessor.get(target) as ManagedRealmSet<Any?>)
+                            .run {
+                                clear()
+                                val elements = accessor.get(source) as RealmSet<*>
+                                operator.addAll(elements, updatePolicy, cache)
+                            }
+                    }
+                    CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                        // We cannot use setDictionary as that requires the type, so we need to retrieve
+                        // the existing dictionary, wipe it and insert new elements
+                        @Suppress("UNCHECKED_CAST")
+                        (accessor.get(target) as ManagedRealmDictionary<Any?>)
+                            .run {
+                                clear()
+                                val elements = accessor.get(source) as RealmDictionary<*>
+                                operator.putAll(elements, updatePolicy, cache)
+                            }
+                    }
+                    else -> TODO("Collection type ${property.collectionType} is not supported")
                 }
-                CollectionType.RLM_COLLECTION_TYPE_LIST -> {
-                    // We cannot use setList as that requires the type, so we need to retrieve the
-                    // existing list, wipe it and insert new elements
-                    @Suppress("UNCHECKED_CAST")
-                    (accessor.get(target) as ManagedRealmList<Any?>)
-                        .run {
-                            clear()
-                            val elements = accessor.get(source) as RealmList<*>
-                            operator.insertAll(size, elements, updatePolicy, cache)
-                        }
-                }
-                CollectionType.RLM_COLLECTION_TYPE_SET -> {
-                    // We cannot use setSet as that requires the type, so we need to retrieve the
-                    // existing set, wipe it and insert new elements
-                    @Suppress("UNCHECKED_CAST")
-                    (accessor.get(target) as ManagedRealmSet<Any?>)
-                        .run {
-                            clear()
-                            val elements = accessor.get(source) as RealmSet<*>
-                            operator.addAll(elements, updatePolicy, cache)
-                        }
-                }
-                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
-                    // We cannot use setDictionary as that requires the type, so we need to retrieve
-                    // the existing dictionary, wipe it and insert new elements
-                    @Suppress("UNCHECKED_CAST")
-                    (accessor.get(target) as ManagedRealmDictionary<Any?>)
-                        .run {
-                            clear()
-                            val elements = accessor.get(source) as RealmDictionary<*>
-                            operator.putAll(elements, updatePolicy, cache)
-                        }
-                }
-                else -> TODO("Collection type ${property.collectionType} is not supported")
             }
         }
     }

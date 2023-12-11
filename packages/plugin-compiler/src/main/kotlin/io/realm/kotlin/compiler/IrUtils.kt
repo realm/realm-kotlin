@@ -26,7 +26,6 @@ import io.realm.kotlin.compiler.FqNames.PACKAGE_TYPES
 import io.realm.kotlin.compiler.Names.ASYMMETRIC_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.EMBEDDED_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT
-import io.realm.kotlin.compiler.ClassIds.TYPE_ADAPTER_ANNOTATION
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageLocationWithRange
@@ -88,7 +87,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrWhenImpl
 import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
@@ -123,7 +121,6 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.types.KotlinType
 import java.lang.reflect.Field
 import java.util.function.Predicate
-import kotlin.reflect.KClass
 
 // Somehow addSetter was removed from the IrProperty in https://github.com/JetBrains/kotlin/commit/d1dc938a5d7331ba43fcbb8ce53c3e17ef76a22a#diff-2726c3747ace0a1c93ad82365cf3ff18L114
 // Remove this extension when this will be re-introduced? see https://kotlinlang.slack.com/archives/C7L3JB43G/p1600888883006300
@@ -410,7 +407,7 @@ private const val NO_ALIAS = ""
 data class SchemaProperty(
     val propertyType: PropertyType,
     val declaration: IrProperty,
-    val type: IrType,
+    val computedType: IrType,
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null,
 ) {
