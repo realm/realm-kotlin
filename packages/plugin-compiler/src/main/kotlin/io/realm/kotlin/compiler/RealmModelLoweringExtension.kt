@@ -33,7 +33,9 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.superTypes
 import org.jetbrains.kotlin.ir.types.typeOrNull
@@ -63,20 +65,29 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 
     override fun lower(irClass: IrClass) {
+        val realmPluginContext by lazy { RealmPluginContextImpl(pluginContext) }
+
         if (irClass.isRealmTypeAdapter) {
-            // Validate that the R type parameter is a valid RealmType
-//            irClass.symbol
-//                .superTypes()
-//                .first {
-//                    it.classId == REALM_TYPE_ADAPTER_INTERFACE
-//                }
-//                .let {
-//                    it as IrSimpleType
-//                }
-//                .arguments
-//                .let { arguments ->
-//                    arguments[0].typeOrNull!!.isPersistedPrimitiveType()
-//                }
+            with(realmPluginContext) {
+                // Validate that the R type parameter on a RealmTypeAdapter is a valid persisted type
+                val realmType = irClass.symbol
+                    .superTypes()
+                    .first {
+                        it.classId == REALM_TYPE_ADAPTER_INTERFACE
+                    }
+                    .let {
+                        it as IrSimpleType
+                    }
+                    .arguments
+                    .let { arguments ->
+                        arguments[0].typeOrNull!!
+                    }
+
+                if(!realmType.makeNotNull().isValidPersistedType()) {
+                    // TODO better name please
+                    logError("Invalid type parameter '${realmType.classFqName}', only Realm types are supported")
+                }
+            }
         }
 
         if (irClass.isBaseRealmObject) {
@@ -125,7 +136,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             generator.addRealmObjectInternalProperties(irClass)
 
             // Modify properties accessor to generate custom getter/setter
-            AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
+            AccessorModifierIrGeneration(realmPluginContext).modifyPropertiesAndCollectSchema(irClass)
 
             // Add custom toString, equals and hashCode methods
             val methodGenerator = RealmModelDefaultMethodGeneration(pluginContext)

@@ -38,11 +38,11 @@ import kotlin.test.assertTrue
  * These tests should validate:
  *  - [x] Adapter with a non-realm type should fail
  *  - [x] Adapter annotation on unsupported types: delegate, function etc
- *  - [ ] Adapter not matching public type
  *  - [x] Adapters type supportness
  *  - [x] Adapters type unsupportness
- *  - [ ] Instanced and singleton adapters
  *  - [ ] Other annotations Ignore, Index etc
+ *  - [ ] Adapter not matching public type
+ *  - [ ] Instanced and singleton adapters
  */
 class TypeAdaptersTests {
     // TODO: Can we make it fail when declaring type adapters rather than when we apply them?
@@ -59,13 +59,8 @@ class TypeAdaptersTests {
                     import io.realm.kotlin.types.annotations.TypeAdapter
                        
                     class UserType
-                    
+
                     class NonRealmType
-                    
-                    class TestObject : RealmObject {
-                        @TypeAdapter(adapter = UnsupportedRealmTypeParameter::class)
-                        var userType: UserType = UserType()
-                    }
                     
                     object UnsupportedRealmTypeParameter : RealmTypeAdapter<NonRealmType, UserType> {
                         override fun fromRealm(realmValue: NonRealmType): UserType = TODO()

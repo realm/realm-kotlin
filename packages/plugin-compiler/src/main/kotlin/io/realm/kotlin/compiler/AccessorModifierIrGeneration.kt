@@ -16,52 +16,13 @@
 
 package io.realm.kotlin.compiler
 
-import io.realm.kotlin.compiler.ClassIds.ASYMMETRIC_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.IGNORE_ANNOTATION
-import io.realm.kotlin.compiler.ClassIds.KBSON_DECIMAL128
-import io.realm.kotlin.compiler.ClassIds.KBSON_OBJECT_ID
-import io.realm.kotlin.compiler.ClassIds.REALM_ANY
-import io.realm.kotlin.compiler.ClassIds.REALM_BACKLINKS
-import io.realm.kotlin.compiler.ClassIds.REALM_DICTIONARY
-import io.realm.kotlin.compiler.ClassIds.REALM_EMBEDDED_BACKLINKS
-import io.realm.kotlin.compiler.ClassIds.REALM_INSTANT
-import io.realm.kotlin.compiler.ClassIds.REALM_LIST
-import io.realm.kotlin.compiler.ClassIds.REALM_MUTABLE_INTEGER
-import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_HELPER
-import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_ID
-import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
-import io.realm.kotlin.compiler.ClassIds.REALM_SET
-import io.realm.kotlin.compiler.ClassIds.REALM_UUID
 import io.realm.kotlin.compiler.ClassIds.TRANSIENT_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.TYPE_ADAPTER_ANNOTATION
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BOOLEAN
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_DECIMAL128
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_DOUBLE
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_FLOAT
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_INSTANT
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_LONG
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_OBJECT_ID
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_REALM_ANY
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_STRING
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_GET_UUID
-import io.realm.kotlin.compiler.Names.REALM_ACCESSOR_HELPER_SET_VALUE
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_DICTIONARY
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_LIST
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_MUTABLE_INT
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_OBJECT
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_GET_SET
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_DICTIONARY
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
 import io.realm.kotlin.compiler.Names.REALM_TYPE_ADAPTER_FROM_REALM
 import io.realm.kotlin.compiler.Names.REALM_TYPE_ADAPTER_TO_REALM
-import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
@@ -80,7 +41,6 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrProperty
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
-import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedKotlinType
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
@@ -97,7 +57,6 @@ import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
-import org.jetbrains.kotlin.ir.types.impl.originalKotlinType
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
 import org.jetbrains.kotlin.ir.types.isByteArray
@@ -113,18 +72,13 @@ import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.superTypes
 import org.jetbrains.kotlin.ir.types.typeOrNull
-import org.jetbrains.kotlin.ir.util.classId
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.descriptorUtil.classId
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.StarProjectionImpl
 import org.jetbrains.kotlin.types.isNullable
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import kotlin.IllegalStateException
@@ -134,106 +88,7 @@ import kotlin.collections.set
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
  * It also collect the schema information while processing the class properties.
  */
-class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
-
-    private val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_HELPER)
-    private val realmListClass: IrClass = pluginContext.lookupClassOrThrow(REALM_LIST)
-    private val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(REALM_SET)
-    private val realmDictionaryClass: IrClass = pluginContext.lookupClassOrThrow(REALM_DICTIONARY)
-    private val realmInstantClass: IrClass = pluginContext.lookupClassOrThrow(REALM_INSTANT)
-    private val realmBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_BACKLINKS)
-    private val realmEmbeddedBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_EMBEDDED_BACKLINKS)
-    private val realmObjectInterface = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE).symbol
-    private val embeddedRealmObjectInterface = pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE).symbol
-    // Attempt to find the interface for asymmetric objects.
-    // The class will normally only be on the classpath for library-sync builds, not
-    // library-base builds.
-    private val asymmetricRealmObjectInterface: IrClass? = pluginContext.referenceClass(ASYMMETRIC_OBJECT_INTERFACE)?.owner
-
-    private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
-    private val decimal128Class: IrClass = pluginContext.lookupClassOrThrow(KBSON_DECIMAL128)
-    private val realmObjectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
-    private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
-    private val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
-    private val realmAnyClass: IrClass = pluginContext.lookupClassOrThrow(REALM_ANY)
-
-    // Primitive (Core) type getters
-    private val getString: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_STRING)
-    private val getLong: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_LONG)
-    private val getBoolean: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_BOOLEAN)
-    private val getFloat: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_FLOAT)
-    private val getDouble: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_DOUBLE)
-    private val getDecimal128: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_DECIMAL128)
-    private val getInstant: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_INSTANT)
-    private val getObjectId: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_OBJECT_ID)
-    private val getUUID: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_UUID)
-    private val getByteArray: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_BYTE_ARRAY)
-    private val getMutableInt: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_MUTABLE_INT)
-    private val getRealmAny: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_GET_REALM_ANY)
-    private val getObject: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_OBJECT)
-
-    // Primitive (Core) type setters
-    private val setValue: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_ACCESSOR_HELPER_SET_VALUE)
-    private val setObject: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_OBJECT)
-    private val setEmbeddedRealmObject: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT)
-
-    // Getters and setters for collections
-    private val getList: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_LIST)
-    private val setList: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_LIST)
-    private val getSet: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_SET)
-    private val setSet: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_SET)
-    private val getDictionary: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_GET_DICTIONARY)
-    private val setDictionary: IrSimpleFunction =
-        realmObjectHelper.lookupFunction(REALM_OBJECT_HELPER_SET_DICTIONARY)
-
-    // Top level SDK->Core converters
-    private val byteToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("byteToLong"))).first().owner
-    private val charToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("charToLong"))).first().owner
-    private val shortToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("shortToLong"))).first().owner
-    private val intToLong: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("intToLong"))).first().owner
-
-    // Top level Core->SDK converters
-    private val longToByte: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToByte"))).first().owner
-    private val longToChar: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToChar"))).first().owner
-    private val longToShort: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToShort"))).first().owner
-    private val longToInt: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToInt"))).first().owner
-    private val objectIdToRealmObjectId: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("objectIdToRealmObjectId"))).first().owner
-
-    private val providedAdapterFromRealm: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("fromRealm"))).first().owner
-
-    private val providedAdapterToRealm: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("toRealm"))).first().owner
+class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): RealmPluginContext by realmPluginContext {
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType
@@ -325,7 +180,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         if(actualType != null) {
                             propertyTypeRaw = actualType
                             propertyType = actualType.makeNotNull()
-                            if(!propertyType.isPersistedPrimitiveType()) {
+                            if(!propertyType.isValidPersistedType()) {
                                 // TODO improve messaging
                                 logError("Unsupported Realm storage type. Use a valid type` instead", declaration.locationOf())
                             }
@@ -893,7 +748,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
         val collectionGenericType = (type as IrSimpleTypeImpl).arguments[0]
 
-        if(typeAdapterMethodReferences != null && !collectionGenericType.typeOrNull!!.makeNotNull().isPersistedPrimitiveType()) {
+        if(typeAdapterMethodReferences != null && !collectionGenericType.typeOrNull!!.makeNotNull().isValidPersistedType()) {
             // TODO improve messaging
             logError("Unsupported Realm storage type. Use a valid type instead", declaration.locationOf())
         }
@@ -1143,120 +998,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             }
         }
     }
-
-    private fun IrType.isRealmList(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val realmListClassId: ClassId? = realmListClass.classId
-        return propertyClassId == realmListClassId
-    }
-
-    private fun IrType.isRealmSet(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val realmSetClassId: ClassId? = realmSetClass.classId
-        return propertyClassId == realmSetClassId
-    }
-
-    private fun IrType.isRealmDictionary(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val realmDictionaryClassId: ClassId? = realmDictionaryClass.classId
-        return propertyClassId == realmDictionaryClassId
-    }
-
-    private fun IrType.isRealmInstant(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val realmInstantClassId: ClassId? = realmInstantClass.classId
-        return propertyClassId == realmInstantClassId
-    }
-
-    private fun IrType.isLinkingObject(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val realmBacklinksClassId: ClassId? = realmBacklinksClass.classId
-        return propertyClassId == realmBacklinksClassId
-    }
-
-    private fun IrType.isEmbeddedLinkingObject(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val realmEmbeddedBacklinksClassId: ClassId? = realmEmbeddedBacklinksClass.classId
-        return propertyClassId == realmEmbeddedBacklinksClassId
-    }
-
-    private fun IrType.isDecimal128(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val objectIdClassId: ClassId? = decimal128Class.classId
-        return propertyClassId == objectIdClassId
-    }
-
-    private fun IrType.isObjectId(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val objectIdClassId: ClassId? = objectIdClass.classId
-        return propertyClassId == objectIdClassId
-    }
-
-    private fun IrType.isRealmObjectId(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val objectIdClassId: ClassId? = realmObjectIdClass.classId
-        return propertyClassId == objectIdClassId
-    }
-
-    private fun IrType.hasSameClassId(other: IrType): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val otherClassId = other.classIdOrFail()
-        return propertyClassId == otherClassId
-    }
-
-    private fun IrType.isRealmUUID(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val realmUUIDClassId: ClassId? = realmUUIDClass.classId
-        return propertyClassId == realmUUIDClassId
-    }
-
-    fun IrType.isMutableRealmInteger(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val mutableRealmIntegerClassId: ClassId? = mutableRealmIntegerClass.classId
-        return propertyClassId == mutableRealmIntegerClassId
-    }
-
-    fun IrType.isRealmAny(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val mutableRealmIntegerClassId: ClassId? = realmAnyClass.classId
-        return propertyClassId == mutableRealmIntegerClassId
-    }
-
-    fun IrType.isPersistedPrimitiveType(): Boolean = isRealmAny() ||
-            isByteArray() ||
-            isString() ||
-//    isLinkingObject() ||
-//    isEmbeddedLinkingObject() ||
-//    isPersistedPrimitiveType() ||
-//    isMutableRealmInteger() ||
-//    isByte() ||
-//    isChar() ||
-//    isShort() ||
-//    isInt() ||
-            isLong() ||
-            isBoolean() ||
-            isFloat() ||
-            isDouble() ||
-            isDecimal128() ||
-            //    isEmbeddedLinkingObject() ||
-            //    isLinkingObject() ||
-            isRealmList() ||
-            isRealmSet() ||
-            isRealmDictionary() ||
-            isRealmInstant() ||
-            isObjectId() ||
-            isRealmObjectId() ||
-            isRealmUUID() ||
-            isRealmList() ||
-            isRealmSet() ||
-            isRealmDictionary() ||
-            isSubtypeOfClass(embeddedRealmObjectInterface) ||
-            asymmetricRealmObjectInterface?.let {
-                isSubtypeOfClass(
-                    asymmetricRealmObjectInterface.symbol
-                )
-            } ?: false ||
-            isSubtypeOfClass(realmObjectInterface)
 
     @Suppress("ReturnCount", "LongMethod")
     private fun getCollectionGenericCoreType(
