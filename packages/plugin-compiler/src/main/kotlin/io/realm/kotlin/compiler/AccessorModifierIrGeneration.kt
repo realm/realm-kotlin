@@ -155,13 +155,17 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                 val typeAdapterMethodReferences = if(declaration.hasAnnotation(TYPE_ADAPTER_ANNOTATION)) {
                     logDebug("Object property named ${declaration.name} is an adapted type.")
 
+                    if(declaration.isDelegated) {
+                        logError("Type adapters do not support delegated properties")
+                    }
+
                     val adapterClassReference =
                         declaration.getAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
                             .getValueArgument(0)!! as IrClassReference
                     val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
 
                     // TODO find correct super type adapter type, might be multiple ones because inheritance
-                    val (realmType: IrTypeArgument, userType) =
+                    val (realmType, userType) =
                         adapterClassReference.symbol
                             .superTypes()
                             .first {
@@ -172,11 +176,15 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                             }
                             .arguments
                             .let { arguments ->
-                                arguments[0] to arguments[1]
+                                arguments[0].typeOrNull!! to arguments[1].typeOrNull!!
                             }
+                    if(propertyType.classId != userType.classId) {
+                        // TODO improve messaging
+                        logError("Not matching types")
+                    }
 
                     // Replace the property type with the one from the type adapter
-                    realmType.typeOrNull.let { actualType ->
+                    realmType.let { actualType ->
                         if(actualType != null) {
                             propertyTypeRaw = actualType
                             propertyType = actualType.makeNotNull()

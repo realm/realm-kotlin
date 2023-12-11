@@ -166,6 +166,7 @@ interface RealmPluginContext {
         return propertyClassId == mutableRealmIntegerClassId
     }
 
+    // TODO Clean up
     fun IrType.isValidPersistedType(): Boolean = isRealmAny() ||
             isByteArray() ||
             isString() ||

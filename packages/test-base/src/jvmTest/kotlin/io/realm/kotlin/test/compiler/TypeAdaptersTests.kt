@@ -18,7 +18,6 @@ package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
-import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.test.util.TypeDescriptor.unsupportedRealmTypeAdaptersClassifiers
@@ -40,41 +39,85 @@ import kotlin.test.assertTrue
  *  - [x] Adapter annotation on unsupported types: delegate, function etc
  *  - [x] Adapters type supportness
  *  - [x] Adapters type unsupportness
+ *  - [x] Adapter not matching public type
+ *  - [x] Instanced and singleton adapters
  *  - [ ] Other annotations Ignore, Index etc
- *  - [ ] Adapter not matching public type
- *  - [ ] Instanced and singleton adapters
  */
 class TypeAdaptersTests {
+
+    private val typeAdapterTypes = listOf("object", "class")
     // TODO: Can we make it fail when declaring type adapters rather than when we apply them?
     @Test
-    fun `adapters don't support R-types that are not Realm types`() {
-        val result = compileFromSource(
-            plugins = listOf(io.realm.kotlin.compiler.Registrar()),
-            source = SourceFile.kotlin(
-                "typeAdapter_unsupported_type.kt",
-                """
+    fun `invalid R-type unsupported persisted type`() {
+        typeAdapterTypes.forEach { type ->
+            val result = compileFromSource(
+                plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+                source = SourceFile.kotlin(
+                    "typeAdapter_unsupported_type.kt",
+                    """
                     import io.realm.kotlin.types.RealmInstant
                     import io.realm.kotlin.types.RealmObject
                     import io.realm.kotlin.types.RealmTypeAdapter
                     import io.realm.kotlin.types.annotations.TypeAdapter
                        
                     class UserType
-
+                    
                     class NonRealmType
                     
-                    object UnsupportedRealmTypeParameter : RealmTypeAdapter<NonRealmType, UserType> {
+                    $type UnsupportedRealmTypeParameter : RealmTypeAdapter<NonRealmType, UserType> {
                         override fun fromRealm(realmValue: NonRealmType): UserType = TODO()
                     
                         override fun toRealm(value: UserType): NonRealmType = TODO()
                     }
                 """.trimIndent()
+                )
             )
-        )
-        assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
-        assertTrue(
-            result.messages.contains("Invalid type parameter 'NonRealmType', only Realm types are supported"),
-            result.messages
-        )
+            assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+            assertTrue(
+                result.messages.contains("Invalid type parameter 'NonRealmType', only Realm types are supported"),
+                result.messages
+            )
+        }
+    }
+
+
+    @Test
+    fun `invalid U-type non-matching user-defined type`() {
+        typeAdapterTypes.forEach { type ->
+            val result = compileFromSource(
+                plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+                source = SourceFile.kotlin(
+                    "typeAdapter_unsupported_type.kt",
+                    """
+                    import io.realm.kotlin.types.RealmInstant
+                    import io.realm.kotlin.types.RealmObject
+                    import io.realm.kotlin.types.RealmTypeAdapter
+                    import io.realm.kotlin.types.annotations.TypeAdapter
+                       
+                    class UserType
+                    
+                    class OtherUserType
+                    
+                    class TestObject : RealmObject {
+                        @TypeAdapter(adapter = UserTypeAdapter::class)
+                        var userType: OtherUserType = OtherUserType()
+                    }
+                    
+                    $type UserTypeAdapter : RealmTypeAdapter<String, UserType> {
+                        override fun fromRealm(realmValue: String): UserType = TODO()
+                    
+                        override fun toRealm(value: UserType): String = TODO()
+                    }
+                """.trimIndent()
+                )
+            )
+            assertEquals(
+                KotlinCompilation.ExitCode.COMPILATION_ERROR,
+                result.exitCode,
+                result.messages
+            )
+            assertTrue(result.messages.contains("Not matching types"), result.messages)
+        }
     }
 
     @Test
@@ -111,7 +154,7 @@ class TypeAdaptersTests {
         )
         assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
         assertTrue(
-            result.messages.contains("Invalid type parameter, only Realm types are supported"),
+            result.messages.contains("Type adapters do not support delegated properties"),
             result.messages
         )
     }
