@@ -22,6 +22,7 @@ import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_LISTOF
 import io.realm.kotlin.compiler.ClassIds.PERSISTED_NAME_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_TYPE_ADAPTER_INTERFACE
 import io.realm.kotlin.compiler.FqNames.PACKAGE_TYPES
 import io.realm.kotlin.compiler.Names.ASYMMETRIC_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.EMBEDDED_REALM_OBJECT
@@ -260,6 +261,9 @@ val IrClass.isEmbeddedRealmObject: Boolean
 
 val IrClass.isAsymmetricRealmObject: Boolean
     get() = superTypes.any { it.classId == ASYMMETRIC_OBJECT_INTERFACE }
+
+val IrClass.isRealmTypeAdapter: Boolean
+    get() = superTypes.any { it.classId == REALM_TYPE_ADAPTER_INTERFACE }
 
 val IrType.classId: ClassId?
     get() = this.getClass()?.classId

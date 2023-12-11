@@ -91,10 +91,12 @@ import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.interpreter.getAnnotation
 import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.IrStarProjection
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.originalKotlinType
 import org.jetbrains.kotlin.ir.types.isBoolean
 import org.jetbrains.kotlin.ir.types.isByte
@@ -143,6 +145,10 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private val realmEmbeddedBacklinksClass: IrClass = pluginContext.lookupClassOrThrow(REALM_EMBEDDED_BACKLINKS)
     private val realmObjectInterface = pluginContext.lookupClassOrThrow(REALM_OBJECT_INTERFACE).symbol
     private val embeddedRealmObjectInterface = pluginContext.lookupClassOrThrow(EMBEDDED_OBJECT_INTERFACE).symbol
+    // Attempt to find the interface for asymmetric objects.
+    // The class will normally only be on the classpath for library-sync builds, not
+    // library-base builds.
+    private val asymmetricRealmObjectInterface: IrClass? = pluginContext.referenceClass(ASYMMETRIC_OBJECT_INTERFACE)?.owner
 
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
     private val decimal128Class: IrClass = pluginContext.lookupClassOrThrow(KBSON_DECIMAL128)
@@ -248,11 +254,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         objectReferenceProperty = irClass.lookupProperty(OBJECT_REFERENCE)
         objectReferenceType = objectReferenceProperty.backingField!!.type
 
-        // Attempt to find the interface for asymmetric objects.
-        // The class will normally only be on the classpath for library-sync builds, not
-        // library-base builds.
-        val asymmetricRealmObjectInterface: IrClass? = pluginContext.referenceClass(ASYMMETRIC_OBJECT_INTERFACE)?.owner
-
         irClass.transformChildrenVoid(object : IrElementTransformerVoid() {
             @Suppress("LongMethod")
             override fun visitProperty(declaration: IrProperty): IrStatement {
@@ -306,7 +307,14 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
                     // TODO find correct super type adapter type, might be multiple ones because inheritance
                     val (realmType: IrTypeArgument, userType) =
-                        (adapterClassReference.symbol.superTypes().first() as IrSimpleType)
+                        adapterClassReference.symbol
+                            .superTypes()
+                            .first {
+                                it.classId == ClassIds.REALM_TYPE_ADAPTER_INTERFACE
+                            }
+                            .let {
+                                it as IrSimpleType
+                            }
                             .arguments
                             .let { arguments ->
                                 arguments[0] to arguments[1]
@@ -317,9 +325,9 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                         if(actualType != null) {
                             propertyTypeRaw = actualType
                             propertyType = actualType.makeNotNull()
-                            if(propertyType.isChar() || propertyType.isByte() || propertyType.isShort() || propertyType.isInt() || propertyType.isMutableRealmInteger()) {
+                            if(!propertyType.isPersistedPrimitiveType()) {
                                 // TODO improve messaging
-                                logError("Unsupported Realm storage type. Use `Long` instead", declaration.locationOf())
+                                logError("Unsupported Realm storage type. Use a valid type` instead", declaration.locationOf())
                             }
                             nullable = actualType.isNullable()
                         } else {
@@ -879,23 +887,29 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         propertyTypeRaw: IrType,
         typeAdapterMethodReferences: TypeAdapterMethodReferences?,
     ) {
-        val type: KotlinType =
-            typeAdapterMethodReferences?.propertyType?.originalKotlinType
-                ?: declaration.symbol.owner.toIrBasedDescriptor().type
+        val type: IrType =
+            typeAdapterMethodReferences?.propertyType
+                ?: declaration.backingField!!.type
 
-        if (type.arguments[0] is StarProjectionImpl) {
+        val collectionGenericType = (type as IrSimpleTypeImpl).arguments[0]
+
+        if(typeAdapterMethodReferences != null && !collectionGenericType.typeOrNull!!.makeNotNull().isPersistedPrimitiveType()) {
+            // TODO improve messaging
+            logError("Unsupported Realm storage type. Use a valid type instead", declaration.locationOf())
+        }
+
+        if (collectionGenericType is IrStarProjection) {
             logError(
                 "Error in field ${declaration.name} - ${collectionType.description} cannot use a '*' projection.",
                 declaration.locationOf()
             )
             return
         }
-        val collectionGenericType = type.arguments[0].type
-        val coreGenericTypes = getCollectionGenericCoreType(collectionType, declaration, type)
 
+        val coreGenericTypes = getCollectionGenericCoreType(collectionType, declaration, type.kotlinType!!)
         // Only process field if we got valid generics
         if (coreGenericTypes != null) {
-            val genericPropertyType = getPropertyTypeFromKotlinType(collectionGenericType)
+            val genericPropertyType = getPropertyTypeFromKotlinType(collectionGenericType.typeOrNull!!.toIrBasedKotlinType())
 
             // Only process
             if (genericPropertyType != null) {
@@ -1207,6 +1221,42 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         val mutableRealmIntegerClassId: ClassId? = realmAnyClass.classId
         return propertyClassId == mutableRealmIntegerClassId
     }
+
+    fun IrType.isPersistedPrimitiveType(): Boolean = isRealmAny() ||
+            isByteArray() ||
+            isString() ||
+//    isLinkingObject() ||
+//    isEmbeddedLinkingObject() ||
+//    isPersistedPrimitiveType() ||
+//    isMutableRealmInteger() ||
+//    isByte() ||
+//    isChar() ||
+//    isShort() ||
+//    isInt() ||
+            isLong() ||
+            isBoolean() ||
+            isFloat() ||
+            isDouble() ||
+            isDecimal128() ||
+            //    isEmbeddedLinkingObject() ||
+            //    isLinkingObject() ||
+            isRealmList() ||
+            isRealmSet() ||
+            isRealmDictionary() ||
+            isRealmInstant() ||
+            isObjectId() ||
+            isRealmObjectId() ||
+            isRealmUUID() ||
+            isRealmList() ||
+            isRealmSet() ||
+            isRealmDictionary() ||
+            isSubtypeOfClass(embeddedRealmObjectInterface) ||
+            asymmetricRealmObjectInterface?.let {
+                isSubtypeOfClass(
+                    asymmetricRealmObjectInterface.symbol
+                )
+            } ?: false ||
+            isSubtypeOfClass(realmObjectInterface)
 
     @Suppress("ReturnCount", "LongMethod")
     private fun getCollectionGenericCoreType(

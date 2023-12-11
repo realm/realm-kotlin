@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.ClassIds.MODEL_OBJECT_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_TYPE_ADAPTER_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -31,8 +32,11 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.starProjectedType
+import org.jetbrains.kotlin.ir.types.superTypes
+import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.isAnonymousObject
@@ -59,6 +63,22 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 
     override fun lower(irClass: IrClass) {
+        if (irClass.isRealmTypeAdapter) {
+            // Validate that the R type parameter is a valid RealmType
+//            irClass.symbol
+//                .superTypes()
+//                .first {
+//                    it.classId == REALM_TYPE_ADAPTER_INTERFACE
+//                }
+//                .let {
+//                    it as IrSimpleType
+//                }
+//                .arguments
+//                .let { arguments ->
+//                    arguments[0].typeOrNull!!.isPersistedPrimitiveType()
+//                }
+        }
+
         if (irClass.isBaseRealmObject) {
             // Throw error with classes that we do not support
             if (irClass.isData) {

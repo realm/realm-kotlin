@@ -365,6 +365,9 @@ object TypeDescriptor {
         allSingularFieldTypes + allListFieldTypes + allSetFieldTypes + allDictionaryFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
+    val unsupportedRealmTypeAdaptersClassifiers =
+        setOf(Byte::class, Char::class, Short::class, Int::class, MutableRealmInt::class)
+
     // Realm field type represents the type of a given user specified field in the RealmObject
     data class RealmFieldType(
         val collectionType: CollectionType,

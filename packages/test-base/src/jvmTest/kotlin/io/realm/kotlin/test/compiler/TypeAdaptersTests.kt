@@ -21,6 +21,7 @@ import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
+import io.realm.kotlin.test.util.TypeDescriptor.unsupportedRealmTypeAdaptersClassifiers
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
@@ -39,7 +40,7 @@ import kotlin.test.assertTrue
  *  - [x] Adapter annotation on unsupported types: delegate, function etc
  *  - [ ] Adapter not matching public type
  *  - [x] Adapters type supportness
- *  - [ ] Adapters type unsupportness
+ *  - [x] Adapters type unsupportness
  *  - [ ] Instanced and singleton adapters
  *  - [ ] Other annotations Ignore, Index etc
  */
@@ -124,10 +125,6 @@ class TypeAdaptersTests {
     fun `type adapters supportness`() {
         val defaults = mapOf<KClassifier, Any>(
             Boolean::class to true,
-            Byte::class to "1",
-            Char::class to "\'c\'",
-            Short::class to "1",
-            Int::class to "1",
             Long::class to "1",
             Float::class to "1.4f",
             Double::class to "1.4",
@@ -138,18 +135,12 @@ class TypeAdaptersTests {
             BsonObjectId::class to "BsonObjectId()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
-            MutableRealmInt::class to "MutableRealmInt.create(42)",
-            RealmObject::class to "TestObject2()"
+            RealmObject::class to "TestObject2()",
         )
 
         allFieldTypes
             .filterNot { type ->
-                // TODO tidy list unsupported types in TypeDescriptor
-                type.elementType.classifier == Byte::class ||
-                type.elementType.classifier == Char::class ||
-                type.elementType.classifier == Short::class ||
-                type.elementType.classifier == Int::class ||
-                type.elementType.classifier == MutableRealmInt::class
+                type.elementType.classifier in unsupportedRealmTypeAdaptersClassifiers
             }
             .forEach { type ->
                 val elementType = type.elementType
@@ -161,7 +152,6 @@ class TypeAdaptersTests {
                 } else {
                     type.toKotlinLiteral()
                 }
-                println(kotlinLiteral)
 
                 val result = compileFromSource(
                     plugins = listOf(io.realm.kotlin.compiler.Registrar()),
@@ -204,8 +194,75 @@ class TypeAdaptersTests {
                     )
                 )
                 assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
-//            assertTrue(result.messages.contains("Invalid type parameter, only Realm types are supported"), result.messages)
             }
+    }
 
+    @Test
+    fun `type adapters unsupportness`() {
+        val defaults = mapOf<KClassifier, Any>(
+            Byte::class to "1",
+            Char::class to "\'c\'",
+            Short::class to "1",
+            Int::class to "1",
+            MutableRealmInt::class to "MutableRealmInt.create(42)",
+        )
+
+        allFieldTypes
+            .filter { type ->
+                type.elementType.classifier in unsupportedRealmTypeAdaptersClassifiers
+            }
+            .forEach { type ->
+                val elementType = type.elementType
+                val default = if (!elementType.nullable) defaults[elementType.classifier]
+                    ?: error("unmapped default") else null
+
+                val kotlinLiteral = if(type.elementType.classifier == RealmObject::class) {
+                    type.toKotlinLiteral().replace("RealmObject", "TestObject2")
+                } else {
+                    type.toKotlinLiteral()
+                }
+
+                val result = compileFromSource(
+                    plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+                    source = SourceFile.kotlin(
+                        "typeadapter_supportness_$kotlinLiteral.kt",
+                        """
+                    import io.realm.kotlin.types.RealmAny
+                    import io.realm.kotlin.types.RealmDictionary
+                    import io.realm.kotlin.types.RealmList
+                    import io.realm.kotlin.types.RealmSet
+                    import io.realm.kotlin.types.RealmInstant
+                    import io.realm.kotlin.types.MutableRealmInt
+                    import io.realm.kotlin.types.RealmObject
+                    import io.realm.kotlin.types.RealmTypeAdapter
+                    import io.realm.kotlin.types.RealmUUID 
+                    import io.realm.kotlin.types.annotations.TypeAdapter
+                    import io.realm.kotlin.types.ObjectId
+                    import org.mongodb.kbson.BsonDecimal128
+                    import org.mongodb.kbson.BsonObjectId
+                       
+                    class UserType
+                    
+                    class NonRealmType
+                    
+                    class TestObject2: RealmObject {
+                        var name: String = ""
+                    }
+                    
+                    class TestObject : RealmObject {
+                        @TypeAdapter(adapter = ValidRealmTypeAdapter::class)
+                        var userType: UserType = UserType()
+                    }
+                    
+                    object ValidRealmTypeAdapter : RealmTypeAdapter<$kotlinLiteral, UserType> {
+                        override fun fromRealm(realmValue: $kotlinLiteral): UserType = TODO()
+                    
+                        override fun toRealm(value: UserType): $kotlinLiteral = TODO()
+                    }
+                """.trimIndent()
+                    )
+                )
+                assertEquals(KotlinCompilation.ExitCode.COMPILATION_ERROR, result.exitCode, result.messages)
+            }
     }
 }

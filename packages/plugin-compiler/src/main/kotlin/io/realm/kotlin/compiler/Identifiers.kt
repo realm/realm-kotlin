@@ -126,6 +126,7 @@ object ClassIds {
     val TYPED_REALM_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("TypedRealmObject"))
     val EMBEDDED_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("EmbeddedRealmObject"))
     val ASYMMETRIC_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("AsymmetricRealmObject"))
+    val REALM_TYPE_ADAPTER_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmTypeAdapter"))
 
     val CLASS_APP_CONFIGURATION = ClassId(FqNames.PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
 
