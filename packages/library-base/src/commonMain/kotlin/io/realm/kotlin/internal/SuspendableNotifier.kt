@@ -94,6 +94,7 @@ internal class SuspendableNotifier(
         if (!realmInitializer.isInitialized()) {
             withContext(dispatcher) {
                 realm
+                println("Emit initial version")
                 _realmChanged.emit(realm.version())
             }
         }
