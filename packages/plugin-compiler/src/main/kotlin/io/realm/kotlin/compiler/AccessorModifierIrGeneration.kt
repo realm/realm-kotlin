@@ -44,6 +44,7 @@ import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedKotlinType
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
+import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrDeclarationReference
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
@@ -54,6 +55,7 @@ import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrStarProjection
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
@@ -68,11 +70,13 @@ import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
+import org.jetbrains.kotlin.ir.types.isSubtypeOf
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.superTypes
 import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.util.defaultType
+import org.jetbrains.kotlin.ir.util.findAnnotation
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -98,6 +102,26 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
         val toPublic: (IrBuilderWithScope.(IrGetValue, IrFunctionAccessExpression)->IrDeclarationReference),
         val fromPublic: (IrBuilderWithScope.(IrGetValue, IrGetValue)->IrDeclarationReference),
     )
+
+    fun IrConstructorCall.getTypeAdapterTypes(): Triple<IrClassReference, IrType, IrType> =
+        (getValueArgument(0)!! as IrClassReference).let { adapterClassReference ->
+            adapterClassReference.symbol
+                .superTypes()
+                .first {
+                    it.classId == ClassIds.REALM_TYPE_ADAPTER_INTERFACE
+                }
+                .let {
+                    it as IrSimpleType
+                }
+                .arguments
+                .let { arguments ->
+                    Triple(
+                        adapterClassReference,
+                        arguments[0].typeOrNull!!,
+                        arguments[1].typeOrNull!!
+                    )
+                }
+        }
 
     fun modifyPropertiesAndCollectSchema(irClass: IrClass) {
         logDebug("Processing class ${irClass.name}")
@@ -159,45 +183,23 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                         logError("Type adapters do not support delegated properties")
                     }
 
-                    val adapterClassReference =
-                        declaration.getAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
-                            .getValueArgument(0)!! as IrClassReference
+                    val (adapterClassReference, realmType, userType) = declaration
+                        .getAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
+                        .getTypeAdapterTypes()
+
                     val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
 
-                    // TODO find correct super type adapter type, might be multiple ones because inheritance
-                    val (realmType, userType) =
-                        adapterClassReference.symbol
-                            .superTypes()
-                            .first {
-                                it.classId == ClassIds.REALM_TYPE_ADAPTER_INTERFACE
-                            }
-                            .let {
-                                it as IrSimpleType
-                            }
-                            .arguments
-                            .let { arguments ->
-                                arguments[0].typeOrNull!! to arguments[1].typeOrNull!!
-                            }
                     if(propertyType.classId != userType.classId) {
                         // TODO improve messaging
-                        logError("Not matching types")
+                        logError("Not matching types 1")
                     }
 
                     // Replace the property type with the one from the type adapter
-                    realmType.let { actualType ->
-                        if(actualType != null) {
-                            propertyTypeRaw = actualType
-                            propertyType = actualType.makeNotNull()
-                            if(!propertyType.isValidPersistedType()) {
-                                // TODO improve messaging
-                                logError("Unsupported Realm storage type. Use a valid type` instead", declaration.locationOf())
-                            }
-                            nullable = actualType.isNullable()
-                        } else {
-                            logError("Could not retrieve the storage type.")
-                        }
-                    }
+                    propertyTypeRaw = realmType
+                    propertyType = realmType.makeNotNull()
+                    nullable = realmType.isNullable()
 
+                    // Generate the conversion calls based on whether the adapter is singleton or not.
                     when (adapterClass.kind) {
                         ClassKind.CLASS -> {
                             TypeAdapterMethodReferences(
@@ -750,18 +752,9 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
         propertyTypeRaw: IrType,
         typeAdapterMethodReferences: TypeAdapterMethodReferences?,
     ) {
-        val type: IrType =
-            typeAdapterMethodReferences?.propertyType
-                ?: declaration.backingField!!.type
+        val collectionTypeArgument = (propertyTypeRaw as IrSimpleTypeImpl).arguments[0]
 
-        val collectionGenericType = (type as IrSimpleTypeImpl).arguments[0]
-
-        if(typeAdapterMethodReferences != null && !collectionGenericType.typeOrNull!!.makeNotNull().isValidPersistedType()) {
-            // TODO improve messaging
-            logError("Unsupported Realm storage type. Use a valid type instead", declaration.locationOf())
-        }
-
-        if (collectionGenericType is IrStarProjection) {
+        if (collectionTypeArgument is IrStarProjection) {
             logError(
                 "Error in field ${declaration.name} - ${collectionType.description} cannot use a '*' projection.",
                 declaration.locationOf()
@@ -769,10 +762,37 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
             return
         }
 
-        val coreGenericTypes = getCollectionGenericCoreType(collectionType, declaration, type.kotlinType!!)
+        var collectionIrType = collectionTypeArgument.typeOrNull!!
+
+        // if not null the type would need to be adapted
+        val typeAdapterAnnotation = collectionIrType
+            .annotations
+            .findAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
+
+        typeAdapterAnnotation?.let {
+            val (adapterClassReference, realmType, userType) = it.getTypeAdapterTypes()
+
+            val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
+
+            if(collectionIrType.classId != userType.classId) {
+                // TODO improve messaging
+                logError("Not matching types ${collectionIrType.classFqName} ${userType.classFqName}")
+            }
+
+            // Replace the property type with the one from the type adapter
+            collectionIrType = realmType
+        }
+
+        val coreGenericTypes = getCollectionGenericCoreType(
+            collectionType = collectionType,
+            declaration = declaration,
+            descriptorType = propertyTypeRaw,
+            collectionGenericType = collectionIrType,
+        )
+
         // Only process field if we got valid generics
         if (coreGenericTypes != null) {
-            val genericPropertyType = getPropertyTypeFromKotlinType(collectionGenericType.typeOrNull!!.toIrBasedKotlinType())
+            val genericPropertyType = getPropertyTypeFromKotlinType(collectionIrType)
 
             // Only process
             if (genericPropertyType != null) {
@@ -1011,15 +1031,14 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
     private fun getCollectionGenericCoreType(
         collectionType: CollectionType,
         declaration: IrProperty,
-        descriptorType: KotlinType,
+        descriptorType: IrType,
+        collectionGenericType: IrType,
     ): CoreType? {
         // Check first if the generic is a subclass of RealmObject
-        val collectionGenericType: KotlinType = descriptorType.arguments[0].type
+        val isRealmObject = collectionGenericType.isSubtypeOfClass(realmObjectInterface)
+        val isEmbedded = collectionGenericType.isSubtypeOfClass(embeddedRealmObjectInterface)
 
-        val supertypes = collectionGenericType.constructor.supertypes
-        val isEmbedded = inheritsFromRealmObject(supertypes, RealmObjectType.EMBEDDED)
-
-        if (inheritsFromRealmObject(supertypes)) {
+        if (isRealmObject || isEmbedded) {
             // No embedded objects for sets
             if (collectionType == CollectionType.SET && isEmbedded) {
                 logError(
@@ -1064,18 +1083,17 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
         // If not a RealmObject, check whether the collection itself is nullable - if so, throw error
         if (descriptorType.isNullable()) {
             logError(
-                "Error in field ${declaration.name} - a ${collectionType.description} field cannot be marked as nullable.",
+                "Error in field ${declaration.name} - a ${collectionType.description} field cannot be marked as nullable. ${descriptorType.classFqName}",
                 declaration.locationOf()
             )
             return null
         }
 
         // Otherwise just return the matching core type present in the declaration
-        val genericPropertyType: PropertyType? = getPropertyTypeFromKotlinType(collectionGenericType)
+        val genericPropertyType: PropertyType? = getPropertyTypeFromKotlinType(collectionGenericType.makeNotNull())
         return if (genericPropertyType == null) {
             logError(
-                "Unsupported type for ${collectionType.description}: '${collectionGenericType.getKotlinTypeFqNameCompat(true)
-                }'",
+                "Unsupported type for ${collectionType.description}: '${collectionGenericType.classFqName}'",
                 declaration.locationOf()
             )
             null
@@ -1095,51 +1113,32 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
 
     // TODO do the lookup only once
     @Suppress("ComplexMethod")
-    private fun getPropertyTypeFromKotlinType(type: KotlinType): PropertyType? {
-        return type.constructor.declarationDescriptor
-            ?.name
-            ?.let { identifier ->
-                when (identifier.toString()) {
-                    "Byte" -> PropertyType.RLM_PROPERTY_TYPE_INT
-                    "Char" -> PropertyType.RLM_PROPERTY_TYPE_INT
-                    "Short" -> PropertyType.RLM_PROPERTY_TYPE_INT
-                    "Int" -> PropertyType.RLM_PROPERTY_TYPE_INT
-                    "Long" -> PropertyType.RLM_PROPERTY_TYPE_INT
-                    "Boolean" -> PropertyType.RLM_PROPERTY_TYPE_BOOL
-                    "Float" -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
-                    "Double" -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
-                    "String" -> PropertyType.RLM_PROPERTY_TYPE_STRING
-                    "RealmInstant" -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
-                    "ObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
-                    "BsonObjectId" -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
-                    "BsonDecimal128" -> PropertyType.RLM_PROPERTY_TYPE_DECIMAL128
-                    "RealmUUID" -> PropertyType.RLM_PROPERTY_TYPE_UUID
-                    "ByteArray" -> PropertyType.RLM_PROPERTY_TYPE_BINARY
-                    "RealmAny" -> PropertyType.RLM_PROPERTY_TYPE_MIXED
-                    else ->
-                        if (inheritsFromRealmObject(type.supertypes())) {
-                            PropertyType.RLM_PROPERTY_TYPE_OBJECT
-                        } else {
-                            null
-                        }
+    private fun getPropertyTypeFromKotlinType(type: IrType): PropertyType? =
+        when {
+            type.isByte() -> PropertyType.RLM_PROPERTY_TYPE_INT
+            type.isChar() -> PropertyType.RLM_PROPERTY_TYPE_INT
+            type.isShort() -> PropertyType.RLM_PROPERTY_TYPE_INT
+            type.isInt() -> PropertyType.RLM_PROPERTY_TYPE_INT
+            type.isLong() -> PropertyType.RLM_PROPERTY_TYPE_INT
+            type.isBoolean() -> PropertyType.RLM_PROPERTY_TYPE_BOOL
+            type.isFloat() -> PropertyType.RLM_PROPERTY_TYPE_FLOAT
+            type.isDouble() -> PropertyType.RLM_PROPERTY_TYPE_DOUBLE
+            type.isString() -> PropertyType.RLM_PROPERTY_TYPE_STRING
+            type.isRealmInstant() -> PropertyType.RLM_PROPERTY_TYPE_TIMESTAMP
+            type.isObjectId() -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+            type.isRealmObjectId() -> PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID
+            type.isDecimal128() -> PropertyType.RLM_PROPERTY_TYPE_DECIMAL128
+            type.isRealmUUID() -> PropertyType.RLM_PROPERTY_TYPE_UUID
+            type.isByteArray() -> PropertyType.RLM_PROPERTY_TYPE_BINARY
+            type.isRealmAny() -> PropertyType.RLM_PROPERTY_TYPE_MIXED
+            else ->
+                if (
+                    type.isSubtypeOfClass(realmObjectInterface) ||
+                    type.isSubtypeOfClass(embeddedRealmObjectInterface)
+                ) {
+                    PropertyType.RLM_PROPERTY_TYPE_OBJECT
+                } else {
+                    null
                 }
-            }
-    }
-
-    // Check if the class in question inherits from RealmObject, EmbeddedRealmObject or either
-    private fun inheritsFromRealmObject(
-        supertypes: Collection<KotlinType>,
-        objectType: RealmObjectType = RealmObjectType.EITHER
-    ): Boolean = supertypes.any {
-        val objectFqNames: Set<ClassId> = when (objectType) {
-            RealmObjectType.OBJECT -> realmObjectInterfaceFqNames
-            RealmObjectType.EMBEDDED -> realmEmbeddedObjectInterfaceFqNames
-            RealmObjectType.EITHER -> realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames
         }
-        it.constructor.declarationDescriptor?.classId in objectFqNames
-    }
-}
-
-private enum class RealmObjectType {
-    OBJECT, EMBEDDED, EITHER
 }

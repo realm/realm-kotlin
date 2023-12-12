@@ -20,7 +20,7 @@ import io.realm.kotlin.types.RealmTypeAdapter
 import kotlin.reflect.KClass
 
 @Retention(AnnotationRetention.SOURCE)
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS)
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS, AnnotationTarget.TYPE)
 @MustBeDocumented
 /**
  * TODO

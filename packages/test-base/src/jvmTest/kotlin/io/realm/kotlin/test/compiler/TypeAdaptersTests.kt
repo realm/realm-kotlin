@@ -18,6 +18,7 @@ package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
+import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.test.util.TypeDescriptor.unsupportedRealmTypeAdaptersClassifiers
@@ -42,6 +43,7 @@ import kotlin.test.assertTrue
  *  - [x] Adapter not matching public type
  *  - [x] Instanced and singleton adapters
  *  - [] Other annotations Ignore, Index etc
+ *  TODO: Rename generated file names
  */
 class TypeAdaptersTests {
 
@@ -327,5 +329,87 @@ class TypeAdaptersTests {
                     result.messages
                 )
             }
+    }
+
+    @Test
+    fun `apply annotation to type parameter`() {
+        allFieldTypes
+            .filterNot { type ->
+                type.elementType.classifier in unsupportedRealmTypeAdaptersClassifiers
+            }
+            .filterNot { type ->
+                type.collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE
+            }
+            .forEach { type ->
+                val default = when(type.collectionType) {
+                    CollectionType.RLM_COLLECTION_TYPE_NONE -> error("Outside of testing scope")
+                    CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<@TypeAdapter(ValidRealmTypeAdapter::class) UserType> = realmListOf()"
+                    CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<@TypeAdapter(ValidRealmTypeAdapter::class) UserType> = realmSetOf()"
+                    CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> "RealmDictionary<@TypeAdapter(ValidRealmTypeAdapter::class) UserType> = realmDictionaryOf()"
+                    else -> error("Unmapped type")
+                }
+
+                val adapterType = when (type.elementType.classifier) {
+                    RealmObject::class -> "TestObject2${if(type.elementType.nullable) "?" else ""}"
+                    else -> type.copy(
+                        collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE
+                    ).toKotlinLiteral()
+                }
+
+                val additionalAnnotations = mutableSetOf(
+                    "",
+                    """@PersistedName("testing")"""
+                )
+
+                additionalAnnotations.forEach { annotation ->
+                    val result = compileFromSource(
+                        plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+                        source = SourceFile.kotlin(
+                            "typeadapter_supportness_$adapterType.kt",
+                            """
+                    import io.realm.kotlin.ext.realmDictionaryOf
+                    import io.realm.kotlin.ext.realmListOf
+                    import io.realm.kotlin.ext.realmSetOf
+                    import io.realm.kotlin.types.RealmAny
+                    import io.realm.kotlin.types.RealmDictionary
+                    import io.realm.kotlin.types.RealmList
+                    import io.realm.kotlin.types.RealmSet
+                    import io.realm.kotlin.types.RealmInstant
+                    import io.realm.kotlin.types.MutableRealmInt
+                    import io.realm.kotlin.types.RealmObject
+                    import io.realm.kotlin.types.RealmTypeAdapter
+                    import io.realm.kotlin.types.RealmUUID 
+                    import io.realm.kotlin.types.annotations.FullText
+                    import io.realm.kotlin.types.annotations.Index
+                    import io.realm.kotlin.types.annotations.PersistedName
+                    import io.realm.kotlin.types.annotations.PrimaryKey
+                    import io.realm.kotlin.types.annotations.TypeAdapter
+                    import io.realm.kotlin.types.ObjectId
+                    import org.mongodb.kbson.BsonDecimal128
+                    import org.mongodb.kbson.BsonObjectId
+                       
+                    class UserType
+                    
+                    class TestObject2: RealmObject {
+                        var field: String = ""
+                    }
+                    
+                    class TestObject : RealmObject {
+                        $annotation
+                        var userType: $default
+                    }
+                    
+                    object ValidRealmTypeAdapter : RealmTypeAdapter<$adapterType, UserType> {
+                        override fun fromRealm(realmValue: $adapterType): UserType = TODO()
+                    
+                        override fun toRealm(value: UserType): $adapterType = TODO()
+                    }
+                """.trimIndent()
+                        )
+                    )
+                    assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
+                }
+            }
+
     }
 }

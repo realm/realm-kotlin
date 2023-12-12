@@ -63,6 +63,7 @@ import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmTypeAdapter
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.TypedRealmObject
 import org.mongodb.kbson.BsonObjectId
@@ -366,7 +367,8 @@ internal object RealmObjectHelper {
     @Suppress("unused") // Called from generated code
     internal inline fun <reified R : Any> getList(
         obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
+        propertyName: String,
+        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
     ): ManagedRealmList<R> {
         val elementType: KClass<R> = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
@@ -667,7 +669,8 @@ internal object RealmObjectHelper {
         col: String,
         list: RealmList<T>,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
-        cache: UnmanagedToManagedObjectCache = mutableMapOf()
+        cache: UnmanagedToManagedObjectCache = mutableMapOf(),
+        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
     ) {
         val existingList = getList<T>(obj, col)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(

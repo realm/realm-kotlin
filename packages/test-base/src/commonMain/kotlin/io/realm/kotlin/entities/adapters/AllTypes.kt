@@ -91,7 +91,8 @@ class AllTypes : RealmObject {
 
     @TypeAdapter(StringRealmListAdapter::class)
     var stringListField: RealmList<String> = realmListOf()
-//    var byteListField: RealmList<Byte> = realmListOf()
+
+    //    var byteListField: RealmList<Byte> = realmListOf()
 //    var charListField: RealmList<Char> = realmListOf()
 //    var shortListField: RealmList<Short> = realmListOf()
 //    var intListField: RealmList<Int> = realmListOf()
@@ -124,7 +125,7 @@ class AllTypes : RealmObject {
 //    var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
 //    var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
 //
-@TypeAdapter(StringRealmSetAdapter::class)
+    @TypeAdapter(StringRealmSetAdapter::class)
     var stringSetField: RealmSet<String> = realmSetOf()
 //    var byteSetField: RealmSet<Byte> = realmSetOf()
 //    var charSetField: RealmSet<Char> = realmSetOf()
@@ -162,7 +163,8 @@ class AllTypes : RealmObject {
 
     @TypeAdapter(StringRealmDictionaryAdapter::class)
     var stringDictionaryField: RealmDictionary<String> = realmDictionaryOf()
-//    var byteDictionaryField: RealmDictionary<Byte> = realmDictionaryOf()
+
+    //    var byteDictionaryField: RealmDictionary<Byte> = realmDictionaryOf()
 //    var charDictionaryField: RealmDictionary<Char> = realmDictionaryOf()
 //    var shortDictionaryField: RealmDictionary<Short> = realmDictionaryOf()
 //    var intDictionaryField: RealmDictionary<Int> = realmDictionaryOf()
@@ -212,6 +214,7 @@ class AllTypes : RealmObject {
 //    fun stringFieldSetter(s: String) {
 //        stringField = s
 //    }
+    var adaptedStringListField: RealmList<@TypeAdapter(StringAdapter::class) String> = realmListOf()
 
     companion object {
         // Empty object required by SampleTests
@@ -251,6 +254,7 @@ class AllTypes : RealmObject {
         if (stringListField != other.stringListField) return false
         if (stringSetField != other.stringSetField) return false
         if (stringDictionaryField != other.stringDictionaryField) return false
+        if (adaptedStringListField != other.adaptedStringListField) return false
 
         return true
     }
@@ -281,8 +285,10 @@ class AllTypes : RealmObject {
         result = 31 * result + stringListField.hashCode()
         result = 31 * result + stringSetField.hashCode()
         result = 31 * result + stringDictionaryField.hashCode()
+        result = 31 * result + adaptedStringListField.hashCode()
         return result
     }
+
 }
 
 // Passthrough converters
@@ -311,25 +317,32 @@ object DoubleAdapter : RealmTypeAdapter<Double, Double> {
 }
 
 object Decimal128Adapter : RealmTypeAdapter<Decimal128, Decimal128> {
-    override fun fromRealm(realmValue: Decimal128): Decimal128 = Decimal128.fromIEEE754BIDEncoding(realmValue.high, realmValue.low)
+    override fun fromRealm(realmValue: Decimal128): Decimal128 =
+        Decimal128.fromIEEE754BIDEncoding(realmValue.high, realmValue.low)
 
-    override fun toRealm(value: Decimal128): Decimal128 = Decimal128.fromIEEE754BIDEncoding(value.high, value.low)
+    override fun toRealm(value: Decimal128): Decimal128 =
+        Decimal128.fromIEEE754BIDEncoding(value.high, value.low)
 }
 
 object TimestampAdapter : RealmTypeAdapter<RealmInstant, RealmInstant> {
-    override fun fromRealm(realmValue: RealmInstant): RealmInstant = RealmInstant.from(realmValue.epochSeconds, realmValue.nanosecondsOfSecond)
+    override fun fromRealm(realmValue: RealmInstant): RealmInstant =
+        RealmInstant.from(realmValue.epochSeconds, realmValue.nanosecondsOfSecond)
 
-    override fun toRealm(value: RealmInstant): RealmInstant = RealmInstant.from(value.epochSeconds, value.nanosecondsOfSecond)
+    override fun toRealm(value: RealmInstant): RealmInstant =
+        RealmInstant.from(value.epochSeconds, value.nanosecondsOfSecond)
 }
 
 object ObjectIdAdapter : RealmTypeAdapter<ObjectId, ObjectId> {
-    override fun fromRealm(realmValue: ObjectId): ObjectId = ObjectId.from(realmValue.asBsonObjectId().toHexString())
+    override fun fromRealm(realmValue: ObjectId): ObjectId =
+        ObjectId.from(realmValue.asBsonObjectId().toHexString())
 
-    override fun toRealm(value: ObjectId): ObjectId = ObjectId.from(value.asBsonObjectId().toHexString())
+    override fun toRealm(value: ObjectId): ObjectId =
+        ObjectId.from(value.asBsonObjectId().toHexString())
 }
 
 object BsonObjectIdAdapter : RealmTypeAdapter<BsonObjectId, BsonObjectId> {
-    override fun fromRealm(realmValue: BsonObjectId): BsonObjectId = BsonObjectId(realmValue.toHexString())
+    override fun fromRealm(realmValue: BsonObjectId): BsonObjectId =
+        BsonObjectId(realmValue.toHexString())
 
     override fun toRealm(value: BsonObjectId): BsonObjectId = BsonObjectId(value.toHexString())
 }
@@ -372,43 +385,58 @@ object NullableDoubleAdapter : RealmTypeAdapter<Double?, Double?> {
 }
 
 object NullableDecimal128Adapter : RealmTypeAdapter<Decimal128?, Decimal128?> {
-    override fun fromRealm(realmValue: Decimal128?): Decimal128? = realmValue?.let { Decimal128.fromIEEE754BIDEncoding(realmValue.high, realmValue.low) }
+    override fun fromRealm(realmValue: Decimal128?): Decimal128? =
+        realmValue?.let { Decimal128.fromIEEE754BIDEncoding(realmValue.high, realmValue.low) }
 
-    override fun toRealm(value: Decimal128?): Decimal128? = value?.let { Decimal128.fromIEEE754BIDEncoding(value.high, value.low) }
+    override fun toRealm(value: Decimal128?): Decimal128? =
+        value?.let { Decimal128.fromIEEE754BIDEncoding(value.high, value.low) }
 }
 
 object NullableTimestampAdapter : RealmTypeAdapter<RealmInstant?, RealmInstant?> {
-    override fun fromRealm(realmValue: RealmInstant?): RealmInstant? = realmValue?.let { RealmInstant.from(realmValue.epochSeconds, realmValue.nanosecondsOfSecond) }
+    override fun fromRealm(realmValue: RealmInstant?): RealmInstant? = realmValue?.let {
+        RealmInstant.from(
+            realmValue.epochSeconds,
+            realmValue.nanosecondsOfSecond
+        )
+    }
 
-    override fun toRealm(value: RealmInstant?): RealmInstant? = value?.let { RealmInstant.from(value.epochSeconds, value.nanosecondsOfSecond) }
+    override fun toRealm(value: RealmInstant?): RealmInstant? =
+        value?.let { RealmInstant.from(value.epochSeconds, value.nanosecondsOfSecond) }
 }
 
 object NullableObjectIdAdapter : RealmTypeAdapter<ObjectId?, ObjectId?> {
-    override fun fromRealm(realmValue: ObjectId?): ObjectId? = realmValue?.let { ObjectId.from(realmValue.asBsonObjectId().toHexString()) }
+    override fun fromRealm(realmValue: ObjectId?): ObjectId? =
+        realmValue?.let { ObjectId.from(realmValue.asBsonObjectId().toHexString()) }
 
-    override fun toRealm(value: ObjectId?): ObjectId? = value?.let { ObjectId.from(value.asBsonObjectId().toHexString()) }
+    override fun toRealm(value: ObjectId?): ObjectId? =
+        value?.let { ObjectId.from(value.asBsonObjectId().toHexString()) }
 }
 
 object NullableBsonObjectIdAdapter : RealmTypeAdapter<BsonObjectId?, BsonObjectId?> {
-    override fun fromRealm(realmValue: BsonObjectId?): BsonObjectId? = realmValue?.let { BsonObjectId(realmValue.toHexString()) }
+    override fun fromRealm(realmValue: BsonObjectId?): BsonObjectId? =
+        realmValue?.let { BsonObjectId(realmValue.toHexString()) }
 
-    override fun toRealm(value: BsonObjectId?): BsonObjectId? = value?.let { BsonObjectId(value.toHexString()) }
+    override fun toRealm(value: BsonObjectId?): BsonObjectId? =
+        value?.let { BsonObjectId(value.toHexString()) }
 }
 
 object NullableUuidAdapter : RealmTypeAdapter<RealmUUID?, RealmUUID?> {
-    override fun fromRealm(realmValue: RealmUUID?): RealmUUID? = realmValue?.let { RealmUUID.from(realmValue.bytes) }
+    override fun fromRealm(realmValue: RealmUUID?): RealmUUID? =
+        realmValue?.let { RealmUUID.from(realmValue.bytes) }
 
     override fun toRealm(value: RealmUUID?): RealmUUID? = value?.let { RealmUUID.from(value.bytes) }
 }
 
 object NullableBinaryAdapter : RealmTypeAdapter<ByteArray?, ByteArray?> {
-    override fun fromRealm(realmValue: ByteArray?): ByteArray? = realmValue?.let { realmValue.copyOf() }
+    override fun fromRealm(realmValue: ByteArray?): ByteArray? =
+        realmValue?.let { realmValue.copyOf() }
 
     override fun toRealm(value: ByteArray?): ByteArray? = value?.let { value.copyOf() }
 }
 
 object RealmAnyAdapter : RealmTypeAdapter<RealmAny?, RealmAny?> {
-    override fun fromRealm(realmValue: RealmAny?): RealmAny? = realmValue?.let { realmValue.clone() }
+    override fun fromRealm(realmValue: RealmAny?): RealmAny? =
+        realmValue?.let { realmValue.clone() }
 
     override fun toRealm(value: RealmAny?): RealmAny? = value?.let { value.clone() }
 }
@@ -420,24 +448,31 @@ object AllTypesObjectAdapter : RealmTypeAdapter<AllTypes?, AllTypes?> {
 }
 
 object StringRealmListAdapter : RealmTypeAdapter<RealmList<String>, RealmList<String>> {
-    override fun fromRealm(realmValue: RealmList<String>): RealmList<String> = realmListOf<String>().apply { addAll(realmValue) }
+    override fun fromRealm(realmValue: RealmList<String>): RealmList<String> =
+        realmListOf<String>().apply { addAll(realmValue) }
 
-    override fun toRealm(value: RealmList<String>): RealmList<String> = realmListOf<String>().apply { addAll(value) }
+    override fun toRealm(value: RealmList<String>): RealmList<String> =
+        realmListOf<String>().apply { addAll(value) }
 }
 
 object StringRealmSetAdapter : RealmTypeAdapter<RealmSet<String>, RealmSet<String>> {
-    override fun fromRealm(realmValue: RealmSet<String>): RealmSet<String> = realmSetOf<String>().apply { addAll(realmValue) }
+    override fun fromRealm(realmValue: RealmSet<String>): RealmSet<String> =
+        realmSetOf<String>().apply { addAll(realmValue) }
 
-    override fun toRealm(value: RealmSet<String>): RealmSet<String> = realmSetOf<String>().apply { addAll(value) }
+    override fun toRealm(value: RealmSet<String>): RealmSet<String> =
+        realmSetOf<String>().apply { addAll(value) }
 }
 
-object StringRealmDictionaryAdapter : RealmTypeAdapter<RealmDictionary<String>, RealmDictionary<String>> {
-    override fun fromRealm(realmValue: RealmDictionary<String>): RealmDictionary<String> = realmDictionaryOf<String>().apply { putAll(realmValue) }
+object StringRealmDictionaryAdapter :
+    RealmTypeAdapter<RealmDictionary<String>, RealmDictionary<String>> {
+    override fun fromRealm(realmValue: RealmDictionary<String>): RealmDictionary<String> =
+        realmDictionaryOf<String>().apply { putAll(realmValue) }
 
-    override fun toRealm(value: RealmDictionary<String>): RealmDictionary<String> = realmDictionaryOf<String>().apply { putAll(value) }
+    override fun toRealm(value: RealmDictionary<String>): RealmDictionary<String> =
+        realmDictionaryOf<String>().apply { putAll(value) }
 }
 
-internal fun RealmAny.clone() = when(type) {
+internal fun RealmAny.clone() = when (type) {
     RealmAny.Type.INT -> RealmAny.create(asInt())
     RealmAny.Type.BOOL -> RealmAny.create(asBoolean())
     RealmAny.Type.STRING -> RealmAny.create(asString())
