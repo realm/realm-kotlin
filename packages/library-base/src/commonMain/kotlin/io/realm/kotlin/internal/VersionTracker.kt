@@ -43,6 +43,7 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
         }
 
         realmReference.let {
+            println("VersionTracker: track version")
             log.trace("$owner TRACK-VERSION ${realmReference.version()}")
             references.add(Pair(realmReference.dbPointer, WeakReference(it)))
         }
@@ -74,12 +75,15 @@ internal class VersionTracker(private val owner: BaseRealmImpl, private val log:
         intermediateReferences.value = references
     }
 
-    fun versions(): Set<VersionId> =
+    fun versions(): Set<VersionId> {
         // We could actually also report freed versions here!?
-        intermediateReferences.value.mapNotNull { it.second.get()?.version() }.toSet()
+        println("Report versions")
+        return intermediateReferences.value.mapNotNull { it.second.get()?.version() }.toSet()
+    }
 
     fun close() {
         intermediateReferences.value.forEach { (pointer, _) ->
+            println("VersionTracker: Close pointer version")
             log.trace("$owner CLOSE-ACTIVE ${VersionId(RealmInterop.realm_get_version_id(pointer))}")
             RealmInterop.realm_close(pointer)
         }

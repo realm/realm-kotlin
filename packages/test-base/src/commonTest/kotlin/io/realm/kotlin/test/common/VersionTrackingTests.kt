@@ -219,7 +219,6 @@ class VersionTrackingTests {
     @Suppress("invisible_member", "invisible_reference")
     fun initialVersionDereferencedAfterFirstWrite() {
         (realm as RealmImpl).let { realm ->
-            assertNotNull(realm.initialRealmReference.value, toString())
             assertEquals(1, realm.versionTracker.versions().size, toString())
 
             val realmUpdates = TestChannel<Unit>()

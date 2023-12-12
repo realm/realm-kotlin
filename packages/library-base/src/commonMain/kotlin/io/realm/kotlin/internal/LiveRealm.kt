@@ -100,6 +100,7 @@ internal abstract class LiveRealm(
         return snapshotLock.withLock {
             _snapshot.value.also { snapshot ->
                 if (_closeSnapshotWhenAdvancing && !snapshot.isClosed()) {
+                    println("Get snapshot version")
                     log.trace("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
                     _closeSnapshotWhenAdvancing = false
                 }
@@ -122,17 +123,21 @@ internal abstract class LiveRealm(
     // Always executed on the live realm's backing thread
     internal fun updateSnapshot() {
         snapshotLock.withLock {
+            println("updateSnapshot: getVersion")
             val version = _snapshot.value.version()
+            println("updateSnapshot: realmReference.version()")
             if (realmReference.isClosed() || version == realmReference.version()) {
                 return
             }
             if (_closeSnapshotWhenAdvancing) {
+                println("updateSnapshot: close-untracked version")
                 log.trace("${this@LiveRealm} CLOSE-UNTRACKED $version")
                 _snapshot.value.close()
             } else {
                 versionTracker.trackReference(_snapshot.value)
             }
             _snapshot.value = realmReference.snapshot(owner)
+            println("updateSnapshot: advancing version")
             log.trace("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
             _closeSnapshotWhenAdvancing = true
         }
