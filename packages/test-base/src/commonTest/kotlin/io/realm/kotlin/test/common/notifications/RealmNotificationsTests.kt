@@ -129,7 +129,6 @@ class RealmNotificationsTests : FlowableTests {
         c2.cancel()
     }
 
-
     @Test
     override fun asFlow() {
         runBlocking {
