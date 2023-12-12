@@ -257,6 +257,12 @@ public class RealmImpl private constructor(
         return initialRealmReference.value.let { localReference ->
             // Find whether the user-facing, notifier or writer has the latest snapshot.
             // Sort is stable, it will try to preserve the following order.
+            println("RealmImpl: InitialRealmReference unchecked version")
+            println(localReference?.uncheckedVersion())
+            println("RealmImpl: InitialRealmReference writer version")
+            println(writer.version)
+            println("RealmImpl: InitialRealmReference notifier version")
+            println(notifier.version)
             listOf(
                 { localReference } to localReference?.uncheckedVersion(),
                 { writer.snapshot } to writer.version,
@@ -268,6 +274,7 @@ public class RealmImpl private constructor(
     }
 
     public fun activeVersions(): VersionInfo {
+        println("RealmImpl: activeVersions")
         val mainVersions: VersionData = VersionData(
             current = initialRealmReference.value?.uncheckedVersion(),
             active = versionTracker.versions()

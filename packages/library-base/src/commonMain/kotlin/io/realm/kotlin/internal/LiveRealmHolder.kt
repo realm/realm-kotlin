@@ -34,7 +34,9 @@ internal abstract class LiveRealmHolder<out LiveRealm> {
      * request a more recent GC-tracked snapshot from the [LiveRealmHolder] through [snapshot].
      */
     val version: VersionId?
-        get() = if (realmInitializer.isInitialized()) { realm.snapshotVersion } else null
+        get() = if (realmInitializer.isInitialized()) {
+            realm.snapshotVersion
+        } else null
 
     /**
      * Returns a GC-tracked snapshot from the underlying [realm]. See [LiveRealm.gcTrackedSnapshot]
@@ -48,9 +50,12 @@ internal abstract class LiveRealmHolder<out LiveRealm> {
     /**
      * Dump the current snapshot and tracked versions of the LiveRealm used for debugging purpose.
      */
-    fun versions(): VersionData? = if (realmInitializer.isInitialized()) {
-        realm.versions()
-    } else {
-        null
+    fun versions(): VersionData? {
+        println("LiveRealmHolder: versions()")
+        return if (realmInitializer.isInitialized()) {
+            realm.versions()
+        } else {
+            null
+        }
     }
 }
