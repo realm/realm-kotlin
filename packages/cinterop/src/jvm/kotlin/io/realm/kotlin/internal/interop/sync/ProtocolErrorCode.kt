@@ -130,7 +130,7 @@ actual enum class WebsocketErrorCode(
     RLM_ERR_WEBSOCKET_FATAL_ERROR("FatalError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_FATAL_ERROR);
 
     actual companion object {
-        internal actual fun of(nativeValue: Int): WebsocketErrorCode? =
+        actual fun of(nativeValue: Int): WebsocketErrorCode? =
             values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }

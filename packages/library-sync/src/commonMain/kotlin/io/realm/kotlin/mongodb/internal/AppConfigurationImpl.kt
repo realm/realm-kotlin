@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import io.realm.kotlin.internal.platform.DEVICE_MANUFACTURER
 import io.realm.kotlin.internal.platform.DEVICE_MODEL
 import io.realm.kotlin.internal.platform.OS_VERSION
@@ -47,6 +48,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val encryptionKey: ByteArray?,
     private val appNetworkDispatcherFactory: CoroutineDispatcherFactory,
     internal val networkTransportFactory: (dispatcher: DispatcherHolder) -> NetworkTransport,
+    private val websocketTransport: WebSocketTransport?,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
     public val logger: LogConfiguration?,
@@ -88,12 +90,15 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         }
         val sdkInfo = "RealmKotlin/$SDK_VERSION"
         val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig(
+            websocketTransport,
             sdkInfo,
             applicationInfo.toString()
         )
-        return Triple(
+
+        return AppResources(
             appDispatcher,
             networkTransport,
+            websocketTransport,
             RealmInterop.realm_app_get(
                 appConfigPointer,
                 synClientConfig,
@@ -143,7 +148,11 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         )
     }
 
-    private fun initializeSyncClientConfig(sdkInfo: String?, applicationInfo: String?): RealmSyncClientConfigurationPointer =
+    private fun initializeSyncClientConfig(
+        webSocketTransport: WebSocketTransport?,
+        sdkInfo: String?,
+        applicationInfo: String?
+    ): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
                 // Initialize client configuration first
@@ -202,6 +211,11 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                     syncClientConfig,
                     syncTimeoutOptions.fastReconnectLimit.inWholeMilliseconds.toULong()
                 )
+
+                // Use platform networking for Sync client WebSockets if provided
+                webSocketTransport?.let {
+                    RealmInterop.realm_sync_set_websocket_transport(syncClientConfig, it)
+                }
             }
 
     internal companion object {

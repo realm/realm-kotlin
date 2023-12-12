@@ -63,7 +63,7 @@ public fun interface CoroutineDispatcherFactory {
 
     /**
      * Returns the dispatcher from the factory configuration, creating it if needed.
-     * If a dispatcher is created, calling this method multiple times wille create a
+     * If a dispatcher is created, calling this method multiple times will create a
      * new dispatcher for each call.
      */
     public fun create(): DispatcherHolder
