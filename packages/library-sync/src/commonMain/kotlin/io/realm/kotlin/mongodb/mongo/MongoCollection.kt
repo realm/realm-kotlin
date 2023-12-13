@@ -17,8 +17,8 @@
 // TODO - QUESTIONS
 //  - should we allow serialization of update, sort and projection arguments?
 //  - Experimental annotation as a safegaurd around all the serialization stuff? We dont support an API without Bson-serialization, so will depend on ExperimentalKBsonSerializerApi internally anyway, so can't avoid the KSerialization-dependency
-//  - Missing ignoreUnknown properties
 //  - #naming App Services seems to use "Data source", Data
+//  - What about missing fields in server response -> ServiceException?
 
 package io.realm.kotlin.mongodb.mongo
 
@@ -43,10 +43,11 @@ import kotlin.jvm.JvmName
  */
 public interface MongoCollection<T, K> {
 
-    /**
-     * Name of the remote collection.
-     */
-    public val name: String
+    // FIXME Remove? as we don't have a name when the collection is obtained from a schema name (directly from MongoClient
+//    /**
+//     * Name of the remote collection.
+//     */
+//    public val name: String
 
     /**
      * Get an instance of the same collection with a different set of default types serialization.
@@ -60,14 +61,15 @@ public suspend fun MongoCollection<*, *>.count(filter: BsonDocument? = null, lim
     return count(filter, limit)
 }
 
-public suspend inline fun < reified T, R : Any> MongoCollection<T, R>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T {
+public suspend inline fun < reified T, R : Any> MongoCollection<T, R>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T? {
     isType<MongoCollectionImpl<*, *>>(this)
-    return decodeFromBsonValue(findOne(filter, projection, sort))
+    val bsonValue: BsonValue? = findOne(filter, projection, sort)
+    return decodeFromBsonValue<T?>(bsonValue!!)
 }
 
 @JvmName("findOneTyped")
-public suspend inline fun <reified T> MongoCollection<*, *>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T {
-    return (this as MongoCollection<T, BsonValue>).findOne(filter, projection, sort)
+public suspend inline fun <reified T> MongoCollection<*, *>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T? {
+    return (this as MongoCollection<T?, BsonValue>).findOne(filter, projection, sort)
 }
 
 public suspend inline fun <reified T, K : Any> MongoCollection<T, K>.find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null): List<T> {
@@ -172,7 +174,7 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndU
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
+): T? {
     isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndUpdate(filter, update, projection, sort, upsert, returnNewDoc))
 }
@@ -186,7 +188,7 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndUpdate(
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
+): T? {
     return (this as MongoCollection<T, BsonValue>).findOneAndUpdate(filter, update, projection, sort, upsert, returnNewDoc)
 }
 
@@ -198,7 +200,7 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndR
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
+): T? {
     isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndReplace(filter, update, projection, sort, upsert, returnNewDoc))
 }
@@ -212,7 +214,7 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndReplace(
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
-): T {
+): T? {
     return (this as MongoCollection<T, BsonValue>).findOneAndReplace(filter, update, projection, sort, upsert, returnNewDoc)
 }
 
@@ -220,7 +222,7 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndD
     filter: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
-): T {
+): T? {
     isType<MongoCollectionImpl<*, *>>(this)
     return decodeFromBsonValue(findOneAndDelete(filter, projection, sort))
 }
@@ -230,6 +232,6 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndDelete(
     filter: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
-): T {
+): T? {
     return (this as MongoCollection<T, BsonValue>).findOneAndDelete(filter, projection, sort)
 }

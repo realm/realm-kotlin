@@ -33,9 +33,9 @@ internal class MongoDatabaseImpl constructor(
 ) : MongoDatabase {
 
     override fun collection(collectionName: String): MongoCollection<BsonDocument, BsonValue> {
-        return MongoCollectionImpl(this, collectionName, this.eJson)
+        return MongoDatabaseCollection(this, collectionName, this.eJson)
     }
 
     override fun <T, K> collection(collectionName: String, eJson: EJson?): MongoCollection<T, K> =
-        MongoCollectionImpl(this, collectionName, eJson ?: this.eJson)
+        MongoDatabaseCollection(this, collectionName, eJson ?: this.eJson)
 }

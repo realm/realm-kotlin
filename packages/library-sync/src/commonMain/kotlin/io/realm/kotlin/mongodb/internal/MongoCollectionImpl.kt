@@ -23,6 +23,7 @@ import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBoolean
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonInt64
+import org.mongodb.kbson.BsonNull
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
@@ -30,50 +31,67 @@ import org.mongodb.kbson.serialization.EJson
 import org.mongodb.kbson.serialization.decodeFromBsonValue
 import org.mongodb.kbson.serialization.encodeToBsonValue
 
-@OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
 @PublishedApi
-internal class MongoCollectionImpl<T, K> constructor(
-    @PublishedApi internal val database: MongoDatabaseImpl,
-    override val name: String,
-    val eJson: EJson,
-) : MongoCollection<T, K> {
-
-    val client = this.database.client
-    val user = client.user
-    val functions = client.functions
-
-    private val defaults: Map<String, BsonValue> = mapOf(
+@OptIn(ExperimentalKBsonSerializerApi::class)
+internal class MongoDatabaseCollection<T, K>(@PublishedApi internal val database: MongoDatabaseImpl, val name: String, eJson: EJson) : MongoCollectionImpl<T, K>(database.client.functions, eJson) {
+    override val defaults: Map<String, BsonValue> = mapOf(
         "database" to BsonString(database.name),
         "collection" to BsonString(name),
     )
-
     @OptIn(ExperimentalKBsonSerializerApi::class)
     override fun <T, K> collection(eJson: EJson?): MongoCollection<T, K> {
-        return MongoCollectionImpl(this.database, this.name, eJson ?: this.eJson)
+        return MongoDatabaseCollection(this.database, this.name, eJson ?: this.eJson)
     }
+}
 
-    private suspend inline fun <reified R> call(name: String, crossinline arguments: MutableMap<String, BsonValue>.() -> Unit): R {
+@PublishedApi
+@OptIn(ExperimentalKBsonSerializerApi::class)
+internal class MongoClientCollection<T, K>(@PublishedApi internal val clientImpl: MongoClientImpl, val schemaName: String, eJson: EJson) : MongoCollectionImpl<T, K>(clientImpl.functions, eJson) {
+    override val defaults: Map<String, BsonValue> = mapOf(
+        "schema_name" to BsonString(schemaName),
+    )
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    override fun <T, K> collection(eJson: EJson?): MongoCollection<T, K> {
+        return MongoClientCollection(clientImpl, schemaName, eJson ?: this.eJson)
+    }
+}
+
+@OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
+@PublishedApi
+internal abstract class MongoCollectionImpl<T, K> constructor(
+    val functions: FunctionsImpl,
+    val eJson: EJson,
+) : MongoCollection<T, K> {
+
+    // Default entries for the argument document submitted for the function call.
+    abstract val defaults: Map<String, BsonValue>
+
+    private suspend fun call(name: String, arguments: MutableMap<String, BsonValue>.() -> Unit): BsonValue {
         val doc = defaults.toMutableMap()
         arguments(doc)
-        val response = functions.callInternal(name, BsonArray(listOf(BsonDocument(doc))))
-        return decodeFromBsonValue(response)
+        val argument = BsonDocument(doc)
+        return functions.callInternal(name, BsonArray(listOf(argument)))
     }
 
     @PublishedApi
     internal suspend fun count(filter: BsonDocument? = null, limit: Long? = null): Long {
-        return call("count") {
-            filter?.let { put("query", it) }
-            limit?.let { put("limit", BsonInt64(it)) }
-        }
+        return decodeFromBsonValue(
+            call("count") {
+                filter?.let { put("query", it) }
+                limit?.let<Long, Unit> { put("limit", BsonInt64(it)) }
+            }
+        )
     }
 
     @PublishedApi
-    internal suspend fun findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): BsonValue =
-        call("findOne") {
+    internal suspend fun findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): BsonValue {
+        val call: BsonValue = call("findOne") {
             filter?.let { put("query", it) }
             projection?.let { put("projection", it) }
             sort?.let { put("sort", it) }
         }
+        return call
+    }
 
     @PublishedApi
     internal suspend fun find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null): BsonValue =
@@ -86,21 +104,21 @@ internal class MongoCollectionImpl<T, K> constructor(
 
     @PublishedApi
     internal suspend fun aggregate(pipeline: List<BsonDocument>): List<BsonValue> =
-        call<BsonValue>("aggregate") { put("pipeline", BsonArray(pipeline)) }.asArray().toList()
+        call("aggregate") { put("pipeline", BsonArray(pipeline)) }.asArray().toList()
 
     @PublishedApi
     internal suspend fun insertOne(document: BsonDocument): BsonValue =
-        call<BsonValue>("insertOne") { put("document", document) }.asDocument()["insertedId"]!!
+        call("insertOne") { put("document", document) }.asDocument()["insertedId"]!!
 
     @PublishedApi
     internal suspend fun insertMany(documents: List<BsonDocument>): List<BsonValue> =
-        call<BsonValue>("insertMany") {
+        call("insertMany") {
             put("documents", BsonArray(documents))
         }.asDocument()["insertedIds"]!!.asArray().toList()
 
     @PublishedApi
     internal suspend fun deleteOne(filter: BsonDocument): Boolean {
-        val deletedCountBson = call<BsonValue>("deleteOne") {
+        val deletedCountBson = call("deleteOne") {
             put("query", filter)
         }.asDocument()["deletedCount"]!!
         val deletedCount = decodeFromBsonValue<Long>(deletedCountBson)
@@ -113,7 +131,7 @@ internal class MongoCollectionImpl<T, K> constructor(
 
     @PublishedApi
     internal suspend fun deleteMany(filter: BsonDocument): Long {
-        val deletedCountBson = call<BsonValue>("deleteMany") {
+        val deletedCountBson = call("deleteMany") {
             put("query", filter)
         }.asDocument()["deletedCount"]!!
         return decodeFromBsonValue(deletedCountBson)
@@ -139,7 +157,7 @@ internal class MongoCollectionImpl<T, K> constructor(
 
     @PublishedApi
     internal suspend fun updateMany(filter: BsonDocument, update: BsonDocument, upsert: Boolean = false): Pair<Long, BsonValue?> {
-        val response = call<BsonValue>("updateMany") {
+        val response = call("updateMany") {
             put("query", filter)
             put("update", update)
             put("upsert", BsonBoolean(upsert))
@@ -202,15 +220,15 @@ internal class MongoCollectionImpl<T, K> constructor(
 internal inline fun <reified R : Any> MongoCollectionImpl<*, *>.encodeToBsonValue(value: R): BsonValue {
     return eJson.encodeToBsonValue(value)
 }
+
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
-internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bsonValue: BsonValue): R {
-    return if (R::class == BsonValue::class) {
-        bsonValue as R
-    } else {
-        eJson.decodeFromBsonValue(bsonValue)
+internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bsonValue: BsonValue): R =
+    when {
+        bsonValue == BsonNull -> null as R
+        R::class == BsonValue::class -> bsonValue as R
+        else -> eJson.decodeFromBsonValue(bsonValue)
     }
-}
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi

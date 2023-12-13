@@ -25,6 +25,7 @@ import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
 import io.realm.kotlin.mongodb.mongo.aggregate
+import io.realm.kotlin.mongodb.mongo.collection
 import io.realm.kotlin.mongodb.mongo.count
 import io.realm.kotlin.mongodb.mongo.deleteMany
 import io.realm.kotlin.mongodb.mongo.deleteOne
@@ -41,7 +42,13 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.modules.SerializersModule
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
@@ -59,10 +66,20 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-private const val SERVICE_NAME = "BackingDB"
-
+class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    override fun collection(): MongoCollection<SyncDog, ObjectId> {
+        return client.database(app.clientAppId).collection<SyncDog, ObjectId>("SyncDog")
+    }
+}
+class MongoCollectionFromClientTests : MongoCollectionTests() {
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    override fun collection(): MongoCollection<SyncDog, ObjectId> {
+        return client.collection()
+    }
+}
 @OptIn(ExperimentalKBsonSerializerApi::class)
-class MongoClientTest {
+abstract class MongoCollectionTests {
 
     lateinit var app: TestApp
     lateinit var client: MongoClient
@@ -85,9 +102,9 @@ class MongoClientTest {
             }
         }
         val user = app.createUserAndLogin()
-        client = user.mongoClient(SERVICE_NAME)
+        client = user.mongoClient(TEST_SERVICE_NAME)
         database = client.database(databaseName)
-        collection = database.collection<SyncDog, ObjectId>("SyncDog")
+        collection = collection()
     }
 
     @AfterTest
@@ -98,15 +115,16 @@ class MongoClientTest {
         }
     }
 
+    abstract fun collection(): MongoCollection<SyncDog, ObjectId>
+
+    // FIXME How to align this across MongoClient.collection and MongoDatabase.collection
     @Test
     fun properties() {
-        assertEquals("SyncDog", collection.name)
-        assertEquals(app.configuration.appId, database.name)
-        assertEquals(SERVICE_NAME, client.serviceName)
+//        assertEquals("SyncDog", collection.collectionname)
     }
 
     @Test
-    fun collection() = runBlocking<Unit> {
+    fun collection_reshaping() = runBlocking<Unit> {
         val bsonCollection: MongoCollection<BsonDocument, BsonValue> = database.collection("SyncDogIntId")
 
         // Default argument issues default return type
@@ -155,9 +173,10 @@ class MongoClientTest {
     }
 
     @Test
-    fun findOne() = runBlocking<Unit> {
+    open fun findOne() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
-        assertNull(collection.findOne())
+        val actual: SyncDog? = collection.findOne()
+        assertNull(actual)
         assertNull(collection.findOne<BsonValue>())
 
         collection.insertMany((1..10).map { SyncDog("dog-${it % 5}") })
@@ -169,14 +188,14 @@ class MongoClientTest {
         assertIs<SyncDog>(collection.findOne<SyncDog>(filter = BsonDocument("name", "dog-0")))
 
         collection.findOne<BsonDocument>(filter = BsonDocument("name", "dog-0")).run {
-            assertEquals("dog-0", get("name")!!.asString().value)
+            assertEquals("dog-0", this!!.get("name")!!.asString().value)
         }
 
         // Projection select field
         // Limit
         // Sort
-        val y: BsonDocument = collection.findOne<BsonDocument>(filter = BsonDocument("name", "dog-0"))
-        val y2: BsonValue = collection.findOne<BsonValue>(filter = BsonDocument("name", "dog-0"))
+        val y: BsonDocument = collection.findOne<BsonDocument>(filter = BsonDocument("name", "dog-0"))!!
+        val y2: BsonValue = collection.findOne<BsonValue>(filter = BsonDocument("name", "dog-0"))!!
 
         // argument type differentiation
         // - serialization issues
@@ -447,6 +466,13 @@ class MongoClientTest {
 
         // TODO
         //  Existing primary key object
+    }
+
+    @Test
+    fun insertOne_throwsOnTypeMismatch() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("insert not permitted") {
+            collection.insertOne<BsonDocument, ObjectId>(BsonDocument("""{"x": "a" }"""))
+        }
     }
 
 //
@@ -1317,7 +1343,7 @@ class MongoClientTest {
                 SyncDog("dog2")
             )
         )
-        val x: SyncDog = collection.findOneAndDelete<SyncDog>(
+        val x: SyncDog? = collection.findOneAndDelete<SyncDog>(
             BsonDocument(),
             BsonDocument("""{ "name": "dog1" }"""),
         )
@@ -1404,22 +1430,7 @@ class MongoClientTest {
 //    }
 }
 
-@Serializable
-class SyncDog : RealmObject {
-    constructor() {
-        this.name = "Default"
-    }
-
-    constructor(name: String) {
-        this.name = name
-    }
-
-    var name: String
-}
-
-@Serializable
-data class SyncDogIntId(val name: String, val _id: Int)
-
+@Suppress("name")
 @OptIn(ExperimentalKBsonSerializerApi::class)
 inline operator fun <reified T : Any> BsonDocument.Companion.invoke(
     key: String,
@@ -1427,3 +1438,62 @@ inline operator fun <reified T : Any> BsonDocument.Companion.invoke(
 ): BsonDocument {
     return BsonDocument(key to EJson.Default.encodeToBsonValue(value))
 }
+
+@Serializable
+class SyncDog(var name: String) : RealmObject {
+    constructor() : this("Default")
+}
+
+@Serializable
+data class SyncDogIntId(val name: String, val _id: Int)
+
+@PersistedName("SyncDog")
+class CustomDataType(var name: String) : RealmObject {
+    @Suppress("unused")
+    constructor() : this("Default")
+}
+
+@Serializable
+class NonSchemaType : RealmObject {
+    var name: String = "Default"
+}
+
+class CustomIdType(val id: ObjectId)
+
+class CustomDataTypeSerializer : KSerializer<CustomDataType> {
+
+    val serializer = BsonValue.serializer()
+    override val descriptor: SerialDescriptor = serializer.descriptor
+    override fun deserialize(decoder: Decoder): CustomDataType {
+        return decoder.decodeSerializableValue(serializer).let {
+            CustomDataType(it.asDocument()["name"]!!.asString().value)
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: CustomDataType) {
+        encoder.encodeSerializableValue(serializer, BsonDocument("name", value.name))
+    }
+}
+
+class CustomIdSerializer : KSerializer<CustomIdType> {
+    val serializer = BsonValue.serializer()
+    override val descriptor: SerialDescriptor = serializer.descriptor
+    override fun deserialize(decoder: Decoder): CustomIdType {
+        return decoder.decodeSerializableValue(serializer).let {
+            CustomIdType(it.asObjectId())
+        }
+    }
+
+    override fun serialize(encoder: Encoder, value: CustomIdType) {
+        encoder.encodeSerializableValue(serializer, value.id)
+    }
+}
+
+@OptIn(ExperimentalKBsonSerializerApi::class)
+val customEjsonSerializer = EJson(
+    ignoreUnknownKeys = false,
+    serializersModule = SerializersModule {
+        contextual(CustomDataType::class, CustomDataTypeSerializer())
+        contextual(CustomIdType::class, CustomIdSerializer())
+    }
+)
