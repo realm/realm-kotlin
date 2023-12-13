@@ -1096,11 +1096,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Restore Android Test APK
-        uses: actions/download-artifact@v3
-        with:
-          name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+#      - name: Restore Android Test APK
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
+#          path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
 
       - name: Restore Android Sync Test APK
         uses: actions/download-artifact@v3

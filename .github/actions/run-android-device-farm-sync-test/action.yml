@@ -25,7 +25,7 @@ runs:
         project_arn: ${{ inputs.project-arn }}
         device_pool_arn: ${{ inputs.device-pool-arn }}
         app_file: ${{ inputs.apk-path }}
-        auxiliaryApp: ${{ inputs.apk-path }}
+        auxiliaryApp: ${{ inputs.apk-auxiliary-path }}
         app_type: ANDROID_APP
         test_type: APPIUM_PYTHON
         test_package_file: https://github.com/realm/aws-devicefarm-sample-data/releases/download/0.3/sample_env_python3.zip
@@ -41,6 +41,7 @@ runs:
                 - export PYTHON_VERSION=3
             test:
               commands:
+                - adb shell pm list packages | grep realm
                 - adb shell am instrument -w -r io.realm.sync.testapp.test/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
 
     - run: |
