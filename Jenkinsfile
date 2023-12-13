@@ -256,6 +256,7 @@ pipeline {
                         testAndCollect("integration-tests/gradle/gradle75-test", "integrationTest")
                         withEnv(["JAVA_HOME=${JAVA_17}"]) {
                             testAndCollect("integration-tests/gradle/gradle8-test", "integrationTest")
+                            testAndCollect("integration-tests/gradle/gradle85-test", "integrationTest")
                         }
                     }
                 }
