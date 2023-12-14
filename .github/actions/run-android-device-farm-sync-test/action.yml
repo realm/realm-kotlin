@@ -19,7 +19,7 @@ runs:
   using: "composite"
   steps:
     - name: Run the tests
-      uses: nhachicha/aws-devicefarm/test-application@6649db58af66706eda92ebaf478d8fb31a814a82
+      uses: nhachicha/aws-devicefarm/test-application@c55f6647eb1c6bc78ec86857ef6a990fd84a6b98
       id: run-tests
       with:
         project_arn: ${{ inputs.project-arn }}
