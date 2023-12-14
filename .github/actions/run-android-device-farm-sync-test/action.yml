@@ -18,12 +18,6 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Log message using the console object
-      shell: bash
-      run: |
-        console.warn('>>>>>>>>>>>> Using new action with apk-auxiliary-path');
-        echo "APK with AUX apps"
-
     - name: Run the tests
       uses: nhachicha/aws-devicefarm/test-application@972cd0cbd0d048ef977cb3f6399d12ec9b7bcb27
       id: run-tests
@@ -47,7 +41,7 @@ runs:
                 - export PYTHON_VERSION=3
             test:
               commands:
-                - adb shell pm list packages |  grep realm
+                - adb shell pm list packages |grep realm
                 - adb shell am instrument -w -r io.realm.sync.testapp.test/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
 
     - run: |
