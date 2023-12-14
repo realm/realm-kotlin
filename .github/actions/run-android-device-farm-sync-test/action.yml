@@ -19,6 +19,7 @@ runs:
   using: "composite"
   steps:
     - name: Log message using the console object
+      shell: bash
       run: |
         console.warn('>>>>>>>>>>>> Using new action with apk-auxiliary-path');
         echo "APK with AUX apps"
