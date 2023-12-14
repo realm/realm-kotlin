@@ -19,9 +19,11 @@ runs:
   using: "composite"
   steps:
     - name: Run the tests
-      uses: nhachicha/aws-devicefarm/test-application@755918d1cdbcce207783ed350c1aaa75765e3881
+      uses: nhachicha/aws-devicefarm/test-application@master
+
       id: run-tests
       with:
+        force-pull: true
         project_arn: ${{ inputs.project-arn }}
         device_pool_arn: ${{ inputs.device-pool-arn }}
         app_file: ${{ inputs.apk-path }}
