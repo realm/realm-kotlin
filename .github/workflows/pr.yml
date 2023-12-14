@@ -1106,9 +1106,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: android-sync-test-apk-${{ needs.check-cache.outputs.version-label }}
-          path: |
-            ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
-            ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
+          path: ./packages/test-sync/build/outputs/apk/
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -1132,7 +1130,7 @@ jobs:
         with:
           apk-path: ${{ github.workspace }}/packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           apk-auxiliary-path: ${{ github.workspace }}/packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
-          app-id: io.realm.testapp.test
+          app-id: io.realm.sync.testapp.test
           project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
