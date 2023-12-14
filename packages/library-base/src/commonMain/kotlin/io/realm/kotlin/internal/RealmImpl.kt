@@ -46,7 +46,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -208,14 +210,13 @@ public class RealmImpl private constructor(
     }
 
     override fun asFlow(): Flow<RealmChange<Realm>> = scopedFlow {
-        val firstItem = atomic(true)
-        return@scopedFlow notifierFlow.map {
-            if (firstItem.compareAndSet(expect = true, update = false)) {
-                InitialRealmImpl(this)
-            } else {
-                it
+        notifierFlow.withIndex()
+            .map { (index, change) ->
+                when (index) {
+                    0 -> InitialRealmImpl(this)
+                    else -> change
+                }
             }
-        }
     }
 
     override fun writeCopyTo(configuration: Configuration) {
