@@ -19,13 +19,13 @@ runs:
   using: "composite"
   steps:
     - name: Run the tests
-      uses: nhachicha/aws-devicefarm/test-application@034225295b7f7351606f1a752429d50dfbc43d58
+      uses: nhachicha/aws-devicefarm/test-application@6649db58af66706eda92ebaf478d8fb31a814a82
       id: run-tests
       with:
         project_arn: ${{ inputs.project-arn }}
         device_pool_arn: ${{ inputs.device-pool-arn }}
         app_file: ${{ inputs.apk-path }}
-        auxiliaryApp: ${{ inputs.apk-auxiliary-path }}
+        apk_auxiliary_file: ${{ inputs.apk-auxiliary-path }}
         app_type: ANDROID_APP
         test_type: APPIUM_PYTHON
         test_package_file: https://github.com/realm/aws-devicefarm-sample-data/releases/download/0.3/sample_env_python3.zip
