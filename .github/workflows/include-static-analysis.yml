@@ -18,6 +18,11 @@ jobs:
         with:
           cache-read-only: false # TODO How to configure caching here?
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
+
       - name: Build Gradle Plugin
         working-directory: packages
         run: ./gradlew :gradle-plugin:publishAllPublicationsToTestRepository --info --stacktrace
