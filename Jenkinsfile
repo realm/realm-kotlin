@@ -759,7 +759,7 @@ def build_jvm_windows(String buildType) {
 
   def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
   dir('packages') {
-      bat "cd cinterop && mkdir build && cd build && rmdir /s /q realmWindowsBuild && mkdir realmWindowsBuild && cd realmWindowsBuild &&  \"${tool 'cmake'}\" ${cmakeDefinitions} ..\\..\\src\\jvm && \"${tool 'cmake'}\" --build . --config Release"
+      bat "cd cinterop && rmdir /s /q build & mkdir build & cd build && rmdir /s /q realmWindowsBuild & mkdir realmWindowsBuild && cd realmWindowsBuild &&  \"${tool 'cmake'}\" ${cmakeDefinitions} ..\\..\\src\\jvm && \"${tool 'cmake'}\" --build . --config Release"
   }
   stash includes: 'packages/cinterop/build/realmWindowsBuild/Release/realmc.dll', name: 'win_dll'
 }
