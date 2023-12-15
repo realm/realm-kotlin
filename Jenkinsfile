@@ -19,7 +19,7 @@ import groovy.json.JsonOutput
 @Library('realm-ci') _
 
 // Branches from which we release SNAPSHOT's. Only release branches need to run on actual hardware.
-releaseBranches = [ 'main', 'releases', 'next-major' ]
+releaseBranches = [ 'main', 'releases', 'next-major', 'cm/gradle-setup-for-ci' ]
 // Branches that are "important", so if they do not compile they will generate a Slack notification
 slackNotificationBranches = [ 'main', 'releases', 'next-major' ]
 // Shortcut to current branch name that is being tested
@@ -281,24 +281,24 @@ pipeline {
                         testAndCollect("examples/realm-java-compatibility", "-Pkotlin.experimental.tryK2=true connectedAndroidTest")
                     }
                 }
-                stage('Track build metrics') {
-                    when { expression { currentBranch == "main" } }
-                    steps {
-                        trackBuildMetrics(version)
-                    }
-                }
-                stage('Publish SNAPSHOT to Maven Central') {
-                    when { expression { shouldPublishSnapshot(version) } }
-                    steps {
-                        runPublishSnapshotToMavenCentral()
-                    }
-                }
-                stage('Publish Release to Maven Central') {
-                    when { expression { publishBuild } }
-                    steps {
-                        runPublishReleaseOnMavenCentral()
-                    }
-                }
+                // stage('Track build metrics') {
+                //     when { expression { currentBranch == "main" } }
+                //     steps {
+                //         trackBuildMetrics(version)
+                //     }
+                // }
+                // // stage('Publish SNAPSHOT to Maven Central') {
+                //     when { expression { shouldPublishSnapshot(version) } }
+                //     steps {
+                //         runPublishSnapshotToMavenCentral()
+                //     }
+                // }
+                // stage('Publish Release to Maven Central') {
+                //     when { expression { publishBuild } }
+                //     steps {
+                //         runPublishReleaseOnMavenCentral()
+                //     }
+                // }
             }
         }
     }
