@@ -734,7 +734,7 @@ def build_jvm_linux(String buildType) {
                  -DREALM_ENABLE_SYNC=1 \
                  -DREALM_NO_TESTS=1 \
                  -DREALM_BUILD_LIB_ONLY=true \
-           ../../jvm
+           ../../src/jvm
            make -j8
         """
 
@@ -759,7 +759,7 @@ def build_jvm_windows(String buildType) {
 
   def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
   dir('packages') {
-      bat "cd cinterop\\build && mkdir build && cd build && && rmdir /s /q realmWindowsBuild && mkdir realmWindowsBuild && cd realmWindowsBuild &&  \"${tool 'cmake'}\" ${cmakeDefinitions} ..\\..\\jvm && \"${tool 'cmake'}\" --build . --config Release"
+      bat "cd cinterop && mkdir build && cd build && rmdir /s /q realmWindowsBuild && mkdir realmWindowsBuild && cd realmWindowsBuild &&  \"${tool 'cmake'}\" ${cmakeDefinitions} ..\\..\\jvm && \"${tool 'cmake'}\" --build . --config Release"
   }
   stash includes: 'packages/cinterop/build/realmWindowsBuild/Release/realmc.dll', name: 'win_dll'
 }
