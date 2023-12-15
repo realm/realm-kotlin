@@ -546,8 +546,6 @@ jobs:
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
           gh repo clone 10gen/baasaas
