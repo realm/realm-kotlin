@@ -546,8 +546,10 @@ jobs:
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git clone https://${{ secrets.GITHUB_TOKEN }}@github.com/10gen/baasaas.git
+          git clone https://github.com/10gen/baasaas
           
 
       # Start BAAS instance in the background
