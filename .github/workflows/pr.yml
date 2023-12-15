@@ -540,7 +540,28 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
+      - name: Install JSON parser
+        run: brew install jq
+
+      # checkout BAAS CLI repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          repository: 10gen/baasaas
+          ref: main
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        working-directory: baasaas
+        env:
+          BAAS_CLI_API: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(APIKEY=$BAAS_CLI_API ./cli.sh start)
+          echo "::set-output name=baas_container_id::$OUTPUT"
+
+      # TODO This cmake version is not being used by the Android builds. Figure out why.
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
@@ -588,9 +609,19 @@ jobs:
         working-directory: packages
         run: ./gradlew  :test-base:assembleAndroidTest -PignoreNativeLibs=true
 
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        working-directory: baasaas
+        env:
+          BAAS_CLI_API: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(APIKEY=$BAAS_CLI_API ./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "::set-output name=baas_container_hostname::$OUTPUT"
+
       - name: Build Android Sync Test Apk
         working-directory: packages
-        run: ./gradlew  :test-sync:packageDebug :test-sync:assembleAndroidTest -PignoreNativeLibs=true
+        run: ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:packageDebug :test-sync:assembleAndroidTest -PignoreNativeLibs=true
 
       - name: Build packages
         working-directory: packages
