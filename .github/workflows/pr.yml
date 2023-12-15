@@ -547,7 +547,7 @@ jobs:
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
         run: |
-          echo ${{ secrets.REALM_REPO_PAT }} | gh auth login --with-token
+          echo ${{ secrets.BAASAAS_REPO_PAT }} | gh auth login --with-token
           gh repo clone 10gen/baasaas
           
 
