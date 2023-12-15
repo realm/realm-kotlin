@@ -22,6 +22,8 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
@@ -33,9 +35,9 @@ import io.realm.kotlin.mongodb.mongo.insertOne
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
+import io.realm.kotlin.test.mongodb.common.mongo.CollectionDataType
 import io.realm.kotlin.test.mongodb.common.mongo.CustomDataType
 import io.realm.kotlin.test.mongodb.common.mongo.CustomIdType
-import io.realm.kotlin.test.mongodb.common.mongo.SyncDog
 import io.realm.kotlin.test.mongodb.common.mongo.TEST_SERVICE_NAME
 import io.realm.kotlin.test.mongodb.common.mongo.customEjsonSerializer
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
@@ -742,7 +744,7 @@ class UserTests {
             createUserAndLogin(email, password)
         }
         val client = user.mongoClient(TEST_SERVICE_NAME)
-        assertIs<ObjectId>(client.database(app.clientAppId).collection<SyncDog, ObjectId>("SyncDog").insertOne(SyncDog("dog-1")))
+        assertIs<Int>(client.database(app.clientAppId).collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
     }
 
     @Test
@@ -772,9 +774,9 @@ class UserTests {
         }
         val mongoClient = user.mongoClient("UNKNOWN_SERVICE")
         val collection =
-            mongoClient.database(app.clientAppId).collection<SyncDog, ObjectId>("SyncDog")
+            mongoClient.database(app.clientAppId).collection<CollectionDataType, ObjectId>("CollectionDataType")
         assertFailsWithMessage<ServiceException>("service not found: 'UNKNOWN_SERVICE'") {
-            collection.insertOne(SyncDog("dog-1"))
+            collection.insertOne(CollectionDataType("object-1"))
         }
     }
 

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+@file:OptIn(ExperimentalKBsonSerializerApi::class)
+
 package io.realm.kotlin.test.mongodb.common.mongo
 
 import io.realm.kotlin.internal.platform.runBlocking
@@ -41,15 +43,18 @@ import io.realm.kotlin.mongodb.mongo.updateOne
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
@@ -57,6 +62,7 @@ import org.mongodb.kbson.ObjectId
 import org.mongodb.kbson.serialization.EJson
 import org.mongodb.kbson.serialization.encodeToBsonValue
 import kotlin.random.Random
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -67,44 +73,69 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
-    @OptIn(ExperimentalKBsonSerializerApi::class)
-    override fun collection(): MongoCollection<SyncDog, ObjectId> {
-        return client.database(app.clientAppId).collection<SyncDog, ObjectId>("SyncDog")
+
+    lateinit var database: MongoDatabase
+
+    @BeforeTest
+    override fun setUp() {
+        super.setUp()
+        val databaseName = app.configuration.appId
+        database = client.database(databaseName)
+        collection = collection(CollectionDataType::class)
+    }
+
+    @Test
+    override fun findOne_unknownCollection() = runBlocking<Unit> {
+        // Unknown collections will create the collection
+        val unknownCollection = collection<Unknown, BsonValue>(Unknown::class)
+        assertNull(unknownCollection.findOne())
     }
 }
 class MongoCollectionFromClientTests : MongoCollectionTests() {
-    @OptIn(ExperimentalKBsonSerializerApi::class)
-    override fun collection(): MongoCollection<SyncDog, ObjectId> {
-        return client.collection()
+
+    @BeforeTest
+    override fun setUp() {
+        super.setUp()
+        collection = collection(CollectionDataType::class)
+    }
+
+    @Test
+    fun name_persistedName() {
+        assertEquals("CollectionDataType", client.collection<CustomDataType, ObjectId>().name)
+    }
+
+    @Test
+    override fun findOne_unknownCollection() = runBlocking<Unit> {
+        val unknownCollection = collection<Unknown, BsonValue>(Unknown::class)
+        assertFailsWithMessage<ServiceException>("no matching collection found that maps to a table with title \"Unknown\"") {
+            RealmLog.level = LogLevel.ALL
+            unknownCollection.findOne()
+        }
     }
 }
-@OptIn(ExperimentalKBsonSerializerApi::class)
-abstract class MongoCollectionTests {
+
+abstract sealed class MongoCollectionTests {
 
     lateinit var app: TestApp
     lateinit var client: MongoClient
-    lateinit var database: MongoDatabase
-    lateinit var collection: MongoCollection<SyncDog, ObjectId>
+    lateinit var collection: MongoCollection<CollectionDataType, Int>
 
     @BeforeTest
-    fun setUp() {
+    open fun setUp() {
         app = TestApp(
             this::class.simpleName,
             builder = { builder: AppConfiguration.Builder ->
                 builder.httpLogObfuscator(null)
             }
         )
-        val databaseName = app.configuration.appId
 
         app.asTestApp.run {
             runBlocking {
-                deleteDocuments(databaseName, "SyncDog", "{}")
+                deleteDocuments(app.configuration.appId, "CollectionDataType", "{}")
             }
         }
         val user = app.createUserAndLogin()
         client = user.mongoClient(TEST_SERVICE_NAME)
-        database = client.database(databaseName)
-        collection = collection()
     }
 
     @AfterTest
@@ -115,179 +146,138 @@ abstract class MongoCollectionTests {
         }
     }
 
-    abstract fun collection(): MongoCollection<SyncDog, ObjectId>
-
-    // FIXME How to align this across MongoClient.collection and MongoDatabase.collection
     @Test
-    fun properties() {
-//        assertEquals("SyncDog", collection.collectionname)
+    fun name() {
+        assertEquals("CollectionDataType", collection.name)
     }
 
     @Test
-    fun collection_reshaping() = runBlocking<Unit> {
-        val bsonCollection: MongoCollection<BsonDocument, BsonValue> = database.collection("SyncDogIntId")
+    open fun reshape() = runBlocking<Unit> {
+        // Original typing
+        assertIs<Int>(collection.insertOne(CollectionDataType("object-1", Random.nextInt())))
+        assertIs<CollectionDataType>(collection.findOne())
 
-        // Default argument issues default return type
-        assertIs<BsonValue>(bsonCollection.insertOne(BsonDocument("dog-1", Random.nextInt())))
+        // Reshaped
+        val bsonCollection: MongoCollection<BsonDocument, BsonValue> = collection.reshape()
+        assertIs<BsonValue>(bsonCollection.insertOne(BsonDocument("name", "object-2")))
         assertIs<BsonDocument>(bsonCollection.findOne())
+        assertEquals(2, bsonCollection.count())
+    }
 
-        // Cannot resolve return type because not using explicit typed insertOne
-        // val value2 = bsonCollection.insertOne(SyncDogIntId("dog-2", Random.nextInt()))
+    @Test
+    fun reshape_withCustomSerialization() = runBlocking<Unit> {
+        val reshapedCollectionWithDefaultSerializer: MongoCollection<CustomDataType, CustomIdType> =
+            collection.reshape()
 
-        // Explicit combinations returns what they should
-        val value2: BsonValue = bsonCollection.insertOne(SyncDogIntId("dog-2", Random.nextInt()))
-        assertIs<BsonValue>(value2)
-        val value3: Int = bsonCollection.insertOne(SyncDogIntId("dog-2", Random.nextInt()))
-        assertIs<Int>(value3)
-        assertIs<SyncDogIntId>(bsonCollection.findOne<SyncDogIntId>())
+        assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
+            reshapedCollectionWithDefaultSerializer.insertOne(CustomDataType("object-2"))
+        }
 
-        // Converting to typed collection changes defaults
-        val typedCollection = bsonCollection.collection<SyncDogIntId, Int>()
-        assertIs<Int>(typedCollection.insertOne(SyncDogIntId("dog-1", Random.nextInt())))
-        assertIs<SyncDogIntId>(typedCollection.findOne())
+        val reshapedCollectionWithCustomSerializer: MongoCollection<CustomDataType, CustomIdType> =
+            collection.reshape(customEjsonSerializer)
 
-        // TODO eJson
+        assertIs<CustomIdType>(reshapedCollectionWithCustomSerializer.insertOne(CustomDataType("object-2")))
     }
 
     @Test
     fun count() = runBlocking<Unit> {
+        RealmLog.level = LogLevel.ALL
         assertEquals(0, collection.count())
 
-        collection.insertMany((1..10).map { SyncDog("dog-${it % 5}") })
+        collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
 
         assertEquals(10, collection.count())
         assertEquals(5, collection.count(limit = 5))
-        assertEquals(2, collection.count(filter = BsonDocument("name" to BsonString("dog-0"))))
-        assertEquals(2, collection.count(filter = BsonDocument("name", "dog-0")))
+        assertEquals(2, collection.count(filter = BsonDocument("name" to BsonString("object-0"))))
+        assertEquals(2, collection.count(filter = BsonDocument("name", "object-0")))
         assertEquals(
             1,
-            collection.count(filter = BsonDocument("name" to BsonString("dog-0")), limit = 1)
+            collection.count(filter = BsonDocument("name" to BsonString("object-0")), limit = 1)
         )
     }
 
     @Test
     fun count_invalidFilter() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("operator") {
-            collection.count(filter = BsonDocument("\$who", "dog-0"))
+            collection.count(filter = BsonDocument("\$who", "object-0"))
         }
     }
 
     @Test
     open fun findOne() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
-        val actual: SyncDog? = collection.findOne()
-        assertNull(actual)
+        // Empty collections
+        assertNull(collection.findOne())
         assertNull(collection.findOne<BsonValue>())
 
-        collection.insertMany((1..10).map { SyncDog("dog-${it % 5}") })
+        collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
 
         // No match
         assertNull(collection.findOne(filter = BsonDocument("name", "cat")))
 
-        // Only on document even though multiple matches
-        assertIs<SyncDog>(collection.findOne<SyncDog>(filter = BsonDocument("name", "dog-0")))
-
-        collection.findOne<BsonDocument>(filter = BsonDocument("name", "dog-0")).run {
-            assertEquals("dog-0", this!!.get("name")!!.asString().value)
+        // Multiple matches, still only one document
+        // Default types
+        collection.findOne(filter = BsonDocument("name", "object-0")).run {
+            assertIs<CollectionDataType>(this)
+            assertEquals("object-0", this.name)
         }
 
-        // Projection select field
-        // Limit
-        // Sort
-        val y: BsonDocument = collection.findOne<BsonDocument>(filter = BsonDocument("name", "dog-0"))!!
-        val y2: BsonValue = collection.findOne<BsonValue>(filter = BsonDocument("name", "dog-0"))!!
+        // projection
+        val collectionDataType = CollectionDataType("object-6")
+        assertEquals(collectionDataType._id, collection.insertOne(collectionDataType))
 
-        // argument type differentiation
-        // - serialization issues
-        //   - missing fields
-        //   - too many fields
-        // return type differentiation
-        // - serialization issues
-        //   - missing fields
-        //   - too many fields
-        // parameters
-        // - ill formatted parameters
+        collection.findOne(filter = BsonDocument("name", "object-6")).run {
+            assertIs<CollectionDataType>(this)
+            assertEquals("object-6", this.name)
+            assertEquals(collectionDataType._id, this._id)
+        }
 
-        // state differentiation
-        // - empty collection
-        // -
+        collection.findOne(
+            filter = BsonDocument("name", "object-6"),
+            projection = BsonDocument("""{ "name" : 0}""")
+        ).run {
+            assertIs<CollectionDataType>(this)
+            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // assertEquals("Default", this.name)
+            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            // _id is included by default
+            assertEquals(collectionDataType._id, this._id)
+        }
+
+        // sort
+        collection.findOne(sort = BsonDocument(mapOf("name" to BsonInt32(-1)))).run {
+            assertIs<CollectionDataType>(this)
+            assertEquals("object-6", this.name)
+        }
+        collection.findOne(sort = BsonDocument(mapOf("name" to BsonInt32(1)))).run {
+            assertIs<CollectionDataType>(this)
+            assertEquals("object-0", this.name)
+        }
     }
 
-    @OptIn(ExperimentalKBsonSerializerApi::class)
-//    @Test
-//    fun findOne() = runBlocking<Unit> {
-//        with(getCollectionInternal()) {
-//            // Test findOne() on empty collection with no filter and no options
-//            assertNull(findOne().get())
-//
-//            // Test findOne() with filter that does not match any documents and no options
-//            assertNull(findOne(Document("hello", "worldDNE")).get())
-//
-//            val doc1 = Document("hello", "world1")
-//            insertOne(doc1).get()
-//            assertEquals(1, count().get())
-//
-//            // Test findOne() with filter that does not match any documents and no options
-//            assertNull(findOne(Document("hello", "worldDNE")).get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOne_singleDocument() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world1")
-//
-//            // Insert one document
-//            insertOne(doc1).get()
-//            assertEquals(1, count().get())
-//
-//            // No filter and no options
-//            assertEquals(doc1, findOne().get()!!.withoutId())
-//
-//            // Projection (remove "_id") options
-//            val projection = Document("hello", 1).apply { this["_id"] = 0 }
-//            var options = FindOptions()
-//                .limit(2)
-//                .projection(projection)
-//            assertEquals(doc1, findOne(Document(), options).get()!!)
-//
-//            // Projection (remove "_id") and sort (by desc "hello") options
-//            options = FindOptions()
-//                .limit(2)
-//                .projection(projection)
-//                .sort(Document("hello", -1))
-//            assertEquals(doc1, findOne(Document(), options).get()!!)
-//        }
-//    }
-//
-//    @Test
-//    fun findOne_multipleDocuments() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world1")
-//            val doc2 = Document("hello", "world2")
-//            val doc3 = Document("hello", "world3")
-//
-//            // Insert 3 documents
-//            insertMany(listOf(doc1, doc2, doc3)).get()
-//            assertEquals(3, count().get())
-//
-//            // Projection (remove "_id") and sort (by asc "hello") options
-//            val projection = Document("hello", 1).apply { this["_id"] = 0 }
-//            var options = FindOptions()
-//                .limit(2)
-//                .projection(projection)
-//                .sort(Document("hello", 1))
-//            assertEquals(doc1, findOne(Document(), options).get()!!)
-//
-//            // Projection (remove "_id") and sort (by desc "hello") options
-//            options = FindOptions()
-//                .limit(2)
-//                .projection(projection)
-//                .sort(Document("hello", -1))
-//            assertEquals(doc3, findOne(Document(), options).get()!!)
-//        }
-//    }
-//
+    @Test
+    fun findOne_explicitTypes() = runBlocking {
+        // Empty collection
+        assertNull(collection.findOne<BsonValue>())
+
+        collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
+
+        // Explicit types
+        collection.findOne<BsonDocument>(filter = BsonDocument("name", "object-0")).run {
+            assertIs<BsonDocument>(this)
+            assertEquals("object-0", this["name"]!!.asString().value)
+        }
+    }
+
+    @Test
+    fun findOne_extraFieldsAreDiscarded() { }
+
+    @Test
+    fun findOne_missingFieldsGetsDefaults() { }
+
+    @Test
+    abstract fun findOne_unknownCollection()
+
     @Test
     fun findOne_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("operator") {
@@ -299,10 +289,10 @@ abstract class MongoCollectionTests {
     fun find() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
         assertTrue { collection.find().isEmpty() }
-        assertTrue { collection.find<SyncDog>().isEmpty() }
+        assertTrue { collection.find<CollectionDataType>().isEmpty() }
 
-        val x: List<ObjectId> = collection.insertMany(listOf(SyncDog("dog1"), SyncDog("dog2")))
-        assertEquals(2, collection.find<SyncDog>().size)
+        val x: List<Int> = collection.insertMany(listOf(CollectionDataType("dog1"), CollectionDataType("dog2")))
+        assertEquals(2, collection.find<CollectionDataType>().size)
         //
         collection.find(filter = null, projection = null, sort = null, limit = null)
     }
@@ -360,29 +350,24 @@ abstract class MongoCollectionTests {
 //        }
 //    }
 //
-//    @Test
-//    fun find_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                find(Document("\$who", 1)).first().get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("operator", true))
-//            }
-//        }
-//    }
-//
+    @Test
+    fun find_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
+            collection.find<BsonDocument>(BsonDocument("\$who", 1)).first()
+        }
+    }
 
     @Test
     fun aggregate() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
         collection.aggregate(listOf())
-        collection.aggregate<SyncDog>(listOf())
+        collection.aggregate<CollectionDataType>(listOf())
         collection.aggregate<BsonDocument>(listOf())
 
-        val x: List<ObjectId> = collection.insertMany(listOf(SyncDog(name = "dog1"), SyncDog(name = "dog2")))
-        collection.aggregate<SyncDog>(listOf())
+        val x: List<Int> = collection.insertMany(listOf(CollectionDataType(name = "dog1"), CollectionDataType(name = "dog2")))
+        collection.aggregate<CollectionDataType>(listOf())
 
-        collection.aggregate<SyncDog>(listOf(BsonDocument("\$sort", BsonDocument("name", -1)), BsonDocument("\$limit", 1)))
+        collection.aggregate<CollectionDataType>(listOf(BsonDocument("\$sort", BsonDocument("name", -1)), BsonDocument("\$limit", 1)))
     }
 //    @Test
 //    fun aggregate() {
@@ -454,24 +439,30 @@ abstract class MongoCollectionTests {
         RealmLog.level = LogLevel.ALL
         // Option 1 - Typed return value - BsonValue
         val insertedIdDocument: BsonValue = collection.insertOne(BsonDocument("name", "sadffds"))
-        val insertedIdDocument2: BsonValue = collection.insertOne(SyncDog("sadf"))
+        val insertedIdDocument2: Int = collection.insertOne(CollectionDataType("sadf"))
 
         // Option 2 - Explicit generic arguments to enabling fluent API
-        val id = collection.insertOne<SyncDog, BsonValue>(SyncDog("sadf"))
+        val id = collection.insertOne<CollectionDataType, BsonValue>(CollectionDataType("sadf"))
 
         // Option 3 - Automatically serialized object
-        val x2: ObjectId = collection.insertOne(SyncDog("sadf"))
+        val x2: Int = collection.insertOne(CollectionDataType("sadf"))
 
         val x3: ObjectId = collection.insertOne(BsonDocument("""{ "name" : "asdf" }"""))
-
-        // TODO
-        //  Existing primary key object
     }
 
     @Test
+    fun insertOne_throwsOnExistingPrimaryKey() { }
+    @Test
+    fun insertOne_throwsOnUnknownFields() { }
+
+    @Test
+    fun insertOne_throwsOnMissingRequiredFields() { }
+
+    @Test
     fun insertOne_throwsOnTypeMismatch() = runBlocking<Unit> {
+        val collectionWithFixedSchema = collection<SyncDog, ObjectId>(SyncDog::class)
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertOne<BsonDocument, ObjectId>(BsonDocument("""{"x": "a" }"""))
+            collectionWithFixedSchema.insertOne<BsonDocument, ObjectId>(BsonDocument("_id", ObjectId()))
         }
     }
 
@@ -513,31 +504,31 @@ abstract class MongoCollectionTests {
 //        }
 //    }
 
-    @Test
-    fun insertMany() = runBlocking {
-        RealmLog.level = LogLevel.ALL
-        val x: List<BsonValue> = collection.insertMany(listOf(SyncDog("a")))
-        val syncDogIntIdCollection = database.collection<SyncDogIntId, Int>("SyncDogIntId")
-        val elements = SyncDogIntId("a", Random.nextInt())
-        val y: List<Int> = syncDogIntIdCollection.insertMany(listOf(elements))
-
-        assertFailsWithMessage<ServiceException>("dup key") {
-            val z: List<Int> = syncDogIntIdCollection.insertMany(listOf(elements))
-        }
-
-        val typedCollection = collection.collection<SyncDog, ObjectId>()
-        val z: List<ObjectId> = typedCollection.insertMany(listOf(SyncDog("sadf")))
-        val tyz = typedCollection.insertMany<SyncDog, BsonValue>(listOf(SyncDog("sadf")))
-
-        val bsonSyncDogs: MongoCollection<BsonDocument, BsonValue> = database.collection("SyncDog")
-        val insertMany /*: List<BsonValue> */ = bsonSyncDogs.insertMany(listOf(BsonDocument("name", "x")))
-
-        val syncDogs: MongoCollection<SyncDog, ObjectId> = database.collection<SyncDog, ObjectId>("SyncDog")
-
-        val objectIds = syncDogs.insertMany(listOf(SyncDog("name")))
-
-        val objectIds2: List<ObjectId> = syncDogs.insertMany<BsonValue, ObjectId>(listOf(BsonDocument("name", "asdf")))
-    }
+//    @Test
+//    fun insertMany() = runBlocking {
+//        RealmLog.level = LogLevel.ALL
+//        val x: List<BsonValue> = collection.insertMany(listOf(SyncDog("a")))
+//        val syncDogIntIdCollection = collection<SyncDogIntId, Int>(SyncDogIntId::class)
+//        val elements = SyncDogIntId("a", Random.nextInt())
+//        val y: List<Int> = syncDogIntIdCollection.insertMany(listOf(elements))
+//
+//        assertFailsWithMessage<ServiceException>("dup key") {
+//            val z: List<Int> = syncDogIntIdCollection.insertMany(listOf(elements))
+//        }
+//
+//        val typedCollection = collection.reshape<SyncDog, ObjectId>()
+//        val z: List<ObjectId> = typedCollection.insertMany(listOf(SyncDog("sadf")))
+//        val tyz = typedCollection.insertMany<SyncDog, BsonValue>(listOf(SyncDog("sadf")))
+//
+//        val bsonSyncDogs: MongoCollection<BsonDocument, BsonValue> = collection.reshape()
+//        val insertMany /*: List<BsonValue> */ = bsonSyncDogs.insertMany(listOf(BsonDocument("name", "x")))
+//
+//        val syncDogs: MongoCollection<SyncDog, ObjectId> = database.collection<SyncDog, ObjectId>("SyncDog")
+//
+//        val objectIds = syncDogs.insertMany(listOf(SyncDog("name")))
+//
+//        val objectIds2: List<ObjectId> = syncDogs.insertMany<BsonValue, ObjectId>(listOf(BsonDocument("name", "asdf")))
+//    }
 
 //
 //    @Test
@@ -652,68 +643,53 @@ abstract class MongoCollectionTests {
         RealmLog.level = LogLevel.ALL
         assertFalse { collection.deleteOne(BsonDocument()) }
 
-        // A bit ann
-        val elements = SyncDog("x")
-        assertEquals(2, collection.insertMany<SyncDog, BsonValue>(listOf(elements, elements)).size)
-        assertTrue { collection.deleteOne(BsonDocument("""{ "name": "x" }""")) }
+        assertEquals(
+            2,
+            collection.insertMany<CollectionDataType, BsonValue>(
+                listOf(
+                    CollectionDataType("object-1"),
+                    CollectionDataType("object-1")
+                )
+            ).size
+        )
+        assertEquals(2, collection.count(BsonDocument("""{ "name": "object-1" }""")))
+        assertTrue { collection.deleteOne(BsonDocument("""{ "name": "object-1" }""")) }
+        assertEquals(1, collection.count(BsonDocument("""{ "name": "object-1" }""")))
     }
 
-//    @Test
-//    fun deleteOne_singleDocument() {
-//        with(getCollectionInternal()) {
-//            assertEquals(0, deleteOne(Document()).get()!!.deletedCount)
-//            assertEquals(0, deleteOne(Document("hello", "world")).get()!!.deletedCount)
-//
-//            val doc1 = Document("hello", "world")
-//
-//            insertOne(doc1).get()
-//            assertEquals(1, deleteOne(doc1).get()!!.deletedCount)
-//            assertEquals(0, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun deleteOne_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                deleteOne(Document("\$who", 1)).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("operator", true))
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun deleteOne_multipleDocuments() {
-//        with(getCollectionInternal()) {
-//            assertEquals(0, count().get())
-//
-//            val rawDoc = Document("hello", "world")
-//            val doc1 = Document(rawDoc)
-//            val doc1b = Document(rawDoc)
-//            val doc2 = Document("foo", "bar")
-//            val doc3 = Document("42", "666")
-//            insertMany(listOf(doc1, doc1b, doc2, doc3)).get()
-//            assertEquals(1, deleteOne(rawDoc).get()!!.deletedCount)
-//            assertEquals(1, deleteOne(Document()).get()!!.deletedCount)
-//            assertEquals(2, count().get())
-//        }
-//    }
-//
+    @Test
+    fun deleteOne_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
+            collection.deleteOne(BsonDocument("\$who", 1))
+        }
+    }
+
     @Test
     fun deleteMany() = runBlocking {
         // Argument wrapper DSL
         RealmLog.level = LogLevel.ALL
         assertEquals(0, collection.deleteMany(BsonDocument()))
 
-        // A bit ann
-        val elements = SyncDog("x")
-        assertEquals(2, collection.insertMany<SyncDog, BsonValue>(listOf(elements, elements)).size)
-        assertEquals(2, collection.deleteMany(BsonDocument("""{ "name": "x" }""")))
+        assertEquals(
+            2,
+            collection.insertMany<CollectionDataType, BsonValue>(
+                listOf(
+                    CollectionDataType("object-1"),
+                    CollectionDataType("object-1")
+                )
+            ).size
+        )
+        assertEquals(2, collection.deleteMany(BsonDocument("""{ "name": "object-1" }""")))
 
         assertEquals(
             3,
-            collection.insertMany<SyncDog, BsonValue>(listOf(elements, elements, elements)).size
+            collection.insertMany<CollectionDataType, BsonValue>(
+                listOf(
+                    CollectionDataType("object-1"),
+                    CollectionDataType("object-1"),
+                    CollectionDataType("object-1")
+                )
+            ).size
         )
         assertEquals(3, collection.deleteMany(BsonDocument()))
     }
@@ -767,16 +743,20 @@ abstract class MongoCollectionTests {
 //    }
 //
     @Test
-    fun updateOne() = runBlocking<Unit> {
+    open fun updateOne() = runBlocking<Unit> {
         // Argument wrapper DSL
         assertEquals(0, collection.count())
 
         RealmLog.level = LogLevel.ALL
-        val elements = SyncDog("x")
         assertEquals(
             4,
-            collection.insertMany<SyncDog, BsonValue>(
-                listOf(elements, elements, elements, elements)
+            collection.insertMany<CollectionDataType, BsonValue>(
+                listOf(
+                    CollectionDataType("object-1"),
+                    CollectionDataType("object-1"),
+                    CollectionDataType("object-1"),
+                    CollectionDataType("object-1")
+                )
             ).size
         )
         assertEquals(4, collection.count())
@@ -790,32 +770,32 @@ abstract class MongoCollectionTests {
 
         // update with match match
         val updateWithMatch = collection.updateOne(
-            BsonDocument("""{ "name": "x"}"""),
-            BsonDocument("""{ "name": "y"}"""),
+            BsonDocument("""{ "name": "object-1"}"""),
+            BsonDocument("""{ "name": "object-2"}"""),
         )
         assertEquals(true to null, updateWithMatch)
         assertEquals(4, collection.count())
-        assertEquals(3, collection.count(filter = BsonDocument("""{"name": "x"}""")))
-        assertEquals(1, collection.count(filter = BsonDocument("""{"name": "y"}""")))
+        assertEquals(3, collection.count(filter = BsonDocument("""{"name": "object-1"}""")))
+        assertEquals(1, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
 
         // upsert no match
-        val upsertWithoutMatch = collection.updateOne<BsonValue>(
-            BsonDocument("""{ "name": "z"}"""), BsonDocument(""" { "name": "y"}"""), upsert = true
+        val upsertWithoutMatch = collection.updateOne<Int>(
+            BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
         )
         upsertWithoutMatch.let { (updated, upsertedId) ->
             assertFalse(updated)
-            assertIs<ObjectId>(upsertedId)
+            assertIs<Int>(upsertedId)
         }
         assertEquals(5, collection.count())
-        assertEquals(2, collection.count(filter = BsonDocument("""{"name": "y"}""")))
+        assertEquals(2, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
 
         // upsert with match
         val upsertWithMatch = collection.updateOne<BsonValue>(
-            BsonDocument("""{ "name": "y"}"""), BsonDocument(""" { "name": "z"}"""), upsert = true
+            BsonDocument("""{ "name": "object-2"}"""), BsonDocument(""" { "name": "object-3"}"""), upsert = true
         )
         assertEquals(true to null, upsertWithMatch)
         assertEquals(5, collection.count())
-        assertEquals(1, collection.count(filter = BsonDocument("""{"name": "y"}""")))
+        assertEquals(1, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
     }
 
     //    @Test
@@ -882,12 +862,12 @@ abstract class MongoCollectionTests {
         RealmLog.level = LogLevel.ALL
         assertEquals(
             4,
-            collection.insertMany<SyncDog, BsonValue>(
+            collection.insertMany<CollectionDataType, BsonValue>(
                 listOf(
-                    SyncDog("x"),
-                    SyncDog("x"),
-                    SyncDog("y"),
-                    SyncDog("z")
+                    CollectionDataType("x"),
+                    CollectionDataType("x"),
+                    CollectionDataType("y"),
+                    CollectionDataType("z")
                 )
             ).size
         )
@@ -910,12 +890,12 @@ abstract class MongoCollectionTests {
         assertEquals(4, collection.count())
 
         // upsert no match
-        val upsertWithoutMatch = collection.updateMany<BsonValue>(
-            BsonDocument("""{ "name": "NOMATCH"}"""), BsonDocument(""" { "name": "UPSERTED"}"""), upsert = true
+        val upsertWithoutMatch = collection.updateMany<Int>(
+            BsonDocument("""{ "name": "NOMATCH"}"""), BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""), upsert = true
         )
         upsertWithoutMatch.let {
             assertEquals(0, it.first)
-            assertIs<ObjectId>(it.second)
+            assertIs<Int>(it.second)
         }
         assertEquals(5, collection.count())
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "UPSERTED"}""")))
@@ -1006,17 +986,17 @@ abstract class MongoCollectionTests {
     @Test
     fun findOneAndUpdate() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
-        assertNull(collection.findOneAndUpdate<SyncDog>(BsonDocument(), BsonDocument()))
-        collection.insertMany<SyncDog, ObjectId>(
+        assertNull(collection.findOneAndUpdate<CollectionDataType>(BsonDocument(), BsonDocument()))
+        collection.insertMany<CollectionDataType, Int>(
             listOf(
-                SyncDog("dog1"),
-                SyncDog("dog1"),
-                SyncDog("dog2")
+                CollectionDataType("object-1"),
+                CollectionDataType("object-1"),
+                CollectionDataType("object-2")
             )
         )
-        collection.findOneAndUpdate<SyncDog>(
+        collection.findOneAndUpdate<CollectionDataType>(
             BsonDocument(),
-            BsonDocument("""{ "name": "dog1" }"""),
+            BsonDocument("""{ "name": "object-1" }"""),
             upsert = true
         )
     }
@@ -1185,17 +1165,17 @@ abstract class MongoCollectionTests {
     @Test
     fun findOneAndReplace() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
-        assertNull(collection.findOneAndReplace<SyncDog>(BsonDocument(), BsonDocument()))
-        collection.insertMany<SyncDog, ObjectId>(
+        assertNull(collection.findOneAndReplace<CollectionDataType>(BsonDocument(), BsonDocument()))
+        collection.insertMany(
             listOf(
-                SyncDog("dog1"),
-                SyncDog("dog1"),
-                SyncDog("dog2")
+                CollectionDataType("object-1"),
+                CollectionDataType("object-1"),
+                CollectionDataType("object-2")
             )
         )
-        val x = collection.findOneAndReplace<SyncDog>(
+        val x = collection.findOneAndReplace<CollectionDataType>(
             BsonDocument(),
-            BsonDocument("""{ "name": "dog1" }"""),
+            BsonDocument("""{ "name": "object-1" }"""),
             upsert = true
         )
     }
@@ -1335,17 +1315,17 @@ abstract class MongoCollectionTests {
     @Test
     fun findOneAndDelete() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
-        assertNull(collection.findOneAndDelete<SyncDog>(BsonDocument(), BsonDocument()))
-        collection.insertMany<SyncDog, ObjectId>(
+        assertNull(collection.findOneAndDelete<CollectionDataType>(BsonDocument(), BsonDocument()))
+        collection.insertMany(
             listOf(
-                SyncDog("dog1"),
-                SyncDog("dog1"),
-                SyncDog("dog2")
+                CollectionDataType("object-1"),
+                CollectionDataType("object-1"),
+                CollectionDataType("object-2")
             )
         )
-        val x: SyncDog? = collection.findOneAndDelete<SyncDog>(
+        val x: CollectionDataType? = collection.findOneAndDelete<CollectionDataType>(
             BsonDocument(),
-            BsonDocument("""{ "name": "dog1" }"""),
+            BsonDocument("""{ "name": "object-1" }"""),
         )
     }
     //
@@ -1430,6 +1410,13 @@ abstract class MongoCollectionTests {
 //    }
 }
 
+inline fun <reified T : BaseRealmObject, K> MongoCollectionTests.collection(clazz: KClass<T>): MongoCollection<T, K> {
+    return when (this) {
+        is MongoCollectionFromDatabaseTests -> database.collection<T, K>(T::class.simpleName!!)
+        is MongoCollectionFromClientTests -> client.collection()
+    }
+}
+
 @Suppress("name")
 @OptIn(ExperimentalKBsonSerializerApi::class)
 inline operator fun <reified T : Any> BsonDocument.Companion.invoke(
@@ -1440,14 +1427,22 @@ inline operator fun <reified T : Any> BsonDocument.Companion.invoke(
 }
 
 @Serializable
+class Unknown : RealmObject {
+    var name = "Unknown"
+}
+
+// Strictly defined in schema in TestAppInitializer.kt
+@Serializable
 class SyncDog(var name: String) : RealmObject {
     constructor() : this("Default")
 }
 
 @Serializable
-data class SyncDogIntId(val name: String, val _id: Int)
+class CollectionDataType(var name: String? = "Default", var _id: Int? = Random.nextInt()) : RealmObject {
+    constructor() : this("Default")
+}
 
-@PersistedName("SyncDog")
+@PersistedName("CollectionDataType")
 class CustomDataType(var name: String) : RealmObject {
     @Suppress("unused")
     constructor() : this("Default")
@@ -1491,7 +1486,7 @@ class CustomIdSerializer : KSerializer<CustomIdType> {
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 val customEjsonSerializer = EJson(
-    ignoreUnknownKeys = false,
+//    ignoreUnknownKeys = false,
     serializersModule = SerializersModule {
         contextual(CustomDataType::class, CustomDataTypeSerializer())
         contextual(CustomIdType::class, CustomIdSerializer())

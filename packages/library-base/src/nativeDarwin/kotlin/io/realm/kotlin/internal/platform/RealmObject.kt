@@ -22,6 +22,7 @@ import kotlin.reflect.ExperimentalAssociatedObjects
 import kotlin.reflect.KClass
 import kotlin.reflect.findAssociatedObject
 
+@PublishedApi
 internal actual fun <T : Any> realmObjectCompanionOrNull(clazz: KClass<T>): RealmObjectCompanion? =
     @OptIn(ExperimentalAssociatedObjects::class)
     when (val associatedObject = clazz.findAssociatedObject<ModelObject>()) {

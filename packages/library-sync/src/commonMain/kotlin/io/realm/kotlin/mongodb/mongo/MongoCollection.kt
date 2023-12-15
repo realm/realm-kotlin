@@ -43,17 +43,16 @@ import kotlin.jvm.JvmName
  */
 public interface MongoCollection<T, K> {
 
-    // FIXME Remove? as we don't have a name when the collection is obtained from a schema name (directly from MongoClient
-//    /**
-//     * Name of the remote collection.
-//     */
-//    public val name: String
+    /**
+     * Name of the remote collection. Will be `null` for collections
+     */
+    public val name: String?
 
     /**
      * Get an instance of the same collection with a different set of default types serialization.
      */
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    public fun <T, K> collection(eJson: EJson? = null): MongoCollection<T, K>
+    public fun <T, K> reshape(eJson: EJson? = null): MongoCollection<T, K>
 }
 
 public suspend fun MongoCollection<*, *>.count(filter: BsonDocument? = null, limit: Long? = null): Long {

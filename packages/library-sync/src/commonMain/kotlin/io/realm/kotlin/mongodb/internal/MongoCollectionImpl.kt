@@ -33,26 +33,26 @@ import org.mongodb.kbson.serialization.encodeToBsonValue
 
 @PublishedApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
-internal class MongoDatabaseCollection<T, K>(@PublishedApi internal val database: MongoDatabaseImpl, val name: String, eJson: EJson) : MongoCollectionImpl<T, K>(database.client.functions, eJson) {
+internal class MongoDatabaseCollection<T, K>(@PublishedApi internal val database: MongoDatabaseImpl, override val name: String, eJson: EJson) : MongoCollectionImpl<T, K>(database.client.functions, eJson) {
     override val defaults: Map<String, BsonValue> = mapOf(
         "database" to BsonString(database.name),
         "collection" to BsonString(name),
     )
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    override fun <T, K> collection(eJson: EJson?): MongoCollection<T, K> {
+    override fun <T, K> reshape(eJson: EJson?): MongoCollection<T, K> {
         return MongoDatabaseCollection(this.database, this.name, eJson ?: this.eJson)
     }
 }
 
 @PublishedApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
-internal class MongoClientCollection<T, K>(@PublishedApi internal val clientImpl: MongoClientImpl, val schemaName: String, eJson: EJson) : MongoCollectionImpl<T, K>(clientImpl.functions, eJson) {
+internal class MongoClientCollection<T, K>(@PublishedApi internal val clientImpl: MongoClientImpl, override val name: String, eJson: EJson) : MongoCollectionImpl<T, K>(clientImpl.functions, eJson) {
     override val defaults: Map<String, BsonValue> = mapOf(
-        "schema_name" to BsonString(schemaName),
+        "schema_name" to BsonString(name),
     )
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    override fun <T, K> collection(eJson: EJson?): MongoCollection<T, K> {
-        return MongoClientCollection(clientImpl, schemaName, eJson ?: this.eJson)
+    override fun <T, K> reshape(eJson: EJson?): MongoCollection<T, K> {
+        return MongoClientCollection(clientImpl, name, eJson ?: this.eJson)
     }
 }
 
@@ -87,7 +87,7 @@ internal abstract class MongoCollectionImpl<T, K> constructor(
     internal suspend fun findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): BsonValue {
         val call: BsonValue = call("findOne") {
             filter?.let { put("query", it) }
-            projection?.let { put("projection", it) }
+            projection?.let { put("project", it) }
             sort?.let { put("sort", it) }
         }
         return call

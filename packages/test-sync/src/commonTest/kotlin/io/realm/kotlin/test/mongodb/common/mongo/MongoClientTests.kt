@@ -71,37 +71,39 @@ class MongoClientTests {
 
     @Test
     fun database_defaultSerializer() = runBlocking<Unit> {
-        assertIs<ObjectId>(client.database(app.clientAppId).collection<SyncDog, ObjectId>("SyncDog").insertOne(SyncDog("dog-1")))
+        assertIs<Int>(client.database(app.clientAppId).collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
     }
 
     @Test
     fun database_customSerializer() = runBlocking<Unit> {
         val collectionWithDefaultSerializer = client.database(app.clientAppId)
-            .collection<CustomDataType, BsonValue>("SyncDog")
+            .collection<CustomDataType, BsonValue>("CollectionDataType")
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
-            collectionWithDefaultSerializer.insertOne(CustomDataType("dog-1"))
+            collectionWithDefaultSerializer.insertOne(CustomDataType("object-1"))
         }
 
         val collectionWithCustomSerializer = client.database(app.clientAppId, customEjsonSerializer)
-            .collection<CustomDataType, CustomIdType>("SyncDog")
-        assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("dog-1")))
+            .collection<CustomDataType, CustomIdType>("CollectionDataType")
+        assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("object-1")))
     }
 
     @Test
     fun database_unknownDatabase() = runBlocking<Unit> {
-        assertIs<ObjectId>(client.database("Unknown").collection<SyncDog, ObjectId>("SyncDog").insertOne(SyncDog("dog-1")))
+        RealmLog.level = LogLevel.ALL
+        assertIs<Int>(client.database("Unknown").collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
+        RealmLog.level = LogLevel.WARN
     }
 
     @Test
     fun collection_defaultSerializer() = runBlocking<Unit> {
-        assertIs<ObjectId>(client.collection<SyncDog, ObjectId>().insertOne(SyncDog("dog-1")))
+        assertIs<Int>(client.collection<CollectionDataType, Int>().insertOne(CollectionDataType("object-1")))
     }
 
     @Test
     fun collection_customSerializer() = runBlocking<Unit> {
-        val collectionWithDefaultSerializer = client.collection<SyncDog, ObjectId>()
+        val collectionWithDefaultSerializer = client.collection<CollectionDataType, Int>()
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
-            collectionWithDefaultSerializer.insertOne(CustomDataType("dog-1"))
+            collectionWithDefaultSerializer.insertOne(CustomDataType("object-1"))
         }
 
         val collectionWithCustomSerializer = client.collection<CustomDataType, CustomIdType>(
@@ -109,7 +111,7 @@ class MongoClientTests {
         )
         assertIs<CustomIdType>(
             collectionWithCustomSerializer.insertOne(
-                CustomDataType("dog-1")
+                CustomDataType("object-1")
             )
         )
     }

@@ -235,6 +235,35 @@ object TestAppInitializer {
                 "metadata": {
                     "data_source": "BackingDB",
                     "database": "$databaseName",
+                    "collection": "CollectionDataType"
+                },
+                "schema": {
+                    "properties": {
+                        "_id": {
+                            "bsonType": "int"
+                        },
+                        "realm_id": {
+                            "bsonType": "string"
+                        },
+                        "name": {
+                            "bsonType": "string"
+                        }
+                    },
+                    "required": [
+                        "name"
+                    ],
+                    "title": "CollectionDataType"
+                }
+            }
+            """.trimIndent()
+        )
+
+        app.addSchema(
+            """
+            {
+                "metadata": {
+                    "data_source": "BackingDB",
+                    "database": "$databaseName",
                     "collection": "SyncPerson"
                 },
                 "relationships": {

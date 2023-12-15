@@ -26,9 +26,10 @@ import io.realm.kotlin.mongodb.mongo.insertOne
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import kotlinx.serialization.SerializationException
+import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
-import org.mongodb.kbson.ObjectId
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -71,18 +72,32 @@ class MongoDatabaseTests {
     }
 
     @Test
+    fun collection_defaultTypes() = runBlocking<Unit> {
+        val collection = database.collection("CollectionDataType")
+        val value = collection.insertOne(BsonDocument("name", "object-1"))
+        assertIs<BsonValue>(value)
+    }
+
+    @Test
+    fun collection_typed() = runBlocking<Unit> {
+        val collection = database.collection<CollectionDataType, Int>("CollectionDataType")
+        val value = collection.insertOne(CollectionDataType("object-1", Random.nextInt()))
+        assertIs<Int>(value)
+    }
+
+    @Test
     fun collection_defaultSerializer() = runBlocking<Unit> {
-        assertIs<ObjectId>(database.collection<SyncDog, ObjectId>("SyncDog").insertOne(SyncDog("dog-1")))
+        assertIs<Int>(database.collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
     }
 
     @Test
     fun collection_customSerializer() = runBlocking<Unit> {
-        val collectionWithDefaultSerializer = database.collection<CustomDataType, BsonValue>("SyncDog")
+        val collectionWithDefaultSerializer = database.collection<CustomDataType, BsonValue>("CollectionDataType")
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
-            collectionWithDefaultSerializer.insertOne(CustomDataType("dog-1"))
+            collectionWithDefaultSerializer.insertOne(CustomDataType("object-1"))
         }
 
-        val collectionWithCustomSerializer = database.collection<CustomDataType, CustomIdType>("SyncDog", customEjsonSerializer)
-        assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("dog-1")))
+        val collectionWithCustomSerializer = database.collection<CustomDataType, CustomIdType>("CollectionDataType", customEjsonSerializer)
+        assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("object-1")))
     }
 }
