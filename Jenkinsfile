@@ -287,7 +287,7 @@ pipeline {
                         trackBuildMetrics(version)
                     }
                 }
-                // stage('Publish SNAPSHOT to Maven Central') {
+                stage('Publish SNAPSHOT to Maven Central') {
                     when { expression { shouldPublishSnapshot(version) } }
                     steps {
                         runPublishSnapshotToMavenCentral()
