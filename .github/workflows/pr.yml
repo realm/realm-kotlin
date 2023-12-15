@@ -46,6 +46,11 @@ jobs:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
+          
       # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
       # 4.1.0 is not available in apt-get, so use brew instead
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
@@ -93,6 +98,11 @@ jobs:
         with:
           path: ./packages/cinterop/build/realmLinuxBuild
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -162,6 +172,11 @@ jobs:
           path: ./packages/cinterop/build/realmWindowsBuild
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
           enableCrossOsArchive: true
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
