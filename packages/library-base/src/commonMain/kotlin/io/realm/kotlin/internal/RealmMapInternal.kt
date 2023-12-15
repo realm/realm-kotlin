@@ -668,10 +668,8 @@ internal class ManagedRealmDictionary<V> constructor(
 
     override fun toString(): String {
         val owner = parent.className
-        println("RealmMap: parent toString getVersion()")
         val version = parent.owner.version().version
         val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
-        println("RealmMap: output toString getVersion()")
         return "RealmDictionary{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 
@@ -720,10 +718,8 @@ internal class KeySet<K> constructor(
 
     override fun toString(): String {
         val owner = parent.className
-        println("KeySet: toString parent getVersion()")
         val version = parent.owner.version().version
         val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
-        println("KeySet: toString output getVersion()")
         return "RealmDictionary.keys{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 
@@ -829,10 +825,8 @@ internal class RealmMapValues<K, V> constructor(
 
     override fun toString(): String {
         val owner = parent.className
-        println("RealmMapValues: toString parent getVersion()")
         val version = parent.owner.version().version
         val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
-        println("RealmMapValues: toString output getVersion()")
         return "RealmDictionary.values{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 
@@ -988,10 +982,8 @@ internal class RealmMapEntrySetImpl<K, V> constructor(
 
     override fun toString(): String {
         val owner = parent.className
-        println("RealmMapEntrySetImpl: toString parent getVersion()")
         val version = parent.owner.version().version
         val objKey = RealmInterop.realm_object_get_key(parent.objectPointer).key
-        println("RealmMapEntrySetImpl: toString output getVersion()")
         return "RealmDictionary.entries{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 

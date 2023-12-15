@@ -50,12 +50,9 @@ internal abstract class LiveRealmHolder<out LiveRealm> {
     /**
      * Dump the current snapshot and tracked versions of the LiveRealm used for debugging purpose.
      */
-    fun versions(): VersionData? {
-        println("LiveRealmHolder: versions()")
-        return if (realmInitializer.isInitialized()) {
-            realm.versions()
-        } else {
-            null
-        }
+    fun versions(): VersionData? = if (realmInitializer.isInitialized()) {
+        realm.versions()
+    } else {
+        null
     }
 }

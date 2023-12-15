@@ -36,7 +36,6 @@ import kotlinx.atomicfu.atomic
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -46,7 +45,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@Ignore
 class RealmMigrationTests {
 
     private lateinit var tmpDir: String
@@ -150,13 +148,12 @@ class RealmMigrationTests {
                     }
                 }
             }
-        ).also {
+        ).use {
             it.query<io.realm.kotlin.entities.migration.after.MigrationSample>().find().first().run {
                 assertEquals("First Last", fullName)
                 assertEquals("Realm", renamedProperty)
                 assertEquals("42", type)
             }
-            it.close()
         }
     }
 
@@ -176,12 +173,11 @@ class RealmMigrationTests {
                     newObject?.set("stringField", migratedValue)
                 }
             }
-        ).also {
+        ).use {
             assertEquals(
                 migratedValue,
                 it.query<io.realm.kotlin.entities.migration.Sample>().find().first().stringField
             )
-            it.close()
         }
     }
 
@@ -276,12 +272,11 @@ class RealmMigrationTests {
         val configuration = RealmConfiguration.Builder(schema = setOf(PrimaryKeyString::class))
             .directory(tmpDir)
             .build()
-        Realm.open(configuration).also {
+        Realm.open(configuration).use {
             it.writeBlocking {
                 copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY1" })
                 copyToRealm(PrimaryKeyString().apply { primaryKey = "PRIMARY_KEY2" })
             }
-            it.close()
         }
 
         val newConfiguration =

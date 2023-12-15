@@ -90,7 +90,6 @@ class RealmNotificationsTests : FlowableTests {
         }
     }
 
-    // Test 5
     @Test
     fun registerTwoFlows() = runBlocking {
         val c1 = TestChannel<RealmChange<Realm>>()
