@@ -366,11 +366,11 @@ def genAndStashSwigJNI() {
     stash includes: 'packages/jni-swig-stub/build/generated/sources/jni/realmc.cpp,packages/jni-swig-stub/build/generated/sources/jni/realmc.h', name: 'swig_jni'
 }
 def runBuild() {
-    def buildJvmAbiFlag = "-PcopyJvmABIs=false"
+    def buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs=false"
     if (shouldBuildJvmABIs()) {
         unstash name: 'linux_so_file'
         unstash name: 'win_dll'
-        buildJvmAbiFlag = "-PcopyJvmABIs=true"
+        buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs=true"
     }
 
     withCredentials([

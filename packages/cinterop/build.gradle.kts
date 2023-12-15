@@ -64,7 +64,7 @@ val buildType: BuildType = if ((System.getenv("CONFIGURATION") ?: "RELEASE").equ
 fun checkIfBuildingNativeLibs(task: Task, action: Task.() -> Unit) {
     // Whether or not to build the underlying native Realm Libs. Generally these are only
     // needed at runtime and thus can be ignored when only building the layers on top
-    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+    if (project.extra.properties["realm.kotlin.buildRealmCore"] == "true") {
         action(task)
     } else {
         logger.warn("Ignore building native libs")
