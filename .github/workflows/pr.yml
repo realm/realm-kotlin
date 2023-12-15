@@ -549,7 +549,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git clone https://github.com/10gen/baasaas
+          gh repo clone 10gen/baasaas
           
 
       # Start BAAS instance in the background
