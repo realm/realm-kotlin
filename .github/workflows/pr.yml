@@ -1165,6 +1165,11 @@ jobs:
           project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
+    post:
+      - name: Stop BAAS container
+        run: |
+          echo "TODO use cli.sh to stop container id: ${{ needs.build-android-packages.steps.baas_cli_start.outputs.baas_container_id }}"
+
   test-macos-packages:
     timeout-minutes: 30
     strategy:
