@@ -132,8 +132,10 @@ actual enum class WebsocketErrorCode(
 
     override val nativeValue: Int = errorCode.value.toInt()
 
+    val asNativeEnum: realm_web_socket_errno = errorCode
+
     actual companion object {
-        internal actual fun of(nativeValue: Int): WebsocketErrorCode? =
+        actual fun of(nativeValue: Int): WebsocketErrorCode? =
             values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }

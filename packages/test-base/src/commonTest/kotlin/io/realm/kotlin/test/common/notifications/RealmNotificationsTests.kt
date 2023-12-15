@@ -92,6 +92,45 @@ class RealmNotificationsTests : FlowableTests {
 
     // Test 5
     @Test
+    fun registerTwoFlows() = runBlocking {
+        val c1 = TestChannel<RealmChange<Realm>>()
+        val c2 = TestChannel<RealmChange<Realm>>()
+        val startingVersion = realm.version()
+        val observer1 = async {
+            realm.asFlow().collect {
+                c1.send(it)
+            }
+        }
+        c1.receiveOrFail(message = "Failed to receive initial event on Channel 1").let { realmChange ->
+            assertIs<InitialRealm<Realm>>(realmChange)
+            assertEquals(startingVersion, realmChange.realm.version())
+        }
+
+        realm.write { /* Do nothing */ }
+        val nextVersion = realm.version()
+
+        val observer2 = async {
+            realm.asFlow().collect {
+                c2.send(it)
+            }
+        }
+
+        c1.receiveOrFail(message = "Failed to receive update event on Channel 1").let { realmChange ->
+            assertIs<UpdatedRealm<Realm>>(realmChange)
+            assertEquals(nextVersion, realmChange.realm.version())
+        }
+        c2.receiveOrFail(message = "Failed to receive initial event on Channel 2").let { realmChange ->
+            assertIs<InitialRealm<Realm>>(realmChange)
+            assertEquals(nextVersion, realmChange.realm.version())
+        }
+
+        observer1.cancel()
+        observer2.cancel()
+        c1.cancel()
+        c2.cancel()
+    }
+
+    @Test
     override fun asFlow() {
         runBlocking {
             val c = TestChannel<RealmChange<Realm>>()
