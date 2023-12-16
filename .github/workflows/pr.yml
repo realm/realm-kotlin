@@ -557,9 +557,9 @@ jobs:
         id: baas_cli_start
         working-directory: baasaas
         env:
-          BAAS_CLI_API: ${{ secrets.BAAS_CLI_API_KEY }}
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          OUTPUT=$(APIKEY=$BAAS_CLI_API ./cli.sh start)
+          OUTPUT=$(./cli.sh start)
           echo "::set-output name=baas_container_id::$OUTPUT"
 
       # TODO This cmake version is not being used by the Android builds. Figure out why.
@@ -615,9 +615,9 @@ jobs:
         id: baas_cli_poll
         working-directory: baasaas
         env:
-          BAAS_CLI_API: ${{ secrets.BAAS_CLI_API_KEY }}
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          OUTPUT=$(APIKEY=$BAAS_CLI_API ./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "::set-output name=baas_container_hostname::$OUTPUT"
 
       - name: Build Android Sync Test Apk
