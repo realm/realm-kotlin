@@ -136,7 +136,7 @@ jobs:
     runs-on: windows-latest
     needs: [check-cache, build-jni-swig-stub]
     if: |
-      never()
+      ${{ false == true }}
 #      !cancelled() &&
 #      !contains(needs.*.result, 'failure') &&
 #      !contains(needs.*.result, 'cancelled') &&
@@ -200,7 +200,7 @@ jobs:
     runs-on: macos-latest
     needs: [check-cache, build-jni-swig-stub]
     if: |
-      never()
+      ${{ false == true }}
 #      !cancelled() &&
 #      !contains(needs.*.result, 'failure') &&
 #      !contains(needs.*.result, 'cancelled') &&
