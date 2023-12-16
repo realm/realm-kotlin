@@ -136,7 +136,7 @@ jobs:
     runs-on: windows-latest
     needs: [check-cache, build-jni-swig-stub]
     if: |
-      always()
+      never()
 #      !cancelled() &&
 #      !contains(needs.*.result, 'failure') &&
 #      !contains(needs.*.result, 'cancelled') &&
@@ -200,7 +200,7 @@ jobs:
     runs-on: macos-latest
     needs: [check-cache, build-jni-swig-stub]
     if: |
-      always()
+      never()
 #      !cancelled() &&
 #      !contains(needs.*.result, 'failure') &&
 #      !contains(needs.*.result, 'cancelled') &&
@@ -389,7 +389,7 @@ jobs:
   # all Kotlin Multiplatform Metadata
   build-jvm-packages:
     runs-on: macos-latest
-    needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib, build-jvm-macos-native-lib]
+    needs: [check-cache, build-jvm-linux-native-lib]
     if: |
       always()
 #      !cancelled() &&
@@ -476,17 +476,17 @@ jobs:
           name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/cinterop/build/realmLinuxBuild
 
-      - name: Restore Windows JNI lib
-        uses: actions/download-artifact@v3
-        with:
-          name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/build/realmWindowsBuild/Release
-
-      - name: Restore MacOS JNI lib
-        uses: actions/download-artifact@v3
-        with:
-          name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/build/realmMacOsBuild
+#      - name: Restore Windows JNI lib
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
+#          path: ./packages/cinterop/build/realmWindowsBuild/Release
+#
+#      - name: Restore MacOS JNI lib
+#        uses: actions/download-artifact@v3
+#        with:
+#          name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
+#          path: ./packages/cinterop/build/realmMacOsBuild
           
       - name: Build JVM Package
         working-directory: packages
