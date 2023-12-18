@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Add Mongo Client API to access Atlas App Service collections. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972))
 
 ### Fixed
 * None.
