@@ -22,8 +22,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User

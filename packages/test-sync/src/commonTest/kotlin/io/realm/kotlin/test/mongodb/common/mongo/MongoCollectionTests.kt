@@ -222,7 +222,7 @@ abstract sealed class MongoCollectionTests {
             assertEquals("object-0", this.name)
         }
 
-        // projection
+        // Projection
         val collectionDataType = CollectionDataType("object-6")
         assertEquals(collectionDataType._id, collection.insertOne(collectionDataType))
 
@@ -244,7 +244,7 @@ abstract sealed class MongoCollectionTests {
             assertEquals(collectionDataType._id, this._id)
         }
 
-        // sort
+        // Sort
         collection.findOne(sort = BsonDocument(mapOf("name" to BsonInt32(-1)))).run {
             assertIs<CollectionDataType>(this)
             assertEquals("object-6", this.name)
@@ -287,13 +287,11 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     fun find() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
         assertTrue { collection.find().isEmpty() }
-        assertTrue { collection.find<CollectionDataType>().isEmpty() }
 
-        val x: List<Int> = collection.insertMany(listOf(CollectionDataType("dog1"), CollectionDataType("dog2")))
+        val ids: List<Int> = collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
         assertEquals(2, collection.find<CollectionDataType>().size)
-        //
+
         collection.find(filter = null, projection = null, sort = null, limit = null)
     }
 
