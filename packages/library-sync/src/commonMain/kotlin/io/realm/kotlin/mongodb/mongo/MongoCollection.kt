@@ -194,14 +194,14 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndUpdate(
 @Suppress("LongParameterList")
 public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndReplace(
     filter: BsonDocument,
-    update: BsonDocument,
+    document: BsonDocument,
     projection: BsonDocument? = null,
     sort: BsonDocument? = null,
     upsert: Boolean = false,
     returnNewDoc: Boolean = false,
 ): T? {
     isType<MongoCollectionImpl<*, *>>(this)
-    return decodeFromBsonValue(findOneAndReplace(filter, update, projection, sort, upsert, returnNewDoc))
+    return decodeFromBsonValue(findOneAndReplace(filter, document, projection, sort, upsert, returnNewDoc))
 }
 
 @Suppress("LongParameterList")

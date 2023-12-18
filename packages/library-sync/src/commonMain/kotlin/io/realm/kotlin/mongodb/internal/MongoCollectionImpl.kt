@@ -97,7 +97,7 @@ internal abstract class MongoCollectionImpl<T, K> constructor(
     internal suspend fun find(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null, limit: Long? = null): BsonValue =
         call("find") {
             filter?.let { put("query", it) }
-            projection?.let { put("projection", it) }
+            projection?.let { put("project", it) }
             sort?.let { put("sort", it) }
             limit?.let { put("limit", BsonInt64(it)) }
         }
@@ -182,7 +182,7 @@ internal abstract class MongoCollectionImpl<T, K> constructor(
         projection?.let { put("projection", projection) }
         sort?.let { put("sort", sort) }
         put("upsert", BsonBoolean(upsert))
-        put("returnNewDoc", BsonBoolean(returnNewDoc))
+        put("returnNewDocument", BsonBoolean(returnNewDoc))
     }
 
     @Suppress("LongParameterList")
@@ -200,7 +200,7 @@ internal abstract class MongoCollectionImpl<T, K> constructor(
         projection?.let { put("projection", projection) }
         sort?.let { put("sort", sort) }
         put("upsert", BsonBoolean(upsert))
-        put("returnNewDoc", BsonBoolean(returnNewDoc))
+        put("returnNewDocument", BsonBoolean(returnNewDoc))
     }
 
     @PublishedApi

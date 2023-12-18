@@ -89,7 +89,7 @@ class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
     @Test
     override fun findOne_unknownCollection() = runBlocking<Unit> {
         // Unknown collections will create the collection
-        val unknownCollection = collection<Unknown, BsonValue>(Unknown::class)
+        val unknownCollection = collection<NonSchemaType, BsonValue>(NonSchemaType::class)
         assertNull(unknownCollection.findOne())
     }
 }
@@ -108,7 +108,7 @@ class MongoCollectionFromClientTests : MongoCollectionTests() {
 
     @Test
     override fun findOne_unknownCollection() = runBlocking<Unit> {
-        val unknownCollection = collection<Unknown, BsonValue>(Unknown::class)
+        val unknownCollection = collection<NonSchemaType, BsonValue>(NonSchemaType::class)
         assertFailsWithMessage<ServiceException>("no matching collection found that maps to a table with title \"Unknown\"") {
             RealmLog.level = LogLevel.ALL
             unknownCollection.findOne()
@@ -282,10 +282,10 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
-    fun findOne_extraFieldsAreDiscarded() { }
+    fun findOne_extraFieldsAreDiscarded() { TODO() }
 
     @Test
-    fun findOne_missingFieldsGetsDefaults() { }
+    fun findOne_missingFieldsGetsDefaults() { TODO() }
 
     @Test
     abstract fun findOne_unknownCollection()
@@ -459,7 +459,12 @@ abstract sealed class MongoCollectionTests {
     fun insertMany() = runBlocking {
         assertEquals(0, collection.find().size)
 
-        collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
+        collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") }).let { ids ->
+            assertEquals(10, ids.size)
+            ids.forEach { id ->
+                assertIs<Int>(id)
+            }
+        }
 
         assertEquals(10, collection.find().size)
     }
@@ -492,7 +497,7 @@ abstract sealed class MongoCollectionTests {
         assertFailsWithMessage<ServiceException>("Duplicate key error") {
             collection.insertMany(listOf(document.apply { name = "sadf" }, document))
         }
-        // FIXME Wouldn't have expected one of the documents to be inserted :thinking:
+        // Above call will throw an error, but we have actually inserted one document
         assertEquals(1, collection.find().size)
     }
 
@@ -526,9 +531,12 @@ abstract sealed class MongoCollectionTests {
             ).size
         )
         assertEquals(2, collection.count(BsonDocument("""{ "name": "object-1" }""")))
+
         assertTrue { collection.deleteOne(BsonDocument("""{ "name": "object-1" }""")) }
         assertEquals(1, collection.count(BsonDocument("""{ "name": "object-1" }""")))
     }
+
+    // Explicit types
 
     @Test
     fun deleteOne_fails() = runBlocking<Unit> {
@@ -539,88 +547,29 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     fun deleteMany() = runBlocking {
-        // Argument wrapper DSL
-        RealmLog.level = LogLevel.ALL
         assertEquals(0, collection.deleteMany(BsonDocument()))
 
-        assertEquals(
-            2,
-            collection.insertMany<CollectionDataType, BsonValue>(
-                listOf(
-                    CollectionDataType("object-1"),
-                    CollectionDataType("object-1")
-                )
-            ).size
-        )
+        collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
+        assertEquals(10, collection.find().size)
+
         assertEquals(2, collection.deleteMany(BsonDocument("""{ "name": "object-1" }""")))
 
-        assertEquals(
-            3,
-            collection.insertMany<CollectionDataType, BsonValue>(
-                listOf(
-                    CollectionDataType("object-1"),
-                    CollectionDataType("object-1"),
-                    CollectionDataType("object-1")
-                )
-            ).size
-        )
-        assertEquals(3, collection.deleteMany(BsonDocument()))
+        assertEquals(8, collection.find().size)
+
+        assertEquals(8, collection.deleteMany(BsonDocument()))
     }
 
-//    @Test
-//    fun deleteMany_singleDocument() {
-//        with(getCollectionInternal()) {
-//            assertEquals(0, count().get())
-//
-//            val rawDoc = Document("hello", "world")
-//            val doc1 = Document(rawDoc)
-//
-//            insertOne(doc1).get()
-//            assertEquals(1, count().get())
-//            assertEquals(1, deleteMany(doc1).get()!!.deletedCount)
-//            assertEquals(0, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun deleteMany_multipleDocuments() {
-//        with(getCollectionInternal()) {
-//            assertEquals(0, count().get())
-//
-//            val rawDoc = Document("hello", "world")
-//            val doc1 = Document(rawDoc)
-//            val doc1b = Document(rawDoc)
-//            val doc2 = Document("foo", "bar")
-//            val doc3 = Document("42", "666")
-//            insertMany(listOf(doc1, doc1b, doc2, doc3)).get()
-//            assertEquals(2, deleteMany(rawDoc).get()!!.deletedCount)                 // two docs will be deleted
-//            assertEquals(2, count().get())                                           // two docs still present
-//            assertEquals(2, deleteMany(Document()).get()!!.deletedCount)             // delete all
-//            assertEquals(0, count().get())
-//
-//            insertMany(listOf(doc1, doc1b, doc2, doc3)).get()
-//            assertEquals(4, deleteMany(Document()).get()!!.deletedCount)             // delete all
-//            assertEquals(0, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun deleteMany_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                deleteMany(Document("\$who", 1)).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("operator", true))
-//            }
-//        }
-//    }
-//
+    @Test
+    fun deleteMany_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
+            collection.deleteMany(BsonDocument("\$who", 1))
+        }
+    }
+
     @Test
     open fun updateOne() = runBlocking<Unit> {
-        // Argument wrapper DSL
         assertEquals(0, collection.count())
 
-        RealmLog.level = LogLevel.ALL
         assertEquals(
             4,
             collection.insertMany<CollectionDataType, BsonValue>(
@@ -634,25 +583,25 @@ abstract sealed class MongoCollectionTests {
         )
         assertEquals(4, collection.count())
 
-        // update no match
-        val updateWithoutMatch = collection.updateOne<BsonDocument>(
+        // Update no match
+        val updateWithoutMatch = collection.updateOne(
             BsonDocument("""{ "name": "NOMATCH"}"""),
-            BsonDocument("""{ "name": "UPDATED"}"""),
+            BsonDocument("\$set", BsonDocument("""{ "name": "UPDATED"}""")),
         )
         assertEquals(false to null, updateWithoutMatch)
 
-        // update with match match
+        // Update with match match
         val updateWithMatch = collection.updateOne(
             BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument("""{ "name": "object-2"}"""),
+            BsonDocument("\$set", BsonDocument("""{ "name": "object-2"}""")),
         )
         assertEquals(true to null, updateWithMatch)
         assertEquals(4, collection.count())
         assertEquals(3, collection.count(filter = BsonDocument("""{"name": "object-1"}""")))
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
 
-        // upsert no match
-        val upsertWithoutMatch = collection.updateOne<Int>(
+        // Upsert no match
+        val upsertWithoutMatch = collection.updateOne(
             BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
         )
         upsertWithoutMatch.let { (updated, upsertedId) ->
@@ -662,8 +611,8 @@ abstract sealed class MongoCollectionTests {
         assertEquals(5, collection.count())
         assertEquals(2, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
 
-        // upsert with match
-        val upsertWithMatch = collection.updateOne<BsonValue>(
+        // Upsert with match
+        val upsertWithMatch = collection.updateOne(
             BsonDocument("""{ "name": "object-2"}"""), BsonDocument(""" { "name": "object-3"}"""), upsert = true
         )
         assertEquals(true to null, upsertWithMatch)
@@ -671,64 +620,24 @@ abstract sealed class MongoCollectionTests {
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
     }
 
-    //    @Test
-//    fun updateOne_emptyCollection() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world")
-//
-//            // Update on an empty collection
-//            updateOne(Document(), doc1)
-//                .get()!!
-//                .let {
-//                    assertEquals(0, it.matchedCount)
-//                    assertEquals(0, it.modifiedCount)
-//                    assertNull(it.upsertedId)
-//                }
-//
-//            // Update on an empty collection adding some values
-//            val doc2 = Document("\$set", Document("woof", "meow"))
-//            updateOne(Document(), doc2)
-//                .get()!!
-//                .let {
-//                    assertEquals(0, it.matchedCount)
-//                    assertEquals(0, it.modifiedCount)
-//                    assertNull(it.upsertedId)
-//                    assertEquals(0, count().get())
-//                }
-//        }
-//    }
-//
-//    @Test
-//    fun updateOne_emptyCollectionWithUpsert() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world")
-//
-//            // Update on empty collection with upsert
-//            val options = UpdateOptions().upsert(true)
-//            updateOne(Document(), doc1, options)
-//                .get()!!
-//                .let {
-//                    assertEquals(0, it.matchedCount)
-//                    assertEquals(0, it.modifiedCount)
-//                    assertFalse(it.upsertedId!!.isNull)
-//                }
-//            assertEquals(1, count().get())
-//
-//            assertEquals(doc1, find(Document()).first().get()!!.withoutId())
-//        }
-//    }
-//
-//    @Test
-//    fun updateOne_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                updateOne(Document("\$who", 1), Document()).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("operator", true))
-//            }
-//        }
-//    }
-//
+    @Test
+    fun updateOne_explicitTypes() = runBlocking<Unit> {
+        val upsertWithoutMatch = collection.updateOne<BsonValue>(
+            BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
+        )
+        upsertWithoutMatch.let { (updated, upsertedId) ->
+            assertFalse(updated)
+            assertIs<BsonValue>(upsertedId)
+        }
+    }
+
+    @Test
+    fun updateOne_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
+            collection.updateOne(BsonDocument("\$who", 1), BsonDocument())
+        }
+    }
+
     @Test
     fun updateMany() = runBlocking<Unit> {
         assertEquals(0, collection.count())
@@ -745,7 +654,8 @@ abstract sealed class MongoCollectionTests {
             ).size
         )
         assertEquals(4, collection.count())
-        val updateWithoutMatch = collection.updateMany<BsonValue>(
+        // Update with no match
+        val updateWithoutMatch = collection.updateMany(
             BsonDocument("""{"name": "NOMATCH"}"""),
             BsonDocument("""{"name": "UPDATED"}"""),
         )
@@ -753,7 +663,7 @@ abstract sealed class MongoCollectionTests {
         assertEquals(0, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
         assertEquals(4, collection.count())
 
-        // update with match match
+        // Update with match
         val updateWithMatch = collection.updateMany(
             BsonDocument("""{ "name": "x"}"""),
             BsonDocument("""{ "name": "UPDATED"}"""),
@@ -762,8 +672,8 @@ abstract sealed class MongoCollectionTests {
         assertEquals(2, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
         assertEquals(4, collection.count())
 
-        // upsert no match
-        val upsertWithoutMatch = collection.updateMany<Int>(
+        // Upsert no match
+        val upsertWithoutMatch = collection.updateMany(
             BsonDocument("""{ "name": "NOMATCH"}"""), BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""), upsert = true
         )
         upsertWithoutMatch.let {
@@ -772,8 +682,8 @@ abstract sealed class MongoCollectionTests {
         }
         assertEquals(5, collection.count())
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "UPSERTED"}""")))
-        // upsert with match
-        val upsertWithMatch = collection.updateMany<BsonValue>(
+        // Upsert with match
+        val upsertWithMatch = collection.updateMany(
             BsonDocument("""{ "name": "y"}"""), BsonDocument(""" { "name": "z"}"""), upsert = true
         )
         assertEquals(1L to null, upsertWithMatch)
@@ -781,508 +691,367 @@ abstract sealed class MongoCollectionTests {
         assertEquals(0, collection.count(filter = BsonDocument("""{"name": "y"}""")))
     }
 
-    //    @Test
-//    fun updateMany_emptyCollection() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world")
-//
-//            // Update on empty collection
-//            updateMany(Document(), doc1)
-//                .get()!!
-//                .let {
-//                    assertEquals(0, it.matchedCount)
-//                    assertEquals(0, it.modifiedCount)
-//                    assertNull(it.upsertedId)
-//                }
-//            assertEquals(0, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun updateMany_emptyCollectionWithUpsert() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world")
-//
-//            // Update on empty collection with upsert
-//            updateMany(Document(), doc1, UpdateOptions().upsert(true))
-//                .get()!!
-//                .let {
-//                    assertEquals(0, it.matchedCount)
-//                    assertEquals(0, it.modifiedCount)
-//                    assertNotNull(it.upsertedId)
-//                }
-//            assertEquals(1, count().get())
-//
-//            // Add new value using update
-//            val update = Document("woof", "meow")
-//            updateMany(Document(), Document("\$set", update))
-//                .get()!!
-//                .let {
-//                    assertEquals(1, it.matchedCount)
-//                    assertEquals(1, it.modifiedCount)
-//                    assertNull(it.upsertedId)
-//                }
-//            assertEquals(1, count().get())
-//            val expected = Document(doc1).apply { this["woof"] = "meow" }
-//            assertEquals(expected, find().first().get()!!.withoutId())
-//
-//            // Insert empty document, add ["woof", "meow"] to it and check it worked
-//            insertOne(Document()).get()
-//            updateMany(Document(), Document("\$set", update))
-//                .get()!!
-//                .let {
-//                    assertEquals(2, it.matchedCount)
-//                    assertEquals(2, it.modifiedCount)
-//                }
-//            assertEquals(2, count().get())
-//            find().iterator()
-//                .get()!!
-//                .let {
-//                    assertEquals(expected, it.next().withoutId())
-//                    assertEquals(update, it.next().withoutId())
-//                    assertFalse(it.hasNext())
-//                }
-//        }
-//    }
-//
-//    @Test
-//    fun updateMany_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                updateMany(Document("\$who", 1), Document()).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("operator", true))
-//            }
-//        }
-//    }
-//
+    @Test
+    fun updateMany_explicitTypes() = runBlocking<Unit> {
+        collection.updateMany<BsonValue>(
+            BsonDocument("""{ "name": "object-3"}"""),
+            BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""),
+            upsert = true
+        ).let { (updated, upsertedId) ->
+            assertEquals(0, updated)
+            assertIs<BsonValue>(upsertedId)
+        }
+    }
+
+    @Test
+    fun updateMany_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("Unknown modifier: \$who") {
+            collection.updateOne(BsonDocument(), BsonDocument("\$who", 1))
+        }
+    }
+
     @Test
     fun findOneAndUpdate() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
-        assertNull(collection.findOneAndUpdate<CollectionDataType>(BsonDocument(), BsonDocument()))
-        collection.insertMany<CollectionDataType, Int>(
-            listOf(
-                CollectionDataType("object-1"),
-                CollectionDataType("object-1"),
-                CollectionDataType("object-2")
+        assertNull(collection.findOneAndUpdate(BsonDocument(), BsonDocument()))
+
+        val names = (1..10).map { "object-${it % 5}" }
+        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+
+        // Update with no match
+        assertNull(
+            collection.findOneAndUpdate(
+                BsonDocument("""{"name": "NOMATCH"}"""),
+                BsonDocument("""{"name": "UPDATED"}"""),
             )
         )
-        collection.findOneAndUpdate<CollectionDataType>(
-            BsonDocument(),
-            BsonDocument("""{ "name": "object-1" }"""),
-            upsert = true
-        )
-    }
-//    @Test
-//    fun findOneAndUpdate_emptyCollection() {
-//        with(getCollectionInternal()) {
-//            // Test null return format
-//            assertNull(findOneAndUpdate(Document(), Document()).get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndUpdate_noUpdates() {
-//        with(getCollectionInternal()) {
-//            assertNull(findOneAndUpdate(Document(), Document()).get())
-//            assertEquals(0, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndUpdate_noUpsert() {
-//        with(getCollectionInternal()) {
-//            val sampleDoc = Document("hello", "world1")
-//            sampleDoc["num"] = 2
-//
-//            // Insert a sample Document
-//            insertOne(sampleDoc).get()
-//            assertEquals(1, count().get())
-//
-//            // Sample call to findOneAndUpdate() where we get the previous document back
-//            val sampleUpdate = Document("\$set", Document("hello", "hellothere")).apply {
-//                this["\$inc"] = Document("num", 1)
-//            }
-//            findOneAndUpdate(Document("hello", "world1"), sampleUpdate)
-//                .get()!!
-//                .withoutId()
-//                .let {
-//                    assertEquals(sampleDoc.withoutId(), it)
-//                }
-//            assertEquals(1, count().get())
-//
-//            // Make sure the update took place
-//            val expectedDoc = Document("hello", "hellothere")
-//            expectedDoc["num"] = 3
-//            assertEquals(expectedDoc.withoutId(), find().first().get()!!.withoutId())
-//            assertEquals(1, count().get())
-//
-//            // Call findOneAndUpdate() again but get the new document
-//            sampleUpdate.remove("\$set")
-//            expectedDoc["num"] = 4
-//            val options = FindOneAndModifyOptions()
-//                .returnNewDocument(true)
-//            findOneAndUpdate(Document("hello", "hellothere"), sampleUpdate, options)
-//                .get()!!
-//                .withoutId()
-//                .let {
-//                    assertEquals(expectedDoc.withoutId(), it)
-//                }
-//            assertEquals(1, count().get())
-//
-//            // Test null behaviour again with a filter that should not match any documents
-//            assertNull(findOneAndUpdate(Document("hello", "zzzzz"), Document()).get())
-//            assertEquals(1, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndUpdate_upsert() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world1").apply { this["num"] = 1 }
-//            val doc2 = Document("hello", "world2").apply { this["num"] = 2 }
-//            val doc3 = Document("hello", "world3").apply { this["num"] = 3 }
-//
-//            val filter = Document("hello", "hellothere")
-//
-//            // Test the upsert option where it should not actually be invoked
-//            var options = FindOneAndModifyOptions()
-//                .returnNewDocument(true)
-//                .upsert(true)
-//            val update1 = Document("\$set", doc1)
-//            assertEquals(doc1,
-//                findOneAndUpdate(filter, update1, options)
-//                    .get()!!
-//                    .withoutId())
-//            assertEquals(1, count().get())
-//            assertEquals(doc1.withoutId(),
-//                find().first()
-//                    .get()!!
-//                    .withoutId())
-//
-//            // Test the upsert option where the server should perform upsert and return new document
-//            val update2 = Document("\$set", doc2)
-//            assertEquals(doc2,
-//                findOneAndUpdate(filter, update2, options)
-//                    .get()!!
-//                    .withoutId())
-//            assertEquals(2, count().get())
-//
-//            // Test the upsert option where the server should perform upsert and return old document
-//            // The old document should be empty
-//            options = FindOneAndModifyOptions()
-//                .upsert(true)
-//            val update = Document("\$set", doc3)
-//            assertNull(findOneAndUpdate(filter, update, options).get())
-//            assertEquals(3, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndUpdate_withProjectionAndSort() {
-//        with(getCollectionInternal()) {
-//            insertMany(listOf(
-//                Document(mapOf(Pair("team", "Fearful Mallards"), Pair("score", 25000))),
-//                Document(mapOf(Pair("team", "Tactful Mooses"), Pair("score", 23500))),
-//                Document(mapOf(Pair("team", "Aquatic Ponies"), Pair("score", 19250))),
-//                Document(mapOf(Pair("team", "Cuddly Zebras"), Pair("score", 15235))),
-//                Document(mapOf(Pair("team", "Garrulous Bears"), Pair("score", 18000)))
-//            )).get()
-//
-//            assertEquals(5, count().get())
-//            assertNotNull(findOne(Document("team", "Cuddly Zebras")))
-//
-//            // Project: team, hide _id; Sort: score ascending
-//            val project = Document(mapOf(Pair("_id", 0), Pair("team", 1), Pair("score", 1)))
-//            val sort = Document("score", 1)
-//
-//            // This results in the update of Cuddly Zebras
-//            val updatedDocument = findOneAndUpdate(
-//                Document("score", Document("\$lt", 22250)),
-//                Document("\$inc", Document("score", 1)),
-//                FindOneAndModifyOptions()
-//                    .projection(project)
-//                    .sort(sort)
-//            ).get()
-//
-//            assertEquals(5, count().get())
-//            assertEquals(
-//                Document(mapOf(Pair("team", "Cuddly Zebras"), Pair("score", 15235))),
-//                updatedDocument
-//            )
-//            assertEquals(
-//                Document(mapOf(Pair("team", "Cuddly Zebras"), Pair("score", 15235 + 1))),
-//                findOne(Document("team", "Cuddly Zebras")).get().withoutId()
-//            )
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndUpdate_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                findOneAndUpdate(Document(), Document("\$who", 1)).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("modifier", true))
-//            }
-//
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                findOneAndUpdate(Document(), Document("\$who", 1), FindOneAndModifyOptions().upsert(true)).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("modifier", true))
-//            }
-//        }
-//    }
+        assertEquals(0, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
 
-    // FIXME Invalid fields?~?
+        // Update with match - return old
+        collection.findOneAndUpdate(
+            BsonDocument("""{ "name": "object-1"}"""),
+            BsonDocument("""{ "name": "UPDATED"}"""),
+        )!!.let {
+            assertEquals("object-1", it.name)
+        }
+        assertEquals(1, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
+        // Update with match - return new
+        collection.findOneAndUpdate(
+            BsonDocument("""{ "name": "object-1"}"""),
+            BsonDocument("""{ "name": "UPDATED"}"""),
+            returnNewDoc = true
+        )!!.let {
+            assertEquals("UPDATED", it.name)
+        }
+        assertEquals(2, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
+
+        // Upsert no match
+        assertNull(
+            collection.findOneAndUpdate(
+                filter = BsonDocument("""{ "name": "NOMATCH"}"""),
+                update = BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""),
+                upsert = true,
+            )
+        )
+        // Upsert no match - return new document
+        collection.findOneAndUpdate(
+            filter = BsonDocument("""{ "name": "NOMATCH"}"""),
+            update = BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""),
+            upsert = true,
+            returnNewDoc = true,
+        )!!.let {
+            assertEquals("UPSERTED", it.name)
+        }
+
+        // Upsert with match
+        collection.findOneAndUpdate(
+            filter = BsonDocument("""{ "name": "object-2"}"""),
+            update = BsonDocument(""" { "name": "UPSERTED" }"""),
+            upsert = true,
+        )!!.let {
+            assertEquals("object-2", it.name)
+        }
+        collection.findOneAndUpdate(
+            filter = BsonDocument("""{ "name": "object-2"}"""),
+            update = BsonDocument(""" { "name": "UPSERTED"}"""),
+            upsert = true,
+            returnNewDoc = true,
+        )!!.let {
+            assertEquals("UPSERTED", it.name)
+        }
+
+        // Project without name
+        collection.findOneAndUpdate(
+            filter = BsonDocument("name", "object-3"),
+            update = BsonDocument(""" { "name": "UPDATED"}"""),
+            projection = BsonDocument("""{ "name" : 0}""")
+        )!!.run {
+            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // assertEquals("Default", this.name)
+            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            // _id is included by default and matched one of the previously inserted objects
+            assertTrue { this._id in ids }
+        }
+        // Project without _id, have to be explicitly excluded
+        collection.findOneAndUpdate(
+            filter = BsonDocument("name", "object-3"),
+            update = BsonDocument(""" { "name": "UPDATED"}"""),
+            projection = BsonDocument("""{ "_id" : 0}""")
+        )!!.run {
+            assertEquals("object-3", name)
+            // FIXME Should be constructor default arguments but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // We don't know the id as the constructor default generated a new one
+            // assertFalse { this._id in ids}
+            assertNull(this._id)
+        }
+
+        // Sort
+        val sortedNames: List<String> = collection.find().map { it.name!! }.sorted()
+        collection.findOneAndUpdate(
+            filter = BsonDocument(),
+            update = BsonDocument(""" { "name": "FIRST"}"""),
+            sort = BsonDocument(mapOf("name" to BsonInt32(1)))
+        )!!.run {
+            assertEquals(sortedNames.first(), this.name)
+        }
+        collection.findOneAndUpdate(
+            filter = BsonDocument(),
+            update = BsonDocument(""" { "name": "LAST"}"""),
+            sort = BsonDocument(mapOf("name" to BsonInt32(-1)))
+        )!!.run {
+            assertEquals(sortedNames.last(), this.name)
+        }
+    }
+
+    @Test
+    fun findOneAndUpdate_explicitTypes() = runBlocking<Unit> {
+        collection.insertOne(CollectionDataType("object-1"))
+
+        collection.findOneAndUpdate<BsonDocument>(
+            BsonDocument("""{ "name": "object-1"}"""),
+            BsonDocument("""{ "name": "UPDATED"}"""),
+        )!!.let {
+            assertEquals("object-1", it.asDocument()["name"]!!.asString().value)
+        }
+    }
+
+    @Test
+    fun findOneAndUpdate_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("Unknown modifier: \$who") {
+            collection.findOneAndUpdate(BsonDocument(), BsonDocument("\$who", 1))
+        }
+    }
+
     @Test
     fun findOneAndReplace() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
-        assertNull(collection.findOneAndReplace<CollectionDataType>(BsonDocument(), BsonDocument()))
-        collection.insertMany(
-            listOf(
-                CollectionDataType("object-1"),
-                CollectionDataType("object-1"),
-                CollectionDataType("object-2")
+        assertNull(collection.findOneAndReplace(BsonDocument(), BsonDocument()))
+
+        val names = (1..10).map { "object-${it % 5}" }
+        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+
+        // Replace with no match
+        assertNull(
+            collection.findOneAndReplace(
+                BsonDocument("""{"name": "NOMATCH"}"""),
+                BsonDocument(""" { "name": "REPLACED", "_id" : ${Random.nextInt()}}"""),
             )
         )
-        val x = collection.findOneAndReplace<CollectionDataType>(
-            BsonDocument(),
-            BsonDocument("""{ "name": "object-1" }"""),
-            upsert = true
+        assertEquals(0, collection.count(filter = BsonDocument("""{"name": "REPLACED"}""")))
+
+        // Replace with match - return old
+        collection.findOneAndReplace(
+            BsonDocument("""{ "name": "object-1"}"""),
+            BsonDocument(""" { "name": "REPLACED"}"""),
+        )!!.let {
+            assertEquals("object-1", it.name)
+        }
+        assertEquals(1, collection.count(filter = BsonDocument("""{"name": "REPLACED"}""")))
+
+        // Replace with match - return new
+        collection.findOneAndReplace(
+            BsonDocument("""{ "name": "object-1"}"""),
+            BsonDocument("""{ "name": "REPLACED"}"""),
+            returnNewDoc = true
+        )!!.let {
+            assertEquals("REPLACED", it.name)
+        }
+        assertEquals(2, collection.count(filter = BsonDocument("""{"name": "REPLACED"}""")))
+
+        // Upsert no match
+        assertNull(
+            collection.findOneAndReplace(
+                filter = BsonDocument("""{ "name": "NOMATCH"}"""),
+                document = BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""),
+                upsert = true,
+            )
         )
+        // Upsert no match - return new document
+        collection.findOneAndReplace(
+            filter = BsonDocument("""{ "name": "NOMATCH"}"""),
+            document = BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""),
+            upsert = true,
+            returnNewDoc = true,
+        )!!.let {
+            assertEquals("UPSERTED", it.name)
+        }
+
+        // Upsert with match
+        collection.findOneAndReplace(
+            filter = BsonDocument("""{ "name": "object-2"}"""),
+            document = BsonDocument(""" { "name": "UPSERTED" }"""),
+            upsert = true,
+        )!!.let {
+            assertEquals("object-2", it.name)
+        }
+        collection.findOneAndReplace(
+            filter = BsonDocument("""{ "name": "object-2"}"""),
+            document = BsonDocument(""" { "name": "UPSERTED"}"""),
+            upsert = true,
+            returnNewDoc = true,
+        )!!.let {
+            assertEquals("UPSERTED", it.name)
+        }
+
+        // Project without name
+        collection.findOneAndReplace(
+            filter = BsonDocument("name", "object-3"),
+            document = BsonDocument(""" { "name": "REPLACED"}"""),
+            projection = BsonDocument("""{ "name" : 0}""")
+        )!!.run {
+            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // assertEquals("Default", this.name)
+            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            // _id is included by default and matched one of the previously inserted objects
+            assertTrue { this._id in ids }
+        }
+        // Project without _id, have to be explicitly excluded
+        collection.findOneAndReplace(
+            filter = BsonDocument("name", "object-3"),
+            document = BsonDocument(""" { "name": "REPLACED"}"""),
+            projection = BsonDocument("""{ "_id" : 0}""")
+        )!!.run {
+            assertEquals("object-3", name)
+            // FIXME Should be constructor default arguments but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // We don't know the id as the constructor default generated a new one
+            // assertFalse { this._id in ids}
+            assertNull(this._id)
+        }
+
+        // Sort
+        val sortedNames: List<String> = collection.find().map { it.name!! }.sorted()
+        collection.findOneAndReplace(
+            filter = BsonDocument(),
+            document = BsonDocument(""" { "name": "FIRST"}"""),
+            sort = BsonDocument(mapOf("name" to BsonInt32(1)))
+        )!!.run {
+            assertEquals(sortedNames.first(), this.name)
+        }
+        collection.findOneAndReplace(
+            filter = BsonDocument(),
+            document = BsonDocument(""" { "name": "LAST"}"""),
+            sort = BsonDocument(mapOf("name" to BsonInt32(-1)))
+        )!!.run {
+            assertEquals(sortedNames.last(), this.name)
+        }
     }
-//
-//    @Test
-//    fun findOneAndReplace_noUpdates() {
-//        with(getCollectionInternal()) {
-//            // Test null behaviour again with a filter that should not match any documents
-//            assertNull(findOneAndReplace(Document("hello", "zzzzz"), Document()).get())
-//            assertEquals(0, count().get())
-//            assertNull(findOneAndReplace(Document(), Document()).get())
-//            assertEquals(0, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndReplace_noUpsert() {
-//        with(getCollectionInternal()) {
-//            val sampleDoc = Document("hello", "world1").apply { this["num"] = 2 }
-//
-//            // Insert a sample Document
-//            insertOne(sampleDoc).get()
-//            assertEquals(1, count().get())
-//
-//            // Sample call to findOneAndReplace() where we get the previous document back
-//            var sampleUpdate = Document("hello", "world2").apply { this["num"] = 2 }
-//            assertEquals(sampleDoc.withoutId(),
-//                findOneAndReplace(Document("hello", "world1"), sampleUpdate).get()!!.withoutId())
-//            assertEquals(1, count().get())
-//
-//            // Make sure the update took place
-//            val expectedDoc = Document("hello", "world2").apply { this["num"] = 2 }
-//            assertEquals(expectedDoc.withoutId(), find().first().get()!!.withoutId())
-//            assertEquals(1, count().get())
-//
-//            // Call findOneAndReplace() again but get the new document
-//            sampleUpdate = Document("hello", "world3").apply { this["num"] = 3 }
-//            val options = FindOneAndModifyOptions().returnNewDocument(true)
-//            assertEquals(sampleUpdate.withoutId(),
-//                findOneAndReplace(Document(), sampleUpdate, options).get()!!.withoutId())
-//            assertEquals(1, count().get())
-//
-//            // Test null behaviour again with a filter that should not match any documents
-//            assertNull(findOneAndReplace(Document("hello", "zzzzz"), Document()).get())
-//            assertEquals(1, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndReplace_upsert() {
-//        with(getCollectionInternal()) {
-//            val doc4 = Document("hello", "world4").apply { this["num"] = 4 }
-//            val doc5 = Document("hello", "world5").apply { this["num"] = 5 }
-//            val doc6 = Document("hello", "world6").apply { this["num"] = 6 }
-//
-//            // Test the upsert option where it should not actually be invoked
-//            val sampleUpdate = Document("hello", "world4").apply { this["num"] = 4 }
-//            var options = FindOneAndModifyOptions()
-//                .returnNewDocument(true)
-//                .upsert(true)
-//            assertEquals(doc4.withoutId(),
-//                findOneAndReplace(Document("hello", "world3"), doc4, options)
-//                    .get()!!
-//                    .withoutId())
-//            assertEquals(1, count().get())
-//            assertEquals(doc4.withoutId(), find().first().get()!!.withoutId())
-//
-//            // Test the upsert option where the server should perform upsert and return new document
-//            options = FindOneAndModifyOptions().returnNewDocument(true).upsert(true)
-//            assertEquals(doc5.withoutId(), findOneAndReplace(Document("hello", "hellothere"), doc5, options).get()!!.withoutId())
-//            assertEquals(2, count().get())
-//
-//            // Test the upsert option where the server should perform upsert and return old document
-//            // The old document should be empty
-//            options = FindOneAndModifyOptions().upsert(true)
-//            assertNull(findOneAndReplace(Document("hello", "hellothere"), doc6, options).get())
-//            assertEquals(3, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndReplace_withProjectionAndSort() {
-//        with(getCollectionInternal()) {
-//            insertMany(listOf(
-//                Document(mapOf(Pair("team", "Fearful Mallards"), Pair("score", 25000))),
-//                Document(mapOf(Pair("team", "Tactful Mooses"), Pair("score", 23500))),
-//                Document(mapOf(Pair("team", "Aquatic Ponies"), Pair("score", 19250))),
-//                Document(mapOf(Pair("team", "Cuddly Zebras"), Pair("score", 15235))),
-//                Document(mapOf(Pair("team", "Garrulous Bears"), Pair("score", 18000)))
-//            )).get()
-//
-//            assertEquals(5, count().get())
-//            assertNotNull(findOne(Document("team", "Cuddly Zebras")))
-//
-//            // Project: team, hide _id; Sort: score ascending
-//            val project = Document(mapOf(Pair("_id", 0), Pair("team", 1)))
-//            val sort = Document("score", 1)
-//
-//            // This results in the replacement of Cuddly Zebras
-//            val replacedDocument = findOneAndReplace(
-//                Document("score", Document("\$lt", 22250)),
-//                Document(mapOf(Pair("team", "Therapeutic Hamsters"), Pair("score", 22250))),
-//                FindOneAndModifyOptions()
-//                    .projection(project)
-//                    .sort(sort)
-//            ).get()
-//
-//            assertEquals(5, count().get())
-//            assertEquals(Document("team", "Cuddly Zebras"), replacedDocument)
-//            assertNull(findOne(Document("team", "Cuddly Zebras")).get())
-//            assertNotNull(findOne(Document("team", "Therapeutic Hamsters")).get())
-//
-//            // Check returnNewDocument
-//            val newDocument = findOneAndReplace(
-//                Document("score", 22250),
-//                Document(mapOf(Pair("team", "New Therapeutic Hamsters"), Pair("score", 30000))),
-//                FindOneAndModifyOptions().returnNewDocument(true)
-//            ).get()
-//
-//            assertEquals(Document(mapOf(Pair("team", "New Therapeutic Hamsters"), Pair("score", 30000))), newDocument.withoutId())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndReplace_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.INVALID_PARAMETER) {
-//                findOneAndReplace(Document(), Document("\$who", 1)).get()
-//            }
-//
-//            assertFailsWithErrorCode(ErrorCode.INVALID_PARAMETER) {
-//                findOneAndReplace(Document(), Document("\$who", 1), FindOneAndModifyOptions().upsert(true)).get()
-//            }
-//        }
-//    }
+
+    @Test
+    fun findOneAndReplace_explicitTypes() = runBlocking<Unit> {
+        collection.insertOne(CollectionDataType("object-1"))
+
+        collection.findOneAndReplace<BsonDocument>(
+            BsonDocument("""{ "name": "object-1"}"""),
+            BsonDocument("""{ "name": "REPLACED"}"""),
+        )!!.let {
+            assertEquals("object-1", it.asDocument()["name"]!!.asString().value)
+        }
+    }
+
+    @Test
+    fun findOneAndReplace_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("the replace operation document must not contain atomic operators") {
+            collection.findOneAndReplace(BsonDocument(), BsonDocument("\$who", 1))
+        }
+    }
 
     @Test
     fun findOneAndDelete() = runBlocking<Unit> {
+        assertNull(collection.findOneAndDelete(BsonDocument(), BsonDocument()))
+
+        val names = (1..10).map { "object-${it % 5}" }
+        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+
         RealmLog.level = LogLevel.ALL
-        assertNull(collection.findOneAndDelete<CollectionDataType>(BsonDocument(), BsonDocument()))
-        collection.insertMany(
-            listOf(
-                CollectionDataType("object-1"),
-                CollectionDataType("object-1"),
-                CollectionDataType("object-2")
-            )
-        )
-        val x: CollectionDataType? = collection.findOneAndDelete<CollectionDataType>(
-            BsonDocument(),
-            BsonDocument("""{ "name": "object-1" }"""),
-        )
+        // Delete with no match
+        assertNull(collection.findOneAndDelete(BsonDocument("""{"name": "NOMATCH"}""")))
+        assertEquals(10, collection.count(filter = BsonDocument()))
+
+        // Delete with match
+        collection.findOneAndDelete(
+            BsonDocument("""{ "name": "object-1"}"""),
+        )!!.let {
+            assertEquals("object-1", it.name)
+        }
+        assertEquals(9, collection.count(filter = BsonDocument()))
+
+        // Project without name
+        collection.findOneAndDelete(
+            filter = BsonDocument("name", "object-3"),
+            projection = BsonDocument("""{ "name" : 0}""")
+        )!!.run {
+            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // assertEquals("Default", this.name)
+            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            // _id is included by default and matched one of the previously inserted objects
+            assertTrue { this._id in ids }
+        }
+        // Project without _id, have to be explicitly excluded
+        collection.findOneAndDelete(
+            filter = BsonDocument("name", "object-3"),
+            projection = BsonDocument("""{ "_id" : 0}""")
+        )!!.run {
+            assertEquals("object-3", name)
+            // FIXME Should be constructor default arguments but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // We don't know the id as the constructor default generated a new one
+            // assertFalse { this._id in ids}
+            assertNull(this._id)
+        }
+
+        // Sort
+        val sortedNames: List<String> = collection.find().map { it.name!! }.sorted()
+        collection.findOneAndDelete(
+            filter = BsonDocument(),
+            sort = BsonDocument(mapOf("name" to BsonInt32(1)))
+        )!!.run {
+            assertEquals(sortedNames.first(), this.name)
+        }
+        collection.findOneAndDelete(
+            filter = BsonDocument(),
+            sort = BsonDocument(mapOf("name" to BsonInt32(-1)))
+        )!!.run {
+            assertEquals(sortedNames.last(), this.name)
+        }
     }
-    //
-//    @Test
-//    fun findOneAndDelete() {
-//        with(getCollectionInternal()) {
-//            val sampleDoc = Document("hello", "world1").apply { this["num"] = 1 }
-//
-//            // Collection should start out empty
-//            // This also tests the null return format
-//            assertNull(findOneAndDelete(Document()).get())
-//
-//            // Insert a sample Document
-//            insertOne(sampleDoc).get()
-//            assertEquals(1, count().get())
-//
-//            // Sample call to findOneAndDelete() where we delete the only doc in the collection
-//            assertEquals(sampleDoc.withoutId(),
-//                findOneAndDelete(Document()).get()!!.withoutId())
-//
-//            // There should be no documents in the collection now
-//            assertEquals(0, count().get())
-//
-//            // Insert a sample Document
-//            insertOne(sampleDoc).get()
-//            assertEquals(1, count().get())
-//
-//            // Call findOneAndDelete() again but this time with a filter
-//            assertEquals(sampleDoc.withoutId(),
-//                findOneAndDelete(Document("hello", "world1")).get()!!.withoutId())
-//
-//            // There should be no documents in the collection now
-//            assertEquals(0, count().get())
-//
-//            // Insert a sample Document
-//            insertOne(sampleDoc).get()
-//            assertEquals(1, count().get())
-//
-//            // Test null behaviour again with a filter that should not match any documents
-//            assertNull(findOneAndDelete(Document("hello", "zzzzz")).get())
-//            assertEquals(1, count().get())
-//
-//            val doc2 = Document("hello", "world2").apply { this["num"] = 2 }
-//            val doc3 = Document("hello", "world3").apply { this["num"] = 3 }
-//
-//            // Insert new documents
-//            insertMany(listOf(doc2, doc3)).get()
-//            assertEquals(3, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun findOneAndDelete_withProjectionAndSort() {
-//        with(getCollectionInternal()) {
-//            insertMany(listOf(
-//                Document(mapOf(Pair("team", "Fearful Mallards"), Pair("score", 25000))),
-//                Document(mapOf(Pair("team", "Tactful Mooses"), Pair("score", 23500))),
-//                Document(mapOf(Pair("team", "Aquatic Ponies"), Pair("score", 19250))),
-//                Document(mapOf(Pair("team", "Cuddly Zebras"), Pair("score", 15235))),
-//                Document(mapOf(Pair("team", "Garrulous Bears"), Pair("score", 18000)))
-//            )).get()
-//
-//            assertEquals(5, count().get())
-//            assertNotNull(findOne(Document("team", "Cuddly Zebras")))
-//
-//            // Project: team, hide _id; Sort: score ascending
-//            val project = Document(mapOf(Pair("_id", 0), Pair("team", 1)))
-//            val sort = Document("score", 1)
-//
-//            // This results in the deletion of Cuddly Zebras
-//            val deletedDocument = findOneAndDelete(
-//                Document("score", Document("\$lt", 22250)),
-//                FindOneAndModifyOptions()
-//                    .projection(project)
-//                    .sort(sort)
-//            ).get()
-//
-//            assertEquals(4, count().get())
-//            assertEquals(Document("team", "Cuddly Zebras"), deletedDocument.withoutId())
-//            assertNull(findOne(Document("team", "Cuddly Zebras")).get())
-//        }
-//    }
+
+    @Test
+    fun findOneAndDelete_explicitTypes() = runBlocking<Unit> {
+        collection.insertOne(CollectionDataType("object-1"))
+
+        collection.findOneAndDelete<BsonDocument>(
+            BsonDocument("""{ "name": "object-1"}"""),
+        )!!.let {
+            assertEquals("object-1", it.asDocument()["name"]!!.asString().value)
+        }
+    }
+
+    @Test
+    fun findOneAndDelete_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
+            collection.findOneAndDelete(BsonDocument("\$who", 1))
+        }
+    }
 }
 
+// Helper method to be able to differentiate collection creation across test classes
 inline fun <reified T : BaseRealmObject, K> MongoCollectionTests.collection(clazz: KClass<T>): MongoCollection<T, K> {
     return when (this) {
         is MongoCollectionFromDatabaseTests -> database.collection<T, K>(T::class.simpleName!!)
@@ -1290,6 +1059,7 @@ inline fun <reified T : BaseRealmObject, K> MongoCollectionTests.collection(claz
     }
 }
 
+// Helper method to easy BsonDocument construction from Kotlin types and avoid BsonValue wrappers.
 @Suppress("name")
 @OptIn(ExperimentalKBsonSerializerApi::class)
 inline operator fun <reified T : Any> BsonDocument.Companion.invoke(
@@ -1299,15 +1069,11 @@ inline operator fun <reified T : Any> BsonDocument.Companion.invoke(
     return BsonDocument(key to EJson.Default.encodeToBsonValue(value))
 }
 
+// Class that is unknown to the server. Should never be inserted as the server would then
+// automatically create the collection.
 @Serializable
-class Unknown : RealmObject {
+class NonSchemaType : RealmObject {
     var name = "Unknown"
-}
-
-// Strictly defined in schema in TestAppInitializer.kt
-@Serializable
-class SyncDog(var name: String) : RealmObject {
-    constructor() : this("Default")
 }
 
 @Serializable
@@ -1315,19 +1081,17 @@ class CollectionDataType(var name: String? = "Default", var _id: Int? = Random.n
     constructor() : this("Default")
 }
 
+// Distinct data type with same fields as the above CollectionDataType used to showcase injection
+// of custom serializers.
 @PersistedName("CollectionDataType")
 class CustomDataType(var name: String) : RealmObject {
     @Suppress("unused")
     constructor() : this("Default")
 }
-
-@Serializable
-class NonSchemaType : RealmObject {
-    var name: String = "Default"
-}
-
+// Custom Id type to showcase that we can use custom serializers for primary key return values.
 class CustomIdType(val id: ObjectId)
 
+// Custom serializers to showcase that we can inject serializers throughout the MongoClient APIs.
 class CustomDataTypeSerializer : KSerializer<CustomDataType> {
 
     val serializer = BsonValue.serializer()
@@ -1342,7 +1106,6 @@ class CustomDataTypeSerializer : KSerializer<CustomDataType> {
         encoder.encodeSerializableValue(serializer, BsonDocument("name", value.name))
     }
 }
-
 class CustomIdSerializer : KSerializer<CustomIdType> {
     val serializer = BsonValue.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
@@ -1359,7 +1122,6 @@ class CustomIdSerializer : KSerializer<CustomIdType> {
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 val customEjsonSerializer = EJson(
-//    ignoreUnknownKeys = false,
     serializersModule = SerializersModule {
         contextual(CustomDataType::class, CustomDataTypeSerializer())
         contextual(CustomIdType::class, CustomIdSerializer())
