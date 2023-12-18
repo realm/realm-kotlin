@@ -1336,24 +1336,22 @@ jobs:
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
+        if: matrix.os == 'windows-latest'
         run: |
-          if [[ ${{ matrix.os }} != 'windows-latest' ]]; then
-            echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-            gh repo clone 10gen/baasaas
-          fi
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
       - name: Start Baas instance in the background
+        if: matrix.os == 'windows-latest'
         id: baas_cli_start
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          if [[ ${{ matrix.os }} != 'windows-latest' ]]; then
-            OUTPUT=$(bash cli.sh start)
-            echo "::set-output name=baas_container_id::$OUTPUT"
-          fi
+          OUTPUT=$(bash cli.sh start)
+          echo "::set-output name=baas_container_id::$OUTPUT"
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
@@ -1395,22 +1393,20 @@ jobs:
 
       # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
       - name: Fetching the BAAS CLI hostname
+        if: matrix.os == 'windows-latest'
         id: baas_cli_poll
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          if [[ ${{ matrix.os }} != 'windows-latest' ]]; then
-            OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
-            echo "::set-output name=baas_container_hostname::$OUTPUT"
-          fi
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "::set-output name=baas_container_hostname::$OUTPUT"
 
       - name: Run Sync tests
+        if: matrix.os == 'windows-latest'
         working-directory: packages
         run: |
-          if [[ ${{ matrix.os }} != 'windows-latest' ]]; then
-            ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:jvmTest -PincludeSdkModules=false --info --no-daemon
-          fi
+          ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:jvmTest -PincludeSdkModules=false --info --no-daemon
 
       - name: Publish Sync Unit Test Results
         uses: dorny/test-reporter@v1
