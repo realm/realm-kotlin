@@ -1350,7 +1350,7 @@ jobs:
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          OUTPUT=$(bash cli.sh start)
+          OUTPUT=$(bash cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1410,7 +1410,7 @@ jobs:
 
       - name: Publish Sync Unit Test Results
         uses: dorny/test-reporter@v1
-        if: matrix.os != 'windows-latest'
+        if: always() && matrix.os != 'windows-latest'
         with:
           name: ${{ matrix.test-title }}
           path: ./packages/test-sync/build/**/TEST-*.xml
@@ -1420,7 +1420,7 @@ jobs:
           fail-on-error: true
 
       - name: Stopping the BAAS container
-        if: matrix.os != 'windows-latest'
+        if: always() && matrix.os != 'windows-latest'
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
