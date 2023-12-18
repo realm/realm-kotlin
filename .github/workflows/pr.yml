@@ -1418,14 +1418,16 @@ jobs:
           list-suites: failed
           list-tests: failed
           fail-on-error: true
-    finally:
+
       - name: Stopping the BAAS container
         if: matrix.os != 'windows-latest'
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
 
 
   package-all-artifacts: 
