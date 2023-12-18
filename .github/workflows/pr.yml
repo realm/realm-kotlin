@@ -1334,6 +1334,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh start)
+          echo "::set-output name=baas_container_id::$OUTPUT"
+
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
@@ -1371,6 +1388,40 @@ jobs:
           list-suites: failed
           list-tests: failed
           fail-on-error: true
+
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "::set-output name=baas_container_hostname::$OUTPUT"
+
+      - name: Run Sync tests
+        working-directory: packages
+        run: ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:jvmTest -PincludeSdkModules=false --info --no-daemon
+
+      - name: Publish Sync Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: ${{ matrix.test-title }}
+          path: ./packages/test-sync/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+      - name: Stopping the BAAS container
+        if: always() || failure()
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+
 
   package-all-artifacts: 
     runs-on: ubuntu-latest

@@ -23,7 +23,6 @@ runs:
 
       id: run-tests
       with:
-        force-pull: true
         project_arn: ${{ inputs.project-arn }}
         device_pool_arn: ${{ inputs.device-pool-arn }}
         app_file: ${{ inputs.apk-path }}
