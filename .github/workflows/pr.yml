@@ -1410,7 +1410,7 @@ jobs:
 
       - name: Publish Sync Unit Test Results
         uses: dorny/test-reporter@v1
-        if: matrix.os == 'windows-latest' || failure()
+        if: matrix.os != 'windows-latest'
         with:
           name: ${{ matrix.test-title }}
           path: ./packages/test-sync/build/**/TEST-*.xml
@@ -1420,7 +1420,7 @@ jobs:
           fail-on-error: true
 
       - name: Stopping the BAAS container
-        if: always() || failure()
+        if: matrix.os != 'windows-latest'
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
