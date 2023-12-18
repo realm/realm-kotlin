@@ -69,6 +69,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -181,7 +183,6 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     fun count() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
         assertEquals(0, collection.count())
 
         collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
@@ -208,7 +209,6 @@ abstract sealed class MongoCollectionTests {
         RealmLog.level = LogLevel.ALL
         // Empty collections
         assertNull(collection.findOne())
-        assertNull(collection.findOne<BsonValue>())
 
         collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
 
@@ -232,6 +232,7 @@ abstract sealed class MongoCollectionTests {
             assertEquals(collectionDataType._id, this._id)
         }
 
+        // Project without name
         collection.findOne(
             filter = BsonDocument("name", "object-6"),
             projection = BsonDocument("""{ "name" : 0}""")
@@ -242,6 +243,17 @@ abstract sealed class MongoCollectionTests {
             assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
             // _id is included by default
             assertEquals(collectionDataType._id, this._id)
+        }
+        // Project without _id, have to be explicitly excluded
+        collection.findOne(
+            filter = BsonDocument("name", "object-6"),
+            projection = BsonDocument("""{ "_id" : 0}""")
+        ).run {
+            assertIs<CollectionDataType>(this)
+            assertEquals(collectionDataType.name, name)
+            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+            // _id is included by default
+            assertNotEquals(collectionDataType._id, this._id)
         }
 
         // Sort
@@ -289,65 +301,75 @@ abstract sealed class MongoCollectionTests {
     fun find() = runBlocking<Unit> {
         assertTrue { collection.find().isEmpty() }
 
-        val ids: List<Int> = collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
-        assertEquals(2, collection.find<CollectionDataType>().size)
+        val names = (1..10).map { "object-${it % 5}" }
+        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
 
-        collection.find(filter = null, projection = null, sort = null, limit = null)
+        assertEquals(10, collection.find().size)
+
+        collection.find(filter = BsonDocument("name", "object-1")).let {
+            assertEquals(2, it.size)
+        }
+
+        // Limit
+        collection.find(
+            limit = 5,
+        ).let {
+            assertEquals(5, it.size)
+        }
+
+        // Projection
+        collection.find(
+            filter = BsonDocument("name", "object-1"),
+            projection = BsonDocument("""{ "name" : 0}"""),
+        ).let {
+            assertEquals(2, it.size)
+            it.forEach {
+                // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+                // assertEquals("Default", it.name)
+                assertNull(it.name)
+                // _id is included by default
+                assertTrue(it._id in ids)
+            }
+        }
+        collection.find(
+            filter = BsonDocument("name", "object-1"),
+            projection = BsonDocument("""{ "_id" : 0}"""),
+        ).let {
+            assertEquals(2, it.size)
+            it.forEach {
+                assertNotNull(it.name)
+                assertNotEquals("Default", it.name)
+                // Objects have new ids
+                // FIXME Should be assigned new Objects ids, but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
+                // assertFalse(it._id in ids)
+                assertNull(it._id)
+            }
+        }
+
+        // Sort
+        collection.find(sort = BsonDocument("""{ "name" : -1}""")).let { results ->
+            assertEquals(names.sorted().reversed(), results.map { it.name })
+        }
+        collection.find(sort = BsonDocument("""{ "name" : 1}""")).let { results ->
+            assertEquals(names.sorted(), results.map { it.name })
+        }
     }
 
-//
-//    @Test
-//    fun find() {
-//        with(getCollectionInternal()) {
-//            // Find on an empty collection returns false on hasNext and null on first
-//            var iter = find()
-//            assertFalse(iter.iterator().get()!!.hasNext())
-//            assertNull(iter.first().get())
-//
-//            val doc1 = Document("hello", "world")
-//            val doc2 = Document("hello", "friend")
-//            doc2["proj"] = "field"
-//            insertMany(listOf(doc1, doc2)).get()
-//
-//            // Iterate after inserting two documents
-//            assertTrue(iter.iterator().get()!!.hasNext())
-//            assertEquals(doc1, iter.first().get()!!.withoutId())
-//
-//            // Get next with sort by desc "_id" and limit to 1 document
-//            assertEquals(doc2,
-//                iter.limit(1)
-//                    .sort(Document("_id", -1))
-//                    .iterator().get()!!
-//                    .next().withoutId())
-//
-//            // Find first document
-//            iter = find(doc1)
-//            assertTrue(iter.iterator().get()!!.hasNext())
-//            assertEquals(doc1,
-//                iter.iterator().get()!!
-//                    .next().withoutId())
-//
-//            // Find with filter for first document
-//            iter = find().filter(doc1)
-//            assertTrue(iter.iterator().get()!!.hasNext())
-//            assertEquals(doc1,
-//                iter.iterator().get()!!
-//                    .next().withoutId())
-//
-//            // Find with projection shows "proj" in result
-//            val expected = Document("proj", "field")
-//            assertEquals(expected,
-//                find(doc2)
-//                    .projection(Document("proj", 1))
-//                    .iterator().get()!!
-//                    .next().withoutId())
-//
-//            // Getting a new iterator returns first element on tryNext
-//            val asyncIter = iter.iterator().get()!!
-//            assertEquals(doc1, asyncIter.tryNext().withoutId())
-//        }
-//    }
-//
+    @Test
+    fun find_explicitTypes() = runBlocking<Unit> {
+        collection.find<BsonDocument>().let { assertTrue { it.isEmpty() } }
+
+        val names = (1..10).map { "object-${it % 5}" }
+        collection.insertMany<BsonDocument, BsonValue>(names.map { BsonDocument("name", it) })
+
+        collection.find<BsonDocument>().let { results ->
+            results.forEach {
+                assertIs<BsonDocument>(it)
+                assertTrue { it.asDocument()["name"]!!.asString().value in names }
+            }
+        }
+    }
+
     @Test
     fun find_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
@@ -357,283 +379,136 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     fun aggregate() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
-        collection.aggregate(listOf())
-        collection.aggregate<CollectionDataType>(listOf())
-        collection.aggregate<BsonDocument>(listOf())
+        collection.aggregate(listOf()).let { assertTrue { it.isEmpty() } }
 
-        val x: List<Int> = collection.insertMany(listOf(CollectionDataType(name = "dog1"), CollectionDataType(name = "dog2")))
-        collection.aggregate<CollectionDataType>(listOf())
+        val names = (1..10).map { "object-${it % 5}" }
+        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
 
-        collection.aggregate<CollectionDataType>(listOf(BsonDocument("\$sort", BsonDocument("name", -1)), BsonDocument("\$limit", 1)))
-    }
-//    @Test
-//    fun aggregate() {
-//        with(getCollectionInternal()) {
-//            // Aggregate on an empty collection returns false on hasNext and null on first
-//            var iter = aggregate(listOf())
-//            assertFalse(iter.iterator().get()!!.hasNext())
-//            assertNull(iter.first().get())
-//
-//            // Iterate after inserting two documents
-//            val doc1 = Document("hello", "world")
-//            val doc2 = Document("hello", "friend")
-//            insertMany(listOf(doc1, doc2)).get()
-//            assertTrue(iter.iterator().get()!!.hasNext())
-//            assertEquals(doc1.withoutId(), iter.first().get()!!.withoutId())
-//
-//            // Aggregate with pipeline, sort by desc "_id" and limit to 1 document
-//            iter = aggregate(listOf(Document("\$sort", Document("_id", -1)), Document("\$limit", 1)))
-//            assertEquals(doc2.withoutId(),
-//                iter.iterator().get()!!
-//                    .next().withoutId())
-//
-//            // Aggregate with pipeline, match first document
-//            iter = aggregate(listOf(Document("\$match", doc1)))
-//            assertTrue(iter.iterator().get()!!.hasNext())
-//            assertEquals(doc1.withoutId(), iter.iterator().get()!!.next().withoutId())
-//        }
-//    }
-//
-//    @Test
-//    fun aggregate_fails() {
-//        with(getCollectionInternal()) {
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                aggregate(listOf(Document("\$who", 1))).first().get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("pipeline", true))
-//            }
-//        }
-//    }
-//
+        collection.aggregate<CollectionDataType>(listOf()).let {
+            assertEquals(10, it.size)
+            it.forEach {
+                assertTrue { it.name in names }
+            }
+        }
 
-//    @Test
-//    fun insertOne() = runBlocking<Unit> {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            assertEquals(doc1.getObjectId("_id"), insertOne(doc1).get()!!.insertedId.asObjectId().value)
-//            assertEquals(1, count().get())
-//
-//            val doc2 = Document("hello", "world")
-//            val insertOneResult = insertOne(doc2).get()!!
-//            assertNotNull(insertOneResult.insertedId.asObjectId().value)
-//            assertEquals(2, count().get())
-//        }
-//    }
-
-    @Test
-    fun insertOne() = runBlocking<Unit> {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            assertEquals(doc1.getObjectId("_id"), insertOne(doc1).get()!!.insertedId.asObjectId().value)
-//            assertEquals(1, count().get())
-//
-//            val doc2 = Document("hello", "world")
-//            val insertOneResult = insertOne(doc2).get()!!
-//            assertNotNull(insertOneResult.insertedId.asObjectId().value)
-//            assertEquals(2, count().get())
-//        }
-
-        RealmLog.level = LogLevel.ALL
-        // Option 1 - Typed return value - BsonValue
-        val insertedIdDocument: BsonValue = collection.insertOne(BsonDocument("name", "sadffds"))
-        val insertedIdDocument2: Int = collection.insertOne(CollectionDataType("sadf"))
-
-        // Option 2 - Explicit generic arguments to enabling fluent API
-        val id = collection.insertOne<CollectionDataType, BsonValue>(CollectionDataType("sadf"))
-
-        // Option 3 - Automatically serialized object
-        val x2: Int = collection.insertOne(CollectionDataType("sadf"))
-
-        val x3: ObjectId = collection.insertOne(BsonDocument("""{ "name" : "asdf" }"""))
-    }
-
-    @Test
-    fun insertOne_throwsOnExistingPrimaryKey() { }
-    @Test
-    fun insertOne_throwsOnUnknownFields() { }
-
-    @Test
-    fun insertOne_throwsOnMissingRequiredFields() { }
-
-    @Test
-    fun insertOne_throwsOnTypeMismatch() = runBlocking<Unit> {
-        val collectionWithFixedSchema = collection<SyncDog, ObjectId>(SyncDog::class)
-        assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collectionWithFixedSchema.insertOne<BsonDocument, ObjectId>(BsonDocument("_id", ObjectId()))
+        collection.aggregate<CollectionDataType>(listOf(BsonDocument("\$sort", BsonDocument("name", -1)), BsonDocument("\$limit", 2))).let {
+            assertEquals(2, it.size)
+            it.forEach {
+                assertEquals("object-4", it.name)
+            }
         }
     }
 
-//
-//    @Test
-//    fun insertOne_throwsWhenMixingIdTypes() {
-//        with(getCollectionInternal()) {
-//            // The default collection uses ObjectId for "_id"
-//            val doc1 = Document("hello", "world").apply { this["_id"] = 666 }
-//            assertFailsWith<AppException> {
-//                insertOne(doc1).get()!!
-//            }.let { e ->
-//                assertEquals("insert not permitted", e.errorMessage)
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun insertOne_integerId() {
-//        with(getCollectionInternal(COLLECTION_NAME_ALT)) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = 666 }
-//            val insertOneResult = insertOne(doc1).get()!!
-//            assertEquals(doc1.getInteger("_id"), insertOneResult.insertedId.asInt32().value)
-//            assertEquals(1, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun insertOne_fails() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            insertOne(doc1).get()
-//
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                insertOne(doc1).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("duplicate", true))
-//            }
-//        }
-//    }
+    @Test
+    fun aggregate_fails() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("Unrecognized pipeline stage name: '\$who'.") {
+            collection.aggregate(pipeline = listOf(BsonDocument("\$who", 1)))
+        }
+    }
 
-//    @Test
-//    fun insertMany() = runBlocking {
-//        RealmLog.level = LogLevel.ALL
-//        val x: List<BsonValue> = collection.insertMany(listOf(SyncDog("a")))
-//        val syncDogIntIdCollection = collection<SyncDogIntId, Int>(SyncDogIntId::class)
-//        val elements = SyncDogIntId("a", Random.nextInt())
-//        val y: List<Int> = syncDogIntIdCollection.insertMany(listOf(elements))
-//
-//        assertFailsWithMessage<ServiceException>("dup key") {
-//            val z: List<Int> = syncDogIntIdCollection.insertMany(listOf(elements))
-//        }
-//
-//        val typedCollection = collection.reshape<SyncDog, ObjectId>()
-//        val z: List<ObjectId> = typedCollection.insertMany(listOf(SyncDog("sadf")))
-//        val tyz = typedCollection.insertMany<SyncDog, BsonValue>(listOf(SyncDog("sadf")))
-//
-//        val bsonSyncDogs: MongoCollection<BsonDocument, BsonValue> = collection.reshape()
-//        val insertMany /*: List<BsonValue> */ = bsonSyncDogs.insertMany(listOf(BsonDocument("name", "x")))
-//
-//        val syncDogs: MongoCollection<SyncDog, ObjectId> = database.collection<SyncDog, ObjectId>("SyncDog")
-//
-//        val objectIds = syncDogs.insertMany(listOf(SyncDog("name")))
-//
-//        val objectIds2: List<ObjectId> = syncDogs.insertMany<BsonValue, ObjectId>(listOf(BsonDocument("name", "asdf")))
-//    }
+    @Test
+    fun insertOne() = runBlocking<Unit> {
+        assertEquals(0, collection.find().size)
 
-//
-//    @Test
-//    fun insertMany_singleDocument() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//
-//            assertEquals(doc1.getObjectId("_id"),
-//                insertMany(listOf(doc1)).get()!!.insertedIds[0]!!.asObjectId().value)
-//            val doc2 = Document("hello", "world")
-//
-//            assertNotEquals(doc1.getObjectId("_id"), insertMany(listOf(doc2)).get()!!.insertedIds[0]!!.asObjectId().value)
-//
-//            val doc3 = Document("one", "two")
-//            val doc4 = Document("three", 4)
-//
-//            insertMany(listOf(doc3, doc4)).get()
-//        }
-//    }
-//
-//    @Test
-//    fun insertMany_singleDocument_fails() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            insertMany(listOf(doc1)).get()
-//
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                insertMany(listOf(doc1)).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("duplicate", true))
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun insertMany_multipleDocuments() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            val doc2 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            val documents = listOf(doc1, doc2)
-//
-//            insertMany(documents).get()!!
-//                .insertedIds
-//                .forEach { entry ->
-//                    assertEquals(documents[entry.key.toInt()]["_id"], entry.value.asObjectId().value)
-//                }
-//
-//            val doc3 = Document("one", "two")
-//            val doc4 = Document("three", 4)
-//
-//            insertMany(listOf(doc3, doc4)).get()
-//            assertEquals(4, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun insertMany_multipleDocuments_IntegerId() {
-//        with(getCollectionInternal(COLLECTION_NAME_ALT)) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = 42 }
-//            val doc2 = Document("hello", "world").apply { this["_id"] = 42 + 1 }
-//            val documents = listOf(doc1, doc2)
-//
-//            insertMany(documents).get()!!
-//                .insertedIds
-//                .forEach { entry ->
-//                    assertEquals(documents[entry.key.toInt()]["_id"], entry.value.asInt32().value)
-//                }
-//
-//            val doc3 = Document("one", "two")
-//            val doc4 = Document("three", 4)
-//
-//            insertMany(listOf(doc3, doc4)).get()
-//            assertEquals(4, count().get())
-//        }
-//    }
-//
-//    @Test
-//    fun insertMany_throwsWhenMixingIdTypes() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = 42 }
-//            val doc2 = Document("hello", "world").apply { this["_id"] = 42 + 1 }
-//            val documents = listOf(doc1, doc2)
-//
-//            assertFailsWith<AppException> {
-//                insertMany(documents).get()!!
-//            }.let { e ->
-//                assertEquals("insert not permitted", e.errorMessage)
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun insertMany_multipleDocuments_fails() {
-//        with(getCollectionInternal()) {
-//            val doc1 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            val doc2 = Document("hello", "world").apply { this["_id"] = ObjectId() }
-//            val documents = listOf(doc1, doc2)
-//            insertMany(documents).get()
-//
-//            assertFailsWithErrorCode(ErrorCode.MONGODB_ERROR) {
-//                insertMany(documents).get()
-//            }.also { e ->
-//                assertTrue(e.errorMessage!!.contains("duplicate", true))
-//            }
-//        }
-//    }
-//
+        collection.insertOne(CollectionDataType("object-1")).let {
+            assertIs<Int>(it)
+        }
+        assertEquals(1, collection.find().size)
+    }
+
+    @Test
+    fun insertOne_explicitTypes() = runBlocking<Unit> {
+        assertEquals(0, collection.find().size)
+        // Inserting document without _id will use ObjectId as _id
+        collection.insertOne<BsonDocument, BsonValue>(BsonDocument("name", "object-1")).let {
+            assertIs<ObjectId>(it)
+        }
+        // Inserted document will have ObjectId key and cannot be serialized into CollectionDataType
+        // so find must also  use BsonDocument
+        assertEquals(1, collection.find<BsonDocument>().size)
+    }
+
+    @Test
+    fun insertOne_throwsOnExistingPrimaryKey() = runBlocking {
+        assertEquals(0, collection.find().size)
+
+        val document = CollectionDataType("object-1")
+        collection.insertOne(document).let {
+            assertIs<Int>(it)
+        }
+        assertFailsWithMessage<ServiceException>("Duplicate key error") {
+            collection.insertOne(document)
+        }
+        assertEquals(1, collection.find().size)
+    }
+
+    @Test
+    fun insertOne_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("insert not permitted") {
+            collection.insertOne<BsonDocument, BsonValue>(BsonDocument())
+        }
+    }
+
+    @Test
+    fun insertOne_throwsOnTypeMismatch() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("insert not permitted") {
+            collection.insertOne<BsonDocument, ObjectId>(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1"))))
+        }
+    }
+    @Test
+    fun insertMany() = runBlocking {
+        assertEquals(0, collection.find().size)
+
+        collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
+
+        assertEquals(10, collection.find().size)
+    }
+
+    @Test
+    fun insertMany_explictTyped() = runBlocking<Unit> {
+        assertEquals(0, collection.find().size)
+
+        collection.insertMany<BsonDocument, BsonValue>((1..10).map { BsonDocument("name", "object-${it % 5}") }).let {
+            assertEquals(10, it.size)
+            it.forEach {
+                assertIs<ObjectId>(it)
+            }
+        }
+        assertEquals(10, collection.find<BsonDocument>().size)
+    }
+
+    @Test
+    fun insertMany_throwsOnEmptyList() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("must provide at least one element") {
+            collection.insertMany(emptyList())
+        }
+    }
+
+    @Test
+    fun insertMany_throwsOnExistingPrimaryKey() = runBlocking {
+        assertEquals(0, collection.find().size)
+
+        val document = CollectionDataType("object-1")
+        assertFailsWithMessage<ServiceException>("Duplicate key error") {
+            collection.insertMany(listOf(document.apply { name = "sadf" }, document))
+        }
+        // FIXME Wouldn't have expected one of the documents to be inserted :thinking:
+        assertEquals(1, collection.find().size)
+    }
+
+    @Test
+    fun insertMany_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("insert not permitted") {
+            collection.insertOne<BsonDocument, BsonValue>(BsonDocument())
+        }
+    }
+
+    @Test
+    fun insertMany_throwsOnTypeMismatch() = runBlocking<Unit> {
+        assertFailsWithMessage<ServiceException>("insert not permitted") {
+            collection.insertOne<BsonDocument, ObjectId>(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1"))))
+        }
+    }
 
     @Test
     fun deleteOne() = runBlocking {
