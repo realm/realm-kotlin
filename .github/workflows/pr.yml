@@ -679,11 +679,11 @@ jobs:
     # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-android-cache-hit != 'true'
 
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v3
-#        with:
-#          submodules: "recursive"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
 #
 #      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
 #      #  https://github.com/actions/setup-java#caching-packages-dependencies
