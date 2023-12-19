@@ -1384,7 +1384,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }} 
+          name: ${{ matrix.test-title }}
           path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
@@ -1410,9 +1410,9 @@ jobs:
 
       - name: Publish Sync Unit Test Results
         uses: dorny/test-reporter@v1
-        if: always() && matrix.os != 'windows-latest'
+        if: ${{ !cancelled() && matrix.os != 'windows-latest' }}
         with:
-          name: ${{ matrix.test-title }}
+          name: "Sync - ${{ matrix.test-title }}"
           path: ./packages/test-sync/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
