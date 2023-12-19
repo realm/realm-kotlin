@@ -41,6 +41,7 @@ import io.realm.kotlin.notifications.internal.UpdatedSetImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmSet
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -301,6 +302,33 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
     fun get(index: Int): E
     fun contains(element: E): Boolean
     fun copy(realmReference: RealmReference, nativePointer: RealmSetPointer): SetOperator<E>
+}
+
+internal class TypeAdaptedSetOperator<E, S>(
+    private val setOperator: SetOperator<S>,
+    private val typeAdapter: RealmTypeAdapter<S, E>,
+): SetOperator<E> {
+    override var modCount: Int by setOperator::modCount
+    override val nativePointer: RealmSetPointer by setOperator::nativePointer
+
+    override val mediator: Mediator by setOperator::mediator
+    override val realmReference: RealmReference by setOperator::realmReference
+    override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("Not available") }
+
+    override fun get(index: Int): E = typeAdapter.fromRealm(setOperator.get(index))
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmSetPointer,
+    ): SetOperator<E> = TypeAdaptedSetOperator(setOperator.copy(realmReference, nativePointer), typeAdapter)
+
+    override fun contains(element: E): Boolean = setOperator.contains(typeAdapter.toRealm(element))
+
+    override fun addInternal(
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache,
+    ): Boolean = setOperator.addInternal(typeAdapter.toRealm(element), updatePolicy, cache)
 }
 
 internal class PrimitiveSetOperator<E>(

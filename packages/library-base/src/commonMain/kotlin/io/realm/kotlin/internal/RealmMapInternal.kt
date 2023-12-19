@@ -51,6 +51,7 @@ import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmMap
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -284,6 +285,53 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
     }
 
     fun copy(realmReference: RealmReference, nativePointer: RealmMapPointer): MapOperator<K, V>
+}
+
+internal class TypeAdaptedMapOperator<K, E, S>(
+    val mapOperator: MapOperator<K, S>,
+    val typeAdapter: RealmTypeAdapter<S, E>
+): MapOperator<K, E> {
+    override var modCount: Int by mapOperator::modCount
+    override val keyConverter: RealmValueConverter<K> by mapOperator::keyConverter
+    override val nativePointer: RealmMapPointer by mapOperator::nativePointer
+
+    override fun getEntryInternal(position: Int): Pair<K, E> = mapOperator
+        .getEntryInternal(position)
+        .run {
+            Pair(first, typeAdapter.fromRealm(second))
+        }
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmMapPointer,
+    ): MapOperator<K, E> = TypeAdaptedMapOperator(mapOperator.copy(realmReference, nativePointer), typeAdapter)
+
+    override fun areValuesEqual(expected: E?, actual: E?): Boolean = mapOperator.areValuesEqual(
+        expected?.let { typeAdapter.toRealm(it) }, actual?.let { typeAdapter.toRealm(it) })
+
+    override fun containsValueInternal(value: E): Boolean = mapOperator.containsValueInternal(typeAdapter.toRealm(value))
+
+    override fun getInternal(key: K): E? = mapOperator.getInternal(key)
+        ?.let { typeAdapter.fromRealm(it) }
+
+    override fun eraseInternal(key: K): Pair<E?, Boolean> = mapOperator.eraseInternal(key).run {
+        Pair(first?.let { typeAdapter.fromRealm(it) }, second)
+    }
+
+    override fun insertInternal(
+        key: K,
+        value: E?,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache,
+    ): Pair<E?, Boolean> = mapOperator.insertInternal(key,
+        value?.let { typeAdapter.toRealm(it) }, updatePolicy, cache
+    ).run {
+        Pair(first?.let { typeAdapter.fromRealm(it) }, second)
+    }
+
+    override val mediator: Mediator by mapOperator::mediator
+    override val realmReference: RealmReference by mapOperator::realmReference
+    override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("Unreachable") }
 }
 
 internal open class PrimitiveMapOperator<K, V> constructor(

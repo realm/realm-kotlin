@@ -483,15 +483,15 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <reified R : Any> getSet(
+    internal inline fun <E : Any, reified S: Any> getSet(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
-    ): ManagedRealmSet<R?> {
-        val elementType = R::class
-        val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        typeAdapter: RealmTypeAdapter<S, E>? = null,
+    ): ManagedRealmSet<E> {
+        val storeType = S::class
+        val realmObjectCompanion = storeType.realmObjectCompanionOrNull()
         val operatorType = if (realmObjectCompanion == null) {
-            if (elementType == RealmAny::class) {
+            if (storeType == RealmAny::class) {
                 CollectionOperatorType.REALM_ANY
             } else {
                 CollectionOperatorType.PRIMITIVE
@@ -500,20 +500,21 @@ internal object RealmObjectHelper {
             CollectionOperatorType.REALM_OBJECT
         }
         val propertyMetadata = obj.propertyInfoOrThrow(propertyName)
-        return getSetByKey(obj, propertyMetadata, elementType, operatorType)
+        return getSetByKey<E, S>(obj, propertyMetadata, storeType, operatorType, typeAdapter)
     }
 
     @Suppress("LongParameterList")
-    internal fun <R> getSetByKey(
+    internal fun <E: Any, S: Any> getSetByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyMetadata: PropertyMetadata,
-        elementType: KClass<R & Any>,
+        elementType: KClass<S>,
         operatorType: CollectionOperatorType,
+        typeAdapter: RealmTypeAdapter<S, E>?,
         issueDynamicObject: Boolean = false,
-        issueDynamicMutableObject: Boolean = false
-    ): ManagedRealmSet<R> {
+        issueDynamicMutableObject: Boolean = false,
+    ): ManagedRealmSet<E> {
         val setPtr = RealmInterop.realm_get_set(obj.objectPointer, propertyMetadata.key)
-        val operator = createSetOperator<R>(
+        val storageOperator = createSetOperator<S>(
             setPtr,
             elementType,
             propertyMetadata,
@@ -523,6 +524,10 @@ internal object RealmObjectHelper {
             issueDynamicObject,
             issueDynamicMutableObject,
         )
+        val operator = when (typeAdapter) {
+            null -> storageOperator as SetOperator<E>
+            else -> TypeAdaptedSetOperator(storageOperator, typeAdapter)
+        }
         return ManagedRealmSet(obj, setPtr, operator)
     }
 
@@ -566,16 +571,16 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <reified R : Any> getDictionary(
+    internal inline fun <E: Any, reified S : Any> getDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
-    ): ManagedRealmDictionary<R?> {
-        val elementType = R::class
-        val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
+        typeAdapter: RealmTypeAdapter<S, E>? = null,
+    ): ManagedRealmDictionary<E> {
+        val storageType = S::class
+        val realmObjectCompanion = storageType.realmObjectCompanionOrNull()
         val propertyMetadata = obj.propertyInfoOrThrow(propertyName)
         val operatorType = if (realmObjectCompanion == null) {
-            if (elementType == RealmAny::class) {
+            if (storageType == RealmAny::class) {
                 CollectionOperatorType.REALM_ANY
             } else {
                 CollectionOperatorType.PRIMITIVE
@@ -585,21 +590,22 @@ internal object RealmObjectHelper {
         } else {
             CollectionOperatorType.EMBEDDED_OBJECT
         }
-        return getDictionaryByKey(obj, propertyMetadata, elementType, operatorType)
+        return getDictionaryByKey(obj, propertyMetadata, storageType, operatorType, typeAdapter)
     }
 
     @Suppress("LongParameterList")
-    internal fun <R> getDictionaryByKey(
+    internal fun <E, S> getDictionaryByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyMetadata: PropertyMetadata,
-        elementType: KClass<R & Any>,
+        elementType: KClass<S & Any>,
         operatorType: CollectionOperatorType,
+        typeAdapter: RealmTypeAdapter<S, E>?,
         issueDynamicObject: Boolean = false,
         issueDynamicMutableObject: Boolean = false
-    ): ManagedRealmDictionary<R> {
+    ): ManagedRealmDictionary<E> {
         val dictionaryPtr =
             RealmInterop.realm_get_dictionary(obj.objectPointer, propertyMetadata.key)
-        val operator = createDictionaryOperator<R>(
+        val storageOperator = createDictionaryOperator<S>(
             dictionaryPtr,
             elementType,
             propertyMetadata,
@@ -609,6 +615,12 @@ internal object RealmObjectHelper {
             issueDynamicObject,
             issueDynamicMutableObject,
         )
+
+        val operator = when (typeAdapter) {
+            null -> storageOperator as MapOperator<String, E>
+            else -> TypeAdaptedMapOperator(storageOperator, typeAdapter)
+        }
+
         return ManagedRealmDictionary(obj, dictionaryPtr, operator)
     }
 
@@ -700,15 +712,15 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <reified T : Any> setSet(
+    internal inline fun <E : Any, reified S: Any> setSet(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
-        set: RealmSet<T>,
-        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
+        set: RealmSet<E>,
+        typeAdapter: RealmTypeAdapter<S, E>? = null,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
-        val existingSet = getSet<T>(obj, col)
+        val existingSet = getSet<E, S>(obj, col, typeAdapter)
         if (set !is ManagedRealmSet || !RealmInterop.realm_equals(
                 existingSet.nativePointer,
                 set.nativePointer
@@ -721,16 +733,16 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <reified T : Any> setDictionary(
+    internal inline fun <E: Any, reified S : Any> setDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
-        dictionary: RealmDictionary<T>,
-        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
+        dictionary: RealmDictionary<E>,
+        typeAdapter: RealmTypeAdapter<S, E>? = null,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
-        val existingDictionary = getDictionary<T>(obj, col)
-        if (dictionary !is ManagedRealmDictionary<T> || !RealmInterop.realm_equals(
+        val existingDictionary = getDictionary<E, S>(obj, col, typeAdapter)
+        if (dictionary !is ManagedRealmDictionary<E> || !RealmInterop.realm_equals(
                 existingDictionary.nativePointer,
                 dictionary.nativePointer
             )
@@ -1007,11 +1019,12 @@ internal object RealmObjectHelper {
             else -> throw IllegalStateException("RealmSets do not support Embedded Objects.")
         }
         @Suppress("UNCHECKED_CAST")
-        return getSetByKey(
+        return getSetByKey<R, R>(
             obj,
             propertyMetadata,
             clazz,
             operatorType,
+            null,
             true,
             issueDynamicMutableObject
         ) as RealmSet<R?>
@@ -1042,11 +1055,12 @@ internal object RealmObjectHelper {
             else -> CollectionOperatorType.EMBEDDED_OBJECT
         }
         @Suppress("UNCHECKED_CAST")
-        return getDictionaryByKey(
+        return getDictionaryByKey<R, R>(
             obj,
             propertyMetadata,
             clazz,
             operatorType,
+            null,
             true,
             issueDynamicMutableObject
         ) as RealmDictionary<R?>
