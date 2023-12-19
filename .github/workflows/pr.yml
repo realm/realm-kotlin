@@ -1200,6 +1200,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+          #   curl: option --data: error encountered when reading a file
+          OUTPUT=$(bash cli.sh start -t foo=bar)
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
@@ -1235,7 +1254,43 @@ jobs:
           reporter: java-junit
           list-suites: failed
           list-tests: failed
-          fail-on-error: true        
+          fail-on-error: true
+
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Run Sync tests
+        working-directory: packages
+        run: |
+          ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:macosTest -PincludeSdkModules=false --info --no-daemon
+
+      - name: Publish Sync Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: "Sync ${{ matrix.test-title }}"
+          path: ./packages/test-sync/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+      - name: Stopping the BAAS container
+        if: always()
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
 
   test-ios-packages:
     timeout-minutes: 30
@@ -1264,6 +1319,25 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+          #   curl: option --data: error encountered when reading a file
+          OUTPUT=$(bash cli.sh start -t foo=bar)
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
         uses: actions/setup-java@v3
@@ -1308,6 +1382,42 @@ jobs:
           list-tests: failed
           fail-on-error: true
 
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Run Sync tests
+        working-directory: packages
+        run: |
+          ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:iosTest -PincludeSdkModules=false --info --no-daemon
+
+      - name: Publish Sync Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: "Sync ${{ matrix.test-title }}"
+          path: ./packages/test-sync/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+      - name: Stopping the BAAS container
+        if: always()
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
+
   # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
   test-jvm-packages:
     timeout-minutes: 30
@@ -1350,6 +1460,8 @@ jobs:
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
+          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+          #   curl: option --data: error encountered when reading a file
           OUTPUT=$(bash cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
