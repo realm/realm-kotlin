@@ -17,6 +17,7 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.TypeAdapter
 import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.Decimal128
 
 
@@ -92,7 +93,7 @@ class AllTypes : RealmObject {
     @TypeAdapter(StringRealmListAdapter::class)
     var stringListField: RealmList<String> = realmListOf()
 
-    //    var byteListField: RealmList<Byte> = realmListOf()
+//    var byteListField: RealmList<Byte> = realmListOf()
 //    var charListField: RealmList<Char> = realmListOf()
 //    var shortListField: RealmList<Short> = realmListOf()
 //    var intListField: RealmList<Int> = realmListOf()
@@ -214,7 +215,9 @@ class AllTypes : RealmObject {
 //    fun stringFieldSetter(s: String) {
 //        stringField = s
 //    }
-    var adaptedStringListField: RealmList<@TypeAdapter(StringAdapter::class) String> = realmListOf()
+    var adaptedStringListField: RealmList<RealmBsonString> = realmListOf()
+    var adaptedStringSetField: RealmSet<RealmBsonString> = realmSetOf()
+    var adaptedStringDictionaryField: RealmDictionary<RealmBsonString> = realmDictionaryOf()
 
     companion object {
         // Empty object required by SampleTests
@@ -255,6 +258,8 @@ class AllTypes : RealmObject {
         if (stringSetField != other.stringSetField) return false
         if (stringDictionaryField != other.stringDictionaryField) return false
         if (adaptedStringListField != other.adaptedStringListField) return false
+        if (adaptedStringSetField != other.adaptedStringSetField) return false
+        if (adaptedStringDictionaryField != other.adaptedStringDictionaryField) return false
 
         return true
     }
@@ -286,16 +291,28 @@ class AllTypes : RealmObject {
         result = 31 * result + stringSetField.hashCode()
         result = 31 * result + stringDictionaryField.hashCode()
         result = 31 * result + adaptedStringListField.hashCode()
+        result = 31 * result + adaptedStringSetField.hashCode()
+        result = 31 * result + adaptedStringDictionaryField.hashCode()
         return result
     }
 
+
 }
 
+// TODO should we write these type adapters as BsonValue converters?
 // Passthrough converters
 object StringAdapter : RealmTypeAdapter<String, String> {
     override fun fromRealm(realmValue: String): String = realmValue.toString()
 
     override fun toRealm(value: String): String = value.toString()
+}
+
+typealias RealmBsonString = @TypeAdapter(BsonStringAdapter::class) BsonString
+
+object BsonStringAdapter : RealmTypeAdapter<String, BsonString> {
+    override fun fromRealm(realmValue: String): BsonString = BsonString(realmValue)
+
+    override fun toRealm(value: BsonString): String = value.value
 }
 
 object BooleanAdapter : RealmTypeAdapter<Boolean, Boolean> {
