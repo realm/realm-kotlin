@@ -36,7 +36,9 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 // Common Kotlin configuration
 kotlin {
     jvm()
-    android("android") {
+    androidTarget("android") {
+        // Changing this will also requires an update to the publishCIPackages task
+        // in /packages/build.gradle.kts
         publishLibraryVariants("release")
     }
     ios()
@@ -225,6 +227,8 @@ val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
 }
 
+// Make sure that docs are published for the Metadata publication as well. This is required
+// by Maven Central
 publishing {
     // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
     publications.withType<MavenPublication> {

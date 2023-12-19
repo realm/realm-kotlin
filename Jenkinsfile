@@ -367,11 +367,11 @@ def genAndStashSwigJNI() {
     stash includes: 'packages/jni-swig-stub/build/generated/sources/jni/realmc.cpp,packages/jni-swig-stub/build/generated/sources/jni/realmc.h', name: 'swig_jni'
 }
 def runBuild() {
-    def buildJvmAbiFlag = "-PcopyJvmABIs=false"
+    def buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs=false"
     if (shouldBuildJvmABIs()) {
         unstash name: 'linux_so_file'
         unstash name: 'win_dll'
-        buildJvmAbiFlag = "-PcopyJvmABIs=true"
+        buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs=true"
     }
 
     withCredentials([
@@ -386,7 +386,7 @@ def runBuild() {
             }
             sh """
                   cd packages
-                  chmod +x gradlew && ./gradlew publishAllPublicationsToTestRepository ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
+                  chmod +x gradlew && ./gradlew publishCIPackages ${buildJvmAbiFlag} ${signingFlags} --info --stacktrace --no-daemon
                """
         }
     }
@@ -725,19 +725,21 @@ def build_jvm_linux(String buildType) {
     unstash name: 'swig_jni'
     docker.build('jvm_linux', '-f packages/cinterop/src/jvmMain/generic.Dockerfile .').inside {
         sh """
-           cd packages/cinterop/src/jvmMain/
-           rm -rf linux-build-dir
-           mkdir linux-build-dir
-           cd linux-build-dir
+           cd packages/cinterop
+           mkdir build
+           cd build
+           rm -rf realmLinuxBuild
+           mkdir realmLinuxBuild
+           cd realmLinuxBuild
            cmake -DCMAKE_BUILD_TYPE=${buildType} \
                  -DREALM_ENABLE_SYNC=1 \
                  -DREALM_NO_TESTS=1 \
                  -DREALM_BUILD_LIB_ONLY=true \
-           ../../jvm
+           ../../src/jvm
            make -j8
         """
 
-        stash includes:'packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so', name: 'linux_so_file'
+        stash includes:'packages/cinterop/build/realmLinuxBuild/librealmc.so', name: 'linux_so_file'
     }
 }
 
@@ -758,9 +760,9 @@ def build_jvm_windows(String buildType) {
 
   def cmakeDefinitions = cmakeOptions.collect { k,v -> "-D$k=$v" }.join(' ')
   dir('packages') {
-      bat "cd cinterop\\src\\jvmMain && rmdir /s /q windows-build-dir & mkdir windows-build-dir && cd windows-build-dir &&  \"${tool 'cmake'}\" ${cmakeDefinitions} ..\\..\\jvm && \"${tool 'cmake'}\" --build . --config Release"
+      bat "cd cinterop && rmdir /s /q build & mkdir build & cd build && rmdir /s /q realmWindowsBuild & mkdir realmWindowsBuild && cd realmWindowsBuild &&  \"${tool 'cmake'}\" ${cmakeDefinitions} ..\\..\\src\\jvm && \"${tool 'cmake'}\" --build . --config Release"
   }
-  stash includes: 'packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll', name: 'win_dll'
+  stash includes: 'packages/cinterop/build/realmWindowsBuild/Release/realmc.dll', name: 'win_dll'
 }
 
 def trackBuildMetrics(version) {
