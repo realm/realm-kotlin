@@ -70,7 +70,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -233,14 +232,12 @@ abstract sealed class MongoCollectionTests {
         }
 
         // Project without name
-        collection.findOne(
+        collection.findOne<CollectionDataType>(
             filter = BsonDocument("name", "object-6"),
             projection = BsonDocument("""{ "name" : 0}""")
         ).run {
             assertIs<CollectionDataType>(this)
-            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
-            // assertEquals("Default", this.name)
-            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            assertEquals("Default", this.name)
             // _id is included by default
             assertEquals(collectionDataType._id, this._id)
         }
@@ -251,8 +248,6 @@ abstract sealed class MongoCollectionTests {
         ).run {
             assertIs<CollectionDataType>(this)
             assertEquals(collectionDataType.name, name)
-            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
-            // _id is included by default
             assertNotEquals(collectionDataType._id, this._id)
         }
 
@@ -282,10 +277,35 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
-    fun findOne_extraFieldsAreDiscarded() { TODO() }
+    fun findOne_extraFieldsAreDiscarded() = runBlocking<Unit> {
+        collection.insertOne<BsonDocument, Int>(
+            BsonDocument(
+                mapOf(
+                    "_id" to BsonInt32(Random.nextInt()),
+                    "name" to BsonString("object-1"),
+                    "extra" to BsonString("extra"),
+                )
+            )
+        )
+
+        // Show that remote method returns extra properties
+        collection.findOne<BsonDocument>()!!.let {
+            assertEquals("extra", it["extra"]!!.asString().value)
+        }
+        // But these properties are silently discarded by the serialization framework
+        assertIs<CollectionDataType>(collection.findOne())
+    }
 
     @Test
-    fun findOne_missingFieldsGetsDefaults() { TODO() }
+    fun findOne_missingFieldsGetsDefaults() = runBlocking<Unit> {
+        collection.insertOne(CollectionDataType("object-1"))
+        collection.findOne<CollectionDataType>(
+            projection = BsonDocument("""{ "name" : 0}""")
+        ).run {
+            assertIs<CollectionDataType>(this)
+            assertEquals("Default", this.name)
+        }
+    }
 
     @Test
     abstract fun findOne_unknownCollection()
@@ -324,9 +344,7 @@ abstract sealed class MongoCollectionTests {
         ).let {
             assertEquals(2, it.size)
             it.forEach {
-                // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
-                // assertEquals("Default", it.name)
-                assertNull(it.name)
+                assertEquals("Default", it.name)
                 // _id is included by default
                 assertTrue(it._id in ids)
             }
@@ -337,12 +355,9 @@ abstract sealed class MongoCollectionTests {
         ).let {
             assertEquals(2, it.size)
             it.forEach {
-                assertNotNull(it.name)
-                assertNotEquals("Default", it.name)
+                assertEquals("object-1", it.name)
                 // Objects have new ids
-                // FIXME Should be assigned new Objects ids, but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
-                // assertFalse(it._id in ids)
-                assertNull(it._id)
+                assertFalse(it._id in ids)
             }
         }
 
@@ -785,9 +800,7 @@ abstract sealed class MongoCollectionTests {
             update = BsonDocument(""" { "name": "UPDATED"}"""),
             projection = BsonDocument("""{ "name" : 0}""")
         )!!.run {
-            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
-            // assertEquals("Default", this.name)
-            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            assertEquals("Default", this.name)
             // _id is included by default and matched one of the previously inserted objects
             assertTrue { this._id in ids }
         }
@@ -798,10 +811,8 @@ abstract sealed class MongoCollectionTests {
             projection = BsonDocument("""{ "_id" : 0}""")
         )!!.run {
             assertEquals("object-3", name)
-            // FIXME Should be constructor default arguments but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
             // We don't know the id as the constructor default generated a new one
-            // assertFalse { this._id in ids}
-            assertNull(this._id)
+            assertFalse { this._id in ids }
         }
 
         // Sort
@@ -917,9 +928,7 @@ abstract sealed class MongoCollectionTests {
             document = BsonDocument(""" { "name": "REPLACED"}"""),
             projection = BsonDocument("""{ "name" : 0}""")
         )!!.run {
-            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
-            // assertEquals("Default", this.name)
-            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            assertEquals("Default", this.name)
             // _id is included by default and matched one of the previously inserted objects
             assertTrue { this._id in ids }
         }
@@ -930,10 +939,8 @@ abstract sealed class MongoCollectionTests {
             projection = BsonDocument("""{ "_id" : 0}""")
         )!!.run {
             assertEquals("object-3", name)
-            // FIXME Should be constructor default arguments but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
             // We don't know the id as the constructor default generated a new one
-            // assertFalse { this._id in ids}
-            assertNull(this._id)
+            assertFalse { this._id in ids }
         }
 
         // Sort
@@ -998,9 +1005,7 @@ abstract sealed class MongoCollectionTests {
             filter = BsonDocument("name", "object-3"),
             projection = BsonDocument("""{ "name" : 0}""")
         )!!.run {
-            // FIXME Should be "Default" but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
-            // assertEquals("Default", this.name)
-            assertNull(this.name) // Currently null because of nullability, but should have default value "Default"
+            assertEquals("Default", this.name)
             // _id is included by default and matched one of the previously inserted objects
             assertTrue { this._id in ids }
         }
@@ -1010,10 +1015,8 @@ abstract sealed class MongoCollectionTests {
             projection = BsonDocument("""{ "_id" : 0}""")
         )!!.run {
             assertEquals("object-3", name)
-            // FIXME Should be constructor default arguments but serialization fails if field is non-nullable even though descriptor correctly has isOptional=true
             // We don't know the id as the constructor default generated a new one
-            // assertFalse { this._id in ids}
-            assertNull(this._id)
+            assertFalse { this._id in ids }
         }
 
         // Sort
@@ -1077,7 +1080,7 @@ class NonSchemaType : RealmObject {
 }
 
 @Serializable
-class CollectionDataType(var name: String? = "Default", var _id: Int? = Random.nextInt()) : RealmObject {
+class CollectionDataType(var name: String = "Default", var _id: Int = Random.nextInt()) : RealmObject {
     constructor() : this("Default")
 }
 
