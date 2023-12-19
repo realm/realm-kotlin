@@ -14,12 +14,6 @@
  * limitations under the License.
  */
 
-// TODO - QUESTIONS
-//  - should we allow serialization of update, sort and projection arguments?
-//  - Experimental annotation as a safegaurd around all the serialization stuff? We dont support an API without Bson-serialization, so will depend on ExperimentalKBsonSerializerApi internally anyway, so can't avoid the KSerialization-dependency
-//  - #naming App Services seems to use "Data source", Data
-//  - What about missing fields in server response -> ServiceException?
-
 package io.realm.kotlin.mongodb.mongo
 
 import io.realm.kotlin.internal.util.Validation.isType

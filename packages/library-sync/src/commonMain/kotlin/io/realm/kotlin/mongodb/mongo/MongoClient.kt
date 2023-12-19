@@ -30,7 +30,6 @@ public interface MongoClient {
     /**
      * The name of the data source that the [MongoClient] is connecting to.
      */
-    // FIXME Data Source name??
     public val serviceName: String
 
     /**
