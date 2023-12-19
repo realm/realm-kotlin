@@ -29,6 +29,9 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmInline
@@ -103,9 +106,15 @@ interface RealmUserT : CapiT
 interface RealmNetworkTransportT : CapiT
 interface RealmSyncSessionT : CapiT
 interface RealmSubscriptionT : CapiT
+interface RealmSyncSocketObserverPointerT : CapiT
+interface RealmSyncSocketCallbackPointerT : CapiT
+
 interface RealmBaseSubscriptionSet : CapiT
+interface RealmSyncSocket : CapiT
 interface RealmSubscriptionSetT : RealmBaseSubscriptionSet
 interface RealmMutableSubscriptionSetT : RealmBaseSubscriptionSet
+interface RealmSyncSocketT : RealmSyncSocket
+
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
 typealias RealmAsyncOpenTaskPointer = NativePointer<RealmAsyncOpenTaskT>
@@ -121,7 +130,11 @@ typealias RealmSubscriptionPointer = NativePointer<RealmSubscriptionT>
 typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscriptionSet>
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
-
+typealias RealmSyncSocketPointer = NativePointer<RealmSyncSocketT>
+typealias RealmSyncSocketObserverPointer = NativePointer<RealmSyncSocketObserverPointerT>
+typealias RealmSyncSocketCallbackPointer = NativePointer<RealmSyncSocketCallbackPointerT>
+typealias RealmWebsocketHandlerCallbackPointer = NativePointer<CapiT>
+typealias RealmWebsocketProviderPointer = NativePointer<CapiT>
 /**
  * Class for grouping and normalizing values we want to send as part of
  * logging in Sync Users.
@@ -494,7 +507,6 @@ expect object RealmInterop {
     fun realm_app_link_credentials(app: RealmAppPointer, user: RealmUserPointer, credentials: RealmCredentialsPointer, callback: AppCallback<RealmUserPointer>)
     fun realm_clear_cached_apps()
     fun realm_app_sync_client_get_default_file_path_for_realm(
-        app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
         overriddenName: String?
     ): String
@@ -800,4 +812,22 @@ expect object RealmInterop {
     fun realm_sync_subscriptionset_commit(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): RealmSubscriptionSetPointer
+
+    fun realm_sync_set_websocket_transport(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        webSocketTransport: WebSocketTransport
+    )
+
+    fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean = false, status: WebsocketCallbackResult = WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS, reason: String = "")
+
+    fun realm_sync_socket_websocket_connected(nativePointer: RealmWebsocketProviderPointer, protocol: String)
+
+    fun realm_sync_socket_websocket_error(nativePointer: RealmWebsocketProviderPointer)
+
+    fun realm_sync_socket_websocket_message(
+        nativePointer: RealmWebsocketProviderPointer,
+        data: ByteArray
+    ): Boolean
+
+    fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String = "")
 }

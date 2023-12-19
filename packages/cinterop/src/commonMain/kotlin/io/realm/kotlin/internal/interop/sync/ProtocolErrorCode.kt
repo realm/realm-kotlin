@@ -121,7 +121,7 @@ expect enum class WebsocketErrorCode : CodeDescription {
     RLM_ERR_WEBSOCKET_FATAL_ERROR;
 
     companion object {
-        internal fun of(nativeValue: Int): WebsocketErrorCode?
+        fun of(nativeValue: Int): WebsocketErrorCode?
     }
 }
 

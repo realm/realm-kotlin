@@ -191,7 +191,7 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("packages", "cleanAllTests -PincludeSdkModules=false connectedAndroidTest")
+                                        testAndCollect("packages", "cleanAllTests -PsyncUsePlatformNetworking=true -PincludeSdkModules=false connectedAndroidTest")
                                     }
                                 )
                             }
@@ -215,7 +215,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests jvmTest -PincludeSdkModules=false ')
+                                testAndCollect("packages", 'cleanAllTests jvmTest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false ')
                             }
                         ])
                     }
@@ -235,7 +235,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PincludeSdkModules=false -PtestBuildType=debugMinified')
+                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false -PtestBuildType=debugMinified')
                             }
                         ])
                         sh 'rm mapping.zip || true'
@@ -256,6 +256,7 @@ pipeline {
                         testAndCollect("integration-tests/gradle/gradle75-test", "integrationTest")
                         withEnv(["JAVA_HOME=${JAVA_17}"]) {
                             testAndCollect("integration-tests/gradle/gradle8-test", "integrationTest")
+                            testAndCollect("integration-tests/gradle/gradle85-test", "integrationTest")
                         }
                     }
                 }

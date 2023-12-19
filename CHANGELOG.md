@@ -4,10 +4,44 @@
 * None.
 
 ### Enhancements
-* Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972))
+* [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
+* [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972))
 
 ### Fixed
+* Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))
+* Using `Realm.asFlow()` could miss an update if a write was started right after opening the Realm. (Issue [#1582](https://github.com/realm/realm-kotlin/issues/1582)) 
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* Update to Ktor 2.3.4.
+* Updated to CMake 3.27.7
+
+
+## 1.13.1-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
 * None.
+
+### Enhancements
+* None.
+>>>>>>> main
+
+### Fixed
+* Using keypaths in Flows could sometimes throw `java.lang.IllegalStateException: [RLM_ERR_WRONG_THREAD]: Realm accessed from incorrect thread.`. (Issue [#1594](https://github.com/realm/realm-kotlin/pull/1594, since 1.13.0)
 
 ### Compatibility
 * File format: Generates Realms with file format v23.
@@ -89,7 +123,7 @@ This release upgrades the Sync metadata in a way that is not compatible with old
 * Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] Manual client reset on Windows would not trigger correctly when run inside `onManualResetFallback`. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
-* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
 GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))

@@ -129,7 +129,6 @@ class FlexibleSyncConfigurationTests {
     //     val config: SyncConfiguration = SyncConfiguration.defaultConfig(user)
     //     assertFailsWith<IllegalStateException> { config.partitionValue }
     // }
-
     @Test
     fun defaultPath() {
         val user: User = app.asTestApp.createUserAndLogin()

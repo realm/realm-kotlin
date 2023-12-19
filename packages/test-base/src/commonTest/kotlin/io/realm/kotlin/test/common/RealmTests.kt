@@ -32,12 +32,12 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
@@ -449,9 +449,9 @@ class RealmTests {
             .directory(testDir)
             .build()
 
-        val bgThreadReadyChannel = Channel<Unit>(1)
-        val readyToCloseChannel = Channel<Unit>(1)
-        val closedChannel = Channel<Unit>(1)
+        val bgThreadReadyChannel = TestChannel<Unit>()
+        val readyToCloseChannel = TestChannel<Unit>()
+        val closedChannel = TestChannel<Unit>()
 
         runBlocking {
             val testRealm = Realm.open(configuration)

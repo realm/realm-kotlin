@@ -23,6 +23,7 @@ import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.copyAssetFile
 import io.realm.kotlin.internal.platform.fileExists
@@ -45,7 +46,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -64,7 +67,7 @@ public class RealmImpl private constructor(
     internal val realmScope =
         CoroutineScope(SupervisorJob() + notificationScheduler.dispatcher)
     private val notifierFlow: MutableSharedFlow<RealmChange<Realm>> =
-        MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+        MutableSharedFlow(onBufferOverflow = BufferOverflow.DROP_OLDEST, replay = 1)
 
     private val notifier = SuspendableNotifier(
         owner = this,
@@ -207,7 +210,13 @@ public class RealmImpl private constructor(
     }
 
     override fun asFlow(): Flow<RealmChange<Realm>> = scopedFlow {
-        notifierFlow.onStart { emit(InitialRealmImpl(this@RealmImpl)) }
+        notifierFlow.withIndex()
+            .map { (index, change) ->
+                when (index) {
+                    0 -> InitialRealmImpl(this)
+                    else -> change
+                }
+            }
     }
 
     override fun writeCopyTo(configuration: Configuration) {
@@ -225,7 +234,8 @@ public class RealmImpl private constructor(
     }
 
     override fun <T : CoreNotifiable<T, C>, C> registerObserver(t: Observable<T, C>, keyPaths: Pair<ClassKey, List<String>>?): Flow<C> {
-        return notifier.registerObserver(t, keyPaths)
+        val keypathsPtr: RealmKeyPathArrayPointer? = keyPaths?.let { RealmInterop.realm_create_key_paths_array(realmReference.dbPointer, keyPaths.first, keyPaths.second) }
+        return notifier.registerObserver(t, keypathsPtr)
     }
 
     /**

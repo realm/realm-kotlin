@@ -2,7 +2,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.Callback
-import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
@@ -45,7 +44,7 @@ internal class SuspendableNotifier(
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<VersionId>(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        extraBufferCapacity = 1
+        replay = 1
     )
 
     val dispatcher: CoroutineDispatcher = scheduler.dispatcher
@@ -90,13 +89,15 @@ internal class SuspendableNotifier(
         // Touching realm will open the underlying realm and register change listeners, but must
         // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
         if (!realmInitializer.isInitialized()) {
-            withContext(dispatcher) { realm }
+            withContext(dispatcher) {
+                realm
+                _realmChanged.emit(realm.version())
+            }
         }
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPaths: Pair<ClassKey, List<String>>?): Flow<C> {
-        val keypathsPtr: RealmKeyPathArrayPointer? = keyPaths?.let { RealmInterop.realm_create_key_paths_array(realm.owner.realmReference.dbPointer, keyPaths.first, keyPaths.second) }
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPathsPtr: RealmKeyPathArrayPointer?): Flow<C> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> =
                 kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
@@ -125,7 +126,7 @@ internal class SuspendableNotifier(
                                 changeFlow.emit(frozenObservable, change)
                             }
                         }
-                    token.value = NotificationToken(lifeRef.registerForNotification(keypathsPtr, interopCallback))
+                    token.value = NotificationToken(lifeRef.registerForNotification(keyPathsPtr, interopCallback))
                 } else {
                     changeFlow.emit(null)
                 }
