@@ -38,15 +38,15 @@ import kotlin.jvm.JvmName
 public interface MongoCollection<T, K> {
 
     /**
-     * Name of the remote collection. Will be `null` for collections
+     * Name of the remote collection.
      */
-    public val name: String?
+    public val name: String
 
     /**
      * Get an instance of the same collection with a different set of default types serialization.
      */
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    public fun <T, K> reshape(eJson: EJson? = null): MongoCollection<T, K>
+    public fun <T, K> withDocumentClass(eJson: EJson? = null): MongoCollection<T, K>
 }
 
 public suspend fun MongoCollection<*, *>.count(filter: BsonDocument? = null, limit: Long? = null): Long {

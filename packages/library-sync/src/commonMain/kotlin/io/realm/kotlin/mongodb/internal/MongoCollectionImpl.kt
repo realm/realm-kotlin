@@ -39,7 +39,7 @@ internal class MongoDatabaseCollection<T, K>(@PublishedApi internal val database
         "collection" to BsonString(name),
     )
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    override fun <T, K> reshape(eJson: EJson?): MongoCollection<T, K> {
+    override fun <T, K> withDocumentClass(eJson: EJson?): MongoCollection<T, K> {
         return MongoDatabaseCollection(this.database, this.name, eJson ?: this.eJson)
     }
 }
@@ -51,7 +51,7 @@ internal class MongoClientCollection<T, K>(@PublishedApi internal val clientImpl
         "schema_name" to BsonString(name),
     )
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    override fun <T, K> reshape(eJson: EJson?): MongoCollection<T, K> {
+    override fun <T, K> withDocumentClass(eJson: EJson?): MongoCollection<T, K> {
         return MongoClientCollection(clientImpl, name, eJson ?: this.eJson)
     }
 }

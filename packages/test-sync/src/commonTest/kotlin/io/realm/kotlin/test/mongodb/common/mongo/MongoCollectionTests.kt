@@ -159,7 +159,7 @@ abstract sealed class MongoCollectionTests {
         assertIs<CollectionDataType>(collection.findOne())
 
         // Reshaped
-        val bsonCollection: MongoCollection<BsonDocument, BsonValue> = collection.reshape()
+        val bsonCollection: MongoCollection<BsonDocument, BsonValue> = collection.withDocumentClass()
         assertIs<BsonValue>(bsonCollection.insertOne(BsonDocument("name", "object-2")))
         assertIs<BsonDocument>(bsonCollection.findOne())
         assertEquals(2, bsonCollection.count())
@@ -168,14 +168,14 @@ abstract sealed class MongoCollectionTests {
     @Test
     fun reshape_withCustomSerialization() = runBlocking<Unit> {
         val reshapedCollectionWithDefaultSerializer: MongoCollection<CustomDataType, CustomIdType> =
-            collection.reshape()
+            collection.withDocumentClass()
 
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
             reshapedCollectionWithDefaultSerializer.insertOne(CustomDataType("object-2"))
         }
 
         val reshapedCollectionWithCustomSerializer: MongoCollection<CustomDataType, CustomIdType> =
-            collection.reshape(customEjsonSerializer)
+            collection.withDocumentClass(customEjsonSerializer)
 
         assertIs<CustomIdType>(reshapedCollectionWithCustomSerializer.insertOne(CustomDataType("object-2")))
     }
