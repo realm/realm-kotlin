@@ -260,35 +260,28 @@ internal object IntConverter : CoreIntConverter, CompositeConverter<Int, Long>()
 public inline fun intToLong(value: Int?): Long? = value?.toLong()
 public inline fun longToInt(value: Long?): Int? = value?.toInt()
 
-public inline fun toRealm(
+public fun getTypeAdapter(
     obj: RealmObjectReference<out BaseRealmObject>,
     adapterClass: KClass<*>,
-    userValue: Any?,
-): Any? {
-    val adapter = obj.owner.owner
+): RealmTypeAdapter<Any?, Any?> =
+    obj.owner.owner
         .configuration
         .typeAdapterMap.let { adapters ->
             require(adapters.contains(adapterClass)) {"User provided adaptes don't contains adapter ${adapterClass.simpleName}"}
             adapters[adapterClass] as RealmTypeAdapter<Any?, Any?>
         }
 
-    return adapter.toRealm(userValue)
-}
+public inline fun toRealm(
+    obj: RealmObjectReference<out BaseRealmObject>,
+    adapterClass: KClass<*>,
+    userValue: Any?,
+): Any? = getTypeAdapter(obj, adapterClass).toRealm(userValue)
 
 public inline fun fromRealm(
     obj: RealmObjectReference<out BaseRealmObject>,
     adapterClass: KClass<*>,
     realmValue: Any,
-): Any? {
-    val adapter = obj.owner.owner
-        .configuration
-        .typeAdapterMap.let { adapters ->
-            require(adapters.contains(adapterClass)) {"User provided adaptes don't contains adapter ${adapterClass.simpleName}"}
-            adapters[adapterClass] as RealmTypeAdapter<Any?, Any?>
-        }
-
-    return adapter.fromRealm(realmValue)
-}
+): Any? = getTypeAdapter(obj, adapterClass).fromRealm(realmValue)
 
 internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>() {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =

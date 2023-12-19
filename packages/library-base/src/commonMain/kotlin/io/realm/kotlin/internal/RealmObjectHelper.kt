@@ -365,26 +365,31 @@ internal object RealmObjectHelper {
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     @Suppress("unused") // Called from generated code
-    internal inline fun <reified R : Any> getList(
+    internal inline fun <E : Any, reified S: Any> getList(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
-        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
-    ): ManagedRealmList<R> {
-        val elementType: KClass<R> = R::class
-        val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
-        val operatorType = if (realmObjectCompanion == null) {
-            if (elementType == RealmAny::class) {
-                CollectionOperatorType.REALM_ANY
-            } else {
-                CollectionOperatorType.PRIMITIVE
+        typeAdapter: RealmTypeAdapter<S, E>? = null,
+    ): ManagedRealmList<E> {
+        val storeType: KClass<S> = S::class
+
+        val realmObjectCompanion = storeType.realmObjectCompanionOrNull()
+        val operatorType = when {
+            realmObjectCompanion == null -> {
+                if (storeType == RealmAny::class) {
+                    CollectionOperatorType.REALM_ANY
+                } else {
+                    CollectionOperatorType.PRIMITIVE
+                }
             }
-        } else if (realmObjectCompanion.io_realm_kotlin_classKind == RealmClassKind.EMBEDDED) {
-            CollectionOperatorType.EMBEDDED_OBJECT
-        } else {
-            CollectionOperatorType.REALM_OBJECT
+            realmObjectCompanion.io_realm_kotlin_classKind == RealmClassKind.EMBEDDED -> {
+                CollectionOperatorType.EMBEDDED_OBJECT
+            }
+            else -> {
+                CollectionOperatorType.REALM_OBJECT
+            }
         }
         val propertyMetadata = obj.propertyInfoOrThrow(propertyName)
-        return getListByKey(obj, propertyMetadata, elementType, operatorType)
+        return getListByKey<E, S>(obj, propertyMetadata, storeType, operatorType, typeAdapter)
     }
 
     @Suppress("unused") // Called from generated code
@@ -399,25 +404,33 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("LongParameterList")
-    internal fun <R> getListByKey(
+    internal fun <E: Any, S: Any> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyMetadata: PropertyMetadata,
-        elementType: KClass<R & Any>,
+        storeType: KClass<S>,
         operatorType: CollectionOperatorType,
+        typeAdapter: RealmTypeAdapter<S, E>?,
         issueDynamicObject: Boolean = false,
-        issueDynamicMutableObject: Boolean = false
-    ): ManagedRealmList<R> {
+        issueDynamicMutableObject: Boolean = false,
+    ): ManagedRealmList<E> {
         val listPtr = RealmInterop.realm_get_list(obj.objectPointer, propertyMetadata.key)
-        val operator = createListOperator<R>(
-            listPtr,
-            elementType,
-            propertyMetadata,
-            obj.mediator,
-            obj.owner,
-            operatorType,
-            issueDynamicObject,
-            issueDynamicMutableObject
+
+        val storageOperator = createListOperator(
+            listPtr = listPtr,
+            clazz = storeType,
+            propertyMetadata = propertyMetadata,
+            mediator = obj.mediator,
+            realm = obj.owner,
+            operatorType = operatorType,
+            issueDynamicObject = issueDynamicObject,
+            issueDynamicMutableObject = issueDynamicMutableObject
         )
+
+        val operator = when (typeAdapter) {
+            null -> storageOperator as ListOperator<E>
+            else -> TypeAdaptedListOperator(storageOperator, typeAdapter)
+        }
+
         return ManagedRealmList(obj, listPtr, operator)
     }
 
@@ -430,7 +443,7 @@ internal object RealmObjectHelper {
         realm: RealmReference,
         operatorType: CollectionOperatorType,
         issueDynamicObject: Boolean,
-        issueDynamicMutableObject: Boolean
+        issueDynamicMutableObject: Boolean,
     ): ListOperator<R> {
         return when (operatorType) {
             CollectionOperatorType.PRIMITIVE -> PrimitiveListOperator(
@@ -472,7 +485,8 @@ internal object RealmObjectHelper {
 
     internal inline fun <reified R : Any> getSet(
         obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
+        propertyName: String,
+        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
     ): ManagedRealmSet<R?> {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
@@ -554,7 +568,8 @@ internal object RealmObjectHelper {
 
     internal inline fun <reified R : Any> getDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
-        propertyName: String
+        propertyName: String,
+        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
     ): ManagedRealmDictionary<R?> {
         val elementType = R::class
         val realmObjectCompanion = elementType.realmObjectCompanionOrNull()
@@ -664,15 +679,15 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("unused") // Called from generated code
-    internal inline fun <reified T : Any> setList(
+    internal inline fun <E : Any, reified S: Any> setList(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
-        list: RealmList<T>,
+        list: RealmList<E>,
+        typeAdapter: RealmTypeAdapter<S, E>? = null,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf(),
-        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
     ) {
-        val existingList = getList<T>(obj, col)
+        val existingList = getList<E, S>(obj, col, typeAdapter)
         if (list !is ManagedRealmList || !RealmInterop.realm_equals(
                 existingList.nativePointer,
                 list.nativePointer
@@ -689,6 +704,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         set: RealmSet<T>,
+        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
@@ -709,6 +725,7 @@ internal object RealmObjectHelper {
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         dictionary: RealmDictionary<T>,
+        typeAdapter: RealmTypeAdapter<Any?, Any?>? = null,
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     ) {
@@ -954,13 +971,14 @@ internal object RealmObjectHelper {
             else -> CollectionOperatorType.EMBEDDED_OBJECT
         }
         @Suppress("UNCHECKED_CAST")
-        return getListByKey(
-            obj,
-            propertyMetadata,
-            clazz,
-            operatorType,
-            true,
-            issueDynamicMutableObject
+        return getListByKey<R, R>(
+            obj = obj,
+            propertyMetadata = propertyMetadata,
+            storeType = clazz,
+            operatorType = operatorType,
+            typeAdapter = null,
+            issueDynamicObject = true,
+            issueDynamicMutableObject = issueDynamicMutableObject
         ) as RealmList<R?>
     }
 

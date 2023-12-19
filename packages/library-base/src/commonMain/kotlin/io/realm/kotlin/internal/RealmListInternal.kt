@@ -21,6 +21,7 @@ import io.realm.kotlin.Versioned
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
+import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_get
@@ -29,6 +30,7 @@ import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
+import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
@@ -41,6 +43,7 @@ import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -247,6 +250,45 @@ internal interface ListOperator<E> : CollectionOperator<E, RealmListPointer> {
 
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
+}
+
+internal class TypeAdaptedListOperator<E, S>(
+    private val listOperator: ListOperator<S>,
+    private val typeAdapter: RealmTypeAdapter<S, E>
+): ListOperator<E> {
+    override val nativePointer: RealmListPointer by listOperator::nativePointer
+    override val mediator: Mediator by listOperator::mediator
+    override val realmReference: RealmReference by listOperator::realmReference
+    override val valueConverter: RealmValueConverter<E> = object : RealmValueConverter<E> {
+        override fun MemTrackingAllocator.publicToRealmValue(value: E?): RealmValue {
+            TODO("Not yet implemented")
+        }
+
+        override fun realmValueToPublic(realmValue: RealmValue): E? {
+            TODO("Not yet implemented")
+        }
+    }
+
+    override fun get(index: Int): E = typeAdapter.fromRealm(listOperator.get(index))
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmListPointer,
+    ): ListOperator<E> = TypeAdaptedListOperator(listOperator.copy(realmReference, nativePointer), typeAdapter)
+
+    override fun set(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache,
+    ): E = typeAdapter.fromRealm(listOperator.set(index, typeAdapter.toRealm(element), updatePolicy, cache))
+
+    override fun insert(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache,
+    ) = listOperator.insert(index, typeAdapter.toRealm(element), updatePolicy, cache)
 }
 
 internal class PrimitiveListOperator<E>(

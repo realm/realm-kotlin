@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrDeclarationReference
+import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
@@ -56,6 +57,7 @@ import org.jetbrains.kotlin.ir.types.IrStarProjection
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
@@ -70,7 +72,6 @@ import org.jetbrains.kotlin.ir.types.isLong
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.isShort
 import org.jetbrains.kotlin.ir.types.isString
-import org.jetbrains.kotlin.ir.types.isSubtypeOf
 import org.jetbrains.kotlin.ir.types.isSubtypeOfClass
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.superTypes
@@ -80,11 +81,6 @@ import org.jetbrains.kotlin.ir.util.findAnnotation
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.resolve.descriptorUtil.classId
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.isNullable
-import org.jetbrains.kotlin.types.typeUtil.supertypes
 import kotlin.IllegalStateException
 import kotlin.collections.set
 
@@ -103,7 +99,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
         val fromPublic: (IrBuilderWithScope.(IrGetValue, IrGetValue)->IrDeclarationReference),
     )
 
-    fun IrConstructorCall.getTypeAdapterTypes(): Triple<IrClassReference, IrType, IrType> =
+    fun IrConstructorCall.getTypeAdapterInfo(): Triple<IrClassReference, IrType, IrType> =
         (getValueArgument(0)!! as IrClassReference).let { adapterClassReference ->
             adapterClassReference.symbol
                 .superTypes()
@@ -185,7 +181,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
 
                     val (adapterClassReference, realmType, userType) = declaration
                         .getAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
-                        .getTypeAdapterTypes()
+                        .getTypeAdapterInfo()
 
                     val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
 
@@ -769,10 +765,13 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
             .annotations
             .findAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
 
-        typeAdapterAnnotation?.let {
-            val (adapterClassReference, realmType, userType) = it.getTypeAdapterTypes()
+        var adapterClassReference: IrClassReference? = null
+        var collectionAdapterType: (IrBuilderWithScope.(IrGetValue)->IrExpression)? = null
+        var collectionStoreType: IrType? = null
 
-            val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
+        typeAdapterAnnotation?.let {
+            val typeAdapterInfo = it.getTypeAdapterInfo()
+            val (classReference, realmType, userType) = typeAdapterInfo
 
             if(collectionIrType.classId != userType.classId) {
                 // TODO improve messaging
@@ -781,6 +780,29 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
 
             // Replace the property type with the one from the type adapter
             collectionIrType = realmType
+            adapterClassReference = classReference
+            val adapterClass: IrClass = classReference.classType.getClass()!!
+
+            collectionAdapterType = { objectReference ->
+                // retrieve the actual type adapter
+                when (adapterClass.kind) {
+                    ClassKind.CLASS -> {
+                        irCall(
+                            callee = getTypeAdapter,
+                            origin = IrStatementOrigin.INVOKE
+                        ).apply {
+                            // pass obj reference
+                            putValueArgument(0, objectReference)
+                            // pass class reference
+                            putValueArgument(1, adapterClassReference)
+                        }
+                    }
+                    ClassKind.OBJECT -> {
+                        irGetObject(adapterClass.symbol)
+                    }
+                    else -> throw IllegalStateException("Unsupported type")
+                }
+            }
         }
 
         val coreGenericTypes = getCollectionGenericCoreType(
@@ -836,7 +858,9 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                     },
                     fromPublic = typeAdapterMethodReferences?.fromPublic,
                     toRealmValue = null,
-                    collectionType = collectionType
+                    collectionType = collectionType,
+                    collectionStoreType = collectionIrType,
+                    collectionAdapterType = collectionAdapterType,
                 )
             }
         }
@@ -852,7 +876,9 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
         setFunction: IrSimpleFunction? = null,
         fromPublic: (IrBuilderWithScope.(IrGetValue, IrGetValue)->IrDeclarationReference)? = null,
         toRealmValue: IrSimpleFunction? = null,
-        collectionType: CollectionType = CollectionType.NONE
+        collectionType: CollectionType = CollectionType.NONE,
+        collectionStoreType: IrType? = null,
+        collectionAdapterType: (IrBuilderWithScope.(IrGetValue)->IrExpression)? = null,
     ) {
         // TODO check this backing field if required
         val backingField = property.declaration.backingField!!
@@ -913,8 +939,15 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                             if (typeArgumentsCount > 0) {
                                 putTypeArgument(0, type)
                             }
-                            putValueArgument(0, irGet(objectReferenceType, valueSymbol))
+                            if (typeArgumentsCount > 1) {
+                                putTypeArgument(1, collectionStoreType)
+                            }
+                            val objectReference = irGet(objectReferenceType, valueSymbol)
+                            putValueArgument(0, objectReference)
                             putValueArgument(1, irString(property.persistedName))
+                            collectionAdapterType?.let {
+                                putValueArgument(2, it(objectReference))
+                            }
                         }
                         val storageValue = fromRealmValue?.let {
                             irCall(callee = it).apply {
@@ -1001,9 +1034,16 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                             if (typeArgumentsCount > 0) {
                                 putTypeArgument(0, type)
                             }
-                            putValueArgument(0, irGet(objectReferenceType, valueSymbol))
+                            if (typeArgumentsCount > 1) {
+                                putTypeArgument(1, collectionStoreType)
+                            }
+                            val objectReference = irGet(objectReferenceType, valueSymbol)
+                            putValueArgument(0, objectReference)
                             putValueArgument(1, irString(property.persistedName))
                             putValueArgument(2, realmValue)
+                            collectionAdapterType?.let {
+                                putValueArgument(3, it(objectReference))
+                            }
                         }
 
                         irIfNull(

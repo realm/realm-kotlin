@@ -87,6 +87,8 @@ interface RealmPluginContext {
     val providedAdapterFromRealm: IrSimpleFunction
     val providedAdapterToRealm: IrSimpleFunction
 
+    val getTypeAdapter: IrSimpleFunction
+
 
     fun IrType.isRealmList(): Boolean {
         val propertyClassId: ClassId = this.classIdOrFail()
@@ -325,4 +327,7 @@ class RealmPluginContextImpl(override val pluginContext: IrPluginContext): Realm
 
     override val providedAdapterToRealm: IrSimpleFunction =
         pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("toRealm"))).first().owner
+
+    override val getTypeAdapter: IrSimpleFunction =
+        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("getTypeAdapter"))).first().owner
 }
