@@ -30,13 +30,13 @@ internal class FunctionsImpl(
 ) : Functions {
     @PublishedApi
     internal suspend fun callInternal(
-        name: String,
+        functionName: String,
         serializedEjsonArgs: String
     ): String = Channel<Result<String>>(1).use { channel ->
         RealmInterop.realm_app_call_function(
             app = app.nativePointer,
             user = user.nativePointer,
-            name = name,
+            name = functionName,
             serviceName = serviceName,
             serializedEjsonArgs = serializedEjsonArgs,
             callback = channelResultCallback(channel) { ejsonEncodedObject: String ->
@@ -49,6 +49,6 @@ internal class FunctionsImpl(
         return channel.receive().getOrThrow()
     }
 
-    internal suspend fun callInternal(name: String, bsonValue: BsonValue): BsonValue =
-        Bson(callInternal(name, Bson.toJson(bsonValue)))
+    internal suspend fun callInternal(functionName: String, bsonValue: BsonValue): BsonValue =
+        Bson(callInternal(functionName, Bson.toJson(bsonValue)))
 }

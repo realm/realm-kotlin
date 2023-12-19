@@ -54,7 +54,7 @@ public interface MongoDatabase {
      * to.
      * @param K the default type that primary keys will be serialized into.
      * @return a [MongoCollection] that will accept and return entities from the remote collection
-     * as [BsonValue] values.
+     * as [T] values.
      */
     @OptIn(ExperimentalKBsonSerializerApi::class)
     public fun <T, K> collection(collectionName: String, eJson: EJson? = null): MongoCollection<T, K>
