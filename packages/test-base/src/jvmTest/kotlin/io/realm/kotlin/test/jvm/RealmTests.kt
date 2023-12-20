@@ -29,11 +29,15 @@ import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlin.random.Random
+import kotlin.random.nextUInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
 
 fun totalThreadCount() = Thread.getAllStackTraces().size
@@ -42,6 +46,18 @@ fun totalThreadCount() = Thread.getAllStackTraces().size
  * Realm tests that are specific to the JVM platform (both Desktop and Android).
  */
 class RealmTests {
+
+    // Test for https://github.com/Kotlin/kotlinx.coroutines/issues/3993
+    @Test
+    fun closingDispatchersThrowIllegalState() {
+        val dispatcher = singleThreadDispatcher("test-${Random.nextUInt()}")
+        dispatcher.close()
+        runBlocking {
+            launch(dispatcher) {
+                fail("Dispatcher was running")
+            }
+        }
+    }
 
     @Test
     fun cleanupDispatcherThreadsOnClose() = runBlocking {
