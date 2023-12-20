@@ -690,7 +690,7 @@ jobs:
             ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
     outputs:
-      baas-container-id: ${{ steps.job_b_step.outputs.baas_cli_start.baas_container_id }}
+      baas-container-id: ${{ steps.baas_cli_start.outputs.baas_container_id }}
 
   # TODO: ccache is not being used by this build for some reason
   build-macos-x64-packages:
@@ -1200,6 +1200,7 @@ jobs:
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
       - name: Checkout BAAS repo
+        if: always()
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
           gh repo clone 10gen/baasaas
