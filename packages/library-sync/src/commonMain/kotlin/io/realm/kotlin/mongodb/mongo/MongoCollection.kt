@@ -117,14 +117,21 @@ public suspend fun MongoCollection<*, *>.deleteMany(filter: BsonDocument): Long 
     return deleteMany(filter)
 }
 
+/**
+ * Wrapper of results of an [updateOne] call.
+ *
+ * @param updated boolean indicating that a document was updated.
+ * @param upsertedId primary key of the new document if created.
+ */
+public data class UpdateOneResult<R>(val updated: Boolean, val upsertedId: R?)
 public suspend inline fun <T : Any, reified R> MongoCollection<T, R>.updateOne(
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-): Pair<Boolean, R?> {
+): UpdateOneResult<R> {
     isType<MongoCollectionImpl<*, *>>(this)
-    return updateOne(filter, update, upsert).let { (updated, asdf) ->
-        updated to asdf?.let { decodeFromBsonValue(it) }
+    return updateOne(filter, update, upsert).let { (updated, upsertedId) ->
+        UpdateOneResult(updated, upsertedId?.let { decodeFromBsonValue(it) })
     }
 }
 
@@ -133,18 +140,25 @@ public suspend inline fun <reified R> MongoCollection<*, *>.updateOne(
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-): Pair<Boolean, R?> {
+): UpdateOneResult<R> {
     return (this as MongoCollection<BsonValue, R>).updateOne(filter, update, upsert)
 }
 
+/**
+ * Wrapper of results of an [updateMany] call.
+ *
+ * @param modifiedCount number of documents that was updated by the operation.
+ * @param upsertedId primary key of the new document if created.
+ */
+public data class UpdateManyResult<R>(val modifiedCount: Long, val upsertedId: R?)
 public suspend inline fun <T : Any, reified R : Any> MongoCollection<T, R>.updateMany(
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-): Pair<Long, R?> {
+): UpdateManyResult<R> {
     isType<MongoCollectionImpl<*, *>>(this)
     return updateMany(filter, update, upsert).let { (updatedCount, upsertedId) ->
-        updatedCount to upsertedId?.let { decodeFromBsonValue(it) }
+        UpdateManyResult(updatedCount, upsertedId?.let { decodeFromBsonValue(it) })
     }
 }
 
@@ -153,7 +167,7 @@ public suspend inline fun <reified R : Any> MongoCollection<*, *>.updateMany(
     filter: BsonDocument,
     update: BsonDocument,
     upsert: Boolean = false
-): Pair<Long, R?> {
+): UpdateManyResult<R> {
     return (this as MongoCollection<BsonValue, R>).updateMany(filter, update, upsert)
 }
 

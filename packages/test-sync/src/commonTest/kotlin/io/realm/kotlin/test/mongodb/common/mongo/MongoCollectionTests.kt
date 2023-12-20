@@ -596,27 +596,30 @@ abstract sealed class MongoCollectionTests {
         assertEquals(4, collection.count())
 
         // Update no match
-        val updateWithoutMatch = collection.updateOne(
+        collection.updateOne(
             BsonDocument("""{ "name": "NOMATCH"}"""),
             BsonDocument("\$set", BsonDocument("""{ "name": "UPDATED"}""")),
-        )
-        assertEquals(false to null, updateWithoutMatch)
+        ).let { (updated, upsertedId) ->
+            assertFalse(updated)
+            assertNull(upsertedId)
+        }
 
         // Update with match match
-        val updateWithMatch = collection.updateOne(
+        collection.updateOne(
             BsonDocument("""{ "name": "object-1"}"""),
             BsonDocument("\$set", BsonDocument("""{ "name": "object-2"}""")),
-        )
-        assertEquals(true to null, updateWithMatch)
+        ).let { (updated, upsertedId) ->
+            assertTrue(updated)
+            assertNull(upsertedId)
+        }
         assertEquals(4, collection.count())
         assertEquals(3, collection.count(filter = BsonDocument("""{"name": "object-1"}""")))
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
 
         // Upsert no match
-        val upsertWithoutMatch = collection.updateOne(
+        collection.updateOne(
             BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
-        )
-        upsertWithoutMatch.let { (updated, upsertedId) ->
+        ).let { (updated, upsertedId) ->
             assertFalse(updated)
             assertIs<Int>(upsertedId)
         }
@@ -624,10 +627,12 @@ abstract sealed class MongoCollectionTests {
         assertEquals(2, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
 
         // Upsert with match
-        val upsertWithMatch = collection.updateOne(
+        collection.updateOne(
             BsonDocument("""{ "name": "object-2"}"""), BsonDocument(""" { "name": "object-3"}"""), upsert = true
-        )
-        assertEquals(true to null, upsertWithMatch)
+        ).let { (updated, upsertedId) ->
+            assertTrue(updated)
+            assertNull(upsertedId)
+        }
         assertEquals(5, collection.count())
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
     }
@@ -666,38 +671,46 @@ abstract sealed class MongoCollectionTests {
         )
         assertEquals(4, collection.count())
         // Update with no match
-        val updateWithoutMatch = collection.updateMany(
+        collection.updateMany(
             BsonDocument("""{"name": "NOMATCH"}"""),
             BsonDocument("""{"name": "UPDATED"}"""),
-        )
-        assertEquals(0L to null, updateWithoutMatch)
+        ).let { (modifiedCount, upsertedId) ->
+            assertEquals(0L, modifiedCount)
+            assertNull(upsertedId)
+        }
         assertEquals(0, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
         assertEquals(4, collection.count())
 
         // Update with match
-        val updateWithMatch = collection.updateMany(
+        collection.updateMany(
             BsonDocument("""{ "name": "x"}"""),
             BsonDocument("""{ "name": "UPDATED"}"""),
-        )
-        assertEquals(2L to null, updateWithMatch)
+        ).let { (modifiedCount, upsertedId) ->
+            assertEquals(2L, modifiedCount)
+            assertNull(upsertedId)
+        }
         assertEquals(2, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
         assertEquals(4, collection.count())
 
         // Upsert no match
-        val upsertWithoutMatch = collection.updateMany(
-            BsonDocument("""{ "name": "NOMATCH"}"""), BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""), upsert = true
-        )
-        upsertWithoutMatch.let {
-            assertEquals(0, it.first)
-            assertIs<Int>(it.second)
+        collection.updateMany(
+            BsonDocument("""{ "name": "NOMATCH"}"""),
+            BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""),
+            upsert = true
+        ).let { (modifiedCount, upsertedId) ->
+            assertEquals(0L, modifiedCount)
+            assertIs<Int>(upsertedId)
         }
         assertEquals(5, collection.count())
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "UPSERTED"}""")))
+
         // Upsert with match
-        val upsertWithMatch = collection.updateMany(
+        collection.updateMany(
             BsonDocument("""{ "name": "y"}"""), BsonDocument(""" { "name": "z"}"""), upsert = true
-        )
-        assertEquals(1L to null, upsertWithMatch)
+        ).let { (modifiedCount, upsertedId) ->
+            assertEquals(1L, modifiedCount)
+            assertNull(upsertedId)
+        }
         assertEquals(5, collection.count())
         assertEquals(0, collection.count(filter = BsonDocument("""{"name": "y"}""")))
     }
@@ -708,8 +721,8 @@ abstract sealed class MongoCollectionTests {
             BsonDocument("""{ "name": "object-3"}"""),
             BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""),
             upsert = true
-        ).let { (updated, upsertedId) ->
-            assertEquals(0, updated)
+        ).let { (modifiedCount, upsertedId) ->
+            assertEquals(0, modifiedCount)
             assertIs<BsonValue>(upsertedId)
         }
     }
