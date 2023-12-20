@@ -290,7 +290,7 @@ internal interface MapOperator<K, V> : CollectionOperator<V, RealmMapPointer> {
 internal class TypeAdaptedMapOperator<K, E, S>(
     val mapOperator: MapOperator<K, S>,
     val typeAdapter: RealmTypeAdapter<S, E>
-): MapOperator<K, E> {
+) : MapOperator<K, E> {
     override var modCount: Int by mapOperator::modCount
     override val keyConverter: RealmValueConverter<K> by mapOperator::keyConverter
     override val nativePointer: RealmMapPointer by mapOperator::nativePointer
@@ -307,7 +307,8 @@ internal class TypeAdaptedMapOperator<K, E, S>(
     ): MapOperator<K, E> = TypeAdaptedMapOperator(mapOperator.copy(realmReference, nativePointer), typeAdapter)
 
     override fun areValuesEqual(expected: E?, actual: E?): Boolean = mapOperator.areValuesEqual(
-        expected?.let { typeAdapter.toRealm(it) }, actual?.let { typeAdapter.toRealm(it) })
+        expected?.let { typeAdapter.toRealm(it) }, actual?.let { typeAdapter.toRealm(it) }
+    )
 
     override fun containsValueInternal(value: E): Boolean = mapOperator.containsValueInternal(typeAdapter.toRealm(value))
 
@@ -323,7 +324,8 @@ internal class TypeAdaptedMapOperator<K, E, S>(
         value: E?,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache,
-    ): Pair<E?, Boolean> = mapOperator.insertInternal(key,
+    ): Pair<E?, Boolean> = mapOperator.insertInternal(
+        key,
         value?.let { typeAdapter.toRealm(it) }, updatePolicy, cache
     ).run {
         Pair(first?.let { typeAdapter.fromRealm(it) }, second)

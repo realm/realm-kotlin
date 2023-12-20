@@ -72,7 +72,7 @@ class TypeAdaptersTests {
                     
                         override fun toRealm(value: UserType): NonRealmType = TODO()
                     }
-                """.trimIndent()
+                    """.trimIndent()
                 )
             )
             assertEquals(
@@ -86,7 +86,6 @@ class TypeAdaptersTests {
             )
         }
     }
-
 
     @Test
     fun `invalid U-type non-matching user-defined type`() {
@@ -115,7 +114,7 @@ class TypeAdaptersTests {
                     
                         override fun toRealm(value: UserType): String = TODO()
                     }
-                """.trimIndent()
+                    """.trimIndent()
                 )
             )
             assertEquals(
@@ -250,7 +249,7 @@ class TypeAdaptersTests {
                     
                         override fun toRealm(value: UserType): $kotlinLiteral = TODO()
                     }
-                """.trimIndent()
+                            """.trimIndent()
                         )
                     )
                     assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
@@ -320,7 +319,7 @@ class TypeAdaptersTests {
                     
                         override fun toRealm(value: UserType): $kotlinLiteral = TODO()
                     }
-                """.trimIndent()
+                        """.trimIndent()
                     )
                 )
                 assertEquals(
@@ -341,7 +340,7 @@ class TypeAdaptersTests {
                 type.collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE
             }
             .forEach { type ->
-                val default = when(type.collectionType) {
+                val default = when (type.collectionType) {
                     CollectionType.RLM_COLLECTION_TYPE_NONE -> error("Outside of testing scope")
                     CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<@TypeAdapter(ValidRealmTypeAdapter::class) UserType> = realmListOf()"
                     CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<@TypeAdapter(ValidRealmTypeAdapter::class) UserType> = realmSetOf()"
@@ -350,7 +349,7 @@ class TypeAdaptersTests {
                 }
 
                 val adapterType = when (type.elementType.classifier) {
-                    RealmObject::class -> "TestObject2${if(type.elementType.nullable) "?" else ""}"
+                    RealmObject::class -> "TestObject2${if (type.elementType.nullable) "?" else ""}"
                     else -> type.copy(
                         collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE
                     ).toKotlinLiteral()
@@ -404,12 +403,11 @@ class TypeAdaptersTests {
                     
                         override fun toRealm(value: UserType): $adapterType = TODO()
                     }
-                """.trimIndent()
+                            """.trimIndent()
                         )
                     )
                     assertEquals(KotlinCompilation.ExitCode.OK, result.exitCode, result.messages)
                 }
             }
-
     }
 }

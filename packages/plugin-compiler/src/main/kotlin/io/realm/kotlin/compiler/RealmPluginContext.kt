@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
-
 interface RealmPluginContext {
     val pluginContext: IrPluginContext
     val realmObjectHelper: IrClass
@@ -88,7 +87,6 @@ interface RealmPluginContext {
     val providedAdapterToRealm: IrSimpleFunction
 
     val getTypeAdapter: IrSimpleFunction
-
 
     fun IrType.isRealmList(): Boolean {
         val propertyClassId: ClassId = this.classIdOrFail()
@@ -168,10 +166,11 @@ interface RealmPluginContext {
         return propertyClassId == mutableRealmIntegerClassId
     }
 
-    // TODO Clean up
+    // TODO Clean up move around?
+    @Suppress("ComplexMethod")
     fun IrType.isValidPersistedType(): Boolean = isRealmAny() ||
-            isByteArray() ||
-            isString() ||
+        isByteArray() ||
+        isString() ||
 //    isLinkingObject() ||
 //    isEmbeddedLinkingObject() ||
 //    isPersistedPrimitiveType() ||
@@ -180,29 +179,29 @@ interface RealmPluginContext {
 //    isChar() ||
 //    isShort() ||
 //    isInt() ||
-            isLong() ||
-            isBoolean() ||
-            isFloat() ||
-            isDouble() ||
-            isDecimal128() ||
-            //    isEmbeddedLinkingObject() ||
-            //    isLinkingObject() ||
-            isRealmList() ||
-            isRealmSet() ||
-            isRealmDictionary() ||
-            isRealmInstant() ||
-            isObjectId() ||
-            isRealmObjectId() ||
-            isRealmUUID() ||
-            isRealmList() ||
-            isRealmSet() ||
-            isRealmDictionary() ||
-            isSubtypeOfClass(embeddedRealmObjectInterface) ||
-            asymmetricRealmObjectInterface?.let { isSubtypeOfClass(it.symbol) } ?: false ||
-            isSubtypeOfClass(realmObjectInterface)
+        isLong() ||
+        isBoolean() ||
+        isFloat() ||
+        isDouble() ||
+        isDecimal128() ||
+        //    isEmbeddedLinkingObject() ||
+        //    isLinkingObject() ||
+        isRealmList() ||
+        isRealmSet() ||
+        isRealmDictionary() ||
+        isRealmInstant() ||
+        isObjectId() ||
+        isRealmObjectId() ||
+        isRealmUUID() ||
+        isRealmList() ||
+        isRealmSet() ||
+        isRealmDictionary() ||
+        isSubtypeOfClass(embeddedRealmObjectInterface) ||
+        asymmetricRealmObjectInterface?.let { isSubtypeOfClass(it.symbol) } ?: false ||
+        isSubtypeOfClass(realmObjectInterface)
 }
 
-class RealmPluginContextImpl(override val pluginContext: IrPluginContext): RealmPluginContext {
+class RealmPluginContextImpl(override val pluginContext: IrPluginContext) : RealmPluginContext {
     override val realmObjectHelper: IrClass = pluginContext.lookupClassOrThrow(ClassIds.REALM_OBJECT_HELPER)
     override val realmListClass: IrClass = pluginContext.lookupClassOrThrow(ClassIds.REALM_LIST)
     override val realmSetClass: IrClass = pluginContext.lookupClassOrThrow(ClassIds.REALM_SET)

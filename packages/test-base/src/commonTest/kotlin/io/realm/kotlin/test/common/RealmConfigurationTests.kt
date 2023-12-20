@@ -497,7 +497,7 @@ class RealmConfigurationTests {
 
     @Test
     fun customTypeAdapters_defaultEmpty() {
-        val typeAdapter = object: RealmTypeAdapter<String, String> {
+        val typeAdapter = object : RealmTypeAdapter<String, String> {
             override fun fromRealm(realmValue: String): String = TODO("Not yet implemented")
 
             override fun toRealm(value: String): String = TODO("Not yet implemented")
@@ -511,7 +511,7 @@ class RealmConfigurationTests {
 
     @Test
     fun defineCustomTypeAdapters() {
-        val typeAdapter = object: RealmTypeAdapter<String, String> {
+        val typeAdapter = object : RealmTypeAdapter<String, String> {
             override fun fromRealm(realmValue: String): String = TODO("Not yet implemented")
 
             override fun toRealm(value: String): String = TODO("Not yet implemented")

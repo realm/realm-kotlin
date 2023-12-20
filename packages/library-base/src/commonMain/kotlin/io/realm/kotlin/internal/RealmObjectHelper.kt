@@ -365,7 +365,7 @@ internal object RealmObjectHelper {
 
     // Return type should be RealmList<R?> but causes compilation errors for native
     @Suppress("unused") // Called from generated code
-    internal inline fun <E : Any, reified S: Any> getList(
+    internal inline fun <E : Any, reified S : Any> getList(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         typeAdapter: RealmTypeAdapter<S, E>? = null,
@@ -404,7 +404,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("LongParameterList")
-    internal fun <E: Any, S: Any> getListByKey(
+    internal fun <E : Any, S : Any> getListByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyMetadata: PropertyMetadata,
         storeType: KClass<S>,
@@ -483,7 +483,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <E : Any, reified S: Any> getSet(
+    internal inline fun <E : Any, reified S : Any> getSet(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         typeAdapter: RealmTypeAdapter<S, E>? = null,
@@ -504,7 +504,7 @@ internal object RealmObjectHelper {
     }
 
     @Suppress("LongParameterList")
-    internal fun <E: Any, S: Any> getSetByKey(
+    internal fun <E : Any, S : Any> getSetByKey(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyMetadata: PropertyMetadata,
         elementType: KClass<S>,
@@ -571,7 +571,7 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <E: Any, reified S : Any> getDictionary(
+    internal inline fun <E : Any, reified S : Any> getDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
         propertyName: String,
         typeAdapter: RealmTypeAdapter<S, E>? = null,
@@ -690,8 +690,8 @@ internal object RealmObjectHelper {
         RealmInterop.realm_set_value(obj.objectPointer, key, transport, false)
     }
 
-    @Suppress("unused") // Called from generated code
-    internal inline fun <E : Any, reified S: Any> setList(
+    @Suppress("unused", "LongParameterList") // Called from generated code
+    internal inline fun <E : Any, reified S : Any> setList(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         list: RealmList<E>,
@@ -712,7 +712,8 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <E : Any, reified S: Any> setSet(
+    @Suppress("LongParameterList")
+    internal inline fun <E : Any, reified S : Any> setSet(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         set: RealmSet<E>,
@@ -733,7 +734,8 @@ internal object RealmObjectHelper {
         }
     }
 
-    internal inline fun <E: Any, reified S : Any> setDictionary(
+    @Suppress("LongParameterList")
+    internal inline fun <E : Any, reified S : Any> setDictionary(
         obj: RealmObjectReference<out BaseRealmObject>,
         col: String,
         dictionary: RealmDictionary<E>,
@@ -793,7 +795,7 @@ internal object RealmObjectHelper {
                 }
             accessor as KMutableProperty1<BaseRealmObject, Any?>
 
-            if(property.usesCustomType) {
+            if (property.usesCustomType) {
                 // Passthrough values when a property uses a custom type adapter, values will be converted automatically.
                 val getterValue = accessor.get(source)
                 accessor.set(target, getterValue)

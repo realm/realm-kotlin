@@ -20,7 +20,6 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.adapters.AllTypes
 import io.realm.kotlin.entities.adapters.RealmInstantBsonDateTimeAdapterInstanced
 import io.realm.kotlin.entities.adapters.UsingInstancedAdapter
-//import io.realm.kotlin.entities.adapters.UsingInstancedAdapter
 import io.realm.kotlin.entities.adapters.UsingSingletonAdapter
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
@@ -124,5 +123,4 @@ class TypeAdapterTests {
 
         assertEquals(unmanagedObject, managedObject)
     }
-
 }

@@ -17,13 +17,13 @@
 
 package io.realm.kotlin.entities.adapters
 
+import io.realm.kotlin.internal.asBsonDateTime
+import io.realm.kotlin.internal.toRealmInstant
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmTypeAdapter
 import io.realm.kotlin.types.annotations.TypeAdapter
 import org.mongodb.kbson.BsonDateTime
-import io.realm.kotlin.internal.asBsonDateTime
-import io.realm.kotlin.internal.toRealmInstant
 import kotlin.time.Duration.Companion.milliseconds
 
 class UsingSingletonAdapter : RealmObject {
@@ -37,4 +37,3 @@ object RealmInstantBsonDateTimeAdapterSingleton : RealmTypeAdapter<RealmInstant,
     override fun toRealm(value: BsonDateTime): RealmInstant =
         value.value.milliseconds.toRealmInstant()
 }
-

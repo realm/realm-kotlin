@@ -50,11 +50,11 @@ import io.realm.kotlin.compiler.Names.PROPERTY_TYPE_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_KIND
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_CLASS_NAME_MEMBER
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_USE_CUSTOM_TYPE_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
+import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_USE_CUSTOM_TYPE_MEMBER
 import io.realm.kotlin.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder

@@ -267,7 +267,7 @@ public fun getTypeAdapter(
     obj.owner.owner
         .configuration
         .typeAdapterMap.let { adapters ->
-            require(adapters.contains(adapterClass)) {"User provided adaptes don't contains adapter ${adapterClass.simpleName}"}
+            require(adapters.contains(adapterClass)) { "User provided adaptes don't contains adapter ${adapterClass.simpleName}" }
             adapters[adapterClass] as RealmTypeAdapter<Any?, Any?>
         }
 

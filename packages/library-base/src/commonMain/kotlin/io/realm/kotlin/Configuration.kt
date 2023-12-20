@@ -50,13 +50,12 @@ public fun interface CompactOnLaunchCallback {
     public fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
 }
 
-
 /**
  * TODO
  */
 public class TypeAdapterBuilder {
     internal val typeAdapters: MutableList<RealmTypeAdapter<*, *>> = mutableListOf()
-    public fun add(adapter: RealmTypeAdapter<*,*>) {
+    public fun add(adapter: RealmTypeAdapter<*, *>) {
         typeAdapters.add(adapter)
     }
 }

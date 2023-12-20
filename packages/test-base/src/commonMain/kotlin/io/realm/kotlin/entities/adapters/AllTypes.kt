@@ -20,7 +20,6 @@ import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.Decimal128
 
-
 @Suppress("MagicNumber")
 class AllTypes : RealmObject {
 
@@ -223,6 +222,7 @@ class AllTypes : RealmObject {
         // Empty object required by SampleTests
     }
 
+    @Suppress("ComplexMethod")
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other == null || this::class != other::class) return false
@@ -295,8 +295,6 @@ class AllTypes : RealmObject {
         result = 31 * result + adaptedStringDictionaryField.hashCode()
         return result
     }
-
-
 }
 
 // TODO should we write these type adapters as BsonValue converters?
@@ -375,7 +373,6 @@ object BinaryAdapter : RealmTypeAdapter<ByteArray, ByteArray> {
 
     override fun toRealm(value: ByteArray): ByteArray = value.copyOf()
 }
-
 
 object NullableStringAdapter : RealmTypeAdapter<String?, String?> {
     override fun fromRealm(realmValue: String?): String? = realmValue?.toString()

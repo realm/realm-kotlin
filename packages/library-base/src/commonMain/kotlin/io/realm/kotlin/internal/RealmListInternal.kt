@@ -255,7 +255,7 @@ internal interface ListOperator<E> : CollectionOperator<E, RealmListPointer> {
 internal class TypeAdaptedListOperator<E, S>(
     private val listOperator: ListOperator<S>,
     private val typeAdapter: RealmTypeAdapter<S, E>
-): ListOperator<E> {
+) : ListOperator<E> {
     override val nativePointer: RealmListPointer by listOperator::nativePointer
     override val mediator: Mediator by listOperator::mediator
     override val realmReference: RealmReference by listOperator::realmReference

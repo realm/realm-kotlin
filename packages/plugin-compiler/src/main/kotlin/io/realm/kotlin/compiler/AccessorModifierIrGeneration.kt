@@ -57,7 +57,6 @@ import org.jetbrains.kotlin.ir.types.IrStarProjection
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.IrTypeArgument
 import org.jetbrains.kotlin.ir.types.classFqName
-import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.impl.IrAbstractSimpleType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
@@ -88,15 +87,15 @@ import kotlin.collections.set
  * Modifies the IR tree to transform getter/setter to call the C-Interop layer to retrieve read the managed values from the Realm
  * It also collect the schema information while processing the class properties.
  */
-class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): RealmPluginContext by realmPluginContext {
+class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : RealmPluginContext by realmPluginContext {
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType
 
     data class TypeAdapterMethodReferences(
         val propertyType: IrType,
-        val toPublic: (IrBuilderWithScope.(IrGetValue, IrFunctionAccessExpression)->IrDeclarationReference),
-        val fromPublic: (IrBuilderWithScope.(IrGetValue, IrGetValue)->IrDeclarationReference),
+        val toPublic: (IrBuilderWithScope.(IrGetValue, IrFunctionAccessExpression) -> IrDeclarationReference),
+        val fromPublic: (IrBuilderWithScope.(IrGetValue, IrGetValue) -> IrDeclarationReference),
     )
 
     fun IrConstructorCall.getTypeAdapterInfo(): Triple<IrClassReference, IrType, IrType> =
@@ -172,10 +171,10 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                     }
                 }
 
-                val typeAdapterMethodReferences = if(declaration.hasAnnotation(TYPE_ADAPTER_ANNOTATION)) {
+                val typeAdapterMethodReferences = if (declaration.hasAnnotation(TYPE_ADAPTER_ANNOTATION)) {
                     logDebug("Object property named ${declaration.name} is an adapted type.")
 
-                    if(declaration.isDelegated) {
+                    if (declaration.isDelegated) {
                         logError("Type adapters do not support delegated properties")
                     }
 
@@ -185,7 +184,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
 
                     val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
 
-                    if(propertyType.classId != userType.classId) {
+                    if (propertyType.classId != userType.classId) {
                         // TODO improve messaging
                         logError("Not matching types 1")
                     }
@@ -361,7 +360,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
                             fromRealmValue = longToByte,
                             toPublic = null,
                             setFunction = setValue,
-                            fromPublic = {_, value ->
+                            fromPublic = { _, value ->
                                 irCall(callee = byteToLong).apply {
                                     putValueArgument(0, value)
                                 }
@@ -740,6 +739,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
         })
     }
 
+    @Suppress("LongParameterList", "LongMethod", "ComplexMethod")
     private fun processCollectionField(
         collectionType: CollectionType,
         fields: MutableMap<String, SchemaProperty>,
@@ -766,14 +766,14 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
             .findAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
 
         var adapterClassReference: IrClassReference? = null
-        var collectionAdapterType: (IrBuilderWithScope.(IrGetValue)->IrExpression)? = null
+        var collectionAdapterType: (IrBuilderWithScope.(IrGetValue) -> IrExpression)? = null
         var collectionStoreType: IrType? = null
 
         typeAdapterAnnotation?.let {
             val typeAdapterInfo = it.getTypeAdapterInfo()
             val (classReference, realmType, userType) = typeAdapterInfo
 
-            if(collectionIrType.classId != userType.classId) {
+            if (collectionIrType.classId != userType.classId) {
                 // TODO improve messaging
                 logError("Not matching types ${collectionIrType.classFqName} ${userType.classFqName}")
             }
@@ -866,19 +866,19 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext): Real
         }
     }
 
-    @Suppress("LongParameterList", "LongMethod", "ComplexMethod")
+    @Suppress("LongParameterList", "LongMethod", "ComplexMethod", "MagicNumber")
     private fun modifyAccessor(
         property: SchemaProperty,
         type: IrType,
         getFunction: IrSimpleFunction,
         fromRealmValue: IrSimpleFunction? = null,
-        toPublic: (IrBuilderWithScope.(IrGetValue, IrFunctionAccessExpression)->IrDeclarationReference)? = null,
+        toPublic: (IrBuilderWithScope.(IrGetValue, IrFunctionAccessExpression) -> IrDeclarationReference)? = null,
         setFunction: IrSimpleFunction? = null,
-        fromPublic: (IrBuilderWithScope.(IrGetValue, IrGetValue)->IrDeclarationReference)? = null,
+        fromPublic: (IrBuilderWithScope.(IrGetValue, IrGetValue) -> IrDeclarationReference)? = null,
         toRealmValue: IrSimpleFunction? = null,
         collectionType: CollectionType = CollectionType.NONE,
         collectionStoreType: IrType? = null,
-        collectionAdapterType: (IrBuilderWithScope.(IrGetValue)->IrExpression)? = null,
+        collectionAdapterType: (IrBuilderWithScope.(IrGetValue) -> IrExpression)? = null,
     ) {
         // TODO check this backing field if required
         val backingField = property.declaration.backingField!!

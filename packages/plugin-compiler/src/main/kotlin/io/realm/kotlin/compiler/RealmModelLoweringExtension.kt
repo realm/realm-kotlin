@@ -64,6 +64,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 
+    @Suppress("LongMethod", "ComplexMethod")
     override fun lower(irClass: IrClass) {
         val realmPluginContext by lazy { RealmPluginContextImpl(pluginContext) }
 
@@ -83,7 +84,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
                         arguments[0].typeOrNull!!
                     }
 
-                if(!realmType.makeNotNull().isValidPersistedType()) {
+                if (!realmType.makeNotNull().isValidPersistedType()) {
                     // TODO better name please
                     logError("Invalid type parameter '${realmType.classFqName}', only Realm types are supported")
                 }

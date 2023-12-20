@@ -169,11 +169,11 @@ inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
                     .split(",") // Split by commas
                     .filter {
                         !(
-                                it.contains("<RealmObject>") ||
-                                        it.contains("<io.realm.kotlin.types.RealmObject>") ||
-                                        it.contains("<EmbeddedRealmObject>") ||
-                                        it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
-                                )
+                            it.contains("<RealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.RealmObject>") ||
+                                it.contains("<EmbeddedRealmObject>") ||
+                                it.contains("<io.realm.kotlin.types.EmbeddedRealmObject>")
+                            )
                     }.joinToString(",") // Re-sanitize again
                 hasRealmObjectAsSuperType = elementNodeText.findAnyOf(interfaces) != null
             }
@@ -221,23 +221,23 @@ val realmObjectClassIds = realmObjectTypes.map { name -> ClassId(PACKAGE_TYPES, 
 @OptIn(SymbolInternals::class)
 val FirClassSymbol<*>.isBaseRealmObject: Boolean
     get() = this.classKind == ClassKind.CLASS &&
-            this.fir.superTypeRefs.any { typeRef ->
-                when (typeRef) {
-                    // In SUPERTYPES stage
-                    is FirUserTypeRef -> {
-                        typeRef.qualifier.last().name in realmObjectTypes &&
-                                // Disregard constructor invocations as that means that it is a Realm Java class
-                                !(
-                                        typeRef.source?.run { treeStructure.getParent(lighterASTNode) }
-                                            ?.tokenType?.let { it == KtStubElementTypes.CONSTRUCTOR_CALLEE }
-                                            ?: false
-                                        )
-                    }
-                    // After SUPERTYPES stage
-                    is FirResolvedTypeRef -> typeRef.type.classId in realmObjectClassIds
-                    else -> false
+        this.fir.superTypeRefs.any { typeRef ->
+            when (typeRef) {
+                // In SUPERTYPES stage
+                is FirUserTypeRef -> {
+                    typeRef.qualifier.last().name in realmObjectTypes &&
+                        // Disregard constructor invocations as that means that it is a Realm Java class
+                        !(
+                            typeRef.source?.run { treeStructure.getParent(lighterASTNode) }
+                                ?.tokenType?.let { it == KtStubElementTypes.CONSTRUCTOR_CALLEE }
+                                ?: false
+                            )
                 }
+                // After SUPERTYPES stage
+                is FirResolvedTypeRef -> typeRef.type.classId in realmObjectClassIds
+                else -> false
             }
+        }
 
 // JetBrains already have a method `fun IrAnnotationContainer.hasAnnotation(symbol: IrClassSymbol)`
 // It is unclear exactly what the difference is and how to get a ClassSymbol from a ClassId,
@@ -449,8 +449,10 @@ data class SchemaProperty(
     companion object {
         fun getPersistedName(declaration: IrProperty): String {
             @Suppress("UNCHECKED_CAST")
-            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName())
-                .getValueArgument(0)!! as IrConstImpl<String>).value
+            return (
+                declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName())
+                    .getValueArgument(0)!! as IrConstImpl<String>
+                ).value
         }
     }
 }
@@ -713,8 +715,10 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
 fun getSchemaClassName(clazz: IrClass): String {
     return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
         @Suppress("UNCHECKED_CAST")
-        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName())
-            .getValueArgument(0)!! as IrConstImpl<String>).value
+        return (
+            clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName())
+                .getValueArgument(0)!! as IrConstImpl<String>
+            ).value
     } else {
         clazz.name.identifier
     }

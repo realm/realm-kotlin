@@ -24,7 +24,6 @@ import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.migration.AutomaticSchemaMigration
 import io.realm.kotlin.migration.RealmMigration
-import io.realm.kotlin.types.RealmTypeAdapter
 import io.realm.kotlin.types.TypedRealmObject
 import kotlin.reflect.KClass
 
@@ -93,7 +92,7 @@ public interface RealmConfiguration : Configuration {
         /**
          * TODO
          */
-        public fun typeAdapters(block: TypeAdapterBuilder.()->Unit): Builder =
+        public fun typeAdapters(block: TypeAdapterBuilder.() -> Unit): Builder =
             apply {
                 this.typeAdapters = TypeAdapterBuilder().apply(block).typeAdapters
             }

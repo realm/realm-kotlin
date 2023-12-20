@@ -307,7 +307,7 @@ internal interface SetOperator<E> : CollectionOperator<E, RealmSetPointer> {
 internal class TypeAdaptedSetOperator<E, S>(
     private val setOperator: SetOperator<S>,
     private val typeAdapter: RealmTypeAdapter<S, E>,
-): SetOperator<E> {
+) : SetOperator<E> {
     override var modCount: Int by setOperator::modCount
     override val nativePointer: RealmSetPointer by setOperator::nativePointer
 
