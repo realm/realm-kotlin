@@ -765,9 +765,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
             .annotations
             .findAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
 
-        var adapterClassReference: IrClassReference? = null
         var collectionAdapterExpression: (IrBuilderWithScope.(IrGetValue) -> IrExpression)? = null
-        var collectionStoreType: IrType? = null
 
         typeAdapterAnnotation?.let {
             val typeAdapterInfo = it.getTypeAdapterInfo()
@@ -780,7 +778,6 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
 
             // Replace the property type with the one from the type adapter
             collectionIrType = realmType
-            adapterClassReference = classReference
             val adapterClass: IrClass = classReference.classType.getClass()!!
 
             collectionAdapterExpression = { objectReference ->
@@ -794,7 +791,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
                             // pass obj reference
                             putValueArgument(0, objectReference)
                             // pass class reference
-                            putValueArgument(1, adapterClassReference)
+                            putValueArgument(1, classReference)
                         }
                     }
                     ClassKind.OBJECT -> {

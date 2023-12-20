@@ -33,8 +33,10 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.IrStarProjection
 import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.starProjectedType
 import org.jetbrains.kotlin.ir.types.superTypes
@@ -64,7 +66,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 
-    @Suppress("LongMethod", "ComplexMethod")
+    @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     override fun lower(irClass: IrClass) {
         val realmPluginContext by lazy { RealmPluginContextImpl(pluginContext) }
 
@@ -84,8 +86,24 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
                         arguments[0].typeOrNull!!
                     }
 
-                if (!realmType.makeNotNull().isValidPersistedType()) {
-                    // TODO better name please
+                val type =
+                    if (realmType.isRealmList() || realmType.isRealmSet() || realmType.isRealmDictionary()) {
+                        val typeArgument  = (realmType as IrSimpleTypeImpl).arguments[0]
+                        if (typeArgument is IrStarProjection) {
+                            logError(
+//                                "Error in field ${declaration.name} - ${collectionType.description} cannot use a '*' projection.",
+//                                declaration.locationOf()
+                                "TODO IMPROVE ERROR"
+                            )
+                            return
+                        }
+
+                        typeArgument.typeOrNull!!
+                    } else {
+                        realmType
+                    }
+
+                if (!type.makeNotNull().isValidPersistedType()) {
                     logError("Invalid type parameter '${realmType.classFqName}', only Realm types are supported")
                 }
             }

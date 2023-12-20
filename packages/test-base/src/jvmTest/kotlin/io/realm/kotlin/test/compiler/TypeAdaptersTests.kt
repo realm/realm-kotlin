@@ -20,6 +20,7 @@ import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
+import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.test.util.TypeDescriptor.unsupportedRealmTypeAdaptersClassifiers
 import io.realm.kotlin.types.MutableRealmInt
@@ -317,6 +318,62 @@ class TypeAdaptersTests {
                     object ValidRealmTypeAdapter : RealmTypeAdapter<$kotlinLiteral, UserType> {
                         override fun fromRealm(realmValue: $kotlinLiteral): UserType = TODO()
                     
+                        override fun toRealm(value: UserType): $kotlinLiteral = TODO()
+                    }
+                        """.trimIndent()
+                    )
+                )
+                assertEquals(
+                    KotlinCompilation.ExitCode.COMPILATION_ERROR,
+                    result.exitCode,
+                    result.messages
+                )
+            }
+    }
+
+    @Test
+    fun `type adapter with star projection`() {
+        CollectionType.values()
+            .filterNot { collectionType ->
+                collectionType == CollectionType.RLM_COLLECTION_TYPE_NONE
+            }
+            .map { collectionType ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = collectionType,
+                    elementType = TypeDescriptor.ElementType(
+                        classifier = String::class,
+                        nullable = false
+                    )
+                )
+            }
+            .map {
+                it.toKotlinLiteral().replace("String", "*")
+            }
+            .forEach { kotlinLiteral ->
+                val result = compileFromSource(
+                    plugins = listOf(io.realm.kotlin.compiler.Registrar()),
+                    source = SourceFile.kotlin(
+                        "typeadapter_supportness_$kotlinLiteral.kt",
+                        """
+                    import io.realm.kotlin.types.RealmAny
+                    import io.realm.kotlin.types.RealmDictionary
+                    import io.realm.kotlin.types.RealmList
+                    import io.realm.kotlin.types.RealmSet
+                    import io.realm.kotlin.types.RealmInstant
+                    import io.realm.kotlin.types.MutableRealmInt
+                    import io.realm.kotlin.types.RealmObject
+                    import io.realm.kotlin.types.RealmTypeAdapter
+                    import io.realm.kotlin.types.RealmUUID
+                    import io.realm.kotlin.types.annotations.TypeAdapter
+                    import io.realm.kotlin.types.ObjectId
+                    import org.mongodb.kbson.BsonDecimal128
+                    import org.mongodb.kbson.BsonObjectId
+
+                    class UserType
+
+                    object ValidRealmTypeAdapter : RealmTypeAdapter<$kotlinLiteral, UserType> {
+                        override fun fromRealm(realmValue: $kotlinLiteral): UserType = TODO()
+
                         override fun toRealm(value: UserType): $kotlinLiteral = TODO()
                     }
                         """.trimIndent()
