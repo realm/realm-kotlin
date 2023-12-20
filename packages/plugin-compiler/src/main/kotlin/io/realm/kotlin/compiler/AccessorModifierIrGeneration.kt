@@ -185,8 +185,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
                     val adapterClass: IrClass = adapterClassReference.classType.getClass()!!
 
                     if (propertyType.classId != userType.classId) {
-                        // TODO improve messaging
-                        logError("Not matching types 1")
+                        logError("Type adapter public type does not match the property type.")
                     }
 
                     // Replace the property type with the one from the type adapter

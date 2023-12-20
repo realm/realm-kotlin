@@ -259,15 +259,7 @@ internal class TypeAdaptedListOperator<E, S>(
     override val nativePointer: RealmListPointer by listOperator::nativePointer
     override val mediator: Mediator by listOperator::mediator
     override val realmReference: RealmReference by listOperator::realmReference
-    override val valueConverter: RealmValueConverter<E> = object : RealmValueConverter<E> {
-        override fun MemTrackingAllocator.publicToRealmValue(value: E?): RealmValue {
-            TODO("Not yet implemented")
-        }
-
-        override fun realmValueToPublic(realmValue: RealmValue): E? {
-            TODO("Not yet implemented")
-        }
-    }
+    override val valueConverter: RealmValueConverter<E> by lazy { throw RuntimeException("TypeAdaptedListOperator does not have a valueConverter") }
 
     override fun get(index: Int): E = typeAdapter.fromRealm(listOperator.get(index))
 

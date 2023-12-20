@@ -297,8 +297,7 @@ class AllTypes : RealmObject {
     }
 }
 
-// TODO should we write these type adapters as BsonValue converters?
-// Passthrough converters
+// Passthrough converters, we could use BsonTypes, but passthrough is also a case to test.
 object StringAdapter : RealmTypeAdapter<String, String> {
     override fun fromRealm(realmValue: String): String = realmValue.toString()
 

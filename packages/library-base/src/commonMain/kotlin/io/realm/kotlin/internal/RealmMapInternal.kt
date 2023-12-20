@@ -333,7 +333,7 @@ internal class TypeAdaptedMapOperator<K, E, S>(
 
     override val mediator: Mediator by mapOperator::mediator
     override val realmReference: RealmReference by mapOperator::realmReference
-    override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("Unreachable") }
+    override val valueConverter: RealmValueConverter<E> by lazy { throw RuntimeException("TypeAdaptedMapOperator does not have a valueConverter") }
 }
 
 internal open class PrimitiveMapOperator<K, V> constructor(

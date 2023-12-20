@@ -43,16 +43,15 @@ import kotlin.test.assertTrue
  *  - [x] Adapters type unsupportness
  *  - [x] Adapter not matching public type
  *  - [x] Instanced and singleton adapters
- *  - [] Other annotations Ignore, Index etc
- *  TODO: Rename generated file names
+ *  - [x] Other annotations Ignore, Index etc
+ *  - [x] Star projections in persistable types
  */
 class TypeAdaptersTests {
 
     private val typeAdapterTypes = listOf("object", "class")
 
-    // TODO: Can we make it fail when declaring type adapters rather than when we apply them?
     @Test
-    fun `invalid R-type unsupported persisted type`() {
+    fun `invalid persisted type`() {
         typeAdapterTypes.forEach { type ->
             val result = compileFromSource(
                 plugins = listOf(io.realm.kotlin.compiler.Registrar()),
@@ -82,14 +81,14 @@ class TypeAdaptersTests {
                 result.messages
             )
             assertTrue(
-                result.messages.contains("Invalid type parameter 'NonRealmType', only Realm types are supported"),
+                result.messages.contains("Invalid adapter persisted type 'NonRealmType', only Realm persistable types are supported."),
                 result.messages
             )
         }
     }
 
     @Test
-    fun `invalid U-type non-matching user-defined type`() {
+    fun `not matching user type`() {
         typeAdapterTypes.forEach { type ->
             val result = compileFromSource(
                 plugins = listOf(io.realm.kotlin.compiler.Registrar()),
@@ -123,7 +122,7 @@ class TypeAdaptersTests {
                 result.exitCode,
                 result.messages
             )
-            assertTrue(result.messages.contains("Not matching types"), result.messages)
+            assertTrue(result.messages.contains("Type adapter public type does not match the property type."), result.messages)
         }
     }
 
@@ -167,7 +166,7 @@ class TypeAdaptersTests {
     }
 
     @Test
-    fun `type adapters supportness`() {
+    fun `validate all adapters supported types`() {
         val defaults = mapOf<KClassifier, Any>(
             Boolean::class to true,
             Long::class to "1",
@@ -259,7 +258,7 @@ class TypeAdaptersTests {
     }
 
     @Test
-    fun `type adapters unsupportness`() {
+    fun `validate all adapters unsupported types`() {
         val defaults = mapOf<KClassifier, Any>(
             Byte::class to "1",
             Char::class to "\'c\'",
@@ -328,6 +327,7 @@ class TypeAdaptersTests {
                     result.exitCode,
                     result.messages
                 )
+                assertTrue(result.messages.contains("only Realm persistable types are supported"), result.messages)
             }
     }
 
@@ -384,6 +384,7 @@ class TypeAdaptersTests {
                     result.exitCode,
                     result.messages
                 )
+                assertTrue(result.messages.contains("cannot use a '*' projection"), result.messages)
             }
     }
 

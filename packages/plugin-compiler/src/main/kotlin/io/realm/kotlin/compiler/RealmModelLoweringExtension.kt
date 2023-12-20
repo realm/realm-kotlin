@@ -91,9 +91,8 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
                         val typeArgument = (realmType as IrSimpleTypeImpl).arguments[0]
                         if (typeArgument is IrStarProjection) {
                             logError(
-//                                "Error in field ${declaration.name} - ${collectionType.description} cannot use a '*' projection.",
-//                                declaration.locationOf()
-                                "TODO IMPROVE ERROR"
+                                "Error in class ${irClass.name} - ${realmType.classFqName?.shortName()} cannot use a '*' projection.",
+                                irClass.locationOf()
                             )
                             return
                         }
@@ -104,7 +103,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
                     }
 
                 if (!type.makeNotNull().isValidPersistedType()) {
-                    logError("Invalid type parameter '${realmType.classFqName}', only Realm types are supported")
+                    logError("Invalid adapter persisted type '${realmType.classFqName}', only Realm persistable types are supported.")
                 }
             }
         }

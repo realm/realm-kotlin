@@ -166,26 +166,15 @@ interface RealmPluginContext {
         return propertyClassId == mutableRealmIntegerClassId
     }
 
-    // TODO Clean up move around?
     @Suppress("ComplexMethod")
     fun IrType.isValidPersistedType(): Boolean = isRealmAny() ||
         isByteArray() ||
         isString() ||
-//    isLinkingObject() ||
-//    isEmbeddedLinkingObject() ||
-//    isPersistedPrimitiveType() ||
-//    isMutableRealmInteger() ||
-//    isByte() ||
-//    isChar() ||
-//    isShort() ||
-//    isInt() ||
         isLong() ||
         isBoolean() ||
         isFloat() ||
         isDouble() ||
         isDecimal128() ||
-        //    isEmbeddedLinkingObject() ||
-        //    isLinkingObject() ||
         isRealmList() ||
         isRealmSet() ||
         isRealmDictionary() ||
