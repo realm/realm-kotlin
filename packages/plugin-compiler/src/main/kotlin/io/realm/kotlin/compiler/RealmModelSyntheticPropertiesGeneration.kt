@@ -327,7 +327,9 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         pluginContext.irBuiltIns.arrayClass.typeWith(pluginContext.irBuiltIns.stringType),
                         type,
                         // Generate list of properties: List<Pair<String, KMutableProperty1<*, *>>>
-                        properties!!.entries.map {
+                        properties!!.entries.filter {
+                            true // TODO filter actual adapted types
+                        }.map {
                             IrConstImpl.string(
                                 startOffset,
                                 endOffset,

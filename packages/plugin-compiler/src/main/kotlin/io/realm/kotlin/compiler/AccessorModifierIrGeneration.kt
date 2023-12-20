@@ -766,7 +766,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
             .findAnnotation(TYPE_ADAPTER_ANNOTATION.asSingleFqName())
 
         var adapterClassReference: IrClassReference? = null
-        var collectionAdapterType: (IrBuilderWithScope.(IrGetValue) -> IrExpression)? = null
+        var collectionAdapterExpression: (IrBuilderWithScope.(IrGetValue) -> IrExpression)? = null
         var collectionStoreType: IrType? = null
 
         typeAdapterAnnotation?.let {
@@ -783,7 +783,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
             adapterClassReference = classReference
             val adapterClass: IrClass = classReference.classType.getClass()!!
 
-            collectionAdapterType = { objectReference ->
+            collectionAdapterExpression = { objectReference ->
                 // retrieve the actual type adapter
                 when (adapterClass.kind) {
                     ClassKind.CLASS -> {
@@ -814,7 +814,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
 
         // Only process field if we got valid generics
         if (coreGenericTypes != null) {
-            val genericPropertyType = getPropertyTypeFromKotlinType(collectionIrType)
+            val genericPropertyType = getPropertyTypeFromKotlinType(collectionIrType.makeNotNull())
 
             // Only process
             if (genericPropertyType != null) {
@@ -860,7 +860,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
                     toRealmValue = null,
                     collectionType = collectionType,
                     collectionStoreType = collectionIrType,
-                    collectionAdapterType = collectionAdapterType,
+                    collectionAdapterValue = collectionAdapterExpression,
                 )
             }
         }
@@ -878,7 +878,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
         toRealmValue: IrSimpleFunction? = null,
         collectionType: CollectionType = CollectionType.NONE,
         collectionStoreType: IrType? = null,
-        collectionAdapterType: (IrBuilderWithScope.(IrGetValue) -> IrExpression)? = null,
+        collectionAdapterValue: (IrBuilderWithScope.(IrGetValue) -> IrExpression)? = null,
     ) {
         // TODO check this backing field if required
         val backingField = property.declaration.backingField!!
@@ -945,7 +945,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
                             val objectReference = irGet(objectReferenceType, valueSymbol)
                             putValueArgument(0, objectReference)
                             putValueArgument(1, irString(property.persistedName))
-                            collectionAdapterType?.let {
+                            collectionAdapterValue?.let {
                                 putValueArgument(2, it(objectReference))
                             }
                         }
@@ -1041,7 +1041,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
                             putValueArgument(0, objectReference)
                             putValueArgument(1, irString(property.persistedName))
                             putValueArgument(2, realmValue)
-                            collectionAdapterType?.let {
+                            collectionAdapterValue?.let {
                                 putValueArgument(3, it(objectReference))
                             }
                         }
