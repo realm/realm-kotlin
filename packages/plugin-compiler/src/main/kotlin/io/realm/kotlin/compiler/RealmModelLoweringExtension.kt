@@ -88,7 +88,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
                 val type =
                     if (realmType.isRealmList() || realmType.isRealmSet() || realmType.isRealmDictionary()) {
-                        val typeArgument  = (realmType as IrSimpleTypeImpl).arguments[0]
+                        val typeArgument = (realmType as IrSimpleTypeImpl).arguments[0]
                         if (typeArgument is IrStarProjection) {
                             logError(
 //                                "Error in field ${declaration.name} - ${collectionType.description} cannot use a '*' projection.",
