@@ -689,6 +689,9 @@ jobs:
             ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
             ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
+    outputs:
+      baas-container-id: ${{ steps.job_b_step.outputs.baas_cli_start.baas_container_id }}
+
   # TODO: ccache is not being used by this build for some reason
   build-macos-x64-packages:
     runs-on: macos-latest
@@ -1136,11 +1139,42 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-#      - name: Restore Android Test APK
-#        uses: actions/download-artifact@v3
-#        with:
-#          name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
-#          path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+      - name: Restore Android Test APK
+        uses: actions/download-artifact@v3
+        with:
+          name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEVICEFARM_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Run the tests
+        uses: ./.github/actions/run-android-device-farm-test
+        id: run_android_tests
+        with:
+          apk-path: ${{ github.workspace }}/packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk/test-base-debug-androidTest.apk
+          app-id: io.realm.testapp.test
+          project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
+          device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
+
+  test-android-packages-device-farm-sync:
+    name: AWS Device Farm Sync Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    needs: [ check-cache, build-android-packages, build-jvm-packages ]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Restore Android Sync Test APK
         uses: actions/download-artifact@v3
@@ -1155,15 +1189,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
-#      - name: Run the tests
-#        uses: ./.github/actions/run-android-device-farm-test
-#        id: run_android_tests
-#        with:
-#          apk-path: ${{ github.workspace }}/packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk/test-base-debug-androidTest.apk
-#          app-id: io.realm.testapp.test
-#          project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
-#          device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
-
       - name: Run the Sync tests
         uses: ./.github/actions/run-android-device-farm-sync-test
         id: run_android_tests
@@ -1174,11 +1199,20 @@ jobs:
           project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
-      - name: Stop BAAS container
+      - name: Checkout BAAS repo
         run: |
-          echo "TODO use cli.sh to stop container id: ${{ needs.build-android-packages.steps.baas_cli_start.outputs.baas_container_id }}"
-        if: always()
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
 
+      - name: Stopping the BAAS container
+        if: always()
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ needs.build-android-packages.outputs.baas-container-id }}" ]; then
+            bash cli.sh stop ${{ needs.build-android-packages.outputs.baas-container-id }}
+          fi  
 
   test-macos-packages:
     timeout-minutes: 30
@@ -1641,6 +1675,7 @@ jobs:
              test-ios-packages, 
              test-android-packages-emulator, 
              test-android-packages-device-farm,
+             test-android-packages-device-farm-sync,
              package-all-artifacts
            ]
     if: |
