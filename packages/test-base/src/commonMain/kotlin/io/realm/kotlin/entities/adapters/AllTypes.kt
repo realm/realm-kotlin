@@ -5,6 +5,8 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
+import io.realm.kotlin.internal.interop.CollectionType
+import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
@@ -14,20 +16,47 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmTypeAdapter
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.TypeAdapter
 import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.Decimal128
+import kotlin.reflect.KMutableProperty1
+
+class ReferencedObject : RealmObject {
+    var stringField: String = ""
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as ReferencedObject
+
+        if (stringField != other.stringField) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return stringField.hashCode()
+    }
+
+
+}
 
 @Suppress("MagicNumber")
 class AllTypes : RealmObject {
 
+    @PersistedName("persistedStringField")
     @TypeAdapter(StringAdapter::class)
     var stringField: String = "Realm"
 
     @TypeAdapter(BooleanAdapter::class)
     var booleanField: Boolean = true
+
+    @TypeAdapter(LongAdapter::class)
+    var longField: Long = 10L
 
     @TypeAdapter(FloatAdapter::class)
     var floatField: Float = 3.14f
@@ -59,6 +88,9 @@ class AllTypes : RealmObject {
     @TypeAdapter(NullableBooleanAdapter::class)
     var nullableBooleanField: Boolean? = null
 
+    @TypeAdapter(NullableLongAdapter::class)
+    var nullableLongField: Long? = null
+
     @TypeAdapter(NullableFloatAdapter::class)
     var nullableFloatField: Float? = null
 
@@ -86,8 +118,8 @@ class AllTypes : RealmObject {
     @TypeAdapter(RealmAnyAdapter::class)
     var nullableRealmAnyField: RealmAny? = null
 
-    @TypeAdapter(AllTypesObjectAdapter::class)
-    var nullableObject: AllTypes? = null
+    @TypeAdapter(NullableReferencedObjectAdapter::class)
+    var nullableObject: ReferencedObject? = null
 
     @TypeAdapter(StringRealmListAdapter::class)
     var stringListField: RealmList<String> = realmListOf()
@@ -106,9 +138,13 @@ class AllTypes : RealmObject {
 //    var uuidListField: RealmList<RealmUUID> = realmListOf()
 //    var binaryListField: RealmList<ByteArray> = realmListOf()
 //    var decimal128ListField: RealmList<Decimal128> = realmListOf()
-//    var objectListField: RealmList<Sample> = realmListOf()
-//
-//    var nullableStringListField: RealmList<String?> = realmListOf()
+
+    @TypeAdapter(ReferencedObjectRealmListAdapter::class)
+    var objectListField: RealmList<ReferencedObject> = realmListOf()
+
+    @TypeAdapter(NullableStringRealmListAdapter::class)
+    var nullableStringListField: RealmList<String?> = realmListOf()
+
 //    var nullableByteListField: RealmList<Byte?> = realmListOf()
 //    var nullableCharListField: RealmList<Char?> = realmListOf()
 //    var nullableShortListField: RealmList<Short?> = realmListOf()
@@ -124,10 +160,11 @@ class AllTypes : RealmObject {
 //    var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 //    var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
 //    var nullableRealmAnyListField: RealmList<RealmAny?> = realmListOf()
-//
+
     @TypeAdapter(StringRealmSetAdapter::class)
     var stringSetField: RealmSet<String> = realmSetOf()
-//    var byteSetField: RealmSet<Byte> = realmSetOf()
+
+    //    var byteSetField: RealmSet<Byte> = realmSetOf()
 //    var charSetField: RealmSet<Char> = realmSetOf()
 //    var shortSetField: RealmSet<Short> = realmSetOf()
 //    var intSetField: RealmSet<Int> = realmSetOf()
@@ -141,9 +178,11 @@ class AllTypes : RealmObject {
 //    var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
 //    var binarySetField: RealmSet<ByteArray> = realmSetOf()
 //    var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
-//    var objectSetField: RealmSet<Sample> = realmSetOf()
-//
-//    var nullableStringSetField: RealmSet<String?> = realmSetOf()
+    @TypeAdapter(ReferencedObjectRealmSetAdapter::class)
+    var objectSetField: RealmSet<ReferencedObject> = realmSetOf()
+
+    @TypeAdapter(NullableStringRealmSetAdapter::class)
+    var nullableStringSetField: RealmSet<String?> = realmSetOf()
 //    var nullableByteSetField: RealmSet<Byte?> = realmSetOf()
 //    var nullableCharSetField: RealmSet<Char?> = realmSetOf()
 //    var nullableShortSetField: RealmSet<Short?> = realmSetOf()
@@ -159,12 +198,11 @@ class AllTypes : RealmObject {
 //    var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 //    var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
 //    var nullableRealmAnySetField: RealmSet<RealmAny?> = realmSetOf()
-//
 
     @TypeAdapter(StringRealmDictionaryAdapter::class)
     var stringDictionaryField: RealmDictionary<String> = realmDictionaryOf()
 
-    //    var byteDictionaryField: RealmDictionary<Byte> = realmDictionaryOf()
+//    var byteDictionaryField: RealmDictionary<Byte> = realmDictionaryOf()
 //    var charDictionaryField: RealmDictionary<Char> = realmDictionaryOf()
 //    var shortDictionaryField: RealmDictionary<Short> = realmDictionaryOf()
 //    var intDictionaryField: RealmDictionary<Int> = realmDictionaryOf()
@@ -178,8 +216,9 @@ class AllTypes : RealmObject {
 //    var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
 //    var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
 //    var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
-//
-//    var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
+
+    @TypeAdapter(NullableStringRealmDictionaryAdapter::class)
+    var nullableStringDictionaryField: RealmDictionary<String?> = realmDictionaryOf()
 //    var nullableByteDictionaryField: RealmDictionary<Byte?> = realmDictionaryOf()
 //    var nullableCharDictionaryField: RealmDictionary<Char?> = realmDictionaryOf()
 //    var nullableShortDictionaryField: RealmDictionary<Short?> = realmDictionaryOf()
@@ -195,105 +234,117 @@ class AllTypes : RealmObject {
 //    var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
 //    var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
 //    var nullableRealmAnyDictionaryField: RealmDictionary<RealmAny?> = realmDictionaryOf()
-//    var nullableObjectDictionaryFieldNotNull: RealmDictionary<Sample?> = realmDictionaryOf()
-//    var nullableObjectDictionaryFieldNull: RealmDictionary<Sample?> = realmDictionaryOf()
-//
-//    val objectBacklinks by backlinks(Sample::nullableObject)
-//    val listBacklinks by backlinks(Sample::objectListField)
-//    val setBacklinks by backlinks(Sample::objectSetField)
-//
-//    @PersistedName("persistedStringField")
-//    var publicStringField = "Realm"
-//
-//    // For verification that references inside class is also using our modified accessors and are
-//    // not optimized to use the backing field directly.
-//    fun stringFieldGetter(): String {
-//        return stringField
-//    }
-//
-//    fun stringFieldSetter(s: String) {
-//        stringField = s
-//    }
-    var adaptedStringListField: RealmList<RealmBsonString> = realmListOf()
-    var adaptedStringSetField: RealmSet<RealmBsonString> = realmSetOf()
-    var adaptedStringDictionaryField: RealmDictionary<RealmBsonString> = realmDictionaryOf()
+//    var nullableObjectDictionaryFieldNotNull: RealmDictionary<ReferencedObject?> = realmDictionaryOf()
+    @TypeAdapter(ReferencedObjectRealmDictionaryAdapter::class)
+    var nullableObjectDictionaryFieldNull: RealmDictionary<ReferencedObject?> = realmDictionaryOf()
+
+    var adaptedStringListField: RealmList<AdaptedString> = realmListOf()
+    var adaptedStringSetField: RealmSet<AdaptedString> = realmSetOf()
+    var adaptedStringDictionaryField: RealmDictionary<AdaptedString> = realmDictionaryOf()
+
+    var adaptedObjectListField: RealmList<RealmReferencedObject> = realmListOf()
+    var adaptedObjectSetField: RealmSet<RealmReferencedObject> = realmSetOf()
+    var adaptedObjectDictionaryField: RealmDictionary<NullableRealmReferencedObject> =
+        realmDictionaryOf()
+
 
     companion object {
-        // Empty object required by SampleTests
-    }
+        val properties: Map<TypeDescriptor.RealmFieldType, KMutableProperty1<AllTypes, out Any?>>
 
-    @Suppress("ComplexMethod")
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class != other::class) return false
+        init {
+            val fieldProperties = (listOf(
+                String::class to AllTypes::stringField,
+                Long::class to AllTypes::longField,
+                Boolean::class to AllTypes::booleanField,
+                Float::class to AllTypes::floatField,
+                Double::class to AllTypes::doubleField,
+                Decimal128::class to AllTypes::decimal128Field,
+                RealmInstant::class to AllTypes::timestampField,
+                ObjectId::class to AllTypes::objectIdField,
+                BsonObjectId::class to AllTypes::bsonObjectIdField,
+                RealmUUID::class to AllTypes::uuidField,
+                ByteArray::class to AllTypes::binaryField,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, false) to pair.second
+            } + listOf(
+                String::class to AllTypes::nullableStringField,
+                Long::class to AllTypes::nullableLongField,
+                Boolean::class to AllTypes::nullableBooleanField,
+                Float::class to AllTypes::nullableFloatField,
+                Double::class to AllTypes::nullableDoubleField,
+                Decimal128::class to AllTypes::nullableDecimal128Field,
+                RealmInstant::class to AllTypes::nullableTimestampField,
+                ObjectId::class to AllTypes::nullableObjectIdField,
+                BsonObjectId::class to AllTypes::nullableBsonObjectIdField,
+                RealmUUID::class to AllTypes::nullableUuidField,
+                ByteArray::class to AllTypes::nullableBinaryField,
+                RealmAny::class to AllTypes::nullableRealmAnyField,
+                RealmObject::class to AllTypes::nullableObject,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, true) to pair.second
+            }).associate { pair ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
+                    elementType = pair.first
+                ) to pair.second
+            }
 
-        other as AllTypes
+            val listProperties = (listOf(
+                // NON NULLABLE CLASSIFIERS TO LISTS
+                String::class to AllTypes::stringListField,
+                RealmObject::class to AllTypes::objectListField,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, false) to pair.second
+            } + listOf(
+                // NULLABLE CLASSIFIERS TO LISTS
+                String::class to AllTypes::nullableStringListField,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, true) to pair.second
+            }).associate { pair ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_LIST,
+                    elementType = pair.first
+                ) to pair.second
+            }
 
-        if (stringField != other.stringField) return false
-        if (booleanField != other.booleanField) return false
-        if (floatField != other.floatField) return false
-        if (doubleField != other.doubleField) return false
-        if (decimal128Field != other.decimal128Field) return false
-        if (timestampField != other.timestampField) return false
-        if (objectIdField != other.objectIdField) return false
-        if (bsonObjectIdField != other.bsonObjectIdField) return false
-        if (uuidField != other.uuidField) return false
-        if (!binaryField.contentEquals(other.binaryField)) return false
-        if (nullableStringField != other.nullableStringField) return false
-        if (nullableBooleanField != other.nullableBooleanField) return false
-        if (nullableFloatField != other.nullableFloatField) return false
-        if (nullableDoubleField != other.nullableDoubleField) return false
-        if (nullableDecimal128Field != other.nullableDecimal128Field) return false
-        if (nullableTimestampField != other.nullableTimestampField) return false
-        if (nullableObjectIdField != other.nullableObjectIdField) return false
-        if (nullableBsonObjectIdField != other.nullableBsonObjectIdField) return false
-        if (nullableUuidField != other.nullableUuidField) return false
-        if (nullableBinaryField != null) {
-            if (other.nullableBinaryField == null) return false
-            if (!nullableBinaryField.contentEquals(other.nullableBinaryField)) return false
-        } else if (other.nullableBinaryField != null) return false
-        if (nullableRealmAnyField != other.nullableRealmAnyField) return false
-        if (nullableObject != other.nullableObject) return false
-        if (stringListField != other.stringListField) return false
-        if (stringSetField != other.stringSetField) return false
-        if (stringDictionaryField != other.stringDictionaryField) return false
-        if (adaptedStringListField != other.adaptedStringListField) return false
-        if (adaptedStringSetField != other.adaptedStringSetField) return false
-        if (adaptedStringDictionaryField != other.adaptedStringDictionaryField) return false
+            val setProperties = (listOf(
+                // NON NULLABLE CLASSIFIERS TO SETS
+                String::class to AllTypes::stringSetField,
+                RealmObject::class to AllTypes::objectSetField,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, false) to pair.second
+            } + listOf(
+                // NULLABLE CLASSIFIERS TO SETS
+                String::class to AllTypes::nullableStringSetField,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, true) to pair.second
+            }).associate { pair ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_SET,
+                    elementType = pair.first
+                ) to pair.second
+            }
 
-        return true
-    }
+            val dictionaryProperties = (listOf(
+                // NON NULLABLE CLASSIFIERS TO DICTIONARY
+                String::class to AllTypes::stringDictionaryField,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, false) to pair.second
+            } + listOf(
+                // NULLABLE CLASSIFIERS TO DICTIONARY
+                String::class to AllTypes::nullableStringDictionaryField,
+                RealmObject::class to AllTypes::nullableObjectDictionaryFieldNull,
+            ).map { pair ->
+                TypeDescriptor.ElementType(pair.first, true) to pair.second
+            }).associate { pair ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_DICTIONARY,
+                    elementType = pair.first
+                ) to pair.second
+            }
 
-    override fun hashCode(): Int {
-        var result = stringField.hashCode()
-        result = 31 * result + booleanField.hashCode()
-        result = 31 * result + floatField.hashCode()
-        result = 31 * result + doubleField.hashCode()
-        result = 31 * result + decimal128Field.hashCode()
-        result = 31 * result + timestampField.hashCode()
-        result = 31 * result + objectIdField.hashCode()
-        result = 31 * result + bsonObjectIdField.hashCode()
-        result = 31 * result + uuidField.hashCode()
-        result = 31 * result + binaryField.contentHashCode()
-        result = 31 * result + (nullableStringField?.hashCode() ?: 0)
-        result = 31 * result + (nullableBooleanField?.hashCode() ?: 0)
-        result = 31 * result + (nullableFloatField?.hashCode() ?: 0)
-        result = 31 * result + (nullableDoubleField?.hashCode() ?: 0)
-        result = 31 * result + (nullableDecimal128Field?.hashCode() ?: 0)
-        result = 31 * result + (nullableTimestampField?.hashCode() ?: 0)
-        result = 31 * result + (nullableObjectIdField?.hashCode() ?: 0)
-        result = 31 * result + (nullableBsonObjectIdField?.hashCode() ?: 0)
-        result = 31 * result + (nullableUuidField?.hashCode() ?: 0)
-        result = 31 * result + (nullableBinaryField?.contentHashCode() ?: 0)
-        result = 31 * result + (nullableRealmAnyField?.hashCode() ?: 0)
-        result = 31 * result + (nullableObject?.hashCode() ?: 0)
-        result = 31 * result + stringListField.hashCode()
-        result = 31 * result + stringSetField.hashCode()
-        result = 31 * result + stringDictionaryField.hashCode()
-        result = 31 * result + adaptedStringListField.hashCode()
-        result = 31 * result + adaptedStringSetField.hashCode()
-        result = 31 * result + adaptedStringDictionaryField.hashCode()
-        return result
+            properties = fieldProperties + listProperties + setProperties + dictionaryProperties
+        }
     }
 }
 
@@ -304,18 +355,21 @@ object StringAdapter : RealmTypeAdapter<String, String> {
     override fun toRealm(value: String): String = value.toString()
 }
 
-typealias RealmBsonString = @TypeAdapter(BsonStringAdapter::class) BsonString
+typealias AdaptedString = @TypeAdapter(StringAdapter::class) String
 
-object BsonStringAdapter : RealmTypeAdapter<String, BsonString> {
-    override fun fromRealm(realmValue: String): BsonString = BsonString(realmValue)
-
-    override fun toRealm(value: BsonString): String = value.value
-}
+typealias RealmReferencedObject = @TypeAdapter(ReferencedObjectAdapter::class) ReferencedObject
+typealias NullableRealmReferencedObject = @TypeAdapter(NullableReferencedObjectAdapter::class) ReferencedObject?
 
 object BooleanAdapter : RealmTypeAdapter<Boolean, Boolean> {
     override fun fromRealm(realmValue: Boolean): Boolean = realmValue.not().not()
 
     override fun toRealm(value: Boolean): Boolean = value.not().not()
+}
+
+object LongAdapter : RealmTypeAdapter<Long, Long> {
+    override fun fromRealm(realmValue: Long): Long = realmValue
+
+    override fun toRealm(value: Long): Long = value
 }
 
 object FloatAdapter : RealmTypeAdapter<Float, Float> {
@@ -383,6 +437,12 @@ object NullableBooleanAdapter : RealmTypeAdapter<Boolean?, Boolean?> {
     override fun fromRealm(realmValue: Boolean?): Boolean? = realmValue?.not()?.not()
 
     override fun toRealm(value: Boolean?): Boolean? = value?.not()?.not()
+}
+
+object NullableLongAdapter : RealmTypeAdapter<Long?, Long?> {
+    override fun fromRealm(realmValue: Long?): Long? = realmValue
+
+    override fun toRealm(value: Long?): Long? = value
 }
 
 object NullableFloatAdapter : RealmTypeAdapter<Float?, Float?> {
@@ -454,10 +514,20 @@ object RealmAnyAdapter : RealmTypeAdapter<RealmAny?, RealmAny?> {
     override fun toRealm(value: RealmAny?): RealmAny? = value?.let { value.clone() }
 }
 
-object AllTypesObjectAdapter : RealmTypeAdapter<AllTypes?, AllTypes?> {
-    override fun fromRealm(realmValue: AllTypes?): AllTypes? = realmValue?.let { AllTypes() }
+object ReferencedObjectAdapter : RealmTypeAdapter<ReferencedObject, ReferencedObject> {
+    override fun fromRealm(realmValue: ReferencedObject): ReferencedObject =
+        realmValue.let { ReferencedObject().apply { stringField = realmValue.stringField } }
 
-    override fun toRealm(value: AllTypes?): AllTypes? = value?.let { AllTypes() }
+    override fun toRealm(value: ReferencedObject): ReferencedObject =
+        value.let { ReferencedObject().apply { stringField = value.stringField } }
+}
+
+object NullableReferencedObjectAdapter : RealmTypeAdapter<ReferencedObject?, ReferencedObject?> {
+    override fun fromRealm(realmValue: ReferencedObject?): ReferencedObject? =
+        realmValue?.let { ReferencedObject().apply { stringField = realmValue.stringField } }
+
+    override fun toRealm(value: ReferencedObject?): ReferencedObject? =
+        value?.let { ReferencedObject().apply { stringField = value.stringField } }
 }
 
 object StringRealmListAdapter : RealmTypeAdapter<RealmList<String>, RealmList<String>> {
@@ -468,12 +538,46 @@ object StringRealmListAdapter : RealmTypeAdapter<RealmList<String>, RealmList<St
         realmListOf<String>().apply { addAll(value) }
 }
 
+object NullableStringRealmListAdapter : RealmTypeAdapter<RealmList<String?>, RealmList<String?>> {
+    override fun fromRealm(realmValue: RealmList<String?>): RealmList<String?> =
+        realmListOf<String?>().apply { addAll(realmValue) }
+
+    override fun toRealm(value: RealmList<String?>): RealmList<String?> =
+        realmListOf<String?>().apply { addAll(value) }
+}
+
+object ReferencedObjectRealmListAdapter :
+    RealmTypeAdapter<RealmList<ReferencedObject>, RealmList<ReferencedObject>> {
+    override fun fromRealm(realmValue: RealmList<ReferencedObject>): RealmList<ReferencedObject> =
+        realmListOf<ReferencedObject>().apply { addAll(realmValue) }
+
+    override fun toRealm(value: RealmList<ReferencedObject>): RealmList<ReferencedObject> =
+        realmListOf<ReferencedObject>().apply { addAll(value) }
+}
+
 object StringRealmSetAdapter : RealmTypeAdapter<RealmSet<String>, RealmSet<String>> {
     override fun fromRealm(realmValue: RealmSet<String>): RealmSet<String> =
         realmSetOf<String>().apply { addAll(realmValue) }
 
     override fun toRealm(value: RealmSet<String>): RealmSet<String> =
         realmSetOf<String>().apply { addAll(value) }
+}
+
+object NullableStringRealmSetAdapter : RealmTypeAdapter<RealmSet<String?>, RealmSet<String?>> {
+    override fun fromRealm(realmValue: RealmSet<String?>): RealmSet<String?> =
+        realmSetOf<String?>().apply { addAll(realmValue) }
+
+    override fun toRealm(value: RealmSet<String?>): RealmSet<String?> =
+        realmSetOf<String?>().apply { addAll(value) }
+}
+
+object ReferencedObjectRealmSetAdapter :
+    RealmTypeAdapter<RealmSet<ReferencedObject>, RealmSet<ReferencedObject>> {
+    override fun fromRealm(realmValue: RealmSet<ReferencedObject>): RealmSet<ReferencedObject> =
+        realmSetOf<ReferencedObject>().apply { addAll(realmValue) }
+
+    override fun toRealm(value: RealmSet<ReferencedObject>): RealmSet<ReferencedObject> =
+        realmSetOf<ReferencedObject>().apply { addAll(value) }
 }
 
 object StringRealmDictionaryAdapter :
@@ -483,6 +587,24 @@ object StringRealmDictionaryAdapter :
 
     override fun toRealm(value: RealmDictionary<String>): RealmDictionary<String> =
         realmDictionaryOf<String>().apply { putAll(value) }
+}
+
+object ReferencedObjectRealmDictionaryAdapter :
+    RealmTypeAdapter<RealmDictionary<ReferencedObject?>, RealmDictionary<ReferencedObject?>> {
+    override fun fromRealm(realmValue: RealmDictionary<ReferencedObject?>): RealmDictionary<ReferencedObject?> =
+        realmDictionaryOf<ReferencedObject?>().apply { putAll(realmValue) }
+
+    override fun toRealm(value: RealmDictionary<ReferencedObject?>): RealmDictionary<ReferencedObject?> =
+        realmDictionaryOf<ReferencedObject?>().apply { putAll(value) }
+}
+
+object NullableStringRealmDictionaryAdapter :
+    RealmTypeAdapter<RealmDictionary<String?>, RealmDictionary<String?>> {
+    override fun fromRealm(realmValue: RealmDictionary<String?>): RealmDictionary<String?> =
+        realmDictionaryOf<String?>().apply { putAll(realmValue) }
+
+    override fun toRealm(value: RealmDictionary<String?>): RealmDictionary<String?> =
+        realmDictionaryOf<String?>().apply { putAll(value) }
 }
 
 internal fun RealmAny.clone() = when (type) {
