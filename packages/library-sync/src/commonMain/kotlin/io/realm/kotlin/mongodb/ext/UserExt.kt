@@ -70,49 +70,6 @@ public inline fun <reified T> User.profile(serializer: KSerializer<T> = (this as
     }
 
 /**
- * Returns the profile for this user as a [T].
- *
- * **Note** This method supports full document serialization. The user profile will be deserialized with
- * the built-in serializer for [T] and decoded with [AppConfiguration.ejson].
- *
- * @param T the type to decoded the user profile.
- * @return The profile for this user.
- */
-// @ExperimentalRealmSerializerApi
-// @OptIn(ExperimentalKBsonSerializerApi::class)
-// public inline fun <reified T> User.profile(): T =
-//     profile(
-//         (this as UserImpl).app
-//             .configuration
-//             .ejson
-//             .serializersModule
-//             .serializerOrRealmBuiltInSerializer<T>()
-//     )
-//
-/**
- * Returns the custom user data associated with the user in the Realm App as [T].
- *
- * The data is only refreshed when the user's access token is refreshed or when explicitly
- * calling [User.refreshCustomData].
- *
- * **Note** This method supports full document serialization. Custom data will be deserialized with
- * the built-in serializer for [T] and decoded with [AppConfiguration.ejson].
- *
- * @param T the type to decoded the user custom data.
- * @return The custom user data associated with the user.
- */
-// @ExperimentalRealmSerializerApi
-// @OptIn(ExperimentalKBsonSerializerApi::class)
-// public inline fun <reified T> User.customData(): T? =
-//     customData(
-//         (this as UserImpl).app
-//             .configuration
-//             .ejson
-//             .serializersModule
-//             .serializerOrRealmBuiltInSerializer<T>()
-//     )
-
-/**
  * Returns the custom user data associated with the user in the Realm App as [T].
  *
  * The data is only refreshed when the user's access token is refreshed or when explicitly

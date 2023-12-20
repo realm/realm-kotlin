@@ -56,6 +56,6 @@ public interface MongoDatabase {
      * @return a [MongoCollection] that will accept and return entities from the remote collection
      * as [T] values.
      */
-    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @ExperimentalKBsonSerializerApi
     public fun <T, K> collection(collectionName: String, eJson: EJson? = null): MongoCollection<T, K>
 }

@@ -39,11 +39,11 @@ public interface MongoClient {
      * @param eJson the EJson serializer that the [MongoDatabase] should use to convert objects and
      * primary keys with. Will default to the client's [EJson] instance.
      */
-    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @ExperimentalKBsonSerializerApi
     public fun database(databaseName: String, eJson: EJson? = null): MongoDatabase
 }
 
-@OptIn(ExperimentalKBsonSerializerApi::class)
+@ExperimentalKBsonSerializerApi
 public inline fun <reified T : BaseRealmObject, K> MongoClient.collection(eJson: EJson? = null): MongoCollection<T, K> {
     @Suppress("invisible_reference", "invisible_member")
     return MongoClientCollection(this as MongoClientImpl, io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(T::class).io_realm_kotlin_className, eJson ?: this.eJson)

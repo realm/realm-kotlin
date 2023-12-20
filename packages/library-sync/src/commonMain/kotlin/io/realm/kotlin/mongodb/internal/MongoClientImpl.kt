@@ -21,8 +21,8 @@ import io.realm.kotlin.mongodb.mongo.MongoDatabase
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
-@OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
+@OptIn(ExperimentalKBsonSerializerApi::class)
 internal class MongoClientImpl(
     internal val user: UserImpl,
     override val serviceName: String,

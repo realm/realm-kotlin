@@ -45,7 +45,7 @@ public interface MongoCollection<T, K> {
     /**
      * Get an instance of the same collection with a different set of default types serialization.
      */
-    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @ExperimentalKBsonSerializerApi
     public fun <T, K> withDocumentClass(eJson: EJson? = null): MongoCollection<T, K>
 }
 
@@ -56,8 +56,8 @@ public suspend fun MongoCollection<*, *>.count(filter: BsonDocument? = null, lim
 
 public suspend inline fun < reified T, R : Any> MongoCollection<T, R>.findOne(filter: BsonDocument? = null, projection: BsonDocument? = null, sort: BsonDocument? = null): T? {
     isType<MongoCollectionImpl<*, *>>(this)
-    val bsonValue: BsonValue? = findOne(filter, projection, sort)
-    return decodeFromBsonValue<T?>(bsonValue!!)
+    val bsonValue: BsonValue = findOne(filter, projection, sort)
+    return decodeFromBsonValue(bsonValue)
 }
 
 @JvmName("findOneTyped")
@@ -117,8 +117,6 @@ public suspend fun MongoCollection<*, *>.deleteMany(filter: BsonDocument): Long 
     return deleteMany(filter)
 }
 
-// FIXME Could just return Boolean, since matchedCount=1,modifiedCount=1 even if multiple documents should be matching :thinking:
-// FIXME Should we split into upsertOne, since response only contains 'upsertedId' if call has 'upsert:true`
 public suspend inline fun <T : Any, reified R> MongoCollection<T, R>.updateOne(
     filter: BsonDocument,
     update: BsonDocument,

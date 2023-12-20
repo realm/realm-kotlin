@@ -185,7 +185,7 @@ public class UserImpl(
         }
     }
 
-    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @ExperimentalKBsonSerializerApi
     override fun mongoClient(serviceName: String, eJson: EJson?): MongoClient = MongoClientImpl(this, serviceName, eJson ?: app.configuration.ejson)
 
     override fun equals(other: Any?): Boolean {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
+@file:OptIn(ExperimentalRealmSerializerApi::class)
 
 package io.realm.kotlin.test.mongodb.common
 
@@ -29,6 +29,7 @@ import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
+import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.insertOne
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
@@ -736,16 +737,19 @@ class UserTests {
     }
 
     @Test
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     fun mongoClient_defaultSerializer() = runBlocking<Unit> {
         val (email, password) = randomEmail() to "123456"
         val user = runBlocking {
             createUserAndLogin(email, password)
         }
-        val client = user.mongoClient(TEST_SERVICE_NAME)
+        @OptIn(ExperimentalRealmSerializerApi::class)
+        val client: MongoClient = user.mongoClient(TEST_SERVICE_NAME)
         assertIs<Int>(client.database(app.clientAppId).collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
     }
 
     @Test
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     fun mongoClient_customSerializer() = runBlocking<Unit> {
         val (email, password) = randomEmail() to "123456"
         val user = runBlocking {
@@ -765,6 +769,7 @@ class UserTests {
     }
 
     @Test
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     fun mongoClient_unknownClient() = runBlocking<Unit> {
         val (email, password) = randomEmail() to "123456"
         val user = runBlocking {

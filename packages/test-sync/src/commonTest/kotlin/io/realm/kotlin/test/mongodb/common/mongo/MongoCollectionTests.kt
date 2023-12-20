@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-@file:OptIn(ExperimentalKBsonSerializerApi::class)
-
 package io.realm.kotlin.test.mongodb.common.mongo
 
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.mongo.MongoClient
@@ -81,13 +77,15 @@ class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
     override fun setUp() {
         super.setUp()
         val databaseName = app.configuration.appId
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         database = client.database(databaseName)
         collection = collection(CollectionDataType::class)
     }
 
     @Test
     override fun findOne_unknownCollection() = runBlocking<Unit> {
-        // Unknown collections will create the collection
+        // Unknown collections will create the collection if inserting document, so only use
+        // NonSchemaType for queries
         val unknownCollection = collection<NonSchemaType, BsonValue>(NonSchemaType::class)
         assertNull(unknownCollection.findOne())
     }
@@ -102,14 +100,14 @@ class MongoCollectionFromClientTests : MongoCollectionTests() {
 
     @Test
     fun name_persistedName() {
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         assertEquals("CollectionDataType", client.collection<CustomDataType, ObjectId>().name)
     }
 
     @Test
     override fun findOne_unknownCollection() = runBlocking<Unit> {
         val unknownCollection = collection<NonSchemaType, BsonValue>(NonSchemaType::class)
-        assertFailsWithMessage<ServiceException>("no matching collection found that maps to a table with title \"Unknown\"") {
-            RealmLog.level = LogLevel.ALL
+        assertFailsWithMessage<ServiceException>("no matching collection found that maps to a table with title \"NonSchemaType\"") {
             unknownCollection.findOne()
         }
     }
@@ -136,6 +134,7 @@ abstract sealed class MongoCollectionTests {
             }
         }
         val user = app.createUserAndLogin()
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         client = user.mongoClient(TEST_SERVICE_NAME)
     }
 
@@ -153,12 +152,13 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
-    open fun reshape() = runBlocking<Unit> {
+    open fun withDocumentClass() = runBlocking<Unit> {
         // Original typing
         assertIs<Int>(collection.insertOne(CollectionDataType("object-1", Random.nextInt())))
         assertIs<CollectionDataType>(collection.findOne())
 
         // Reshaped
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         val bsonCollection: MongoCollection<BsonDocument, BsonValue> = collection.withDocumentClass()
         assertIs<BsonValue>(bsonCollection.insertOne(BsonDocument("name", "object-2")))
         assertIs<BsonDocument>(bsonCollection.findOne())
@@ -167,6 +167,7 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     fun reshape_withCustomSerialization() = runBlocking<Unit> {
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         val reshapedCollectionWithDefaultSerializer: MongoCollection<CustomDataType, CustomIdType> =
             collection.withDocumentClass()
 
@@ -174,6 +175,7 @@ abstract sealed class MongoCollectionTests {
             reshapedCollectionWithDefaultSerializer.insertOne(CustomDataType("object-2"))
         }
 
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         val reshapedCollectionWithCustomSerializer: MongoCollection<CustomDataType, CustomIdType> =
             collection.withDocumentClass(customEjsonSerializer)
 
@@ -205,7 +207,6 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     open fun findOne() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
         // Empty collections
         assertNull(collection.findOne())
 
@@ -532,8 +533,6 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     fun deleteOne() = runBlocking {
-        // Argument wrapper DSL
-        RealmLog.level = LogLevel.ALL
         assertFalse { collection.deleteOne(BsonDocument()) }
 
         assertEquals(
@@ -550,8 +549,6 @@ abstract sealed class MongoCollectionTests {
         assertTrue { collection.deleteOne(BsonDocument("""{ "name": "object-1" }""")) }
         assertEquals(1, collection.count(BsonDocument("""{ "name": "object-1" }""")))
     }
-
-    // Explicit types
 
     @Test
     fun deleteOne_fails() = runBlocking<Unit> {
@@ -656,7 +653,6 @@ abstract sealed class MongoCollectionTests {
     @Test
     fun updateMany() = runBlocking<Unit> {
         assertEquals(0, collection.count())
-        RealmLog.level = LogLevel.ALL
         assertEquals(
             4,
             collection.insertMany<CollectionDataType, BsonValue>(
@@ -987,7 +983,6 @@ abstract sealed class MongoCollectionTests {
         val names = (1..10).map { "object-${it % 5}" }
         val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
 
-        RealmLog.level = LogLevel.ALL
         // Delete with no match
         assertNull(collection.findOneAndDelete(BsonDocument("""{"name": "NOMATCH"}""")))
         assertEquals(10, collection.count(filter = BsonDocument()))
@@ -1055,6 +1050,7 @@ abstract sealed class MongoCollectionTests {
 }
 
 // Helper method to be able to differentiate collection creation across test classes
+@OptIn(ExperimentalKBsonSerializerApi::class)
 inline fun <reified T : BaseRealmObject, K> MongoCollectionTests.collection(clazz: KClass<T>): MongoCollection<T, K> {
     return when (this) {
         is MongoCollectionFromDatabaseTests -> database.collection<T, K>(T::class.simpleName!!)

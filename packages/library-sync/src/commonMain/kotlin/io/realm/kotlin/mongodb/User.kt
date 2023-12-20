@@ -212,7 +212,7 @@ public interface User {
      * primary keys with. Will default to the apps [EJson] instance configured with
      * [AppConfiguration.Builder.ejson].
      */
-    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @ExperimentalKBsonSerializerApi
     public fun mongoClient(serviceName: String, eJson: EJson? = null): MongoClient
 
     /**

@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import org.mongodb.kbson.BsonArray
@@ -38,7 +37,6 @@ internal class MongoDatabaseCollection<T, K>(@PublishedApi internal val database
         "database" to BsonString(database.name),
         "collection" to BsonString(name),
     )
-    @OptIn(ExperimentalKBsonSerializerApi::class)
     override fun <T, K> withDocumentClass(eJson: EJson?): MongoCollection<T, K> {
         return MongoDatabaseCollection(this.database, this.name, eJson ?: this.eJson)
     }
@@ -50,14 +48,13 @@ internal class MongoClientCollection<T, K>(@PublishedApi internal val clientImpl
     override val defaults: Map<String, BsonValue> = mapOf(
         "schema_name" to BsonString(name),
     )
-    @OptIn(ExperimentalKBsonSerializerApi::class)
     override fun <T, K> withDocumentClass(eJson: EJson?): MongoCollection<T, K> {
         return MongoClientCollection(clientImpl, name, eJson ?: this.eJson)
     }
 }
 
-@OptIn(ExperimentalKBsonSerializerApi::class, ExperimentalRealmSerializerApi::class)
 @PublishedApi
+@OptIn(ExperimentalKBsonSerializerApi::class)
 internal abstract class MongoCollectionImpl<T, K> constructor(
     val functions: FunctionsImpl,
     val eJson: EJson,
