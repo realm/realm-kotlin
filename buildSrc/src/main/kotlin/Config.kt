@@ -115,7 +115,7 @@ object Versions {
     const val buildkonfig = "0.13.3" // https://github.com/yshrsmz/BuildKonfig
     // Not currently used, so mostly here for documentation. Core requires minimum 3.15, but 3.18.1 is available through the Android SDK.
     // Build also tested successfully with 3.21.4 (latest release).
-    const val cmake = "3.22.1"
+    const val cmake = "3.27.7"
     const val coroutines = "1.7.0" // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-coroutines-core
     const val datetime = "0.4.0" // https://github.com/Kotlin/kotlinx-datetime
     const val detektPlugin = "1.22.0-RC2" // https://github.com/detekt/detekt
@@ -131,7 +131,7 @@ object Versions {
     const val latestKotlin = "1.9.20" // https://kotlinlang.org/docs/eap.html#build-details
     const val kotlinCompileTesting = "1.5.0" // https://github.com/tschuchortdev/kotlin-compile-testing
     const val ktlint = "0.45.2" // https://github.com/pinterest/ktlint
-    const val ktor = "2.1.2" // https://github.com/ktorio/ktor
+    const val ktor = "2.3.4" // https://github.com/ktorio/ktor
     const val multidex = "2.0.1" // https://developer.android.com/jetpack/androidx/releases/multidex
     const val nexusPublishPlugin = "1.1.0" // https://github.com/gradle-nexus/publish-plugin
     const val okio = "3.2.0" // https://square.github.io/okio/#releases

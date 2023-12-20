@@ -173,8 +173,8 @@ register_results_notification_cb(realm_results_t *results,
                                  int64_t key_path_array_ptr,
                                  jobject callback) {
     auto jenv = get_env();
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
 
     return realm_results_add_notification_callback(
             results,
@@ -201,8 +201,8 @@ register_results_notification_cb(realm_results_t *results,
 
 realm_on_object_change_func_t get_on_object_change() {
     auto jenv = get_env(true);
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
     return [](realm_userdata_t userdata, const realm_object_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
@@ -218,8 +218,8 @@ realm_on_object_change_func_t get_on_object_change() {
 
 realm_on_collection_change_func_t get_on_collection_change() {
     auto jenv = get_env(true);
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
     return [](realm_userdata_t userdata, const realm_collection_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
@@ -235,8 +235,8 @@ realm_on_collection_change_func_t get_on_collection_change() {
 
 realm_on_dictionary_change_func_t get_on_dictionary_change() {
     auto jenv = get_env(true);
-    static jclass notification_class = jenv->FindClass("io/realm/kotlin/internal/interop/NotificationCallback");
-    static jmethodID on_change_method = jenv->GetMethodID(notification_class, "onChange", "(J)V");
+    static JavaMethod on_change_method(jenv, JavaClassGlobalDef::notification_callback(),
+                                       "onChange", "(J)V");
     return [](realm_userdata_t userdata, const realm_dictionary_changes_t* changes) {
         // TODO API-NOTIFICATION Consider catching errors and propagate to error callback
         //  like the C-API error callback below
@@ -312,7 +312,7 @@ public:
     void notify(realm_work_queue_t* work_queue) {
         // There is currently no signaling of creation/tear down of the core notifier thread, so we
         // just attach it as a daemon thread here on first notification to allow the JVM to
-        // shutdown propertly. See https://github.com/realm/realm-core/issues/6429
+        // shutdown property. See https://github.com/realm/realm-core/issues/6429
         auto jenv = get_env(true, true, "core-notifier");
         jni_check_exception(jenv);
         jenv->CallVoidMethod(m_jvm_dispatch_scheduler, m_notify_method,
@@ -742,6 +742,226 @@ realm_http_transport_t* realm_network_transport_new(jobject network_transport) {
                                     });
 }
 
+// *** BEGIN - WebSocket Client (Platform Networking) *** //
+
+using WebsocketFunctionHandlerCallback = std::function<void(bool, int, const char*)>;
+
+static void websocket_post_func(realm_userdata_t userdata,
+                                realm_sync_socket_post_callback_t* realm_callback) {
+    // Some calls to 'post' happens from the external commit helper which is not necessarily attached yet to a JVM thread
+    auto jenv = get_env(true, true); // attach as daemon thread
+
+    WebsocketFunctionHandlerCallback* lambda = new WebsocketFunctionHandlerCallback([realm_callback=std::move(realm_callback)](bool cancelled, int status, const char* reason) {
+        realm_sync_socket_post_complete(realm_callback,
+                                        cancelled ? realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED : realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_SUCCESS,
+                                        "");
+    });
+    jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
+
+    static JavaMethod post_method(jenv, JavaClassGlobalDef::sync_websocket_transport(), "post",
+                                                     "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
+    jobject websocket_transport = static_cast<jobject>(userdata);
+    jenv->CallVoidMethod(websocket_transport, post_method, lambda_callback_pointer_wrapper);
+    jni_check_exception(jenv);
+
+    jenv->DeleteLocalRef(lambda_callback_pointer_wrapper);
+}
+
+static realm_sync_socket_timer_t websocket_create_timer_func(
+        realm_userdata_t userdata, uint64_t delay_ms,
+        realm_sync_socket_timer_callback_t *realm_callback) {
+    // called from main thread/event loop which should be already attached to JVM
+    auto jenv = get_env(false);
+
+    WebsocketFunctionHandlerCallback *lambda = new WebsocketFunctionHandlerCallback(
+            [realm_callback = std::move(realm_callback)](bool cancel, int status,
+                                                         const char *reason) {
+                if (cancel) {
+                    realm_sync_socket_timer_canceled(realm_callback);
+                } else {
+                    realm_sync_socket_timer_complete(realm_callback,
+                                                     realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_SUCCESS,
+                                                     "");
+                }
+            });
+    jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
+
+    static JavaMethod create_timer_method (jenv, JavaClassGlobalDef::sync_websocket_transport(), "createTimer",
+                                                     "(JLio/realm/kotlin/internal/interop/NativePointer;)Lio/realm/kotlin/internal/interop/sync/CancellableTimer;");
+    jobject websocket_transport = static_cast<jobject>(userdata);
+    jobject cancellable_timer = jenv->CallObjectMethod(websocket_transport, create_timer_method, jlong(delay_ms), lambda_callback_pointer_wrapper);
+    jni_check_exception(jenv);
+
+    jenv->DeleteLocalRef(lambda_callback_pointer_wrapper);
+    return reinterpret_cast<realm_sync_socket_timer_t>(jenv->NewGlobalRef(cancellable_timer));
+}
+
+static void websocket_cancel_timer_func(realm_userdata_t userdata,
+                              realm_sync_socket_timer_t timer_userdata) {
+    if (timer_userdata != nullptr) {
+        auto jenv = get_env(false);
+        jobject cancellable_timer = static_cast<jobject>(timer_userdata);
+
+        static JavaClass cancellable_timer_class(jenv, "io/realm/kotlin/internal/interop/sync/CancellableTimer");
+        static JavaMethod cancel_method(jenv, cancellable_timer_class, "cancel", "()V");
+        jenv->CallVoidMethod(cancellable_timer, cancel_method);
+        jni_check_exception(jenv);
+
+        jenv->DeleteGlobalRef(cancellable_timer);
+    }
+}
+
+static realm_sync_socket_websocket_t websocket_connect_func(
+        realm_userdata_t userdata, realm_websocket_endpoint_t endpoint,
+        realm_websocket_observer_t* realm_websocket_observer) {
+
+    auto jenv = get_env(false);
+
+    jobject observer_pointer = wrap_pointer(jenv,reinterpret_cast<jlong>(realm_websocket_observer));
+
+    static JavaClass websocket_observer_class(jenv, "io/realm/kotlin/internal/interop/sync/WebSocketObserver");
+    static JavaMethod websocket_observer_constructor(jenv, websocket_observer_class, "<init>",
+                                                                         "(Lio/realm/kotlin/internal/interop/NativePointer;)V");
+    jobject websocket_observer = jenv->NewObject(websocket_observer_class, websocket_observer_constructor, observer_pointer);
+
+    static JavaMethod connect_method(jenv, JavaClassGlobalDef::sync_websocket_transport(), "connect",
+                                                        "(Lio/realm/kotlin/internal/interop/sync/WebSocketObserver;Ljava/lang/String;Ljava/lang/String;JZJLjava/lang/String;)Lio/realm/kotlin/internal/interop/sync/WebSocketClient;");
+    jobject websocket_transport = static_cast<jobject>(userdata);
+
+    std::ostringstream supported_protocol;
+    for (size_t i = 0; i < endpoint.num_protocols; ++i) {
+        supported_protocol << endpoint.protocols[i] << ", ";
+    }
+
+    jobject websocket_client = jenv->CallObjectMethod(websocket_transport, connect_method,
+                                                      websocket_observer,
+                                                      to_jstring(jenv, endpoint.path),
+                                                      to_jstring(jenv, endpoint.address),
+                                                      jlong(endpoint.port),
+                                                      endpoint.is_ssl,
+                                                      jlong(endpoint.num_protocols),
+                                                      to_jstring(jenv, supported_protocol.str().c_str()));
+    jni_check_exception(jenv);
+
+    realm_sync_socket_websocket_t global_websocket_ref = reinterpret_cast<realm_sync_socket_websocket_t>(jenv->NewGlobalRef(websocket_client));
+
+    jenv->DeleteLocalRef(websocket_observer);
+    jenv->DeleteLocalRef(observer_pointer);
+
+    return global_websocket_ref;
+}
+
+static void websocket_async_write_func(realm_userdata_t userdata,
+                                 realm_sync_socket_websocket_t websocket_userdata,
+                                 const char* data, size_t size,
+                                 realm_sync_socket_write_callback_t* realm_callback) {
+    auto jenv = get_env(false);
+
+    WebsocketFunctionHandlerCallback* lambda = new WebsocketFunctionHandlerCallback([realm_callback=std::move(realm_callback)](bool cancelled, int status, const char* reason) {
+        realm_sync_socket_write_complete(realm_callback,
+                                         cancelled ? realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED: realm_sync_socket_callback_result::RLM_ERR_SYNC_SOCKET_SUCCESS,
+                                         "");
+    });
+    jobject lambda_callback_pointer_wrapper = wrap_pointer(jenv,reinterpret_cast<jlong>(lambda));
+
+    static jmethodID write_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_transport(), "write",
+                                                      "(Lio/realm/kotlin/internal/interop/sync/WebSocketClient;[BJLio/realm/kotlin/internal/interop/NativePointer;)V");
+    jobject websocket_transport = static_cast<jobject>(userdata);
+
+    jbyteArray byteArray = jenv->NewByteArray(size);
+    jenv->SetByteArrayRegion(byteArray, 0, size, reinterpret_cast<const jbyte*>(data));
+
+    jenv->CallVoidMethod(websocket_transport, write_method,
+                         static_cast<jobject>(websocket_userdata),
+                         byteArray,
+                         jlong(size),
+                         lambda_callback_pointer_wrapper);
+    jni_check_exception(jenv);
+
+    jenv->DeleteLocalRef(byteArray);
+    jenv->DeleteLocalRef(lambda_callback_pointer_wrapper);
+
+}
+
+static void realm_sync_websocket_free(realm_userdata_t userdata,
+                                      realm_sync_socket_websocket_t websocket_userdata) {
+    if (websocket_userdata != nullptr) {
+        auto jenv = get_env(false);
+        static jmethodID close_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_client(), "close", "()V");
+
+        jobject websocket_client = static_cast<jobject>(websocket_userdata);
+        jenv->CallVoidMethod(websocket_client, close_method);
+        jni_check_exception(jenv);
+
+        jenv->DeleteGlobalRef(websocket_client);
+    }
+}
+
+static void realm_sync_userdata_free(realm_userdata_t userdata) {
+    if (userdata != nullptr) {
+        auto jenv = get_env(false);
+
+        static jmethodID close_method = jenv->GetMethodID(JavaClassGlobalDef::sync_websocket_transport(), "close", "()V");
+
+        jobject websocket_transport = static_cast<jobject>(userdata);
+        jenv->CallVoidMethod(websocket_transport, close_method);
+        jni_check_exception(jenv);
+
+        jenv->DeleteGlobalRef(websocket_transport);
+    }
+}
+
+// This should run in the context of CoroutineScope
+void realm_sync_websocket_callback_complete(bool cancelled, int64_t lambda_ptr, int status, const char* reason) {
+    WebsocketFunctionHandlerCallback* callback = reinterpret_cast<WebsocketFunctionHandlerCallback*>(lambda_ptr);
+    (*callback)(cancelled, status, reason);
+    delete callback;
+}
+
+void realm_sync_websocket_connected(int64_t observer_ptr, const char* protocol) {
+    realm_sync_socket_websocket_connected(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr), protocol);
+}
+
+void realm_sync_websocket_error(int64_t observer_ptr) {
+    realm_sync_socket_websocket_error(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr));
+}
+
+bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t size) {
+    auto jenv = get_env(false);
+    jbyte* byteData = jenv->GetByteArrayElements(data, NULL);
+    std::unique_ptr<char[]> charData(new char[size]); // not null terminated (used in util::Span with size parameter)
+    std::memcpy(charData.get(), byteData, size);
+    bool close_websocket = !realm_sync_socket_websocket_message(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr), charData.get(), size);
+    jenv->ReleaseByteArrayElements(data, byteData, JNI_ABORT);
+    return close_websocket;
+}
+
+void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error_code, const char* reason) {
+    realm_sync_socket_websocket_closed(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr), was_clean, static_cast<realm_web_socket_errno_e>(error_code), reason);
+}
+
+realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jobject websocket_transport) {
+    auto jenv = get_env(false); // Always called from JVM
+    realm_sync_socket_t* socket_provider = realm_sync_socket_new(jenv->NewGlobalRef(websocket_transport), /*userdata*/
+                                  realm_sync_userdata_free/*userdata_free*/,
+                                  websocket_post_func/*post_func*/,
+                                  websocket_create_timer_func/*create_timer_func*/,
+                                  websocket_cancel_timer_func/*cancel_timer_func*/,
+                                  [](realm_userdata_t userdata,
+                                          realm_sync_socket_timer_t timer_userdata){
+                                  }/*free_timer_func*/,
+                                  websocket_connect_func/*websocket_connect_func*/,
+                                  websocket_async_write_func/*websocket_write_func*/,
+                                  realm_sync_websocket_free/*websocket_free_func*/);
+    jni_check_exception(jenv);
+
+    realm_sync_client_config_set_sync_socket(reinterpret_cast<realm_sync_client_config_t*>(sync_client_config_ptr)/*config*/, socket_provider);
+    realm_release(socket_provider);
+    return socket_provider;
+}
+
+// *** END - WebSocket Client (Platform Networking) *** //
+
 void set_log_callback(jint j_log_level, jobject log_callback) {
 auto jenv = get_env(false);
 auto log_level = static_cast<realm_log_level_e>(j_log_level);
@@ -1146,7 +1366,7 @@ realm_sync_thread_error(realm_userdata_t userdata, const char* error) {
 }
 
 realm_scheduler_t*
-realm_create_generic_scheduler() { 
+realm_create_generic_scheduler() {
     return new realm_scheduler_t { realm::util::Scheduler::make_dummy() };
 }
 

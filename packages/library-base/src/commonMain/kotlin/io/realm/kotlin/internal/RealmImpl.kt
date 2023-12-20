@@ -46,7 +46,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 
@@ -136,15 +138,12 @@ public class RealmImpl private constructor(
             }
 
             realmScope.launch {
-                println("Start collecting from Notifier realmChangedFlow")
                 notifier.realmChanged().collect {
-                    println("Notifier received realmChanged() event: $it")
                     removeInitialRealmReference()
                     // Closing this reference might be done by the GC:
                     // https://github.com/realm/realm-kotlin/issues/1527
                     versionTracker.closeExpiredReferences()
                     notifierFlow.emit(UpdatedRealmImpl(this@RealmImpl))
-                    println("Emitted update from notifier")
                 }
             }
             if (!realmStateFlow.tryEmit(State.OPEN)) {
@@ -211,14 +210,13 @@ public class RealmImpl private constructor(
     }
 
     override fun asFlow(): Flow<RealmChange<Realm>> = scopedFlow {
-        val firstItem = atomic(true)
-        notifierFlow.map {
-            if (firstItem.compareAndSet(expect = true, update = false)) {
-                InitialRealmImpl(this)
-            } else {
-                it
+        notifierFlow.withIndex()
+            .map { (index, change) ->
+                when (index) {
+                    0 -> InitialRealmImpl(this)
+                    else -> change
+                }
             }
-        }
     }
 
     override fun writeCopyTo(configuration: Configuration) {
@@ -257,12 +255,6 @@ public class RealmImpl private constructor(
         return initialRealmReference.value.let { localReference ->
             // Find whether the user-facing, notifier or writer has the latest snapshot.
             // Sort is stable, it will try to preserve the following order.
-            println("RealmImpl: InitialRealmReference unchecked version")
-            println(localReference?.uncheckedVersion())
-            println("RealmImpl: InitialRealmReference writer version")
-            println(writer.version)
-            println("RealmImpl: InitialRealmReference notifier version")
-            println(notifier.version)
             listOf(
                 { localReference } to localReference?.uncheckedVersion(),
                 { writer.snapshot } to writer.version,
@@ -274,7 +266,6 @@ public class RealmImpl private constructor(
     }
 
     public fun activeVersions(): VersionInfo {
-        println("RealmImpl: activeVersions")
         val mainVersions: VersionData = VersionData(
             current = initialRealmReference.value?.uncheckedVersion(),
             active = versionTracker.versions()

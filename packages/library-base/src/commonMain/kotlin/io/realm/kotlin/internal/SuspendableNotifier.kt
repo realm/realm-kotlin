@@ -59,11 +59,8 @@ internal class SuspendableNotifier(
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
         override fun onRealmChanged() {
-            println("onRealmChanged in NotifierRealm was called")
             super.onRealmChanged()
-            println("TryEmit from NotifierRealm.onRealmChanged(): ${this.hashCode()} -> ${version()}")
             if (!_realmChanged.tryEmit(version())) {
-                println("Failed to emit version")
                 // Should never fail to emit snapshot version as we just drop oldest
                 sdkError("Failed to emit snapshot version")
             }
@@ -94,7 +91,6 @@ internal class SuspendableNotifier(
         if (!realmInitializer.isInitialized()) {
             withContext(dispatcher) {
                 realm
-                println("Emit initial version")
                 _realmChanged.emit(realm.version())
             }
         }

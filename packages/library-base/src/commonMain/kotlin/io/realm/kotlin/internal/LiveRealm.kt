@@ -86,10 +86,7 @@ internal abstract class LiveRealm(
      * (which can be newer, but never older).
      */
     internal val snapshotVersion: VersionId
-        get() {
-            println("LiveRealm: snapshotVersion")
-            return _snapshot.value.uncheckedVersion()
-        }
+        get() = _snapshot.value.uncheckedVersion()
 
     /**
      * Garbage collector tracked snapshot that can be used to issue other object, query, etc.
@@ -103,7 +100,6 @@ internal abstract class LiveRealm(
         return snapshotLock.withLock {
             _snapshot.value.also { snapshot ->
                 if (_closeSnapshotWhenAdvancing && !snapshot.isClosed()) {
-                    println("Get snapshot version")
                     log.trace("${this@LiveRealm} ENABLE-TRACKING ${snapshot.version()}")
                     _closeSnapshotWhenAdvancing = false
                 }
@@ -114,7 +110,6 @@ internal abstract class LiveRealm(
     init {
         @Suppress("LeakingThis") // Should be ok as we do not rely on this to be fully initialized
         val callback = WeakLiveRealmCallback(this)
-        println("Register realmChange callback: ${this.hashCode()}")
         realmChangeRegistration = NotificationToken(RealmInterop.realm_add_realm_changed_callback(realmReference.dbPointer, callback::onRealmChanged))
         schemaChangeRegistration = NotificationToken(RealmInterop.realm_add_schema_changed_callback(realmReference.dbPointer, callback::onSchemaChanged))
     }
@@ -126,21 +121,17 @@ internal abstract class LiveRealm(
     // Always executed on the live realm's backing thread
     internal fun updateSnapshot() {
         snapshotLock.withLock {
-            println("updateSnapshot: getVersion")
             val version = _snapshot.value.version()
-            println("updateSnapshot: realmReference.version()")
             if (realmReference.isClosed() || version == realmReference.version()) {
                 return
             }
             if (_closeSnapshotWhenAdvancing) {
-                println("updateSnapshot: close-untracked version")
                 log.trace("${this@LiveRealm} CLOSE-UNTRACKED $version")
                 _snapshot.value.close()
             } else {
                 versionTracker.trackReference(_snapshot.value)
             }
             _snapshot.value = realmReference.snapshot(owner)
-            println("updateSnapshot: advancing version")
             log.trace("${this@LiveRealm} ADVANCING $version -> ${_snapshot.value.version()}")
             _closeSnapshotWhenAdvancing = true
         }
@@ -157,7 +148,6 @@ internal abstract class LiveRealm(
     }
 
     internal fun unregisterCallbacks() {
-        println("Remove realmChange callback: ${this.hashCode()}")
         realmChangeRegistration.cancel()
         schemaChangeRegistration.cancel()
     }
@@ -184,12 +174,10 @@ internal abstract class LiveRealm(
         withContext(scheduler.dispatcher) {
             snapshotLock.withLock {
                 val active = if (!_closeSnapshotWhenAdvancing) {
-                    println("LiveRealm: versions() snapshot vesion")
                     versionTracker.versions() + _snapshot.value.version()
                 } else {
                     versionTracker.versions()
                 }
-                println("LiveRealm: versions() return value version")
                 VersionData(_snapshot.value.version(), active)
             }
         }
@@ -197,18 +185,7 @@ internal abstract class LiveRealm(
 
     private class WeakLiveRealmCallback(liveRealm: LiveRealm) {
         val realm: WeakReference<LiveRealm> = WeakReference(liveRealm)
-        fun onRealmChanged() {
-            realm.get()?.let {
-                println("onRealmChanged triggered: ${it.hashCode()}")
-                it.onRealmChanged()
-            } ?: println("WeakLiveRealmCallback could not find a Realm instance to call onRealmChanged On")
-        }
-        fun onSchemaChanged(schema: RealmSchemaPointer) {
-            println("onSchemaChanged called on LiveRealm")
-            realm.get()?.let {
-                println("onSchemaChanged triggered: ${it.hashCode()}")
-                it.onSchemaChanged(schema)
-            }
-        }
+        fun onRealmChanged() { realm.get()?.onRealmChanged() }
+        fun onSchemaChanged(schema: RealmSchemaPointer) { realm.get()?.onSchemaChanged(schema) }
     }
 }

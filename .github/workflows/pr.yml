@@ -47,6 +47,11 @@ jobs:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
+
       # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
       # 4.1.0 is not available in apt-get, so use brew instead
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
@@ -94,6 +99,11 @@ jobs:
         with:
           path: ./packages/cinterop/build/realmLinuxBuild
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -164,6 +174,11 @@ jobs:
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
           enableCrossOsArchive: true
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
+
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
         with:
@@ -227,11 +242,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -321,11 +335,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -418,11 +431,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -566,14 +578,14 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
-      # TODO This Ninja version is not being used by the Android builds. Figure out why.
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
           version: '1.11.0'
-
+ 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
@@ -592,7 +604,7 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build?
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
@@ -658,7 +670,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo/**/*
+          path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
       - name: Upload Android Test APK
@@ -705,11 +717,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -791,11 +802,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -869,11 +879,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -947,11 +956,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -1280,7 +1288,7 @@ jobs:
           reporter: java-junit
           list-suites: failed
           list-tests: failed
-          fail-on-error: true
+          fail-on-error: true        
 
       - name: Stopping the BAAS container
         if: always()
@@ -1496,7 +1504,7 @@ jobs:
         uses: dorny/test-reporter@v1
         if: always() || failure()
         with:
-          name: ${{ matrix.test-title }}
+          name: ${{ matrix.test-title }} 
           path: ./packages/test-base/build/**/TEST-*.xml
           reporter: java-junit
           list-suites: failed
@@ -1542,7 +1550,7 @@ jobs:
           fi
 
 
-  package-all-artifacts: 
+  package-all-artifacts:
     runs-on: ubuntu-latest
     needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages, build-kotlin-metadata-package]
     if: |

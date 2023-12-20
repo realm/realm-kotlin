@@ -132,7 +132,6 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                         channel.send(flowList)
                     }
             }
-
             channel.receive().let {
                 assertIs<InitialList<*>>(it)
             }
@@ -260,6 +259,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
                 queriedList[1].stringField = "B"
                 queriedList[3].stringField = "D"
             }
+
             channel.receiveOrFail().let { listChange ->
                 assertIs<UpdatedList<*>>(listChange)
 

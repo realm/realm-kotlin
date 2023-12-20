@@ -49,7 +49,6 @@ public interface RealmStateHolder : RealmState {
     public fun realmState(): RealmState
 
     override fun version(): VersionId {
-        println("Returning version from RealmStateHolder")
         return realmState().version()
     }
 
