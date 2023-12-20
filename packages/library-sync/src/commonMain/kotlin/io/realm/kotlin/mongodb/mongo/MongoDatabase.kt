@@ -35,6 +35,9 @@ public interface MongoDatabase {
      * Get a [MongoCollection] that exposed methods to retrieve and update data from the database's
      * collection.
      *
+     * Serialization to and from EJSON is performed with [KBSON](https://github.com/mongodb/kbson)
+     * and requires to opt-in to the experimental [ExperimentalKBsonSerializerApi]-feature.
+     *
      * @param collectionName the name of the collection name that the [MongoCollection] will
      * connect to.
      * @return a [MongoCollection] that will accept and return entities from the remote collection
@@ -45,6 +48,9 @@ public interface MongoDatabase {
     /**
      * Get a [MongoCollection] that exposed methods to retrieve and update data from the database's
      * collection with specific typed serialization.
+     *
+     * Serialization to and from EJSON is performed with [KBSON](https://github.com/mongodb/kbson)
+     * and requires to opt-in to the experimental [ExperimentalKBsonSerializerApi]-feature.
      *
      * @param collectionName the name of the collection name that the [MongoCollection] will
      * connect to.

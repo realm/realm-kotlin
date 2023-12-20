@@ -207,6 +207,9 @@ public interface User {
     /**
      * Get a [MongoClient] for accessing documents from App Service's _Data Source_.
      *
+     * Serialization to and from EJSON is performed with [KBSON](https://github.com/mongodb/kbson)
+     * and requires to opt-in to the experimental [ExperimentalKBsonSerializerApi]-feature.
+     *
      * @param serviceName the name of the data service.
      * @param eJson the EJson serializer that the [MongoClient] should use to convert objects and
      * primary keys with. Will default to the apps [EJson] instance configured with
