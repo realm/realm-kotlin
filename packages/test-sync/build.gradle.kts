@@ -257,7 +257,7 @@ kotlin {
     }
     targets.filterIsInstance<KotlinNativeTargetWithSimulatorTests>().forEach { simulatorTargets ->
         simulatorTargets.testRuns.forEach { testRun ->
-            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 15"
+            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
         }
     }
     sourceSets {
@@ -331,7 +331,7 @@ buildkonfig {
  *
  * - This command is mostly intended to run on Github Actions which start from a clean slate,
  *   so no attempt is done at tearing down the simulator. If this task is run locally, it might
- *   be needed to call `xcrun simctl shutdown 'iPhone 15'`. Otherwise the following error might
+ *   be needed to call `xcrun simctl shutdown 'iPhone 12'`. Otherwise the following error might
  *   be thrown when running this task:
  *
  *   ```
@@ -342,13 +342,13 @@ buildkonfig {
  * Note, this seems to be scheduled for a fix in 1.9.0.
  */
 tasks.register("runCloudIosTests")  {
-    val  device = project.findProperty("iosDevice") as? String ?: "iPhone 15"
+    val  device = project.findProperty("iosDevice") as? String ?: "iPhone 12"
     dependsOn("linkDebugTestIos")
     group = JavaBasePlugin.VERIFICATION_GROUP
     description = "Runs tests targeting Cloud-QA for target 'ios' on an iOS simulator"
 
     // This is the output from the default iosTest task as of Kotlin 1.7.20:
-    // /usr/bin/xcrun simctl spawn --standalone iPhone 15 /Users/cm/Realm/realm-kotlin-v3/packages/test-sync/build/bin/ios/debugTest/test.kexe -- --ktest_no_exit_code --ktest_logger=TEAMCITY --ktest_gradle_filter=io.realm.kotlin.test.mongodb.shared.AppTests
+    // /usr/bin/xcrun simctl spawn --standalone iPhone 12 /Users/cm/Realm/realm-kotlin-v3/packages/test-sync/build/bin/ios/debugTest/test.kexe -- --ktest_no_exit_code --ktest_logger=TEAMCITY --ktest_gradle_filter=io.realm.kotlin.test.mongodb.shared.AppTests
     // We mirror this setup and remove the --standalone flag, which is causing the issue. This
     // also means we manually have to boot the simulator.
     doLast {
