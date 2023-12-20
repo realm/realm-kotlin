@@ -24,7 +24,6 @@ import io.realm.kotlin.compiler.ClassIds.INDEX_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.KBSON_OBJECT_ID
 import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAP
 import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_MAPOF
-import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_SET
 import io.realm.kotlin.compiler.ClassIds.KOTLIN_PAIR
 import io.realm.kotlin.compiler.ClassIds.OBJECT_REFERENCE_CLASS
 import io.realm.kotlin.compiler.ClassIds.PRIMARY_KEY_ANNOTATION
@@ -54,7 +53,6 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_FIELDS_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_NEW_INSTANCE_METHOD
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_SCHEMA_METHOD
-import io.realm.kotlin.compiler.Names.REALM_OBJECT_COMPANION_USE_CUSTOM_TYPE_MEMBER
 import io.realm.kotlin.compiler.Names.SET
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
@@ -160,7 +158,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         pluginContext.lookupClassOrThrow(ClassIds.KOTLIN_REFLECT_KPROPERTY1)
 
     private val mapClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_MAP)
-    private val setClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_COLLECTIONS_SET)
     private val pairClass: IrClass = pluginContext.lookupClassOrThrow(KOTLIN_PAIR)
     private val pairCtor = pluginContext.lookupConstructorInClass(KOTLIN_PAIR)
     private val realmObjectMutablePropertyType = kMutableProperty1Class.typeWith(
@@ -176,19 +173,10 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             val parameters = it.owner.valueParameters
             parameters.size == 1 && parameters.first().isVararg
         }
-    private val setOf = pluginContext.referenceFunctions(ClassIds.KOTLIN_COLLECTIONS_SETOF)
-        .first {
-            val parameters = it.owner.valueParameters
-            parameters.size == 1 && parameters.first().isVararg
-        }
 
     private val companionFieldsType = mapClass.typeWith(
         pluginContext.irBuiltIns.stringType,
         realmObjectMutablePropertyType
-    )
-
-    private val companionCustomTypesType = setClass.typeWith(
-        pluginContext.irBuiltIns.stringType
     )
     @Suppress("UnusedPrivateMember")
     private val companionComputedFieldsType = mapClass.typeWith(
@@ -300,46 +288,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             pluginContext.irBuiltIns.stringType
         ) { startOffset, endOffset ->
             IrConstImpl.string(startOffset, endOffset, pluginContext.irBuiltIns.stringType, className)
-        }
-
-        // Add `public val `io_realm_kotlin_useCustomType`: Set<String>` property.
-        companion.addValueProperty(
-            pluginContext,
-            realmObjectCompanionInterface,
-            REALM_OBJECT_COMPANION_USE_CUSTOM_TYPE_MEMBER,
-            companionCustomTypesType,
-        ) { startOffset, endOffset ->
-            IrCallImpl(
-                startOffset = startOffset, endOffset = endOffset,
-                type = companionCustomTypesType,
-                symbol = setOf,
-                typeArgumentsCount = 1,
-                valueArgumentsCount = 1,
-                origin = null,
-                superQualifierSymbol = null
-            ).apply {
-                putTypeArgument(index = 0, type = pluginContext.irBuiltIns.stringType)
-                putValueArgument(
-                    index = 0,
-                    valueArgument = IrVarargImpl(
-                        UNDEFINED_OFFSET,
-                        UNDEFINED_OFFSET,
-                        pluginContext.irBuiltIns.arrayClass.typeWith(pluginContext.irBuiltIns.stringType),
-                        type,
-                        // Generate list of properties: List<Pair<String, KMutableProperty1<*, *>>>
-                        properties!!.entries.filter {
-                            true // TODO filter actual adapted types
-                        }.map {
-                            IrConstImpl.string(
-                                startOffset,
-                                endOffset,
-                                pluginContext.irBuiltIns.stringType,
-                                it.value.persistedName
-                            )
-                        },
-                    )
-                )
-            }
         }
 
         // Add `public val `io_realm_kotlin_fields`: Map<String, KProperty1<BaseRealmObject, Any?>>` property.

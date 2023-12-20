@@ -413,7 +413,7 @@ data class SchemaProperty(
     val declaration: IrProperty,
     val computedType: IrType,
     val collectionType: CollectionType = CollectionType.NONE,
-    val coreGenericTypes: List<CoreType>? = null,
+    val coreGenericTypes: List<CoreType>? = null
 ) {
     val isComputed = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
     val hasPersistedNameAnnotation =

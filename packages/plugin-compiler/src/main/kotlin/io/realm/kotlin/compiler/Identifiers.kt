@@ -36,8 +36,6 @@ internal object Names {
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}className")
     val REALM_OBJECT_COMPANION_FIELDS_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}fields")
-    val REALM_OBJECT_COMPANION_USE_CUSTOM_TYPE_MEMBER: Name =
-        Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}useCustomType")
     val REALM_OBJECT_COMPANION_PRIMARY_KEY_MEMBER: Name =
         Name.identifier("${REALM_SYNTHETIC_PROPERTY_PREFIX}primaryKey")
     val REALM_OBJECT_COMPANION_CLASS_KIND: Name =

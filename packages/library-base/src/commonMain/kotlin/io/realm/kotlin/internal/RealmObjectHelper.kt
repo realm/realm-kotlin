@@ -795,76 +795,98 @@ internal object RealmObjectHelper {
                 }
             accessor as KMutableProperty1<BaseRealmObject, Any?>
 
-            if (property.usesCustomType) {
-                // Passthrough values when a property uses a custom type adapter, values will be converted automatically.
-                val getterValue = accessor.get(source)
-                accessor.set(target, getterValue)
-            } else {
-                when (property.collectionType) {
-                    CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
-                        PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
-                            val isTargetEmbedded =
-                                target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget).isEmbeddedRealmObject
-                            if (isTargetEmbedded) {
-                                val value = accessor.get(source) as EmbeddedRealmObject?
-                                setEmbeddedRealmObjectByKey(
-                                    target.realmObjectReference!!,
-                                    property.key,
-                                    value,
-                                    updatePolicy,
-                                    cache
-                                )
-                            } else {
-                                val value = accessor.get(source) as RealmObject?
-                                setObjectByKey(
-                                    target.realmObjectReference!!,
-                                    property.key,
-                                    value,
-                                    updatePolicy,
-                                    cache
-                                )
-                            }
+            when (property.collectionType) {
+                CollectionType.RLM_COLLECTION_TYPE_NONE -> when (property.type) {
+                    PropertyType.RLM_PROPERTY_TYPE_OBJECT -> {
+                        val isTargetEmbedded =
+                            target.realmObjectReference!!.owner.schemaMetadata.getOrThrow(property.linkTarget).isEmbeddedRealmObject
+                        if (isTargetEmbedded) {
+                            val value = accessor.get(source) as EmbeddedRealmObject?
+                            setEmbeddedRealmObjectByKey(
+                                target.realmObjectReference!!,
+                                property.key,
+                                value,
+                                updatePolicy,
+                                cache
+                            )
+                        } else {
+                            val value = accessor.get(source) as RealmObject?
+                            setObjectByKey(
+                                target.realmObjectReference!!,
+                                property.key,
+                                value,
+                                updatePolicy,
+                                cache
+                            )
                         }
+                    }
+
+                    else -> {
+                        val getterValue = accessor.get(source)
+                        accessor.set(target, getterValue)
+                    }
+                }
+
+                CollectionType.RLM_COLLECTION_TYPE_LIST -> {
+                    when (val managedList = accessor.get(target)) {
+                        // We cannot use setList as that requires the type, so we need to retrieve the
+                        // existing list, wipe it and insert new elements
+                        is ManagedRealmList<*> -> {
+                            managedList.clear()
+                            val elements = accessor.get(source) as RealmList<Nothing>
+                            managedList.operator.insertAll(
+                                managedList.size,
+                                elements,
+                                updatePolicy,
+                                cache
+                            )
+                        }
+
                         else -> {
+                            // Passthrough values when a property uses a custom type adapter, values will be converted automatically.
                             val getterValue = accessor.get(source)
                             accessor.set(target, getterValue)
                         }
                     }
-                    CollectionType.RLM_COLLECTION_TYPE_LIST -> {
-                        // We cannot use setList as that requires the type, so we need to retrieve the
-                        // existing list, wipe it and insert new elements
-                        @Suppress("UNCHECKED_CAST")
-                        (accessor.get(target) as ManagedRealmList<Any?>)
-                            .run {
-                                clear()
-                                val elements = accessor.get(source) as RealmList<*>
-                                operator.insertAll(size, elements, updatePolicy, cache)
-                            }
-                    }
-                    CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                }
+
+                CollectionType.RLM_COLLECTION_TYPE_SET -> {
+                    when (val managedSet = accessor.get(target)) {
                         // We cannot use setSet as that requires the type, so we need to retrieve the
                         // existing set, wipe it and insert new elements
-                        @Suppress("UNCHECKED_CAST")
-                        (accessor.get(target) as ManagedRealmSet<Any?>)
-                            .run {
-                                clear()
-                                val elements = accessor.get(source) as RealmSet<*>
-                                operator.addAll(elements, updatePolicy, cache)
-                            }
+                        is ManagedRealmSet<*> -> {
+                            managedSet.clear()
+                            val elements = accessor.get(source) as RealmSet<Nothing>
+                            managedSet.operator.addAll(elements, updatePolicy, cache)
+                        }
+
+                        else -> {
+                            // Passthrough values when a property uses a custom type adapter, values will be converted automatically.
+                            val getterValue = accessor.get(source)
+                            accessor.set(target, getterValue)
+                        }
                     }
-                    CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                }
+
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> {
+                    when (val managedDictionary = accessor.get(target)) {
                         // We cannot use setDictionary as that requires the type, so we need to retrieve
                         // the existing dictionary, wipe it and insert new elements
-                        @Suppress("UNCHECKED_CAST")
-                        (accessor.get(target) as ManagedRealmDictionary<Any?>)
-                            .run {
-                                clear()
-                                val elements = accessor.get(source) as RealmDictionary<*>
-                                operator.putAll(elements, updatePolicy, cache)
-                            }
+                        is ManagedRealmDictionary<*> -> {
+                            managedDictionary.clear()
+                            val elements = accessor.get(source) as RealmDictionary<Nothing>
+                            managedDictionary.operator.putAll(elements, updatePolicy, cache)
+                        }
+
+                        else -> {
+                            // Passthrough values when a property uses a custom type adapter, values will be converted automatically.
+                            val getterValue = accessor.get(source)
+                            accessor.set(target, getterValue)
+                        }
                     }
-                    else -> TODO("Collection type ${property.collectionType} is not supported")
                 }
+
+                else -> TODO("Collection type ${property.collectionType} is not supported")
             }
         }
     }

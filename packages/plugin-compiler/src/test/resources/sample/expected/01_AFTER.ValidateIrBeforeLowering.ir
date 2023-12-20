@@ -8183,146 +8183,6 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_className> (): kotlin.String declared in sample.input.Sample.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_className>' type=sample.input.Sample.Companion origin=null
-        PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private
-            EXPRESSION_BODY
-              CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.String> origin=null
-                <T>: kotlin.String
-                elements: VARARG type=kotlin.Array<kotlin.String> varargElementType=kotlin.collections.Set<kotlin.String>
-                  CONST String type=kotlin.String value="id"
-                  CONST String type=kotlin.String value="stringField"
-                  CONST String type=kotlin.String value="byteField"
-                  CONST String type=kotlin.String value="charField"
-                  CONST String type=kotlin.String value="shortField"
-                  CONST String type=kotlin.String value="intField"
-                  CONST String type=kotlin.String value="longField"
-                  CONST String type=kotlin.String value="booleanField"
-                  CONST String type=kotlin.String value="floatField"
-                  CONST String type=kotlin.String value="doubleField"
-                  CONST String type=kotlin.String value="decimal128Field"
-                  CONST String type=kotlin.String value="timestampField"
-                  CONST String type=kotlin.String value="objectIdField"
-                  CONST String type=kotlin.String value="bsonObjectIdField"
-                  CONST String type=kotlin.String value="uuidField"
-                  CONST String type=kotlin.String value="byteArrayField"
-                  CONST String type=kotlin.String value="mutableRealmInt"
-                  CONST String type=kotlin.String value="child"
-                  CONST String type=kotlin.String value="nullableRealmAny"
-                  CONST String type=kotlin.String value="stringListField"
-                  CONST String type=kotlin.String value="byteListField"
-                  CONST String type=kotlin.String value="charListField"
-                  CONST String type=kotlin.String value="shortListField"
-                  CONST String type=kotlin.String value="intListField"
-                  CONST String type=kotlin.String value="longListField"
-                  CONST String type=kotlin.String value="booleanListField"
-                  CONST String type=kotlin.String value="floatListField"
-                  CONST String type=kotlin.String value="doubleListField"
-                  CONST String type=kotlin.String value="timestampListField"
-                  CONST String type=kotlin.String value="objectIdListField"
-                  CONST String type=kotlin.String value="bsonObjectIdListField"
-                  CONST String type=kotlin.String value="uuidListField"
-                  CONST String type=kotlin.String value="binaryListField"
-                  CONST String type=kotlin.String value="decimal128ListField"
-                  CONST String type=kotlin.String value="objectListField"
-                  CONST String type=kotlin.String value="embeddedRealmObjectListField"
-                  CONST String type=kotlin.String value="nullableStringListField"
-                  CONST String type=kotlin.String value="nullableByteListField"
-                  CONST String type=kotlin.String value="nullableCharListField"
-                  CONST String type=kotlin.String value="nullableShortListField"
-                  CONST String type=kotlin.String value="nullableIntListField"
-                  CONST String type=kotlin.String value="nullableLongListField"
-                  CONST String type=kotlin.String value="nullableBooleanListField"
-                  CONST String type=kotlin.String value="nullableFloatListField"
-                  CONST String type=kotlin.String value="nullableDoubleListField"
-                  CONST String type=kotlin.String value="nullableTimestampListField"
-                  CONST String type=kotlin.String value="nullableObjectIdListField"
-                  CONST String type=kotlin.String value="nullableBsonObjectIdListField"
-                  CONST String type=kotlin.String value="nullableUUIDListField"
-                  CONST String type=kotlin.String value="nullableBinaryListField"
-                  CONST String type=kotlin.String value="nullableDecimal128ListField"
-                  CONST String type=kotlin.String value="nullableRealmAnyListField"
-                  CONST String type=kotlin.String value="stringSetField"
-                  CONST String type=kotlin.String value="byteSetField"
-                  CONST String type=kotlin.String value="charSetField"
-                  CONST String type=kotlin.String value="shortSetField"
-                  CONST String type=kotlin.String value="intSetField"
-                  CONST String type=kotlin.String value="longSetField"
-                  CONST String type=kotlin.String value="booleanSetField"
-                  CONST String type=kotlin.String value="floatSetField"
-                  CONST String type=kotlin.String value="doubleSetField"
-                  CONST String type=kotlin.String value="timestampSetField"
-                  CONST String type=kotlin.String value="objectIdSetField"
-                  CONST String type=kotlin.String value="bsonObjectIdSetField"
-                  CONST String type=kotlin.String value="uuidSetField"
-                  CONST String type=kotlin.String value="binarySetField"
-                  CONST String type=kotlin.String value="decimal128SetField"
-                  CONST String type=kotlin.String value="objectSetField"
-                  CONST String type=kotlin.String value="nullableStringSetField"
-                  CONST String type=kotlin.String value="nullableByteSetField"
-                  CONST String type=kotlin.String value="nullableCharSetField"
-                  CONST String type=kotlin.String value="nullableShortSetField"
-                  CONST String type=kotlin.String value="nullableIntSetField"
-                  CONST String type=kotlin.String value="nullableLongSetField"
-                  CONST String type=kotlin.String value="nullableBooleanSetField"
-                  CONST String type=kotlin.String value="nullableFloatSetField"
-                  CONST String type=kotlin.String value="nullableDoubleSetField"
-                  CONST String type=kotlin.String value="nullableTimestampSetField"
-                  CONST String type=kotlin.String value="nullableObjectIdSetField"
-                  CONST String type=kotlin.String value="nullableBsonObjectIdSetField"
-                  CONST String type=kotlin.String value="nullableUUIDSetField"
-                  CONST String type=kotlin.String value="nullableBinarySetField"
-                  CONST String type=kotlin.String value="nullableDecimal128SetField"
-                  CONST String type=kotlin.String value="nullableRealmAnySetField"
-                  CONST String type=kotlin.String value="stringDictionaryField"
-                  CONST String type=kotlin.String value="byteDictionaryField"
-                  CONST String type=kotlin.String value="charDictionaryField"
-                  CONST String type=kotlin.String value="shortDictionaryField"
-                  CONST String type=kotlin.String value="intDictionaryField"
-                  CONST String type=kotlin.String value="longDictionaryField"
-                  CONST String type=kotlin.String value="booleanDictionaryField"
-                  CONST String type=kotlin.String value="floatDictionaryField"
-                  CONST String type=kotlin.String value="doubleDictionaryField"
-                  CONST String type=kotlin.String value="timestampDictionaryField"
-                  CONST String type=kotlin.String value="objectIdDictionaryField"
-                  CONST String type=kotlin.String value="bsonObjectIdDictionaryField"
-                  CONST String type=kotlin.String value="uuidDictionaryField"
-                  CONST String type=kotlin.String value="binaryDictionaryField"
-                  CONST String type=kotlin.String value="decimal128DictionaryField"
-                  CONST String type=kotlin.String value="nullableStringDictionaryField"
-                  CONST String type=kotlin.String value="nullableByteDictionaryField"
-                  CONST String type=kotlin.String value="nullableCharDictionaryField"
-                  CONST String type=kotlin.String value="nullableShortDictionaryField"
-                  CONST String type=kotlin.String value="nullableIntDictionaryField"
-                  CONST String type=kotlin.String value="nullableLongDictionaryField"
-                  CONST String type=kotlin.String value="nullableBooleanDictionaryField"
-                  CONST String type=kotlin.String value="nullableFloatDictionaryField"
-                  CONST String type=kotlin.String value="nullableDoubleDictionaryField"
-                  CONST String type=kotlin.String value="nullableTimestampDictionaryField"
-                  CONST String type=kotlin.String value="nullableObjectIdDictionaryField"
-                  CONST String type=kotlin.String value="nullableBsonObjectIdDictionaryField"
-                  CONST String type=kotlin.String value="nullableUUIDDictionaryField"
-                  CONST String type=kotlin.String value="nullableBinaryDictionaryField"
-                  CONST String type=kotlin.String value="nullableDecimal128DictionaryField"
-                  CONST String type=kotlin.String value="nullableRealmAnyDictionaryField"
-                  CONST String type=kotlin.String value="nullableObjectDictionaryField"
-                  CONST String type=kotlin.String value="nullableEmbeddedObjectDictionaryField"
-                  CONST String type=kotlin.String value="linkingObjectsByList"
-                  CONST String type=kotlin.String value="linkingObjectsBySet"
-                  CONST String type=kotlin.String value="linkingObjectsByDictionary"
-                  CONST String type=kotlin.String value="persistedNameStringField"
-                  CONST String type=kotlin.String value="persistedNameChildField"
-                  CONST String type=kotlin.String value="persistedNameLinkingObjectsField"
-                  CONST String type=kotlin.String value="singletonAdaptedRealmInstant"
-                  CONST String type=kotlin.String value="instancedAdaptedRealmInstant"
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_useCustomType> visibility:public modality:FINAL <> ($this:sample.input.Sample.Companion) returnType:kotlin.collections.Set<kotlin.String>
-            correspondingProperty: PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-            overridden:
-              public abstract fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in io.realm.kotlin.internal.RealmObjectCompanion
-            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Sample.Companion
-            BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in sample.input.Sample.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private' type=kotlin.collections.Set<kotlin.String> origin=null
-                  receiver: GET_VAR '<this>: sample.input.Sample.Companion declared in sample.input.Sample.Companion.<get-io_realm_kotlin_useCustomType>' type=sample.input.Sample.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -9310,24 +9170,6 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_className> (): kotlin.String declared in sample.input.Child.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_className>' type=sample.input.Child.Companion origin=null
-        PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private
-            EXPRESSION_BODY
-              CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.String> origin=null
-                <T>: kotlin.String
-                elements: VARARG type=kotlin.Array<kotlin.String> varargElementType=kotlin.collections.Set<kotlin.String>
-                  CONST String type=kotlin.String value="name"
-                  CONST String type=kotlin.String value="linkingObjectsByObject"
-                  CONST String type=kotlin.String value="persistedNameParent"
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_useCustomType> visibility:public modality:FINAL <> ($this:sample.input.Child.Companion) returnType:kotlin.collections.Set<kotlin.String>
-            correspondingProperty: PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-            overridden:
-              public abstract fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in io.realm.kotlin.internal.RealmObjectCompanion
-            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.Child.Companion
-            BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in sample.input.Child.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private' type=kotlin.collections.Set<kotlin.String> origin=null
-                  receiver: GET_VAR '<this>: sample.input.Child.Companion declared in sample.input.Child.Companion.<get-io_realm_kotlin_useCustomType>' type=sample.input.Child.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -9575,22 +9417,6 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_className> (): kotlin.String declared in sample.input.EmbeddedParent.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: sample.input.EmbeddedParent.Companion declared in sample.input.EmbeddedParent.Companion.<get-io_realm_kotlin_className>' type=sample.input.EmbeddedParent.Companion origin=null
-        PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private
-            EXPRESSION_BODY
-              CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.String> origin=null
-                <T>: kotlin.String
-                elements: VARARG type=kotlin.Array<kotlin.String> varargElementType=kotlin.collections.Set<kotlin.String>
-                  CONST String type=kotlin.String value="child"
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_useCustomType> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedParent.Companion) returnType:kotlin.collections.Set<kotlin.String>
-            correspondingProperty: PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-            overridden:
-              public abstract fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in io.realm.kotlin.internal.RealmObjectCompanion
-            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedParent.Companion
-            BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in sample.input.EmbeddedParent.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private' type=kotlin.collections.Set<kotlin.String> origin=null
-                  receiver: GET_VAR '<this>: sample.input.EmbeddedParent.Companion declared in sample.input.EmbeddedParent.Companion.<get-io_realm_kotlin_useCustomType>' type=sample.input.EmbeddedParent.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
             EXPRESSION_BODY
@@ -9826,22 +9652,6 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_className> (): kotlin.String declared in sample.input.EmbeddedChild.Companion'
                 GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_className type:kotlin.String visibility:private' type=kotlin.String origin=null
                   receiver: GET_VAR '<this>: sample.input.EmbeddedChild.Companion declared in sample.input.EmbeddedChild.Companion.<get-io_realm_kotlin_className>' type=sample.input.EmbeddedChild.Companion origin=null
-        PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-          FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private
-            EXPRESSION_BODY
-              CALL 'public final fun setOf <T> (vararg elements: T of kotlin.collections.SetsKt.setOf): kotlin.collections.Set<T of kotlin.collections.SetsKt.setOf> declared in kotlin.collections.SetsKt' type=kotlin.collections.Set<kotlin.String> origin=null
-                <T>: kotlin.String
-                elements: VARARG type=kotlin.Array<kotlin.String> varargElementType=kotlin.collections.Set<kotlin.String>
-                  CONST String type=kotlin.String value="name"
-          FUN DEFAULT_PROPERTY_ACCESSOR name:<get-io_realm_kotlin_useCustomType> visibility:public modality:FINAL <> ($this:sample.input.EmbeddedChild.Companion) returnType:kotlin.collections.Set<kotlin.String>
-            correspondingProperty: PROPERTY name:io_realm_kotlin_useCustomType visibility:public modality:FINAL [var]
-            overridden:
-              public abstract fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in io.realm.kotlin.internal.RealmObjectCompanion
-            $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:sample.input.EmbeddedChild.Companion
-            BLOCK_BODY
-              RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_useCustomType> (): kotlin.collections.Set<kotlin.String> declared in sample.input.EmbeddedChild.Companion'
-                GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_useCustomType type:kotlin.collections.Set<kotlin.String> visibility:private' type=kotlin.collections.Set<kotlin.String> origin=null
-                  receiver: GET_VAR '<this>: sample.input.EmbeddedChild.Companion declared in sample.input.EmbeddedChild.Companion.<get-io_realm_kotlin_useCustomType>' type=sample.input.EmbeddedChild.Companion origin=null
         PROPERTY name:io_realm_kotlin_fields visibility:public modality:FINAL [var]
           FIELD PROPERTY_BACKING_FIELD name:io_realm_kotlin_fields type:kotlin.collections.Map<kotlin.String, kotlin.reflect.KMutableProperty1<io.realm.kotlin.types.RealmObject, kotlin.Any?>> visibility:private
             EXPRESSION_BODY

@@ -823,7 +823,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
                     declaration = declaration,
                     computedType = propertyTypeRaw,
                     collectionType = collectionType,
-                    coreGenericTypes = listOf(coreGenericTypes)
+                    coreGenericTypes = listOf(coreGenericTypes),
                 )
                 fields[name] = schemaProperty
                 // TODO OPTIMIZE consider synthetic property generation for lists to cache
