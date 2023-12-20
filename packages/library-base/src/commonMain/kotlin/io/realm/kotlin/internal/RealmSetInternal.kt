@@ -313,7 +313,7 @@ internal class TypeAdaptedSetOperator<E, S>(
 
     override val mediator: Mediator by setOperator::mediator
     override val realmReference: RealmReference by setOperator::realmReference
-    override val valueConverter: RealmValueConverter<E> by lazy { throw RuntimeException("TypeAdaptedSetOperator does not have a valueConverter") }
+    override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("TypeAdaptedSetOperator does not have a valueConverter") }
 
     override fun get(index: Int): E = typeAdapter.fromRealm(setOperator.get(index))
 

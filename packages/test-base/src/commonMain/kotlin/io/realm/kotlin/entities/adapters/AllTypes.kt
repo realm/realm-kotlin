@@ -20,7 +20,6 @@ import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.TypeAdapter
 import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonObjectId
-import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.Decimal128
 import kotlin.reflect.KMutableProperty1
 
@@ -41,8 +40,6 @@ class ReferencedObject : RealmObject {
     override fun hashCode(): Int {
         return stringField.hashCode()
     }
-
-
 }
 
 @Suppress("MagicNumber")
@@ -247,96 +244,104 @@ class AllTypes : RealmObject {
     var adaptedObjectDictionaryField: RealmDictionary<NullableRealmReferencedObject> =
         realmDictionaryOf()
 
-
     companion object {
         val properties: Map<TypeDescriptor.RealmFieldType, KMutableProperty1<AllTypes, out Any?>>
+        val adaptedTypeParameterProperties: Map<TypeDescriptor.RealmFieldType, KMutableProperty1<AllTypes, out Any?>>
 
         init {
-            val fieldProperties = (listOf(
-                String::class to AllTypes::stringField,
-                Long::class to AllTypes::longField,
-                Boolean::class to AllTypes::booleanField,
-                Float::class to AllTypes::floatField,
-                Double::class to AllTypes::doubleField,
-                Decimal128::class to AllTypes::decimal128Field,
-                RealmInstant::class to AllTypes::timestampField,
-                ObjectId::class to AllTypes::objectIdField,
-                BsonObjectId::class to AllTypes::bsonObjectIdField,
-                RealmUUID::class to AllTypes::uuidField,
-                ByteArray::class to AllTypes::binaryField,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, false) to pair.second
-            } + listOf(
-                String::class to AllTypes::nullableStringField,
-                Long::class to AllTypes::nullableLongField,
-                Boolean::class to AllTypes::nullableBooleanField,
-                Float::class to AllTypes::nullableFloatField,
-                Double::class to AllTypes::nullableDoubleField,
-                Decimal128::class to AllTypes::nullableDecimal128Field,
-                RealmInstant::class to AllTypes::nullableTimestampField,
-                ObjectId::class to AllTypes::nullableObjectIdField,
-                BsonObjectId::class to AllTypes::nullableBsonObjectIdField,
-                RealmUUID::class to AllTypes::nullableUuidField,
-                ByteArray::class to AllTypes::nullableBinaryField,
-                RealmAny::class to AllTypes::nullableRealmAnyField,
-                RealmObject::class to AllTypes::nullableObject,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, true) to pair.second
-            }).associate { pair ->
+            val fieldProperties = (
+                listOf(
+                    String::class to AllTypes::stringField,
+                    Long::class to AllTypes::longField,
+                    Boolean::class to AllTypes::booleanField,
+                    Float::class to AllTypes::floatField,
+                    Double::class to AllTypes::doubleField,
+                    Decimal128::class to AllTypes::decimal128Field,
+                    RealmInstant::class to AllTypes::timestampField,
+                    ObjectId::class to AllTypes::objectIdField,
+                    BsonObjectId::class to AllTypes::bsonObjectIdField,
+                    RealmUUID::class to AllTypes::uuidField,
+                    ByteArray::class to AllTypes::binaryField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, false) to pair.second
+                } + listOf(
+                    String::class to AllTypes::nullableStringField,
+                    Long::class to AllTypes::nullableLongField,
+                    Boolean::class to AllTypes::nullableBooleanField,
+                    Float::class to AllTypes::nullableFloatField,
+                    Double::class to AllTypes::nullableDoubleField,
+                    Decimal128::class to AllTypes::nullableDecimal128Field,
+                    RealmInstant::class to AllTypes::nullableTimestampField,
+                    ObjectId::class to AllTypes::nullableObjectIdField,
+                    BsonObjectId::class to AllTypes::nullableBsonObjectIdField,
+                    RealmUUID::class to AllTypes::nullableUuidField,
+                    ByteArray::class to AllTypes::nullableBinaryField,
+                    RealmAny::class to AllTypes::nullableRealmAnyField,
+                    RealmObject::class to AllTypes::nullableObject,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, true) to pair.second
+                }
+                ).associate { pair ->
                 TypeDescriptor.RealmFieldType(
                     collectionType = CollectionType.RLM_COLLECTION_TYPE_NONE,
                     elementType = pair.first
                 ) to pair.second
             }
 
-            val listProperties = (listOf(
-                // NON NULLABLE CLASSIFIERS TO LISTS
-                String::class to AllTypes::stringListField,
-                RealmObject::class to AllTypes::objectListField,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, false) to pair.second
-            } + listOf(
-                // NULLABLE CLASSIFIERS TO LISTS
-                String::class to AllTypes::nullableStringListField,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, true) to pair.second
-            }).associate { pair ->
+            val listProperties = (
+                listOf(
+                    // NON NULLABLE CLASSIFIERS TO LISTS
+                    String::class to AllTypes::stringListField,
+                    RealmObject::class to AllTypes::objectListField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, false) to pair.second
+                } + listOf(
+                    // NULLABLE CLASSIFIERS TO LISTS
+                    String::class to AllTypes::nullableStringListField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, true) to pair.second
+                }
+                ).associate { pair ->
                 TypeDescriptor.RealmFieldType(
                     collectionType = CollectionType.RLM_COLLECTION_TYPE_LIST,
                     elementType = pair.first
                 ) to pair.second
             }
 
-            val setProperties = (listOf(
-                // NON NULLABLE CLASSIFIERS TO SETS
-                String::class to AllTypes::stringSetField,
-                RealmObject::class to AllTypes::objectSetField,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, false) to pair.second
-            } + listOf(
-                // NULLABLE CLASSIFIERS TO SETS
-                String::class to AllTypes::nullableStringSetField,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, true) to pair.second
-            }).associate { pair ->
+            val setProperties = (
+                listOf(
+                    // NON NULLABLE CLASSIFIERS TO SETS
+                    String::class to AllTypes::stringSetField,
+                    RealmObject::class to AllTypes::objectSetField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, false) to pair.second
+                } + listOf(
+                    // NULLABLE CLASSIFIERS TO SETS
+                    String::class to AllTypes::nullableStringSetField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, true) to pair.second
+                }
+                ).associate { pair ->
                 TypeDescriptor.RealmFieldType(
                     collectionType = CollectionType.RLM_COLLECTION_TYPE_SET,
                     elementType = pair.first
                 ) to pair.second
             }
 
-            val dictionaryProperties = (listOf(
-                // NON NULLABLE CLASSIFIERS TO DICTIONARY
-                String::class to AllTypes::stringDictionaryField,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, false) to pair.second
-            } + listOf(
-                // NULLABLE CLASSIFIERS TO DICTIONARY
-                String::class to AllTypes::nullableStringDictionaryField,
-                RealmObject::class to AllTypes::nullableObjectDictionaryFieldNull,
-            ).map { pair ->
-                TypeDescriptor.ElementType(pair.first, true) to pair.second
-            }).associate { pair ->
+            val dictionaryProperties = (
+                listOf(
+                    // NON NULLABLE CLASSIFIERS TO DICTIONARY
+                    String::class to AllTypes::stringDictionaryField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, false) to pair.second
+                } + listOf(
+                    // NULLABLE CLASSIFIERS TO DICTIONARY
+                    String::class to AllTypes::nullableStringDictionaryField,
+                    RealmObject::class to AllTypes::nullableObjectDictionaryFieldNull,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, true) to pair.second
+                }
+                ).associate { pair ->
                 TypeDescriptor.RealmFieldType(
                     collectionType = CollectionType.RLM_COLLECTION_TYPE_DICTIONARY,
                     elementType = pair.first
@@ -344,6 +349,57 @@ class AllTypes : RealmObject {
             }
 
             properties = fieldProperties + listProperties + setProperties + dictionaryProperties
+
+            val adaptedListProperties = (
+                listOf(
+                    // NON NULLABLE CLASSIFIERS TO LISTS
+                    String::class to AllTypes::adaptedStringListField,
+                    RealmObject::class to AllTypes::adaptedObjectListField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, false) to pair.second
+                }
+                ).associate { pair ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_LIST,
+                    elementType = pair.first
+                ) to pair.second
+            }
+
+            val adaptedSetProperties = (
+                listOf(
+                    // NON NULLABLE CLASSIFIERS TO SETS
+                    String::class to AllTypes::adaptedStringSetField,
+                    RealmObject::class to AllTypes::adaptedObjectSetField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, false) to pair.second
+                }
+                ).associate { pair ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_SET,
+                    elementType = pair.first
+                ) to pair.second
+            }
+
+            val adaptedDictionaryProperties = (
+                listOf(
+                    // NON NULLABLE CLASSIFIERS TO DICTIONARY
+                    String::class to AllTypes::adaptedStringDictionaryField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, false) to pair.second
+                } + listOf(
+                    // NULLABLE CLASSIFIERS TO DICTIONARY
+                    RealmObject::class to AllTypes::adaptedObjectDictionaryField,
+                ).map { pair ->
+                    TypeDescriptor.ElementType(pair.first, true) to pair.second
+                }
+                ).associate { pair ->
+                TypeDescriptor.RealmFieldType(
+                    collectionType = CollectionType.RLM_COLLECTION_TYPE_DICTIONARY,
+                    elementType = pair.first
+                ) to pair.second
+            }
+
+            adaptedTypeParameterProperties = adaptedListProperties + adaptedSetProperties + adaptedDictionaryProperties
         }
     }
 }

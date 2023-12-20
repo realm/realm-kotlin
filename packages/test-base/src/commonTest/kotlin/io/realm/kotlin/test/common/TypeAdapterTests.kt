@@ -127,16 +127,21 @@ class TypeAdapterTests {
 
     @Test
     fun roundTripAllTypes() {
+        validateProperties(AllTypes.properties)
+        validateProperties(AllTypes.adaptedTypeParameterProperties)
+    }
+
+    private fun validateProperties(properties: Map<TypeDescriptor.RealmFieldType, KMutableProperty1<AllTypes, out Any?>>) {
         TypeDescriptor.allFieldTypes
             .filterNot { fieldType ->
                 fieldType.elementType.classifier in unsupportedRealmTypeAdaptersClassifiers
             }
             .filter { fieldType ->
-                fieldType in AllTypes.properties
+                fieldType in properties
             }
             .forEach { fieldType: TypeDescriptor.RealmFieldType ->
                 val testProperty: KMutableProperty1<AllTypes, Any?> =
-                    AllTypes.properties[fieldType]!! as KMutableProperty1<AllTypes, Any?>
+                    properties[fieldType]!! as KMutableProperty1<AllTypes, Any?>
 
                 val testClassifier = fieldType.elementType.classifier
 

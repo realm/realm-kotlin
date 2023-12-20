@@ -21,7 +21,6 @@ import io.realm.kotlin.Versioned
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
-import io.realm.kotlin.internal.interop.MemTrackingAllocator
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_list_get
@@ -30,7 +29,6 @@ import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmListPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
-import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.getterScope
 import io.realm.kotlin.internal.interop.inputScope
 import io.realm.kotlin.internal.query.ObjectBoundQuery
@@ -259,7 +257,7 @@ internal class TypeAdaptedListOperator<E, S>(
     override val nativePointer: RealmListPointer by listOperator::nativePointer
     override val mediator: Mediator by listOperator::mediator
     override val realmReference: RealmReference by listOperator::realmReference
-    override val valueConverter: RealmValueConverter<E> by lazy { throw RuntimeException("TypeAdaptedListOperator does not have a valueConverter") }
+    override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("TypeAdaptedListOperator does not have a valueConverter") }
 
     override fun get(index: Int): E = typeAdapter.fromRealm(listOperator.get(index))
 
