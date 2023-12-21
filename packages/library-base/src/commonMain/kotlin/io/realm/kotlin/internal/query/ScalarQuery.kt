@@ -96,7 +96,7 @@ internal class CountQuery<E : BaseRealmObject> constructor(
     override fun asFlow(): Flow<Long> {
         realmReference.checkClosed()
         return realmReference.owner
-            .registerObserver(this)
+            .registerObserver(this, null)
             .map {
                 it.list.size.toLong()
             }.distinctUntilChanged()
@@ -148,7 +148,7 @@ internal class MinMaxQuery<E : BaseRealmObject, T : Any> constructor(
     override fun asFlow(): Flow<T?> {
         realmReference.checkClosed()
         return realmReference.owner
-            .registerObserver(this)
+            .registerObserver(this, null)
             .map {
                 val realmResults = it.list as RealmResultsImpl<*>
                 findFromResults(realmResults.nativePointer, realmResults.realm)
@@ -216,7 +216,7 @@ internal class SumQuery<E : BaseRealmObject, T : Any> constructor(
     override fun asFlow(): Flow<T> {
         realmReference.checkClosed()
         return realmReference.owner
-            .registerObserver(this)
+            .registerObserver(this, null)
             .map { findFromResults((it.list as RealmResultsImpl<*>).nativePointer) }
             .distinctUntilChanged()
     }

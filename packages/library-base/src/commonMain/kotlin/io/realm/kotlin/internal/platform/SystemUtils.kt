@@ -137,6 +137,7 @@ public expect fun epochInSeconds(): Long
 
 /**
  * Returns a RealmInstant representing the time that has passed since the Unix epoch.
+ * For Android targets < API 26 there's no nano seconds precision.
  */
 public expect fun currentTime(): RealmInstant
 

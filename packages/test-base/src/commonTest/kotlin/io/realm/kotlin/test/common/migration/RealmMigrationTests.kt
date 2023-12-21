@@ -60,6 +60,27 @@ class RealmMigrationTests {
     }
 
     @Test
+    fun migrationContext_publicNamesNotAvailable() {
+        migration(
+            initialSchema = setOf(
+                io.realm.kotlin.entities.schema.SchemaVariations::class,
+                io.realm.kotlin.entities.Sample::class
+            ),
+            migratedSchema = setOf(io.realm.kotlin.entities.migration.Sample::class),
+            migration = { context ->
+                val oldRealm = context.oldRealm
+                val newRealm = context.newRealm
+
+                assertNotNull(oldRealm.schema()["Sample"]?.get("persistedStringField"))
+                assertNull(oldRealm.schema()["Sample"]?.get("publicStringField"))
+
+                assertNotNull(newRealm.schema()["Sample"]?.get("persistedStringField"))
+                assertNull(newRealm.schema()["Sample"]?.get("publicStringField"))
+            }
+        )
+    }
+
+    @Test
     fun migrationContext_schemaVerification() {
         migration(
             initialSchema = setOf(
@@ -89,7 +110,7 @@ class RealmMigrationTests {
                     assertNull(newSchema["SchemaVariations"])
                 }
             }
-        )
+        ).close()
     }
 
     // TODO Test all schema modifications (theoretically test core behavior, so postponed for now)
