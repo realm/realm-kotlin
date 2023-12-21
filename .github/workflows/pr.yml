@@ -1503,7 +1503,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
             OUTPUT=$(powershell cli.ps1 start -t foo=bar)
           else
             OUTPUT=$(bash cli.sh start -t foo=bar)
@@ -1555,7 +1555,7 @@ jobs:
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          if [ "${{ matrix.os }}" != "windows-latest" ]; then
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
             OUTPUT=$(powershell cli.ps1 poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           else
             OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
@@ -1585,7 +1585,7 @@ jobs:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
           if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            if [ "${{ matrix.os }}" != "windows-latest" ]; then
+            if [ "${{ matrix.os }}" = "windows-latest" ]; then
               powershell cli.ps1 stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
             else
               bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
