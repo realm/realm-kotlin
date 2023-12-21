@@ -560,7 +560,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -b nh/windows_support
+          gh repo clone 10gen/baasaas -- -b nh/windows_support
           
 
       # Start BAAS instance in the background
@@ -1203,7 +1203,7 @@ jobs:
         if: always()
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -b nh/windows_support
+          gh repo clone 10gen/baasaas -- -b nh/windows_support
 
       - name: Stopping the BAAS container
         if: always()
@@ -1247,7 +1247,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -b nh/windows_support
+          gh repo clone 10gen/baasaas -- -b nh/windows_support
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
@@ -1367,7 +1367,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -b nh/windows_support
+          gh repo clone 10gen/baasaas -- -b nh/windows_support
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
@@ -1492,7 +1492,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -b nh/windows_support
+          gh repo clone 10gen/baasaas -- -b nh/windows_support
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
