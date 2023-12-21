@@ -69,7 +69,7 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
     val REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT = Name.identifier("setEmbeddedRealmObject")
 
-    val REALM_TYPE_ADAPTER_FROM_REALM = Name.identifier("fromRealm")
+    val REALM_TYPE_ADAPTER_TO_PUBLIC = Name.identifier("toPublic")
     val REALM_TYPE_ADAPTER_TO_REALM = Name.identifier("toRealm")
 
     // C-interop methods

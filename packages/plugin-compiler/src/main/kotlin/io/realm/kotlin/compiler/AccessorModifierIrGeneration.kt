@@ -21,7 +21,7 @@ import io.realm.kotlin.compiler.ClassIds.TRANSIENT_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.TYPE_ADAPTER_ANNOTATION
 import io.realm.kotlin.compiler.Names.OBJECT_REFERENCE
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
-import io.realm.kotlin.compiler.Names.REALM_TYPE_ADAPTER_FROM_REALM
+import io.realm.kotlin.compiler.Names.REALM_TYPE_ADAPTER_TO_PUBLIC
 import io.realm.kotlin.compiler.Names.REALM_TYPE_ADAPTER_TO_REALM
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrStatement
@@ -219,7 +219,7 @@ class AccessorModifierIrGeneration(realmPluginContext: RealmPluginContext) : Rea
 
                         ClassKind.OBJECT -> {
                             val fromRealm =
-                                adapterClass.lookupFunction(REALM_TYPE_ADAPTER_FROM_REALM)
+                                adapterClass.lookupFunction(REALM_TYPE_ADAPTER_TO_PUBLIC)
                             val toRealm =
                                 adapterClass.lookupFunction(REALM_TYPE_ADAPTER_TO_REALM)
 

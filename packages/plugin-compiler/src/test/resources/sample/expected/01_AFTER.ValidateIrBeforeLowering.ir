@@ -6642,9 +6642,9 @@ MODULE_FRAGMENT name:<main>
                       receiver: GET_VAR '<this>: sample.input.Sample declared in sample.input.Sample.<get-singletonAdaptedRealmInstant>' type=sample.input.Sample origin=null
                   BRANCH
                     if: CONST Boolean type=kotlin.Boolean value=true
-                    then: CALL 'public open fun fromRealm (realmValue: io.realm.kotlin.types.RealmInstant): org.mongodb.kbson.BsonDateTime declared in sample.input.RealmInstantBsonDateTimeAdapterSingleton' type=org.mongodb.kbson.BsonDateTime origin=null
+                    then: CALL 'public open fun toPublic (value: io.realm.kotlin.types.RealmInstant): org.mongodb.kbson.BsonDateTime declared in sample.input.RealmInstantBsonDateTimeAdapterSingleton' type=org.mongodb.kbson.BsonDateTime origin=null
                       $this: GET_OBJECT 'CLASS OBJECT name:RealmInstantBsonDateTimeAdapterSingleton modality:FINAL visibility:public superTypes:[io.realm.kotlin.types.RealmTypeAdapter<io.realm.kotlin.types.RealmInstant, org.mongodb.kbson.BsonDateTime>]' type=sample.input.RealmInstantBsonDateTimeAdapterSingleton
-                      realmValue: CALL 'internal final fun getInstant (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.types.RealmInstant? [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.types.RealmInstant? origin=GET_PROPERTY
+                      value: CALL 'internal final fun getInstant (obj: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>, propertyName: kotlin.String): io.realm.kotlin.types.RealmInstant? [inline] declared in io.realm.kotlin.internal.RealmObjectHelper' type=io.realm.kotlin.types.RealmInstant? origin=GET_PROPERTY
                         $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
                         obj: GET_VAR 'val tmp0_objectReference: io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? [val] declared in sample.input.Sample.<get-singletonAdaptedRealmInstant>' type=io.realm.kotlin.internal.RealmObjectReference<sample.input.Sample>? origin=null
                         propertyName: CONST String type=kotlin.String value="singletonAdaptedRealmInstant"
@@ -8908,18 +8908,18 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
           INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:RealmInstantBsonDateTimeAdapterSingleton modality:FINAL visibility:public superTypes:[io.realm.kotlin.types.RealmTypeAdapter<io.realm.kotlin.types.RealmInstant, org.mongodb.kbson.BsonDateTime>]'
-      FUN name:fromRealm visibility:public modality:OPEN <> ($this:sample.input.RealmInstantBsonDateTimeAdapterSingleton, realmValue:io.realm.kotlin.types.RealmInstant) returnType:org.mongodb.kbson.BsonDateTime
+      FUN name:toPublic visibility:public modality:OPEN <> ($this:sample.input.RealmInstantBsonDateTimeAdapterSingleton, value:io.realm.kotlin.types.RealmInstant) returnType:org.mongodb.kbson.BsonDateTime
         overridden:
-          public abstract fun fromRealm (realmValue: S of io.realm.kotlin.types.RealmTypeAdapter): U of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
+          public abstract fun toPublic (value: R of io.realm.kotlin.types.RealmTypeAdapter): P of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
         $this: VALUE_PARAMETER name:<this> type:sample.input.RealmInstantBsonDateTimeAdapterSingleton
-        VALUE_PARAMETER name:realmValue index:0 type:io.realm.kotlin.types.RealmInstant
+        VALUE_PARAMETER name:value index:0 type:io.realm.kotlin.types.RealmInstant
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun fromRealm (realmValue: io.realm.kotlin.types.RealmInstant): org.mongodb.kbson.BsonDateTime declared in sample.input.RealmInstantBsonDateTimeAdapterSingleton'
+          RETURN type=kotlin.Nothing from='public open fun toPublic (value: io.realm.kotlin.types.RealmInstant): org.mongodb.kbson.BsonDateTime declared in sample.input.RealmInstantBsonDateTimeAdapterSingleton'
             CONSTRUCTOR_CALL 'public constructor <init> (value: kotlin.Long) [primary] declared in org.mongodb.kbson.BsonDateTime' type=org.mongodb.kbson.BsonDateTime origin=null
               value: CONST Long type=kotlin.Long value=100
       FUN name:toRealm visibility:public modality:OPEN <> ($this:sample.input.RealmInstantBsonDateTimeAdapterSingleton, value:org.mongodb.kbson.BsonDateTime) returnType:io.realm.kotlin.types.RealmInstant
         overridden:
-          public abstract fun toRealm (value: U of io.realm.kotlin.types.RealmTypeAdapter): S of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
+          public abstract fun toRealm (value: P of io.realm.kotlin.types.RealmTypeAdapter): R of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
         $this: VALUE_PARAMETER name:<this> type:sample.input.RealmInstantBsonDateTimeAdapterSingleton
         VALUE_PARAMETER name:value index:0 type:org.mongodb.kbson.BsonDateTime
         BLOCK_BODY
@@ -8945,18 +8945,18 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
           INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:RealmInstantBsonDateTimeAdapterInstanced modality:FINAL visibility:public superTypes:[io.realm.kotlin.types.RealmTypeAdapter<io.realm.kotlin.types.RealmInstant, org.mongodb.kbson.BsonDateTime>]'
-      FUN name:fromRealm visibility:public modality:OPEN <> ($this:sample.input.RealmInstantBsonDateTimeAdapterInstanced, realmValue:io.realm.kotlin.types.RealmInstant) returnType:org.mongodb.kbson.BsonDateTime
+      FUN name:toPublic visibility:public modality:OPEN <> ($this:sample.input.RealmInstantBsonDateTimeAdapterInstanced, value:io.realm.kotlin.types.RealmInstant) returnType:org.mongodb.kbson.BsonDateTime
         overridden:
-          public abstract fun fromRealm (realmValue: S of io.realm.kotlin.types.RealmTypeAdapter): U of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
+          public abstract fun toPublic (value: R of io.realm.kotlin.types.RealmTypeAdapter): P of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
         $this: VALUE_PARAMETER name:<this> type:sample.input.RealmInstantBsonDateTimeAdapterInstanced
-        VALUE_PARAMETER name:realmValue index:0 type:io.realm.kotlin.types.RealmInstant
+        VALUE_PARAMETER name:value index:0 type:io.realm.kotlin.types.RealmInstant
         BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun fromRealm (realmValue: io.realm.kotlin.types.RealmInstant): org.mongodb.kbson.BsonDateTime declared in sample.input.RealmInstantBsonDateTimeAdapterInstanced'
+          RETURN type=kotlin.Nothing from='public open fun toPublic (value: io.realm.kotlin.types.RealmInstant): org.mongodb.kbson.BsonDateTime declared in sample.input.RealmInstantBsonDateTimeAdapterInstanced'
             CONSTRUCTOR_CALL 'public constructor <init> (value: kotlin.Long) [primary] declared in org.mongodb.kbson.BsonDateTime' type=org.mongodb.kbson.BsonDateTime origin=null
               value: CONST Long type=kotlin.Long value=100
       FUN name:toRealm visibility:public modality:OPEN <> ($this:sample.input.RealmInstantBsonDateTimeAdapterInstanced, value:org.mongodb.kbson.BsonDateTime) returnType:io.realm.kotlin.types.RealmInstant
         overridden:
-          public abstract fun toRealm (value: U of io.realm.kotlin.types.RealmTypeAdapter): S of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
+          public abstract fun toRealm (value: P of io.realm.kotlin.types.RealmTypeAdapter): R of io.realm.kotlin.types.RealmTypeAdapter declared in io.realm.kotlin.types.RealmTypeAdapter
         $this: VALUE_PARAMETER name:<this> type:sample.input.RealmInstantBsonDateTimeAdapterInstanced
         VALUE_PARAMETER name:value index:0 type:org.mongodb.kbson.BsonDateTime
         BLOCK_BODY
