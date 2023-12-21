@@ -4,7 +4,7 @@
 * None.
 
 ### Enhancements
-* None.
+* Add support for persisting custom types using Realm type adapters. (Issue [#587](https://github.com/realm/realm-kotlin/issues/587))
 
 ### Fixed
 * None.
