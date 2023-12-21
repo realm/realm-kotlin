@@ -53,11 +53,16 @@ runs:
         echo "All File Artifacts:"
         echo $fileArtifacts
         $logCatArtifacts = $fileArtifacts | Where-Object { $_.Name -EQ "Logcat" }
-        echo "LogCat Artifacts:"
-        echo $logCatArtifacts
-        echo "::group::Logcat"
-        Invoke-WebRequest -Uri $logCatArtifacts[0].Url | Select-Object -Expand RawContent
-        echo "::endgroup::"
+        if ($logCatArtifacts) {
+            echo "LogCat Artifacts:"
+            echo $logCatArtifacts
+            echo "::group::Logcat"
+            Invoke-WebRequest -Uri $logCatArtifacts[0].Url | Select-Object -Expand RawContent
+            echo "::endgroup::"
+        } else {
+            Write-Warning "No logCatArtifacts found."
+        }
+
       shell: pwsh
       if: always()
       name: Device Farm Output

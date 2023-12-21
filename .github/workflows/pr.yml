@@ -1489,7 +1489,6 @@ jobs:
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
-        if: matrix.os != 'windows-latest'
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
           gh repo clone 10gen/baasaas -- -b nh/windows_support
@@ -1497,7 +1496,6 @@ jobs:
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
       - name: Start Baas instance in the background
-        if: matrix.os != 'windows-latest'
         id: baas_cli_start
         working-directory: baasaas
         env:
@@ -1552,7 +1550,6 @@ jobs:
 
       # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
       - name: Fetching the BAAS CLI hostname
-        if: matrix.os != 'windows-latest'
         id: baas_cli_poll
         working-directory: baasaas
         env:
@@ -1566,14 +1563,13 @@ jobs:
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
-        if: matrix.os != 'windows-latest'
         working-directory: packages
         run: |
           ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:jvmTest -PincludeSdkModules=false --info --no-daemon
 
       - name: Publish Sync Unit Test Results
         uses: dorny/test-reporter@v1
-        if: ${{ !cancelled() && matrix.os != 'windows-latest' }}
+        if: ${{ !cancelled() }}
         with:
           name: "Sync - ${{ matrix.test-title }}"
           path: ./packages/test-sync/build/**/TEST-*.xml
@@ -1583,7 +1579,7 @@ jobs:
           fail-on-error: true
 
       - name: Stopping the BAAS container
-        if: always() && matrix.os != 'windows-latest'
+        if: always()
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
