@@ -560,7 +560,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+          gh repo clone 10gen/baasaas -b nh/windows_support
           
 
       # Start BAAS instance in the background
@@ -570,9 +570,8 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
-          OUTPUT=$(./cli.sh start)
+          OUTPUT=$(bash cli.sh start)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       # TODO This cmake version is not being used by the Android builds. Figure out why.
@@ -629,9 +628,8 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
-          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Build Android Sync Test Apk
@@ -1205,17 +1203,16 @@ jobs:
         if: always()
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+          gh repo clone 10gen/baasaas -b nh/windows_support
 
       - name: Stopping the BAAS container
         if: always()
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
           if [ -n "${{ needs.build-android-packages.outputs.baas-container-id }}" ]; then
-            ./cli.sh stop ${{ needs.build-android-packages.outputs.baas-container-id }}
+            bash cli.sh stop ${{ needs.build-android-packages.outputs.baas-container-id }}
           fi  
 
   test-macos-packages:
@@ -1250,7 +1247,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+          gh repo clone 10gen/baasaas -b nh/windows_support
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
@@ -1259,11 +1256,10 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(./cli.sh start -t foo=bar)
+          OUTPUT=$(bash cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1309,9 +1305,8 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
-          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
@@ -1335,10 +1330,9 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
           if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            ./cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
           fi
 
   test-ios-packages:
@@ -1373,7 +1367,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+          gh repo clone 10gen/baasaas -b nh/windows_support
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
@@ -1382,11 +1376,10 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(./cli.sh start -t foo=bar)
+          OUTPUT=$(bash cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1438,9 +1431,8 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
-          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
@@ -1464,10 +1456,9 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
           if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            ./cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
           fi
 
   # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
@@ -1501,7 +1492,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+          gh repo clone 10gen/baasaas -b nh/windows_support
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
@@ -1511,11 +1502,14 @@ jobs:
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(./cli.sh start -t foo=bar)
+          if [[ $RUNNER_OS == "windows-latest" ]]; then
+            OUTPUT=$(powershell cli.ps1 start -t foo=bar)
+          else
+            OUTPUT=$(bash cli.sh start -t foo=bar)
+          fi
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1558,16 +1552,21 @@ jobs:
 
       # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
       - name: Fetching the BAAS CLI hostname
+        if: matrix.os != 'windows-latest'
         id: baas_cli_poll
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
-          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          if [[ $RUNNER_OS == "windows-latest" ]]; then
+            OUTPUT=$(powershell cli.ps1 poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          else
+            OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          fi
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
+        if: matrix.os != 'windows-latest'
         working-directory: packages
         run: |
           ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:jvmTest -PincludeSdkModules=false --info --no-daemon
@@ -1584,14 +1583,17 @@ jobs:
           fail-on-error: true
 
       - name: Stopping the BAAS container
-        if: always()
+        if: always() && matrix.os != 'windows-latest'
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        shell: bash
         run: |
           if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            ./cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            if [[ $RUNNER_OS == "windows-latest" ]]; then
+              powershell cli.ps1 stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            else
+              bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            fi
           fi
 
 
