@@ -572,7 +572,7 @@ jobs:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         shell: bash
         run: |
-          OUTPUT=$(cli.sh start)
+          OUTPUT=$(./cli.sh start)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       # TODO This cmake version is not being used by the Android builds. Figure out why.
@@ -631,7 +631,7 @@ jobs:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         shell: bash
         run: |
-          OUTPUT=$(cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Build Android Sync Test Apk
@@ -1215,7 +1215,7 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ needs.build-android-packages.outputs.baas-container-id }}" ]; then
-            cli.sh stop ${{ needs.build-android-packages.outputs.baas-container-id }}
+            ./cli.sh stop ${{ needs.build-android-packages.outputs.baas-container-id }}
           fi  
 
   test-macos-packages:
@@ -1263,7 +1263,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(cli.sh start -t foo=bar)
+          OUTPUT=$(./cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1311,7 +1311,7 @@ jobs:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         shell: bash
         run: |
-          OUTPUT=$(cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
@@ -1338,7 +1338,7 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            ./cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
           fi
 
   test-ios-packages:
@@ -1386,7 +1386,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(cli.sh start -t foo=bar)
+          OUTPUT=$(./cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1440,7 +1440,7 @@ jobs:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         shell: bash
         run: |
-          OUTPUT=$(cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
@@ -1467,7 +1467,7 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            ./cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
           fi
 
   # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
@@ -1515,7 +1515,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(cli.sh start -t foo=bar)
+          OUTPUT=$(./cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1564,7 +1564,7 @@ jobs:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         shell: bash
         run: |
-          OUTPUT=$(cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(./cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
@@ -1591,7 +1591,7 @@ jobs:
         shell: bash
         run: |
           if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+            ./cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
           fi
 
 
