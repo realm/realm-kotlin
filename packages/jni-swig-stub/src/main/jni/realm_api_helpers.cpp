@@ -79,10 +79,10 @@ inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
             jint(error.error),
             error_message,
             error_path,
-            static_cast<jobject>(error.usercode_error)
+            static_cast<jobject>(error.user_code_error)
     );
-    if (error.usercode_error) {
-        (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    if (error.user_code_error) {
+        (jenv)->DeleteGlobalRef(static_cast<jobject>(error.user_code_error));
     }
     jni_check_exception(jenv);
     return jenv->PopLocalFrame(exception);
@@ -1081,11 +1081,11 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             is_unrecognized_by_client,
             is_client_reset_requested,
             j_compensating_write_info_array,
-            static_cast<jobject>(error.usercode_error)
+            static_cast<jobject>(error.user_code_error)
     );
 
     jni_check_exception(jenv);
-    jenv->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    jenv->DeleteGlobalRef(static_cast<jobject>(error.user_code_error));
     return jenv->PopLocalFrame(result);
 }
 
@@ -1185,7 +1185,7 @@ before_client_reset(void* userdata, realm_t* before_realm) {
     env->PushLocalFrame(1);
     jobject before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
-    bool result = jni_check_exception(env);
+    bool result = jni_check_exception(env, true);
     return result;
 }
 
@@ -1207,7 +1207,7 @@ after_client_reset(void* userdata, realm_t* before_realm,
     jobject after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
     realm_close(after_realm_ptr);
-    bool result = jni_check_exception(env);
+    bool result = jni_check_exception(env, true);
     return result;
 }
 
