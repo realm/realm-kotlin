@@ -90,7 +90,7 @@ public interface RealmConfiguration : Configuration {
             apply { this.directory = directoryPath }
 
         /**
-         * TODO
+         * Sets the type adapters that would be available in runtime.
          */
         public fun typeAdapters(block: TypeAdapterBuilder.() -> Unit): Builder =
             apply {

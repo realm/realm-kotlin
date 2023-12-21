@@ -281,7 +281,7 @@ public inline fun fromRealm(
     obj: RealmObjectReference<out BaseRealmObject>,
     adapterClass: KClass<*>,
     realmValue: Any,
-): Any? = getTypeAdapter(obj, adapterClass).fromRealm(realmValue)
+): Any? = getTypeAdapter(obj, adapterClass).toPublic(realmValue)
 
 internal object RealmInstantConverter : PassThroughPublicConverter<RealmInstant>() {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmInstant? =

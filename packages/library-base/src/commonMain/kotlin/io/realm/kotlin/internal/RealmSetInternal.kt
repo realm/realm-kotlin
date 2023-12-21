@@ -315,7 +315,7 @@ internal class TypeAdaptedSetOperator<E, S>(
     override val realmReference: RealmReference by setOperator::realmReference
     override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("TypeAdaptedSetOperator does not have a valueConverter") }
 
-    override fun get(index: Int): E = typeAdapter.fromRealm(setOperator.get(index))
+    override fun get(index: Int): E = typeAdapter.toPublic(setOperator.get(index))
 
     override fun copy(
         realmReference: RealmReference,

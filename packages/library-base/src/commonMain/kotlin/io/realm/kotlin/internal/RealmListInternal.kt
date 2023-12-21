@@ -259,7 +259,7 @@ internal class TypeAdaptedListOperator<E, S>(
     override val realmReference: RealmReference by listOperator::realmReference
     override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("TypeAdaptedListOperator does not have a valueConverter") }
 
-    override fun get(index: Int): E = typeAdapter.fromRealm(listOperator.get(index))
+    override fun get(index: Int): E = typeAdapter.toPublic(listOperator.get(index))
 
     override fun copy(
         realmReference: RealmReference,
@@ -271,7 +271,7 @@ internal class TypeAdaptedListOperator<E, S>(
         element: E,
         updatePolicy: UpdatePolicy,
         cache: UnmanagedToManagedObjectCache,
-    ): E = typeAdapter.fromRealm(listOperator.set(index, typeAdapter.toRealm(element), updatePolicy, cache))
+    ): E = typeAdapter.toPublic(listOperator.set(index, typeAdapter.toRealm(element), updatePolicy, cache))
 
     override fun insert(
         index: Int,

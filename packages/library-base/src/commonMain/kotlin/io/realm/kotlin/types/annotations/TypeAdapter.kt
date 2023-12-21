@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,49 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS, AnnotationTarget.TYPE)
 @MustBeDocumented
 /**
- * TODO
+ * Annotations marking a field to use a type adapter.
+ *
+ * [RealmTypeAdapter] allows using non Realm types in Realm schema models. Data would automatically be
+ * converted in and out using the type adapter defined by this annotation.
+ *
+ * Example of a compile time adapter:
+ *
+ * ```
+ * object RealmInstantDateAdapter: RealmTypeAdapter<RealmInstant, Date> {
+ *     override fun fromRealm(realmValue: RealmInstant): Date = TODO()
+ *
+ *     override fun toRealm(value: Date): RealmInstant = TODO()
+ * }
+ *
+ * class MyObject: RealmObject {
+ *     @TypeAdapter(RealmInstantDateAdapter::class)
+ *     var date: Date = Date()
+ * }
+ * ```
+ *
+ * Example of a runtime adapter:
+ *
+ * ```
+ * class EncryptedStringAdapter(
+ *     val encryptionKey: String,
+ * ) : RealmTypeAdapter<ByteArray, String> {
+ *     override fun fromRealm(realmValue: ByteArray): String = TODO()
+ *
+ *     override fun toRealm(value: String): ByteArray = TODO()
+ * }
+ *
+ * class MyObject : RealmObject {
+ *     @TypeAdapter(EncryptedStringAdapter::class)
+ *     var secureString: String = "some content"
+ * }
+ *
+ * fun createRealmConfig() =
+ *     RealmConfiguration
+ *         .Builder(setOf(MyObject::class))
+ *         .typeAdapters {
+ *             add(EncryptedStringAdapter("my encryption key"))
+ *         }
+ *         .build()
+ * ```
  */
 public annotation class TypeAdapter(val adapter: KClass<out RealmTypeAdapter<*, *>>)

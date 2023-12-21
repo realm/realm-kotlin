@@ -298,7 +298,7 @@ internal class TypeAdaptedMapOperator<K, E, S>(
     override fun getEntryInternal(position: Int): Pair<K, E> = mapOperator
         .getEntryInternal(position)
         .run {
-            Pair(first, typeAdapter.fromRealm(second))
+            Pair(first, typeAdapter.toPublic(second))
         }
 
     override fun copy(
@@ -313,10 +313,10 @@ internal class TypeAdaptedMapOperator<K, E, S>(
     override fun containsValueInternal(value: E): Boolean = mapOperator.containsValueInternal(typeAdapter.toRealm(value))
 
     override fun getInternal(key: K): E? = mapOperator.getInternal(key)
-        ?.let { typeAdapter.fromRealm(it) }
+        ?.let { typeAdapter.toPublic(it) }
 
     override fun eraseInternal(key: K): Pair<E?, Boolean> = mapOperator.eraseInternal(key).run {
-        Pair(first?.let { typeAdapter.fromRealm(it) }, second)
+        Pair(first?.let { typeAdapter.toPublic(it) }, second)
     }
 
     override fun insertInternal(
@@ -328,7 +328,7 @@ internal class TypeAdaptedMapOperator<K, E, S>(
         key,
         value?.let { typeAdapter.toRealm(it) }, updatePolicy, cache
     ).run {
-        Pair(first?.let { typeAdapter.fromRealm(it) }, second)
+        Pair(first?.let { typeAdapter.toPublic(it) }, second)
     }
 
     override val mediator: Mediator by mapOperator::mediator

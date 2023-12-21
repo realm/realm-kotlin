@@ -214,13 +214,13 @@ class Sample : RealmObject {
 }
 
 object RealmInstantBsonDateTimeAdapterSingleton: RealmTypeAdapter<RealmInstant, BsonDateTime> {
-    override fun fromRealm(realmValue: RealmInstant): BsonDateTime = BsonDateTime(100)
+    override fun toPublic(value: RealmInstant): BsonDateTime = BsonDateTime(100)
 
     override fun toRealm(value: BsonDateTime): RealmInstant = RealmInstant.now()
 }
 
 class RealmInstantBsonDateTimeAdapterInstanced: RealmTypeAdapter<RealmInstant, BsonDateTime> {
-    override fun fromRealm(realmValue: RealmInstant): BsonDateTime = BsonDateTime(100)
+    override fun toPublic(value: RealmInstant): BsonDateTime = BsonDateTime(100)
 
     override fun toRealm(value: BsonDateTime): RealmInstant = RealmInstant.now()
 }

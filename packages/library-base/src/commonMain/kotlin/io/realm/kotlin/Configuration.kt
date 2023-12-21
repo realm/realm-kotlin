@@ -51,7 +51,7 @@ public fun interface CompactOnLaunchCallback {
 }
 
 /**
- * TODO
+ * Builder for setting up any runtime type adapters.
  */
 public class TypeAdapterBuilder {
     internal val typeAdapters: MutableList<RealmTypeAdapter<*, *>> = mutableListOf()
@@ -208,7 +208,7 @@ public interface Configuration {
     public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
     /**
-     * TODO
+     * List of types adapters that would be available in runtime.
      */
     public val typeAdapters: List<RealmTypeAdapter<*, *>>
 

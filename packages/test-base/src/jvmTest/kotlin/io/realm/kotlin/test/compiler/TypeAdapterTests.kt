@@ -46,7 +46,7 @@ import kotlin.test.assertTrue
  *  - [x] Other annotations Ignore, Index etc
  *  - [x] Star projections in persistable types
  */
-class TypeAdaptersTests {
+class TypeAdapterTests {
 
     private val typeAdapterTypes = listOf("object", "class")
 
