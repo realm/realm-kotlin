@@ -133,6 +133,9 @@ class AsymmetricSyncTests {
                 )
             }
         }
+
+        realm.syncSession.uploadAllLocalChanges()
+
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
