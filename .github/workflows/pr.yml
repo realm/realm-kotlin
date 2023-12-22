@@ -560,7 +560,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -- -b nh/windows_support
+          gh repo clone 10gen/baasaas
           
 
       # Start BAAS instance in the background
@@ -1203,7 +1203,7 @@ jobs:
         if: always()
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -- -b nh/windows_support
+          gh repo clone 10gen/baasaas
 
       - name: Stopping the BAAS container
         if: always()
@@ -1247,7 +1247,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -- -b nh/windows_support
+          gh repo clone 10gen/baasaas
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
@@ -1367,7 +1367,7 @@ jobs:
       - name: Checkout BAAS repo
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -- -b nh/windows_support
+          gh repo clone 10gen/baasaas
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
@@ -1468,10 +1468,10 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
         include:
-#          - os: macos-latest
-#            test-title: Unit Test Results - Base JVM MacOS x64
-#          - os: ubuntu-latest
-#            test-title: Unit Test Results - Base JVM Linux
+          - os: macos-latest
+            test-title: Unit Test Results - Base JVM MacOS x64
+          - os: ubuntu-latest
+            test-title: Unit Test Results - Base JVM Linux
           - os: windows-latest
             test-title: Unit Test Results - Base JVM Windows
  
@@ -1489,13 +1489,15 @@ jobs:
 
       # checkout BAAS CLI repo
       - name: Checkout BAAS repo
+        if: matrix.os != 'windows-latest'
         run: |
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas -- -b nh/windows_support
+          gh repo clone 10gen/baasaas
 
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
       - name: Start Baas instance in the background
+        if: matrix.os != 'windows-latest'
         id: baas_cli_start
         working-directory: baasaas
         env:
@@ -1503,7 +1505,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(powershell cli.ps1 start -t foo=bar)
+          OUTPUT=$(bash cli.sh start -t foo=bar)
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1546,22 +1548,24 @@ jobs:
 
       # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
       - name: Fetching the BAAS CLI hostname
+        if: matrix.os != 'windows-latest'
         id: baas_cli_poll
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          OUTPUT=$(powershell cli.ps1 poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
           echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Run Sync tests
+        if: matrix.os != 'windows-latest'
         working-directory: packages
         run: |
           ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:jvmTest -PincludeSdkModules=false --info --no-daemon
 
       - name: Publish Sync Unit Test Results
         uses: dorny/test-reporter@v1
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && matrix.os != 'windows-latest' }}
         with:
           name: "Sync - ${{ matrix.test-title }}"
           path: ./packages/test-sync/build/**/TEST-*.xml
@@ -1571,12 +1575,14 @@ jobs:
           fail-on-error: true
 
       - name: Stopping the BAAS container
-        if: always()
+        if: always() && matrix.os != 'windows-latest'
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          powershell cli.ps1 stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
 
 
   package-all-artifacts:
