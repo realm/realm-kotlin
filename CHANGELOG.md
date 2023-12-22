@@ -29,6 +29,7 @@
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
+* Updated to Realm Core 13.25.0, commit 71f94d75e25bfc8913fcd93ae8de550b57577a4a.
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)
