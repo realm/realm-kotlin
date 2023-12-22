@@ -158,9 +158,9 @@ private fun throwOnError() {
                 errorCodeNativeValue = error.error.value.toInt(),
                 messageNativeValue = error.message?.toKString(),
                 path = error.path?.toKString(),
-                userError = error.usercode_error?.asStableRef<Throwable>()?.get()
+                userError = error.user_code_error?.asStableRef<Throwable>()?.get()
             ).also {
-                error.usercode_error?.let { disposeUserData<Throwable>(it) }
+                error.user_code_error?.let { disposeUserData<Throwable>(it) }
                 realm_clear_last_error()
             }
         }
@@ -638,9 +638,9 @@ actual object RealmInterop {
                             errorCodeNativeValue = err.error.value.toInt(),
                             messageNativeValue = err.message?.toKString(),
                             path = err.path?.toKString(),
-                            userError = err.usercode_error?.asStableRef<Throwable>()?.get()
+                            userError = err.user_code_error?.asStableRef<Throwable>()?.get()
                         )
-                        err.usercode_error?.let { disposeUserData<Throwable>(it) }
+                        err.user_code_error?.let { disposeUserData<Throwable>(it) }
                     } else {
                         realm_release(realm)
                     }
@@ -2535,9 +2535,9 @@ actual object RealmInterop {
                         isUnrecognizedByClient = is_unrecognized_by_client,
                         isClientResetRequested = is_client_reset_requested,
                         compensatingWrites = compensatingWrites,
-                        userError = usercode_error?.asStableRef<Throwable>()?.get()
+                        userError = user_code_error?.asStableRef<Throwable>()?.get()
                     ).also {
-                        usercode_error?.let { disposeUserData<Throwable>(it) }
+                        user_code_error?.let { disposeUserData<Throwable>(it) }
                     }
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
