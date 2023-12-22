@@ -1085,7 +1085,9 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     );
 
     jni_check_exception(jenv);
-    jenv->DeleteGlobalRef(static_cast<jobject>(error.user_code_error));
+    if(error.user_code_error) {
+        jenv->DeleteGlobalRef(static_cast<jobject>(error.user_code_error));
+    }
     return jenv->PopLocalFrame(result);
 }
 
@@ -1186,6 +1188,7 @@ before_client_reset(void* userdata, realm_t* before_realm) {
     jobject before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
     bool result = jni_check_exception(env, true);
+    env->PopLocalFrame(NULL);
     return result;
 }
 
@@ -1208,6 +1211,7 @@ after_client_reset(void* userdata, realm_t* before_realm,
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
     realm_close(after_realm_ptr);
     bool result = jni_check_exception(env, true);
+    env->PopLocalFrame(NULL);
     return result;
 }
 
