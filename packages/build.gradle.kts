@@ -21,7 +21,6 @@ plugins {
     `java-gradle-plugin`
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
-    id("com.dorongold.task-tree") version "2.1.1"
 }
 
 allprojects {
@@ -34,6 +33,21 @@ allprojects {
     }
 }
 
+/**
+ * Task that will build and publish the defined packages to <root>/packages/build/m2-buildrepo`.
+ * This is mostly suited for CI jobs that wants to build select publications on specific runners.
+ *
+ *
+ * See `gradle.properties` for specific configuration options available to this task.
+ *
+ * For local development, using:
+ *
+ * ```
+ * > ./gradlew publishAllPublicationsToTestRepository
+ * ```
+ *
+ * will build and publish all targets available to the builder platform.
+ */
 tasks.register("publishCIPackages") {
     group = "Publishing"
     description = "Publish packages that has been configured for this CI node. See `gradle.properties`."
@@ -53,31 +67,31 @@ tasks.register("publishCIPackages") {
 
     val mainHostTarget: Set<String> = setOf("metadata") // "kotlinMultiplatform"
 
-    val isMainHost: Boolean? = if (project.properties.containsKey("realm.kotlin.mainHost"))  {
-        project.properties["realm.kotlin.mainHost"] == "true"
-    } else {
-        null
-    }
+    val isMainHost: Boolean = project.properties["realm.kotlin.mainHost"]?.let { it == "true" } ?: false
+
     // Find user configured platforms (if any)
     val userTargets: Set<String>? = (project.properties["realm.kotlin.targets"] as String?)
         ?.split(",")
         ?.map { it.trim() }
         ?.filter { it.isNotEmpty() }
         ?.toSet()
+
     userTargets?.forEach {
         if (!availableTargets.contains(it)) {
             project.logger.error("Unknown publication: $it")
             throw IllegalArgumentException("Unknown publication: $it")
         }
     }
+
     // Configure which platforms publications we do want to publish
-    val wantedTargets: Collection<String> = when (isMainHost) {
-        true -> mainHostTarget + (userTargets ?: availableTargets)
-        false -> userTargets ?: (availableTargets - mainHostTarget)
-        null -> availableTargets
+    val publicationTargets = (userTargets ?: availableTargets).let {
+        when (isMainHost) {
+            true -> it + mainHostTarget
+            false -> it - mainHostTarget
+        }
     }
 
-    wantedTargets.forEach { target: String ->
+    publicationTargets.forEach { target: String ->
         when(target) {
             "iosArm64" -> {
                 dependsOn(
