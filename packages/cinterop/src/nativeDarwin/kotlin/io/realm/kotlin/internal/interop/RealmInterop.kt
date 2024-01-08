@@ -3603,41 +3603,40 @@ actual object RealmInterop {
         }
 
         override fun notify(work_queue: CPointer<realm_work_queue_t>?) {
-            try {
-                scope.launch {
-                    try {
-                        printlntid("on dispatcher")
-                        lock.withLock {
-                            if (!cancelled) {
-                                realm_wrapper.realm_scheduler_perform_work(work_queue)
+            // Use a lock as a work-around for https://github.com/realm/realm-kotlin/issues/1608
+            //
+            // As the Core listeners are separated from Coroutines, there is a chance
+            // that we have closed the Kotlin dispatcher and scheduler while Core is in the
+            // process of sending notifications. If this happens we might end up in this
+            // `notify` method with the dispatcher and scheduler being closed.
+            //
+            // As the ClosableDispatcher does not expose a `isClosed` state, it means
+            // there is no way for us to detect if it is safe to launch a task using
+            // the current coroutine APIs.
+            //
+            // Ass a work-around we use the `canceled` flag that is being set when the Scheduler
+            // is being released. This should be safe as we are only closing the dispatcher when
+            // releasing the scheduler. See [io.realm.kotlin.internal.util.LiveRealmContext] for
+            // the logic around this.
+            //
+            // Note, JVM and Native behave differently on this. See this issue for more
+            // details: https://github.com/Kotlin/kotlinx.coroutines/issues/3993
+            lock.withLock {
+                if (!cancelled) {
+                    scope.launch {
+                        try {
+                            printlntid("on dispatcher")
+                            lock.withLock {
+                                if (!cancelled) {
+                                    realm_wrapper.realm_scheduler_perform_work(work_queue)
+                                }
                             }
+                        } catch (e: Exception) {
+                            // Should never happen, but is included for development to get some indicators
+                            // on errors instead of silent crashes.
+                            e.printStackTrace()
                         }
-                    } catch (e: Exception) {
-                        // Should never happen, but is included for development to get some indicators
-                        // on errors instead of silent crashes.
-                        e.printStackTrace()
                     }
-                }
-            } catch (ex: IllegalStateException) {
-                // A work-around for https://github.com/realm/realm-kotlin/issues/1608
-                // As the Core listeners are separated from Coroutines, there is a chance
-                // that we have closed the Kotlin dispatcher while Core is in the process
-                // of sending notifications. If this happens we might end up in this
-                // `notify` method with the dispatcher being closed.
-                //
-                // As the ClosableDispatcher does not expose a `isClosed` state, it means
-                // there is no way for us to detect if it is safe to launch a task using
-                // it. So as a last resort we are catching the error here and ignore it.
-                //
-                // This should be safe as we are only closing the dispatcher when closing the
-                // Realm anyway.
-                //
-                // Note, JVM and Native behave differently on this. See this issue for more
-                // details: https://github.com/Kotlin/kotlinx.coroutines/issues/3993
-                if (ex.message?.contains("was closed, attempted to schedule") == false) {
-                    throw ex
-                } else {
-                    ex.printStackTrace()
                 }
             }
         }
