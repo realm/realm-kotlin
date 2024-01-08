@@ -3595,8 +3595,10 @@ actual object RealmInterop {
         private val scope: CoroutineScope = CoroutineScope(dispatcher)
         val ref: CPointer<out CPointed> = StableRef.create(this).asCPointer()
         private lateinit var scheduler: CPointer<realm_scheduler_t>
-        private val lock = SynchronizableObject()
+        private val schedulerLock = SynchronizableObject()
+        private val dispatcherLock = SynchronizableObject()
         private var cancelled = false
+        private var dispatcherClosing = false
 
         fun setScheduler(scheduler: CPointer<realm_scheduler_t>) {
             this.scheduler = scheduler
@@ -3621,12 +3623,12 @@ actual object RealmInterop {
             //
             // Note, JVM and Native behave differently on this. See this issue for more
             // details: https://github.com/Kotlin/kotlinx.coroutines/issues/3993
-            lock.withLock {
-                if (!cancelled) {
+            dispatcherLock.withLock {
+                if (!dispatcherClosing) {
                     scope.launch {
                         try {
                             printlntid("on dispatcher")
-                            lock.withLock {
+                            schedulerLock.withLock {
                                 if (!cancelled) {
                                     realm_wrapper.realm_scheduler_perform_work(work_queue)
                                 }
@@ -3642,7 +3644,10 @@ actual object RealmInterop {
         }
 
         fun cancel() {
-            lock.withLock {
+            dispatcherLock.withLock {
+                dispatcherClosing = true
+            }
+            schedulerLock.withLock {
                 cancelled = true
             }
         }
