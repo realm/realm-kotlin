@@ -67,7 +67,7 @@ jobs:
 
       - name: Build JNI Stub
         working-directory: ./packages
-        run: ./gradlew :jni-swig-stub:assemble -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       # TODO Do we need to cache something or just built it every time?
       - name: Upload artifacts
@@ -387,7 +387,7 @@ jobs:
           
       - name: Build Kotlin Metadata and Gradle and Compiler Plugin
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -PignoreNativeLibs=true -Prealm.kotlin.mainHost=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -501,7 +501,7 @@ jobs:
           
       - name: Build JVM Package
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -PignoreNativeLibs=true -PcopyJvmABIs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=true -Prealm.kotlin.mainHost=false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -597,11 +597,11 @@ jobs:
 
       - name: Build Android Test Apk
         working-directory: packages
-        run: ./gradlew  :test-base:assembleAndroidTest -PignoreNativeLibs=true
+        run: ./gradlew  :test-base:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       - name: APK zipinfo
         run: zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
