@@ -49,7 +49,7 @@ class RealmTests {
 
     // Test for https://github.com/Kotlin/kotlinx.coroutines/issues/3993
     @Test
-    fun closingDispatchersThrowIllegalState() {
+    fun submittingToClosedDispatcherIsANoop() {
         val dispatcher = singleThreadDispatcher("test-${Random.nextUInt()}")
         dispatcher.close()
         runBlocking {
