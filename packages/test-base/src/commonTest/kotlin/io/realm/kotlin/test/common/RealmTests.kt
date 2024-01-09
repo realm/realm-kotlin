@@ -178,7 +178,7 @@ class RealmTests {
 
     @Suppress("invisible_member")
     @Test
-    fun exceptionInWriteWillRollback() = runBlocking {
+    fun exceptionInWriteWillRollback() = runBlocking<Unit> {
         class CustomException : Exception()
 
         assertFailsWith<CustomException> {
@@ -189,6 +189,11 @@ class RealmTests {
             }
         }
         assertEquals(0, realm.query<Child>().find().size)
+        // Verify that we can do additional transactions after the previous transaction
+        // was rolled back due to the exception
+        realm.write {
+            this.copyToRealm(Child())
+        }
     }
 
     @Test
