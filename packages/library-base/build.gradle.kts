@@ -37,7 +37,7 @@ project.extensions.configure(kotlinx.atomicfu.plugin.gradle.AtomicFUPluginExtens
 // Common Kotlin configuration
 kotlin {
     jvm()
-    android("android") {
+    androidTarget("android") {
         // Changing this will also requires an update to the publishCIPackages task
         // in /packages/build.gradle.kts
         publishLibraryVariants("release")
@@ -206,27 +206,28 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     }
 }
 
-// tasks.register("dokkaJar", Jar::class) {
-//     val dokkaTask = "dokkaHtmlPartial"
-//     dependsOn(dokkaTask)
-//     archiveClassifier.set("dokka")
-//     from(tasks.named(dokkaTask).get().outputs)
-// }
+tasks.register("dokkaJar", Jar::class) {
+    val dokkaTask = "dokkaHtmlPartial"
+    dependsOn(dokkaTask)
+    archiveClassifier.set("dokka")
+    from(tasks.named(dokkaTask).get().outputs)
+}
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
 }
 
-// FIXME: This is currently causing a full build of native sources in cinterop.
-// publishing {
-//     // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
-//     publications.withType<MavenPublication> {
-//         // Stub javadoc.jar artifact
-//         artifact(javadocJar.get())
-//     }
-//
-//     val common = publications.getByName("kotlinMultiplatform") as MavenPublication
-//     // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
-//     // completely, hence the .get() below.
-//     // common.artifact(tasks.named("dokkaJar").get())
-// }
+// Make sure that docs are published for the Metadata publication as well. This is required
+// by Maven Central
+publishing {
+    // See https://dev.to/kotlin/how-to-build-and-publish-a-kotlin-multiplatform-library-going-public-4a8k
+    publications.withType<MavenPublication> {
+        // Stub javadoc.jar artifact
+        artifact(javadocJar.get())
+    }
+
+    val common = publications.getByName("kotlinMultiplatform") as MavenPublication
+    // Configuration through examples/kmm-sample does not work if we do not resolve the tasks
+    // completely, hence the .get() below.
+    common.artifact(tasks.named("dokkaJar").get())
+}

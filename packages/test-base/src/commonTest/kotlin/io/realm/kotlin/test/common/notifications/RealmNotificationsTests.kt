@@ -108,15 +108,15 @@ class RealmNotificationsTests : FlowableTests {
         realm.write { /* Do nothing */ }
         val nextVersion = realm.version()
 
+        c1.receiveOrFail(message = "Failed to receive update event on Channel 1").let { realmChange ->
+            assertIs<UpdatedRealm<Realm>>(realmChange)
+            assertEquals(nextVersion, realmChange.realm.version())
+        }
+
         val observer2 = async {
             realm.asFlow().collect {
                 c2.send(it)
             }
-        }
-
-        c1.receiveOrFail(message = "Failed to receive update event on Channel 1").let { realmChange ->
-            assertIs<UpdatedRealm<Realm>>(realmChange)
-            assertEquals(nextVersion, realmChange.realm.version())
         }
         c2.receiveOrFail(message = "Failed to receive initial event on Channel 2").let { realmChange ->
             assertIs<InitialRealm<Realm>>(realmChange)

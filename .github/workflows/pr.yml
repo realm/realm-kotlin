@@ -68,7 +68,7 @@ jobs:
 
       - name: Build JNI Stub
         working-directory: ./packages
-        run: ./gradlew :jni-swig-stub:assemble -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       # TODO Do we need to cache something or just built it every time?
       - name: Upload artifacts
@@ -305,7 +305,7 @@ jobs:
           retention-days: 1     
 
   build-kotlin-metadata-package:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     needs: [check-cache]
     if: |
       always() && 
@@ -388,7 +388,7 @@ jobs:
           
       - name: Build Kotlin Metadata and Gradle and Compiler Plugin
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -PignoreNativeLibs=true -Prealm.kotlin.mainHost=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -502,7 +502,7 @@ jobs:
           
       - name: Build JVM Package
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -PignoreNativeLibs=true -PcopyJvmABIs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=true -Prealm.kotlin.mainHost=false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -620,7 +620,7 @@ jobs:
 
       - name: Build Android Test Apk
         working-directory: packages
-        run: ./gradlew  :test-base:assembleAndroidTest -PignoreNativeLibs=true
+        run: ./gradlew  :test-base:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
       - name: Fetching the BAAS CLI hostname
@@ -638,7 +638,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -PignoreNativeLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       - name: APK zipinfo
         run: zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
@@ -1598,16 +1598,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # These contain broken JVM publications, so need to be restored first, so they
+      # can be overidden with the correct ones.
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
       - name: Restore Android artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
-
-      - name: Restore JVM artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore JVM artifacts
@@ -1638,12 +1640,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
-
-      - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Upload artifacts bundle

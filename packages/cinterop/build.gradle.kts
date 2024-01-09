@@ -64,7 +64,7 @@ val buildType: BuildType = if ((System.getenv("CONFIGURATION") ?: "RELEASE").equ
 fun checkIfBuildingNativeLibs(task: Task, action: Task.() -> Unit) {
     // Whether or not to build the underlying native Realm Libs. Generally these are only
     // needed at runtime and thus can be ignored when only building the layers on top
-    if (project.extra.properties["ignoreNativeLibs"] != "true") {
+    if (project.extra.properties["realm.kotlin.buildRealmCore"] == "true") {
         action(task)
     } else {
         logger.warn("Ignore building native libs")
@@ -288,25 +288,6 @@ kotlin {
             }
         }
     }
-
-    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
-    /***
-     * Uncommenting below will cause the aritifact to not be published for cinterop-jvm coordinate:
-     * > Task :cinterop:publishJvmPublicationToMavenLocal SKIPPED
-     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Starting
-     Skipping task ':cinterop:publishJvmPublicationToMavenLocal' as task onlyIf is false.
-     Task :cinterop:publishJvmPublicationToMavenLocal in cinterop Finished
-     :cinterop:publishJvmPublicationToMavenLocal (Thread[Execution worker for ':',5,main]) completed. Took 0.0 secs.
-     */
-//    configure(listOf(targets["metadata"], jvm())) {
-//        mavenPublication {
-//            val targetPublication = this@mavenPublication
-//            tasks.withType<AbstractPublishToMaven>()
-//                .matching { it.publication == targetPublication }
-//                .all { onlyIf { findProperty("isMainHost") == "true" } }
-//        }
-//    }
 }
 
 android {
@@ -376,7 +357,7 @@ if (HOST_OS.isMacOs()) {
     val capiSimulatorArm64 by tasks.registering {
         build_C_API_Simulator("arm64", buildType)
     }
-    
+
     // Building for ios device (arm64 only)
     val capiIosArm64 by tasks.registering {
         build_C_API_iOS_Arm64(buildType)
@@ -418,7 +399,7 @@ val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     if (HOST_OS.isMacOs()) {
         buildSharedLibrariesForJVMMacOs()
     } else if (HOST_OS.isWindows()) {
-         buildSharedLibrariesForJVMWindows()
+        buildSharedLibrariesForJVMWindows()
     } else {
         throw IllegalStateException("Building JVM libraries on this platform is not supported: $HOST_OS")
     }
@@ -479,7 +460,7 @@ fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<Str
         add("-DREALM_ENABLE_SYNC=1")
         add("-DREALM_NO_TESTS=1")
         add("-DREALM_BUILD_LIB_ONLY=true")
-		add("-DREALM_CORE_SUBMODULE_BUILD=true")
+        add("-DREALM_CORE_SUBMODULE_BUILD=true")
     }
     return args.toTypedArray()
 }
