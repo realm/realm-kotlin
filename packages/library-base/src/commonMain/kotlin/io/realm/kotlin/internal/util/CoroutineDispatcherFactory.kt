@@ -120,6 +120,10 @@ public class LiveRealmContext(
     }
 
     override fun close() {
+        // Warning: It is important to release the scheduler before closing the
+        // dispatcher. Failing to do it this way might create race conditions on Darwin.
+        // See SingleThreadDispatcherScheduler in RealmInterop for the Darwin
+        // source set.
         scheduler.release()
         dispatcherHolder.close()
     }
