@@ -1190,7 +1190,7 @@ jobs:
           aws-region: us-west-2
 
       - name: Run the Sync tests
-        uses: ./.github/actions/run-android-device-farm-sync-test
+        uses: ./.github/actions/run-android-device-farm-test
         id: run_android_tests
         with:
           apk-path: ${{ github.workspace }}/packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
