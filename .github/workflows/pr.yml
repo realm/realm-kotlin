@@ -1317,6 +1317,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # These contain broken JVM publications, so need to be restored first, so they
+      # can be overidden with the correct ones.
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
       - name: Restore Android artifacts
         uses: actions/download-artifact@v3
         with:
@@ -1357,12 +1365,6 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
-
-      - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Upload artifacts bundle
