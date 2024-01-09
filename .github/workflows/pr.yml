@@ -1337,12 +1337,6 @@ jobs:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
-      - name: Restore JVM artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
-
       - name: Restore MacOS x64 artifacts
         uses: actions/download-artifact@v3
         with:
