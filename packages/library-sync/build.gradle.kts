@@ -20,7 +20,6 @@ plugins {
     id("realm-publisher")
     id("org.jetbrains.dokka")
 }
-
 buildscript {
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
@@ -186,12 +185,12 @@ tasks.withType<org.jetbrains.dokka.gradle.DokkaTaskPartial>().configureEach {
     }
 }
 
- tasks.register("dokkaJar", Jar::class) {
-     val dokkaTask = "dokkaHtmlPartial"
-     dependsOn(dokkaTask)
-     archiveClassifier.set("dokka")
-     from(tasks.named(dokkaTask).get().outputs)
- }
+tasks.register("dokkaJar", Jar::class) {
+    val dokkaTask = "dokkaHtmlPartial"
+    dependsOn(dokkaTask)
+    archiveClassifier.set("dokka")
+    from(tasks.named(dokkaTask).get().outputs)
+}
 
 val javadocJar by tasks.registering(Jar::class) {
     archiveClassifier.set("javadoc")
