@@ -571,7 +571,7 @@ jobs:
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          OUTPUT=$(bash cli.sh start)
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       # TODO This cmake version is not being used by the Android builds. Figure out why.
@@ -1259,7 +1259,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start -t foo=bar)
+          OUTPUT=$(bash cli.sh start -t foo=bar | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1379,7 +1379,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start -t foo=bar)
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1505,7 +1505,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start -t foo=bar)
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
