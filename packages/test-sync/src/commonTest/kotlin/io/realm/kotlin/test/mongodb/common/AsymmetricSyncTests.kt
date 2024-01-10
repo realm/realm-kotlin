@@ -114,6 +114,9 @@ class AsymmetricSyncTests {
     @AfterTest
     fun tearDown() {
         realm.close()
+        runBlocking {
+            app.deleteDocuments(app.clientAppId, Measurement::class.simpleName!!, "{}")
+        }
         if (this::app.isInitialized) {
             app.close()
         }
@@ -328,7 +331,7 @@ class AsymmetricSyncTests {
                 delay(1.seconds)
             }
         }
-        assertTrue(found, "Number of documents was: $documents")
+        assertTrue(found, "Number of documents was: $documents [initialCount: $initialCount, expectedCount: $expectedCount]")
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {
