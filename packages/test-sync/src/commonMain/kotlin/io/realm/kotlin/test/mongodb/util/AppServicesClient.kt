@@ -20,6 +20,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
@@ -222,7 +223,13 @@ class AppServicesClient(
                 install(Logging) {
                     // Set to LogLevel.ALL to debug Admin API requests. All relevant
                     // data for each request/response will be console or LogCat.
-                    level = LogLevel.INFO
+                    level = LogLevel.ALL
+                    logger = object : Logger {
+                        override fun log(message: String) {
+                            println("LOG: $message")
+                        }
+
+                    }
                 }
             }
 
