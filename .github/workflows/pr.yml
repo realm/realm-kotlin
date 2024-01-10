@@ -562,7 +562,6 @@ jobs:
           echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
           gh repo clone 10gen/baasaas
           
-
       # Start BAAS instance in the background
       # We save the container id to poll against and get the hostname info later
       - name: Start Baas instance in the background
