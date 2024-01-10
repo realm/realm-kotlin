@@ -18,11 +18,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="io.realm.sync.testapp">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-
     <application
         android:largeHeap="true"
-        android:usesCleartextTraffic="true">
+        android:networkSecurityConfig="@xml/network_security_config">
         <profileable android:shell="true"/>
     </application>
 
