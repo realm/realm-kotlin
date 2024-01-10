@@ -28,6 +28,7 @@
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
+* Adding Sync tests via Github Action.
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)

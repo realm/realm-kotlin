@@ -301,23 +301,29 @@ jobs:
       id: android-test-sync-apk
       uses: cmelchior/cache@main
       with:
-        path: ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
         key: android-sync-test-apk-key-${{ steps.packages-cache-key.outputs.sha }}
+        path: |
+          ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+          ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
     - name: Save Android Sync Test APK
       uses: actions/upload-artifact@v3
-      if: steps.android-test-sync-apk.outputs.cache-hit == 'true'
+      if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
       with:
         name: android-sync-test-apk-${{ steps.find-library-version.outputs.label }}
-        path: ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
         retention-days: 1
+        path: |
+          ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+          ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
     - name: Delete Android Sync Test APK cache files
       id: delete-cache-android-sync-test-apk
       uses: JesseTG/rm@v1.0.3
-      if: steps.android-test-sync-apk.outputs.cache-hit == 'true'
+      if: always() && !cancelled() && steps.android-test-sync-apk.outputs.cache-hit == 'true'
       with:
-        path: ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+        path: |
+          ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+          ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
 
     #
     # MacOS arm64
