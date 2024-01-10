@@ -36,12 +36,13 @@ import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
@@ -258,13 +259,13 @@ class SyncSessionTests {
         val config1 = SyncConfiguration.Builder(
             user1,
             partitionValue,
-            schema = FLX_SYNC_SCHEMA
+            schema = PARTITION_BASED_SCHEMA
         ).name("user1.realm")
             .build()
         val config2 = SyncConfiguration.Builder(
             user2,
             partitionValue,
-            schema = FLX_SYNC_SCHEMA
+            schema = PARTITION_BASED_SCHEMA
         ).name("user2.realm")
             .build()
 
@@ -318,13 +319,13 @@ class SyncSessionTests {
         // See 'canWritePartition' in TestAppInitializer.kt.
         val (email, password) = "test_nowrite_noread_${TestHelper.randomEmail()}" to "password1234"
         val user = app.createUserAndLogIn(email, password)
-        val channel = Channel<SyncSession>(1)
+        val channel = TestChannel<SyncSession>()
         val config = SyncConfiguration.Builder(
-            schema = PARTITION_SYNC_SCHEMA,
+            schema = PARTITION_BASED_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).errorHandler { session, _ ->
-            channel.trySend(session)
+            channel.trySendOrFail(session)
         }.build()
 
         var realm: Realm? = null
@@ -382,7 +383,7 @@ class SyncSessionTests {
     @Test
     fun syncingObjectIdFromMongoDB() = runBlocking {
         val adminApi = app.asTestApp
-        val config = SyncConfiguration.Builder(user, partitionValue, schema = PARTITION_SYNC_SCHEMA).build()
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = PARTITION_BASED_SCHEMA).build()
         Realm.open(config).use { realm ->
             val json: JsonObject = adminApi.insertDocument(
                 ObjectIdPk::class.simpleName!!,
@@ -396,12 +397,12 @@ class SyncSessionTests {
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
 
-            val channel = Channel<ObjectIdPk>(1)
+            val channel = TestChannel<ObjectIdPk>()
             val job = async {
                 realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {
                         if (it.obj != null) {
-                            channel.trySend(it.obj!!)
+                            channel.send(it.obj!!)
                         }
                     }
             }
@@ -427,7 +428,7 @@ class SyncSessionTests {
             val config = SyncConfiguration.Builder(
                 user,
                 partitionValue,
-                schema = PARTITION_SYNC_SCHEMA
+                schema = PARTITION_BASED_SCHEMA
             )
                 .build()
             Realm.open(config).use { realm ->
@@ -477,11 +478,11 @@ class SyncSessionTests {
     @Test
     fun getConfiguration_inErrorHandlerThrows() = runBlocking {
         // Open and close a realm with a schema.
-        val channel = Channel<SyncSession>(1)
+        val channel = TestChannel<SyncSession>()
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = app.createUserAndLogIn(email, password)
         val config1 = SyncConfiguration.Builder(
-            schema = FLX_SYNC_SCHEMA,
+            schema = FLEXIBLE_SYNC_SCHEMA,
             user = user,
             partitionValue = partitionValue
         ).name("test1.realm").build()
@@ -499,7 +500,7 @@ class SyncSessionTests {
             partitionValue = partitionValue
         )
             .name("test2.realm")
-            .errorHandler { session, _ -> channel.trySend(session) }
+            .errorHandler { session, _ -> channel.trySendOrFail(session) }
             .build()
         Realm.open(config2).use { realm2 ->
             // Await the sync session sent.

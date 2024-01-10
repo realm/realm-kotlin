@@ -22,18 +22,22 @@ import io.realm.kotlin.entities.link.Child
 import io.realm.kotlin.entities.link.Parent
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlin.random.Random
+import kotlin.random.nextUInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.test.fail
 import kotlin.time.Duration.Companion.seconds
 
 fun totalThreadCount() = Thread.getAllStackTraces().size
@@ -42,6 +46,18 @@ fun totalThreadCount() = Thread.getAllStackTraces().size
  * Realm tests that are specific to the JVM platform (both Desktop and Android).
  */
 class RealmTests {
+
+    // Test for https://github.com/Kotlin/kotlinx.coroutines/issues/3993
+    @Test
+    fun submittingToClosedDispatcherIsANoop() {
+        val dispatcher = singleThreadDispatcher("test-${Random.nextUInt()}")
+        dispatcher.close()
+        runBlocking {
+            launch(dispatcher) {
+                fail("Dispatcher was running")
+            }
+        }
+    }
 
     @Test
     fun cleanupDispatcherThreadsOnClose() = runBlocking {
@@ -81,7 +97,7 @@ class RealmTests {
         // Closing a Realm should also cleanup our default (internal) dispatchers.
         // The core notifier and the finalizer thread will never be closed.
         val expectedThreadCount = initialThreads.size + 1 /* core-notifier */ + if (finalizerRunning) 0 else 1
-        var counter = 10 // Wait 5 seconds for threads to settle
+        var counter = 10 // Wait 10 seconds for threads to settle
         while (newThreads().any { !it.isDaemon } && counter > 0) {
             delay(1000)
             counter--
@@ -110,7 +126,7 @@ class RealmTests {
             Realm.open(configuration).close()
             // ClosableCoroutineDispatcher doesn't expose whether or not it has been closed, so test
             // if it has been closed by running work on it.
-            val channel = Channel<Int>(1)
+            val channel = TestChannel<Int>()
             async(notificationDispatcher) {
                 channel.send(1)
             }

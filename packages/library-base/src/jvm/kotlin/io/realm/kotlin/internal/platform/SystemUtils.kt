@@ -1,15 +1,12 @@
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.Constants.FILE_COPY_BUFFER_SIZE
-import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.util.Exceptions
-import io.realm.kotlin.types.RealmInstant
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
 import java.security.DigestInputStream
 import java.security.MessageDigest
-import java.time.Clock.systemUTC
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
@@ -23,15 +20,6 @@ public actual fun threadId(): ULong {
 
 public actual fun epochInSeconds(): Long =
     TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis())
-
-/**
-* Since internalNow() should only logically return a value after the Unix epoch, it is safe to create a RealmInstant
-* without considering having to pass negative nanoseconds.
-*/
-public actual fun currentTime(): RealmInstant {
-    val jtInstant = systemUTC().instant()
-    return RealmInstantImpl(jtInstant.epochSecond, jtInstant.nano)
-}
 
 public actual fun fileExists(path: String): Boolean =
     File(path).let { it.exists() && it.isFile }

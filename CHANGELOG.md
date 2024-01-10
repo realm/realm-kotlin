@@ -1,17 +1,127 @@
-## 1.12.0-SNAPSHOT (YYYY-MM-DD)
+## 1.14.0-SNAPSHOT (YYYY-MM-DD)
 
 ### Breaking Changes
 * None.
 
 ### Enhancements
-* Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. ([#1513](https://github.com/realm/realm-kotlin/issues/1513))
+* [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
 
 ### Fixed
+* Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))
+* Using `Realm.asFlow()` could miss an update if a write was started right after opening the Realm. (Issue [#1582](https://github.com/realm/realm-kotlin/issues/1582)) 
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* Update to Ktor 2.3.4.
+* Updated to CMake 3.27.7
+
+
+## 1.13.1-SNAPSHOT (YYYY-MM-DD)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* Using keypaths in Flows could sometimes throw `java.lang.IllegalStateException: [RLM_ERR_WRONG_THREAD]: Realm accessed from incorrect thread.`. (Issue [#1594](https://github.com/realm/realm-kotlin/pull/1594, since 1.13.0)
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* None.
+
+
+## 1.13.0 (2023-12-01)
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`. (Issue [#1483](https://github.com/realm/realm-kotlin/issues/1483))
+* Added support for keypaths in `asFlow()` methods on objects and queries. This makes it possible to control which properties will trigger change events, including properties on objects below the default nested limit of 4. (Issue [#661](https://github.com/realm/realm-kotlin/issues/661))
+* [Sync] Added support for multiplexing sync connections. When enabled, a single
+  connection is used per sync user rather than one per synchronized Realm. This
+  reduces resource consumption when multiple Realms are opened and will
+  typically improve performance. The behavior can be controlled through [AppConfiguration.Builder.enableSessionMultiplexing]. It will be made the default
+  in a future release. (Issue [#1578](https://github.com/realm/realm-kotlin/pull/1578))  
+* [Sync] Various sync timeout options can now be configured through `AppConfiguration.Builder.syncTimeouts()`. (Issue [#971](https://github.com/realm/realm-kotlin/issues/971)).
+
+### Fixed
+* `RealmInstant.now` used an API (`java.time.Clock.systemUTC().instant()`) introduced in API 26, current minSDK is 16. (Issue [#1564](https://github.com/realm/realm-kotlin/issues/1564))
+* Fix compiler crash caused by a change in Kotlin 1.9.20 ((toIrConst moved under common IrUtils)[https://github.com/JetBrains/kotlin/commit/ca8db7d0b83f6dfd6afcea7a5fe7556d38f325d8]). (Issue [#1566](https://github.com/realm/realm-kotlin/issues/1566))
+* Fix craches caused by posting to a released scheduler. (Issue [#1543](https://github.com/realm/realm-kotlin/issues/1543))
+* Fix NPE when applying query aggregators on classes annotated with `@PersistedName`. (Issue [1569](https://github.com/realm/realm-kotlin/pull/1569))
+* [Sync] Fix crash when syncing data if the log level was set to `LogLevel.TRACE` or `LogLevel.ALL`. (Issue [#1560](https://github.com/realm/realm-kotlin/pull/1560))
+
+### Compatibility
+* File format: Generates Realms with file format v23.
+* Realm Studio 13.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* Updated to Realm Core 13.24.0, commit e593a5f19d0dc205db931ec5618a8c10c95cac90.
+
+
+## 1.12.0 (2023-11-02)
+
+This release upgrades the Sync metadata in a way that is not compatible with older versions. To downgrade a Sync app from this version, you'll need to manually delete the metadata folder located at `$[SYNC-ROOT-DIRECTORY]/mongodb-realm/[APP-ID]/server-utility/metadata/`. This will log out all users.
+
+### Breaking Changes
+* None.
+
+### Enhancements
+* Realm will no longer set the JVM bytecode to 1.8 when applying the Realm plugin. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
+* The Realm Gradle Plugin no longer has a dependency on KAPT. (Issue [#1513](https://github.com/realm/realm-kotlin/issues/1513))
+
+### Fixed
+* `Realm.getNumberOfActiveVersions` now returns the actual number of active versions. (Core issue [#6960](https://github.com/realm/realm-core/pull/6960))
+* Fixed memory leak on Darwin caused by a reference cycle between resources and the GC cleaner. (Issue [#1530](https://github.com/realm/realm-kotlin/pull/1530))
+* Fixed memory leaks on the JVM platform, see PR for more information. (Issue [#1526](https://github.com/realm/realm-kotlin/pull/1526))
+* Removed pin on the initial realm version after opening a Realm. (Issue [#1519](https://github.com/realm/realm-kotlin/pull/1519))
 * `Realm.close()` is now idempotent.
 * Fix error in `RealmAny.equals` that would sometimes return `true` when comparing RealmAnys wrapping same type but different values. (Issue [#1523](https://github.com/realm/realm-kotlin/pull/1523))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] Manual client reset on Windows would not trigger correctly when run inside `onManualResetFallback`. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
-* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
+* [Sync] `ClientResetRequiredException.executeClientReset()` now returns a boolean indicating if the manual reset fully succeeded or not. (Issue [#1515](https://github.com/realm/realm-kotlin/pull/1515))  
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for 
 GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * [Sync] If calling a function on App Services that resulted in a redirect, it would only redirect for GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
@@ -20,7 +130,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * File format: Generates Realms with file format v23.
 * Realm Studio 13.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.8.0 and above. The K2 compiler is not supported yet.
+  * Kotlin 1.8.20 and above. The K2 compiler is not supported yet.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
@@ -31,7 +141,7 @@ GET requests. (Issue [#1517](https://github.com/realm/realm-kotlin/pull/1517))
 * Minimum Android SDK: 16.
 
 ### Internal
-* None.
+* Updated to Realm Core 13.23.2, commit e6271d72308b40399890060f58a88cf568c2ee22.
 
 
 ## 1.11.1 (2023-09-07)

@@ -23,7 +23,6 @@ import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.ObjectIdImpl
-import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
@@ -600,18 +599,12 @@ public interface SyncConfiguration : Configuration {
                 )
             }.let { auxSyncConfig ->
                 RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
-                    (user as UserImpl).app.nativePointer,
                     auxSyncConfig,
                     name
                 )
             }
 
-            // Remove .realm extension if user has overridden filename manually
-            return if (name != null) {
-                absolutePath.removeSuffix(REALM_FILE_EXTENSION)
-            } else {
-                absolutePath
-            }
+            return absolutePath
         }
     }
 

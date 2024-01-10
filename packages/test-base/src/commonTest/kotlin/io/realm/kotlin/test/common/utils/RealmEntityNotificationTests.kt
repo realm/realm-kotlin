@@ -22,7 +22,7 @@ package io.realm.kotlin.test.common.utils
  * RealmResults) should implement this interface to be sure that we test common behaviour across
  * those classes.
  */
-interface RealmEntityNotificationTests : FlowableTests {
+interface RealmEntityNotificationTests : FlowableTests, KeyPathFlowableTests {
     // Verify that we get deletion events and close the Flow when the object being observed (or
     // containing object) is deleted.
     fun deleteEntity()

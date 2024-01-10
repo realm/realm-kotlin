@@ -33,7 +33,7 @@ jobs:
   build-jni-swig-stub:
     runs-on: ubuntu-latest
     needs: check-cache
-    if: needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -57,6 +57,11 @@ jobs:
           path: ./packages/jni-swig-stub/build/generated/sources/jni
           key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
 
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
+          
       # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
       # 4.1.0 is not available in apt-get, so use brew instead
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
@@ -73,7 +78,7 @@ jobs:
 
       - name: Build JNI Stub
         working-directory: ./packages
-        run: ./gradlew :jni-swig-stub:assemble -PignoreNativeLibs=true
+        run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       # TODO Do we need to cache something or just built it every time?
       - name: Upload artifacts
@@ -86,9 +91,12 @@ jobs:
   build-jvm-linux-native-lib:
     runs-on: ubuntu-latest
     needs: [check-cache, build-jni-swig-stub]
-    if: always() &&
-        (needs.build-jni-swig-stub.result == 'success' || needs.build-jni-swig-stub.result == 'skipped') &&
-        needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -99,8 +107,13 @@ jobs:
       - name: Setup build cache
         uses: actions/cache@v3
         with:
-          path: ./packages/cinterop/src/jvmMain/linux-build-dir
+          path: ./packages/cinterop/build/realmLinuxBuild
           key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -122,27 +135,32 @@ jobs:
           shell: bash
           options: -v ${{ github.workspace }}:/work
           run: |
-            cd /work/packages/cinterop/src/jvmMain/
-            rm -rf linux-build-dir
-            mkdir linux-build-dir
-            cd linux-build-dir
-            cmake ../../jvm
+            cd /work/packages/cinterop
+            mkdir build
+            cd build
+            rm -rf realmLinuxBuild
+            mkdir realmLinuxBuild
+            cd realmLinuxBuild
+            cmake ../../src/jvm
             make -j8
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/src/jvmMain/linux-build-dir/librealmc.so 
+          path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so 
           retention-days: 1
 
   # TODO Is the `if` check enough? Should we also compare the swig stub?
   build-jvm-windows-native-lib:
     runs-on: windows-latest
     needs: [check-cache, build-jni-swig-stub]
-    if: always() &&
-        (needs.build-jni-swig-stub.result == 'success' || needs.build-jni-swig-stub.result == 'skipped') &&
-        needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -162,9 +180,14 @@ jobs:
       - name: Setup build cache
         uses: actions/cache@v3
         with:
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir
+          path: ./packages/cinterop/build/realmWindowsBuild
           key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
           enableCrossOsArchive: true
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -176,12 +199,14 @@ jobs:
         shell: powershell
         working-directory: packages
         run: |
-          cd cinterop\src\jvmMain
-          Remove-Item -Path windows-build-dir -Force -Recurse -ErrorAction Ignore
-          mkdir windows-build-dir
-          cd windows-build-dir
+          cd cinterop
+          mkdir build  
+          cd build
+          Remove-Item -Path realmWindowsBuild -Force -Recurse -ErrorAction Ignore
+          mkdir realmWindowsBuild
+          cd realmWindowsBuild
           cmake `
-          ..\..\jvm `
+          ..\..\src\jvm `
           -DCMAKE_GENERATOR_PLATFORM=x64 `
           -DCMAKE_BUILD_TYPE=Release `
           -DREALM_ENABLE_SYNC=ON `
@@ -193,17 +218,18 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release/realmc.dll
+          path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
           retention-days: 1
 
-  # TODO If building jvm lib for windows fails, this step just skips instead of failing the entire build, why?
-  build-jvm-packages:
+  build-jvm-macos-native-lib:
     runs-on: macos-latest
-    needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib]
-    if: always() && 
-        (needs.build-jvm-linux-native-lib.result == 'success' || needs.build-jvm-linux-native-lib.result == 'skipped') &&
-        (needs.build-jvm-windows-native-lib.result == 'success' || needs.build-jvm-windows-native-lib.result == 'skipped') &&
-        needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
+    needs: [check-cache, build-jni-swig-stub]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -226,11 +252,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -242,7 +267,196 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: 'jvm-macos-native-lib'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      - name: Debug environment
+        run: |
+          env
+          type cmake
+          cmake --version
+          type ninja
+          ninja --version
+
+      # TODO Figure out naming schema and retention policy
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/cinterop/build/realmMacOsBuild
+          key: jni-macos-lib-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Restore JNI Swig Stubs
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni        
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew buildJVMSharedLibs -Prealm.kotlin.mainHost=false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmMacOsBuild/librealmc.dylib
+          retention-days: 1     
+
+  build-kotlin-metadata-package:
+    runs-on: ubuntu-latest
+    needs: [check-cache]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.packages-metadata-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
+      #  https://github.com/actions/setup-java#caching-packages-dependencies
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
+      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
+
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: '1.11.0'
+
+      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'metadata-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r23c
+
+      - name: Debug environment
+        run: |
+          env
+          type cmake
+          cmake --version
+          type ninja
+          ninja --version
+
+      # TODO Figure out naming schema and retention policy
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-metadata-${{ needs.check-cache.outputs.packages-sha }}
+          
+      - name: Build Kotlin Metadata and Gradle and Compiler Plugin
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+
+  # This task is also responsible for creating the Gradle and Compiler Plugin as well as 
+  # all Kotlin Multiplatform Metadata
+  build-jvm-packages:
+    runs-on: macos-latest
+    needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib, build-jvm-macos-native-lib]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
+      #  https://github.com/actions/setup-java#caching-packages-dependencies
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 11
+
+      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
+      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: '3.27.7'
+
+      # TODO This Ninja version is not being used by the Android builds. Figure out why. 
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: '1.11.0'
+
+      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'jvm-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -282,17 +496,23 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/src/jvmMain/linux-build-dir
+          path: ./packages/cinterop/build/realmLinuxBuild
 
       - name: Restore Windows JNI lib
         uses: actions/download-artifact@v3
         with:
           name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/cinterop/src/jvmMain/windows-build-dir/Release
+          path: ./packages/cinterop/build/realmWindowsBuild/Release
 
-      - name: Build packages
+      - name: Restore MacOS JNI lib
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmMacOsBuild
+          
+      - name: Build JVM Package
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -PcopyJvmABIs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=true -Prealm.kotlin.mainHost=false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -306,9 +526,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-cache
     if: |
-      needs.check-cache.outputs.packages-android-cache-hit != 'true' ||
+      always() && !cancelled() &&
+      (needs.check-cache.outputs.packages-android-cache-hit != 'true' ||
       needs.check-cache.outputs.needs.check-cache.outputs.android-test-base-apk-cache-hit != 'true' ||
-      needs.check-cache.outputs.needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true'
+      needs.check-cache.outputs.needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true')
 
     steps:
       - name: Checkout code
@@ -345,11 +566,10 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -361,7 +581,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: 'android-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -391,7 +611,7 @@ jobs:
 
       - name: Build Android Base Test Apk
         working-directory: packages
-        run: ./gradlew  :test-base:assembleAndroidTest -PignoreNativeLibs=true
+        run: ./gradlew  :test-base:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       - name: Build Android Sync Test Apk
         working-directory: packages
@@ -405,7 +625,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -448,7 +668,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -471,11 +691,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -487,7 +706,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: 'macos-x64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -511,7 +730,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -534,7 +753,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -557,11 +776,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -573,7 +791,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: 'macos-arm64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -589,7 +807,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -612,7 +830,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: needs.check-cache.outputs.packages-ios-x64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-x64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -635,11 +853,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -651,7 +868,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: 'ios-x64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -667,7 +884,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -690,7 +907,7 @@ jobs:
     runs-on: macos-latest
     needs: check-cache
     # needs: static-analysis
-    if: needs.check-cache.outputs.packages-ios-arm64-cache-hit != 'true'
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-arm64-cache-hit != 'true'
 
     steps:
       - name: Checkout code
@@ -713,11 +930,10 @@ jobs:
         with:
           cache-read-only: false
 
-      # TODO This cmake version is not being used by the Android builds. Figure out why. 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.25.2'
+          cmake-version: '3.27.7'
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
@@ -729,7 +945,7 @@ jobs:
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
-          key: ${{ github.job }}
+          key: 'ios-arm64-package'
           max-size: '2.0G'
 
       - name: Prepend ccache executables to the PATH
@@ -745,7 +961,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 -PignoreNativeLibs=true
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 -Prealm.kotlin.mainHost=false
 
       # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
@@ -779,12 +995,12 @@ jobs:
             test-title: Unit Test Results - Android Sync (Emulator)
  
     runs-on: macos-latest
-    needs: [check-cache, deploy-baas, build-android-packages, build-jvm-packages]
+    needs: [check-cache, deploy-baas, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
-      always() &&
-      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
-      (needs.deploy-baas.result == 'success')
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -803,6 +1019,12 @@ jobs:
         with:
           cache-read-only: false
 
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
       - name: Restore m2-buildrepo (Android)
         uses: actions/download-artifact@v3
         with:
@@ -815,6 +1037,32 @@ jobs:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
+      # - name: AVD cache
+      #   uses: actions/cache@v3
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: android-emulator-avd-33
+
+      # - name: create AVD and generate snapshot for caching
+      #   if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 33
+      #     target: default
+      #     # target: aosp_atd
+      #     arch: x86_64        
+      #     disk-size: 4096M
+      #     ram-size: 2048M
+      #     heap-size: 1024M
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: true
+      #     channel: canary
+      #     script: echo "Generated AVD snapshot for caching."
+
       # TODO Can we read api level from Config.kt
       # TODO This action does not support using `\` to split multiline scripts.
       - name: Run Integration Tests
@@ -822,13 +1070,18 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 31
-          target: default # Only `google_apis` are available on 33, which has issues creating temporary folders
-          arch: x86_64
-          profile: Nexus 6
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          # force-avd-creation: true
+          api-level: 33 # Must be 30 to support aosp_atd
+          target: default
+          # target: aosp_atd
+          arch: x86_64        
+          # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
+          channel: canary
           script: |
             adb logcat -c
             adb logcat > logcat.txt &
@@ -870,10 +1123,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ check-cache, deploy-baas, build-android-packages, build-jvm-packages ]
     if: |
-      always() &&
-      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
-      (needs.deploy-baas.result == 'success')
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -925,12 +1178,14 @@ jobs:
  
     runs-on: ${{ matrix.os }}
     # TODO Do we need to wait for all matrix builds?
+    # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, deploy-baas, build-macos-x64-packages] #, build-macos-arm64-packages] 
+    needs: [check-cache, deploy-baas, build-macos-x64-packages, build-kotlin-metadata-package] #, build-macos-arm64-packages] 
     if: |
-      always() &&
-      (needs.build-macos-x64-packages.result == 'success' || needs.build-macos-x64-packages.result == 'skipped') &&
-      (needs.deploy-baas.result == 'success')
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -951,6 +1206,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Run tests
@@ -1000,12 +1261,14 @@ jobs:
  
     runs-on: ${{ matrix.os }}
     # TODO Do we need to wait for all matrix builds?
+    # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, deploy-baas, build-macos-x64-packages, build-ios-x64-packages] # , build-ios-arm64-packages] 
+    needs: [check-cache, deploy-baas, build-ios-x64-packages, build-kotlin-metadata-package] # , build-ios-arm64-packages] 
     if: |
-      always() &&
-      (needs.build-ios-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped') &&
-      (needs.deploy-baas.result == 'success')
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -1033,6 +1296,13 @@ jobs:
         with:
           name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
 
       # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
       - name: Run tests
@@ -1095,11 +1365,12 @@ jobs:
             test-title: Unit Test Results - Sync JVM Windows
  
     runs-on: ${{ matrix.os }}
-    needs: [check-cache, build-jvm-packages, deploy-baas]
+    needs: [check-cache, deploy-baas, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
-      (needs.deploy-baas.result == 'success')
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
@@ -1115,6 +1386,12 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           cache-read-only: false
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
 
       - name: Restore m2-buildrepo
         uses: actions/download-artifact@v3
@@ -1148,30 +1425,29 @@ jobs:
 
   package-all-artifacts: 
     runs-on: ubuntu-latest
-    needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages]
+    needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages, build-kotlin-metadata-package]
     if: |
-      always() &&
-      (needs.build-android-packages.result == 'success' || needs.build-android-packages.result == 'skipped') &&
-      (needs.build-jvm-packages.result == 'success' || needs.build-jvm-packages.result == 'skipped') &&
-      (needs.build-macos-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped') &&
-      (needs.build-macos-arm64-packages.result == 'success' || needs.build-macos-arm64-packages.result == 'skipped') &&
-      (needs.build-ios-x64-packages.result == 'success' || needs.build-ios-x64-packages.result == 'skipped') &&
-      (needs.build-ios-arm64-packages.result == 'success' || needs.build-ios-arm64-packages.result == 'skipped')
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # These contain broken JVM publications, so need to be restored first, so they
+      # can be overidden with the correct ones.
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
       - name: Restore Android artifacts
         uses: actions/download-artifact@v3
         with:
           name: packages-android-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
-
-      - name: Restore JVM artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
       - name: Restore JVM artifacts
@@ -1215,12 +1491,13 @@ jobs:
     uses: ./.github/workflows/include-integration-tests.yml
     needs: [check-cache, package-all-artifacts]
     if: |
-      always() &&
-      (needs.package-all-artifacts.result == 'success' || needs.package-all-artifacts.result == 'skipped')
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
-  # TODO: Should only deploy snapshots from certain branches. For now deploy always until GHA branch is closer to being done.
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
     needs: [ 
@@ -1234,18 +1511,13 @@ jobs:
              test-android-packages-device-farm,
              package-all-artifacts
            ]
-    if: always() && 
-        endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-        needs.check-cache.result == 'success' &&
-        needs.static-analysis.result == 'success' &&
-        needs.static-analysis.result == 'success' &&
-        needs.integration-tests.result == 'success' &&
-        needs.test-jvm-packages.result == 'success' &&
-        needs.test-macos-packages.result == 'success' &&
-        needs.test-ios-packages.result == 'success' &&
-        needs.test-android-packages-emulator.result == 'success' &&
-        needs.test-android-packages-device-farm.result == 'success' &&
-        needs.package-all-artifacts.result == 'success'
+    if: |
+      always() && 
+      !cancelled() && 
+      endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases')
 
     secrets: inherit
     with:

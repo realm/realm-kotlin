@@ -271,6 +271,12 @@ kotlin {
     }
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile>().all {
+    kotlinOptions {
+        freeCompilerArgs += listOf("-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+    }
+}
+
 // Rules for getting Kotlin Native resource test files in place for locating it with the `assetFile`
 // configuration. For JVM platforms the files are placed in
 // `src/jvmTest/resources`(non-Android JVM) and `src/androidTest/assets` (Android).

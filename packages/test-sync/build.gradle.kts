@@ -313,6 +313,7 @@ buildkonfig {
             buildConfigField(Type.STRING, "privateApiKey", "")
         }
         buildConfigField(Type.STRING, "clusterName", getPropertyValue("syncTestClusterName") ?: "")
+        buildConfigField(Type.BOOLEAN, "usePlatformNetworking",  getPropertyValue("syncUsePlatformNetworking") ?: "false")
     }
 }
 

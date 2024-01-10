@@ -49,8 +49,10 @@ import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.addEmailProvider
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeFlexibleSync
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializePartitionSync
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.async
@@ -133,6 +135,7 @@ class SyncClientResetIntegrationTests {
 
                 block(syncMode, app, user, configBuilderGenerator(user))
             } finally {
+                logChannel.close()
                 app.close()
             }
         }
@@ -159,7 +162,7 @@ class SyncClientResetIntegrationTests {
                 configBuilderGenerator = { user ->
                     return@TestEnvironment SyncConfiguration.Builder(
                         user,
-                        FLX_SYNC_SCHEMA
+                        FLEXIBLE_SYNC_SCHEMA
                     ).initialSubscriptions { realm ->
                         realm.query<FlexParentObject>(
                             "section = $0 AND name = $1",
@@ -214,7 +217,7 @@ class SyncClientResetIntegrationTests {
                 return@TestEnvironment SyncConfiguration.Builder(
                     user,
                     TestHelper.randomPartitionValue(),
-                    schema = PARTITION_SYNC_SCHEMA
+                    schema = PARTITION_BASED_SCHEMA
                 )
             },
             insertElement = { realm: Realm ->
@@ -315,15 +318,15 @@ class SyncClientResetIntegrationTests {
         ) {
             message?.let {
                 if (message.contains("Client reset: attempting to automatically recover unsynced changes in Realm:")) {
-                    channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET)
+                    channel.trySendOrFail(ClientResetLogEvents.DISCARD_LOCAL_ON_BEFORE_RESET)
                 } else if (message.contains("Client reset: successfully recovered all unsynced changes in Realm:")) {
-                    channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RECOVERY)
+                    channel.trySendOrFail(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_RECOVERY)
                 } else if (message.contains("Client reset: couldn't recover successfully, all unsynced changes were discarded in Realm:")) {
-                    channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_DISCARD)
+                    channel.trySendOrFail(ClientResetLogEvents.DISCARD_LOCAL_ON_AFTER_DISCARD)
                 } else if (message.contains("Client reset: manual reset required for Realm in")) {
-                    channel.trySend(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR)
+                    channel.trySendOrFail(ClientResetLogEvents.DISCARD_LOCAL_ON_ERROR)
                 } else if (message.contains("Client reset required on Realm:")) {
-                    channel.trySend(ClientResetLogEvents.MANUAL_ON_ERROR)
+                    channel.trySendOrFail(ClientResetLogEvents.MANUAL_ON_ERROR)
                 } else {
                     // Ignore
                 }
@@ -380,7 +383,7 @@ class SyncClientResetIntegrationTests {
                     // This realm contains something as we wrote an object while the session was paused
                     assertEquals(1, countObjects(realm))
                     // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                    channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
                 }
 
                 override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
@@ -391,7 +394,7 @@ class SyncClientResetIntegrationTests {
                     assertEquals(0, countObjects(after))
 
                     // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                    channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
                 }
 
                 override fun onError(
@@ -421,7 +424,7 @@ class SyncClientResetIntegrationTests {
                     getObjects(realm)
                         .asFlow()
                         .collect {
-                            objectChannel.trySend(it)
+                            objectChannel.send(it)
                         }
                 }
 
@@ -442,10 +445,11 @@ class SyncClientResetIntegrationTests {
 
                 // Validate Realm instance has been correctly updated
                 assertEquals(0, objectChannel.receiveOrFail().list.size)
-
+                objectChannel.close()
                 job.cancel()
             }
         }
+        channel.close()
     }
 
     @Test
@@ -474,7 +478,7 @@ class SyncClientResetIntegrationTests {
             object : DiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                    channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
                 }
 
                 override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
@@ -484,7 +488,7 @@ class SyncClientResetIntegrationTests {
                     recoverData(before, after)
 
                     // Notify that this callback has been invoked
-                    channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                    channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
                 }
 
                 override fun onError(
@@ -514,7 +518,7 @@ class SyncClientResetIntegrationTests {
                     getObjects(realm)
                         .asFlow()
                         .collect {
-                            objectChannel.trySend(it)
+                            objectChannel.send(it)
                         }
                 }
 
@@ -531,15 +535,20 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
 
-                // TODO We must not need this. Force updating the instance pointer.
+                // Object count down to 0 just after the reset
+                assertEquals(0, objectChannel.receiveOrFail().list.size)
+
+                // TODO https://github.com/realm/realm-core/issues/7065
+                // We must not need this. Force updating the instance pointer.
                 realm.write { }
 
                 // Validate Realm instance has been correctly updated
                 assertEquals(1, objectChannel.receiveOrFail().list.size)
-
+                objectChannel.close()
                 job.cancel()
             }
         }
+        channel.close()
     }
 
     @Test
@@ -575,7 +584,7 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Just notify the callback has been invoked, do the assertions in onManualResetFallback
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
 
             override fun onManualResetFallback(
@@ -594,7 +603,7 @@ class SyncClientResetIntegrationTests {
                     exception.message
                 )
 
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
 
@@ -611,6 +620,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     @Test
@@ -650,7 +660,7 @@ class SyncClientResetIntegrationTests {
                 exception: ClientResetRequiredException
             ) {
                 // Just notify the callback has been invoked, do the assertions in onManualResetFallback
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
 
             override fun onManualResetFallback(
@@ -670,7 +680,7 @@ class SyncClientResetIntegrationTests {
                 assertFalse(fileExists(originalFilePath))
                 assertTrue(fileExists(recoveryFilePath))
 
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
 
@@ -686,6 +696,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     @Test
@@ -713,13 +724,13 @@ class SyncClientResetIntegrationTests {
         val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 // Notify that this callback has been invoked
-                channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
                 throw IllegalStateException("User exception")
             }
 
             override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
                 // Send event anyways so that the asserts outside would fail
-                channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
             }
 
             override fun onError(
@@ -731,7 +742,7 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
 
             override fun onManualResetFallback(
@@ -743,7 +754,7 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
 
@@ -759,6 +770,8 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
+
+        channel.close()
     }
 
     @Test
@@ -797,12 +810,12 @@ class SyncClientResetIntegrationTests {
         val config = builder.syncClientResetStrategy(object : DiscardUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 // Notify that this callback has been invoked
-                channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
             }
 
             override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
                 // Notify that this callback has been invoked
-                channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
                 throw IllegalStateException("User exception")
             }
 
@@ -815,7 +828,7 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
 
             override fun onManualResetFallback(
@@ -827,7 +840,7 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
 
@@ -846,6 +859,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     // ---------------------------------------------------------------------------------------
@@ -922,7 +936,7 @@ class SyncClientResetIntegrationTests {
     private fun manuallyRecoverUnsyncedChanges_reported(
         builder: SyncConfiguration.Builder
     ) {
-        val channel = Channel<ClientResetRequiredException>(1)
+        val channel = TestChannel<ClientResetRequiredException>()
 
         val config = builder.syncClientResetStrategy(
             object : ManuallyRecoverUnsyncedChangesStrategy {
@@ -930,7 +944,7 @@ class SyncClientResetIntegrationTests {
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
-                    channel.trySend(exception)
+                    channel.trySendOrFail(exception)
                 }
             }
         ).build()
@@ -954,6 +968,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     @Test
@@ -976,7 +991,7 @@ class SyncClientResetIntegrationTests {
         user: User,
         builder: SyncConfiguration.Builder
     ) {
-        val channel = Channel<ClientResetRequiredException>(1)
+        val channel = TestChannel<ClientResetRequiredException>()
 
         val config = builder.syncClientResetStrategy(
             object : ManuallyRecoverUnsyncedChangesStrategy {
@@ -984,7 +999,7 @@ class SyncClientResetIntegrationTests {
                     session: SyncSession,
                     exception: ClientResetRequiredException
                 ) {
-                    channel.trySend(exception)
+                    channel.trySendOrFail(exception)
                 }
             }
         ).build()
@@ -1006,6 +1021,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     // ---------------------------------------------------------------------------------------
@@ -1036,13 +1052,13 @@ class SyncClientResetIntegrationTests {
         val config = builder.syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 assertEquals(1, countObjects(realm))
-                channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
             }
 
             override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
                 assertEquals(1, countObjects(before))
                 assertEquals(1, countObjects(after))
-                channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
             }
 
             override fun onManualResetFallback(
@@ -1066,6 +1082,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1085,7 +1102,7 @@ class SyncClientResetIntegrationTests {
     private fun recoverUnsyncedChanges_resetErrorHandled(
         builder: SyncConfiguration.Builder
     ) {
-        val channel = Channel<ClientResetRequiredException>(1)
+        val channel = TestChannel<ClientResetRequiredException>()
         val config = builder.syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
                 fail("This test case was not supposed to trigger RecoverUnsyncedChangesStrategy::onBeforeReset()")
@@ -1099,7 +1116,7 @@ class SyncClientResetIntegrationTests {
                 session: SyncSession,
                 exception: ClientResetRequiredException
             ) {
-                channel.trySend(exception)
+                channel.trySendOrFail(exception)
             }
         }).build()
 
@@ -1117,6 +1134,7 @@ class SyncClientResetIntegrationTests {
                 assertTrue(exception.message!!.contains("Simulate Client Reset"))
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1142,13 +1160,13 @@ class SyncClientResetIntegrationTests {
         val channel = Channel<ClientResetEvents>(2)
         val config = builder.syncClientResetStrategy(object : RecoverUnsyncedChangesStrategy {
             override fun onBeforeReset(realm: TypedRealm) {
-                channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
                 throw IllegalStateException("User exception")
             }
 
             override fun onAfterReset(before: TypedRealm, after: MutableRealm) {
                 // Send event anyways so that the asserts outside would fail
-                channel.trySend(ClientResetEvents.ON_AFTER_RESET)
+                channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
             }
 
             override fun onManualResetFallback(
@@ -1160,7 +1178,7 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
 
@@ -1175,6 +1193,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1231,7 +1250,7 @@ class SyncClientResetIntegrationTests {
                     exception.message
                 )
 
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
 
@@ -1245,6 +1264,7 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 
     // ---------------------------------------------------------------------------------------
@@ -1275,11 +1295,11 @@ class SyncClientResetIntegrationTests {
         val config = builder.syncClientResetStrategy(
             object : RecoverOrDiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
-                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                    channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
                 }
 
                 override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
-                    channel.trySend(ClientResetEvents.ON_AFTER_RECOVERY)
+                    channel.trySendOrFail(ClientResetEvents.ON_AFTER_RECOVERY)
                 }
 
                 override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
@@ -1307,6 +1327,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_AFTER_RECOVERY, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1338,7 +1359,7 @@ class SyncClientResetIntegrationTests {
             object : RecoverOrDiscardUnsyncedChangesStrategy {
                 override fun onBeforeReset(realm: TypedRealm) {
                     assertEquals(1, countObjects(realm))
-                    channel.trySend(ClientResetEvents.ON_BEFORE_RESET)
+                    channel.trySendOrFail(ClientResetEvents.ON_BEFORE_RESET)
                 }
 
                 override fun onAfterRecovery(before: TypedRealm, after: MutableRealm) {
@@ -1348,7 +1369,7 @@ class SyncClientResetIntegrationTests {
                 override fun onAfterDiscard(before: TypedRealm, after: MutableRealm) {
                     assertEquals(1, countObjects(before))
                     assertEquals(0, countObjects(after))
-                    channel.trySend(ClientResetEvents.ON_AFTER_DISCARD)
+                    channel.trySendOrFail(ClientResetEvents.ON_AFTER_DISCARD)
                 }
 
                 override fun onManualResetFallback(
@@ -1374,6 +1395,7 @@ class SyncClientResetIntegrationTests {
                 assertEquals(ClientResetEvents.ON_AFTER_DISCARD, channel.receiveOrFail())
             }
         }
+        channel.close()
     }
 
     @Test
@@ -1434,7 +1456,7 @@ class SyncClientResetIntegrationTests {
                     exception.message
                 )
 
-                channel.trySend(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
+                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
         }).build()
 
@@ -1448,5 +1470,6 @@ class SyncClientResetIntegrationTests {
                 }
             }
         }
+        channel.close()
     }
 }

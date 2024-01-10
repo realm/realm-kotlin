@@ -20,10 +20,12 @@ import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.test.platform.NsQueueDispatcher
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.Utils.printlntid
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.newSingleThreadContext
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
@@ -31,9 +33,14 @@ import platform.CoreFoundation.CFRunLoopRun
 import platform.Foundation.NSNumber
 import platform.darwin.DISPATCH_QUEUE_PRIORITY_BACKGROUND
 import platform.darwin.dispatch_get_global_queue
+import kotlin.random.Random
+import kotlin.random.nextUInt
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlin.test.fail
 
 /**
  * Various coroutine tests to track if basic dispatching, etc. works.
@@ -67,7 +74,7 @@ class CoroutineTests {
     @Test
     @Ignore
     fun dispatchQueueScheduler() {
-        val queue = dispatch_get_global_queue(NSNumber(DISPATCH_QUEUE_PRIORITY_BACKGROUND).integerValue, 0)
+        val queue = dispatch_get_global_queue(NSNumber(DISPATCH_QUEUE_PRIORITY_BACKGROUND).integerValue, 0UL)
         val dispatcher = NsQueueDispatcher(queue)
         CoroutineScope(dispatcher).async {
             printlntid("async")
@@ -87,6 +94,24 @@ class CoroutineTests {
         }
         runBlocking(currentDispatcher!!) {
             assertEquals(tid, PlatformUtils.threadId())
+        }
+    }
+
+    // Test for https://github.com/Kotlin/kotlinx.coroutines/issues/3993
+    @Test
+    fun closingDispatchersThrowIllegalState() {
+        val dispatcher = singleThreadDispatcher("test-${Random.nextUInt()}")
+        dispatcher.close()
+        try {
+            runBlocking {
+                launch(dispatcher) {
+                    fail("Dispatcher was running")
+                }
+            }
+            fail("No error was thrown")
+        } catch (ex: IllegalStateException) {
+            assertFalse(ex is CancellationException, "Was: ${ex::class}")
+            assertTrue(ex.message!!.contains("was closed, attempted to schedule"), ex.message)
         }
     }
 }

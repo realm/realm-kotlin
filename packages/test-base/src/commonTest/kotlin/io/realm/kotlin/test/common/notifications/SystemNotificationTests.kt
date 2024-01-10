@@ -80,6 +80,5 @@ class SystemNotificationTests {
         writer2.close()
         liveRealmContext.close()
         baseRealm.close()
-        realm.close()
     }
 }

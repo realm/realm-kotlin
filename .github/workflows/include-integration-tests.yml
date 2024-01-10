@@ -104,19 +104,50 @@ jobs:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
+      # - name: AVD cache
+      #   uses: actions/cache@v3
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: android-emulator-avd-33
+
+      # - name: create AVD and generate snapshot for caching
+      #   if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 33
+      #     target: default
+      #     # target: aosp_atd
+      #     arch: x86_64        
+      #     disk-size: 4096M
+      #     ram-size: 2048M
+      #     heap-size: 1024M
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: true
+      #     channel: canary
+      #     script: echo "Generated AVD snapshot for caching."
+
       # TODO Can we read api level from Config.kt
-      - name: Run compatibility checks with Realm Java
+      - name: Run Gradle Plugin Test project
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
-          target: google_apis # default is not available on 33 yet.
-          arch: x86_64
-          profile: Nexus 6
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          force-avd-creation: false
+          api-level: 33 # Must be 30 to support aosp_atd
+          target: default
+          # target: aosp_atd
+          arch: x86_64        
+          # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
+          channel: canary
           script: cd examples/realm-java-compatibility && ./gradlew connectedAndroidTest -PincludeSdkModules=false --info
 
       # TODO: This fails with `Error: Cannot read property 'trim' of undefined`. Possible a bug in the action.
@@ -162,6 +193,25 @@ jobs:
         run: ./gradlew assemble
 
   gradle-plugin-integration:
+    strategy:
+      matrix:
+        type: [current, currentK2, gradle6, gradle71, gradle75]
+        include:
+          - type: current
+            path: integration-tests/gradle/current
+            arguments: integrationTest
+          - type: currentK2
+            path: integration-tests/gradle/current
+            arguments: -Pkotlin.experimental.tryK2=true integrationTest
+          - type: gradle6
+            path: integration-tests/gradle/gradle6-test
+            arguments: integrationTest
+          - type: gradle71
+            path: integration-tests/gradle/gradle71-test
+            arguments: integrationTest
+          - type: gradle75
+            path: integration-tests/gradle/gradle75-test
+            arguments: integrationTest
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v3
@@ -186,16 +236,126 @@ jobs:
           name: all-packages-${{ inputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
+      # - name: AVD cache
+      #   uses: actions/cache@v3
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: android-emulator-avd-33
+
+      # - name: create AVD and generate snapshot for caching
+      #   if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 33
+      #     target: default
+      #     # target: aosp_atd
+      #     arch: x86_64        
+      #     disk-size: 4096M
+      #     ram-size: 2048M
+      #     heap-size: 1024M
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: true
+      #     channel: canary
+      #     script: echo "Generated AVD snapshot for caching."
+
+      # TODO Can we read api level from Config.kt
       - name: Run Gradle Plugin Test project
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 33
-          target: google_apis # default is not available on 33 yet.
-          arch: x86_64
-          profile: Nexus 6
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          force-avd-creation: false
+          api-level: 33 # Must be 30 to support aosp_atd
+          target: default
+          # target: aosp_atd
+          arch: x86_64        
+          # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
-          script: cd integration-tests/gradle-plugin-test && ./gradlew integrationTest --info
+          channel: canary
+          script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info    
+
+  gradle-plugin-integration-java-17:
+    strategy:
+      matrix:
+        type: [gradle8]
+        include:
+          - type: gradle8
+            path: integration-tests/gradle/gradle8-test
+            arguments: integrationTest
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: zulu
+          java-version: 17
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: all-packages-${{ inputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      # - name: AVD cache
+      #   uses: actions/cache@v3
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: android-emulator-avd-33
+
+      # - name: create AVD and generate snapshot for caching
+      #   if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 33
+      #     target: default
+      #     # target: aosp_atd
+      #     arch: x86_64        
+      #     disk-size: 4096M
+      #     ram-size: 2048M
+      #     heap-size: 1024M
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: true
+      #     channel: canary
+      #     script: echo "Generated AVD snapshot for caching."
+
+      # TODO Can we read api level from Config.kt
+      - name: Run Gradle Plugin Test project
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          force-avd-creation: false
+          api-level: 33 # Must be 30 to support aosp_atd
+          target: default
+          # target: aosp_atd
+          arch: x86_64        
+          # profile: Nexus 6
+          disk-size: 4096M
+          ram-size: 2048M
+          heap-size: 1024M
+          channel: canary
+          script: cd ${{ matrix.path }} && ./gradlew ${{ matrix.arguments }} --info          

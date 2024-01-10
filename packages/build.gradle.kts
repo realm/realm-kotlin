@@ -21,7 +21,6 @@ plugins {
     `java-gradle-plugin`
     id("realm-publisher")
     id("org.jetbrains.dokka") version Versions.dokka
-    id("com.dorongold.task-tree") version "2.1.0"
 }
 
 allprojects {
@@ -34,6 +33,21 @@ allprojects {
     }
 }
 
+/**
+ * Task that will build and publish the defined packages to <root>/packages/build/m2-buildrepo`.
+ * This is mostly suited for CI jobs that wants to build select publications on specific runners.
+ *
+ *
+ * See `gradle.properties` for specific configuration options available to this task.
+ *
+ * For local development, using:
+ *
+ * ```
+ * > ./gradlew publishAllPublicationsToTestRepository
+ * ```
+ *
+ * will build and publish all targets available to the builder platform.
+ */
 tasks.register("publishCIPackages") {
     group = "Publishing"
     description = "Publish packages that has been configured for this CI node. See `gradle.properties`."
@@ -46,46 +60,38 @@ tasks.register("publishCIPackages") {
         "macosX64",
         "macosArm64",
         "android",
-        "metadata"
+        "metadata",
+        "compilerPlugin",
+        "gradlePlugin"
     )
+
     val mainHostTarget: Set<String> = setOf("metadata") // "kotlinMultiplatform"
 
+    val isMainHost: Boolean = project.properties["realm.kotlin.mainHost"]?.let { it == "true" } ?: false
 
-    val isMainHost: Boolean? = if (project.properties.containsKey("realm.kotlin.mainHost"))  {
-        project.properties["realm.kotlin.mainHost"] == "true"
-    } else {
-        null
-    }
     // Find user configured platforms (if any)
-    val userTargets: Set<String>? = (project.properties["realm.kotlin.targets"] as String?)?.split(",")?.toSet()
+    val userTargets: Set<String>? = (project.properties["realm.kotlin.targets"] as String?)
+        ?.split(",")
+        ?.map { it.trim() }
+        ?.filter { it.isNotEmpty() }
+        ?.toSet()
+
     userTargets?.forEach {
         if (!availableTargets.contains(it)) {
             project.logger.error("Unknown publication: $it")
             throw IllegalArgumentException("Unknown publication: $it")
         }
     }
+
     // Configure which platforms publications we do want to publish
-    val wantedTargets: Collection<String> = when (isMainHost) {
-        true -> mainHostTarget + (userTargets ?: availableTargets)
-        false -> userTargets ?: (availableTargets - mainHostTarget)
-        null -> availableTargets
+    val publicationTargets = (userTargets ?: availableTargets).let {
+        when (isMainHost) {
+            true -> it + mainHostTarget
+            false -> it - mainHostTarget
+        }
     }
 
-    // FIXME: We probably don't need to publish plugin and compiler plugins for each node?
-    dependsOn(":gradle-plugin:publishAllPublicationsToTestRepository")
-    dependsOn(":plugin-compiler:publishAllPublicationsToTestRepository")
-    dependsOn(":plugin-compiler-shaded:publishAllPublicationsToTestRepository")
-    if (wantedTargets.contains("jvm") || wantedTargets.contains("android")) {
-        dependsOn(":jni-swig-stub:publishAllPublicationsToTestRepository")
-    }
-
-
-    // TODO When/How to build this?
-    dependsOn(":cinterop:publishKotlinMultiplatformPublicationToTestRepository")
-    dependsOn(":library-base:publishKotlinMultiplatformPublicationToTestRepository")
-    dependsOn(":library-sync:publishKotlinMultiplatformPublicationToTestRepository")
-
-    wantedTargets.forEach { target: String ->
+    publicationTargets.forEach { target: String ->
         when(target) {
             "iosArm64" -> {
                 dependsOn(
@@ -106,6 +112,7 @@ tasks.register("publishCIPackages") {
             }
             "jvm" -> {
                 dependsOn(
+                    ":jni-swig-stub:publishAllPublicationsToTestRepository",
                     ":cinterop:publishJvmPublicationToTestRepository",
                     ":library-base:publishJvmPublicationToTestRepository",
                     ":library-sync:publishJvmPublicationToTestRepository",
@@ -127,6 +134,7 @@ tasks.register("publishCIPackages") {
             }
             "android" -> {
                 dependsOn(
+                    ":jni-swig-stub:publishAllPublicationsToTestRepository",
                     ":cinterop:publishAndroidReleasePublicationToTestRepository",
                     ":library-base:publishAndroidReleasePublicationToTestRepository",
                     ":library-sync:publishAndroidReleasePublicationToTestRepository",
@@ -138,6 +146,15 @@ tasks.register("publishCIPackages") {
                     ":library-base:publishKotlinMultiplatformPublicationToTestRepository",
                     ":library-sync:publishKotlinMultiplatformPublicationToTestRepository",
                 )
+            }
+            "compilerPlugin" -> {
+                dependsOn(
+                    ":plugin-compiler:publishAllPublicationsToTestRepository",
+                    ":plugin-compiler-shaded:publishAllPublicationsToTestRepository"
+                )
+            }
+            "gradlePlugin" -> {
+                dependsOn(":gradle-plugin:publishAllPublicationsToTestRepository")
             }
             else -> {
                 throw IllegalArgumentException("Unsupported target: $target")

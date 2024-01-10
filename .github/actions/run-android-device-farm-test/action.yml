@@ -49,9 +49,14 @@ runs:
         $runs = Get-DFRunList  -Arn ${{ inputs.project-arn }}
         $jobs = Get-DFJobList -Arn $runs[0].Arn
         $suites = Get-DFSuiteList -Arn $jobs[0].Arn
-        $artifacts = Get-DFArtifactList -Arn $suites[1].Arn -Type File | Where-Object { $_.Name -EQ "Logcat" }
+        $fileArtifacts = Get-DFArtifactList -Arn $suites[1].Arn -Type File
+        echo "All File Artifacts:"
+        echo $fileArtifacts
+        $logCatArtifacts = $fileArtifacts | Where-Object { $_.Name -EQ "Logcat" }
+        echo "LogCat Artifacts:"
+        echo $logCatArtifacts
         echo "::group::Logcat"
-        Invoke-WebRequest -Uri $artifacts[0].Url | Select-Object -Expand RawContent
+        Invoke-WebRequest -Uri $logCatArtifacts[0].Url | Select-Object -Expand RawContent
         echo "::endgroup::"
       shell: pwsh
       if: always()

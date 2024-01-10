@@ -45,7 +45,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
-val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partion-based Sync
+val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partition-based Sync
 val TEST_APP_FLEX = syncServerAppName("flx") // With Flexible Sync
 val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 
@@ -148,10 +148,13 @@ open class TestApp private constructor(
                 }
             }
 
+            app.close()
+
+            // Tearing down the SyncSession still relies on the the event loop (powered by the coroutines) of the platform networking
+            //  to post Function Handler, so we need to close it after we close the App
             if (dispatcher is CloseableCoroutineDispatcher) {
                 dispatcher.close()
             }
-            app.close()
 
             // Close network client resources
             closeClient()
@@ -192,7 +195,7 @@ open class TestApp private constructor(
             }
 
             @Suppress("invisible_member", "invisible_reference")
-            var config = AppConfiguration.Builder(appAdmin.clientAppId)
+            val config = AppConfiguration.Builder(appAdmin.clientAppId)
                 .baseUrl(TEST_SERVER_BASE_URL)
                 .networkTransport(networkTransport)
                 .ejson(ejson)
@@ -203,6 +206,9 @@ open class TestApp private constructor(
                             if (customLogger == null) emptyList<RealmLogger>()
                             else listOf<RealmLogger>(customLogger)
                         )
+                    }
+                    if (SyncServerConfig.usePlatformNetworking) {
+                        usePlatformNetworking()
                     }
                 }
 

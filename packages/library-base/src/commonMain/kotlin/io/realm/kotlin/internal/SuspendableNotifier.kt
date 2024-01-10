@@ -4,6 +4,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.LiveRealmContext
@@ -43,7 +44,7 @@ internal class SuspendableNotifier(
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<VersionId>(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        extraBufferCapacity = 1
+        replay = 1
     )
 
     val dispatcher: CoroutineDispatcher = scheduler.dispatcher
@@ -53,7 +54,7 @@ internal class SuspendableNotifier(
     private inner class NotifierRealm : LiveRealm(
         owner = owner,
         configuration = owner.configuration,
-        scheduler = scheduler
+        scheduler = scheduler,
     ) {
         // This is guaranteed to be triggered before any other notifications for the same
         // update as we get all callbacks on the same single thread dispatcher
@@ -88,12 +89,15 @@ internal class SuspendableNotifier(
         // Touching realm will open the underlying realm and register change listeners, but must
         // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
         if (!realmInitializer.isInitialized()) {
-            withContext(dispatcher) { realm }
+            withContext(dispatcher) {
+                realm
+                _realmChanged.emit(realm.version())
+            }
         }
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>): Flow<C> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPathsPtr: RealmKeyPathArrayPointer?): Flow<C> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> =
                 kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
@@ -122,7 +126,7 @@ internal class SuspendableNotifier(
                                 changeFlow.emit(frozenObservable, change)
                             }
                         }
-                    token.value = NotificationToken(lifeRef.registerForNotification(interopCallback))
+                    token.value = NotificationToken(lifeRef.registerForNotification(keyPathsPtr, interopCallback))
                 } else {
                     changeFlow.emit(null)
                 }
