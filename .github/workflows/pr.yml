@@ -1379,7 +1379,6 @@ jobs:
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
-  # TODO: Should only deploy snapshots from certain branches. For now deploy always until GHA branch is closer to being done.
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
     needs: [ 
@@ -1398,7 +1397,8 @@ jobs:
       !cancelled() && 
       endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
       !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled')
+      !contains(needs.*.result, 'cancelled') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases')
 
     secrets: inherit
     with:
