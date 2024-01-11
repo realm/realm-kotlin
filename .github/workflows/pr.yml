@@ -1553,10 +1553,13 @@ jobs:
             os-id: ubu
             type: sync
             test-title: Unit Test Results - Sync JVM Linux
-          - os: windows-latest
-            os-id: win
-            type: sync
-            test-title: Unit Test Results - Sync JVM Windows
+
+          # Disabling Sync Tests on JVM Windows because the bash script 
+          # for starting the container does not run there.
+          # - os: windows-latest
+          #   os-id: win
+          #   type: sync
+          #   test-title: Unit Test Results - Sync JVM Windows
  
     runs-on: ${{ matrix.os }}
     needs: [check-cache, build-jvm-packages, build-kotlin-metadata-package]
