@@ -4,6 +4,10 @@ on:
     paths-ignore:
     - '**.md'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REALM_DISABLE_ANALYTICS: true
   # CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
@@ -1398,8 +1402,8 @@ jobs:
       !cancelled() && 
       endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
       !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled') &&
-      env.IS_RELEASE_BRANCH == 'true'
+      !contains(needs.*.result, 'cancelled')
+      
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
