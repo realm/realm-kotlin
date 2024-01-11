@@ -4,17 +4,13 @@ on:
     paths-ignore:
     - '**.md'
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 env:
   REALM_DISABLE_ANALYTICS: true
   # CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
   # CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
   CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
   CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
-  IS_RELEASE_BRANCH: "false" 
+  IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}" 
 
 jobs:
   static-analysis:
