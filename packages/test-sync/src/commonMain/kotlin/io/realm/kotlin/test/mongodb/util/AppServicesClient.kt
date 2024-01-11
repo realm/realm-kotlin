@@ -228,7 +228,6 @@ class AppServicesClient(
                         override fun log(message: String) {
                             println("LOG: $message")
                         }
-
                     }
                 }
             }
