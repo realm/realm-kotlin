@@ -1052,7 +1052,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start -t foo=bar | jq -r '.id')
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1319,7 +1319,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start -t foo=bar | jq -r '.id')
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1442,7 +1442,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start -t foo=bar | jq -r '.id')
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
@@ -1582,7 +1582,7 @@ jobs:
         run: |
           # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
           #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start -t foo=bar | jq -r '.id')
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
           echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Setup Java 11
