@@ -3,13 +3,18 @@ on:
   pull_request:
     paths-ignore:
     - '**.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REALM_DISABLE_ANALYTICS: true
   # CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
   # CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
   CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
   CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
-  RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
+  IS_RELEASE_BRANCH: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }} 
 
 jobs:
   static-analysis:
@@ -1398,8 +1403,7 @@ jobs:
       endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
       !contains(needs.*.result, 'failure') && 
       !contains(needs.*.result, 'cancelled') &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases')
-
+      env.IS_RELEASE_BRANCH == 'true'
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
