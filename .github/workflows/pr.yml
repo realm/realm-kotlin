@@ -5,11 +5,17 @@ on:
     paths-ignore:
     - '**.md'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   REALM_DISABLE_ANALYTICS: true
-  CMAKE_C_COMPILER: /usr/local/opt/ccache/libexec/clang
-  CMAKE_CXX_COMPILER: /usr/local/opt/ccache/libexec/clang++
-  RELEASE_BRANCHES: "[ 'master', 'releases', 'feature/github-actions' ]"
+  CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
+  CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
+  # Workflow environment variables are not available in Job if statements: https://github.com/actions/runner/issues/1661
+  # For now move this check to the `deploy-snapshot` job and figure out if there is a better way to do this.
+  # IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}" 
 
 jobs:
   static-analysis:
