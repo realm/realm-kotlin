@@ -1557,9 +1557,9 @@ jobs:
           # Do not run Windows Sync Tests, because the bash script for
           # starting the BAAS container doesn not work on Windows.
           - os: windows-latest
-            os-id: win
+            #os-id: win
             type: sync
-            test-title: Unit Test Results - Sync JVM Windows
+            #test-title: Unit Test Results - Sync JVM Windows
 
     runs-on: ${{ matrix.os }}
     needs: [check-cache, build-jvm-packages, build-kotlin-metadata-package]
