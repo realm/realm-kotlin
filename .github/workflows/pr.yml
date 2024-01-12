@@ -16,6 +16,11 @@ env:
   # For now move this check to the `deploy-snapshot` job and figure out if there is a better way to do this.
   # IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}" 
 
+  # Define versions used throughout the different jobs
+  VERSION_JAVA: 11
+
+
+
 jobs:
   static-analysis:
     uses: ./.github/workflows/include-static-analysis.yml
@@ -38,7 +43,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
@@ -237,7 +242,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
       # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
@@ -426,7 +431,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
       # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
@@ -534,7 +539,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
       # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
@@ -659,7 +664,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
       # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
@@ -744,7 +749,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
       # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
@@ -898,7 +903,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
       # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
@@ -979,7 +984,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
@@ -1141,7 +1146,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
@@ -1206,7 +1211,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
@@ -1275,7 +1280,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: zulu
-          java-version: 11
+          java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
