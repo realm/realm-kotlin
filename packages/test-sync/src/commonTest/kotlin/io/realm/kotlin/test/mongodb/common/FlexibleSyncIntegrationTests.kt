@@ -186,9 +186,12 @@ class FlexibleSyncIntegrationTests {
         val user1 = app.createUserAndLogin()
         val config1 = SyncConfiguration.create(user1, FLEXIBLE_SYNC_SCHEMA)
         Realm.open(config1).use { realm ->
-            assertTrue(realm.subscriptions.update {
-                add(realm.query<FlexParentObject>("section = $0", randomSection))
-            }.waitForSynchronization(4.minutes), "Failed to update subscriptions in time")
+            assertTrue(
+                realm.subscriptions.update {
+                    add(realm.query<FlexParentObject>("section = $0", randomSection))
+                }.waitForSynchronization(4.minutes),
+                "Failed to update subscriptions in time"
+            )
 
             realm.write {
                 repeat(10) { counter ->

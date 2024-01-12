@@ -1180,12 +1180,14 @@ jobs:
             bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
           fi
 
+  # Disable device farm test for Base, because running two in parallel seems to interfer somehow 
   test-android-packages-device-farm:
     name: AWS Device Farm
     timeout-minutes: 60
     runs-on: ubuntu-latest
     needs: [ check-cache, build-android-packages, build-jvm-packages ]
     if: |
+      false &&  
       always() && 
       !cancelled() && 
       !contains(needs.*.result, 'failure') && 
@@ -1741,7 +1743,7 @@ jobs:
              test-macos-packages, 
              test-ios-packages, 
              test-android-packages-emulator, 
-             test-android-packages-device-farm,
+             # test-android-packages-device-farm,
              test-android-packages-device-farm-sync,
              package-all-artifacts
            ]
