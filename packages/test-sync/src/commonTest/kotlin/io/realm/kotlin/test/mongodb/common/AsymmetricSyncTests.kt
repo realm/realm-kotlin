@@ -42,6 +42,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
@@ -317,21 +318,23 @@ class AsymmetricSyncTests {
     }
 
     private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {
+        // Variable shared across while must be atomic
+        // https://youtrack.jetbrains.com/issue/KT-64139/Native-Bug-with-while-loop-coroutine-which-is-started-and-stopped-on-the-same-thread
+        var documents = atomic(0)
         var found = false
-        var documents = 0
         var attempt = 30
         // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
         // before giving up.
         while (!found && attempt > 0) {
-            documents = app.countDocuments(clazz) - initialCount
-            if (documents == expectedCount) {
+            documents.value = app.countDocuments(clazz) - initialCount
+            if (documents.value == expectedCount) {
                 found = true
             } else {
                 attempt -= 1
                 delay(1.seconds)
             }
         }
-        assertTrue(found, "Number of documents was: $documents [initialCount: $initialCount, expectedCount: $expectedCount]")
+        assertTrue(found, "Number of documents was: ${documents.value} [initialCount: $initialCount, expectedCount: $expectedCount]")
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {
