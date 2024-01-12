@@ -1410,7 +1410,7 @@ jobs:
             type: sync
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Sync
-            test-task: runCloudIosTests
+            test-task: iosTest
           # - os: macos-arm
           #   package-prefix: macos-arm64
           #   test-title: Results - MacOS arm64 Base
