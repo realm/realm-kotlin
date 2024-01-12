@@ -413,7 +413,8 @@ val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
  * mostly useful on CI.
  */
 val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
-    val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
+    val copyJvmABIs = project.hasProperty("realm.kotlin.copyNativeJvmLibs") && project.property("realm.kotlin.copyNativeJvmLibs") == "true"
+    logger.info("Copy native Realm JVM libraries: $copyJvmABIs")
     if (copyJvmABIs) {
         // copy MacOS pre-built binaries
         project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
