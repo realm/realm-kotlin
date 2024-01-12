@@ -314,7 +314,7 @@ class AsymmetricSyncTests {
     private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {
         var found = false
         var documents = atomic(0)
-        var attempt = 30
+        var attempt = 60
         // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
         // before giving up.
         while (!found && attempt > 0) {
@@ -326,7 +326,8 @@ class AsymmetricSyncTests {
                 delay(1.seconds)
             }
         }
-        assertTrue(found, "Number of documents was: ${documents.value}")
+        println("Found: $found -> ${documents.value}")
+        assertTrue(found, "Number of documents was: ${documents.value}. Expected was: $expectedCount. Initial count: $initialCount")
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {

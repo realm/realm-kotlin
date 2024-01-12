@@ -144,7 +144,7 @@ class FlexibleSyncIntegrationTests {
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
+            assertTrue(realm.subscriptions.waitForSynchronization(4.minutes))
             realm.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
@@ -154,7 +154,7 @@ class FlexibleSyncIntegrationTests {
                 val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
                 add(query, "sub", updateExisting = true)
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
+            assertTrue(realm.subscriptions.waitForSynchronization(4.minutes))
             assertEquals(1, realm.query<FlexParentObject>().count().find())
         }
     }
@@ -186,9 +186,9 @@ class FlexibleSyncIntegrationTests {
         val user1 = app.createUserAndLogin()
         val config1 = SyncConfiguration.create(user1, FLEXIBLE_SYNC_SCHEMA)
         Realm.open(config1).use { realm ->
-            realm.subscriptions.update {
+            assertTrue(realm.subscriptions.update {
                 add(realm.query<FlexParentObject>("section = $0", randomSection))
-            }.waitForSynchronization(30.seconds)
+            }.waitForSynchronization(4.minutes), "Failed to update subscriptions in time")
 
             realm.write {
                 repeat(10) { counter ->
@@ -200,7 +200,7 @@ class FlexibleSyncIntegrationTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges(30.seconds)
+            assertTrue(realm.syncSession.uploadAllLocalChanges(1.minutes), "Failed to upload writes in time")
         }
 
         // User 2 opens a Realm twice
@@ -216,7 +216,7 @@ class FlexibleSyncIntegrationTests {
                     )
                 )
             }
-            .waitForInitialRemoteData(30.seconds)
+            .waitForInitialRemoteData(2.minutes)
             .build()
 
         Realm.open(config2).use { realm ->
