@@ -17,7 +17,12 @@ env:
   # IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}" 
 
   # Define versions used throughout the different jobs
+  VERSION_ANDROID_EMULATOR_API_LEVEL: 33
+  VERSION_CMAKE: '3.27.7'
   VERSION_JAVA: 11
+  VERSION_JAVA_DISTRIBUTION: zulu
+  VERSION_NINJA: '1.11.0'
+
 
 
 
@@ -42,7 +47,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -59,7 +64,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
           
       # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
       # 4.1.0 is not available in apt-get, so use brew instead
@@ -112,7 +117,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -186,7 +191,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -241,7 +246,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -254,13 +259,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -334,7 +339,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: 11
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -347,13 +352,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -430,7 +435,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -443,13 +448,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
 
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -538,7 +543,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -565,13 +570,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
  
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -663,7 +668,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -676,13 +681,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
  
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -748,7 +753,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -761,13 +766,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
  
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -825,7 +830,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: 11
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -838,13 +843,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
  
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -902,7 +907,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -915,13 +920,13 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ env.VERSION_CMAKE }}
 
       # TODO This Ninja version is not being used by the Android builds. Figure out why. 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
         with:
-          version: '1.11.0'
+          version: ${{ env.VERSION_NINJA }}
  
       # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
@@ -983,7 +988,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -1044,7 +1049,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           # force-avd-creation: true
-          api-level: 33 # Must be 30 to support aosp_atd
+          api-level: ${{ env.VERSION_ANDROID_EMULATOR_API_LEVEL }} # Must be 30 to support aosp_atd
           target: default
           # target: aosp_atd
           arch: x86_64        
@@ -1145,7 +1150,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -1210,7 +1215,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -1279,7 +1284,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ env.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ env.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
