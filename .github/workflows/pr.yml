@@ -1501,18 +1501,16 @@ jobs:
           -PincludeSdkModules=false 
           --info --no-daemon
 
-      # IOS Sync Tests currently don't create XML test output, so look in the build log for failures instead.
-      # This is expected to be fixed in Kotlin 1.9.0.
-      # - name: Publish Unit Test Results
-      #   uses: dorny/test-reporter@v1
-      #   if: always() || failure()
-      #   with:
-      #     name: ${{ matrix.test-title }} 
-      #     path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
-      #     reporter: java-junit
-      #     list-suites: failed
-      #     list-tests: failed
-      #     fail-on-error: true
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: ${{ matrix.test-title }} 
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
 
       - name: Stopping the BAAS container
         if: always() && matrix.type == 'sync'
