@@ -38,7 +38,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -237,7 +237,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -329,7 +329,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -424,7 +424,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -531,7 +531,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -655,7 +655,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -739,7 +739,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -815,7 +815,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -891,7 +891,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
@@ -971,7 +971,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -1133,7 +1133,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -1198,7 +1198,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -1267,7 +1267,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
