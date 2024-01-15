@@ -21,7 +21,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Build Gradle Plugin
         working-directory: packages
@@ -70,7 +70,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '3.27.7'
+          cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Build Gradle Plugin
         working-directory: packages

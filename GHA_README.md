@@ -20,6 +20,13 @@ Currently, the Github UI and API only only deleting each cache invidiually. This
 gh api -H 'Accept: application/vnd.github+json' /repos/realm/realm-kotlin/actions/caches --paginate | jq -r '.actions_caches | .[].id' | xargs -I {} sh -c 'gh api --method DELETE -H "Accept: application/vnd.github+json" /repos/realm/realm-kotlin/actions/caches/{} --silent'
 ```
 
+of if using Github Actions CLI 2.42.0 or later from Homebrew:
+
+```
+gh cache delete -a --repo realm/realm-kotlin
+```
+
+
 ## See all caches
 
 Access all Github Action caches using: https://github.com/realm/realm-kotlin/actions/caches?query=sort%3Asize-desc

@@ -19,7 +19,7 @@ jobs:
   #     - name: Setup Java 11
   #       uses: actions/setup-java@v3
   #       with:
-  #         distribution: zulu
+  #         distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
   #         java-version: 11
 
   #     - name: Setup Gradle and task/dependency caching
@@ -60,7 +60,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -90,7 +90,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -139,7 +139,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 33 # Must be 30 to support aosp_atd
+          api-level: ${{ vars.VERSION_ANDROID_EMULATOR_API_LEVEL }}
           target: default
           # target: aosp_atd
           arch: x86_64        
@@ -174,7 +174,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -222,7 +222,7 @@ jobs:
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
           java-version: ${{ vars.VERSION_JAVA }}
 
       - name: Setup Gradle and task/dependency caching
@@ -271,7 +271,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 33 # Must be 30 to support aosp_atd
+          api-level: ${{ vars.VERSION_ANDROID_EMULATOR_API_LEVEL }}
           target: default
           # target: aosp_atd
           arch: x86_64        
@@ -300,7 +300,7 @@ jobs:
       - name: Setup Java 17
         uses: actions/setup-java@v3
         with:
-          distribution: zulu
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION  }}
           java-version: 17
 
       - name: Setup Gradle and task/dependency caching
@@ -349,7 +349,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           force-avd-creation: false
-          api-level: 33 # Must be 30 to support aosp_atd
+          api-level: ${{ vars.VERSION_ANDROID_EMULATOR_API_LEVEL }}
           target: default
           # target: aosp_atd
           arch: x86_64        
