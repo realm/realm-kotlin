@@ -96,6 +96,11 @@ interface AppAdmin {
      */
     suspend fun countDocuments(clazz: String): Int
 
+    /**
+     * Delete documents of a given type.
+     */
+    suspend fun deleteDocuments(database: String, clazz: String, query: String): JsonObject?
+
     fun closeClient()
 }
 
@@ -189,6 +194,11 @@ class AppAdminImpl(
     override suspend fun countDocuments(clazz: String): Int =
         baasClient.run {
             app.countDocuments(clazz)
+        }
+
+    override suspend fun deleteDocuments(database: String, clazz: String, query: String): JsonObject? =
+        baasClient.run {
+            app.deleteDocument(database, clazz, query)
         }
 
     override fun closeClient() {

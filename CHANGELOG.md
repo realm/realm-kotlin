@@ -5,6 +5,7 @@
 
 ### Enhancements
 * [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
+* `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
 
 ### Fixed
 * Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))
@@ -28,6 +29,7 @@
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
+* Updated to Realm Core 13.25.0, commit 71f94d75e25bfc8913fcd93ae8de550b57577a4a.
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)
