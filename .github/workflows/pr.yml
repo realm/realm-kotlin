@@ -67,7 +67,7 @@ jobs:
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
-          brew install swig
+          brew install swig@${{ vars.VERSION_SWIG }}
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
 
@@ -551,7 +551,7 @@ jobs:
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
-          brew install swig
+          brew install swig@${{ vars.VERSION_SWIG }}
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
 
