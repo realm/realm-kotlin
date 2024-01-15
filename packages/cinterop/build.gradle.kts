@@ -15,6 +15,7 @@
  */
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import java.lang.IllegalArgumentException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -413,31 +414,45 @@ val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
  * mostly useful on CI.
  */
 val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
-    val copyJvmABIs = project.hasProperty("realm.kotlin.copyNativeJvmLibs") && project.property("realm.kotlin.copyNativeJvmLibs") == "true"
+
+    val copyJvmABIs = project.hasProperty("realm.kotlin.copyNativeJvmLibs")
+            && (project.property("realm.kotlin.copyNativeJvmLibs") as String).isNotEmpty()
     logger.info("Copy native Realm JVM libraries: $copyJvmABIs")
     if (copyJvmABIs) {
-        // copy MacOS pre-built binaries
-        project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
-            .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
-        genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
+        val archs = (project.property("realm.kotlin.copyNativeJvmLibs") as String)
+            .split(",")
+            .map { it.trim() }
+            .map { it.toLowerCase() }
 
-        // copy Linux pre-built binaries
-        project.file("$buildDir/realmLinuxBuild/librealmc.so")
-            .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
-        genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
-
-        // copy Window pre-built binaries
-        project.file("$buildDir/realmWindowsBuild/Release/realmc.dll")
-            .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
-        genHashFile(platform = "windows", prefix = "", suffix = ".dll")
-
-        // Register copied libraries as output
-        outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
-        outputs.file(project.file("$jvmJniPath/macos/dynamic_libraries.properties"))
-        outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
-        outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
-        outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
-        outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
+        archs.forEach { arch ->
+            when(arch) {
+                "linux" -> {
+                    // copy Linux pre-built binaries
+                    project.file("$buildDir/realmLinuxBuild/librealmc.so")
+                        .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
+                    genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
+                    outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
+                    outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
+                }
+                "macos" -> {
+                    // copy MacOS pre-built binaries
+                    project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
+                        .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
+                    genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
+                    outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
+                    outputs.file(project.file("$jvmJniPath/macos/dynamic_libraries.properties"))
+                }
+                "windows" -> {
+                    // copy Window pre-built binaries
+                    project.file("$buildDir/realmWindowsBuild/Release/realmc.dll")
+                        .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
+                    genHashFile(platform = "windows", prefix = "", suffix = ".dll")
+                    outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
+                    outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
+                }
+                else -> throw IllegalArgumentException("Unsupported platfor for realm.kotlin.copyNativeJvmLibs: $arch")
+            }
+        }
     }
 }
 
