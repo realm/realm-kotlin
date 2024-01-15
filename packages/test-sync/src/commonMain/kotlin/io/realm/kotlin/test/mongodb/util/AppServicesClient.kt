@@ -47,7 +47,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -623,7 +622,7 @@ class AppServicesClient(
         } ?: throw IllegalStateException("Unexpected result: $result")
     }
 
-    private suspend fun BaasApp.deleteDocument(
+    suspend fun BaasApp.deleteDocument(
         db: String,
         clazz: String,
         query: String
