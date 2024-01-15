@@ -13,8 +13,6 @@ jobs:
         with:
           submodules: "recursive"
 
-      - run: echo ${{ vars }}
-
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
