@@ -516,7 +516,7 @@ jobs:
           
       - name: Build JVM Package
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=true -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=linux,windows,macos -Prealm.kotlin.mainHost=false
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
