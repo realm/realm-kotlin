@@ -57,19 +57,21 @@ jobs:
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
           
-      # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
-      # 4.1.0 is not available in apt-get, so use brew instead
+      # Manually install SWIG 4.1.1 as only 4.0.2 is pre-installed
+      # 4.1.1 is not available in apt-get, so use brew instead
+      # We need to use the formulae directly from GitHub to pin the version as Homebrew does not have
+      # all versions available.
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
       # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
-      # test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-      # test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-      # test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
-      # echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
-      # brew install swig@${{ vars.VERSION_SWIG }}
-      # echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-      # echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
       - name: Install SWIG
-        run: sudo apt-get install swig=4.1.1
+        run: |
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
 
       - name: Build JNI Stub
         working-directory: ./packages
@@ -521,9 +523,6 @@ jobs:
     if: always() && !cancelled() && needs.check-cache.outputs.packages-android-cache-hit != 'true'
 
     steps:
-
-      - run: apt list -a swig
-
       - name: Checkout code
         uses: actions/checkout@v3
         with:
@@ -544,20 +543,21 @@ jobs:
         with:
           cache-read-only: false
 
-      # Manually install SWIG 4.1.0 as only 4.0.2 is pre-installed
-      # 4.1.0 is not available in apt-get, so use brew instead
+      # Manually install SWIG 4.1.1 as only 4.0.2 is pre-installed
+      # 4.1.1 is not available in apt-get, so use brew instead
+      # We need to use the formulae directly from GitHub to pin the version as Homebrew does not have
+      # all versions available.
       # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
       # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
-
-          # test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
-          # test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-          # test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
-          # echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
-          # brew install swig@${{ vars.VERSION_SWIG }}
-          # echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
-          # echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
       - name: Install SWIG
-        run: sudo apt-get install swig=4.1.1
+        run: |
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
