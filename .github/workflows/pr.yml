@@ -79,7 +79,6 @@ jobs:
         working-directory: ./packages
         run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
-      # TODO Do we need to cache something or just built it every time?
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -150,7 +149,6 @@ jobs:
           path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so 
           retention-days: 1
 
-  # TODO Is the `if` check enough? Should we also compare the swig stub?
   build-jvm-windows-native-lib:
     runs-on: windows-latest
     needs: [check-cache, build-jni-swig-stub]
@@ -236,16 +234,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -261,7 +255,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -271,7 +264,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -287,7 +280,6 @@ jobs:
           type ninja
           ninja --version
 
-      # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
         uses: actions/cache@v3
@@ -328,16 +320,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -353,7 +341,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -363,7 +350,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -371,22 +358,12 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
+      # This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
       - name: Setup NDK
         uses: nttld/setup-ndk@v1
         with:
           ndk-version: r23c
 
-      - name: Debug environment
-        run: |
-          env
-          type cmake
-          cmake --version
-          type ninja
-          ninja --version
-
-      # TODO Figure out naming schema and retention policy
-      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
         uses: actions/cache@v3
         with:
@@ -423,16 +400,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -448,7 +421,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
 
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -458,7 +430,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -472,15 +444,6 @@ jobs:
         with:
           ndk-version: r23c
 
-      - name: Debug environment
-        run: |
-          env
-          type cmake
-          cmake --version
-          type ninja
-          ninja --version
-
-      # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
         uses: actions/cache@v3
@@ -530,16 +493,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -572,7 +531,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -582,7 +540,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -596,14 +554,6 @@ jobs:
         with:
           ndk-version: r23c
 
-      - name: Debug environment
-        run: |
-          env
-          type cmake
-          cmake --version
-          type ninja
-          ninja --version
-
       - name: Build Android Test Apk
         working-directory: packages
         run: ./gradlew  :test-base:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
@@ -615,8 +565,6 @@ jobs:
       - name: APK zipinfo
         run: zipinfo ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
 
-      # TODO Figure out naming schema and retention policy
-      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
         uses: actions/cache@v3
         with:
@@ -629,7 +577,7 @@ jobs:
           path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
           key: android-base-test-apk-key-${{ needs.check-cache.outputs.packages-sha }}
 
-      # TODO Must match naming found in include-check-cache.yml
+      # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -644,11 +592,9 @@ jobs:
           path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
           retention-days: 1
 
-  # TODO: ccache is not being used by this build for some reason
   build-macos-x64-packages:
     runs-on: macos-latest
     needs: check-cache
-    # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
 
     steps:
@@ -657,16 +603,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -682,7 +624,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -692,7 +633,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -700,19 +641,10 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      - name: Debug environment
-        run: |
-          env
-          type cmake
-          cmake --version
-          type ninja
-          ninja --version
-
       - name: Build packages
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -Prealm.kotlin.mainHost=false
 
-      # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
         uses: actions/cache@v3
@@ -720,7 +652,7 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
-      # TODO Must match naming found in include-check-cache.yml
+      # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -728,7 +660,6 @@ jobs:
           path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
-  # TODO: ccache is not being used by this build for some reason
   build-macos-arm64-packages:
     runs-on: macos-latest
     needs: check-cache
@@ -741,16 +672,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -766,7 +693,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -776,7 +702,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -788,15 +714,13 @@ jobs:
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -Prealm.kotlin.mainHost=false
 
-      # TODO Figure out naming schema and retention policy
-      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
         uses: actions/cache@v3
         with:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-macos-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
-      # TODO Must match naming found in include-check-cache.yml
+      # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -804,7 +728,6 @@ jobs:
           path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
-  # TODO: ccache is not being used by this build for some reason
   build-ios-x64-packages:
     runs-on: macos-latest
     needs: check-cache
@@ -817,16 +740,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -842,7 +761,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -852,7 +770,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -864,7 +782,6 @@ jobs:
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 -Prealm.kotlin.mainHost=false
 
-      # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
         uses: actions/cache@v3
@@ -872,7 +789,7 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-ios-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
-      # TODO Must match naming found in include-check-cache.yml
+      # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -880,7 +797,6 @@ jobs:
           path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
-  # TODO: ccache is not being used by this build for some reason
   build-ios-arm64-packages:
     runs-on: macos-latest
     needs: check-cache
@@ -893,16 +809,12 @@ jobs:
         with:
           submodules: "recursive"
 
-      # TODO I'm not sure this catches changes to our Config.kt, what is the impact?
-      #  https://github.com/actions/setup-java#caching-packages-dependencies
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
           java-version: ${{ vars.VERSION_JAVA }}
 
-      # TODO Default behavior is only caching from main/master. Unclear what the best caching strategy is for us.
-      # TODO What is the rules and limits for caching on Github -> 10 GB limit, automatic evicition
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
         with:
@@ -918,7 +830,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_NINJA  }}
  
-      # TODO This might not work on Windows: https://github.com/hendrikmuhs/ccache-action#notes-on-windows-support
       - name: Install ccache
         uses: hendrikmuhs/ccache-action@v1.2.2
         with:
@@ -928,7 +839,7 @@ jobs:
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
-      # TODO See https://github.com/hendrikmuhs/ccache-action/issues/94
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
       - name: Configure ccache
         run: |
           ccache --set-config="compiler_check=content"
@@ -940,7 +851,6 @@ jobs:
         working-directory: packages
         run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 -Prealm.kotlin.mainHost=false
 
-      # TODO Figure out naming schema and retention policy
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Store build cache
         uses: actions/cache@v3
@@ -948,7 +858,7 @@ jobs:
           path: ./packages/build/m2-buildrepo
           key: packages-m2-ios-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
 
-      # TODO Must match naming found in include-check-cache.yml
+      # Must match naming found in include-check-cache.yml
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -956,11 +866,6 @@ jobs:
           path: ./packages/build/m2-buildrepo/**/* 
           retention-days: 1
 
-
-  # TODO Split into base and sync tests
-  # TODO If we hook up to Device Farm we can use ubuntu runners instead
-  # TODO Compare speed between emulator and Device Farm
-  # TODO We should be able to move this into a reusable work-flow
   test-android-packages-emulator:
     timeout-minutes: 60
     runs-on: macos-latest
@@ -1004,33 +909,6 @@ jobs:
           name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
           path: ./packages/build/m2-buildrepo 
 
-      # - name: AVD cache
-      #   uses: actions/cache@v3
-      #   id: avd-cache
-      #   with:
-      #     path: |
-      #       ~/.android/avd/*
-      #       ~/.android/adb*
-      #     key: android-emulator-avd-33
-
-      # - name: create AVD and generate snapshot for caching
-      #   if: steps.avd-cache.outputs.cache-hit != 'true'
-      #   uses: reactivecircus/android-emulator-runner@v2
-      #   with:
-      #     api-level: 33
-      #     target: default
-      #     # target: aosp_atd
-      #     arch: x86_64        
-      #     disk-size: 4096M
-      #     ram-size: 2048M
-      #     heap-size: 1024M
-      #     force-avd-creation: false
-      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-      #     disable-animations: true
-      #     channel: canary
-      #     script: echo "Generated AVD snapshot for caching."
-
-      # TODO Can we read api level from Config.kt
       - name: Run Integration Tests
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -1038,12 +916,9 @@ jobs:
         with:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          # force-avd-creation: true
           api-level: ${{ vars.VERSION_ANDROID_EMULATOR_API_LEVEL }} # Must be 30 to support aosp_atd
           target: default
-          # target: aosp_atd
           arch: x86_64        
-          # profile: Nexus 6
           disk-size: 4096M
           ram-size: 2048M
           heap-size: 1024M
@@ -1123,7 +998,6 @@ jobs:
           #   test-title: Results - MacOS arm64 Base
  
     runs-on: ${{ matrix.os }}
-    # TODO Do we need to wait for all matrix builds?
     # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
     needs: [check-cache, build-macos-x64-packages, build-kotlin-metadata-package] #, build-macos-arm64-packages] 
@@ -1188,7 +1062,6 @@ jobs:
           #   test-title: Results - MacOS arm64 Base
  
     runs-on: ${{ matrix.os }}
-    # TODO Do we need to wait for all matrix builds?
     # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
     needs: [check-cache, build-ios-x64-packages, build-kotlin-metadata-package] # , build-ios-arm64-packages] 
@@ -1245,13 +1118,13 @@ jobs:
           list-tests: failed
           fail-on-error: true
 
-  # TODO Investigate why these tests seem to hang for the `run tests` step with no log output. Could it be related to the test failing, but not being picked up?
   test-jvm-packages:
     timeout-minutes: 30
     strategy:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
         include:
+          - os: 
           - os: macos-latest
             test-title: Unit Test Results - Base JVM MacOS x64
           - os: ubuntu-latest
@@ -1322,8 +1195,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # These contain broken JVM publications, so need to be restored first, so they
-      # can be overidden with the correct ones.
+      # The Metadata artifact contain broken JVM publications, so it needs to be 
+      # restored first, it so they can be overidden with the correct ones.
       - name: Restore Kotlin metadata artifacts
         uses: actions/download-artifact@v3
         with:

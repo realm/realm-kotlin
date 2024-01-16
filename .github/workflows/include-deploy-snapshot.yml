@@ -29,14 +29,6 @@ jobs:
         with:
           version: ${{ vars.VERSION_KOTLIN_COMMANDLINE_TOOLS }}
 
-      # TODO Figure out naming schema and retention policy
-      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
-      - name: Setup build cache
-        uses: actions/cache@v3
-        with:
-          path: ./packages/build/m2-buildrepo
-          key: packages-m2-jvm-sync-${{ needs.check-cache.outputs.packages-sha }}
-
       - name: Restore m2-buildrepo
         uses: actions/download-artifact@v3
         with:
