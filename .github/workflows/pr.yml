@@ -1124,7 +1124,6 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
         include:
-          - os: 
           - os: macos-latest
             test-title: Unit Test Results - Base JVM MacOS x64
           - os: ubuntu-latest
