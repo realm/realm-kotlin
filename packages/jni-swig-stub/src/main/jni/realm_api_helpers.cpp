@@ -34,20 +34,26 @@ jobject wrap_pointer(JNIEnv* jenv, jlong pointer, jboolean managed = false) {
                            managed);
 }
 
-inline jboolean jni_check_exception(JNIEnv *jenv = get_env(), bool registrable_callback_error = false) {
+inline jboolean jni_check_exception(JNIEnv *jenv = get_env()) {
     // FIXME https://github.com/realm/realm-kotlin/issues/665 This function is catching and swallowing
     //  the exception. This behavior could leave the SDK in an illegal state.
     if (jenv->ExceptionCheck()) {
-        if (registrable_callback_error) {
-            // setting the user code error is only propagated on certain callbacks.
-            jthrowable exception = jenv->ExceptionOccurred();
-            jenv->ExceptionClear();
-            realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
-        } else {
-            // Print the exception stacktrace in stderr.
-            jenv->ExceptionDescribe();
-            jenv->ExceptionClear();
-        }
+        // Print the exception stacktrace in stderr.
+        jenv->ExceptionDescribe();
+        jenv->ExceptionClear();
+        return false;
+    }
+    return true;
+}
+
+inline jboolean jni_check_exception_for_callback(JNIEnv *jenv = get_env()) {
+    if (jenv->ExceptionCheck()) {
+        // setting the user code error is only propagated on certain callbacks.
+        jthrowable exception = jenv->ExceptionOccurred();
+        jenv->ExceptionClear();
+        // This global ref would be released once core has propagated the exception back
+        // see: create_java_exception and convert_to_jvm_sync_error
+        realm_register_user_code_callback_error(jenv->NewGlobalRef(exception));
         return false;
     }
     return true;
@@ -79,10 +85,10 @@ inline jobject create_java_exception(JNIEnv *jenv, realm_error_t error) {
             jint(error.error),
             error_message,
             error_path,
-            static_cast<jobject>(error.usercode_error)
+            static_cast<jobject>(error.user_code_error)
     );
-    if (error.usercode_error) {
-        (jenv)->DeleteGlobalRef(static_cast<jobject>(error.usercode_error));
+    if (error.user_code_error) {
+        (jenv)->DeleteGlobalRef(static_cast<jobject>(error.user_code_error));
     }
     jni_check_exception(jenv);
     return jenv->PopLocalFrame(exception);
@@ -109,15 +115,6 @@ inline std::string get_exception_message(JNIEnv *env) {
                                             "()Ljava/lang/String;");
     jstring message = (jstring) env->CallObjectMethod(e, get_message);
     return env->GetStringUTFChars(message, NULL);
-}
-
-inline void system_out_println(JNIEnv *env, std::string message) {
-    jclass system_class = env->FindClass("java/lang/System");
-    jfieldID field_id = env->GetStaticFieldID(system_class, "out", "Ljava/io/PrintStream;");
-    jobject system_out = env->GetStaticObjectField(system_class, field_id);
-    jclass print_stream_class = env->FindClass("java/io/PrintStream");
-    jmethodID method_id = env->GetMethodID(print_stream_class, "println", "(Ljava/lang/String;)V");
-    env->CallVoidMethod(system_out, method_id, to_jstring(env, message));
 }
 
 void
@@ -161,7 +158,7 @@ bool migration_callback(void *userdata, realm_t *old_realm, realm_t *new_realm,
                         wrap_pointer(env, reinterpret_cast<jlong>(new_realm), false),
                         wrap_pointer(env, reinterpret_cast<jlong>(schema))
     );
-    bool failed = jni_check_exception(env, true);
+    bool failed = jni_check_exception_for_callback(env);
     env->PopLocalFrame(NULL);
     return failed;
 }
@@ -559,7 +556,7 @@ bool realm_should_compact_callback(void* userdata, uint64_t total_bytes, uint64_
 
     jobject callback = static_cast<jobject>(userdata);
     jboolean result = env->CallBooleanMethod(callback, java_should_compact_method, jlong(total_bytes), jlong(used_bytes));
-    return jni_check_exception(env, true) && result;
+    return jni_check_exception_for_callback(env) && result;
 }
 
 bool realm_data_initialization_callback(void* userdata, realm_t*) {
@@ -569,7 +566,7 @@ bool realm_data_initialization_callback(void* userdata, realm_t*) {
 
     jobject callback = static_cast<jobject>(userdata);
     env->CallVoidMethod(callback, java_data_init_method);
-    return jni_check_exception(env, true);
+    return jni_check_exception_for_callback(env);
 }
 
 static void send_request_via_jvm_transport(JNIEnv *jenv, jobject network_transport, const realm_http_request_t request, jobject j_response_callback) {
@@ -1001,7 +998,7 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
     static JavaMethod sync_error_constructor(jenv,
                                              JavaClassGlobalDef::sync_error(),
                                              "<init>",
-    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;)V");
+    "(IILjava/lang/String;Ljava/lang/String;Ljava/lang/String;ZZZ[Lio/realm/kotlin/internal/interop/sync/CoreCompensatingWriteInfo;Ljava/lang/Throwable;)V");
 
     jint category = static_cast<jint>(error.status.categories);
     jint value = static_cast<jint>(error.status.error);
@@ -1089,10 +1086,14 @@ jobject convert_to_jvm_sync_error(JNIEnv* jenv, const realm_sync_error_t& error)
             is_fatal,
             is_unrecognized_by_client,
             is_client_reset_requested,
-            j_compensating_write_info_array
+            j_compensating_write_info_array,
+            static_cast<jobject>(error.user_code_error)
     );
 
     jni_check_exception(jenv);
+    if(error.user_code_error) {
+        jenv->DeleteGlobalRef(static_cast<jobject>(error.user_code_error));
+    }
     return jenv->PopLocalFrame(result);
 }
 
@@ -1192,14 +1193,7 @@ before_client_reset(void* userdata, realm_t* before_realm) {
     env->PushLocalFrame(1);
     jobject before_pointer = wrap_pointer(env, reinterpret_cast<jlong>(before_realm), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_before_callback_function, before_pointer);
-
-    bool result = true;
-    if (env->ExceptionCheck()) {
-        std::string exception_message = get_exception_message(env);
-        std::string message_template = "An error has occurred in the 'onBefore' callback: ";
-        system_out_println(env, message_template.append(exception_message));
-        result = false;
-    }
+    bool result = jni_check_exception_for_callback(env);
     env->PopLocalFrame(NULL);
     return result;
 }
@@ -1222,13 +1216,7 @@ after_client_reset(void* userdata, realm_t* before_realm,
     jobject after_pointer = wrap_pointer(env, reinterpret_cast<jlong>(after_realm_ptr), false);
     env->CallVoidMethod(static_cast<jobject>(userdata), java_after_callback_function, before_pointer, after_pointer, did_recover);
     realm_close(after_realm_ptr);
-    bool result = true;
-    if (env->ExceptionCheck()) {
-        std::string exception_message = get_exception_message(env);
-        std::string message_template = "An error has occurred in the 'onAfter' callback: ";
-        system_out_println(env, message_template.append(exception_message));
-        result = false;
-    }
+    bool result = jni_check_exception_for_callback(env);
     env->PopLocalFrame(NULL);
     return result;
 }

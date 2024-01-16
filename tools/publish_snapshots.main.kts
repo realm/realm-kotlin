@@ -69,9 +69,9 @@ val props: Properties = Properties().also { props ->
 }
 val localMavenRepo = File("$repoPath/packages/${props["testRepository"]}")
 // Url to upload the release to
-val mavenCentralStagingUrl="https://oss.sonatype.org/service/local/staging/deploy/maven2"
+val mavenCentralStagingUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2"
 // Repository ID used in ~/.m2/settings.xml
-val mavenCentralRepoId="ossrh"
+val mavenCentralRepoId = "ossrh"
 
 debug("Setup signing key")
 runCommand(listOf("/bin/sh", "-c", "echo '$gpgBase64SigningKey' | base64 -d | gpg --batch --import"))

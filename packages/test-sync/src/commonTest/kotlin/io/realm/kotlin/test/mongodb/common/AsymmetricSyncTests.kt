@@ -115,6 +115,9 @@ class AsymmetricSyncTests {
     @AfterTest
     fun tearDown() {
         realm.close()
+        runBlocking {
+            app.deleteDocuments(app.clientAppId, Measurement::class.simpleName!!, "{}")
+        }
         if (this::app.isInitialized) {
             app.close()
         }
@@ -134,6 +137,9 @@ class AsymmetricSyncTests {
                 )
             }
         }
+
+        realm.syncSession.uploadAllLocalChanges()
+
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
@@ -312,8 +318,10 @@ class AsymmetricSyncTests {
     }
 
     private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {
-        var found = false
+        // Variable shared across while must be atomic
+        // https://youtrack.jetbrains.com/issue/KT-64139/Native-Bug-with-while-loop-coroutine-which-is-started-and-stopped-on-the-same-thread
         var documents = atomic(0)
+        var found = false
         var attempt = 60
         // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
         // before giving up.
@@ -326,8 +334,8 @@ class AsymmetricSyncTests {
                 delay(1.seconds)
             }
         }
-        println("Found: $found -> ${documents.value}")
-        assertTrue(found, "Number of documents was: ${documents.value}. Expected was: $expectedCount. Initial count: $initialCount")
+        assertTrue(found, "Number of documents was: ${documents.value} [initialCount: $initialCount, expectedCount: $expectedCount]")
+
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {

@@ -64,6 +64,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -742,6 +743,11 @@ class SyncClientResetIntegrationTests {
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
                 )
+                assertIs<IllegalStateException>(exception.cause)
+                assertEquals(
+                    "User exception",
+                    exception.cause?.message
+                )
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }
 
@@ -753,6 +759,11 @@ class SyncClientResetIntegrationTests {
                 assertEquals(
                     "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
                     exception.message
+                )
+                assertIs<IllegalStateException>(exception.cause)
+                assertEquals(
+                    "User exception",
+                    exception.cause?.message
                 )
                 channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
             }

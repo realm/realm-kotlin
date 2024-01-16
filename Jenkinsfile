@@ -367,11 +367,11 @@ def genAndStashSwigJNI() {
     stash includes: 'packages/jni-swig-stub/build/generated/sources/jni/realmc.cpp,packages/jni-swig-stub/build/generated/sources/jni/realmc.h', name: 'swig_jni'
 }
 def runBuild() {
-    def buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs=false"
+    def buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs="
     if (shouldBuildJvmABIs()) {
         unstash name: 'linux_so_file'
         unstash name: 'win_dll'
-        buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs=true"
+        buildJvmAbiFlag = "-Prealm.kotlin.copyNativeJvmLibs=windows,linux" // Macos is built in-place
     }
 
     withCredentials([
