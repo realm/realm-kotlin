@@ -72,7 +72,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
           cd ~
-          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
 
 
       - name: Build JNI Stub
@@ -560,7 +560,7 @@ jobs:
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
           cd ~
-          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
