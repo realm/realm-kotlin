@@ -69,7 +69,7 @@ jobs:
       # echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
       # echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
       - name: Install SWIG
-        run: sudo apt-get install swigt=4.1.1
+        run: sudo apt-get install swig=4.1.1
 
       - name: Build JNI Stub
         working-directory: ./packages
@@ -554,7 +554,7 @@ jobs:
           # echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           # echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
       - name: Install SWIG
-        run: sudo apt-get install swigt=4.1.1
+        run: sudo apt-get install swig=4.1.1
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
