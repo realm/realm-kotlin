@@ -521,6 +521,9 @@ jobs:
     if: always() && !cancelled() && needs.check-cache.outputs.packages-android-cache-hit != 'true'
 
     steps:
+
+      - run: apt list -a swig
+
       - name: Checkout code
         uses: actions/checkout@v3
         with:
