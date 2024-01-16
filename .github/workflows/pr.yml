@@ -69,9 +69,11 @@ jobs:
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
-          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+          cd ~
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
+
 
       - name: Build JNI Stub
         working-directory: ./packages
@@ -555,9 +557,10 @@ jobs:
           test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
           test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
           echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
-          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
           echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
           echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+          cd ~
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && brew install swig.rb
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
