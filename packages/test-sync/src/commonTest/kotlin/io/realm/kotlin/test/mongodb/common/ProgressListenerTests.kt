@@ -32,8 +32,11 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.util.TestChannel
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -254,6 +257,7 @@ class ProgressListenerTests {
 
     @Test
     fun completesOnClose() = runBlocking {
+        val channel = TestChannel<Boolean>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         TestApp("completesOnClose", TEST_APP_PARTITION).use { app ->
             val user = app.createUserAndLogIn()
             val realm = Realm.open(createSyncConfig(user))
@@ -261,12 +265,18 @@ class ProgressListenerTests {
                 val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
                 val job = async {
                     withTimeout(10.seconds) {
-                        flow.collect { }
+                        flow.collect {
+                            channel.send(true)
+                        }
                     }
                 }
+                // Wait for Flow to start, so we do not close the Realm before
+                // `flow.collect()` can be called.
+                channel.receiveOrFail()
                 realm.close()
                 job.await()
             } finally {
+                channel.close()
                 if (!realm.isClosed()) {
                     realm.close()
                 }
