@@ -337,7 +337,6 @@ class AsymmetricSyncTests {
             }
         }
         assertTrue(found, "Number of documents was: ${documents.value} [initialCount: $initialCount, expectedCount: $expectedCount]")
-
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {
