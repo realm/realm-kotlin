@@ -35,6 +35,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -43,6 +44,7 @@ import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
@@ -555,17 +557,22 @@ class SyncSessionTests {
 
     @Test
     fun connectionState_completeOnClose() = runBlocking {
+        val channel = TestChannel<Boolean>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         val realm = Realm.open(createSyncConfig(user))
         try {
             val flow1 = realm.syncSession.connectionStateAsFlow()
             val job = async {
                 withTimeout(10.seconds) {
-                    flow1.collect { }
+                    flow1.collect {
+                        channel.send(true)
+                    }
                 }
             }
+            channel.receiveOrFail()
             realm.close()
             job.await()
         } finally {
+            channel.close()
             if (!realm.isClosed()) {
                 realm.close()
             }
