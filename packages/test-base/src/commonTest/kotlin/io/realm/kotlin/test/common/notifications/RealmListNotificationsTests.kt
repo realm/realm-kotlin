@@ -41,7 +41,6 @@ import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.runBlocking
@@ -742,7 +741,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
     fun eventsOnObjectChangesInList() {
         runBlocking {
             val channel = Channel<ListChange<RealmListContainer>>(10)
-            val parent = realm.write { copyToRealm(RealmListContainer()).apply { stringField = "PARENT" }}
+            val parent = realm.write { copyToRealm(RealmListContainer()).apply { stringField = "PARENT" } }
 
             val listener = async {
                 parent.objectListField.asFlow().collect {
@@ -778,7 +777,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
     fun eventsOnObjectChangesInRealmAnyList() {
         runBlocking {
             val channel = Channel<ListChange<RealmAny?>>(10)
-            val parent = realm.write { copyToRealm(RealmListContainer()).apply { stringField = "PARENT" }}
+            val parent = realm.write { copyToRealm(RealmListContainer()).apply { stringField = "PARENT" } }
 
             val listener = async {
                 parent.nullableRealmAnyListField.asFlow().collect {
@@ -789,8 +788,11 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             channel.receiveOrFail(message = "Initial event").let { assertIs<InitialList<*>>(it) }
 
             realm.write {
-                findLatest(parent)!!.nullableRealmAnyListField.add(RealmAny.create(
-                    RealmListContainer().apply { stringField = "CHILD" }))
+                findLatest(parent)!!.nullableRealmAnyListField.add(
+                    RealmAny.create(
+                        RealmListContainer().apply { stringField = "CHILD" }
+                    )
+                )
             }
             channel.receiveOrFail(message = "List add").let {
                 assertIs<UpdatedList<*>>(it)
@@ -809,7 +811,6 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
             listener.cancel()
         }
     }
-
 
     fun RealmList<*>.removeRange(range: IntRange) {
         range.reversed().forEach { index -> removeAt(index) }
