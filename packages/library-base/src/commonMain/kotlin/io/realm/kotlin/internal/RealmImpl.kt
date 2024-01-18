@@ -42,6 +42,8 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
@@ -142,13 +144,16 @@ public class RealmImpl private constructor(
                     // with the given configuration because the key might be deleted from memory after the Realm is open.
 
                     // These touches the notifier and writer lazy initialised Realms to open them with the provided configuration.
-                    launch(notificationScheduler.dispatcher) {
-                        notifier.realm.version().version
-                    }
-                    launch(writeScheduler.dispatcher) {
-                        writer.realm.version().version
-                        it.releaseKey()
-                    }
+                    awaitAll(
+                        async(notificationScheduler.dispatcher) {
+                            notifier.realm.version().version
+                        },
+                        async(writeScheduler.dispatcher) {
+                            writer.realm.version().version
+                        }
+                    )
+
+                    it.releaseKey()
                 }
 
                 notifier.realmChanged().collect {
