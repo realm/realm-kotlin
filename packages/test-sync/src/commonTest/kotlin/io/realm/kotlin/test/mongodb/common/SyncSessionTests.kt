@@ -563,9 +563,12 @@ class SyncSessionTests {
             val flow1 = realm.syncSession.connectionStateAsFlow()
             val job = async {
                 withTimeout(10.seconds) {
-                    flow1.collect {
-                        channel.send(true)
-                    }
+                    // We are not guarantee that the connectionFlow will trigger, so are forced
+                    // to send the event before. This still leaves a small chance of a race
+                    // condition, but I assume that the jump between coroutines is always slower
+                    // than executing to instructions in sequence.
+                    channel.send(true)
+                    flow1.collect { }
                 }
             }
             channel.receiveOrFail()
