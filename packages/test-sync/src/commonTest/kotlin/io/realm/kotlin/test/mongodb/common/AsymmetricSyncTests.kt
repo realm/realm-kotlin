@@ -322,7 +322,7 @@ class AsymmetricSyncTests {
         // https://youtrack.jetbrains.com/issue/KT-64139/Native-Bug-with-while-loop-coroutine-which-is-started-and-stopped-on-the-same-thread
         var documents = atomic(0)
         var found = false
-        var attempt = 60
+        var attempt = 60 * 5 // Wait 5 minutes
         // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
         // before giving up.
         while (!found && attempt > 0) {
