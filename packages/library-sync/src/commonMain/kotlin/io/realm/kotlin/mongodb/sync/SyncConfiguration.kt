@@ -565,6 +565,7 @@ public interface SyncConfiguration : Configuration {
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
+                encryptionKeyAsCallback,
                 compactOnLaunchCallback,
                 null, // migration is not relevant for sync,
                 false, // automatic backlink handling is not relevant for sync

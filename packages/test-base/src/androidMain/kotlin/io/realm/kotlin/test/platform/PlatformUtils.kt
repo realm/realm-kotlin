@@ -56,6 +56,17 @@ actual object PlatformUtils {
         }
         SystemClock.sleep(5000) // 5 seconds to give the GC some time to process
     }
+
+    actual fun allocateEncryptionKeyOnNativeMemory(aesKey: ByteArray): Long {
+        // Note: the ByteBuffer is not guaranteed to be in native memory (it could use a backing array)
+        //       use allocateDirect.hasArray() to find out. Ideally we want to use JNI for Android to
+        //       create such native array.
+        TODO()
+    }
+
+    actual fun freeEncryptionKeyFromNativeMemory(aesKeyPointer: Long) {
+        TODO()
+    }
 }
 
 // Allocs as much garbage as we can. Pass maxSize = 0 to use all available memory in the process.

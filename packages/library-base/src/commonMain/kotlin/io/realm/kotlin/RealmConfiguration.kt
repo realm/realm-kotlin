@@ -185,6 +185,7 @@ public interface RealmConfiguration : Configuration {
                 writerDispatcherFactory,
                 schemaVersion,
                 encryptionKey,
+                encryptionKeyAsCallback,
                 deleteRealmIfMigrationNeeded,
                 compactOnLaunchCallback,
                 migration,

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.platform
 
+import sun.misc.Unsafe
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -64,6 +65,29 @@ actual object PlatformUtils {
     }
 
     actual fun threadId(): ULong = Thread.currentThread().id.toULong()
+
+    actual fun allocateEncryptionKeyOnNativeMemory(aesKey: ByteArray): Long {
+        @Suppress("DiscouragedPrivateApi")
+        val field = Unsafe::class.java.getDeclaredField("theUnsafe")
+        field.isAccessible = true
+        val unsafe: Unsafe = field.get(null) as Unsafe
+
+        val keyPointer: Long = unsafe.allocateMemory(aesKey.size.toLong())
+        for (i in aesKey.indices) {
+            unsafe.putByte(keyPointer + i, aesKey[i])
+        }
+
+        return keyPointer
+    }
+
+    actual fun freeEncryptionKeyFromNativeMemory(aesKeyPointer: Long) {
+        @Suppress("DiscouragedPrivateApi")
+        val field = Unsafe::class.java.getDeclaredField("theUnsafe")
+        field.isAccessible = true
+        val unsafe: Unsafe = field.get(null) as Unsafe
+
+        unsafe.freeMemory(aesKeyPointer)
+    }
 
     @Suppress("ExplicitGarbageCollectionCall")
     actual fun triggerGC() {
