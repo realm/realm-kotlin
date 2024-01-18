@@ -17,6 +17,7 @@
 package io.realm.kotlin
 
 import io.realm.kotlin.Configuration.SharedBuilder
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.internal.MISSING_PLUGIN_MESSAGE
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
@@ -106,6 +107,7 @@ public data class InitialRealmFileConfiguration(
     val checksum: String?
 )
 
+@ExperimentalEncryptionCallbackApi
 public interface EncryptionKeyCallback {
     /**
      * Provides the native memory address of the 64 byte array containing the key used to encrypt and decrypt the Realm file.
@@ -170,6 +172,7 @@ public interface Configuration {
      *
      * @return null on unencrypted Realms.
      */
+    @OptIn(ExperimentalEncryptionCallbackApi::class)
     public val encryptionKeyAsCallback: EncryptionKeyCallback?
 
     /**
@@ -253,6 +256,7 @@ public interface Configuration {
         protected var writeDispatcher: CoroutineDispatcher? = null
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
+        @OptIn(ExperimentalEncryptionCallbackApi::class)
         protected var encryptionKeyAsCallback: EncryptionKeyCallback? = null
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
@@ -416,6 +420,7 @@ public interface Configuration {
          * val realm = Realm.open(encryptedConf)
          *```
          */
+        @OptIn(ExperimentalEncryptionCallbackApi::class)
         public fun encryptionKey(encryptionKeyAsCallback: EncryptionKeyCallback): S =
             apply { this.encryptionKeyAsCallback = encryptionKeyAsCallback } as S
 

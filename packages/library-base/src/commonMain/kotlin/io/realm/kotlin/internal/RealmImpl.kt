@@ -19,6 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.ClassKey
@@ -139,6 +140,7 @@ public class RealmImpl private constructor(
             }
 
             realmScope.launch {
+                @OptIn(ExperimentalEncryptionCallbackApi::class)
                 configuration.encryptionKeyAsCallback?.let {
                     // if we're using an encryption key as a callback, we preemptively open the notifier and writer Realm
                     // with the given configuration because the key might be deleted from memory after the Realm is open.

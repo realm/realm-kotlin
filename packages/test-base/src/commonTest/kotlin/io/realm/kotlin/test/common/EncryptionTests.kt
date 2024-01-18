@@ -19,6 +19,7 @@ package io.realm.kotlin.test.common
 import io.realm.kotlin.EncryptionKeyCallback
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
@@ -128,6 +129,7 @@ class EncryptionTests {
             }
     }
 
+    @OptIn(ExperimentalEncryptionCallbackApi::class)
     @Test
     fun openEncryptedRealmWithEncryptionKeyCallback() = runBlocking {
         val key: ByteArray = Random.nextBytes(64)
