@@ -140,7 +140,7 @@ class AsymmetricSyncTests {
             }
         }
 
-        realm.syncSession.uploadAllLocalChanges(1.minutes)
+        assertTrue(realm.syncSession.uploadAllLocalChanges(1.minutes), "Data was not uploaded in time")
 
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
@@ -315,7 +315,7 @@ class AsymmetricSyncTests {
                     }
                 )
             }
-            it.syncSession.uploadAllLocalChanges()
+            assertTrue(it.syncSession.uploadAllLocalChanges(1.minutes), "Schema was not uploaded in time")
         }
     }
 
