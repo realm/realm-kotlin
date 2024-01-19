@@ -28,6 +28,7 @@
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
+* The Unpacking of JVM native library will use the current library version instead of a calculated hash for the path.
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)
