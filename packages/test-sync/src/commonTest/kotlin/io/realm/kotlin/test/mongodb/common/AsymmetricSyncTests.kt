@@ -100,7 +100,7 @@ class AsymmetricSyncTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX, logLevel = LogLevel.ALL)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -306,6 +306,8 @@ class AsymmetricSyncTests {
             schema = FLEXIBLE_SYNC_SCHEMA
         ).build()
         Realm.open(config).use {
+            val initialServerDocuments = app.countDocuments("AsymmetricA")
+            println("Initial: $initialServerDocuments")
             it.write {
                 insert(
                     AsymmetricA().apply {
@@ -316,6 +318,7 @@ class AsymmetricSyncTests {
                 )
             }
             assertTrue(it.syncSession.uploadAllLocalChanges(1.minutes), "Schema was not uploaded in time")
+            verifyDocuments("AsymmetricA", 1, initialServerDocuments)
         }
     }
 
@@ -329,6 +332,7 @@ class AsymmetricSyncTests {
         // before giving up.
         while (!found && attempt > 0) {
             documents.value = app.countDocuments(clazz) - initialCount
+            println("${documents.value} : [$initialCount, ${initialCount + expectedCount}]")
             if (documents.value == expectedCount) {
                 found = true
             } else {
