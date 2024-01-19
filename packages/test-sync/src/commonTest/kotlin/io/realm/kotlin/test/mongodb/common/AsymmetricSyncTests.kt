@@ -24,7 +24,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.annotations.ExperimentalAsymmetricSyncApi
 import io.realm.kotlin.mongodb.ext.insert
