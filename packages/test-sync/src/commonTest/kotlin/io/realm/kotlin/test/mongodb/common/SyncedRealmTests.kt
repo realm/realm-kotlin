@@ -244,7 +244,7 @@ class SyncedRealmTests {
                     val id = "id-${Random.nextLong()}"
                     copyToRealm(SyncObjectWithAllTypes().apply { _id = id })
                 }
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
         }
 
@@ -364,7 +364,7 @@ class SyncedRealmTests {
         // Open another realm with the same entity but change the type of a field in the schema to
         // trigger a sync error to be caught by the error handler
         runBlocking {
-            realm1.syncSession.uploadAllLocalChanges()
+            realm1.syncSession.uploadAllLocalChangesOrFail()
             val config2 = SyncConfiguration.Builder(
                 schema = setOf(io.realm.kotlin.entities.sync.bogus.ChildPk::class),
                 user = user,
@@ -447,7 +447,7 @@ class SyncedRealmTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // 2. Sometimes it can take a little while for the data to be available to other users,
@@ -495,7 +495,7 @@ class SyncedRealmTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // 2. Sometimes it can take a little while for the data to be available to other users,
@@ -625,7 +625,7 @@ class SyncedRealmTests {
                 realm.write {
                     copyToRealm(masterObject)
                 }
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
         }
         createPartitionSyncConfig(
@@ -662,7 +662,7 @@ class SyncedRealmTests {
             // schema = setOf(SyncObjectWithAllTypes::class, ChildPk::class)
         ).let { config ->
             Realm.open(config).use { realm ->
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
                 val schema: RealmSchema = realm.schema()
                 val childPkSchema: RealmClass? = schema["ChildPk"]
                 assertNotNull(childPkSchema)
@@ -738,7 +738,7 @@ class SyncedRealmTests {
         val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
         Realm.open(config0).use { realm ->
             realm.writeBlocking { copyToRealm(masterObject) }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
         assertEquals(42, counterValue.receiveOrFail(message = "Failed to receive 42"))
 
@@ -1196,7 +1196,7 @@ class SyncedRealmTests {
                 realm2.write {
                     copyToRealm(FlexParentObject(section))
                 }
-                realm2.syncSession.uploadAllLocalChanges()
+                realm2.syncSession.uploadAllLocalChangesOrFail()
             }
 
             // Reading the object means we received it from the other Realm
@@ -1262,7 +1262,7 @@ class SyncedRealmTests {
                         }
                     )
                 }
-                flexSyncRealm.syncSession.uploadAllLocalChanges()
+                flexSyncRealm.syncSession.uploadAllLocalChangesOrFail()
             }
             assertTrue(customLogger.logs.isNotEmpty())
             assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")

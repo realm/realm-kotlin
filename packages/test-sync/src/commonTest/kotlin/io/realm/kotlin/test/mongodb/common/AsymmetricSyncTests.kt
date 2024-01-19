@@ -33,6 +33,7 @@ import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.test.StandaloneDynamicMutableRealm
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
@@ -51,7 +52,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class DeviceParent : RealmObject {
@@ -139,7 +139,7 @@ class AsymmetricSyncTests {
             }
         }
 
-        assertTrue(realm.syncSession.uploadAllLocalChanges(1.minutes), "Data was not uploaded in time")
+        realm.syncSession.uploadAllLocalChangesOrFail()
 
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }

@@ -404,7 +404,7 @@ class SubscriptionExtensionsTests {
                     copyToRealm(FlexParentObject(sectionId))
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
     }
 }

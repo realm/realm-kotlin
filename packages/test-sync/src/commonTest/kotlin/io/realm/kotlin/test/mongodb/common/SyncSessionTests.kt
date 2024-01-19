@@ -34,8 +34,8 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
-import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -284,7 +284,7 @@ class SyncSessionTests {
                 }
                 assertEquals(10, realm1.query<ParentPk>().count().find())
                 assertEquals(0, realm2.query<ParentPk>().count().find())
-                assertTrue(realm1.syncSession.uploadAllLocalChanges())
+                realm1.syncSession.uploadAllLocalChangesOrFail()
 
                 // Due to the Server Translator, there is a small delay between data
                 // being uploaded and it not being immediately ready for download
@@ -338,7 +338,7 @@ class SyncSessionTests {
         try {
             assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
                 runBlocking {
-                    session.uploadAllLocalChanges()
+                    session.uploadAllLocalChangesOrFail()
                 }
             }
             assertFailsWithMessage<IllegalStateException>("Operation is not allowed inside a `SyncSession.ErrorHandler`.") {
@@ -363,7 +363,7 @@ class SyncSessionTests {
             val session = realm.syncSession
             app.pauseSync()
             assertFailsWith<SyncException> {
-                session.uploadAllLocalChanges()
+                session.uploadAllLocalChangesOrFail()
             }.also {
                 assertTrue(it.message!!.contains("End of input", ignoreCase = true), it.message)
             }
@@ -443,7 +443,7 @@ class SyncSessionTests {
                     copyToRealm(objWithPK)
                 }
 
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
         }
 
@@ -489,7 +489,7 @@ class SyncSessionTests {
             partitionValue = partitionValue
         ).name("test1.realm").build()
         Realm.open(config1).use { realm1 ->
-            realm1.syncSession.uploadAllLocalChanges()
+            realm1.syncSession.uploadAllLocalChangesOrFail()
             // Make sure to sync the realm with the server before opening the second instance
             assertTrue(realm1.syncSession.uploadAllLocalChanges(1.minutes))
         }
