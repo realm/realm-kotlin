@@ -22,6 +22,8 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.runBlocking
@@ -31,6 +33,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * This class contains all the Realm encryption integration tests that validate opening a Realm with an encryption key.
@@ -136,7 +139,7 @@ class EncryptionTests {
         val keyPointer: Long = PlatformUtils.allocateEncryptionKeyOnNativeMemory(key)
 
         val keyPointerCallbackInvocation = atomic(0)
-        val keyPointerReleaseCallbackInvocation = atomic(0)
+        val releaseKeyCallbackInvoked = TestChannel<Boolean>()
 
         val encryptedConf = RealmConfiguration
             .Builder(
@@ -150,8 +153,8 @@ class EncryptionTests {
                 }
 
                 override fun releaseKey() {
-                    keyPointerReleaseCallbackInvocation.incrementAndGet()
                     PlatformUtils.freeEncryptionKeyFromNativeMemory(keyPointer)
+                    releaseKeyCallbackInvoked.trySend(true)
                 }
             })
             .build()
@@ -163,8 +166,8 @@ class EncryptionTests {
             }
         }
 
+        assertTrue(releaseKeyCallbackInvoked.receiveOrFail(), "Releasing the key should only be invoked once all the 3 Realms have been opened")
         assertEquals(3, keyPointerCallbackInvocation.value, "Encryption key pointer should have been invoked 3 times (Frozen Realm, Notifier and Writer Realms)")
-        assertEquals(1, keyPointerReleaseCallbackInvocation.value, "Releasing the key should only be invoked once all the 3 Realms have been opened")
 
         val keyPointer2 = PlatformUtils.allocateEncryptionKeyOnNativeMemory(key)
         val encryptedConf2 = RealmConfiguration
