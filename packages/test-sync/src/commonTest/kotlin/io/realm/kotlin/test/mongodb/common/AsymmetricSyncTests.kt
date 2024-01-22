@@ -140,7 +140,6 @@ class AsymmetricSyncTests {
         }
 
         realm.syncSession.uploadAllLocalChangesOrFail()
-
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
@@ -305,7 +304,6 @@ class AsymmetricSyncTests {
             schema = FLEXIBLE_SYNC_SCHEMA
         ).build()
         val initialServerDocuments = app.countDocuments("AsymmetricA")
-        println("Initial: $initialServerDocuments")
         Realm.open(config).use {
             it.write {
                 insert(
@@ -316,8 +314,7 @@ class AsymmetricSyncTests {
                     }
                 )
             }
-            // Disable: This always fails on Android?
-            // assertTrue(it.syncSession.uploadAllLocalChanges(1.minutes), "Schema was not uploaded in time")
+            it.syncSession.uploadAllLocalChangesOrFail()
             verifyDocuments("AsymmetricA", 1, initialServerDocuments)
         }
     }
@@ -327,12 +324,11 @@ class AsymmetricSyncTests {
         // https://youtrack.jetbrains.com/issue/KT-64139/Native-Bug-with-while-loop-coroutine-which-is-started-and-stopped-on-the-same-thread
         var documents = atomic(0)
         var found = false
-        var attempt = 60 * 5 // Wait 5 minutes
+        var attempt = 60 // Wait 1 minute
         // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
         // before giving up.
         while (!found && attempt > 0) {
             documents.value = app.countDocuments(clazz) - initialCount
-            println("${documents.value} : [$initialCount, ${initialCount + expectedCount}]")
             if (documents.value == expectedCount) {
                 found = true
             } else {

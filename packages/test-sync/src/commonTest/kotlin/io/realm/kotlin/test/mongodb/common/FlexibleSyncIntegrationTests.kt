@@ -93,7 +93,7 @@ class FlexibleSyncIntegrationTests {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
             }
-            assertTrue(realm1.syncSession.uploadAllLocalChanges(1.minutes), "Failed to upload data in time")
+            realm1.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // Download data from user 2
