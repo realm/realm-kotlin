@@ -63,8 +63,8 @@ actual object PlatformUtils {
 
     actual fun allocateEncryptionKeyOnNativeMemory(aesKey: ByteArray): Long {
         // Note: the ByteBuffer is not guaranteed to be in native memory (it could use a backing array)
-        //       use allocateDirect.hasArray() to find out. Ideally we want to use JNI for Android to
-        //       create such native array.
+        //       use allocateDirect.hasArray() to find out.
+        //       We use JNI for Android to create such native array.
         return nativeAllocateEncryptionKeyOnNativeMemory(aesKey)
     }
 
