@@ -111,7 +111,7 @@ public data class InitialRealmFileConfiguration(
 public interface EncryptionKeyCallback {
     /**
      * Provides the native memory address of the 64 byte array containing the key used to encrypt and decrypt the Realm file.
-     * This can be called multiple times internally, so the key needs to be the same for between calls.
+     * This can be called multiple times internally, so the key needs to be the same between calls.
      *
      * Note: The Realm SDK is not responsible of checking that the pointer is a valid 64 byte array, providing an invalid address will probably
      *       causes a segmentation fault and will crash the app.
