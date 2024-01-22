@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.test.mongodb.common.utils
 
+import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
@@ -50,6 +51,11 @@ fun <T : Throwable> assertFailsWithMessage(exceptionClass: KClass<T>, exceptionM
 
 inline fun <reified T : Throwable> assertFailsWithMessage(exceptionMessage: String, noinline block: () -> Unit): T =
     assertFailsWithMessage(T::class, exceptionMessage, block)
+
+suspend inline fun SubscriptionSet<*>.waitForSynchronizationOrFail() {
+    val timeout = 2.minutes
+    assertTrue(this.waitForSynchronization(timeout), "Failed to synchronize subscriptions in time: $timeout")
+}
 
 suspend inline fun SyncSession.uploadAllLocalChangesOrFail() {
     val timeout = 5.minutes

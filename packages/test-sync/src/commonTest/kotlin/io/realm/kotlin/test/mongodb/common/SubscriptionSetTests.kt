@@ -27,6 +27,7 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.waitForSynchronizationOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.TestHelper
@@ -154,7 +155,7 @@ class SubscriptionSetTests {
             realm.query<FlexParentObject>().subscribe("test1")
         }
         assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
-        subscriptions.waitForSynchronization()
+        subscriptions.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         subscriptions.update {
             // Flexible Sync queries cannot use limit
@@ -194,7 +195,7 @@ class SubscriptionSetTests {
         subscriptions.update {
             removeAll()
         }
-        subscriptions.waitForSynchronization()
+        subscriptions.waitForSynchronizationOrFail()
         assertNull(subscriptions.errorMessage)
     }
 
@@ -223,7 +224,7 @@ class SubscriptionSetTests {
     @Test
     fun waitForSynchronizationInitialSubscriptions() = runBlocking {
         val subscriptions = realm.subscriptions
-        assertTrue(subscriptions.waitForSynchronization())
+        subscriptions.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         assertEquals(0, subscriptions.size)
     }
@@ -232,7 +233,7 @@ class SubscriptionSetTests {
     fun waitForSynchronizationInitialEmptySubscriptionSet() = runBlocking {
         val subscriptions = realm.subscriptions
         subscriptions.update { /* Do nothing */ }
-        assertTrue(subscriptions.waitForSynchronization())
+        subscriptions.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         assertEquals(0, subscriptions.size)
     }
@@ -243,7 +244,7 @@ class SubscriptionSetTests {
             realm.query<FlexParentObject>().subscribe("test")
         }
         assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
-        assertTrue(updatedSubs.waitForSynchronization())
+        updatedSubs.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
     }
 
@@ -299,7 +300,7 @@ class SubscriptionSetTests {
         val subs = realm.subscriptions.update {
             realm.query<FlexParentObject>().subscribe("sub")
         }.also {
-            it.waitForSynchronization()
+            it.waitForSynchronizationOrFail()
         }
         realm.close()
 

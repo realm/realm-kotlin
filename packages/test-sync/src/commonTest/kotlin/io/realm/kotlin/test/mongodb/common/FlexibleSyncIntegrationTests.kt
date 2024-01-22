@@ -32,6 +32,7 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
+import io.realm.kotlin.test.mongodb.common.utils.waitForSynchronizationOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -88,7 +89,7 @@ class FlexibleSyncIntegrationTests {
             val subs = realm1.subscriptions.update {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
             }
-            assertTrue(subs.waitForSynchronization())
+            subs.waitForSynchronizationOrFail()
             realm1.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
@@ -145,7 +146,7 @@ class FlexibleSyncIntegrationTests {
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
+            realm.subscriptions.waitForSynchronizationOrFail()
             realm.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
@@ -155,7 +156,7 @@ class FlexibleSyncIntegrationTests {
                 val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
                 add(query, "sub", updateExisting = true)
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(120.seconds))
+            realm.subscriptions.waitForSynchronizationOrFail()
             assertEquals(1, realm.query<FlexParentObject>().count().find())
         }
     }
@@ -189,7 +190,7 @@ class FlexibleSyncIntegrationTests {
         Realm.open(config1).use { realm ->
             realm.subscriptions.update {
                 add(realm.query<FlexParentObject>("section = $0", randomSection))
-            }.waitForSynchronization(30.seconds)
+            }.waitForSynchronizationOrFail()
 
             realm.write {
                 repeat(10) { counter ->
@@ -201,7 +202,7 @@ class FlexibleSyncIntegrationTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges(30.seconds)
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // User 2 opens a Realm twice
@@ -241,7 +242,7 @@ class FlexibleSyncIntegrationTests {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
                 add(realm1.query<FlexChildObject>("section = $0", randomSection))
             }
-            assertTrue(subs.waitForSynchronization())
+            subs.waitForSynchronizationOrFail()
             realm1.write {
                 copyToRealm(
                     FlexParentObject(randomSection).apply {
@@ -320,14 +321,14 @@ class FlexibleSyncIntegrationTests {
 
                 realm.subscriptions.update {
                     add(realm.query<FlexParentObject>("_id = $0", objectId))
-                }.waitForSynchronization(30.seconds)
+                }.waitForSynchronizationOrFail()
 
                 assertNotEquals(expectedPrimaryKey, objectId)
 
                 realm.write {
                     copyToRealm(FlexParentObject().apply { _id = expectedPrimaryKey })
                 }
-                realm.syncSession.uploadAllLocalChanges(30.seconds)
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
 
             val exception: CompensatingWriteException = channel.receiveOrFail()
