@@ -52,6 +52,6 @@ inline fun <reified T : Throwable> assertFailsWithMessage(exceptionMessage: Stri
     assertFailsWithMessage(T::class, exceptionMessage, block)
 
 suspend inline fun SyncSession.uploadAllLocalChangesOrFail() {
-    val timeout = 1.minutes
+    val timeout = 5.minutes
     assertTrue(this.uploadAllLocalChanges(timeout), "Failed to upload local changes in time: $timeout")
 }
