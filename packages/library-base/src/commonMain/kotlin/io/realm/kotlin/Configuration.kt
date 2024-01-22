@@ -387,7 +387,6 @@ public interface Configuration {
          * There's also extra protection for JVM Windows target, where the underlying storage engine uses the Windows Kernel
          * to encrypt/decrypt the Realm's encryption key before each usage.
          *
-         *
          * Note: The RealmConfiguration doesn't take ownership of this native memory, the caller is responsible of disposing it
          * appropriately after the Realm is open using the [EncryptionKeyCallback.releaseKey].
          *
