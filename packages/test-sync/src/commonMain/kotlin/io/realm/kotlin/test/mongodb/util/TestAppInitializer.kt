@@ -148,6 +148,14 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+        var counter = 30
+        while (!app.initialSyncComplete() && counter > 0) {
+            delay(1.seconds)
+            counter--
+        }
+        if (!app.initialSyncComplete()) {
+            throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
+        }
     }
 
     @Suppress("LongMethod")

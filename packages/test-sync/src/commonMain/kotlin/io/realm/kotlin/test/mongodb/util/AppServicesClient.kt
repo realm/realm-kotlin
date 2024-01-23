@@ -642,26 +642,36 @@ class AppServicesClient(
 
     suspend fun BaasApp.initialSyncComplete(): Boolean {
         return withContext(dispatcher) {
-            httpClient.typedRequest<JsonObject>(
-                Get,
-                "$url/sync/progress"
-            ).let { obj: JsonObject ->
-                println(obj)
-                val statuses: JsonElement = obj["progress"]!!
-                when (statuses) {
-                    is JsonObject -> {
-                        if (obj.keys.isEmpty()) {
-                            // It might take a few seconds to register the Schemas, so treat
-                            // "empty" progress as initial sync not being complete (as we always
-                            // have at least one pre-defined schema).
-                            false
+            try {
+                httpClient.typedRequest<JsonObject>(
+                    Get,
+                    "$url/sync/progress"
+                ).let { obj: JsonObject ->
+                    println(obj)
+                    val statuses: JsonElement = obj["progress"]!!
+                    when (statuses) {
+                        is JsonObject -> {
+                            if (obj.keys.isEmpty()) {
+                                // It might take a few seconds to register the Schemas, so treat
+                                // "empty" progress as initial sync not being complete (as we always
+                                // have at least one pre-defined schema).
+                                false
+                            }
+                            val statuses: List<Boolean> = obj.keys.map { schemaClass ->
+                                obj[schemaClass]!!.jsonObject["complete"]?.jsonPrimitive?.boolean == true
+                            }
+                            statuses.all { true }
                         }
-                        val statuses: List<Boolean> = obj.keys.map { schemaClass ->
-                            obj[schemaClass]!!.jsonObject["complete"]?.jsonPrimitive?.boolean == true
-                        }
-                        statuses.all { true }
+                        else -> false
                     }
-                    else -> false
+                }
+            } catch (ex: IllegalStateException) {
+                if (ex.message!!.contains("there are no mongodb/atlas services with provided sync state")) {
+                    // If the network returns this error, it means that Sync is not enabled for this app,
+                    // in that case, just report success.
+                    true
+                } else {
+                    throw ex
                 }
             }
         }
