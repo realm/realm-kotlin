@@ -54,6 +54,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
@@ -638,6 +639,33 @@ class AppServicesClient(
                 }
             )
         }
+
+    suspend fun BaasApp.initialSyncComplete(): Boolean {
+        return withContext(dispatcher) {
+            httpClient.typedRequest<JsonObject>(
+                Get,
+                "$url/sync/progress"
+            ).let { obj: JsonObject ->
+                println(obj)
+                val statuses: JsonElement = obj["progress"]!!
+                when (statuses) {
+                    is JsonObject -> {
+                        if (obj.keys.isEmpty()) {
+                            // It might take a few seconds to register the Schemas, so treat
+                            // "empty" progress as initial sync not being complete (as we always
+                            // have at least one pre-defined schema).
+                            false
+                        }
+                        val statuses: List<Boolean> = obj.keys.map { schemaClass ->
+                            obj[schemaClass]!!.jsonObject["complete"]?.jsonPrimitive?.boolean == true
+                        }
+                        statuses.all { true }
+                    }
+                    else -> false
+                }
+            }
+        }
+    }
 
     private suspend fun BaasApp.getLocalUserPassProviderId(): String =
         withContext(dispatcher) {

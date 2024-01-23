@@ -18,8 +18,10 @@ package io.realm.kotlin.test.mongodb.util
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
+import kotlinx.coroutines.delay
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlin.time.Duration.Companion.seconds
 
 object TestAppInitializer {
     // Setups a test app
@@ -279,6 +281,15 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+
+        var counter = 30
+        while (!app.initialSyncComplete() && counter > 0) {
+            delay(1.seconds)
+            counter--
+        }
+        if (!app.initialSyncComplete()) {
+            throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
+        }
     }
 
     suspend fun AppServicesClient.addEmailProvider(
@@ -389,6 +400,15 @@ object TestAppInitializer {
         }
 
         setDevelopmentMode(true)
+
+        var counter = 30
+        while (!initialSyncComplete() && counter > 0) {
+            delay(1.seconds)
+            counter--
+        }
+        if (!app.initialSyncComplete()) {
+            throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
+        }
     }
 
     private val insertDocument = Function(
