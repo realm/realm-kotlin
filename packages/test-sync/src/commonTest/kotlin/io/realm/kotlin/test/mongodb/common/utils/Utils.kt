@@ -58,6 +58,6 @@ suspend inline fun SubscriptionSet<*>.waitForSynchronizationOrFail() {
 }
 
 suspend inline fun SyncSession.uploadAllLocalChangesOrFail() {
-    val timeout = 5.minutes
+    val timeout = 2.minutes
     assertTrue(this.uploadAllLocalChanges(timeout), "Failed to upload local changes in time: $timeout")
 }

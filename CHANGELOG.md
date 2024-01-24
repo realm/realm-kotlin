@@ -27,10 +27,10 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Update to Ktor 2.3.7.
+* Updated to Ktor 2.3.7.
 * Updated to CMake 3.27.7
-* Updated to Realm Core 13.25.0, commit 71f94d75e25bfc8913fcd93ae8de550b57577a4a.
 * Updated BAAS test server to v2024-01-22.
+* Updated to Realm Core 13.26.0, commit 8b1678096117b886b42a0576e40c75866c496b8f.
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)
