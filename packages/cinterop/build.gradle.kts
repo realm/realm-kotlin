@@ -422,8 +422,8 @@ val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
     logger.info("Copy native Realm JVM libraries: $copyJvmABIs")
     if (copyJvmABIs) {
         // copy MacOS pre-built binaries
-        project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
-            .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
+//        project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
+//            .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
 
         // copy Linux pre-built binaries
         project.file("$buildDir/realmLinuxBuild/librealmc.so")
