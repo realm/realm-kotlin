@@ -937,6 +937,12 @@ void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error
     realm_sync_socket_websocket_closed(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr), was_clean, static_cast<realm_web_socket_errno_e>(error_code), reason);
 }
 
+void realm_config_set_encryption_key_from_pointer(realm_config_t* config, int64_t aesKeyAddress) {
+    uint8_t key_array[64];
+    std::memcpy(key_array, reinterpret_cast<uint8_t*>(aesKeyAddress), 64);
+    realm_config_set_encryption_key(config, key_array, 64);
+}
+
 realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jobject websocket_transport) {
     auto jenv = get_env(false); // Always called from JVM
     realm_sync_socket_t* socket_provider = realm_sync_socket_new(jenv->NewGlobalRef(websocket_transport), /*userdata*/

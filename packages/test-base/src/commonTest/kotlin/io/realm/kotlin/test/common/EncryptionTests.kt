@@ -16,15 +16,24 @@
  */
 package io.realm.kotlin.test.common
 
+import io.realm.kotlin.EncryptionKeyCallback
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
+import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.use
+import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * This class contains all the Realm encryption integration tests that validate opening a Realm with an encryption key.
@@ -121,5 +130,60 @@ class EncryptionTests {
                     Realm.open(conf)
                 }
             }
+    }
+
+    @OptIn(ExperimentalEncryptionCallbackApi::class)
+    @Test
+    fun openEncryptedRealmWithEncryptionKeyCallback() = runBlocking {
+        val key: ByteArray = Random.nextBytes(64)
+        val keyPointer: Long = PlatformUtils.allocateEncryptionKeyOnNativeMemory(key)
+
+        val keyPointerCallbackInvocation = atomic(0)
+        val releaseKeyCallbackInvoked = TestChannel<Boolean>()
+
+        val encryptedConf = RealmConfiguration
+            .Builder(
+                schema = setOf(Sample::class)
+            )
+            .directory(tmpDir)
+            .encryptionKey(object : EncryptionKeyCallback {
+                override fun keyPointer(): Long {
+                    keyPointerCallbackInvocation.incrementAndGet()
+                    return keyPointer
+                }
+
+                override fun releaseKey() {
+                    PlatformUtils.freeEncryptionKeyFromNativeMemory(keyPointer)
+                    releaseKeyCallbackInvoked.trySend(true)
+                }
+            })
+            .build()
+
+        // Initializes an encrypted Realm
+        Realm.open(encryptedConf).use {
+            it.writeBlocking {
+                copyToRealm(Sample().apply { stringField = "Foo Bar" })
+            }
+        }
+
+        assertTrue(releaseKeyCallbackInvoked.receiveOrFail(), "Releasing the key should only be invoked once all the 3 Realms have been opened")
+        assertEquals(3, keyPointerCallbackInvocation.value, "Encryption key pointer should have been invoked 3 times (Frozen Realm, Notifier and Writer Realms)")
+
+        val keyPointer2 = PlatformUtils.allocateEncryptionKeyOnNativeMemory(key)
+        val encryptedConf2 = RealmConfiguration
+            .Builder(
+                schema = setOf(Sample::class)
+            )
+            .directory(tmpDir)
+            .encryptionKey(object : EncryptionKeyCallback {
+                override fun keyPointer() = keyPointer2
+                override fun releaseKey() = PlatformUtils.freeEncryptionKeyFromNativeMemory(keyPointer2)
+            })
+            .build()
+
+        Realm.open(encryptedConf2).use {
+            val sample: Sample = it.query(Sample::class).find().first()
+            assertEquals("Foo Bar", sample.stringField)
+        }
     }
 }

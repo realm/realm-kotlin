@@ -25,6 +25,10 @@ import kotlin.io.path.absolutePathString
 import kotlin.time.Duration
 
 actual object PlatformUtils {
+    init {
+        System.loadLibrary("android_jni_test_helper")
+    }
+
     @SuppressLint("NewApi")
     actual fun createTempDir(prefix: String, readOnly: Boolean): String {
         val dir: Path = Files.createTempDirectory("$prefix-android_tests")
@@ -56,6 +60,20 @@ actual object PlatformUtils {
         }
         SystemClock.sleep(5000) // 5 seconds to give the GC some time to process
     }
+
+    actual fun allocateEncryptionKeyOnNativeMemory(aesKey: ByteArray): Long {
+        // Note: the ByteBuffer is not guaranteed to be in native memory (it could use a backing array)
+        //       use allocateDirect.hasArray() to find out.
+        //       We use JNI for Android to create such native array.
+        return nativeAllocateEncryptionKeyOnNativeMemory(aesKey)
+    }
+
+    actual fun freeEncryptionKeyFromNativeMemory(aesKeyPointer: Long) {
+        nativeFreeEncryptionKeyFromNativeMemory(aesKeyPointer)
+    }
+
+    private external fun nativeAllocateEncryptionKeyOnNativeMemory(byteArray: ByteArray): Long
+    private external fun nativeFreeEncryptionKeyFromNativeMemory(pointer: Long)
 }
 
 // Allocs as much garbage as we can. Pass maxSize = 0 to use all available memory in the process.

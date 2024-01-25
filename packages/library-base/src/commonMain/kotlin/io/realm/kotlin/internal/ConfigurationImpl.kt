@@ -17,9 +17,11 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.CompactOnLaunchCallback
+import io.realm.kotlin.EncryptionKeyCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.InitialRealmFileConfiguration
 import io.realm.kotlin.LogConfiguration
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.dynamic.DynamicRealm
@@ -60,8 +62,10 @@ public open class ConfigurationImpl(
     schemaVersion: Long,
     schemaMode: SchemaMode,
     private val userEncryptionKey: ByteArray?,
+    @OptIn(ExperimentalEncryptionCallbackApi::class)
+    override val encryptionKeyAsCallback: EncryptionKeyCallback?,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
-    private val userMigration: RealmMigration?,
+    userMigration: RealmMigration?,
     automaticBacklinkHandling: Boolean,
     initialDataCallback: InitialDataCallback?,
     override val isFlexibleSyncConfiguration: Boolean,
@@ -228,6 +232,11 @@ public open class ConfigurationImpl(
 
             userEncryptionKey?.let { key: ByteArray ->
                 RealmInterop.realm_config_set_encryption_key(nativeConfig, key)
+            }
+
+            @OptIn(ExperimentalEncryptionCallbackApi::class)
+            encryptionKeyAsCallback?.let {
+                RealmInterop.realm_config_set_encryption_key_from_pointer(nativeConfig, it.keyPointer())
             }
 
             RealmInterop.realm_config_set_in_memory(nativeConfig, inMemory)

@@ -16,6 +16,7 @@
 
 package io.realm.kotlin
 
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.RealmConfigurationImpl
 import io.realm.kotlin.internal.platform.appFilesDirectory
@@ -185,6 +186,8 @@ public interface RealmConfiguration : Configuration {
                 writerDispatcherFactory,
                 schemaVersion,
                 encryptionKey,
+                @OptIn(ExperimentalEncryptionCallbackApi::class)
+                encryptionKeyAsCallback,
                 deleteRealmIfMigrationNeeded,
                 compactOnLaunchCallback,
                 migration,

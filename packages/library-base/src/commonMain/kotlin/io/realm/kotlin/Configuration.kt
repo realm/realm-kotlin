@@ -17,6 +17,7 @@
 package io.realm.kotlin
 
 import io.realm.kotlin.Configuration.SharedBuilder
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.internal.MISSING_PLUGIN_MESSAGE
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
@@ -106,6 +107,24 @@ public data class InitialRealmFileConfiguration(
     val checksum: String?
 )
 
+@ExperimentalEncryptionCallbackApi
+public interface EncryptionKeyCallback {
+    /**
+     * Provides the native memory address of the 64 byte array containing the key used to encrypt and decrypt the Realm file.
+     * This can be called multiple times internally, so the key needs to be the same between calls.
+     *
+     * Note: The Realm SDK is not responsible of checking that the pointer is a valid 64 byte array, providing an invalid address will probably
+     *       causes a segmentation fault and will crash the app.
+     */
+    public fun keyPointer(): Long
+
+    /**
+     * This callback will be invoked by Realm after it's open. This hint to the user that the key provided in [keyPointer] can now be released.
+     * This will be called once the Realm is open and it's safe to dispose of the encryption key.
+     */
+    public fun releaseKey()
+}
+
 /**
  * Base configuration options shared between all realm configuration types.
  */
@@ -152,6 +171,14 @@ public interface Configuration {
      * @return null on unencrypted Realms.
      */
     public val encryptionKey: ByteArray?
+
+    /**
+     * Native memory address of the 64 byte array containing the key used to encrypt and decrypt the Realm file.
+     *
+     * @return null on unencrypted Realms.
+     */
+    @OptIn(ExperimentalEncryptionCallbackApi::class)
+    public val encryptionKeyAsCallback: EncryptionKeyCallback?
 
     /**
      * Callback that determines if the realm file should be compacted as part of opening it.
@@ -234,6 +261,8 @@ public interface Configuration {
         protected var writeDispatcher: CoroutineDispatcher? = null
         protected var schemaVersion: Long = 0
         protected var encryptionKey: ByteArray? = null
+        @OptIn(ExperimentalEncryptionCallbackApi::class)
+        protected var encryptionKeyAsCallback: EncryptionKeyCallback? = null
         protected var compactOnLaunchCallback: CompactOnLaunchCallback? = null
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
@@ -353,6 +382,51 @@ public interface Configuration {
          */
         public fun encryptionKey(encryptionKey: ByteArray): S =
             apply { this.encryptionKey = validateEncryptionKey(encryptionKey) } as S
+
+        /**
+         * Similar to [encryptionKey] but instead this will read the encryption key from native memory.
+         * This can enhance the security of the app, since it reduces the window where the key is available in clear
+         * in memory (avoid memory dump attack). Once the Realm is open, one can zero-out the memory region holding the key
+         * as it will be already passed to the C++ storage engine.
+         *
+         * There's also extra protection for JVM Windows target, where the underlying storage engine uses the Windows Kernel
+         * to encrypt/decrypt the Realm's encryption key before each usage.
+         *
+         * Note: The RealmConfiguration doesn't take ownership of this native memory, the caller is responsible of disposing it
+         * appropriately after the Realm is open using the [EncryptionKeyCallback.releaseKey].
+         *
+         * @param encryptionKeyAsCallback Callback providing address/pointer to a 64-byte array containing the AES encryption key.
+         * This array should be in native memory to avoid copying the key into garbage collected heap memory (for JVM targets).
+         *
+         * One way to create such an array in JVM is to use JNI or use `sun.misc.Unsafe` as follow:
+         *
+         *```
+         * import sun.misc.Unsafe
+         *
+         * val field = Unsafe::class.java.getDeclaredField("theUnsafe")
+         * field.isAccessible = true
+         * val unsafe: Unsafe = field.get(null) as Unsafe
+         *
+         * val key = Random.nextBytes(64) // Replace with your actual AES key
+         * val keyPointer: Long = unsafe.allocateMemory(key.size.toLong())
+         *  for (i in key.indices) { // Write the key bytes to native memory
+         *      unsafe.putByte(keyPointer + i, key[i])
+         *  }
+         *
+         * val encryptedConf = RealmConfiguration
+         *      .Builder(schema = setOf(Sample::class))
+         *             .encryptionKey(object : EncryptionKeyCallback {
+         *                 override fun keyPointer() = keyPointer
+         *                 override fun releaseKey() = unsafe.freeMemory(keyPointer)
+         *             })
+         *             .build()
+         *
+         * val realm = Realm.open(encryptedConf)
+         *```
+         */
+        @OptIn(ExperimentalEncryptionCallbackApi::class)
+        public fun encryptionKey(encryptionKeyAsCallback: EncryptionKeyCallback): S =
+            apply { this.encryptionKeyAsCallback = encryptionKeyAsCallback } as S
 
         /**
          * Sets a callback for controlling whether the realm should be compacted when opened.

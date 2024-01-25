@@ -192,6 +192,7 @@ expect object RealmInterop {
     fun realm_config_set_schema(config: RealmConfigurationPointer, schema: RealmSchemaPointer)
     fun realm_config_set_max_number_of_active_versions(config: RealmConfigurationPointer, maxNumberOfVersions: Long)
     fun realm_config_set_encryption_key(config: RealmConfigurationPointer, encryptionKey: ByteArray)
+    fun realm_config_set_encryption_key_from_pointer(config: RealmConfigurationPointer, aesEncryptionKeyAddress: Long)
     fun realm_config_get_encryption_key(config: RealmConfigurationPointer): ByteArray?
     fun realm_config_set_should_compact_on_launch_function(config: RealmConfigurationPointer, callback: CompactOnLaunchCallback)
     fun realm_config_set_migration_function(config: RealmConfigurationPointer, callback: MigrationCallback)

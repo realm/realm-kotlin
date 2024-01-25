@@ -1,0 +1,1 @@
+add_library(android_jni_test_helper SHARED android_jni_helper.cpp)

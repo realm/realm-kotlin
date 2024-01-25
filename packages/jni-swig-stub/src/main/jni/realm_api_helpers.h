@@ -161,4 +161,5 @@ bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t 
 
 void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error_code, const char* reason);
 
+void realm_config_set_encryption_key_from_pointer(realm_config_t* config, int64_t aesKeyAddress);
 #endif //TEST_REALM_API_HELPERS_H

@@ -126,6 +126,13 @@ android {
         }
     }
 
+    externalNativeBuild {
+        cmake {
+            version = Versions.cmake
+            path = project.file("src/androidMain/cpp/CMakeLists.txt")
+        }
+    }
+
     buildTypes {
         // LibraryBuildType is not minifiable, but the current dependency from test-sync doesn't
         // allow test-base to be configured as a library. To test test-base with minification

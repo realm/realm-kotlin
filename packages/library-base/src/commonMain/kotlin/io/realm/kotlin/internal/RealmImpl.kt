@@ -19,6 +19,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Configuration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.dynamic.DynamicRealm
 import io.realm.kotlin.internal.dynamic.DynamicRealmImpl
 import io.realm.kotlin.internal.interop.ClassKey
@@ -42,11 +43,12 @@ import kotlinx.atomicfu.AtomicRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.launch
@@ -138,6 +140,24 @@ public class RealmImpl private constructor(
             }
 
             realmScope.launch {
+                @OptIn(ExperimentalEncryptionCallbackApi::class)
+                configuration.encryptionKeyAsCallback?.let {
+                    // if we're using an encryption key as a callback, we preemptively open the notifier and writer Realm
+                    // with the given configuration because the key might be deleted from memory after the Realm is open.
+
+                    // These touches the notifier and writer lazy initialised Realms to open them with the provided configuration.
+                    awaitAll(
+                        async(notificationScheduler.dispatcher) {
+                            notifier.realm.version().version
+                        },
+                        async(writeScheduler.dispatcher) {
+                            writer.realm.version().version
+                        }
+                    )
+
+                    it.releaseKey()
+                }
+
                 notifier.realmChanged().collect {
                     removeInitialRealmReference()
                     // Closing this reference might be done by the GC:
@@ -270,7 +290,6 @@ public class RealmImpl private constructor(
             current = initialRealmReference.value?.uncheckedVersion(),
             active = versionTracker.versions()
         )
-
         return VersionInfo(
             main = mainVersions,
             notifier = notifier.versions(),

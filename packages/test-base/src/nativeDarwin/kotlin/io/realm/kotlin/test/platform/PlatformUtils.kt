@@ -17,11 +17,17 @@
 package io.realm.kotlin.test.platform
 
 import io.realm.kotlin.test.util.Utils
+import kotlinx.cinterop.ByteVarOf
+import kotlinx.cinterop.CPointer
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.ULongVar
 import kotlinx.cinterop.alloc
+import kotlinx.cinterop.allocArray
 import kotlinx.cinterop.cValue
 import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.ptr
+import kotlinx.cinterop.set
+import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.value
 import platform.posix.S_IRGRP
 import platform.posix.S_IROTH
@@ -64,6 +70,24 @@ actual object PlatformUtils {
             val tidVar = alloc<ULongVar>()
             pthread_threadid_np(null, tidVar.ptr)
             return tidVar.value
+        }
+    }
+
+    @ExperimentalForeignApi
+    actual fun allocateEncryptionKeyOnNativeMemory(aesKey: ByteArray): Long {
+        val byteArrayPointer: CPointer<ByteVarOf<Byte>> = kotlinx.cinterop.nativeHeap.allocArray(64)
+
+        for (i in 0 until 64) {
+            byteArrayPointer[i] = aesKey[i]
+        }
+
+        return byteArrayPointer.rawValue.toLong()
+    }
+
+    @ExperimentalForeignApi
+    actual fun freeEncryptionKeyFromNativeMemory(aesKeyPointer: Long) {
+        aesKeyPointer.toCPointer<ByteVarOf<Byte>>()?.let {
+            kotlinx.cinterop.nativeHeap.free(it.rawValue)
         }
     }
 

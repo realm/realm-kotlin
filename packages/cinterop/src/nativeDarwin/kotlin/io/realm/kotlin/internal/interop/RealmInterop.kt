@@ -54,6 +54,7 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
@@ -77,6 +78,7 @@ import kotlinx.cinterop.readValue
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
+import kotlinx.cinterop.toCPointer
 import kotlinx.cinterop.toCStringArray
 import kotlinx.cinterop.toCValues
 import kotlinx.cinterop.toKString
@@ -416,6 +418,16 @@ actual object RealmInterop {
                 encryptionKeyPointer as CPointer<uint8_tVar>,
                 encryptionKey.size.toULong()
             )
+        }
+    }
+
+    @OptIn(ExperimentalForeignApi::class)
+    actual fun realm_config_set_encryption_key_from_pointer(config: RealmConfigurationPointer, aesEncryptionKeyAddress: Long) {
+        memScoped { // Ensure memory cleanup
+            val ptr = aesEncryptionKeyAddress.toCPointer<ByteVarOf<Byte>>()
+            val encryptionKey = ByteArray(64)
+            memcpy(encryptionKey.refTo(0), ptr, 64u)
+            realm_config_set_encryption_key(config, encryptionKey)
         }
     }
 

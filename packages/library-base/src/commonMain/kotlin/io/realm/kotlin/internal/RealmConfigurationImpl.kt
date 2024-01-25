@@ -17,10 +17,12 @@
 package io.realm.kotlin.internal
 
 import io.realm.kotlin.CompactOnLaunchCallback
+import io.realm.kotlin.EncryptionKeyCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.InitialRealmFileConfiguration
 import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.RealmConfiguration
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
 import io.realm.kotlin.migration.RealmMigration
@@ -40,6 +42,8 @@ internal class RealmConfigurationImpl(
     writeDispatcherFactory: CoroutineDispatcherFactory,
     schemaVersion: Long,
     encryptionKey: ByteArray?,
+    @OptIn(ExperimentalEncryptionCallbackApi::class)
+    encryptionKeyAsCallback: EncryptionKeyCallback?,
     override val deleteRealmIfMigrationNeeded: Boolean,
     compactOnLaunchCallback: CompactOnLaunchCallback?,
     migration: RealmMigration?,
@@ -62,6 +66,8 @@ internal class RealmConfigurationImpl(
         false -> SchemaMode.RLM_SCHEMA_MODE_AUTOMATIC
     },
     encryptionKey,
+    @OptIn(ExperimentalEncryptionCallbackApi::class)
+    encryptionKeyAsCallback,
     compactOnLaunchCallback,
     migration,
     automaticBacklinkHandling,

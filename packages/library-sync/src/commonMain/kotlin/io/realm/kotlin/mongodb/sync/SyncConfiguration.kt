@@ -20,6 +20,7 @@ import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
+import io.realm.kotlin.annotations.ExperimentalEncryptionCallbackApi
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.ObjectIdImpl
@@ -565,6 +566,8 @@ public interface SyncConfiguration : Configuration {
                 schemaVersion,
                 SchemaMode.RLM_SCHEMA_MODE_ADDITIVE_DISCOVERED,
                 encryptionKey,
+                @OptIn(ExperimentalEncryptionCallbackApi::class)
+                encryptionKeyAsCallback,
                 compactOnLaunchCallback,
                 null, // migration is not relevant for sync,
                 false, // automatic backlink handling is not relevant for sync

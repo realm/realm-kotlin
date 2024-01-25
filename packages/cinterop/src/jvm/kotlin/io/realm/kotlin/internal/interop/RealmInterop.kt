@@ -184,6 +184,10 @@ actual object RealmInterop {
         realmc.realm_config_set_encryption_key(config.cptr(), encryptionKey, encryptionKey.size.toLong())
     }
 
+    actual fun realm_config_set_encryption_key_from_pointer(config: RealmConfigurationPointer, aesEncryptionKeyAddress: Long) {
+        realmc.realm_config_set_encryption_key_from_pointer(config.cptr(), aesEncryptionKeyAddress)
+    }
+
     actual fun realm_config_get_encryption_key(config: RealmConfigurationPointer): ByteArray? {
         val key = ByteArray(ENCRYPTION_KEY_LENGTH)
         val keyLength: Long = realmc.realm_config_get_encryption_key(config.cptr(), key)
