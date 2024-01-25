@@ -32,7 +32,8 @@ publishBuild = false
 version = null
 // Wether or not to run test steps
 runTests = true
-isReleaseBranch = releaseBranches.contains(currentBranch)
+//isReleaseBranch = releaseBranches.contains(currentBranch)
+isReleaseBranch = false
 // Manually wipe the workspace before checking out the code. This happens automatically on release branches.
 forceWipeWorkspace = false
 
@@ -154,152 +155,152 @@ pipeline {
                         runStaticAnalysis()
                     }
                 }
-                stage('Benchmarks') {
-                    steps {
-                        runBenchmarks()
-                    }
-                }
-                stage('Tests Compiler Plugin') {
-                    when { expression { runTests } }
-                    steps {
-                        runCompilerPluginTest()
-                    }
-                }
-                stage('Tests macOS - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("packages", "cleanAllTests macosTest -PincludeTestModules=false")
-                    }
-                }
-                stage('Tests Android - Unit Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        withLogcatTrace(
-                            "unittest",
-                            {
-                                testAndCollect("packages", "cleanAllTests  connectedAndroidTest -PincludeTestModules=false")
-                            }
-                        )
-                    }
-                }
-                stage('Integration Tests - Android') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                withLogcatTrace(
-                                    "integrationtest",
-                                    {
-                                        forwardAdbPorts()
-                                        testAndCollect("packages", "cleanAllTests -PsyncUsePlatformNetworking=true -PincludeSdkModules=false connectedAndroidTest")
-                                    }
-                                )
-                            }
-                        ])
-                    }
-                }
-                stage('Integration Tests - macOS - New memory model') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            // This will overwrite previous test results, but should be ok as we would not get here
-                            // if previous stages failed.
-                            {
-                                testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false")
-                            },
-                        ])
-                    }
-                }
-                stage('Tests JVM') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("packages", 'cleanAllTests jvmTest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false ')
-                            }
-                        ])
-                    }
-                }
-                stage('Integration Tests - iOS') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("packages", "cleanAllTests iosTest -PincludeSdkModules=false")
-                            }
-                        ])
-                    }
-                }
-                stage('Minified Sync Tests - Android') {
-                    when { expression { runTests } }
-                    steps {
-                        testWithServer([
-                            {
-                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false -PtestBuildType=debugMinified')
-                            }
-                        ])
-                        sh 'rm mapping.zip || true'
-                        zip([
-                            'zipFile': 'mapping.zip',
-                            'archive': true,
-                            'glob': 'packages/test-sync/build/outputs/mapping/debugMinified/mapping.txt'
-                        ])
-                    }
-                }
-                stage('Gradle Plugin Integration Tests') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("integration-tests/gradle/current", "integrationTest")
-                        testAndCollect("integration-tests/gradle/current", "-Pkotlin.experimental.tryK2=true integrationTest")
-                        testAndCollect("integration-tests/gradle/gradle6-test", "integrationTest")
-                        testAndCollect("integration-tests/gradle/gradle71-test", "integrationTest")
-                        testAndCollect("integration-tests/gradle/gradle75-test", "integrationTest")
-                        withEnv(["JAVA_HOME=${JAVA_17}"]) {
-                            testAndCollect("integration-tests/gradle/gradle8-test", "integrationTest")
-                            testAndCollect("integration-tests/gradle/gradle85-test", "integrationTest")
-                        }
-                    }
-                }
-                stage('Tests Android Sample App') {
-                    when { expression { runTests } }
-                    steps {
-                        catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                            runMonkey()
-                        }
-                        runAndroidUnitTestsOnJvm()
-                    }
-                }
-                stage('Build Android on minimum versions') {
-                    when { expression { runTests } }
-                    steps {
-                        runBuildMinAndroidApp()
-                    }
-                }
-                stage('Test Realm Java Compatibility App') {
-                    when { expression { runTests } }
-                    steps {
-                        testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
-                        testAndCollect("examples/realm-java-compatibility", "-Pkotlin.experimental.tryK2=true connectedAndroidTest")
-                    }
-                }
-                stage('Track build metrics') {
-                    when { expression { currentBranch == "main" } }
-                    steps {
-                        trackBuildMetrics(version)
-                    }
-                }
+                // stage('Benchmarks') {
+                //     steps {
+                //         runBenchmarks()
+                //     }
+                // }
+                // stage('Tests Compiler Plugin') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         runCompilerPluginTest()
+                //     }
+                // }
+                // stage('Tests macOS - Unit Tests') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testAndCollect("packages", "cleanAllTests macosTest -PincludeTestModules=false")
+                //     }
+                // }
+                // stage('Tests Android - Unit Tests') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         withLogcatTrace(
+                //             "unittest",
+                //             {
+                //                 testAndCollect("packages", "cleanAllTests  connectedAndroidTest -PincludeTestModules=false")
+                //             }
+                //         )
+                //     }
+                // }
+                // stage('Integration Tests - Android') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             {
+                //                 withLogcatTrace(
+                //                     "integrationtest",
+                //                     {
+                //                         forwardAdbPorts()
+                //                         testAndCollect("packages", "cleanAllTests -PsyncUsePlatformNetworking=true -PincludeSdkModules=false connectedAndroidTest")
+                //                     }
+                //                 )
+                //             }
+                //         ])
+                //     }
+                // }
+                // stage('Integration Tests - macOS - New memory model') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             // This will overwrite previous test results, but should be ok as we would not get here
+                //             // if previous stages failed.
+                //             {
+                //                 testAndCollect("packages", "cleanAllTests macosTest -PincludeSdkModules=false")
+                //             },
+                //         ])
+                //     }
+                // }
+                // stage('Tests JVM') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             {
+                //                 testAndCollect("packages", 'cleanAllTests jvmTest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false ')
+                //             }
+                //         ])
+                //     }
+                // }
+                // stage('Integration Tests - iOS') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             {
+                //                 testAndCollect("packages", "cleanAllTests iosTest -PincludeSdkModules=false")
+                //             }
+                //         ])
+                //     }
+                // }
+                // stage('Minified Sync Tests - Android') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testWithServer([
+                //             {
+                //                 testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false -PtestBuildType=debugMinified')
+                //             }
+                //         ])
+                //         sh 'rm mapping.zip || true'
+                //         zip([
+                //             'zipFile': 'mapping.zip',
+                //             'archive': true,
+                //             'glob': 'packages/test-sync/build/outputs/mapping/debugMinified/mapping.txt'
+                //         ])
+                //     }
+                // }
+                // stage('Gradle Plugin Integration Tests') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testAndCollect("integration-tests/gradle/current", "integrationTest")
+                //         testAndCollect("integration-tests/gradle/current", "-Pkotlin.experimental.tryK2=true integrationTest")
+                //         testAndCollect("integration-tests/gradle/gradle6-test", "integrationTest")
+                //         testAndCollect("integration-tests/gradle/gradle71-test", "integrationTest")
+                //         testAndCollect("integration-tests/gradle/gradle75-test", "integrationTest")
+                //         withEnv(["JAVA_HOME=${JAVA_17}"]) {
+                //             testAndCollect("integration-tests/gradle/gradle8-test", "integrationTest")
+                //             testAndCollect("integration-tests/gradle/gradle85-test", "integrationTest")
+                //         }
+                //     }
+                // }
+                // stage('Tests Android Sample App') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
+                //             runMonkey()
+                //         }
+                //         runAndroidUnitTestsOnJvm()
+                //     }
+                // }
+                // stage('Build Android on minimum versions') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         runBuildMinAndroidApp()
+                //     }
+                // }
+                // stage('Test Realm Java Compatibility App') {
+                //     when { expression { runTests } }
+                //     steps {
+                //         testAndCollect("examples/realm-java-compatibility", "connectedAndroidTest")
+                //         testAndCollect("examples/realm-java-compatibility", "-Pkotlin.experimental.tryK2=true connectedAndroidTest")
+                //     }
+                // }
+                // stage('Track build metrics') {
+                //     when { expression { currentBranch == "main" } }
+                //     steps {
+                //         trackBuildMetrics(version)
+                //     }
+                // }
                 stage('Publish SNAPSHOT to Maven Central') {
                     when { expression { shouldPublishSnapshot(version) } }
                     steps {
                         runPublishSnapshotToMavenCentral()
                     }
                 }
-                stage('Publish Release to Maven Central') {
-                    when { expression { publishBuild } }
-                    steps {
-                        runPublishReleaseOnMavenCentral()
-                    }
-                }
+                // stage('Publish Release to Maven Central') {
+                //     when { expression { publishBuild } }
+                //     steps {
+                //         runPublishReleaseOnMavenCentral()
+                //     }
+                // }
             }
         }
     }
@@ -682,12 +683,12 @@ def startEmulatorInBgIfNeeded() {
 }
 
 boolean shouldPublishSnapshot(version) {
-    if (!releaseBranches.contains(currentBranch)) {
-        return false
-    }
-    if (version == null || !version.endsWith("-SNAPSHOT")) {
-        return false
-    }
+    // if (!releaseBranches.contains(currentBranch)) {
+    //     return false
+    // }
+    // if (version == null || !version.endsWith("-SNAPSHOT")) {
+    //     return false
+    // }
     return true
 }
 
@@ -716,7 +717,8 @@ def runCommand(String command){
 }
 
 def shouldBuildJvmABIs() {
-    if (publishBuild || shouldPublishSnapshot(version)) return true else return false
+    //if (publishBuild || shouldPublishSnapshot(version)) return true else return false
+    return true
 }
 
 def build_jvm_linux(String buildType) {
