@@ -18,10 +18,8 @@ package io.realm.kotlin.test.mongodb.util
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
-import kotlinx.coroutines.delay
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlin.time.Duration.Companion.seconds
 
 object TestAppInitializer {
     // Setups a test app
@@ -56,106 +54,6 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
-
-        app.addSchema(
-            """
-            {
-                "metadata": {
-                    "data_source": "BackingDB",
-                    "database": "$databaseName",
-                    "collection": "FlexChildObject"
-                },
-                "schema": {
-                    "properties": {
-                      "_id": {
-                        "bsonType": "objectId"
-                      },
-                      "name": {
-                        "bsonType": "string"
-                      },
-                      "realm_id": {
-                        "bsonType": "string"
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "_id"
-                    ],
-                    "title": "FlexChildObject"
-                }
-            }
-            """.trimIndent()
-        )
-
-        app.addSchema(
-            """
-            {
-                "metadata": {
-                    "data_source": "BackingDB",
-                    "database": "$databaseName",
-                    "collection": "FlexParentObject"
-                },
-                "relationships": {
-                    "child": {
-                        "ref": "#/relationship/BackingDB/$databaseName/FlexChildObject",
-                        "source_key": "child",
-                        "foreign_key": "_id",
-                        "is_list": false
-                    }
-                },
-                "schema": {
-                    "properties": {
-                        "_id": {
-                          "bsonType": "objectId"
-                        },
-                        "age": {
-                          "bsonType": "int"
-                        },
-                        "child": {
-                          "bsonType": "objectId"
-                        },
-                        "name": {
-                          "bsonType": "string"
-                        },
-                        "realm_id": {
-                          "bsonType": "string"
-                        },
-                        "section": {
-                          "bsonType": "int"
-                        },
-                        "embedded": {
-                            "title": "FlexEmbeddedObject",
-                            "bsonType": "object",
-                            "required": [
-                                "embeddedName"
-                            ],
-                            "properties": {
-                                "embeddedName": {
-                                    "bsonType": "string"
-                                }
-                            }
-                        }
-                    },
-                    "required": [
-                        "name",
-                        "section",
-                        "age",
-                        "_id"
-                    ],
-                    "title": "FlexParentObject"
-                
-                }
-            }
-            """.trimIndent()
-        )
-        var counter = 30
-        while (!app.initialSyncComplete() && counter > 0) {
-            delay(1.seconds)
-            counter--
-        }
-        if (!app.initialSyncComplete()) {
-            throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
-        }
     }
 
     @Suppress("LongMethod")
@@ -289,15 +187,6 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
-
-        var counter = 30
-        while (!app.initialSyncComplete() && counter > 0) {
-            delay(1.seconds)
-            counter--
-        }
-        if (!app.initialSyncComplete()) {
-            throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
-        }
     }
 
     suspend fun AppServicesClient.addEmailProvider(
@@ -408,15 +297,6 @@ object TestAppInitializer {
         }
 
         setDevelopmentMode(true)
-
-        var counter = 30
-        while (!initialSyncComplete() && counter > 0) {
-            delay(1.seconds)
-            counter--
-        }
-        if (!app.initialSyncComplete()) {
-            throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
-        }
     }
 
     private val insertDocument = Function(

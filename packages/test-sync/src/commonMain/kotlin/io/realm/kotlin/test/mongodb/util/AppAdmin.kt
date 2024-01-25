@@ -18,7 +18,9 @@ package io.realm.kotlin.test.mongodb.util
 
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.mongodb.sync.SyncSession
+import kotlinx.coroutines.delay
 import kotlinx.serialization.json.JsonObject
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Wrapper around App Services Server Admin functions needed for tests.
@@ -100,6 +102,11 @@ interface AppAdmin {
      * Delete documents of a given type.
      */
     suspend fun deleteDocuments(database: String, clazz: String, query: String): JsonObject?
+
+    /**
+     * Wait for Sync bootstrap to complete for all model classes.
+     */
+    suspend fun waitForSyncBootstrap()
 
     fun closeClient()
 }
@@ -200,6 +207,19 @@ class AppAdminImpl(
         baasClient.run {
             app.deleteDocument(database, clazz, query)
         }
+
+    override suspend fun waitForSyncBootstrap() {
+        baasClient.run {
+            var counter = 30
+            while (!app.initialSyncComplete() && counter > 0) {
+                delay(1.seconds)
+                counter--
+            }
+            if (!app.initialSyncComplete()) {
+                throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
+            }
+        }
+    }
 
     override fun closeClient() {
         baasClient.closeClient()

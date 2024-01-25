@@ -39,6 +39,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
+import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA_COUNT
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -647,20 +648,19 @@ class AppServicesClient(
                     Get,
                     "$url/sync/progress"
                 ).let { obj: JsonObject ->
-                    println(obj)
                     val statuses: JsonElement = obj["progress"]!!
                     when (statuses) {
                         is JsonObject -> {
-                            if (obj.keys.isEmpty()) {
+                            if (statuses.keys.isEmpty()) {
                                 // It might take a few seconds to register the Schemas, so treat
                                 // "empty" progress as initial sync not being complete (as we always
                                 // have at least one pre-defined schema).
                                 false
                             }
-                            val statuses: List<Boolean> = obj.keys.map { schemaClass ->
-                                obj[schemaClass]!!.jsonObject["complete"]?.jsonPrimitive?.boolean == true
+                            val bootstrapComplete: List<Boolean> = statuses.keys.map { schemaClass ->
+                                statuses[schemaClass]!!.jsonObject["complete"]?.jsonPrimitive?.boolean == true
                             }
-                            statuses.all { true }
+                            bootstrapComplete.all { it } && statuses.size == FLEXIBLE_SYNC_SCHEMA_COUNT
                         }
                         else -> false
                     }

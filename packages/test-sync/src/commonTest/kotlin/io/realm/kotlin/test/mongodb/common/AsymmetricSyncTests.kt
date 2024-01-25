@@ -21,9 +21,9 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.annotations.ExperimentalAsymmetricSyncApi
 import io.realm.kotlin.mongodb.ext.insert
@@ -37,12 +37,6 @@ import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.AsymmetricRealmObject
-import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.PersistedName
-import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
 import org.mongodb.kbson.ObjectId
@@ -54,42 +48,6 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
-class DeviceParent : RealmObject {
-    @PersistedName("_id")
-    @PrimaryKey
-    var id: ObjectId = ObjectId()
-    var device: Device? = null
-}
-
-class Measurement : AsymmetricRealmObject {
-    @PersistedName("_id")
-    @PrimaryKey
-    var id: ObjectId = ObjectId()
-    var type: String = "temperature"
-    var value: Float = 0.0f
-    var device: Device? = null
-    var backups: RealmList<BackupDevice> = realmListOf()
-}
-
-class BackupDevice() : EmbeddedRealmObject {
-    constructor(name: String, serialNumber: String) : this() {
-        this.name = name
-        this.serialNumber = serialNumber
-    }
-    var name: String = ""
-    var serialNumber: String = ""
-}
-
-class Device() : EmbeddedRealmObject {
-    constructor(name: String, serialNumber: String) : this() {
-        this.name = name
-        this.serialNumber = serialNumber
-    }
-    var name: String = ""
-    var serialNumber: String = ""
-    var backupDevice: BackupDevice? = null
-}
-
 @OptIn(ExperimentalAsymmetricSyncApi::class)
 class AsymmetricSyncTests {
 
@@ -99,7 +57,10 @@ class AsymmetricSyncTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX, logLevel = LogLevel.ALL, builder = { builder ->
+            builder.usePlatformNetworking(true)
+            builder
+        })
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -107,7 +68,9 @@ class AsymmetricSyncTests {
         config = SyncConfiguration.Builder(
             user,
             schema = FLEXIBLE_SYNC_SCHEMA
-        ).initialSubscriptions {
+        ).errorHandler { session, error ->
+            println(error)
+        }.initialSubscriptions {
             it.query<DeviceParent>().subscribe()
         }.build()
         realm = Realm.open(config)
@@ -278,22 +241,6 @@ class AsymmetricSyncTests {
                 dynamicRealm.delete(Measurement::class.simpleName!!)
             }
         }
-    }
-
-    class AsymmetricA : AsymmetricRealmObject {
-        @PrimaryKey
-        var _id: ObjectId = ObjectId()
-        var child: EmbeddedB? = null
-    }
-
-    class EmbeddedB : EmbeddedRealmObject {
-        var child: StandardC? = null
-    }
-
-    class StandardC : RealmObject {
-        @PrimaryKey
-        var _id: ObjectId = ObjectId()
-        var name: String = ""
     }
 
     // Verify that a schema of Asymmetric -> Embedded -> RealmObject work.

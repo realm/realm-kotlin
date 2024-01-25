@@ -35,6 +35,8 @@ runTests = true
 isReleaseBranch = releaseBranches.contains(currentBranch)
 // Manually wipe the workspace before checking out the code. This happens automatically on release branches.
 forceWipeWorkspace = false
+// Whether or not to use platform networking for tests
+usePlatformNetworking = false
 
 // References to Docker containers holding the MongoDB Test server and infrastructure for
 // controlling it.
@@ -191,7 +193,7 @@ pipeline {
                                     "integrationtest",
                                     {
                                         forwardAdbPorts()
-                                        testAndCollect("packages", "cleanAllTests -PsyncUsePlatformNetworking=true -PincludeSdkModules=false connectedAndroidTest")
+                                        testAndCollect("packages", "cleanAllTests -PsyncUsePlatformNetworking=${usePlatformNetworking} -PincludeSdkModules=false connectedAndroidTest")
                                     }
                                 )
                             }
@@ -215,7 +217,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests jvmTest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false ')
+                                testAndCollect("packages", "cleanAllTests jvmTest -PsyncUsePlatformNetworking=${usePlatformNetworking} -PincludeSdkModules=false")
                             }
                         ])
                     }
@@ -235,7 +237,7 @@ pipeline {
                     steps {
                         testWithServer([
                             {
-                                testAndCollect("packages", 'cleanAllTests :test-sync:connectedAndroidtest -PsyncUsePlatformNetworking=true -PincludeSdkModules=false -PtestBuildType=debugMinified')
+                                testAndCollect("packages", "cleanAllTests :test-sync:connectedAndroidtest -PsyncUsePlatformNetworking=${usePlatformNetworking} -PincludeSdkModules=false -PtestBuildType=debugMinified")
                             }
                         ])
                         sh 'rm mapping.zip || true'
