@@ -20,11 +20,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("realm-publisher")
+    id("com.codingfeline.buildkonfig") version Versions.buildkonfig
 }
 
 buildscript {
@@ -419,40 +421,22 @@ val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
             && (project.property("realm.kotlin.copyNativeJvmLibs") as String).isNotEmpty()
     logger.info("Copy native Realm JVM libraries: $copyJvmABIs")
     if (copyJvmABIs) {
-        val archs = (project.property("realm.kotlin.copyNativeJvmLibs") as String)
-            .split(",")
-            .map { it.trim() }
-            .map { it.toLowerCase() }
+        // copy MacOS pre-built binaries
+        project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
+            .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
 
-        archs.forEach { arch ->
-            when(arch) {
-                "linux" -> {
-                    // copy Linux pre-built binaries
-                    project.file("$buildDir/realmLinuxBuild/librealmc.so")
-                        .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
-                    genHashFile(platform = "linux", prefix = "lib", suffix = ".so")
-                    outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
-                    outputs.file(project.file("$jvmJniPath/linux/dynamic_libraries.properties"))
-                }
-                "macos" -> {
-                    // copy MacOS pre-built binaries
-                    project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
-                        .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
-                    genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
-                    outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
-                    outputs.file(project.file("$jvmJniPath/macos/dynamic_libraries.properties"))
-                }
-                "windows" -> {
-                    // copy Window pre-built binaries
-                    project.file("$buildDir/realmWindowsBuild/Release/realmc.dll")
-                        .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
-                    genHashFile(platform = "windows", prefix = "", suffix = ".dll")
-                    outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
-                    outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
-                }
-                else -> throw IllegalArgumentException("Unsupported platfor for realm.kotlin.copyNativeJvmLibs: $arch")
-            }
-        }
+        // copy Linux pre-built binaries
+        project.file("$buildDir/realmLinuxBuild/librealmc.so")
+            .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
+
+        // copy Window pre-built binaries
+        project.file("$buildDir/realmWindowsBuild/Release/realmc.dll")
+            .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
+
+        // Register copied libraries as output
+        outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
+        outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
+        outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
     }
 }
 
@@ -512,14 +496,10 @@ fun Task.buildSharedLibrariesForJVMMacOs() {
         }
         File("$directory/librealmc.dylib")
             .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
-
-        // build hash file
-        genHashFile(platform = "macos", prefix = "lib", suffix = ".dylib")
     }
 
     inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
-    outputs.file(project.file("$jvmJniPath/macos/dynamic_libraries.properties"))
 }
 
 fun Task.buildSharedLibrariesForJVMWindows() {
@@ -549,45 +529,10 @@ fun Task.buildSharedLibrariesForJVMWindows() {
         project.file("$jvmJniPath/windows").mkdirs()
         File("$directory/Release/realmc.dll")
             .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
-
-        // build hash file
-        genHashFile(platform = "windows", prefix = "", suffix = ".dll")
     }
 
     inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
-    outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
-}
-
-fun genHashFile(platform: String, prefix: String, suffix: String) {
-    val resourceDir = project.file("$jvmJniPath").absolutePath
-    val libRealmc: Path = Paths.get(resourceDir, platform, "${prefix}realmc$suffix")
-
-    // the order matters (i.e 'realm-ffi' first then 'realmc')
-    val macosHashes = """
-            realmc ${sha1(libRealmc)}
-
-    """.trimIndent()
-
-    Paths.get(resourceDir, platform, "dynamic_libraries.properties").also {
-        Files.write(it, macosHashes.toByteArray())
-    }
-}
-
-fun sha1(file: Path): String {
-    val digest = MessageDigest.getInstance("SHA-1")
-    Files.newInputStream(file).use {
-        val buf = ByteArray(16384) // 16k
-        while (true) {
-            val bytes = it.read(buf)
-            if (bytes > 0) {
-                digest.update(buf, 0, bytes)
-            } else {
-                break
-            }
-        }
-        return digest.digest().joinToString("", transform = { "%02x".format(it) })
-    }
 }
 
 fun Task.build_C_API_Macos_Universal(buildVariant: BuildType) {
@@ -806,5 +751,14 @@ tasks.named("clean") {
     doLast {
         delete(buildJVMSharedLibs.get().outputs)
         delete(project.file(".cxx"))
+    }
+}
+
+// Generate an object holding the current release version, to be used by the JVM SoLoader path construction
+buildkonfig {
+    packageName = "io.realm.kotlin.jvm"
+    objectName = "LibraryConfig"
+    defaultConfigs {
+        buildConfigField(Type.STRING, "version", Realm.version)
     }
 }
