@@ -49,8 +49,10 @@ val TEST_APP_PARTITION = syncServerAppName("pbs") // With Partition-based Sync
 val TEST_APP_FLEX = syncServerAppName("flx") // With Flexible Sync
 val TEST_APP_CLUSTER_NAME = SyncServerConfig.clusterName
 
-val TEST_SERVER_BASE_URL = SyncServerConfig.url
+val TEST_SERVER_BASE_URL = baasTestUrl()
 const val DEFAULT_PASSWORD = "password1234"
+
+expect fun baasTestUrl(): String
 
 // Expose a try-with-resource pattern for Test Apps
 inline fun App.use(action: (App) -> Unit) {

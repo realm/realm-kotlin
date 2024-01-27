@@ -530,23 +530,6 @@ jobs:
       - name: Install JSON parser
         run: brew install jq
 
-      # checkout BAAS CLI repo
-      - name: Checkout BAAS repo
-        run: |
-          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
-          
-      # Start BAAS instance in the background
-      # We save the container id to poll against and get the hostname info later
-      - name: Start Baas instance in the background
-        id: baas_cli_start
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          OUTPUT=$(bash cli.sh start | jq -r '.id')
-          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
-
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
@@ -584,16 +567,6 @@ jobs:
         working-directory: packages
         run: ./gradlew  :test-base:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
-      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
-      - name: Fetching the BAAS CLI hostname
-        id: baas_cli_poll
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
-          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
-      
       - name: Build Android Sync Test Apk
         working-directory: packages
         run: ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:packageDebug :test-sync:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
@@ -1122,6 +1095,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+
       - name: Restore Android Sync Test APK
         uses: actions/download-artifact@v3
         with:
@@ -1135,29 +1125,35 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
       - name: Run the Sync tests
         uses: ./.github/actions/run-android-device-farm-test
         id: run_android_tests
         with:
           apk-path: ${{ github.workspace }}/packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
           apk-auxiliary-path: ${{ github.workspace }}/packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
+          baas_url: ${{ steps.baas_cli_poll.outputs.baas_container_hostname }}
           app-id: io.realm.sync.testapp.test
           project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
           device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
 
-      - name: Checkout BAAS repo
-        if: always()
-        run: |
-          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
       - name: Stopping the BAAS container
         if: always()
         working-directory: baasaas
         env:
           APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
         run: |
-          if [ -n "${{ needs.build-android-packages.outputs.baas-container-id }}" ]; then
-            bash cli.sh stop ${{ needs.build-android-packages.outputs.baas-container-id }}
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
           fi  
 
   test-macos-packages:

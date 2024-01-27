@@ -6,6 +6,10 @@ inputs:
     description: 'Install additional APKs needed for the tests'
     default: ''
     required: false
+  baas_url:
+    description: 'URL of the test server to be used'
+    required: true
+    type: string
   app-id:
     description: 'The test runner class to use'
     required: true
@@ -46,7 +50,7 @@ runs:
             test:
               commands:
                 - adb shell pm list packages | grep realm
-                - adb shell am instrument -w -r ${{ inputs.app-id }}/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
+                - adb shell am instrument -w -e baas_url ${{ inputs.baas_url }} -r ${{ inputs.app-id }}/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
 
     - run: |
         Install-Module -Name AWSPowerShell -Force
