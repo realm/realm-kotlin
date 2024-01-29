@@ -17,6 +17,7 @@ import io.realm.kotlin.mongodb.exceptions.FunctionExecutionException
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.exceptions.SyncException
+import io.realm.kotlin.mongodb.exceptions.SyncSessionAuthExpired
 import io.realm.kotlin.mongodb.exceptions.UnrecoverableSyncException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyConfirmedException
 import io.realm.kotlin.mongodb.exceptions.UserAlreadyExistsException
@@ -79,6 +80,7 @@ internal fun convertSyncError(syncError: SyncError): SyncException {
     val errorCode = syncError.errorCode
     val message = createMessageFromSyncError(errorCode)
     return when (errorCode.errorCode) {
+        ErrorCode.RLM_ERR_AUTH_ERROR -> SyncSessionAuthExpired(message)
         ErrorCode.RLM_ERR_WRONG_SYNC_TYPE -> WrongSyncTypeException(message)
 
         ErrorCode.RLM_ERR_INVALID_SUBSCRIPTION_QUERY -> {

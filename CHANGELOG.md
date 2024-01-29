@@ -5,7 +5,9 @@
 
 ### Enhancements
 * [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
-* `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
+* [Sync] `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
+* [Sync] Added a new `SyncSessionAuthExpired` exception subclass that will be sent to the `SyncConfiguration.errorHandler` if the sync session is stopped because the users refresh token
+is no longer valid and they need to log in again. (Isse [#1640](https://github.com/realm/realm-kotlin/issues/1640))
 
 ### Fixed
 * Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))
