@@ -72,7 +72,7 @@ public class BadFlexibleSyncQueryException internal constructor(message: String)
  *
  * @see https://www.mongodb.com/docs/atlas/app-services/users/sessions/
  */
-public class SyncSessionAuthExpired internal constructor(message: String) :
+public class AuthExpiredException internal constructor(message: String) :
     SyncException(message)
 
 /**
