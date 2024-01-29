@@ -569,7 +569,7 @@ jobs:
 
       - name: Build Android Sync Test Apk
         working-directory: packages
-        run: ./gradlew -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} :test-sync:packageDebug :test-sync:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
+        run: ./gradlew :test-sync:packageDebug :test-sync:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
 
       - name: Build packages
         working-directory: packages
