@@ -15,17 +15,11 @@
  */
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-import java.security.MessageDigest
-import com.codingfeline.buildkonfig.compiler.FieldSpec.Type
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
     id("com.android.library")
     id("realm-publisher")
-    id("com.codingfeline.buildkonfig") version Versions.buildkonfig
 }
 
 buildscript {
@@ -747,14 +741,5 @@ tasks.named("clean") {
     doLast {
         delete(buildJVMSharedLibs.get().outputs)
         delete(project.file(".cxx"))
-    }
-}
-
-// Generate an object holding the current release version, to be used by the JVM SoLoader path construction
-buildkonfig {
-    packageName = "io.realm.kotlin.jvm"
-    objectName = "LibraryConfig"
-    defaultConfigs {
-        buildConfigField(Type.STRING, "version", Realm.version)
     }
 }

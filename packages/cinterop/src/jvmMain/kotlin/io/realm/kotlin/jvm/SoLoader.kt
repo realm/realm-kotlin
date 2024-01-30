@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.jvm
 
+import io.realm.kotlin.internal.SDK_VERSION
 import java.io.File
 import java.nio.file.Files
 import java.util.Locale
@@ -72,7 +73,7 @@ class SoLoader {
         return File(
             platform.defaultSystemLocation +
                 File.separator +
-                LibraryConfig.version +
+                SDK_VERSION +
                 File.separator +
                 (platform.prefix + libraryName + "." + platform.suffix)
         )
