@@ -448,7 +448,7 @@ public interface AppConfiguration {
                         // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                         //  constant in AppConfiguration.Companion
                         //  https://github.com/realm/realm-kotlin/issues/408
-                        timeoutMs = 60000,
+                        timeoutMs = 120_000,
                         dispatcherHolder = dispatcherHolder,
                         logger = logger,
                         customHeaders = customRequestHeaders,

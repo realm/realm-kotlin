@@ -2,7 +2,16 @@ name: 'Run Android tests on Device Farm'
 inputs:
   apk-path:
     required: true
+  apk-auxiliary-path:
+    description: 'Install additional APKs needed for the tests'
+    default: ''
+    required: false
+  baas_url:
+    description: 'URL of the test server to be used'
+    required: true
+    type: string
   app-id:
+    description: 'The test runner class to use'
     required: true
   project-arn:
     required: true
@@ -17,12 +26,14 @@ runs:
   using: "composite"
   steps:
     - name: Run the tests
-      uses: realm/aws-devicefarm/test-application@7b9a91236c456c97e28d384c9e476035d5ea686b
+      uses: nhachicha/aws-devicefarm/test-application@master
+
       id: run-tests
       with:
         project_arn: ${{ inputs.project-arn }}
         device_pool_arn: ${{ inputs.device-pool-arn }}
         app_file: ${{ inputs.apk-path }}
+        app_auxiliary_files: ${{ inputs.apk-auxiliary-path }}
         app_type: ANDROID_APP
         test_type: APPIUM_PYTHON
         test_package_file: https://github.com/realm/aws-devicefarm-sample-data/releases/download/0.3/sample_env_python3.zip
@@ -38,7 +49,8 @@ runs:
                 - export PYTHON_VERSION=3
             test:
               commands:
-                - adb shell am instrument -w -r io.realm.testapp.test/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
+                - adb shell pm list packages | grep realm
+                - adb shell am instrument -w -e baas_url ${{ inputs.baas_url }} -r ${{ inputs.app-id }}/androidx.test.runner.AndroidJUnitRunner | egrep 'OK \([0-9]+ test[s]?\)'
 
     - run: |
         Install-Module -Name AWSPowerShell -Force
@@ -53,11 +65,16 @@ runs:
         echo "All File Artifacts:"
         echo $fileArtifacts
         $logCatArtifacts = $fileArtifacts | Where-Object { $_.Name -EQ "Logcat" }
-        echo "LogCat Artifacts:"
-        echo $logCatArtifacts
-        echo "::group::Logcat"
-        Invoke-WebRequest -Uri $logCatArtifacts[0].Url | Select-Object -Expand RawContent
-        echo "::endgroup::"
+        if ($logCatArtifacts) {
+            echo "LogCat Artifacts:"
+            echo $logCatArtifacts
+            echo "::group::Logcat"
+            Invoke-WebRequest -Uri $logCatArtifacts[0].Url | Select-Object -Expand RawContent
+            echo "::endgroup::"
+        } else {
+            Write-Warning "No logCatArtifacts found."
+        }
+
       shell: pwsh
       if: always()
       name: Device Farm Output
