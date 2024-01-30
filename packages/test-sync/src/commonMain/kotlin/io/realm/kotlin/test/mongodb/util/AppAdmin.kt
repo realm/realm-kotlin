@@ -210,13 +210,14 @@ class AppAdminImpl(
 
     override suspend fun waitForSyncBootstrap() {
         baasClient.run {
-            var counter = 120
-            while (!app.initialSyncComplete() && counter > 0) {
+            var limit = 300
+            var i = 0
+            while (!app.initialSyncComplete() && i < limit) {
                 delay(1.seconds)
-                counter--
+                i++
             }
             if (!app.initialSyncComplete()) {
-                throw IllegalStateException("Test server did not finish bootstrapping sync in time.")
+                throw IllegalStateException("Test server did not finish bootstrapping sync in time: $limit s.")
             }
         }
     }

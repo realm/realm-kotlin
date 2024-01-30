@@ -544,7 +544,7 @@ class SyncClientResetIntegrationTests {
                 // For now, accept both 0 and 1.
 
                 // Object count down to 0 just after the reset
-                 // assertEquals(0, objectChannel.receiveOrFail().list.size)
+                // assertEquals(0, objectChannel.receiveOrFail().list.size)
                 var size = objectChannel.receiveOrFail().list.size
                 assertTrue(size == 0 || size == 1, "Size was: $size")
 
