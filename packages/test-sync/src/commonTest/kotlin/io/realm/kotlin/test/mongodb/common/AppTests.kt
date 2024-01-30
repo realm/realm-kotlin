@@ -18,8 +18,6 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.entities.sync.ChildPk
-import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
@@ -461,7 +459,7 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 

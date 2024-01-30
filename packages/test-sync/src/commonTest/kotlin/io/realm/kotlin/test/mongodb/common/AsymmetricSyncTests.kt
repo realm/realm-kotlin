@@ -23,7 +23,6 @@ import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.annotations.ExperimentalAsymmetricSyncApi
 import io.realm.kotlin.mongodb.ext.insert
@@ -57,10 +56,7 @@ class AsymmetricSyncTests {
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX, logLevel = LogLevel.ALL, builder = { builder ->
-            builder.usePlatformNetworking(true)
-            builder
-        })
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -68,9 +64,7 @@ class AsymmetricSyncTests {
         config = SyncConfiguration.Builder(
             user,
             schema = FLEXIBLE_SYNC_SCHEMA
-        ).errorHandler { session, error ->
-            println(error)
-        }.initialSubscriptions {
+        ).initialSubscriptions {
             it.query<DeviceParent>().subscribe()
         }.build()
         realm = Realm.open(config)

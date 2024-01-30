@@ -54,5 +54,5 @@ private val DEFAULT_SCHEMAS = setOf(
 val PARTITION_BASED_SCHEMA = DEFAULT_SCHEMAS
 // Amount of schema classes that should be created on the server. EmbeddedRealmObjects are not
 // included in this count
-val FLEXIBLE_SYNC_SCHEMA_COUNT = 11
+const val FLEXIBLE_SYNC_SCHEMA_COUNT = 11
 val FLEXIBLE_SYNC_SCHEMA = DEFAULT_SCHEMAS + ASYMMETRIC_SCHEMAS
