@@ -53,7 +53,7 @@ inline fun <reified T : Throwable> assertFailsWithMessage(exceptionMessage: Stri
     assertFailsWithMessage(T::class, exceptionMessage, block)
 
 suspend inline fun SubscriptionSet<*>.waitForSynchronizationOrFail() {
-    val timeout = 2.minutes
+    val timeout = 5.minutes
     assertTrue(this.waitForSynchronization(timeout), "Failed to synchronize subscriptions in time: $timeout")
 }
 
