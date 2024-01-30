@@ -72,7 +72,9 @@ class AsymmetricSyncTests {
 
     @AfterTest
     fun tearDown() {
-        realm.close()
+        if (this::realm.isInitialized) {
+            realm.close()
+        }
         runBlocking {
             app.deleteDocuments(app.clientAppId, Measurement::class.simpleName!!, "{}")
         }
