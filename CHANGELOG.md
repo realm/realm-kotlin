@@ -29,7 +29,7 @@
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
-* Updated to Realm Core 13.25.0, commit 71f94d75e25bfc8913fcd93ae8de550b57577a4a.
+* Updated to Realm Core 13.26.0, commit 5533505d18fda93a7a971d58a191db5005583c92.
 * Adding Sync tests via Github Action.
 
 

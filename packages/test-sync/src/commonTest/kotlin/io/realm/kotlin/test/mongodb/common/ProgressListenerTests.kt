@@ -30,6 +30,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.TestChannel
@@ -165,7 +166,7 @@ class ProgressListenerTests {
                 flow.takeWhile { completed -> completed < 3 }
                     .collect { completed ->
                         realm.writeSampleData(TEST_SIZE, idOffset = (completed + 1) * TEST_SIZE)
-                        realm.syncSession.uploadAllLocalChanges()
+                        realm.syncSession.uploadAllLocalChangesOrFail()
                     }
             }
         }
@@ -228,7 +229,7 @@ class ProgressListenerTests {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             withTimeout(10.seconds) {
                 // Ensure that all data is already synced
-                assertTrue { realm.syncSession.uploadAllLocalChanges() }
+                realm.syncSession.uploadAllLocalChangesOrFail()
                 assertTrue { realm.syncSession.downloadAllServerChanges() }
                 // Ensure that progress listeners are triggered at least one time even though there
                 // is no data

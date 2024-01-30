@@ -31,6 +31,8 @@ import io.realm.kotlin.mongodb.sync.SyncSession
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
+import io.realm.kotlin.test.mongodb.common.utils.waitForSynchronizationOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
@@ -50,7 +52,6 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Integration smoke tests for Flexible Sync. This is not intended to cover all cases, but just
@@ -87,12 +88,12 @@ class FlexibleSyncIntegrationTests {
             val subs = realm1.subscriptions.update {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
             }
-            assertTrue(subs.waitForSynchronization())
+            subs.waitForSynchronizationOrFail()
             realm1.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
             }
-            realm1.syncSession.uploadAllLocalChanges()
+            realm1.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // Download data from user 2
@@ -144,7 +145,7 @@ class FlexibleSyncIntegrationTests {
                     .query("(name = 'red' OR name = 'blue')")
                 add(query, "sub")
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(4.minutes))
+            realm.subscriptions.waitForSynchronizationOrFail()
             realm.write {
                 copyToRealm(FlexParentObject(randomSection).apply { name = "red" })
                 copyToRealm(FlexParentObject(randomSection).apply { name = "blue" })
@@ -154,7 +155,7 @@ class FlexibleSyncIntegrationTests {
                 val query = realm.query<FlexParentObject>("section = $0 AND name = 'red'", randomSection)
                 add(query, "sub", updateExisting = true)
             }
-            assertTrue(realm.subscriptions.waitForSynchronization(4.minutes))
+            realm.subscriptions.waitForSynchronizationOrFail()
             assertEquals(1, realm.query<FlexParentObject>().count().find())
         }
     }
@@ -203,7 +204,7 @@ class FlexibleSyncIntegrationTests {
                     )
                 }
             }
-            assertTrue(realm.syncSession.uploadAllLocalChanges(1.minutes), "Failed to upload writes in time")
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // User 2 opens a Realm twice
@@ -243,7 +244,7 @@ class FlexibleSyncIntegrationTests {
                 add(realm1.query<FlexParentObject>("section = $0", randomSection))
                 add(realm1.query<FlexChildObject>("section = $0", randomSection))
             }
-            assertTrue(subs.waitForSynchronization())
+            subs.waitForSynchronizationOrFail()
             realm1.write {
                 copyToRealm(
                     FlexParentObject(randomSection).apply {
@@ -270,7 +271,7 @@ class FlexibleSyncIntegrationTests {
                     }
                 )
             }
-            realm1.syncSession.uploadAllLocalChanges()
+            realm1.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // Download data from user 2
@@ -322,14 +323,14 @@ class FlexibleSyncIntegrationTests {
 
                 realm.subscriptions.update {
                     add(realm.query<FlexParentObject>("_id = $0", objectId))
-                }.waitForSynchronization(30.seconds)
+                }.waitForSynchronizationOrFail()
 
                 assertNotEquals(expectedPrimaryKey, objectId)
 
                 realm.write {
                     copyToRealm(FlexParentObject().apply { _id = expectedPrimaryKey })
                 }
-                realm.syncSession.uploadAllLocalChanges(30.seconds)
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
 
             val exception: CompensatingWriteException = channel.receiveOrFail()
