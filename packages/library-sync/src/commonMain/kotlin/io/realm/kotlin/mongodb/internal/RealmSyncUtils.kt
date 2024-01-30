@@ -8,6 +8,7 @@ import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
+import io.realm.kotlin.mongodb.exceptions.AuthExpiredException
 import io.realm.kotlin.mongodb.exceptions.BadFlexibleSyncQueryException
 import io.realm.kotlin.mongodb.exceptions.BadRequestException
 import io.realm.kotlin.mongodb.exceptions.CompensatingWriteException
@@ -79,6 +80,7 @@ internal fun convertSyncError(syncError: SyncError): SyncException {
     val errorCode = syncError.errorCode
     val message = createMessageFromSyncError(errorCode)
     return when (errorCode.errorCode) {
+        ErrorCode.RLM_ERR_AUTH_ERROR -> AuthExpiredException(message)
         ErrorCode.RLM_ERR_WRONG_SYNC_TYPE -> WrongSyncTypeException(message)
 
         ErrorCode.RLM_ERR_INVALID_SUBSCRIPTION_QUERY -> {

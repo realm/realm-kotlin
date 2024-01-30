@@ -64,6 +64,18 @@ public class BadFlexibleSyncQueryException internal constructor(message: String)
     SyncException(message)
 
 /**
+ * Thrown when the sync sessions access token expires and it isn't possible to renew it
+ * automatically because the users refresh token is no longer valid.
+ *
+ * Device Sync is stopped and can only be resumed after closing the realm, logging the user
+ * back in and reopen the realm by using the new user object.
+ *
+ * @see https://www.mongodb.com/docs/atlas/app-services/users/sessions/
+ */
+public class AuthExpiredException internal constructor(message: String) :
+    SyncException(message)
+
+/**
  * Thrown when the server undoes one or more client writes. Details on undone writes can be found in
  * [writes].
  */
