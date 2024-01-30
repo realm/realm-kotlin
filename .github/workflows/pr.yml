@@ -490,8 +490,8 @@ jobs:
     if: |
       always() && !cancelled() &&
       (needs.check-cache.outputs.packages-android-cache-hit != 'true' ||
-      needs.check-cache.outputs.needs.check-cache.outputs.android-test-base-apk-cache-hit != 'true' ||
-      needs.check-cache.outputs.needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true')
+      needs.check-cache.outputs.android-test-base-apk-cache-hit != 'true' ||
+      needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true')
 
     steps:
       - name: Checkout code
@@ -1010,7 +1010,7 @@ jobs:
           script: |
             adb logcat -c
             adb logcat > logcat.txt &
-            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} -PincludeSdkModules=false --info --no-daemon
+            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck -PsyncUsePlatformNetworking=true -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} -PincludeSdkModules=false --info --no-daemon
 
       - name: Archive LogCat data
         uses: actions/upload-artifact@v3
@@ -1514,6 +1514,7 @@ jobs:
         working-directory: packages
         run: >
           ./gradlew :test-${{ matrix.type }}:jvmTest
+          -PsyncUsePlatformNetworking=true
           -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
           -PincludeSdkModules=false 
           --info --no-daemon
