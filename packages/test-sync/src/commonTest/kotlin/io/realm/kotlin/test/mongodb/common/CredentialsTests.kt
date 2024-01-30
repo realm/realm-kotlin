@@ -369,7 +369,7 @@ class CredentialsTests {
             payload = mapOf("mail" to TestHelper.randomEmail(), "id" to 0)
         )
 
-        assertFailsWithMessage<AuthException>("[Service][AuthError(4346)] error executing auth function: Error: Authentication failed.") {
+        assertFailsWithMessage<AuthException>("[Service][AuthError(4346)] Error: Authentication failed.") {
             runBlocking {
                 app.login(credentials)
             }

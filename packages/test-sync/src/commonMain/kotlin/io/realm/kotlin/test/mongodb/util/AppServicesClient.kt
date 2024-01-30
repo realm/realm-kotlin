@@ -39,6 +39,7 @@ import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.sync.SyncMode
 import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_CLUSTER_NAME
+import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA_COUNT
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initialize
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
@@ -54,6 +55,7 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.add
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
@@ -638,6 +640,42 @@ class AppServicesClient(
                 }
             )
         }
+
+    suspend fun BaasApp.initialSyncComplete(): Boolean {
+        return withContext(dispatcher) {
+            try {
+                httpClient.typedRequest<JsonObject>(
+                    Get,
+                    "$url/sync/progress"
+                ).let { obj: JsonObject ->
+                    val statuses: JsonElement = obj["progress"]!!
+                    when (statuses) {
+                        is JsonObject -> {
+                            if (statuses.keys.isEmpty()) {
+                                // It might take a few seconds to register the Schemas, so treat
+                                // "empty" progress as initial sync not being complete (as we always
+                                // have at least one pre-defined schema).
+                                false
+                            }
+                            val bootstrapComplete: List<Boolean> = statuses.keys.map { schemaClass ->
+                                statuses[schemaClass]!!.jsonObject["complete"]?.jsonPrimitive?.boolean == true
+                            }
+                            bootstrapComplete.all { it } && statuses.size == FLEXIBLE_SYNC_SCHEMA_COUNT
+                        }
+                        else -> false
+                    }
+                }
+            } catch (ex: IllegalStateException) {
+                if (ex.message!!.contains("there are no mongodb/atlas services with provided sync state")) {
+                    // If the network returns this error, it means that Sync is not enabled for this app,
+                    // in that case, just report success.
+                    true
+                } else {
+                    throw ex
+                }
+            }
+        }
+    }
 
     private suspend fun BaasApp.getLocalUserPassProviderId(): String =
         withContext(dispatcher) {

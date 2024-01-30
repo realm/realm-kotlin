@@ -414,7 +414,6 @@ val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
  * mostly useful on CI.
  */
 val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
-
     val copyJvmABIs = project.hasProperty("realm.kotlin.copyNativeJvmLibs")
             && (project.property("realm.kotlin.copyNativeJvmLibs") as String).isNotEmpty()
     logger.info("Copy native Realm JVM libraries: $copyJvmABIs")
@@ -450,7 +449,7 @@ val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
                     outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
                     outputs.file(project.file("$jvmJniPath/windows/dynamic_libraries.properties"))
                 }
-                else -> throw IllegalArgumentException("Unsupported platfor for realm.kotlin.copyNativeJvmLibs: $arch")
+                else -> throw IllegalArgumentException("Unsupported platform for realm.kotlin.copyNativeJvmLibs: $arch")
             }
         }
     }
