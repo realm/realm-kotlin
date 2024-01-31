@@ -15,6 +15,7 @@
  */
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import java.lang.IllegalArgumentException
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -409,24 +410,38 @@ val buildJVMSharedLibs: TaskProvider<Task> by tasks.registering {
  * mostly useful on CI.
  */
 val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
-    val copyJvmABIs = project.hasProperty("copyJvmABIs") && project.property("copyJvmABIs") == "true"
+    val copyJvmABIs = project.hasProperty("realm.kotlin.copyNativeJvmLibs")
+            && (project.property("realm.kotlin.copyNativeJvmLibs") as String).isNotEmpty()
+    logger.info("Copy native Realm JVM libraries: $copyJvmABIs")
     if (copyJvmABIs) {
-        // copy MacOS pre-built binaries
-        project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
-            .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
+        val archs = (project.property("realm.kotlin.copyNativeJvmLibs") as String)
+            .split(",")
+            .map { it.trim() }
+            .map { it.toLowerCase() }
 
-        // copy Linux pre-built binaries
-        project.file("$buildDir/realmLinuxBuild/librealmc.so")
-            .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
-
-        // copy Window pre-built binaries
-        project.file("$buildDir/realmWindowsBuild/Release/realmc.dll")
-            .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
-
-        // Register copied libraries as output
-        outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
-        outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
-        outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
+        archs.forEach { arch ->
+            when(arch) {
+                "linux" -> {
+                    // copy Linux pre-built binaries
+                    project.file("$buildDir/realmLinuxBuild/librealmc.so")
+                        .copyTo(project.file("$jvmJniPath/linux/librealmc.so"), overwrite = true)
+                    outputs.file(project.file("$jvmJniPath/linux/librealmc.so"))
+                }
+                "macos" -> {
+                    // copy MacOS pre-built binaries
+                    project.file("$buildDir/realmMacOsBuild/librealmc.dylib")
+                        .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
+                    outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
+                }
+                "windows" -> {
+                    // copy Window pre-built binaries
+                    project.file("$buildDir/realmWindowsBuild/Release/realmc.dll")
+                        .copyTo(project.file("$jvmJniPath/windows/realmc.dll"), overwrite = true)
+                    outputs.file(project.file("$jvmJniPath/windows/realmc.dll"))
+                }
+                else -> throw IllegalArgumentException("Unsupported platform for realm.kotlin.copyNativeJvmLibs: $arch")
+            }
+        }
     }
 }
 

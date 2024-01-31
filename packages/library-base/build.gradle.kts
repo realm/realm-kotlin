@@ -21,6 +21,7 @@ plugins {
     id("org.jetbrains.dokka")
     kotlin("plugin.serialization") version Versions.kotlin
 }
+
 buildscript {
     dependencies {
         classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:${Versions.atomicfu}")
@@ -107,17 +108,6 @@ kotlin {
             dependsOn(nativeIos)
         }
     }
-
-    // See https://kotlinlang.org/docs/reference/mpp-publish-lib.html#publish-a-multiplatform-library
-    // FIXME MPP-BUILD We need to revisit this when we enable building on multiple hosts. Right now it doesn't do the right thing.
-//    configure(listOf(targets["metadata"], jvm())) {
-//        mavenPublication {
-//            val targetPublication = this@mavenPublication
-//            tasks.withType<AbstractPublishToMaven>()
-//                .matching { it.publication == targetPublication }
-//                .all { onlyIf { findProperty("isMainHost") == "true" } }
-//        }
-//    }
 
     // Require that all methods in the API have visibility modifiers and return types.
     // Anything inside `io.realm.kotlin.internal.*` is considered internal regardless of their
