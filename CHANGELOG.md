@@ -33,7 +33,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
-* Updated to Realm Core 14.0.0-beta, commit 4926641c6cf2948fa494624ee802bb8cbc21387f.
+* Updated to Realm Core 14.0.0-beta, commit 5c367320af95d0bdbf823aa21e056bd342a10091.
 * Adding Sync tests via Github Action.
 
 
