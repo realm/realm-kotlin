@@ -15,7 +15,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "^Windows")
 
 elseif (CMAKE_SYSTEM_NAME MATCHES "^Android")
     MESSAGE("Building JNI for Android")
-    set(CAPI_BUILD "${CMAKE_SOURCE_DIR}/../../../external/core}/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
+    set(CAPI_BUILD "${CMAKE_SOURCE_DIR}/../../../external/core/build-android-${ANDROID_ABI}-${CMAKE_BUILD_TYPE}")
     set(REALM_INCLUDE_DIRS ${CAPI_BUILD}/src ${CINTEROP_JNI} ${SWIG_JNI_GENERATED} ${SWIG_JNI_HELPERS})
     set(REALM_TARGET_LINK_LIBS log android RealmFFIStatic Realm::ObjectStore)
 

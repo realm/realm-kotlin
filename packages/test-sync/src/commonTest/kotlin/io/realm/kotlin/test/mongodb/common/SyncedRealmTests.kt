@@ -59,6 +59,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.CustomLogCollector
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
@@ -98,6 +99,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -250,7 +252,7 @@ class SyncedRealmTests {
                     val id = "id-${Random.nextLong()}"
                     copyToRealm(SyncObjectWithAllTypes().apply { _id = id })
                 }
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
         }
 
@@ -370,7 +372,7 @@ class SyncedRealmTests {
         // Open another realm with the same entity but change the type of a field in the schema to
         // trigger a sync error to be caught by the error handler
         runBlocking {
-            realm1.syncSession.uploadAllLocalChanges()
+            realm1.syncSession.uploadAllLocalChangesOrFail()
             val config2 = SyncConfiguration.Builder(
                 schema = setOf(io.realm.kotlin.entities.sync.bogus.ChildPk::class),
                 user = user,
@@ -453,7 +455,7 @@ class SyncedRealmTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // 2. Sometimes it can take a little while for the data to be available to other users,
@@ -501,7 +503,7 @@ class SyncedRealmTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // 2. Sometimes it can take a little while for the data to be available to other users,
@@ -631,7 +633,7 @@ class SyncedRealmTests {
                 realm.write {
                     copyToRealm(masterObject)
                 }
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
         }
         createPartitionSyncConfig(
@@ -668,7 +670,7 @@ class SyncedRealmTests {
             // schema = setOf(SyncObjectWithAllTypes::class, ChildPk::class)
         ).let { config ->
             Realm.open(config).use { realm ->
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
                 val schema: RealmSchema = realm.schema()
                 val childPkSchema: RealmClass? = schema["ChildPk"]
                 assertNotNull(childPkSchema)
@@ -744,7 +746,7 @@ class SyncedRealmTests {
         val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
         Realm.open(config0).use { realm ->
             realm.writeBlocking { copyToRealm(masterObject) }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
         assertEquals(42, counterValue.receiveOrFail(message = "Failed to receive 42"))
 
@@ -953,10 +955,12 @@ class SyncedRealmTests {
             val (email1, password1) = randomEmail() to "password1234"
             val user = flexApp.createUserAndLogIn(email1, password1)
             val localConfig = createWriteCopyLocalConfig("local.realm")
-            val syncConfig = createPartitionSyncConfig(
+            val syncConfig = createFlexibleSyncConfig(
                 user = user,
                 name = "sync.realm",
-                partitionValue = partitionValue,
+                initialSubscriptions = {
+                    it.query<FlexParentObject>().subscribe(name = "parentSubscription")
+                }
             )
             Realm.open(syncConfig).use { flexSyncRealm: Realm ->
                 flexSyncRealm.writeBlocking {
@@ -966,6 +970,7 @@ class SyncedRealmTests {
                         }
                     )
                 }
+
                 // Copy to local Realm
                 flexSyncRealm.writeCopyTo(localConfig)
             }
@@ -1199,11 +1204,11 @@ class SyncedRealmTests {
                 realm2.write {
                     copyToRealm(FlexParentObject(section))
                 }
-                realm2.syncSession.uploadAllLocalChanges()
+                realm2.syncSession.uploadAllLocalChangesOrFail()
             }
 
             // Reading the object means we received it from the other Realm
-            withTimeout(30.seconds) {
+            withTimeout(1.minutes) {
                 val obj: FlexParentObject = realm1.query<FlexParentObject>("section = $0", section).asFlow()
                     .map { it.list }
                     .filter { it.isNotEmpty() }
@@ -1265,7 +1270,7 @@ class SyncedRealmTests {
                         }
                     )
                 }
-                flexSyncRealm.syncSession.uploadAllLocalChanges()
+                flexSyncRealm.syncSession.uploadAllLocalChangesOrFail()
             }
             assertTrue(customLogger.logs.isNotEmpty())
             assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")

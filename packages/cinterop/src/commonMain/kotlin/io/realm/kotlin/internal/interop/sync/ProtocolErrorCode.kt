@@ -82,7 +82,9 @@ expect enum class SyncSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE,
     RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX,
     RLM_SYNC_ERR_SESSION_BAD_PROGRESS,
-    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS;
+    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS,
+    RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION,
+    RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED;
 
     companion object {
         internal fun of(nativeValue: Int): SyncSessionErrorCode?
@@ -121,7 +123,7 @@ expect enum class WebsocketErrorCode : CodeDescription {
     RLM_ERR_WEBSOCKET_FATAL_ERROR;
 
     companion object {
-        internal fun of(nativeValue: Int): WebsocketErrorCode?
+        fun of(nativeValue: Int): WebsocketErrorCode?
     }
 }
 

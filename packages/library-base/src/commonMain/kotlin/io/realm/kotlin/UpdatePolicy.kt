@@ -1,10 +1,9 @@
 package io.realm.kotlin
 
-import io.realm.kotlin.dynamic.DynamicMutableRealm
-
 /**
  * Update policy that controls how to handle import of objects with existing primary keys when
- * import them with [MutableRealm.copyToRealm] and [DynamicMutableRealm.copyToRealm].
+ * import them with [MutableRealm.copyToRealm] and
+ * [io.realm.kotlin.dynamic.DynamicMutableRealm.copyToRealm].
  *
  * @see MutableRealm.copyToRealm
  * @see DynamicMutableRealm.copyToRealm
