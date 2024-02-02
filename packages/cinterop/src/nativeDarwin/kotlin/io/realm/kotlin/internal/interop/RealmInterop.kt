@@ -980,12 +980,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
-        checkedBooleanResult(realm_wrapper.realm_set_list(obj.cptr(), key.key))
-        return realm_get_list(obj, key)
+        return CPointerWrapper(realm_wrapper.realm_set_list(obj.cptr(), key.key))
     }
     actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer {
-        checkedBooleanResult(realm_wrapper.realm_set_dictionary(obj.cptr(), key.key))
-        return realm_get_dictionary(obj, key)
+        return CPointerWrapper(realm_wrapper.realm_set_dictionary(obj.cptr(), key.key))
     }
 
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
