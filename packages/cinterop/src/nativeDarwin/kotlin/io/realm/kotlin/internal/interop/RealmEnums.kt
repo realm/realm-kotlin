@@ -116,7 +116,6 @@ actual enum class ValueType(
     RLM_TYPE_OBJECT_ID(realm_value_type_e.RLM_TYPE_OBJECT_ID),
     RLM_TYPE_LINK(realm_value_type_e.RLM_TYPE_LINK),
     RLM_TYPE_UUID(realm_value_type_e.RLM_TYPE_UUID),
-    RLM_TYPE_SET(realm_value_type_e.RLM_TYPE_SET),
     RLM_TYPE_LIST(realm_value_type_e.RLM_TYPE_LIST),
     RLM_TYPE_DICTIONARY(realm_value_type_e.RLM_TYPE_DICTIONARY),
     ;
