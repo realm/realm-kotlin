@@ -573,6 +573,9 @@ class RealmAnyNestedCollectionTests {
         realm.query<JsonStyleRealmObject>("value[*] == 4").find().single().run {
             assertEquals("LIST", id)
         }
+        realm.query<JsonStyleRealmObject>("value[*] == {4, 5, 6}").find().single().run {
+            assertEquals("LIST", id)
+        }
 
         // Matching dictionaries
         realm.query<JsonStyleRealmObject>("value.key1 == 7").find().single().run {
@@ -604,6 +607,12 @@ class RealmAnyNestedCollectionTests {
             assertEquals("EMBEDDED", id)
         }
         realm.query<JsonStyleRealmObject>("value[*].key3[0] == 9").find().single().run {
+            assertEquals("EMBEDDED", id)
+        }
+        realm.query<JsonStyleRealmObject>("value[0][*] == {4, 5, 6}").find().single().run {
+            assertEquals("EMBEDDED", id)
+        }
+        realm.query<JsonStyleRealmObject>("value[*][*] == {4, 5, 6}").find().single().run {
             assertEquals("EMBEDDED", id)
         }
     }
