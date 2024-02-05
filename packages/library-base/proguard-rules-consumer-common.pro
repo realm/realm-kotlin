@@ -127,6 +127,20 @@
     *;
 }
 
+# Platform networking callback
+-keep class io.realm.kotlin.internal.interop.sync.WebSocketTransport {
+    *;
+}
+-keep class io.realm.kotlin.internal.interop.sync.CancellableTimer {
+    *;
+}
+-keep class io.realm.kotlin.internal.interop.sync.WebSocketClient {
+    *;
+}
+-keep class io.realm.kotlin.internal.interop.sync.WebSocketObserver {
+    *;
+}
+
 # Un-comment for debugging
 #-printconfiguration /tmp/full-r8-config.txt
 #-keepattributes LineNumberTable,SourceFile

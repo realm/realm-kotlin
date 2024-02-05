@@ -30,8 +30,11 @@ import io.realm.kotlin.mongodb.internal.createMessageFromSyncError
  */
 public class ClientResetRequiredException constructor(
     private val appPointer: RealmAppPointer,
-    error: SyncError
-) : Throwable(message = createMessageFromSyncError(error.errorCode)) {
+    error: SyncError,
+) : Throwable(
+    message = createMessageFromSyncError(error.errorCode),
+    cause = error.userError,
+) {
 
     /**
      * Path to the original (local) copy of the realm when the Client Reset event was triggered.

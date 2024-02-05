@@ -32,7 +32,7 @@ object TestHelper {
     }
 
     fun randomPartitionValue(): String {
-        return "partition-${Random.nextULong()}"
+        return randomString("partition-")
     }
 
     /**
@@ -46,5 +46,16 @@ object TestHelper {
             Random.nextBytes(key)
         }
         return key
+    }
+
+    /**
+     * Return a random string, with an optional prefix.
+     */
+    fun randomString(prefix: String? = null): String {
+        return if (prefix != null) {
+            prefix + Random.nextULong().toString()
+        } else {
+            Random.nextULong().toString()
+        }
     }
 }

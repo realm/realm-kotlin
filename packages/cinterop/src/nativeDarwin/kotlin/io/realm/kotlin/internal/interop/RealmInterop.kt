@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AppError
 import io.realm.kotlin.internal.interop.sync.AuthProvider
+import io.realm.kotlin.internal.interop.sync.CancellableTimer
 import io.realm.kotlin.internal.interop.sync.CoreCompensatingWriteInfo
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
 import io.realm.kotlin.internal.interop.sync.CoreSubscriptionSetState
@@ -34,6 +35,11 @@ import io.realm.kotlin.internal.interop.sync.Response
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import io.realm.kotlin.internal.interop.sync.WebSocketClient
+import io.realm.kotlin.internal.interop.sync.WebSocketObserver
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import kotlinx.atomicfu.AtomicBoolean
 import kotlinx.atomicfu.atomic
 import kotlinx.cinterop.AutofreeScope
@@ -72,6 +78,7 @@ import kotlinx.cinterop.refTo
 import kotlinx.cinterop.set
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toCStringArray
+import kotlinx.cinterop.toCValues
 import kotlinx.cinterop.toKString
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
@@ -120,6 +127,12 @@ import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_sync_session_stop_policy_e
+import realm_wrapper.realm_sync_socket_post_callback_t
+import realm_wrapper.realm_sync_socket_t
+import realm_wrapper.realm_sync_socket_timer_callback_t
+import realm_wrapper.realm_sync_socket_timer_t
+import realm_wrapper.realm_sync_socket_websocket_t
+import realm_wrapper.realm_sync_socket_write_callback_t
 import realm_wrapper.realm_t
 import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
@@ -145,9 +158,9 @@ private fun throwOnError() {
                 errorCodeNativeValue = error.error.value.toInt(),
                 messageNativeValue = error.message?.toKString(),
                 path = error.path?.toKString(),
-                userError = error.usercode_error?.asStableRef<Throwable>()?.get()
+                userError = error.user_code_error?.asStableRef<Throwable>()?.get()
             ).also {
-                error.usercode_error?.let { disposeUserData<Throwable>(it) }
+                error.user_code_error?.let { disposeUserData<Throwable>(it) }
                 realm_clear_last_error()
             }
         }
@@ -625,9 +638,9 @@ actual object RealmInterop {
                             errorCodeNativeValue = err.error.value.toInt(),
                             messageNativeValue = err.message?.toKString(),
                             path = err.path?.toKString(),
-                            userError = err.usercode_error?.asStableRef<Throwable>()?.get()
+                            userError = err.user_code_error?.asStableRef<Throwable>()?.get()
                         )
-                        err.usercode_error?.let { disposeUserData<Throwable>(it) }
+                        err.user_code_error?.let { disposeUserData<Throwable>(it) }
                     } else {
                         realm_release(realm)
                     }
@@ -967,12 +980,10 @@ actual object RealmInterop {
     }
 
     actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
-        checkedBooleanResult(realm_wrapper.realm_set_list(obj.cptr(), key.key))
-        return realm_get_list(obj, key)
+        return CPointerWrapper(realm_wrapper.realm_set_list(obj.cptr(), key.key))
     }
     actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer {
-        checkedBooleanResult(realm_wrapper.realm_set_dictionary(obj.cptr(), key.key))
-        return realm_get_dictionary(obj, key)
+        return CPointerWrapper(realm_wrapper.realm_set_dictionary(obj.cptr(), key.key))
     }
 
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
@@ -2339,7 +2350,6 @@ actual object RealmInterop {
     }
 
     actual fun realm_app_sync_client_get_default_file_path_for_realm(
-        app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
         overriddenName: String?
     ): String {
@@ -2582,8 +2592,11 @@ actual object RealmInterop {
                         isFatal = is_fatal,
                         isUnrecognizedByClient = is_unrecognized_by_client,
                         isClientResetRequested = is_client_reset_requested,
-                        compensatingWrites = compensatingWrites
-                    )
+                        compensatingWrites = compensatingWrites,
+                        userError = user_code_error?.asStableRef<Throwable>()?.get()
+                    ).also {
+                        user_code_error?.let { disposeUserData<Throwable>(it) }
+                    }
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))
@@ -2613,16 +2626,10 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_before_client_reset_handler(
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm ->
-                val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
-
-                // Check if exceptions have been thrown, return true if all went as it should
-                try {
-                    beforeCallback.onBeforeReset(beforeDb)
+                stableUserDataWithErrorPropagation<SyncBeforeClientResetHandler>(userData) {
+                    val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                    onBeforeReset(beforeDb)
                     true
-                } catch (e: Throwable) {
-                    println(e.message)
-                    false
                 }
             },
             StableRef.create(beforeHandler).asCPointer(),
@@ -2639,22 +2646,19 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_after_client_reset_handler(
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
-                val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                stableUserDataWithErrorPropagation<SyncAfterClientResetHandler>(userData) {
+                    val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
 
-                // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
-                val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
-                val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
+                    // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
+                    val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
+                    val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
 
-                // Check if exceptions have been thrown, return true if all went as it should
-                try {
-                    afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
-                    true
-                } catch (e: Throwable) {
-                    println(e.message)
-                    false
-                } finally {
-                    realm_wrapper.realm_close(afterRealmPtr)
+                    try {
+                        onAfterReset(beforeDb, afterDb, didRecover)
+                        true
+                    } finally {
+                        realm_wrapper.realm_close(afterRealmPtr)
+                    }
                 }
             },
             StableRef.create(afterHandler).asCPointer(),
@@ -2814,6 +2818,149 @@ actual object RealmInterop {
                 }
             )
         )
+    }
+
+    actual fun realm_sync_set_websocket_transport(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        webSocketTransport: WebSocketTransport
+    ) {
+        val realmSyncSocketNew: CPointer<realm_sync_socket_t> =
+            checkedPointerResult(
+                realm_wrapper.realm_sync_socket_new(
+                    userdata = StableRef.create(webSocketTransport).asCPointer(),
+                    userdata_free = staticCFunction { userdata: CPointer<out CPointed>? ->
+                        safeUserData<WebSocketTransport>(userdata).close()
+                        disposeUserData<WebSocketTransport>(userdata)
+                    },
+                    post_func = staticCFunction { userdata: CPointer<out CPointed>?, syncSocketCallback: CPointer<realm_sync_socket_post_callback_t>? ->
+                        val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
+                            realm_wrapper.realm_sync_socket_post_complete(
+                                syncSocketCallback,
+                                if (cancelled) WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED.asNativeEnum else WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
+                                ""
+                            )
+                        }
+
+                        safeUserData<WebSocketTransport>(userdata).post(
+                            CPointerWrapper(StableRef.create(callback).asCPointer())
+                        )
+                    },
+                    create_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, delayInMilliseconds: uint64_t, syncSocketCallback: CPointer<realm_sync_socket_timer_callback_t>? ->
+                        val callback: WebsocketFunctionHandlerCallback = { cancelled, _, _ ->
+                            if (cancelled) {
+                                realm_wrapper.realm_sync_socket_timer_canceled(syncSocketCallback)
+                            } else {
+                                realm_wrapper.realm_sync_socket_timer_complete(
+                                    syncSocketCallback,
+                                    WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
+                                    ""
+                                )
+                            }
+                        }
+
+                        safeUserData<WebSocketTransport>(userdata).let { ws ->
+                            val job: CancellableTimer = ws.createTimer(
+                                delayInMilliseconds.toLong(),
+                                CPointerWrapper(StableRef.create(callback).asCPointer())
+                            )
+                            StableRef.create(job).asCPointer()
+                        }
+                    },
+                    cancel_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? ->
+                        safeUserData<CancellableTimer>(timer).cancel()
+                    },
+                    free_timer_func = staticCFunction { userdata: CPointer<out CPointed>?, timer: realm_sync_socket_timer_t? ->
+                        disposeUserData<WebSocketTransport>(timer)
+                    },
+                    websocket_connect_func = staticCFunction { userdata: CPointer<out CPointed>?, endpoint: CValue<realm_wrapper.realm_websocket_endpoint_t>, observer: CPointer<realm_wrapper.realm_websocket_observer_t>? ->
+                        safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
+                            endpoint.useContents {
+                                val managedObserver = WebSocketObserver(CPointerWrapper(observer))
+
+                                val supportedProtocols = mutableListOf<String>()
+                                for (i in 0 until this.num_protocols.toInt()) {
+                                    val protocol: CPointer<ByteVarOf<Byte>>? =
+                                        this.protocols?.get(i)
+                                    supportedProtocols.add(protocol.safeKString())
+                                }
+                                val webSocketClient: WebSocketClient = websocketTransport.connect(
+                                    managedObserver,
+                                    this.path.safeKString(),
+                                    this.address.safeKString(),
+                                    this.port.toLong(),
+                                    this.is_ssl,
+                                    this.num_protocols.toLong(),
+                                    supportedProtocols.joinToString(", ")
+                                )
+                                StableRef.create(webSocketClient).asCPointer()
+                            }
+                        }
+                    },
+                    websocket_write_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t?, data: CPointer<ByteVar>?, length: size_t, callback: CPointer<realm_sync_socket_write_callback_t>? ->
+                        val postWriteCallback: WebsocketFunctionHandlerCallback =
+                            { cancelled, status, reason ->
+                                realm_wrapper.realm_sync_socket_write_complete(
+                                    callback,
+                                    if (cancelled) WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_OPERATION_ABORTED.asNativeEnum else WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS.asNativeEnum,
+                                    reason
+                                )
+                            }
+
+                        safeUserData<WebSocketTransport>(userdata).let { websocketTransport ->
+                            safeUserData<WebSocketClient>(websocket).let { webSocketClient ->
+                                data?.readBytes(length.toInt())?.run {
+                                    websocketTransport.write(
+                                        webSocketClient,
+                                        this,
+                                        length.toLong(),
+                                        CPointerWrapper(
+                                            StableRef.create(postWriteCallback).asCPointer()
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        Unit
+                    },
+                    websocket_free_func = staticCFunction { userdata: CPointer<out CPointed>?, websocket: realm_sync_socket_websocket_t? ->
+                        safeUserData<WebSocketClient>(websocket).close()
+                        disposeUserData<WebSocketClient>(websocket)
+                    }
+                )
+            ) ?: error("Couldn't create Sync Socket")
+        realm_wrapper.realm_sync_client_config_set_sync_socket(
+            syncClientConfig.cptr(),
+            realmSyncSocketNew
+        )
+        realm_release(realmSyncSocketNew)
+    }
+
+    actual fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean, status: WebsocketCallbackResult, reason: String) {
+        safeUserData<WebsocketFunctionHandlerCallback>(nativePointer.cptr())(cancelled, status, reason)
+        disposeUserData<WebsocketFunctionHandlerCallback>(nativePointer.cptr())
+    }
+
+    actual fun realm_sync_socket_websocket_connected(nativePointer: RealmWebsocketProviderPointer, protocol: String) {
+        realm_wrapper.realm_sync_socket_websocket_connected(nativePointer.cptr(), protocol)
+    }
+
+    actual fun realm_sync_socket_websocket_error(nativePointer: RealmWebsocketProviderPointer) {
+        realm_wrapper.realm_sync_socket_websocket_error(nativePointer.cptr())
+    }
+
+    actual fun realm_sync_socket_websocket_message(
+        nativePointer: RealmWebsocketProviderPointer,
+        data: ByteArray
+    ): Boolean {
+        return realm_wrapper.realm_sync_socket_websocket_message(
+            nativePointer.cptr(),
+            data.toCValues(),
+            data.size.toULong()
+        )
+    }
+
+    actual fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String) {
+        realm_wrapper.realm_sync_socket_websocket_closed(nativePointer.cptr(), wasClean, errorCode.asNativeEnum, reason)
     }
 
     @Suppress("LongParameterList")
@@ -3500,37 +3647,66 @@ actual object RealmInterop {
         private val scope: CoroutineScope = CoroutineScope(dispatcher)
         val ref: CPointer<out CPointed> = StableRef.create(this).asCPointer()
         private lateinit var scheduler: CPointer<realm_scheduler_t>
-        private val lock = SynchronizableObject()
+        private val schedulerLock = SynchronizableObject()
+        private val dispatcherLock = SynchronizableObject()
         private var cancelled = false
+        private var dispatcherClosing = false
 
         fun setScheduler(scheduler: CPointer<realm_scheduler_t>) {
             this.scheduler = scheduler
         }
 
         override fun notify(work_queue: CPointer<realm_work_queue_t>?) {
-            scope.launch {
-                try {
-                    printlntid("on dispatcher")
-                    lock.withLock {
-                        if (!cancelled) {
-                            realm_wrapper.realm_scheduler_perform_work(work_queue)
+            // Use a lock as a work-around for https://github.com/realm/realm-kotlin/issues/1608
+            //
+            // As the Core listeners are separated from Coroutines, there is a chance
+            // that we have closed the Kotlin dispatcher and scheduler while Core is in the
+            // process of sending notifications. If this happens we might end up in this
+            // `notify` method with the dispatcher and scheduler being closed.
+            //
+            // As the ClosableDispatcher does not expose a `isClosed` state, it means
+            // there is no way for us to detect if it is safe to launch a task using
+            // the current coroutine APIs.
+            //
+            // Ass a work-around we use the `canceled` flag that is being set when the Scheduler
+            // is being released. This should be safe as we are only closing the dispatcher when
+            // releasing the scheduler. See [io.realm.kotlin.internal.util.LiveRealmContext] for
+            // the logic around this.
+            //
+            // Note, JVM and Native behave differently on this. See this issue for more
+            // details: https://github.com/Kotlin/kotlinx.coroutines/issues/3993
+            dispatcherLock.withLock {
+                if (!dispatcherClosing) {
+                    scope.launch {
+                        try {
+                            printlntid("on dispatcher")
+                            schedulerLock.withLock {
+                                if (!cancelled) {
+                                    realm_wrapper.realm_scheduler_perform_work(work_queue)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            // Should never happen, but is included for development to get some indicators
+                            // on errors instead of silent crashes.
+                            e.printStackTrace()
                         }
                     }
-                } catch (e: Exception) {
-                    // Should never happen, but is included for development to get some indicators
-                    // on errors instead of silent crashes.
-                    e.printStackTrace()
                 }
             }
         }
 
         fun cancel() {
-            lock.withLock {
+            dispatcherLock.withLock {
+                dispatcherClosing = true
+            }
+            schedulerLock.withLock {
                 cancelled = true
             }
         }
     }
 }
+
+private typealias WebsocketFunctionHandlerCallback = (Boolean, WebsocketCallbackResult, String) -> Unit
 
 fun realm_value_t.asByteArray(): ByteArray {
     if (this.type != realm_value_type.RLM_TYPE_BINARY) {

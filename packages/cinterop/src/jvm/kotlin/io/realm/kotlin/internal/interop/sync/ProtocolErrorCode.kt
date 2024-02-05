@@ -87,7 +87,9 @@ actual enum class SyncSessionErrorCode(
     RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE("CompensatingWrite", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE),
     RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX("MigrateToFlexibleSync", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX),
     RLM_SYNC_ERR_SESSION_BAD_PROGRESS("BadProgress", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_BAD_PROGRESS),
-    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS("RevertToPartitionBasedSync", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_REVERT_TO_PBS);
+    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS("RevertToPartitionBasedSync", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_REVERT_TO_PBS),
+    RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION("BadSchemaVersion", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION),
+    RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED("SchemaVersionChanged", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED);
 
     actual companion object {
         internal actual fun of(nativeValue: Int): SyncSessionErrorCode? =
@@ -130,7 +132,7 @@ actual enum class WebsocketErrorCode(
     RLM_ERR_WEBSOCKET_FATAL_ERROR("FatalError", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_FATAL_ERROR);
 
     actual companion object {
-        internal actual fun of(nativeValue: Int): WebsocketErrorCode? =
+        actual fun of(nativeValue: Int): WebsocketErrorCode? =
             values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }

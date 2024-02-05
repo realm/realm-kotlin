@@ -575,7 +575,7 @@ class RealmSetTests : CollectionQueryTests {
             val listener = async {
                 withTimeout(10.seconds) {
                     flow.collect { current ->
-                        delay(30.milliseconds)
+                        delay(100.milliseconds)
                     }
                 }
             }

@@ -29,9 +29,9 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 
 private val ASYMMETRIC_SCHEMAS = setOf(
-    AsymmetricSyncTests.AsymmetricA::class,
-    AsymmetricSyncTests.EmbeddedB::class,
-    AsymmetricSyncTests.StandardC::class,
+    AsymmetricA::class,
+    EmbeddedB::class,
+    StandardC::class,
     Measurement::class,
 )
 private val DEFAULT_SCHEMAS = setOf(
@@ -52,4 +52,7 @@ private val DEFAULT_SCHEMAS = setOf(
 )
 
 val PARTITION_BASED_SCHEMA = DEFAULT_SCHEMAS
+// Amount of schema classes that should be created on the server. EmbeddedRealmObjects are not
+// included in this count
+const val FLEXIBLE_SYNC_SCHEMA_COUNT = 11
 val FLEXIBLE_SYNC_SCHEMA = DEFAULT_SCHEMAS + ASYMMETRIC_SCHEMAS

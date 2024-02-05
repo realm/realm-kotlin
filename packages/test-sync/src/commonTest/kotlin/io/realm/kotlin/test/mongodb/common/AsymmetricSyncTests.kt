@@ -21,7 +21,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.dynamic.DynamicMutableRealm
 import io.realm.kotlin.dynamic.DynamicMutableRealmObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.Credentials
@@ -33,15 +32,11 @@ import io.realm.kotlin.schema.RealmClassKind
 import io.realm.kotlin.test.StandaloneDynamicMutableRealm
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.AsymmetricRealmObject
-import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.RealmList
-import io.realm.kotlin.types.RealmObject
-import io.realm.kotlin.types.annotations.PersistedName
-import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.delay
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
@@ -51,42 +46,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
-
-class DeviceParent : RealmObject {
-    @PersistedName("_id")
-    @PrimaryKey
-    var id: ObjectId = ObjectId()
-    var device: Device? = null
-}
-
-class Measurement : AsymmetricRealmObject {
-    @PersistedName("_id")
-    @PrimaryKey
-    var id: ObjectId = ObjectId()
-    var type: String = "temperature"
-    var value: Float = 0.0f
-    var device: Device? = null
-    var backups: RealmList<BackupDevice> = realmListOf()
-}
-
-class BackupDevice() : EmbeddedRealmObject {
-    constructor(name: String, serialNumber: String) : this() {
-        this.name = name
-        this.serialNumber = serialNumber
-    }
-    var name: String = ""
-    var serialNumber: String = ""
-}
-
-class Device() : EmbeddedRealmObject {
-    constructor(name: String, serialNumber: String) : this() {
-        this.name = name
-        this.serialNumber = serialNumber
-    }
-    var name: String = ""
-    var serialNumber: String = ""
-    var backupDevice: BackupDevice? = null
-}
 
 @OptIn(ExperimentalAsymmetricSyncApi::class)
 class AsymmetricSyncTests {
@@ -113,7 +72,12 @@ class AsymmetricSyncTests {
 
     @AfterTest
     fun tearDown() {
-        realm.close()
+        if (this::realm.isInitialized) {
+            realm.close()
+        }
+        runBlocking {
+            app.deleteDocuments(app.clientAppId, Measurement::class.simpleName!!, "{}")
+        }
         if (this::app.isInitialized) {
             app.close()
         }
@@ -133,6 +97,8 @@ class AsymmetricSyncTests {
                 )
             }
         }
+
+        realm.syncSession.uploadAllLocalChangesOrFail()
         verifyDocuments(clazz = "Measurement", expectedCount = newDocuments, initialCount = initialServerDocuments)
     }
 
@@ -273,22 +239,6 @@ class AsymmetricSyncTests {
         }
     }
 
-    class AsymmetricA : AsymmetricRealmObject {
-        @PrimaryKey
-        var _id: ObjectId = ObjectId()
-        var child: EmbeddedB? = null
-    }
-
-    class EmbeddedB : EmbeddedRealmObject {
-        var child: StandardC? = null
-    }
-
-    class StandardC : RealmObject {
-        @PrimaryKey
-        var _id: ObjectId = ObjectId()
-        var name: String = ""
-    }
-
     // Verify that a schema of Asymmetric -> Embedded -> RealmObject work.
     @Test
     fun asymmetricSchema() = runBlocking {
@@ -296,6 +246,7 @@ class AsymmetricSyncTests {
             app.login(Credentials.anonymous()),
             schema = FLEXIBLE_SYNC_SCHEMA
         ).build()
+        val initialServerDocuments = app.countDocuments("AsymmetricA")
         Realm.open(config).use {
             it.write {
                 insert(
@@ -306,26 +257,29 @@ class AsymmetricSyncTests {
                     }
                 )
             }
-            it.syncSession.uploadAllLocalChanges()
+            it.syncSession.uploadAllLocalChangesOrFail()
+            verifyDocuments("AsymmetricA", 1, initialServerDocuments)
         }
     }
 
     private suspend fun verifyDocuments(clazz: String, expectedCount: Int, initialCount: Int) {
+        // Variable shared across while must be atomic
+        // https://youtrack.jetbrains.com/issue/KT-64139/Native-Bug-with-while-loop-coroutine-which-is-started-and-stopped-on-the-same-thread
+        var documents = atomic(0)
         var found = false
-        var documents = 0
-        var attempt = 30
+        var attempt = 60 // Wait 1 minute
         // The translator might be slow to incorporate changes into MongoDB, so we retry for a bit
         // before giving up.
         while (!found && attempt > 0) {
-            documents = app.countDocuments(clazz) - initialCount
-            if (documents == expectedCount) {
+            documents.value = app.countDocuments(clazz) - initialCount
+            if (documents.value == expectedCount) {
                 found = true
             } else {
                 attempt -= 1
                 delay(1.seconds)
             }
         }
-        assertTrue(found, "Number of documents was: $documents")
+        assertTrue(found, "Number of documents was: ${documents.value} [initialCount: $initialCount, expectedCount: $expectedCount]")
     }
 
     private fun useDynamicRealm(function: (DynamicMutableRealm) -> Unit) {

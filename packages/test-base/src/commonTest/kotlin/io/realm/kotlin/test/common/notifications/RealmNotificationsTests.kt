@@ -91,6 +91,45 @@ class RealmNotificationsTests : FlowableTests {
     }
 
     @Test
+    fun registerTwoFlows() = runBlocking {
+        val c1 = TestChannel<RealmChange<Realm>>()
+        val c2 = TestChannel<RealmChange<Realm>>()
+        val startingVersion = realm.version()
+        val observer1 = async {
+            realm.asFlow().collect {
+                c1.send(it)
+            }
+        }
+        c1.receiveOrFail(message = "Failed to receive initial event on Channel 1").let { realmChange ->
+            assertIs<InitialRealm<Realm>>(realmChange)
+            assertEquals(startingVersion, realmChange.realm.version())
+        }
+
+        realm.write { /* Do nothing */ }
+        val nextVersion = realm.version()
+
+        c1.receiveOrFail(message = "Failed to receive update event on Channel 1").let { realmChange ->
+            assertIs<UpdatedRealm<Realm>>(realmChange)
+            assertEquals(nextVersion, realmChange.realm.version())
+        }
+
+        val observer2 = async {
+            realm.asFlow().collect {
+                c2.send(it)
+            }
+        }
+        c2.receiveOrFail(message = "Failed to receive initial event on Channel 2").let { realmChange ->
+            assertIs<InitialRealm<Realm>>(realmChange)
+            assertEquals(nextVersion, realmChange.realm.version())
+        }
+
+        observer1.cancel()
+        observer2.cancel()
+        c1.cancel()
+        c2.cancel()
+    }
+
+    @Test
     override fun asFlow() {
         runBlocking {
             val c = TestChannel<RealmChange<Realm>>()
@@ -102,7 +141,7 @@ class RealmNotificationsTests : FlowableTests {
             }
 
             // We should first receive an initial Realm notification.
-            c.receiveOrFail().let { realmChange ->
+            c.receiveOrFail(message = "Failed to receive initial event").let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
@@ -110,7 +149,7 @@ class RealmNotificationsTests : FlowableTests {
             realm.write { /* Do nothing */ }
 
             // Now we we should receive an updated Realm change notification.
-            c.receiveOrFail().let { realmChange ->
+            c.receiveOrFail(message = "Failed to receive update event").let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
@@ -144,12 +183,12 @@ class RealmNotificationsTests : FlowableTests {
             }
 
             // We should first receive an initial Realm notification.
-            c1.receiveOrFail().let { realmChange ->
+            c1.receiveOrFail(message = "Failed to receive initial event on Channel 1").let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
 
-            c2.receiveOrFail().let { realmChange ->
+            c2.receiveOrFail(message = "Failed to receive initial event on Channel 2").let { realmChange ->
                 assertIs<InitialRealm<Realm>>(realmChange)
                 assertEquals(startingVersion, realmChange.realm.version())
             }
@@ -157,12 +196,12 @@ class RealmNotificationsTests : FlowableTests {
             realm.write { /* Do nothing */ }
 
             // Now we we should receive an updated Realm change notification.
-            c1.receiveOrFail().let { realmChange ->
+            c1.receiveOrFail(message = "Failed to receive first update event on Channel 1").let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
 
-            c2.receiveOrFail().let { realmChange ->
+            c2.receiveOrFail(message = "Failed to receive first update event on Channel 2").let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 1), realmChange.realm.version())
             }
@@ -174,7 +213,7 @@ class RealmNotificationsTests : FlowableTests {
             realm.write { /* Do nothing */ }
 
             // But unclosed channels should receive notifications
-            c1.receiveOrFail().let { realmChange ->
+            c1.receiveOrFail(message = "Failed to receive second update event on Channel 1").let { realmChange ->
                 assertIs<UpdatedRealm<Realm>>(realmChange)
                 assertEquals(VersionId(startingVersion.version + 2), realmChange.realm.version())
             }
@@ -222,7 +261,7 @@ class RealmNotificationsTests : FlowableTests {
                 withTimeout(30.seconds) {
                     assertFailsWith<CancellationException> {
                         flow.collect {
-                            delay(1000.milliseconds)
+                            delay(2000.milliseconds)
                         }
                     }.message!!.let { message ->
                         assertEquals(
