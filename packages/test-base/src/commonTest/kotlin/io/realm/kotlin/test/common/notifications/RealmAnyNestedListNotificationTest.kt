@@ -19,6 +19,8 @@ package io.realm.kotlin.test.common.notifications
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.JsonStyleRealmObject
+import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmAnyOf
 import io.realm.kotlin.internal.platform.runBlocking
@@ -30,6 +32,7 @@ import io.realm.kotlin.test.common.utils.DeletableEntityNotificationTests
 import io.realm.kotlin.test.common.utils.FlowableTests
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.types.RealmAny
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -251,5 +254,98 @@ class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotific
     @Ignore
     override fun closeRealmInsideFlowThrows() {
         TODO("Not yet implemented")
+    }
+
+    @Test
+    @Ignore // https://github.com/realm/realm-core/issues/7264
+    fun eventsOnObjectChangesInRealmAnyList() {
+        kotlinx.coroutines.runBlocking {
+            val channel = Channel<ListChange<RealmAny?>>(10)
+            val parent =
+                realm.write {
+                    copyToRealm(JsonStyleRealmObject().apply { value = realmAnyListOf() })
+                }
+
+            val listener = async {
+                parent.value!!.asList().asFlow().collect {
+                    channel.trySendOrFail(it)
+                }
+            }
+
+            channel.receiveOrFail(message = "Initial event").let { assertIs<InitialList<*>>(it) }
+
+            realm.write {
+                val asList = findLatest(parent)!!.value!!.asList()
+                println(asList.size)
+                asList.add(
+                    RealmAny.create(JsonStyleRealmObject().apply { id = "CHILD" })
+                )
+            }
+            channel.receiveOrFail(message = "List add").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+            }
+
+            realm.write {
+                findLatest(parent)!!.value!!.asList()[0]!!.asRealmObject<JsonStyleRealmObject>().value =
+                    RealmAny.create("TEST")
+            }
+            channel.receiveOrFail(message = "Object updated").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+                assertEquals(
+                    "TEST",
+                    it.list[0]!!.asRealmObject<JsonStyleRealmObject>().value!!.asString()
+                )
+            }
+
+            listener.cancel()
+        }
+    }
+
+    @Test
+    fun eventsOnDictionaryChangesInRealmAnyList() {
+        kotlinx.coroutines.runBlocking {
+            val channel = Channel<ListChange<RealmAny?>>(10)
+            val parent =
+                realm.write {
+                    copyToRealm(JsonStyleRealmObject().apply { value = realmAnyListOf() })
+                }
+
+            val listener = async {
+                parent.value!!.asList().asFlow().collect {
+                    channel.trySendOrFail(it)
+                }
+            }
+
+            channel.receiveOrFail(message = "Initial event").let { assertIs<InitialList<*>>(it) }
+
+            realm.write {
+                val asList = findLatest(parent)!!.value!!.asList()
+                println(asList.size)
+                asList.add(
+                    realmAnyDictionaryOf(
+                        "key1" to "value1"
+                    )
+                )
+            }
+            channel.receiveOrFail(message = "List add").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+                assertEquals(RealmAny.Type.DICTIONARY, it.list[0]!!.type)
+            }
+
+            realm.write {
+                findLatest(parent)!!.value!!.asList()[0]!!.asDictionary()["key1"] =
+                    RealmAny.create("TEST")
+            }
+            channel.receiveOrFail(message = "Object updated").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+                assertEquals("TEST", it.list[0]!!.asDictionary()["key1"]!!.asString())
+            }
+
+            listener.cancel()
+        }
     }
 }
