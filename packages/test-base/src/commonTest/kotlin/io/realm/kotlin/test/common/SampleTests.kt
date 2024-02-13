@@ -33,6 +33,7 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmInstant
 import org.mongodb.kbson.Decimal128
+import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -179,6 +180,8 @@ class SampleTests {
     @Test
     @Suppress("LongMethod")
     fun primitiveTypes() {
+        val oid = io.realm.kotlin.types.ObjectId.create()
+        val iod2 = org.mongodb.kbson.ObjectId()
         realm.writeBlocking {
             copyToRealm(Sample()).apply {
                 stringField = "Realm Kotlin"
@@ -192,6 +195,8 @@ class SampleTests {
                 doubleField = 1.19851106
                 decimal128Field = Decimal128("2.155544073709551618E-6157")
                 timestampField = RealmInstant.from(42, 420)
+                objectIdField = oid
+                objectIdField2 = iod2
             }
         }
 
@@ -210,6 +215,8 @@ class SampleTests {
                 assertEquals(1.19851106, objects[0].doubleField)
                 assertEquals(Decimal128("2.155544073709551618E-6157"), objects[0].decimal128Field)
                 assertEquals(RealmInstant.from(42, 420), objects[0].timestampField)
+                assertEquals(oid, objects[0].objectIdField)
+                assertEquals(iod2, objects[0].objectIdField2)
             }
 
         // querying on each type

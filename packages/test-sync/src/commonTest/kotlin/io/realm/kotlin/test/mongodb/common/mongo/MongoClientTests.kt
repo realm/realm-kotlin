@@ -88,10 +88,10 @@ class MongoClientTests {
     }
 
     @Test
-    fun database_unknownDatabase() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
-        assertIs<Int>(client.database("Unknown").collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
-        RealmLog.level = LogLevel.WARN
+    fun database_createsCollectionOnInsertToUnknownDatabase() = runBlocking<Unit> {
+        val database = client.database("Unknown")
+        val collection = database.collection<CollectionDataType, Int>("NewCollection")
+        assertIs<Int>(collection.insertOne(CollectionDataType("object-1")))
     }
 
     @Test

@@ -16,9 +16,15 @@
 
 package io.realm.kotlin.test.mongodb.common.mongo
 
+import io.realm.kotlin.Realm
+import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.internal.MongoDBSerializer
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
@@ -36,12 +42,23 @@ import io.realm.kotlin.mongodb.mongo.insertMany
 import io.realm.kotlin.mongodb.mongo.insertOne
 import io.realm.kotlin.mongodb.mongo.updateMany
 import io.realm.kotlin.mongodb.mongo.updateOne
+import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.syncSession
+import io.realm.kotlin.notifications.ResultsChange
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
+import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -58,7 +75,6 @@ import org.mongodb.kbson.ObjectId
 import org.mongodb.kbson.serialization.EJson
 import org.mongodb.kbson.serialization.encodeToBsonValue
 import kotlin.random.Random
-import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -68,6 +84,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
 
@@ -79,23 +96,27 @@ class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
         val databaseName = app.configuration.appId
         @OptIn(ExperimentalKBsonSerializerApi::class)
         database = client.database(databaseName)
-        collection = collection(CollectionDataType::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        collection = collection()
     }
 
     @Test
     override fun findOne_unknownCollection() = runBlocking<Unit> {
         // Unknown collections will create the collection if inserting document, so only use
         // NonSchemaType for queries
-        val unknownCollection = collection<NonSchemaType, BsonValue>(NonSchemaType::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        val unknownCollection = collection<NonSchemaType, BsonValue>()
         assertNull(unknownCollection.findOne())
     }
 }
+
 class MongoCollectionFromClientTests : MongoCollectionTests() {
 
     @BeforeTest
     override fun setUp() {
         super.setUp()
-        collection = collection(CollectionDataType::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        collection = collection()
     }
 
     @Test
@@ -106,7 +127,8 @@ class MongoCollectionFromClientTests : MongoCollectionTests() {
 
     @Test
     override fun findOne_unknownCollection() = runBlocking<Unit> {
-        val unknownCollection = collection<NonSchemaType, BsonValue>(NonSchemaType::class)
+        @OptIn(ExperimentalKBsonSerializerApi::class)
+        val unknownCollection = collection<NonSchemaType, BsonValue>()
         assertFailsWithMessage<ServiceException>("no matching collection found that maps to a table with title \"NonSchemaType\"") {
             unknownCollection.findOne()
         }
@@ -116,6 +138,7 @@ class MongoCollectionFromClientTests : MongoCollectionTests() {
 abstract sealed class MongoCollectionTests {
 
     lateinit var app: TestApp
+    lateinit var user: User
     lateinit var client: MongoClient
     lateinit var collection: MongoCollection<CollectionDataType, Int>
 
@@ -123,6 +146,7 @@ abstract sealed class MongoCollectionTests {
     open fun setUp() {
         app = TestApp(
             this::class.simpleName,
+            TEST_APP_FLEX,
             builder = { builder: AppConfiguration.Builder ->
                 builder.httpLogObfuscator(null)
             }
@@ -131,9 +155,12 @@ abstract sealed class MongoCollectionTests {
         app.asTestApp.run {
             runBlocking {
                 deleteDocuments(app.configuration.appId, "CollectionDataType", "{}")
+                deleteDocuments(app.configuration.appId, "Parent", "{}")
+                deleteDocuments(app.configuration.appId, "Child", "{}")
+                deleteDocuments(app.configuration.appId, "EmbeddedChild", "{}")
             }
         }
-        val user = app.createUserAndLogin()
+        user = app.createUserAndLogin()
         @OptIn(ExperimentalKBsonSerializerApi::class)
         client = user.mongoClient(TEST_SERVICE_NAME)
     }
@@ -141,6 +168,14 @@ abstract sealed class MongoCollectionTests {
     @AfterTest
     fun teadDown() {
         RealmLog.level = LogLevel.WARN
+        app.asTestApp.run {
+            runBlocking {
+                deleteDocuments(app.configuration.appId, "CollectionDataType", "{}")
+                deleteDocuments(app.configuration.appId, "Parent", "{}")
+                deleteDocuments(app.configuration.appId, "Child", "{}")
+                deleteDocuments(app.configuration.appId, "EmbeddedChild", "{}")
+            }
+        }
         if (this::app.isInitialized) {
             app.close()
         }
@@ -160,7 +195,7 @@ abstract sealed class MongoCollectionTests {
         // Reshaped
         @OptIn(ExperimentalKBsonSerializerApi::class)
         val bsonCollection: MongoCollection<BsonDocument, BsonValue> = collection.withDocumentClass()
-        assertIs<BsonValue>(bsonCollection.insertOne(BsonDocument("name", "object-2")))
+        assertIs<BsonValue>(bsonCollection.insertOne(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-2"))))
         assertIs<BsonDocument>(bsonCollection.findOne())
         assertEquals(2, bsonCollection.count())
     }
@@ -278,6 +313,49 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
+    open fun findOne_links() = runBlocking<Unit> {
+        RealmLog.level = LogLevel.ALL
+        Realm.open(SyncConfiguration.Builder(user, setOf(Parent::class, Child::class, EmbeddedChild::class, CollectionDataType::class))
+            .initialSubscriptions {
+                add(it.query<Parent>())
+                add(it.query<Child>())
+            }
+            .build()).use {
+            val syncedParent = it.write {
+                copyToRealm(Parent().apply { child = Child() })
+            }
+            // We need to upload schema before proceeding
+            it.syncSession.uploadAllLocalChanges(30.seconds)
+            // The translator should have some time to integrate the synced data
+            delay(5.seconds)
+
+            @OptIn(ExperimentalKBsonSerializerApi::class)
+            val mongoDBClientParent = collection<Parent, String>().findOne()
+            assertEquals(syncedParent._id, mongoDBClientParent!!._id)
+            assertEquals(syncedParent.child!!._id, mongoDBClientParent!!.child!!._id)
+        }
+    }
+
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @Test
+    open fun findOne_embeddedObjects() = runBlocking<Unit> {
+        // Empty collections
+        RealmLog.level = RealmLog.level
+        assertNull(collection.findOne())
+
+        val parentCollection = collection<Parent, ObjectId>()
+        parentCollection.insertOne(
+            Parent().apply {
+                embeddedChild = EmbeddedChild().apply { name = "EMBEDDED-NAME" }
+            }
+        )
+
+        parentCollection.find().single().run {
+            assertEquals("EMBEDDED-NAME", embeddedChild!!.name)
+        }
+    }
+
+    @Test
     fun findOne_extraFieldsAreDiscarded() = runBlocking<Unit> {
         collection.insertOne<BsonDocument, Int>(
             BsonDocument(
@@ -376,7 +454,7 @@ abstract sealed class MongoCollectionTests {
         collection.find<BsonDocument>().let { assertTrue { it.isEmpty() } }
 
         val names = (1..10).map { "object-${it % 5}" }
-        collection.insertMany<BsonDocument, BsonValue>(names.map { BsonDocument("name", it) })
+        collection.insertMany<BsonDocument, BsonValue>(names.map { BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString(it)) })
 
         collection.find<BsonDocument>().let { results ->
             results.forEach {
@@ -433,11 +511,92 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    open fun insertOne_links() = runBlocking<Unit> {
+        // Open a synced realm and verified that the linked entities we upload through the
+        Realm.open(
+            SyncConfiguration.Builder(user, setOf(Parent::class, Child::class, EmbeddedChild::class, CollectionDataType::class))
+                .initialSubscriptions {
+                    add(it.query<Parent>())
+                    add(it.query<Child>())
+                }
+                .build()
+        ).use { realm ->
+            // We need to upload schema before proceeding
+            realm.syncSession.uploadAllLocalChanges()
+
+            // We set up listeners to be able to react on when the objects are seen in the synced realm
+            val childChannel = Channel<ResultsChange<Child>>(10)
+            val childListener =
+                async { realm.query<Child>().asFlow().collect { childChannel.send(it) } }
+            childChannel.receiveOrFail(message = "Didn't receive initial value").let {
+                assertTrue { it.list.isEmpty() }
+            }
+            val parentChannel = Channel<ResultsChange<Parent>>(10)
+            val parentListener =
+                async { realm.query<Parent>().asFlow().collect { parentChannel.send(it) } }
+            parentChannel.receiveOrFail(message = "Didn't receive initial value").let {
+                assertTrue { it.list.isEmpty() }
+            }
+
+            val childCollection = collection<Child, ObjectId>()
+            val unmanagedChild = Child()
+            assertEquals(unmanagedChild._id, childCollection.insertOne(unmanagedChild))
+            // We can't rely on the translator to incorporate the insertOnes in order so we need to
+            // assure that the child is actually added before verifying the link in the parent.
+            childChannel.receiveOrFail(message = "Didn't receive initial value").let {
+                assertEquals(unmanagedChild._id, it.list.first()._id)
+            }
+
+            val parentCollection = collection<Parent, ObjectId>()
+            val unmanagedParent = Parent().apply {
+                this.child = unmanagedChild
+            }
+            val actual = parentCollection.insertOne(unmanagedParent)
+            assertEquals(unmanagedParent._id, actual)
+
+            // Verifying that the parent include the correct link
+            parentChannel.receiveOrFail(
+                timeout = 5.seconds,
+                message = "Didn't receive update value"
+            ).let {
+                val parent = it.list.first()
+                assertEquals(unmanagedParent._id, parent._id)
+                parent!!.child!!.let {
+                    assertEquals(unmanagedChild._id, it._id)
+                    assertEquals(unmanagedChild.name, it.name)
+                }
+            }
+            parentListener.cancel()
+            childListener.cancel()
+        }
+    }
+
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    @Test
+    fun insertOne_embeddedObjects() = runBlocking<Unit> {
+        // Empty collections
+        RealmLog.level = RealmLog.level
+        assertNull(collection.findOne())
+
+        val parentCollection = collection<Parent, ObjectId>()
+        parentCollection.insertOne(
+            Parent().apply {
+                embeddedChild = EmbeddedChild().apply { name = "EMBEDDED-NAME" }
+            }
+        )
+
+        parentCollection.find().single().run {
+            assertEquals("EMBEDDED-NAME", embeddedChild!!.name)
+        }
+    }
+
+    @Test
     fun insertOne_explicitTypes() = runBlocking<Unit> {
         assertEquals(0, collection.find().size)
         // Inserting document without _id will use ObjectId as _id
-        collection.insertOne<BsonDocument, BsonValue>(BsonDocument("name", "object-1")).let {
-            assertIs<ObjectId>(it)
+        collection.insertOne<BsonDocument, BsonValue>(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-1"))).let {
+            assertIs<BsonInt32>(it)
         }
         // Inserted document will have ObjectId key and cannot be serialized into CollectionDataType
         // so find must also  use BsonDocument
@@ -459,9 +618,10 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
-    fun insertOne_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+    open fun insertOne_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+        RealmLog.level = LogLevel.ALL
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertOne<BsonDocument, BsonValue>(BsonDocument())
+            collection.insertOne<BsonDocument, BsonValue>(BsonDocument("_id", ObjectId()))
         }
     }
 
@@ -489,14 +649,20 @@ abstract sealed class MongoCollectionTests {
     fun insertMany_explictTyped() = runBlocking<Unit> {
         assertEquals(0, collection.find().size)
 
-        collection.insertMany<BsonDocument, BsonValue>((1..10).map { BsonDocument("name", "object-${it % 5}") }).let {
+        collection.insertMany<BsonDocument, BsonValue>(
+            (1..10).map {
+                BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-${it % 5}"))
+            }
+        ).let {
             assertEquals(10, it.size)
             it.forEach {
-                assertIs<ObjectId>(it)
+                assertIs<BsonInt32>(it)
             }
         }
         assertEquals(10, collection.find<BsonDocument>().size)
     }
+
+    // InsertMany with links
 
     @Test
     fun insertMany_throwsOnEmptyList() = runBlocking<Unit> {
@@ -518,16 +684,17 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
-    fun insertMany_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+    open fun insertMany_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+        RealmLog.level = LogLevel.ALL
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertOne<BsonDocument, BsonValue>(BsonDocument())
+            collection.insertMany<BsonDocument, BsonValue>(listOf(BsonDocument()))
         }
     }
 
     @Test
     fun insertMany_throwsOnTypeMismatch() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertOne<BsonDocument, ObjectId>(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1"))))
+            collection.insertMany<BsonDocument, ObjectId>(listOf(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1")))))
         }
     }
 
@@ -1064,10 +1231,10 @@ abstract sealed class MongoCollectionTests {
 
 // Helper method to be able to differentiate collection creation across test classes
 @OptIn(ExperimentalKBsonSerializerApi::class)
-inline fun <reified T : BaseRealmObject, K> MongoCollectionTests.collection(clazz: KClass<T>): MongoCollection<T, K> {
+inline fun <reified T : BaseRealmObject, K> MongoCollectionTests.collection(eJson: EJson? = null): MongoCollection<T, K> {
     return when (this) {
-        is MongoCollectionFromDatabaseTests -> database.collection<T, K>(T::class.simpleName!!)
-        is MongoCollectionFromClientTests -> client.collection()
+        is MongoCollectionFromDatabaseTests -> database.collection(T::class.simpleName!!, eJson)
+        is MongoCollectionFromClientTests -> client.collection(eJson)
     }
 }
 
@@ -1089,19 +1256,19 @@ class NonSchemaType : RealmObject {
 }
 
 @Serializable
-class CollectionDataType(var name: String = "Default", var _id: Int = Random.nextInt()) : RealmObject {
+class CollectionDataType(var name: String = "Default", @PrimaryKey var _id: Int = Random.nextInt()) : RealmObject {
     constructor() : this("Default")
 }
 
 // Distinct data type with same fields as the above CollectionDataType used to showcase injection
 // of custom serializers.
 @PersistedName("CollectionDataType")
-class CustomDataType(var name: String) : RealmObject {
+class CustomDataType(var name: String, var _id: Int = Random.nextInt()) : RealmObject {
     @Suppress("unused")
     constructor() : this("Default")
 }
 // Custom Id type to showcase that we can use custom serializers for primary key return values.
-class CustomIdType(val id: ObjectId)
+class CustomIdType(val id: Int)
 
 // Custom serializers to showcase that we can inject serializers throughout the MongoClient APIs.
 class CustomDataTypeSerializer : KSerializer<CustomDataType> {
@@ -1110,25 +1277,30 @@ class CustomDataTypeSerializer : KSerializer<CustomDataType> {
     override val descriptor: SerialDescriptor = serializer.descriptor
     override fun deserialize(decoder: Decoder): CustomDataType {
         return decoder.decodeSerializableValue(serializer).let {
-            CustomDataType(it.asDocument()["name"]!!.asString().value)
+            val _id = it.asDocument()["_id"]!!.asInt32().value
+            val name = it.asDocument()["name"]!!.asString().value
+            CustomDataType(name, _id)
         }
     }
 
     override fun serialize(encoder: Encoder, value: CustomDataType) {
-        encoder.encodeSerializableValue(serializer, BsonDocument("name", value.name))
+        val document = BsonDocument()
+        document["_id"] = BsonInt32(value._id)
+        document["name"] = BsonString(value.name)
+        encoder.encodeSerializableValue(serializer, document)
     }
 }
 class CustomIdSerializer : KSerializer<CustomIdType> {
-    val serializer = BsonValue.serializer()
+    val serializer = BsonInt32.serializer()
     override val descriptor: SerialDescriptor = serializer.descriptor
     override fun deserialize(decoder: Decoder): CustomIdType {
         return decoder.decodeSerializableValue(serializer).let {
-            CustomIdType(it.asObjectId())
+            CustomIdType(it.asInt32().value)
         }
     }
 
     override fun serialize(encoder: Encoder, value: CustomIdType) {
-        encoder.encodeSerializableValue(serializer, value.id)
+        encoder.encodeSerializableValue(serializer, BsonInt32(value.id))
     }
 }
 
@@ -1139,3 +1311,27 @@ val customEjsonSerializer = EJson(
         contextual(CustomIdType::class, CustomIdSerializer())
     }
 )
+
+class ParentSerializer: MongoDBSerializer<Parent>(Parent::class)
+@Serializable(ParentSerializer::class)
+class Parent : RealmObject {
+    @PrimaryKey
+    var _id: ObjectId = ObjectId()
+    var name: String = "DEFAULT-PAREN"
+    var child: Child? = null
+    var embeddedChild: EmbeddedChild? = null
+}
+@Serializable
+class Child : RealmObject {
+    @PrimaryKey
+    var _id: ObjectId = ObjectId()
+    var name: String = "DEFAULT-CHILD"
+
+}
+
+@Serializable
+class EmbeddedChild : EmbeddedRealmObject {
+    var _id: ObjectId = ObjectId()
+    var name: String = "EMBEDDED-CHILD"
+}
+

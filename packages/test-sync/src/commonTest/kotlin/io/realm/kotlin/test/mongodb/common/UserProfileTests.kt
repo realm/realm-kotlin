@@ -78,7 +78,7 @@ class UserProfileTests {
     }
 
     private lateinit var app: TestApp
-    lateinit var profileBody: Map<String, String>
+    lateinit var profileBody: Map<String, Any>
 
     private fun setDefaultProfile() {
         profileBody = mapOf(
@@ -89,8 +89,8 @@ class UserProfileTests {
             "last_name" to userProfile.lastName,
             "gender" to userProfile.gender,
             "birthday" to userProfile.birthday,
-            "min_age" to "${userProfile.minAge}",
-            "max_age" to "${userProfile.maxAge}"
+            "min_age" to userProfile.minAge,
+            "max_age" to userProfile.maxAge
         )
     }
 
@@ -115,6 +115,14 @@ class UserProfileTests {
                     body: String,
                     callback: ResponseCallback
                 ) {
+                    val profileData = profileBody.map { (k, v) ->
+                        val value = when(v) {
+                            is String -> Json.encodeToString<String>(v)
+                            is Long -> Json.encodeToString<Long>(v)
+                            else -> TODO("Unsupported user data type $k : $v")
+                        }
+                        "\"$k\" : $value"
+                    }.joinToString(separator = ",", prefix = "{", postfix = "}") { it }
                     val result: String = when {
                         url.endsWith("/providers/local-userpass/login") ->
                             """
@@ -141,7 +149,7 @@ class UserProfileTests {
                                         }
                                     }
                                 ],
-                                "data": ${Json.encodeToString(profileBody)},
+                                "data": ${profileData}, 
                                 "type": "normal",
                                 "roles": [
                                     {
@@ -196,12 +204,12 @@ class UserProfileTests {
 
         document.entries.forEach { (key: String, value: BsonValue) ->
             assertContains(profileBody.keys, key)
-            val stringValue = when (value.bsonType) {
+            val parsedValue: Any = when (value.bsonType) {
                 BsonType.STRING -> value.asString().value
-                BsonType.INT64 -> value.asInt64().value.toString()
+                BsonType.INT64 -> value.asInt64().value
                 else -> TODO()
             }
-            assertEquals(profileBody[key], stringValue, "failed comparing key $key")
+            assertEquals(profileBody[key], parsedValue, "failed comparing key $key")
         }
     }
 
@@ -223,10 +231,10 @@ class UserProfileTests {
         setEmptyProfile()
 
         val user = app.createUserAndLogin()
-        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
+        assertFailsWithMessage<SerializationException>("Fields [name, email, picture_url, first_name, last_name, gender, birthday, min_age, max_age] are required for type with serial name 'io.realm.kotlin.test.mongodb.common.UserProfile', but they were missing") {
             user.profile<UserProfile>()
         }
-        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
+        assertFailsWithMessage<SerializationException>("Fields [name, email, picture_url, first_name, last_name, gender, birthday, min_age, max_age] are required for type with serial name 'io.realm.kotlin.test.mongodb.common.UserProfile', but they were missing") {
             user.profile<UserProfile>(UserProfile.serializer())
         }
     }

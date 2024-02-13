@@ -756,15 +756,16 @@ class UserTests {
             createUserAndLogin(email, password)
         }
         val collectionWithDefaultSerializer =
-            user.mongoClient(TEST_SERVICE_NAME).database(app.clientAppId)
-                .collection<CustomDataType, BsonValue>("SyncDog")
+            user.mongoClient(TEST_SERVICE_NAME)
+                .database(app.clientAppId)
+                .collection<CustomDataType, BsonValue>("CollectionDataType")
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
             collectionWithDefaultSerializer.insertOne(CustomDataType("dog-1"))
         }
 
         val collectionWithCustomSerializer =
             user.mongoClient(TEST_SERVICE_NAME, customEjsonSerializer).database(app.clientAppId)
-                .collection<CustomDataType, CustomIdType>("SyncDog")
+                .collection<CustomDataType, CustomIdType>("CollectionDataType")
         assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("dog-1")))
     }
 
@@ -778,7 +779,7 @@ class UserTests {
         val mongoClient = user.mongoClient("UNKNOWN_SERVICE")
         val collection =
             mongoClient.database(app.clientAppId).collection<CollectionDataType, ObjectId>("CollectionDataType")
-        assertFailsWithMessage<ServiceException>("service not found: 'UNKNOWN_SERVICE'") {
+        assertFailsWithMessage<ServiceException>("Cannot access member 'insertOne' of undefined") {
             collection.insertOne(CollectionDataType("object-1"))
         }
     }

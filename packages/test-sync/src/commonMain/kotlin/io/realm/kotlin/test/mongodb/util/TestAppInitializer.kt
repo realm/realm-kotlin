@@ -146,6 +146,32 @@ object TestAppInitializer {
             }
             """.trimIndent()
         )
+
+        app.addSchema(
+            """
+            {
+                "metadata": {
+                    "data_source": "BackingDB",
+                    "database": "$databaseName",
+                    "collection": "CollectionDataType"
+                },
+                "schema": {
+                    "properties": {
+                        "_id": {
+                            "bsonType": "int"
+                        },
+                        "name": {
+                            "bsonType": "string"
+                        }
+                    },
+                    "required": [
+                        "name"
+                    ],
+                    "title": "CollectionDataType"
+                }
+            }
+            """.trimIndent()
+        )
     }
 
     @Suppress("LongMethod")
