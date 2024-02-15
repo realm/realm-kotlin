@@ -24,28 +24,25 @@ import io.realm.kotlin.entities.sync.EmbeddedChildCollectionDataType
 import io.realm.kotlin.entities.sync.ParentCollectionDataType
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
-import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
-import io.realm.kotlin.mongodb.mongo.aggregate
-import io.realm.kotlin.mongodb.mongo.collection
-import io.realm.kotlin.mongodb.mongo.count
-import io.realm.kotlin.mongodb.mongo.deleteMany
-import io.realm.kotlin.mongodb.mongo.deleteOne
-import io.realm.kotlin.mongodb.mongo.find
-import io.realm.kotlin.mongodb.mongo.findOne
-import io.realm.kotlin.mongodb.mongo.findOneAndDelete
-import io.realm.kotlin.mongodb.mongo.findOneAndReplace
-import io.realm.kotlin.mongodb.mongo.findOneAndUpdate
-import io.realm.kotlin.mongodb.mongo.insertMany
-import io.realm.kotlin.mongodb.mongo.insertOne
-import io.realm.kotlin.mongodb.mongo.updateMany
-import io.realm.kotlin.mongodb.mongo.updateOne
+import io.realm.kotlin.mongodb.ext.aggregate
+import io.realm.kotlin.mongodb.ext.collection
+import io.realm.kotlin.mongodb.ext.count
+import io.realm.kotlin.mongodb.ext.deleteMany
+import io.realm.kotlin.mongodb.ext.deleteOne
+import io.realm.kotlin.mongodb.ext.find
+import io.realm.kotlin.mongodb.ext.findOne
+import io.realm.kotlin.mongodb.ext.findOneAndDelete
+import io.realm.kotlin.mongodb.ext.findOneAndReplace
+import io.realm.kotlin.mongodb.ext.findOneAndUpdate
+import io.realm.kotlin.mongodb.ext.insertMany
+import io.realm.kotlin.mongodb.ext.insertOne
+import io.realm.kotlin.mongodb.ext.updateMany
+import io.realm.kotlin.mongodb.ext.updateOne
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.notifications.ResultsChange
@@ -88,6 +85,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.seconds
 
+/**
+ * Test class that verifies MongoDB Client API interactions through the
+ * `MongoClient.database(...).collection(...)`-API.
+ */
 class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
 
     lateinit var database: MongoDatabase
@@ -112,6 +113,10 @@ class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
     }
 }
 
+/**
+ * Test class that verifies MongoDB Client API interactions through the
+ * `MongoClient.collection(...)`-API.
+ */
 class MongoCollectionFromClientTests : MongoCollectionTests() {
 
     @BeforeTest
@@ -149,9 +154,6 @@ abstract sealed class MongoCollectionTests {
         app = TestApp(
             this::class.simpleName,
             TEST_APP_FLEX,
-            builder = { builder: AppConfiguration.Builder ->
-                builder.httpLogObfuscator(null)
-            }
         )
 
         app.asTestApp.run {
@@ -168,7 +170,6 @@ abstract sealed class MongoCollectionTests {
 
     @AfterTest
     fun teadDown() {
-        RealmLog.level = LogLevel.WARN
         app.asTestApp.run {
             runBlocking {
                 COLLECTION_SCHEMAS.forEach {
@@ -314,7 +315,6 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     open fun findOne_links() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
         Realm.open(
             SyncConfiguration.Builder(user, COLLECTION_SCHEMAS)
                 .initialSubscriptions {
@@ -342,7 +342,6 @@ abstract sealed class MongoCollectionTests {
     @Test
     open fun findOne_embeddedObjects() = runBlocking<Unit> {
         // Empty collections
-        RealmLog.level = RealmLog.level
         assertNull(collection.findOne())
 
         val parentCollection = collection<ParentCollectionDataType, ObjectId>()
@@ -578,7 +577,6 @@ abstract sealed class MongoCollectionTests {
     @Test
     fun insertOne_embeddedObjects() = runBlocking<Unit> {
         // Empty collections
-        RealmLog.level = RealmLog.level
         assertNull(collection.findOne())
 
         val parentCollection = collection<ParentCollectionDataType, ObjectId>()
@@ -621,7 +619,6 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     open fun insertOne_throwsOnMissingRequiredFields() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
         assertFailsWithMessage<ServiceException>("insert not permitted") {
             collection.insertOne<BsonDocument, BsonValue>(BsonDocument("_id", ObjectId()))
         }
@@ -687,7 +684,6 @@ abstract sealed class MongoCollectionTests {
 
     @Test
     open fun insertMany_throwsOnMissingRequiredFields() = runBlocking<Unit> {
-        RealmLog.level = LogLevel.ALL
         assertFailsWithMessage<ServiceException>("insert not permitted") {
             collection.insertMany<BsonDocument, BsonValue>(listOf(BsonDocument()))
         }
@@ -1227,6 +1223,14 @@ abstract sealed class MongoCollectionTests {
     fun findOneAndDelete_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
             collection.findOneAndDelete(BsonDocument("\$who", 1))
+        }
+    }
+
+    @Test
+    fun throwsOnLoggedOutUser() = runBlocking<Unit> {
+        user.logOut()
+        assertFailsWithMessage<ServiceException>("unauthorized") {
+            collection.findOne()
         }
     }
 }

@@ -31,7 +31,7 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.mongo.MongoClient
-import io.realm.kotlin.mongodb.mongo.insertOne
+import io.realm.kotlin.mongodb.ext.insertOne
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -781,6 +781,19 @@ class UserTests {
             mongoClient.database(app.clientAppId).collection<CollectionDataType, ObjectId>("CollectionDataType")
         assertFailsWithMessage<ServiceException>("Cannot access member 'insertOne' of undefined") {
             collection.insertOne(CollectionDataType("object-1"))
+        }
+    }
+
+    @Test
+    @OptIn(ExperimentalKBsonSerializerApi::class)
+    fun mongoClient_throwsOnLoggedOutUser() = runBlocking<Unit> {
+        val (email, password) = randomEmail() to "123456"
+        val user = runBlocking {
+            createUserAndLogin(email, password)
+        }
+        user.logOut()
+        assertFailsWithMessage<IllegalStateException>("Cannot obtain a MongoClient from a logged out user") {
+            user.mongoClient("UNKNOWN_SERVICE")
         }
     }
 

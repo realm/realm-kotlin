@@ -18,13 +18,10 @@ package io.realm.kotlin.test.mongodb.common.mongo
 
 import io.realm.kotlin.entities.sync.CollectionDataType
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
-import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.mongo.MongoClient
-import io.realm.kotlin.mongodb.mongo.collection
-import io.realm.kotlin.mongodb.mongo.insertOne
+import io.realm.kotlin.mongodb.ext.collection
+import io.realm.kotlin.mongodb.ext.insertOne
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
@@ -51,9 +48,6 @@ class MongoClientTests {
         app = TestApp(
             this::class.simpleName,
             appName = TEST_APP_FLEX,
-            builder = { builder: AppConfiguration.Builder ->
-                builder.httpLogObfuscator(null)
-            }
         )
         val user = app.createUserAndLogin()
         client = user.mongoClient(TEST_SERVICE_NAME)
@@ -61,7 +55,6 @@ class MongoClientTests {
 
     @AfterTest
     fun teadDown() {
-        RealmLog.level = LogLevel.WARN
         if (this::app.isInitialized) {
             app.close()
         }

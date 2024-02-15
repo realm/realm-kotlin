@@ -186,7 +186,10 @@ public class UserImpl(
     }
 
     @ExperimentalKBsonSerializerApi
-    override fun mongoClient(serviceName: String, eJson: EJson?): MongoClient = MongoClientImpl(this, serviceName, eJson ?: app.configuration.ejson)
+    override fun mongoClient(serviceName: String, eJson: EJson?): MongoClient {
+        if (!loggedIn) throw IllegalStateException("Cannot obtain a MongoClient from a logged out user")
+        return MongoClientImpl(this, serviceName, eJson ?: app.configuration.ejson)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

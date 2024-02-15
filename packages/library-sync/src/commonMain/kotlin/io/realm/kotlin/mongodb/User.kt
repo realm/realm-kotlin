@@ -214,6 +214,7 @@ public interface User {
      * @param eJson the EJson serializer that the [MongoClient] should use to convert objects and
      * primary keys with. Will default to the apps [EJson] instance configured with
      * [AppConfiguration.Builder.ejson].
+     * throws IllegalStateException if trying to obtain a [MongoClient] from a logged out [User].
      */
     @ExperimentalKBsonSerializerApi
     public fun mongoClient(serviceName: String, eJson: EJson? = null): MongoClient

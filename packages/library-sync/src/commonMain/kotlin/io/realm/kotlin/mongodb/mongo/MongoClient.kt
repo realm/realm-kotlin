@@ -16,9 +16,6 @@
 
 package io.realm.kotlin.mongodb.mongo
 
-import io.realm.kotlin.mongodb.internal.MongoClientCollection
-import io.realm.kotlin.mongodb.internal.MongoClientImpl
-import io.realm.kotlin.types.BaseRealmObject
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
@@ -48,25 +45,4 @@ public interface MongoClient {
      */
     @ExperimentalKBsonSerializerApi
     public fun database(databaseName: String, eJson: EJson? = null): MongoDatabase
-}
-
-/**
- * Get a [MongoCollection] that exposes methods to retrieve and update data from the remote
- * collection of objects of schema type [T].
- *
- * Serialization to and from EJSON is performed with [KBSON](https://github.com/mongodb/kbson)
- * and requires to opt-in to the experimental [ExperimentalKBsonSerializerApi]-feature.
- *
- * @param eJson the EJson serializer that the [MongoCollection] should use to convert objects and
- * primary keys with. Will default to the databases [EJson] instance.
- * @param T the schema type indicating which for which remote entities of the collection will be
- * serialized from and to.
- * @param K the default type that primary keys will be serialized into.
- * @return a [MongoCollection] that will accept and return entities from the remote collection
- * as [T] values.
- */
-@ExperimentalKBsonSerializerApi
-public inline fun <reified T : BaseRealmObject, K> MongoClient.collection(eJson: EJson? = null): MongoCollection<T, K> {
-    @Suppress("invisible_reference", "invisible_member")
-    return MongoClientCollection(this as MongoClientImpl, io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(T::class).io_realm_kotlin_className, eJson ?: this.eJson)
 }
