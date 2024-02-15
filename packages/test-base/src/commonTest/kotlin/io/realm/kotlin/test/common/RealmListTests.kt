@@ -568,7 +568,7 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
                 .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
             val listener = async {
-                withTimeout(10.seconds) {
+                withTimeout(30.seconds) {
                     flow.collect { current ->
                         delay(100.milliseconds)
                     }

@@ -20,6 +20,7 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
+import io.realm.kotlin.entities.sync.CollectionDataType
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.AuthenticationProvider
@@ -34,7 +35,6 @@ import io.realm.kotlin.mongodb.mongo.insertOne
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
-import io.realm.kotlin.test.mongodb.common.mongo.CollectionDataType
 import io.realm.kotlin.test.mongodb.common.mongo.CustomDataType
 import io.realm.kotlin.test.mongodb.common.mongo.CustomIdType
 import io.realm.kotlin.test.mongodb.common.mongo.TEST_SERVICE_NAME

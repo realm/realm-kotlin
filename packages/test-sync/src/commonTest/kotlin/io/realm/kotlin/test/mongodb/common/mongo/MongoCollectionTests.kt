@@ -17,6 +17,11 @@
 package io.realm.kotlin.test.mongodb.common.mongo
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.entities.sync.COLLECTION_SCHEMAS
+import io.realm.kotlin.entities.sync.ChildCollectionDataType
+import io.realm.kotlin.entities.sync.CollectionDataType
+import io.realm.kotlin.entities.sync.EmbeddedChildCollectionDataType
+import io.realm.kotlin.entities.sync.ParentCollectionDataType
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -24,7 +29,6 @@ import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ServiceException
-import io.realm.kotlin.mongodb.internal.MongoDBSerializer
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoCollection
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
@@ -52,10 +56,8 @@ import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
-import io.realm.kotlin.types.annotations.PrimaryKey
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -154,10 +156,9 @@ abstract sealed class MongoCollectionTests {
 
         app.asTestApp.run {
             runBlocking {
-                deleteDocuments(app.configuration.appId, "CollectionDataType", "{}")
-                deleteDocuments(app.configuration.appId, "Parent", "{}")
-                deleteDocuments(app.configuration.appId, "Child", "{}")
-                deleteDocuments(app.configuration.appId, "EmbeddedChild", "{}")
+                COLLECTION_SCHEMAS.forEach {
+                    deleteDocuments(app.configuration.appId, it.simpleName!!, "{}")
+                }
             }
         }
         user = app.createUserAndLogin()
@@ -170,10 +171,9 @@ abstract sealed class MongoCollectionTests {
         RealmLog.level = LogLevel.WARN
         app.asTestApp.run {
             runBlocking {
-                deleteDocuments(app.configuration.appId, "CollectionDataType", "{}")
-                deleteDocuments(app.configuration.appId, "Parent", "{}")
-                deleteDocuments(app.configuration.appId, "Child", "{}")
-                deleteDocuments(app.configuration.appId, "EmbeddedChild", "{}")
+                COLLECTION_SCHEMAS.forEach {
+                    deleteDocuments(app.configuration.appId, it.simpleName!!, "{}")
+                }
             }
         }
         if (this::app.isInitialized) {
@@ -315,14 +315,16 @@ abstract sealed class MongoCollectionTests {
     @Test
     open fun findOne_links() = runBlocking<Unit> {
         RealmLog.level = LogLevel.ALL
-        Realm.open(SyncConfiguration.Builder(user, setOf(Parent::class, Child::class, EmbeddedChild::class, CollectionDataType::class))
-            .initialSubscriptions {
-                add(it.query<Parent>())
-                add(it.query<Child>())
-            }
-            .build()).use {
+        Realm.open(
+            SyncConfiguration.Builder(user, COLLECTION_SCHEMAS)
+                .initialSubscriptions {
+                    add(it.query<ParentCollectionDataType>())
+                    add(it.query<ChildCollectionDataType>())
+                }
+                .build()
+        ).use {
             val syncedParent = it.write {
-                copyToRealm(Parent().apply { child = Child() })
+                copyToRealm(ParentCollectionDataType().apply { child = ChildCollectionDataType() })
             }
             // We need to upload schema before proceeding
             it.syncSession.uploadAllLocalChanges(30.seconds)
@@ -330,7 +332,7 @@ abstract sealed class MongoCollectionTests {
             delay(5.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
-            val mongoDBClientParent = collection<Parent, String>().findOne()
+            val mongoDBClientParent = collection<ParentCollectionDataType, String>().findOne()
             assertEquals(syncedParent._id, mongoDBClientParent!!._id)
             assertEquals(syncedParent.child!!._id, mongoDBClientParent!!.child!!._id)
         }
@@ -343,10 +345,10 @@ abstract sealed class MongoCollectionTests {
         RealmLog.level = RealmLog.level
         assertNull(collection.findOne())
 
-        val parentCollection = collection<Parent, ObjectId>()
+        val parentCollection = collection<ParentCollectionDataType, ObjectId>()
         parentCollection.insertOne(
-            Parent().apply {
-                embeddedChild = EmbeddedChild().apply { name = "EMBEDDED-NAME" }
+            ParentCollectionDataType().apply {
+                embeddedChild = EmbeddedChildCollectionDataType().apply { name = "EMBEDDED-NAME" }
             }
         )
 
@@ -515,10 +517,10 @@ abstract sealed class MongoCollectionTests {
     open fun insertOne_links() = runBlocking<Unit> {
         // Open a synced realm and verified that the linked entities we upload through the
         Realm.open(
-            SyncConfiguration.Builder(user, setOf(Parent::class, Child::class, EmbeddedChild::class, CollectionDataType::class))
+            SyncConfiguration.Builder(user, COLLECTION_SCHEMAS)
                 .initialSubscriptions {
-                    add(it.query<Parent>())
-                    add(it.query<Child>())
+                    add(it.query<ParentCollectionDataType>())
+                    add(it.query<ChildCollectionDataType>())
                 }
                 .build()
         ).use { realm ->
@@ -526,21 +528,21 @@ abstract sealed class MongoCollectionTests {
             realm.syncSession.uploadAllLocalChanges()
 
             // We set up listeners to be able to react on when the objects are seen in the synced realm
-            val childChannel = Channel<ResultsChange<Child>>(10)
+            val childChannel = Channel<ResultsChange<ChildCollectionDataType>>(10)
             val childListener =
-                async { realm.query<Child>().asFlow().collect { childChannel.send(it) } }
+                async { realm.query<ChildCollectionDataType>().asFlow().collect { childChannel.send(it) } }
             childChannel.receiveOrFail(message = "Didn't receive initial value").let {
                 assertTrue { it.list.isEmpty() }
             }
-            val parentChannel = Channel<ResultsChange<Parent>>(10)
+            val parentChannel = Channel<ResultsChange<ParentCollectionDataType>>(10)
             val parentListener =
-                async { realm.query<Parent>().asFlow().collect { parentChannel.send(it) } }
+                async { realm.query<ParentCollectionDataType>().asFlow().collect { parentChannel.send(it) } }
             parentChannel.receiveOrFail(message = "Didn't receive initial value").let {
                 assertTrue { it.list.isEmpty() }
             }
 
-            val childCollection = collection<Child, ObjectId>()
-            val unmanagedChild = Child()
+            val childCollection = collection<ChildCollectionDataType, ObjectId>()
+            val unmanagedChild = ChildCollectionDataType()
             assertEquals(unmanagedChild._id, childCollection.insertOne(unmanagedChild))
             // We can't rely on the translator to incorporate the insertOnes in order so we need to
             // assure that the child is actually added before verifying the link in the parent.
@@ -548,8 +550,8 @@ abstract sealed class MongoCollectionTests {
                 assertEquals(unmanagedChild._id, it.list.first()._id)
             }
 
-            val parentCollection = collection<Parent, ObjectId>()
-            val unmanagedParent = Parent().apply {
+            val parentCollection = collection<ParentCollectionDataType, ObjectId>()
+            val unmanagedParent = ParentCollectionDataType().apply {
                 this.child = unmanagedChild
             }
             val actual = parentCollection.insertOne(unmanagedParent)
@@ -579,10 +581,10 @@ abstract sealed class MongoCollectionTests {
         RealmLog.level = RealmLog.level
         assertNull(collection.findOne())
 
-        val parentCollection = collection<Parent, ObjectId>()
+        val parentCollection = collection<ParentCollectionDataType, ObjectId>()
         parentCollection.insertOne(
-            Parent().apply {
-                embeddedChild = EmbeddedChild().apply { name = "EMBEDDED-NAME" }
+            ParentCollectionDataType().apply {
+                embeddedChild = EmbeddedChildCollectionDataType().apply { name = "EMBEDDED-NAME" }
             }
         )
 
@@ -1255,11 +1257,6 @@ class NonSchemaType : RealmObject {
     var name = "Unknown"
 }
 
-@Serializable
-class CollectionDataType(var name: String = "Default", @PrimaryKey var _id: Int = Random.nextInt()) : RealmObject {
-    constructor() : this("Default")
-}
-
 // Distinct data type with same fields as the above CollectionDataType used to showcase injection
 // of custom serializers.
 @PersistedName("CollectionDataType")
@@ -1311,27 +1308,3 @@ val customEjsonSerializer = EJson(
         contextual(CustomIdType::class, CustomIdSerializer())
     }
 )
-
-class ParentSerializer: MongoDBSerializer<Parent>(Parent::class)
-@Serializable(ParentSerializer::class)
-class Parent : RealmObject {
-    @PrimaryKey
-    var _id: ObjectId = ObjectId()
-    var name: String = "DEFAULT-PAREN"
-    var child: Child? = null
-    var embeddedChild: EmbeddedChild? = null
-}
-@Serializable
-class Child : RealmObject {
-    @PrimaryKey
-    var _id: ObjectId = ObjectId()
-    var name: String = "DEFAULT-CHILD"
-
-}
-
-@Serializable
-class EmbeddedChild : EmbeddedRealmObject {
-    var _id: ObjectId = ObjectId()
-    var name: String = "EMBEDDED-CHILD"
-}
-

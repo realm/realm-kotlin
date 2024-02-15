@@ -45,6 +45,8 @@ import kotlin.time.Duration
  */
 public interface SubscriptionSet<T : BaseRealm> : BaseSubscriptionSet {
 
+    public fun close()
+
     /**
      * Modify the subscription set. If an exception is thrown during the update, no changes will be
      * applied. If the update succeeds, this subscription set is updated with the modified state.

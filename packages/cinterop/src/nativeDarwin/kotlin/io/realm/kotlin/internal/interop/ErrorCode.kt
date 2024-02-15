@@ -68,6 +68,8 @@ actual enum class ErrorCode(
     RLM_ERR_TLS_HANDSHAKE_FAILED("TLSHandshakeFailed", realm_errno.RLM_ERR_TLS_HANDSHAKE_FAILED),
     RLM_ERR_WRONG_SYNC_TYPE("WrongSyncType", realm_errno.RLM_ERR_WRONG_SYNC_TYPE),
     RLM_ERR_SYNC_WRITE_NOT_ALLOWED("SyncWriteNotAllowed", realm_errno.RLM_ERR_SYNC_WRITE_NOT_ALLOWED),
+    RLM_ERR_SYNC_LOCAL_CLOCK_BEFORE_EPOCH("SyncLocalClockBeforeEpoch", realm_errno.RLM_ERR_SYNC_LOCAL_CLOCK_BEFORE_EPOCH),
+    RLM_ERR_SYNC_SCHEMA_MIGRATION_ERROR("SyncSchemaMigrationError", realm_errno.RLM_ERR_SYNC_SCHEMA_MIGRATION_ERROR),
     RLM_ERR_SYSTEM_ERROR("SystemError", realm_errno.RLM_ERR_SYSTEM_ERROR),
     RLM_ERR_LOGIC("Logic", realm_errno.RLM_ERR_LOGIC),
     RLM_ERR_NOT_SUPPORTED("NotSupported", realm_errno.RLM_ERR_NOT_SUPPORTED),

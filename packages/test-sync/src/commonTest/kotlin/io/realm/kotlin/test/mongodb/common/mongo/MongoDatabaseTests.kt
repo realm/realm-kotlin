@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.common.mongo
 
+import io.realm.kotlin.entities.sync.CollectionDataType
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
@@ -23,10 +24,13 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
 import io.realm.kotlin.mongodb.mongo.insertOne
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import kotlinx.serialization.SerializationException
 import org.mongodb.kbson.BsonDocument
+import org.mongodb.kbson.BsonInt32
+import org.mongodb.kbson.BsonString
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import kotlin.random.Random
@@ -48,6 +52,7 @@ class MongoDatabaseTests {
     fun setUp() {
         app = TestApp(
             this::class.simpleName,
+            appName = TEST_APP_FLEX,
             builder = { builder: AppConfiguration.Builder ->
                 builder.httpLogObfuscator(null)
             }
@@ -74,7 +79,7 @@ class MongoDatabaseTests {
     @Test
     fun collection_defaultTypes() = runBlocking<Unit> {
         val collection = database.collection("CollectionDataType")
-        val value = collection.insertOne(BsonDocument("name", "object-1"))
+        val value = collection.insertOne(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-1")))
         assertIs<BsonValue>(value)
     }
 

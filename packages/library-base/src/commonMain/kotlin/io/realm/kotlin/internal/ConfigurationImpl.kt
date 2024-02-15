@@ -251,8 +251,6 @@ public open class ConfigurationImpl(
         }
     }
 
-    // TODO Verify that this logic works on Windows?
-    // FIXME See https://github.com/realm/realm-kotlin/issues/699
     private fun normalizePath(directoryPath: String, fileName: String): String {
         var dir = directoryPath.ifEmpty { appFilesDirectory() }
         // If dir is a relative path, replace with full path for easier debugging

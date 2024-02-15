@@ -15,10 +15,14 @@
  */
 package io.realm.kotlin.test.mongodb.common.utils
 
+import io.realm.kotlin.mongodb.sync.SubscriptionSet
+import io.realm.kotlin.mongodb.sync.SyncSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.minutes
 
 // NOTE: Copy from :base:commonTest. It is unclear if there is an easy way to share test code like
 // this between :base and :sync
@@ -56,3 +60,13 @@ inline fun <reified T : Throwable> CoroutineScope.assertFailsWithMessage(excepti
             block()
         }
     }
+
+suspend inline fun SubscriptionSet<*>.waitForSynchronizationOrFail() {
+    val timeout = 5.minutes
+    assertTrue(this.waitForSynchronization(timeout), "Failed to synchronize subscriptions in time: $timeout")
+}
+
+suspend inline fun SyncSession.uploadAllLocalChangesOrFail() {
+    val timeout = 5.minutes
+    assertTrue(this.uploadAllLocalChanges(timeout), "Failed to upload local changes in time: $timeout")
+}

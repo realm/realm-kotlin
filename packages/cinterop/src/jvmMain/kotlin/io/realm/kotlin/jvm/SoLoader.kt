@@ -16,30 +16,22 @@
 
 package io.realm.kotlin.jvm
 
+import io.realm.kotlin.internal.SDK_VERSION
 import java.io.File
 import java.nio.file.Files
-import java.security.MessageDigest
-import java.util.Collections
-import java.util.Enumeration
-import java.util.LinkedList
 import java.util.Locale
-import java.util.Properties
 
 /**
  * Load the C++ dynamic libraries from the fat Jar.
  * The fat Jar contains three platforms (Win, Linux and Mac) the loader detects the host platform
- * then extract and install the libraries in the same order specified in the 'dynamic_libraries.properties' file.
+ * then extract and install the libraries.
  *
  * Note: this class should be invoke dynamically using reflection so the classloader can have accesses
  * to the dynamic libraries files located inside the fat Jar.
  */
 class SoLoader {
     private val platform: Platform = Platform.currentOS()
-    private val libs: MutableList<Pair<String, String>> = mutableListOf()
-
-    init {
-        readLibrariesHashes()
-    }
+    private val libraryName = "realmc"
 
     @Suppress("unused") // Called using reflection. See /packages/jni-swig-stub/realm.i
     fun load() {
@@ -53,51 +45,36 @@ class SoLoader {
         //
         // See https://github.com/realm/realm-kotlin/issues/1105 for more information.
         try {
-            System.loadLibrary("realmc")
+            System.loadLibrary(libraryName)
         } catch (ex: UnsatisfiedLinkError) {
-            // Load the libraries in the order of dependency specified in 'dynamic_libraries.properties'
-            for (lib in libs) {
-                load(libraryName = lib.first, expectedHash = lib.second)
-            }
+            load(libraryName)
         }
     }
 
-    private fun load(libraryName: String, expectedHash: String) {
+    private fun load(libraryName: String) {
         // load the embedded .so file located inside the Jar file.
-        // unpacking the file is skipped if the hash of the file is already installed.
+        // unpacking the file is skipped if the file is already installed.
         // instead, the on-disk file will be loaded.
 
         // for each SO file:
         // check if the library is already installed in the default platform location
-        // path should be <default user lib dir>/io.realm.kotlin/hash/librealmffi.so
-        // if the full path exists (and the on-disk hash matches) then load it otherwise unpack and load it.
-        val libraryInstallationLocation: File = defaultAbsolutePath(libraryName, expectedHash)
+        // path should be <default user lib dir>/io.realm.kotlin/libraryVersion]/librealmffi.so
+        // if the full path exists then load it otherwise unpack and load it.
+        val libraryInstallationLocation: File = defaultAbsolutePath(libraryName)
         if (!libraryInstallationLocation.exists()) {
-            unpackAndInstall(libraryName, libraryInstallationLocation, expectedHash)
-        } else {
-            // only double check the installed lib hash (in case it was tampered with locally)
-            validHashOrThrow(libraryInstallationLocation, expectedHash)
+            unpackAndInstall(libraryName, libraryInstallationLocation)
         }
         @Suppress("UnsafeDynamicallyLoadedCode")
         // System.loadLibrary does not accept a full path to the lib (needs to be in the current Java paths)
         System.load(libraryInstallationLocation.absolutePath)
     }
 
-    private fun readLibrariesHashes() {
-        javaClass.getResourceAsStream("${platform.shortName}/dynamic_libraries.properties").use { props ->
-            OrderedProperties().run {
-                load(props)
-                for (libName in keys()) {
-                    libs.add(Pair(libName as String, get(libName) as String))
-                }
-            }
-        }
-    }
-
-    private fun defaultAbsolutePath(libraryName: String, libraryHash: String): File {
+    private fun defaultAbsolutePath(libraryName: String): File {
         return File(
-            platform.defaultSystemLocation + File.separator +
-                libraryHash + File.separator +
+            platform.defaultSystemLocation +
+                File.separator +
+                SDK_VERSION +
+                File.separator +
                 (platform.prefix + libraryName + "." + platform.suffix)
         )
     }
@@ -105,45 +82,14 @@ class SoLoader {
     private fun libPathInsideJar(libraryName: String) =
         "${platform.shortName}/${platform.prefix}$libraryName.${platform.suffix}"
 
-    private fun unpackAndInstall(libraryName: String, absolutePath: File, expectedHash: String) {
+    private fun unpackAndInstall(libraryName: String, absolutePath: File) {
         absolutePath.parentFile.mkdirs()
         javaClass.getResourceAsStream(libPathInsideJar(libraryName)).use { lib ->
             Files.newOutputStream(absolutePath.toPath()).use {
                 lib.copyTo(it)
             }
         }
-        // after unpacking make sure the hash is valid
-        validHashOrThrow(absolutePath, expectedHash)
     }
-
-    private fun validHashOrThrow(file: File, expectedHash: String, cleanup: Boolean = true) {
-        if (!isValidHash(file, expectedHash)) {
-            if (cleanup) {
-                file.delete()
-            }
-            throw error("Corrupt or invalid hash for ${file.absolutePath} expected hash is $expectedHash")
-        }
-    }
-
-    private fun isValidHash(file: File, expected: String): Boolean {
-        val digest = MessageDigest.getInstance("SHA-1")
-        Files.newInputStream(file.toPath()).use {
-            val buf = ByteArray(BUFFER_SIZE)
-            while (true) {
-                val bytes = it.read(buf)
-                if (bytes > 0) {
-                    digest.update(buf, 0, bytes)
-                } else {
-                    break
-                }
-            }
-            val hash = digest.digest().toHexString()
-            return hash == expected
-        }
-    }
-
-    private fun ByteArray.toHexString(): String =
-        joinToString("", transform = { "%02x".format(it) })
 }
 
 private enum class Platform(
@@ -190,22 +136,5 @@ private enum class Platform(
                 else -> error("Unsupported OS: $os")
             }
         }
-    }
-}
-
-private const val BUFFER_SIZE = 16384 // 16k
-
-// Preserve the insertion orders for the keys in order to load
-// the dynamic libraries in the same order specified in the property file.
-private class OrderedProperties : Properties() {
-    private val orderedKeys = LinkedList<Any>()
-
-    override fun put(key: Any?, value: Any?): Any? {
-        orderedKeys.add(key!!)
-        return super.put(key, value)
-    }
-
-    override fun keys(): Enumeration<Any> {
-        return Collections.enumeration(orderedKeys)
     }
 }

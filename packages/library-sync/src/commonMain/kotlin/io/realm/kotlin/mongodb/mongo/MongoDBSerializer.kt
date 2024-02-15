@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.mongodb.internal
+package io.realm.kotlin.mongodb.mongo
 
 import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.RealmObjectCompanion
@@ -52,7 +52,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KProperty1
 
-public open class MongoDBSerializer<T: BaseRealmObject>(clazz: KClass<T>): KSerializer<T> {
+public open class MongoDBSerializer<T : BaseRealmObject>(clazz: KClass<T>) : KSerializer<T> {
     override val descriptor: SerialDescriptor = BsonDocument.serializer().descriptor
     private val companion = realmObjectCompanionOrThrow(clazz as KClass<out BaseRealmObject>)
     override fun deserialize(decoder: Decoder): T {
@@ -60,13 +60,14 @@ public open class MongoDBSerializer<T: BaseRealmObject>(clazz: KClass<T>): KSeri
         return bsonToObject(companion, x)
     }
 
+    @Suppress("NestedBlockDepth")
     private fun bsonToObject(companion: RealmObjectCompanion, bsonDocument: BsonDocument): T {
         val instance = companion.io_realm_kotlin_newInstance() as T
         val fields: Map<String, Pair<KClass<*>, KProperty1<BaseRealmObject, Any?>>> = companion.io_realm_kotlin_fields
         val schema = companion.io_realm_kotlin_schema()
         bsonDocument.keys.forEach {
             // FIXME Test exception path
-            val fieldsDescriptor = fields[it]?: throw SerializationException("Unknown field $it for type ${companion.io_realm_kotlin_className}")
+            val fieldsDescriptor = fields[it] ?: throw SerializationException("Unknown field $it for type ${companion.io_realm_kotlin_className}")
             val type = schema[it]?.type
             val value: Any? = if (type?.storageType == RealmStorageType.OBJECT) {
                 // FIXME Should we rather embed targetCompanion directly and make it nullable for non RealmObjects
@@ -78,7 +79,7 @@ public open class MongoDBSerializer<T: BaseRealmObject>(clazz: KClass<T>): KSeri
                     null -> {
                         val bsonValue: BsonValue? = bsonDocument[it]
                         if (bsonValue != null && bsonValue != BsonNull) {
-                                bsonToObject(targetCompanion, bsonValue.asDocument())
+                            bsonToObject(targetCompanion, bsonValue.asDocument())
                         } else {
                             null
                         }
@@ -105,13 +106,14 @@ public open class MongoDBSerializer<T: BaseRealmObject>(clazz: KClass<T>): KSeri
         encoder.encodeSerializableValue(BsonDocument.serializer(), document)
     }
 
+    @Suppress("NestedBlockDepth")
     private fun objectToBson(companion: RealmObjectCompanion, realmObject: BaseRealmObject): BsonDocument {
         val fields: Map<String, Pair<KClass<*>, KProperty1<BaseRealmObject, Any?>>> = companion.io_realm_kotlin_fields
         val schema = companion.io_realm_kotlin_schema()
         val document = BsonDocument()
         fields.forEach { (fieldName, fieldDetails) ->
             val (_, accessor) = fieldDetails
-            val type = schema[fieldName]?.type ?: Validation.sdkError("Schema does not contain property ${fieldName}")
+            val type = schema[fieldName]?.type ?: Validation.sdkError("Schema does not contain property $fieldName")
             val value = if (type.storageType == RealmStorageType.OBJECT) {
                 val target = accessor.get(realmObject)
                 if (target != null && target != BsonNull) {
@@ -132,6 +134,7 @@ public open class MongoDBSerializer<T: BaseRealmObject>(clazz: KClass<T>): KSeri
     }
 }
 
+@Suppress("ComplexMethod")
 internal operator fun BsonValue.Companion.invoke(any: Any?): BsonValue {
     return when (any) {
         null -> BsonNull
@@ -158,7 +161,7 @@ internal operator fun BsonValue.Companion.invoke(any: Any?): BsonValue {
         is Collection<*> -> BsonArray(any.map { BsonValue(it) })
         // RealmDictionaries
         is RealmDictionary<*> -> BsonDocument(any.mapValues { BsonValue(it.value) })
-        else -> TODO("Serializer does not support object of type ${any}")
+        else -> TODO("Serializer does not support object of type $any")
 //        BsonType.TIMESTAMP -> asTimestamp()
 //        BsonType.BINARY -> asBinary()
 //        BsonType.DATE_TIME -> asDateTime()

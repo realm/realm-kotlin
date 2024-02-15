@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.common.mongo
 
+import io.realm.kotlin.entities.sync.CollectionDataType
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
@@ -24,6 +25,7 @@ import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.collection
 import io.realm.kotlin.mongodb.mongo.insertOne
+import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import kotlinx.serialization.SerializationException
@@ -48,6 +50,7 @@ class MongoClientTests {
     fun setUp() {
         app = TestApp(
             this::class.simpleName,
+            appName = TEST_APP_FLEX,
             builder = { builder: AppConfiguration.Builder ->
                 builder.httpLogObfuscator(null)
             }

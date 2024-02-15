@@ -158,9 +158,9 @@ private fun throwOnError() {
                 errorCodeNativeValue = error.error.value.toInt(),
                 messageNativeValue = error.message?.toKString(),
                 path = error.path?.toKString(),
-                userError = error.usercode_error?.asStableRef<Throwable>()?.get()
+                userError = error.user_code_error?.asStableRef<Throwable>()?.get()
             ).also {
-                error.usercode_error?.let { disposeUserData<Throwable>(it) }
+                error.user_code_error?.let { disposeUserData<Throwable>(it) }
                 realm_clear_last_error()
             }
         }
@@ -638,9 +638,9 @@ actual object RealmInterop {
                             errorCodeNativeValue = err.error.value.toInt(),
                             messageNativeValue = err.message?.toKString(),
                             path = err.path?.toKString(),
-                            userError = err.usercode_error?.asStableRef<Throwable>()?.get()
+                            userError = err.user_code_error?.asStableRef<Throwable>()?.get()
                         )
-                        err.usercode_error?.let { disposeUserData<Throwable>(it) }
+                        err.user_code_error?.let { disposeUserData<Throwable>(it) }
                     } else {
                         realm_release(realm)
                     }
@@ -2534,8 +2534,11 @@ actual object RealmInterop {
                         isFatal = is_fatal,
                         isUnrecognizedByClient = is_unrecognized_by_client,
                         isClientResetRequested = is_client_reset_requested,
-                        compensatingWrites = compensatingWrites
-                    )
+                        compensatingWrites = compensatingWrites,
+                        userError = user_code_error?.asStableRef<Throwable>()?.get()
+                    ).also {
+                        user_code_error?.let { disposeUserData<Throwable>(it) }
+                    }
                 }
                 val errorCallback = safeUserData<SyncErrorCallback>(userData)
                 val session = CPointerWrapper<RealmSyncSessionT>(realm_clone(syncSession))
@@ -2565,16 +2568,10 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_before_client_reset_handler(
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm ->
-                val beforeCallback = safeUserData<SyncBeforeClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
-
-                // Check if exceptions have been thrown, return true if all went as it should
-                try {
-                    beforeCallback.onBeforeReset(beforeDb)
+                stableUserDataWithErrorPropagation<SyncBeforeClientResetHandler>(userData) {
+                    val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                    onBeforeReset(beforeDb)
                     true
-                } catch (e: Throwable) {
-                    println(e.message)
-                    false
                 }
             },
             StableRef.create(beforeHandler).asCPointer(),
@@ -2591,22 +2588,19 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_config_set_after_client_reset_handler(
             syncConfig.cptr(),
             staticCFunction { userData, beforeRealm, afterRealm, didRecover ->
-                val afterCallback = safeUserData<SyncAfterClientResetHandler>(userData)
-                val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
+                stableUserDataWithErrorPropagation<SyncAfterClientResetHandler>(userData) {
+                    val beforeDb = CPointerWrapper<FrozenRealmT>(beforeRealm, false)
 
-                // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
-                val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
-                val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
+                    // afterRealm is wrapped inside a ThreadSafeReference so the pointer needs to be resolved
+                    val afterRealmPtr = realm_wrapper.realm_from_thread_safe_reference(afterRealm, null)
+                    val afterDb = CPointerWrapper<LiveRealmT>(afterRealmPtr, false)
 
-                // Check if exceptions have been thrown, return true if all went as it should
-                try {
-                    afterCallback.onAfterReset(beforeDb, afterDb, didRecover)
-                    true
-                } catch (e: Throwable) {
-                    println(e.message)
-                    false
-                } finally {
-                    realm_wrapper.realm_close(afterRealmPtr)
+                    try {
+                        onAfterReset(beforeDb, afterDb, didRecover)
+                        true
+                    } finally {
+                        realm_wrapper.realm_close(afterRealmPtr)
+                    }
                 }
             },
             StableRef.create(afterHandler).asCPointer(),
@@ -3596,32 +3590,59 @@ actual object RealmInterop {
         private val scope: CoroutineScope = CoroutineScope(dispatcher)
         val ref: CPointer<out CPointed> = StableRef.create(this).asCPointer()
         private lateinit var scheduler: CPointer<realm_scheduler_t>
-        private val lock = SynchronizableObject()
+        private val schedulerLock = SynchronizableObject()
+        private val dispatcherLock = SynchronizableObject()
         private var cancelled = false
+        private var dispatcherClosing = false
 
         fun setScheduler(scheduler: CPointer<realm_scheduler_t>) {
             this.scheduler = scheduler
         }
 
         override fun notify(work_queue: CPointer<realm_work_queue_t>?) {
-            scope.launch {
-                try {
-                    printlntid("on dispatcher")
-                    lock.withLock {
-                        if (!cancelled) {
-                            realm_wrapper.realm_scheduler_perform_work(work_queue)
+            // Use a lock as a work-around for https://github.com/realm/realm-kotlin/issues/1608
+            //
+            // As the Core listeners are separated from Coroutines, there is a chance
+            // that we have closed the Kotlin dispatcher and scheduler while Core is in the
+            // process of sending notifications. If this happens we might end up in this
+            // `notify` method with the dispatcher and scheduler being closed.
+            //
+            // As the ClosableDispatcher does not expose a `isClosed` state, it means
+            // there is no way for us to detect if it is safe to launch a task using
+            // the current coroutine APIs.
+            //
+            // Ass a work-around we use the `canceled` flag that is being set when the Scheduler
+            // is being released. This should be safe as we are only closing the dispatcher when
+            // releasing the scheduler. See [io.realm.kotlin.internal.util.LiveRealmContext] for
+            // the logic around this.
+            //
+            // Note, JVM and Native behave differently on this. See this issue for more
+            // details: https://github.com/Kotlin/kotlinx.coroutines/issues/3993
+            dispatcherLock.withLock {
+                if (!dispatcherClosing) {
+                    scope.launch {
+                        try {
+                            printlntid("on dispatcher")
+                            schedulerLock.withLock {
+                                if (!cancelled) {
+                                    realm_wrapper.realm_scheduler_perform_work(work_queue)
+                                }
+                            }
+                        } catch (e: Exception) {
+                            // Should never happen, but is included for development to get some indicators
+                            // on errors instead of silent crashes.
+                            e.printStackTrace()
                         }
                     }
-                } catch (e: Exception) {
-                    // Should never happen, but is included for development to get some indicators
-                    // on errors instead of silent crashes.
-                    e.printStackTrace()
                 }
             }
         }
 
         fun cancel() {
-            lock.withLock {
+            dispatcherLock.withLock {
+                dispatcherClosing = true
+            }
+            schedulerLock.withLock {
                 cancelled = true
             }
         }

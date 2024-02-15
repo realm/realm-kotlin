@@ -18,6 +18,7 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.entities.Location
 import io.realm.kotlin.entities.sync.BinaryObject
+import io.realm.kotlin.entities.sync.COLLECTION_SCHEMAS
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ObjectIdPk
 import io.realm.kotlin.entities.sync.ParentPk
@@ -29,9 +30,9 @@ import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 
 private val ASYMMETRIC_SCHEMAS = setOf(
-    AsymmetricSyncTests.AsymmetricA::class,
-    AsymmetricSyncTests.EmbeddedB::class,
-    AsymmetricSyncTests.StandardC::class,
+    AsymmetricA::class,
+    EmbeddedB::class,
+    StandardC::class,
     Measurement::class,
 )
 private val DEFAULT_SCHEMAS = setOf(
@@ -52,4 +53,8 @@ private val DEFAULT_SCHEMAS = setOf(
 )
 
 val PARTITION_BASED_SCHEMA = DEFAULT_SCHEMAS
-val FLEXIBLE_SYNC_SCHEMA = DEFAULT_SCHEMAS + ASYMMETRIC_SCHEMAS
+// Amount of schema classes that should be created on the server. EmbeddedRealmObjects and
+// AsymmetricRealmObjects are not included in this count.
+// Run FlexibleSyncSchemaTests.flexibleSyncSchemaCount for verification.
+const val FLEXIBLE_SYNC_SCHEMA_COUNT = 14
+val FLEXIBLE_SYNC_SCHEMA = DEFAULT_SCHEMAS + ASYMMETRIC_SCHEMAS + COLLECTION_SCHEMAS

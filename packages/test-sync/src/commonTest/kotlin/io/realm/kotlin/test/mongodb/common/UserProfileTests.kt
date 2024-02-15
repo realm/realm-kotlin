@@ -116,7 +116,7 @@ class UserProfileTests {
                     callback: ResponseCallback
                 ) {
                     val profileData = profileBody.map { (k, v) ->
-                        val value = when(v) {
+                        val value = when (v) {
                             is String -> Json.encodeToString<String>(v)
                             is Long -> Json.encodeToString<Long>(v)
                             else -> TODO("Unsupported user data type $k : $v")
@@ -149,7 +149,7 @@ class UserProfileTests {
                                         }
                                     }
                                 ],
-                                "data": ${profileData}, 
+                                "data": $profileData, 
                                 "type": "normal",
                                 "roles": [
                                     {
