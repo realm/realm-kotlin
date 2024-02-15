@@ -209,7 +209,7 @@ public suspend inline fun <reified T : Any, reified R : Any> MongoCollection<*, 
  * Delete a single object from the remote collection.
  *
  * @param filter a filter to specify the documents to delete.
- * @return a boolean indicating if a document was delete or not.
+ * @return a boolean indicating if a document was deleted or not.
  */
 public suspend fun MongoCollection<*, *>.deleteOne(filter: BsonDocument): Boolean {
     isType<MongoCollectionImpl<*, *>>(this)
@@ -388,7 +388,7 @@ public suspend inline fun <reified T> MongoCollection<*, *>.findOneAndUpdate(
  * @param upsert a boolean indicating if a new document should be inserted if the [filter] does not
  * match any existing documents in the collection.
  * @param returnNewDoc a boolean indicating whether to return the document before or after the update.
- * @return the result of the remote `findOneAndUpdate` invocation deserialized into a [T]-instance.
+ * @return the result of the remote `findOneAndReplace` invocation deserialized into a [T]-instance.
  */
 @Suppress("LongParameterList")
 public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndReplace(
@@ -416,7 +416,7 @@ public suspend inline fun <reified T, R : Any> MongoCollection<T, R>.findOneAndR
  * match any existing documents in the collection.
  * @param returnNewDoc a boolean indicating whether to return the document before or after the update.
  * @param T the type that the result of the remote `findOne` invocation should be deserialized into.
- * @return the result of the remote `findOneAndUpdate` invocation deserialized into a [T]-instance.
+ * @return the result of the remote `findOneAndReplace` invocation deserialized into a [T]-instance.
  */
 @Suppress("LongParameterList")
 @JvmName("findAndReplaceTyped")

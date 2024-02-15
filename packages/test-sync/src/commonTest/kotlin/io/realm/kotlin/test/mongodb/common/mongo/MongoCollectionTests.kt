@@ -201,7 +201,7 @@ abstract sealed class MongoCollectionTests {
     }
 
     @Test
-    fun reshape_withCustomSerialization() = runBlocking<Unit> {
+    fun withDocumentClass_withCustomSerialization() = runBlocking<Unit> {
         @OptIn(ExperimentalKBsonSerializerApi::class)
         val reshapedCollectionWithDefaultSerializer: MongoCollection<CustomDataType, CustomIdType> =
             collection.withDocumentClass()
