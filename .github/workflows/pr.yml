@@ -508,7 +508,15 @@ jobs:
           
       - name: Size before build
         run: du -sh .
-        
+
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Size before build after cleanup
+        run: du -sh .
+
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
