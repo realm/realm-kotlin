@@ -498,11 +498,17 @@ jobs:
       needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true')
 
     steps:
+      - name: Machine disk space
+        run: df -h
+    
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           submodules: "recursive"
-
+          
+      - name: Size before build
+        run: du -sh .
+        
       - name: Setup Java 11
         uses: actions/setup-java@v3
         with:
@@ -570,6 +576,9 @@ jobs:
       - name: Build Android Base Test Apk
         working-directory: packages
         run: ./gradlew  :test-base:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
+
+      - name: Size afte Base Test Apk
+        run: du -sh .
 
       - name: Build Android Sync Test Apk
         working-directory: packages
