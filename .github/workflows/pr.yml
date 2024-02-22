@@ -498,6 +498,11 @@ jobs:
       needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true')
 
     steps:
+     - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - name: Checkout code
         uses: actions/checkout@v3
         with:
