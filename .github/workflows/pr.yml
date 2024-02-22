@@ -1307,7 +1307,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
     # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-ios-x64-packages, build-kotlin-metadata-package] # , build-ios-arm64-packages] 
+    needs: [check-cache, build-ios-x64-packages, build-kotlin-metadata-package, build-macos-x64-packages] # , build-ios-arm64-packages] 
     if: |
       always() && 
       !cancelled() && 
