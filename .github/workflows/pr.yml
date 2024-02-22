@@ -498,7 +498,7 @@ jobs:
       needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true')
 
     steps:
-     - name: Remove unnecessary files
+      - name: Remove unnecessary files
         run: |
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf "$AGENT_TOOLSDIRECTORY"
@@ -1649,3 +1649,26 @@ jobs:
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
+
+
+  deploy-release:
+    uses: ./.github/workflows/include-deploy-release.yml
+    needs: [ 
+             check-cache, 
+             static-analysis, 
+            #  integration-tests, 
+            #  test-jvm-packages, 
+            #  test-macos-packages, 
+            #  test-ios-packages, 
+            #  test-android-packages-emulator, 
+             # test-android-packages-device-farm,
+            #  test-android-packages-device-farm-sync,
+             package-all-artifacts
+           ]
+    if: |
+      always() && 
+      !cancelled()
+    secrets: inherit
+    with:
+      version-label: ${{ needs.check-cache.outputs.version-label }}
+      packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}
