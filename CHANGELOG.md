@@ -33,6 +33,7 @@
 * Updated to CMake 3.27.7
 * Updated to Realm Core 13.26.0, commit 5533505d18fda93a7a971d58a191db5005583c92.
 * Adding Sync tests via Github Action.
+* Updated to Swig 4.2.0.
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)
