@@ -136,10 +136,10 @@ jobs:
           GRADLE_PORTAL_SECRET: ${{ secrets.GRADLE_PORTAL_SECRET }}
         run: |
          set +x
-         sh ./tools/publish_release.sh "$MAVEN_CENTRAL_USER" "$MAVEN_CENTRAL_PASSWORD" \
-         "$REALM_S3_ACCESS_KEY" "$REALM_S3_SECRET_KEY" \
-         "$DOCS_S3_ACCESS_KEY" "$DOCS_S3_SECRET_KEY" \
-         "$SLACK_URL_RELEASE" "$SLACK_URL_CI" \
-         "$GRADLE_PORTAL_KEY" "$GRADLE_PORTAL_SECRET" \
-         '-PsignBuild=true -PsignSecretRingFileKotlin="$GPG_SIGNING_KEY" -PsignPasswordKotlin=$GPG_PASS_PHRASE'
+         sh ./tools/publish_release.sh "${{ secrets.MAVEN_CENTRAL_USER }}" "${{ secrets.MAVEN_CENTRAL_PASSWORD }}" \
+         "${{ secrets.REALM_S3_ACCESS_KEY_BASE }}" "${{ secrets.REALM_S3_SECRET_KEY }}" \
+         "${{ secrets.DOCS_S3_ACCESS_KEY }}" "${{ secrets.DOCS_S3_SECRET_KEY }}" \
+         "${{ secrets.SLACK_URL_RELEASE }}" "${{ secrets.SLACK_URL_CI }}" \
+         "${{ secrets.GRADLE_PORTAL_KEY }}" "${{ secrets.GRADLE_PORTAL_SECRET }}" \
+         '-PsignBuild=true -PsignSecretRingFileKotlin="${{ secrets.GPG_SIGNING_KEY_BASE_64 }}" -PsignPasswordKotlin=${{ secrets.GPG_PASS_PHRASE }}'
         
