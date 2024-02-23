@@ -7,6 +7,10 @@ on:
         required: true
         type: string
 
+env:
+  REALM_DISABLE_ANALYTICS: true
+  REALM_PRINT_ANALYTICS: true
+
 jobs:
 
   # TODO: The Monkey seems to crash the app all the time, but with failures that are not coming from the app. Figure out why.
