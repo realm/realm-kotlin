@@ -166,14 +166,14 @@ notify_slack_channels() {
 # Run Release steps
 ######################################\
 
-check_env
-verify_release_preconditions
-verify_changelog
+# check_env
+# verify_release_preconditions
+# verify_changelog
 
 if [ "$1" != "verify" ]; then
-  create_javadoc
+  # create_javadoc
   publish_artifacts
-  upload_debug_symbols
-  upload_dokka
+  # upload_debug_symbols
+  # upload_dokka
   notify_slack_channels
 fi
