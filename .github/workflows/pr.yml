@@ -228,11 +228,11 @@ jobs:
     runs-on: macos-latest
     needs: [check-cache, build-jni-swig-stub]
     if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
       !contains(needs.*.result, 'cancelled') &&
-      needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
+      needs.check-cache.outputs.jni-macos-lib-cache-hit != 'true'
 
     steps:
       - name: Checkout code
