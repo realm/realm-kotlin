@@ -14,8 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  REALM_DISABLE_ANALYTICS: true
-  REALM_PRINT_ANALYTICS: true
+  REALM_DISABLE_ANALYTICS:  ${{ vars.REALM_DISABLE_ANALYTICS }}
   CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
   CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
   # Workflow environment variables are not available in Job if statements: https://github.com/actions/runner/issues/1661
@@ -36,6 +35,11 @@ jobs:
     needs: check-cache
     if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
     steps:
+      - name: Variables
+        run: |
+          echo "$REALM_DISABLE_ANALYTICS"
+          echo "$REALM_PRINT_ANALYTICS"
+          echo "$REALM_FAIL_ON_ANALYTICS_ERRORS"
       - name: Checkout code
         uses: actions/checkout@v3
         with:
