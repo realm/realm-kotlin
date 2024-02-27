@@ -9,14 +9,14 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     name: Deploy SNAPSHOT 
 
     steps:
-      - name: Remove unnecessary files
-        run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      # - name: Remove unnecessary files
+      #   run: |
+      #     sudo rm -rf /usr/share/dotnet
+      #     sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
       - name: git checkout
         uses: actions/checkout@v3
