@@ -48,7 +48,23 @@ SLACK_WEBHOOK_JAVA_CI_URL="$8"
 GRADLE_PORTAL_KEY="$9"
 GRADLE_PORTAL_SECRET="${10}"
 GRADLE_BUILD_PARAMS="${11}"
-echo $MAVEN_CENTRAL_USER
+
+echo "MAVEN_CENTRAL_USER hash=`echo $MAVEN_CENTRAL_USER | md5`"
+echo "MAVEN_CENTRAL_KEY hash=`echo $MAVEN_CENTRAL_KEY | md5`"
+
+echo "REALM_S3_ACCESS_KEY hash=`echo $REALM_S3_ACCESS_KEY | md5`"
+echo "REALM_S3_SECRET_KEY hash=`echo $REALM_S3_SECRET_KEY | md5`"
+
+echo "DOCS_S3_ACCESS_KEY hash=`echo $DOCS_S3_ACCESS_KEY | md5`"
+echo "DOCS_S3_SECRET_KEY hash=`echo $DOCS_S3_SECRET_KEY | md5`"
+
+echo "SLACK_WEBHOOK_RELEASES_URL hash=`echo $SLACK_WEBHOOK_RELEASES_URL | md5`"
+echo "SLACK_WEBHOOK_JAVA_CI_URL hash=`echo $SLACK_WEBHOOK_JAVA_CI_URL | md5`"
+
+echo "GRADLE_PORTAL_KEY hash=`echo $GRADLE_PORTAL_KEY | md5`"
+echo "GRADLE_PORTAL_SECRET hash=`echo $GRADLE_PORTAL_SECRET | md5`"
+echo "GRADLE_BUILD_PARAMS hash=`echo $GRADLE_BUILD_PARAMS | md5`"
+
 
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
