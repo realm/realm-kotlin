@@ -33,7 +33,7 @@
 * Updated to CMake 3.27.7
 * Updated to Realm Core 13.26.0, commit 5533505d18fda93a7a971d58a191db5005583c92.
 * Adding Sync tests via Github Action.
-* Updated to Swig 4.2.0.
+* Updated to Swig 4.2.0. (Issue [GitHub #1632](https://github.com/realm/realm-kotlin/issues/1632)[JIRA RKOTLIN-1001](https://jira.mongodb.org/browse/RKOTLIN-1001))
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)

@@ -1355,12 +1355,6 @@ jobs:
         with:
           cache-read-only: false
 
-      - name: Restore m2-buildrepo (mac)
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-macos-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
-
       - name: Restore m2-buildrepo (ios)
         uses: actions/download-artifact@v3
         with:
