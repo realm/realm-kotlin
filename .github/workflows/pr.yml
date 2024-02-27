@@ -1166,382 +1166,382 @@ jobs:
   #         fi  
 
   # test-macos-packages:
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest] # , macos-arm]
-        type: [base, sync]
-        include:
-          - os: macos-latest
-            type: base
-            os-id: macos
-            package-prefix: macos-x64
-            test-title: Unit Test Results - MacOS x64 Base
-          - os: macos-latest
-            type: sync
-            os-id: macos
-            package-prefix: macos-x64
-            test-title: Unit Test Results - MacOS x64 Sync
-          # - os: macos-arm
-          #   package-prefix: macos-arm64
-          #   test-title: Results - MacOS arm64 Base
+  #   timeout-minutes: 60
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [macos-latest] # , macos-arm]
+  #       type: [base, sync]
+  #       include:
+  #         - os: macos-latest
+  #           type: base
+  #           os-id: macos
+  #           package-prefix: macos-x64
+  #           test-title: Unit Test Results - MacOS x64 Base
+  #         - os: macos-latest
+  #           type: sync
+  #           os-id: macos
+  #           package-prefix: macos-x64
+  #           test-title: Unit Test Results - MacOS x64 Sync
+  #         # - os: macos-arm
+  #         #   package-prefix: macos-arm64
+  #         #   test-title: Results - MacOS arm64 Base
  
-    runs-on: ${{ matrix.os }}
-    # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
-    # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-macos-x64-packages, build-kotlin-metadata-package] #, build-macos-arm64-packages] 
-    if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled')
+  #   runs-on: ${{ matrix.os }}
+  #   # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
+  #   # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
+  #   needs: [check-cache, build-macos-x64-packages, build-kotlin-metadata-package] #, build-macos-arm64-packages] 
+  #   if: |
+  #     always() && 
+  #     !cancelled() && 
+  #     !contains(needs.*.result, 'failure') && 
+  #     !contains(needs.*.result, 'cancelled')
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      # checkout BAAS CLI repo
-      - name: Checkout BAAS repo
-        if: matrix.type == 'sync'
-        run: |
-          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+  #     # checkout BAAS CLI repo
+  #     - name: Checkout BAAS repo
+  #       if: matrix.type == 'sync'
+  #       run: |
+  #         echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+  #         gh repo clone 10gen/baasaas
 
-      # Start BAAS instance in the background
-      # We save the container id to poll against and get the hostname info later
-      - name: Start Baas instance in the background
-        id: baas_cli_start
-        if: matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
-          #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start | jq -r '.id')
-          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+  #     # Start BAAS instance in the background
+  #     # We save the container id to poll against and get the hostname info later
+  #     - name: Start Baas instance in the background
+  #       id: baas_cli_start
+  #       if: matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+  #         #   curl: option --data: error encountered when reading a file
+  #         OUTPUT=$(bash cli.sh start | jq -r '.id')
+  #         echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - name: Setup Java 11
-        uses: actions/setup-java@v3
-        with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+  #     - name: Setup Java 11
+  #       uses: actions/setup-java@v3
+  #       with:
+  #         distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+  #         java-version: ${{ vars.VERSION_JAVA }}
 
-      - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
-        with:
-          cache-read-only: false
+  #     - name: Setup Gradle and task/dependency caching
+  #       uses: gradle/gradle-build-action@v2
+  #       with:
+  #         cache-read-only: false
 
-      - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+  #     - name: Restore m2-buildrepo
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
+  #         path: ./packages/build/m2-buildrepo 
 
-      - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
-
-
-      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
-      - name: Fetching the BAAS CLI hostname
-        id: baas_cli_poll
-        if: matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
-          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
-
-      - name: Run tests
-        working-directory: packages
-        run: >
-          ./gradlew :test-${{ matrix.type }}:macosTest
-          -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
-          -PincludeSdkModules=false 
-          --info --no-daemon
-
-      - name: Publish Unit Test Results
-        uses: dorny/test-reporter@v1
-        if: always() || failure()
-        with:
-          name: ${{ matrix.test-title }} 
-          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
-          reporter: java-junit
-          list-suites: failed
-          list-tests: failed
-          fail-on-error: true        
-
-      - name: Stopping the BAAS container
-        if: always() && matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
-          fi
+  #     - name: Restore Kotlin metadata artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+  #         path: ./packages/build/m2-buildrepo 
 
 
-  # test-ios-packages:
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest] # , macos-arm]
-        type: [base, sync]
-        include:
-          - os: macos-latest
-            type: base
-            package-prefix: x64
-            test-title: Unit Test Results - iOS x64 Base
-            test-task: iosTest
-          - os: macos-latest
-            type: sync
-            package-prefix: x64
-            test-title: Unit Test Results - iOS x64 Sync
-            test-task: iosTest
-          # - os: macos-arm
-          #   package-prefix: macos-arm64
-          #   test-title: Results - MacOS arm64 Base
+  #     # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+  #     - name: Fetching the BAAS CLI hostname
+  #       id: baas_cli_poll
+  #       if: matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+  #         echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+  #     - name: Run tests
+  #       working-directory: packages
+  #       run: >
+  #         ./gradlew :test-${{ matrix.type }}:macosTest
+  #         -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
+  #         -PincludeSdkModules=false 
+  #         --info --no-daemon
+
+  #     - name: Publish Unit Test Results
+  #       uses: dorny/test-reporter@v1
+  #       if: always() || failure()
+  #       with:
+  #         name: ${{ matrix.test-title }} 
+  #         path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+  #         reporter: java-junit
+  #         list-suites: failed
+  #         list-tests: failed
+  #         fail-on-error: true        
+
+  #     - name: Stopping the BAAS container
+  #       if: always() && matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+  #           bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+  #         fi
+
+
+  # # test-ios-packages:
+  #   timeout-minutes: 60
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [macos-latest] # , macos-arm]
+  #       type: [base, sync]
+  #       include:
+  #         - os: macos-latest
+  #           type: base
+  #           package-prefix: x64
+  #           test-title: Unit Test Results - iOS x64 Base
+  #           test-task: iosTest
+  #         - os: macos-latest
+  #           type: sync
+  #           package-prefix: x64
+  #           test-title: Unit Test Results - iOS x64 Sync
+  #           test-task: iosTest
+  #         # - os: macos-arm
+  #         #   package-prefix: macos-arm64
+  #         #   test-title: Results - MacOS arm64 Base
  
-    runs-on: ${{ matrix.os }}
-    # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
-    # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
-    needs: [check-cache, build-ios-x64-packages, build-kotlin-metadata-package] # , build-ios-arm64-packages] 
-    if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled')
+  #   runs-on: ${{ matrix.os }}
+  #   # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
+  #   # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
+  #   needs: [check-cache, build-ios-x64-packages, build-kotlin-metadata-package] # , build-ios-arm64-packages] 
+  #   if: |
+  #     always() && 
+  #     !cancelled() && 
+  #     !contains(needs.*.result, 'failure') && 
+  #     !contains(needs.*.result, 'cancelled')
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      # checkout BAAS CLI repo
-      - name: Checkout BAAS repo
-        if: matrix.type == 'sync'
-        run: |
-          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+  #     # checkout BAAS CLI repo
+  #     - name: Checkout BAAS repo
+  #       if: matrix.type == 'sync'
+  #       run: |
+  #         echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+  #         gh repo clone 10gen/baasaas
 
-      # Start BAAS instance in the background
-      # We save the container id to poll against and get the hostname info later
-      - name: Start Baas instance in the background
-        id: baas_cli_start
-        if: matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
-          #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start | jq -r '.id')
-          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+  #     # Start BAAS instance in the background
+  #     # We save the container id to poll against and get the hostname info later
+  #     - name: Start Baas instance in the background
+  #       id: baas_cli_start
+  #       if: matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+  #         #   curl: option --data: error encountered when reading a file
+  #         OUTPUT=$(bash cli.sh start | jq -r '.id')
+  #         echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - name: Setup Java 11
-        uses: actions/setup-java@v3
-        with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+  #     - name: Setup Java 11
+  #       uses: actions/setup-java@v3
+  #       with:
+  #         distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+  #         java-version: ${{ vars.VERSION_JAVA }}
 
-      - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
-        with:
-          cache-read-only: false
+  #     - name: Setup Gradle and task/dependency caching
+  #       uses: gradle/gradle-build-action@v2
+  #       with:
+  #         cache-read-only: false
 
-      - name: Restore m2-buildrepo (ios)
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+  #     - name: Restore m2-buildrepo (ios)
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
+  #         path: ./packages/build/m2-buildrepo 
 
-      - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+  #     - name: Restore Kotlin metadata artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+  #         path: ./packages/build/m2-buildrepo 
 
 
-      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
-      - name: Fetching the BAAS CLI hostname
-        id: baas_cli_poll
-        if: matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
-          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+  #     # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+  #     - name: Fetching the BAAS CLI hostname
+  #       id: baas_cli_poll
+  #       if: matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+  #         echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
-      # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
-      - name: Run tests
-        working-directory: packages
-        run: >
-          ./gradlew :test-${{ matrix.type }}:${{ matrix.test-task }}
-          -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
-          -PincludeSdkModules=false 
-          --info --no-daemon
+  #     # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
+  #     - name: Run tests
+  #       working-directory: packages
+  #       run: >
+  #         ./gradlew :test-${{ matrix.type }}:${{ matrix.test-task }}
+  #         -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
+  #         -PincludeSdkModules=false 
+  #         --info --no-daemon
 
-      - name: Publish Unit Test Results
-        uses: dorny/test-reporter@v1
-        if: always() || failure()
-        with:
-          name: ${{ matrix.test-title }} 
-          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
-          reporter: java-junit
-          list-suites: failed
-          list-tests: failed
-          fail-on-error: true
+  #     - name: Publish Unit Test Results
+  #       uses: dorny/test-reporter@v1
+  #       if: always() || failure()
+  #       with:
+  #         name: ${{ matrix.test-title }} 
+  #         path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+  #         reporter: java-junit
+  #         list-suites: failed
+  #         list-tests: failed
+  #         fail-on-error: true
 
-      - name: Stopping the BAAS container
-        if: always() && matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
-          fi
+  #     - name: Stopping the BAAS container
+  #       if: always() && matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+  #           bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+  #         fi
 
-  # test-jvm-packages:
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
-        type: [base, sync]
-        include:
-          - os: macos-latest
-            os-id: mac
-            type: base
-            test-title: Unit Test Results - Base JVM MacOS x64
-          - os: ubuntu-latest
-            os-id: ubu
-            type: base
-            test-title: Unit Test Results - Base JVM Linux
-          - os: windows-latest
-            os-id: win
-            type: base
-            test-title: Unit Test Results - Base JVM Windows
-          - os: macos-latest
-            os-id: mac
-            type: sync
-            test-title: Unit Test Results - Sync JVM MacOS x64
-          - os: ubuntu-latest
-            os-id: ubu
-            type: sync
-            test-title: Unit Test Results - Sync JVM Linux
-        exclude:
-          # Do not run Windows Sync Tests, because the bash script for
-          # starting the BAAS container doesn not work on Windows.
-          - os: windows-latest
-            #os-id: win
-            type: sync
-            #test-title: Unit Test Results - Sync JVM Windows
+  # # test-jvm-packages:
+  #   timeout-minutes: 60
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
+  #       type: [base, sync]
+  #       include:
+  #         - os: macos-latest
+  #           os-id: mac
+  #           type: base
+  #           test-title: Unit Test Results - Base JVM MacOS x64
+  #         - os: ubuntu-latest
+  #           os-id: ubu
+  #           type: base
+  #           test-title: Unit Test Results - Base JVM Linux
+  #         - os: windows-latest
+  #           os-id: win
+  #           type: base
+  #           test-title: Unit Test Results - Base JVM Windows
+  #         - os: macos-latest
+  #           os-id: mac
+  #           type: sync
+  #           test-title: Unit Test Results - Sync JVM MacOS x64
+  #         - os: ubuntu-latest
+  #           os-id: ubu
+  #           type: sync
+  #           test-title: Unit Test Results - Sync JVM Linux
+  #       exclude:
+  #         # Do not run Windows Sync Tests, because the bash script for
+  #         # starting the BAAS container doesn not work on Windows.
+  #         - os: windows-latest
+  #           #os-id: win
+  #           type: sync
+  #           #test-title: Unit Test Results - Sync JVM Windows
 
-    runs-on: ${{ matrix.os }}
-    needs: [check-cache, build-jvm-packages, build-kotlin-metadata-package]
-    if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled')
+  #   runs-on: ${{ matrix.os }}
+  #   needs: [check-cache, build-jvm-packages, build-kotlin-metadata-package]
+  #   if: |
+  #     always() && 
+  #     !cancelled() && 
+  #     !contains(needs.*.result, 'failure') && 
+  #     !contains(needs.*.result, 'cancelled')
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
 
-      # checkout BAAS CLI repo
-      - name: Checkout BAAS repo
-        if: matrix.type == 'sync'
-        run: |
-          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
-          gh repo clone 10gen/baasaas
+  #     # checkout BAAS CLI repo
+  #     - name: Checkout BAAS repo
+  #       if: matrix.type == 'sync'
+  #       run: |
+  #         echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+  #         gh repo clone 10gen/baasaas
 
-      # Start BAAS instance in the background
-      # We save the container id to poll against and get the hostname info later
-      - name: Start Baas instance in the background
-        id: baas_cli_start
-        if: matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
-          #   curl: option --data: error encountered when reading a file
-          OUTPUT=$(bash cli.sh start | jq -r '.id')
-          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+  #     # Start BAAS instance in the background
+  #     # We save the container id to poll against and get the hostname info later
+  #     - name: Start Baas instance in the background
+  #       id: baas_cli_start
+  #       if: matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+  #         #   curl: option --data: error encountered when reading a file
+  #         OUTPUT=$(bash cli.sh start | jq -r '.id')
+  #         echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
 
-      - name: Setup Java 11
-        uses: actions/setup-java@v3
-        with:
-          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+  #     - name: Setup Java 11
+  #       uses: actions/setup-java@v3
+  #       with:
+  #         distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+  #         java-version: ${{ vars.VERSION_JAVA }}
 
-      - name: Setup Gradle and task/dependency caching
-        uses: gradle/gradle-build-action@v2
-        with:
-          cache-read-only: false
+  #     - name: Setup Gradle and task/dependency caching
+  #       uses: gradle/gradle-build-action@v2
+  #       with:
+  #         cache-read-only: false
 
-      - name: Restore Kotlin metadata artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+  #     - name: Restore Kotlin metadata artifacts
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+  #         path: ./packages/build/m2-buildrepo 
 
-      - name: Restore m2-buildrepo
-        uses: actions/download-artifact@v3
-        with:
-          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
-          path: ./packages/build/m2-buildrepo 
+  #     - name: Restore m2-buildrepo
+  #       uses: actions/download-artifact@v3
+  #       with:
+  #         name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+  #         path: ./packages/build/m2-buildrepo 
 
-      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
-      - name: Fetching the BAAS CLI hostname
-        id: baas_cli_poll
-        if: matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
-          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+  #     # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+  #     - name: Fetching the BAAS CLI hostname
+  #       id: baas_cli_poll
+  #       if: matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+  #         echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
 
-      # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
-      - name: Run tests
-        working-directory: packages
-        run: >
-          ./gradlew :test-${{ matrix.type }}:jvmTest
-          -PsyncUsePlatformNetworking=true
-          -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
-          -PincludeSdkModules=false 
-          --info --no-daemon
+  #     # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
+  #     - name: Run tests
+  #       working-directory: packages
+  #       run: >
+  #         ./gradlew :test-${{ matrix.type }}:jvmTest
+  #         -PsyncUsePlatformNetworking=true
+  #         -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
+  #         -PincludeSdkModules=false 
+  #         --info --no-daemon
 
-      - name: Publish Unit Test Results
-        uses: dorny/test-reporter@v1
-        if: always() || failure()
-        with:
-          name: ${{ matrix.test-title }} 
-          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
-          reporter: java-junit
-          list-suites: failed
-          list-tests: failed
-          fail-on-error: true
+  #     - name: Publish Unit Test Results
+  #       uses: dorny/test-reporter@v1
+  #       if: always() || failure()
+  #       with:
+  #         name: ${{ matrix.test-title }} 
+  #         path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+  #         reporter: java-junit
+  #         list-suites: failed
+  #         list-tests: failed
+  #         fail-on-error: true
 
-      - name: Stopping the BAAS container
-        if: always() && matrix.type == 'sync'
-        working-directory: baasaas
-        env:
-          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
-        run: |
-          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
-            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
-          fi
+  #     - name: Stopping the BAAS container
+  #       if: always() && matrix.type == 'sync'
+  #       working-directory: baasaas
+  #       env:
+  #         APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+  #       run: |
+  #         if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+  #           bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+  #         fi
 
   package-all-artifacts: 
     runs-on: ubuntu-latest
@@ -1608,15 +1608,15 @@ jobs:
           retention-days: 7
 
   # integration-tests:
-    uses: ./.github/workflows/include-integration-tests.yml
-    needs: [check-cache, package-all-artifacts]
-    if: |
-      always() && 
-      !cancelled() && 
-      !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled')
-    with:
-      version-label: ${{ needs.check-cache.outputs.version-label }}
+  #   uses: ./.github/workflows/include-integration-tests.yml
+  #   needs: [check-cache, package-all-artifacts]
+  #   if: |
+  #     always() && 
+  #     !cancelled() && 
+  #     !contains(needs.*.result, 'failure') && 
+  #     !contains(needs.*.result, 'cancelled')
+  #   with:
+  #     version-label: ${{ needs.check-cache.outputs.version-label }}
 
   deploy-snapshot:
     uses: ./.github/workflows/include-deploy-snapshot.yml
