@@ -116,9 +116,10 @@ create_javadoc() {
 publish_artifacts() {
   echo "Releasing on MavenCentral"
   cd $REALM_KOTLIN_PATH/packages
-  eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
-  echo "Releasing on Gradle Plugin Portal"
-  eval "./gradlew :gradle-plugin:publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
+  # eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
+  eval "./gradlew publishToSonatype $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
+  # echo "Releasing on Gradle Plugin Portal"
+  # eval "./gradlew :gradle-plugin:publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
   cd $HERE
 }
 
@@ -176,5 +177,5 @@ if [ "$1" != "verify" ]; then
   publish_artifacts
   # upload_debug_symbols
   # upload_dokka
-  notify_slack_channels
+  # notify_slack_channels
 fi
