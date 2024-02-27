@@ -722,13 +722,6 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
                     ),
                     classifier
                 )
-                ByteArray::class -> ByteArrayListTester(
-                    realm = realm,
-                    typeSafetyManager = getTypeSafety(
-                        classifier,
-                        elementType.nullable
-                    ) as ListTypeSafetyManager<ByteArray?>
-                )
                 RealmAny::class -> RealmAnyListTester(
                     realm = realm,
                     typeSafetyManager = ListTypeSafetyManager(
@@ -1366,38 +1359,6 @@ internal class RealmObjectListTester(
 ) : ManagedListTester<RealmListContainer>(realm, typeSafetyManager, classifier) {
     override fun assertElementsAreEqual(expected: RealmListContainer, actual: RealmListContainer) =
         assertEquals(expected.stringField, actual.stringField)
-}
-
-/**
- * Check equality for ByteArrays at a structural level with `assertContentEquals`.
- */
-internal class ByteArrayListTester(
-    realm: Realm,
-    typeSafetyManager: ListTypeSafetyManager<ByteArray?>
-) : ManagedListTester<ByteArray?>(realm, typeSafetyManager, ByteArray::class) {
-    override fun assertElementsAreEqual(expected: ByteArray?, actual: ByteArray?) =
-        assertContentEquals(expected, actual)
-
-    // Removing elements using equals/hashcode will fail for byte arrays since they are
-    // are only equal if identical
-    override fun remove() {
-        val dataSet = typeSafetyManager.dataSetToLoad
-        val assertions = { list: RealmList<ByteArray?> ->
-            assertFalse(list.isEmpty())
-        }
-
-        errorCatcher {
-            realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetCollection(this)
-                assertFalse(list.remove(dataSet[0]))
-                assertTrue(list.add(dataSet[0]))
-                assertFalse(list.remove(list.last()))
-                assertions(list)
-            }
-        }
-
-        assertListAndCleanup { list -> assertions(list) }
-    }
 }
 
 // -----------------------------------

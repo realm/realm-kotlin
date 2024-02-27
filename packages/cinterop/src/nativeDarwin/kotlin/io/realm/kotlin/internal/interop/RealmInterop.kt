@@ -1038,6 +1038,19 @@ actual object RealmInterop {
         return RealmValue(struct)
     }
 
+    actual fun realm_list_find(list: RealmListPointer, value: RealmValue): Long {
+        memScoped {
+            val index = alloc<ULongVar>()
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_list_find(list.cptr(), value.value.readValue(), index.ptr, found.ptr))
+            return if (found.value) {
+                index.value.toLong()
+            } else {
+                -1
+            }
+        }
+    }
+
     actual fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer =
         CPointerWrapper(realm_wrapper.realm_list_get_list(list.cptr(), index.toULong()))
 

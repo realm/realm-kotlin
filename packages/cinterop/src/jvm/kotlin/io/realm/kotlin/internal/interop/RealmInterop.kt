@@ -568,6 +568,18 @@ actual object RealmInterop {
         realmc.realm_list_get(list.cptr(), index, struct)
         return RealmValue(struct)
     }
+
+    actual fun realm_list_find(list: RealmListPointer, value: RealmValue): Long {
+        val index = LongArray(1)
+        val found = BooleanArray(1)
+        realmc.realm_list_find(list.cptr(), value.value, index, found)
+        return if (found[0]) {
+            index[0]
+        } else {
+            -1
+        }
+    }
+
     actual fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer =
         LongPointerWrapper(realmc.realm_list_get_list(list.cptr(), index))
 

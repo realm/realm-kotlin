@@ -20,6 +20,7 @@ import io.realm.kotlin.UpdatePolicy
 import io.realm.kotlin.Versioned
 import io.realm.kotlin.dynamic.DynamicRealmObject
 import io.realm.kotlin.ext.asRealmObject
+import io.realm.kotlin.ext.isManaged
 import io.realm.kotlin.internal.RealmValueArgumentConverter.convertToQueryArgs
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.ClassKey
@@ -90,8 +91,21 @@ internal class ManagedRealmList<E>(
         return operator.get(index)
     }
 
+    override fun contains(element: E): Boolean {
+        return operator.contains(element)
+    }
+
+    override fun indexOf(element: E): Int {
+        return operator.indexOf(element)
+    }
+
+
     override fun add(index: Int, element: E) {
         operator.insert(index, element)
+    }
+
+    override fun remove(element: E): Boolean {
+        return operator.remove(element)
     }
 
     // We need explicit overrides of these to ensure that we capture duplicate references to the
@@ -225,6 +239,10 @@ internal interface ListOperator<E> : CollectionOperator<E, RealmListPointer> {
 
     fun get(index: Int): E
 
+    fun contains(element: E): Boolean = indexOf(element) != -1
+
+    fun indexOf(element: E): Int
+
     // TODO OPTIMIZE We technically don't need update policy and cache for primitive lists but right now RealmObjectHelper.assign doesn't know how to differentiate the calls to the operator
     fun insert(
         index: Int,
@@ -232,6 +250,14 @@ internal interface ListOperator<E> : CollectionOperator<E, RealmListPointer> {
         updatePolicy: UpdatePolicy = UpdatePolicy.ALL,
         cache: UnmanagedToManagedObjectCache = mutableMapOf()
     )
+
+    fun remove(element: E): Boolean = when (val index = indexOf(element)) {
+        -1 -> false
+        else -> {
+            RealmInterop.realm_list_erase(nativePointer, index.toLong())
+            true
+        }
+    }
 
     fun insertAll(
         index: Int,
@@ -273,6 +299,14 @@ internal class PrimitiveListOperator<E>(
             val transport = realm_list_get(nativePointer, index.toLong())
             with(realmValueConverter) {
                 realmValueToPublic(transport) as E
+            }
+        }
+    }
+
+    override fun indexOf(element: E): Int {
+        inputScope {
+            with(realmValueConverter) {
+                return RealmInterop.realm_list_find(nativePointer, publicToRealmValue(element)).toInt()
             }
         }
     }
@@ -351,6 +385,17 @@ internal class RealmAnyListOperator(
                 { RealmInterop.realm_list_get_list(nativePointer, index.toLong()) },
                 { RealmInterop.realm_list_get_dictionary(nativePointer, index.toLong()) }
             )
+        }
+    }
+
+    override fun indexOf(element: RealmAny?): Int {
+        // Unmanaged objects are never found in a managed collections
+        if (element?.type == RealmAny.Type.OBJECT) {
+            if (!element.asRealmObject<RealmObjectInternal>().isManaged()) return -1
+        }
+        return inputScope {
+            val transport = realmAnyToRealmValueWithoutImport(element)
+            RealmInterop.realm_list_find(nativePointer, transport).toInt()
         }
     }
 
@@ -459,6 +504,18 @@ internal abstract class BaseRealmObjectListOperator<E : BaseRealmObject?> (
         return getterScope {
             val transport = realm_list_get(nativePointer, index.toLong())
             realmValueToRealmObject(transport, clazz, mediator, realmReference) as E
+        }
+    }
+
+    override fun indexOf(element: E): Int {
+        // Unmanaged objects are never found in a managed collections
+        element?.also {
+            if (!(it as RealmObjectInternal).isManaged()) return -1
+        }
+        return inputScope {
+            val objRef = realmObjectToRealmReferenceOrError(element as BaseRealmObject?)
+            val transport = realmObjectTransport(objRef as RealmObjectInterop)
+            RealmInterop.realm_list_find(nativePointer, transport).toInt()
         }
     }
 }
