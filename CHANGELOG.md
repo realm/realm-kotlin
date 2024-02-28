@@ -34,6 +34,8 @@
 
 ## 1.14.0 (2024-03-08)
 
+This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from fileformat v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier.  Downgrading to a previous file format is not possible.
+
 ### Breaking Changes
 * None.
 
@@ -68,9 +70,9 @@
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
-* Updated to Realm Core 13.26.0, commit 5533505d18fda93a7a971d58a191db5005583c92.
+* Updated to Realm Core 14.0.1 commit b1d32d3d20fcb80c747aad6b37b4a9d9179e0730.
 * Adding Sync tests via Github Action.
-* Updated to Swig 4.2.0. (Issue [GitHub #1632](https://github.com/realm/realm-kotlin/issues/1632)[JIRA RKOTLIN-1001](https://jira.mongodb.org/browse/RKOTLIN-1001))
+* Updated to Swig 4.2.0. (Issue [GitHub #1632](https://github.com/realm/realm-kotlin/issues/1632) [JIRA RKOTLIN-1001](https://jira.mongodb.org/browse/RKOTLIN-1001))
 
 
 ## 1.13.1-SNAPSHOT (YYYY-MM-DD)
