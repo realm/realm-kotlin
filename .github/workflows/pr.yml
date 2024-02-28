@@ -122,6 +122,9 @@ jobs:
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
 
+      - name: Use cmake
+        run: cmake --version
+
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
         with:
@@ -546,7 +549,10 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: ${{ vars.VERSION_CMAKE }}
+          cmake-version: '${{ vars.VERSION_CMAKE }}'
+
+      - name: Use cmake
+        run: cmake --version
 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
