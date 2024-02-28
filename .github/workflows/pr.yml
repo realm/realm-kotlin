@@ -1649,7 +1649,7 @@ jobs:
     uses: ./.github/workflows/include-deploy-release.yml
     needs: [ 
              check-cache, 
-             static-analysis, 
+            #  static-analysis, 
             #  integration-tests, 
             #  test-jvm-packages, 
             #  test-macos-packages, 
@@ -1657,7 +1657,7 @@ jobs:
             #  test-android-packages-emulator, 
              # test-android-packages-device-farm,
             #  test-android-packages-device-farm-sync,
-             package-all-artifacts
+            #  package-all-artifacts
            ]
     if: |
       always() && 
