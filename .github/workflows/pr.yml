@@ -61,8 +61,11 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: ${{ vars.VERSION_CMAKE }}
-          
+          cmake-version: '${{ vars.VERSION_CMAKE }}'
+
+      - name: Use cmake
+        run: cmake --version
+
       # Manually install SWIG 4.1.1 as only 4.0.2 is pre-installed
       # 4.1.1 is not available in apt-get, so use brew instead
       # We need to use the formulae directly from GitHub to pin the version as Homebrew does not have
