@@ -46,6 +46,7 @@ jobs:
           GPG_PASS_PHRASE: ${{ secrets.GPG_PASS_PHRASE }}
           MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
           MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
-          GPG_TTY: $(tty)
         working-directory: tools
-        run: GPG_TTY=$(tty) kotlin ./publish_snapshots.main.kts "../" "${{ inputs.version-label }}" "$GPG_SIGNING_KEY" "$GPG_PASS_PHRASE" "$MAVEN_CENTRAL_USER" "$MAVEN_CENTRAL_PASSWORD"
+        run: |
+          export GPG_TTY=$(tty)
+          kotlin ./publish_snapshots.main.kts "../" "${{ inputs.version-label }}" "$GPG_SIGNING_KEY" "$GPG_PASS_PHRASE" "$MAVEN_CENTRAL_USER" "$MAVEN_CENTRAL_PASSWORD"
