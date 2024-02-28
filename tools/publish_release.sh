@@ -80,37 +80,37 @@ echo
 
 echo "debugging REALM_S3_ACCESS_KEY"
 for (( i=0; i<${#REALM_S3_ACCESS_KEY}; i++ )); do
-  echo "${:i:1}"
+  echo "${REALM_S3_ACCESS_KEY:i:1}"
 done
 echo
 
 echo "debugging REALM_S3_SECRET_KEY"
 for (( i=0; i<${#REALM_S3_SECRET_KEY}; i++ )); do
-  echo "${:i:1}"
+  echo "${REALM_S3_SECRET_KEY:i:1}"
 done
 echo
 
 echo "debugging DOCS_S3_ACCESS_KEY"
 for (( i=0; i<${#DOCS_S3_ACCESS_KEY}; i++ )); do
-  echo "${:i:1}"
+  echo "${DOCS_S3_ACCESS_KEY:i:1}"
 done
 echo
 
 echo "debugging DOCS_S3_SECRET_KEY"
 for (( i=0; i<${#DOCS_S3_SECRET_KEY}; i++ )); do
-  echo "${:i:1}"
+  echo "${DOCS_S3_SECRET_KEY:i:1}"
 done
 echo
 
 echo "debugging GRADLE_PORTAL_KEY"
 for (( i=0; i<${#GRADLE_PORTAL_KEY}; i++ )); do
-  echo "${:i:1}"
+  echo "${GRADLE_PORTAL_KEY:i:1}"
 done
 echo
 
 echo "debugging GRADLE_PORTAL_SECRET"
 for (( i=0; i<${#GRADLE_PORTAL_SECRET}; i++ )); do
-  echo "${:i:1}"
+  echo "${GRADLE_PORTAL_SECRET:i:1}"
 done
 echo
 
