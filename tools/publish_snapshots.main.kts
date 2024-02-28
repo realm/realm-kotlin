@@ -110,6 +110,9 @@ settingsFile.writeText("""
     </settings>
 """.trimIndent())
 
+printVersion()
+printKeys()
+
 debug("Upload artifacts for $version using $localMavenRepo")
 
 // Iterate through a local Maven repository and find all Realm Kotlin packages that neeeds to be uploaded.
@@ -253,11 +256,33 @@ fun uploadFiles(files: PackageData) {
         add("-Dfiles=${files.additionalFiles.map { "${files.fullPathToPackage}/${it.fileName}" }.joinToString(",")}")
         add("-Dclassifiers=${files.additionalFiles.map { it.classifier }.joinToString(",")}")
         add("-Dtypes=${files.additionalFiles.map { it.type }.joinToString(",")}")
+        add("-Darguments=-Dgpg.passphrase=$gpgPassPhrase")
+        
     }
     debug("Running command: ${args.joinToString(" ")}")
     runCommand(args, showOutput = true)
 }
 
+fun printVersion() {
+    val args = mutableListOf<String>()
+    args.run {
+        add("gpg")
+        add("--list-secret-keys")
+    }
+    debug("Running command: ${args.joinToString(" ")}")
+    runCommand(args, showOutput = true)
+}
+
+fun printKeys() {
+    val args = mutableListOf<String>()
+    args.run {
+        add("gpg")
+        add("--version")
+    }
+    debug("Running command: ${args.joinToString(" ")}")
+    runCommand(args, showOutput = true)
+
+}
 /**
  * Run a system command and collect any output.
  */
