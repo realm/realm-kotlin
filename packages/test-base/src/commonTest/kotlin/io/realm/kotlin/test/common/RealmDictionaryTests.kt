@@ -1108,11 +1108,36 @@ class RealmDictionaryTests : EmbeddedObjectCollectionQueryTests {
     }
 
     @Test
-    @Ignore
-    fun managedDictionary_equals() {
-        // TODO https://github.com/realm/realm-kotlin/issues/1097
-        //  When we fix this issue we will be able to compare two dictionaries' parent objects based
-        //  on the Realm version, object key and class key making equality logic superfluous
+    fun managedDictionary_equals() = runBlocking {
+        val expected = mapOf(
+            "key1" to 1,
+            "key2" to 2
+        )
+        val frozen1 = realm.write {
+            val liveObject =
+                copyToRealm(RealmDictionaryContainer().apply { intDictionaryField.putAll(expected) })
+
+            assertNotEquals(liveObject.intDictionaryField, mapOf("key1" to 1, "key2" to 2))
+            liveObject.intDictionaryField.let {
+                assertEquals(expected.size, it.size)
+                expected.entries.containsAll(it.entries)
+            }
+
+            assertTrue(liveObject.intDictionaryField.equals(liveObject.intDictionaryField)) // Same version
+
+            assertEquals(1, liveObject.intDictionaryField["key1"])
+            liveObject
+        }
+        assertTrue(frozen1.intDictionaryField.equals(frozen1.intDictionaryField)) // Same version
+
+        val frozen2 = realm.write {
+            findLatest(frozen1)?.also { it.stringField = "UPDATED" }
+        }
+        frozen2!!.intDictionaryField.let {
+            assertEquals(frozen1.intDictionaryField.size, it.size)
+            frozen1.intDictionaryField.entries.containsAll(it.entries)
+        }
+        assertFalse { frozen1.intDictionaryField.equals(frozen2!!.intDictionaryField) }
     }
 
     @Test
@@ -2836,7 +2861,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val unmanaged2 = realmDictionaryOf(dataSet)
             val unmanaged3 = realmDictionaryOf(dataSet).apply { remove(dataSet[0].first) }
             assertEquals(unmanaged1, unmanaged1)
-            assertEquals(unmanaged1, unmanaged2)
+            assertNotEquals(unmanaged1, unmanaged2)
             assertNotEquals(unmanaged1, unmanaged3)
         }
     }
@@ -2848,7 +2873,7 @@ internal abstract class ManagedDictionaryTester<T>(
             val unmanaged2 = realmDictionaryOf(dataSet)
             val unmanaged3 = realmDictionaryOf(dataSet).apply { remove(dataSet[0].first) }
             assertEquals(unmanaged1.hashCode(), unmanaged1.hashCode())
-            assertEquals(unmanaged1.hashCode(), unmanaged2.hashCode())
+            assertNotEquals(unmanaged1.hashCode(), unmanaged2.hashCode())
             assertNotEquals(unmanaged1.hashCode(), unmanaged3.hashCode())
         }
     }

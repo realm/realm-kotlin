@@ -66,9 +66,7 @@ internal class UnmanagedRealmList<E>(
 
     override fun toString(): String = "UnmanagedRealmList{${joinToString()}}"
 
-    override fun equals(other: Any?): Boolean = backingList == other
 
-    override fun hashCode(): Int = backingList.hashCode()
 }
 
 /**
@@ -170,6 +168,19 @@ internal class ManagedRealmList<E>(
         !nativePointer.isReleased() && RealmInterop.realm_list_is_valid(nativePointer)
 
     override fun delete() = RealmInterop.realm_list_remove_all(nativePointer)
+
+    override fun equals(other: Any?): Boolean {
+        val o = other as? ManagedRealmList<*>
+        return when (o) {
+            null -> false
+            else -> RealmInterop.realm_equals(nativePointer, o.nativePointer)
+        }
+    }
+
+    override fun hashCode(): Int {
+        // TODO Improve distribution. Maybe something like parent.table + parent.ref + parent.key + version
+        return operator.realmReference.version().version.hashCode()
+    }
 }
 
 internal class RealmListChangeFlow<E>(producerScope: ProducerScope<ListChange<E>>) :
@@ -330,7 +341,7 @@ internal class PrimitiveListOperator<E>(
         index: Int,
         element: E,
         updatePolicy: UpdatePolicy,
-        cache: UnmanagedToManagedObjectCache
+        cache: UnmanagedToManagedObjectCache,
     ): E {
         return get(index).also {
             inputScope {
@@ -344,7 +355,7 @@ internal class PrimitiveListOperator<E>(
 
     override fun copy(
         realmReference: RealmReference,
-        nativePointer: RealmListPointer
+        nativePointer: RealmListPointer,
     ): ListOperator<E> =
         PrimitiveListOperator(mediator, realmReference, realmValueConverter, nativePointer)
 }

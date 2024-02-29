@@ -1235,14 +1235,15 @@ internal object RealmObjectHelper {
         if (other == null || obj::class != other::class) return false
 
         other as BaseRealmObject
-
-        if (other.isManaged()) {
-            if (obj.isValid() != other.isValid()) return false
-            return obj.getIdentifierOrNull() == other.getIdentifierOrNull()
+        return if (obj.isManaged() && other.isManaged()) {
+            RealmInterop.realm_equals(
+                obj.realmObjectReference!!.objectPointer,
+                other.realmObjectReference!!.objectPointer
+            )
         } else {
             // If one of the objects are unmanaged, they are only equal if identical, which
             // should have been caught at the top of this function.
-            return false
+            false
         }
     }
 

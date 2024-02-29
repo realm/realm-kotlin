@@ -784,6 +784,11 @@ class FunctionsTests {
                 actual as Iterable<*>
                 assertContentEquals(expected, actual)
             }
+            is Map<*, *> -> {
+                actual is Map<*, *>
+                assertEquals(expected.size, (actual as Map<*, *>).size)
+                assertTrue { expected.entries.containsAll(actual.entries) }
+            }
             else -> assertEquals(expected, actual)
         }
     }

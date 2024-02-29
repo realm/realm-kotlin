@@ -254,6 +254,18 @@ class SerializationTests {
                                 expected.asRealmObject()
                             )
                         }
+                        // List and Dictionary does not compare equals with RealmAny.equals unless
+                        // it is referential equality, so iterate manually
+                        RealmAny.Type.LIST -> {
+                            expected.asList().zip(actual.asList()).forEach { (a, b): Pair<RealmAny?, RealmAny?> ->
+                                assertEquals(a, b)
+                            }
+                        }
+                        RealmAny.Type.DICTIONARY -> {
+                            expected.asDictionary().entries.zip(actual.asDictionary().entries).forEach { (a, b) ->
+                                assertEquals(a, b)
+                            }
+                        }
                         else -> assertEquals(expected, actual)
                     }
                 } else if (expected != null || actual != null) {

@@ -769,18 +769,6 @@ internal class UnmanagedRealmDictionary<V>(
     override fun toString(): String = entries.joinToString { (key, value) -> "[$key,$value]" }
         .let { "UnmanagedRealmDictionary{$it}" }
 
-    override fun equals(other: Any?): Boolean {
-        if (other !is RealmDictionary<*>) return false
-        if (this === other) return true
-        if (this.size == other.size && this.entries.containsAll(other.entries)) return true
-        return false
-    }
-
-    override fun hashCode(): Int {
-        var result = size.hashCode()
-        result = 31 * result + entries.hashCode()
-        return result
-    }
 }
 
 internal class ManagedRealmDictionary<V> constructor(
@@ -819,7 +807,18 @@ internal class ManagedRealmDictionary<V> constructor(
         return "RealmDictionary{size=$size,owner=$owner,objKey=$objKey,version=$version}"
     }
 
-    // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
+    override fun equals(other: Any?): Boolean {
+        val o = other as? ManagedRealmMap<*, *>
+        return when (o) {
+            null -> false
+            else -> RealmInterop.realm_equals(nativePointer, o.nativePointer)
+        }
+    }
+
+    override fun hashCode(): Int {
+        // TODO Improve distribution. Maybe something like parent.table + parent.ref + parent.key + version
+        return operator.realmReference.version().version.hashCode()
+    }
 }
 
 internal class RealmDictonaryChangeFlow<V>(scope: ProducerScope<MapChange<String, V>>) :

@@ -26,6 +26,7 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
@@ -489,9 +490,18 @@ class RealmAnyTests {
                     // Different objects of same type are not equal
                     assertNotEquals(RealmAny.create(Sample()), RealmAny.create(realmObject))
                 }
-                // Collections in RealmAny are tested in RealmAnyNestedCollections.kt
-                RealmAny.Type.LIST,
-                RealmAny.Type.DICTIONARY -> {}
+                RealmAny.Type.LIST -> {
+                    val value = realmAnyListOf(1, "String", Sample())
+                    // Lists are only comparing equal on referential equality
+                    assertNotEquals(value, realmAnyListOf(1, "String", Sample()))
+                    assertEquals(value, value)
+                }
+                RealmAny.Type.DICTIONARY -> {
+                    val value = realmDictionaryOf("key1" to "String", "key2" to Sample())
+                    // Lists are only comparing equal on referential equality
+                    assertNotEquals(value, realmDictionaryOf("key1" to "String", "key2" to Sample()))
+                    assertEquals(value, value)
+                }
             }
         }
     }

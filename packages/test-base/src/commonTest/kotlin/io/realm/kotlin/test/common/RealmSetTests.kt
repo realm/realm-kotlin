@@ -21,6 +21,7 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.SampleWithPrimaryKey
+import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.set.RealmSetContainer
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
@@ -60,6 +61,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -154,8 +156,12 @@ class RealmSetTests : CollectionQueryTests {
 
     @Test
     fun unmanagedRealmSet_equalsHash() {
-        assertEquals(realmSetOf("1", "2"), realmSetOf("1", "2"))
-        assertEquals(realmSetOf("1", "2").hashCode(), realmSetOf("1", "2").hashCode())
+        val set = realmSetOf("1", "2")
+        assertEquals(set, set)
+        assertNotEquals(realmSetOf("1", "2"), set)
+        assertEquals(set.hashCode(), set.hashCode())
+        assertNotEquals(realmSetOf("1", "2").hashCode(), set.hashCode())
+        assertNotEquals(realmSetOf("1", "2").hashCode(), realmSetOf("1", "2").hashCode())
     }
 
     @Test
@@ -651,6 +657,25 @@ class RealmSetTests : CollectionQueryTests {
         }
         assertFalse(frozenObject.objectSetField.contains(RealmSetContainer()))
         assertFalse(frozenObject.nullableRealmAnySetField.contains(RealmAny.create(RealmSetContainer())))
+    }
+
+    @Test
+    fun isEquals() = runBlocking<Unit> {
+        val frozen1 = realm.write {
+            val liveObject = copyToRealm(RealmSetContainer().apply { intSetField.addAll(listOf(1, 2, 3, 4)) })
+
+            assertContentEquals(liveObject.intSetField, listOf(1,2, 3, 4))
+
+            assertTrue(liveObject.intSetField.equals(liveObject.intSetField)) // Same version
+
+            assertEquals(1, liveObject.intSetField.indexOf(2))
+            liveObject
+        }
+        val frozen2 = realm.write {
+            findLatest(frozen1)?.also { it.stringField = "UPDATED" }
+        }
+        assertNotEquals(frozen1.intSetField, frozen2!!.intSetField) // ==
+        assertFalse { frozen1.intSetField.equals(frozen2!!.intSetField) }
     }
 
     private fun getCloseableRealm(): Realm =

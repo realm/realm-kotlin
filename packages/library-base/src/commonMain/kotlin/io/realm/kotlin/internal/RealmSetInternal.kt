@@ -67,9 +67,7 @@ public class UnmanagedRealmSet<E>(
 
     override fun toString(): String = "UnmanagedRealmSet{${joinToString()}}"
 
-    override fun equals(other: Any?): Boolean = backingSet == other
 
-    override fun hashCode(): Int = backingSet.hashCode()
 }
 
 /**
@@ -204,6 +202,19 @@ internal class ManagedRealmSet<E> constructor(
 
     override fun isValid(): Boolean {
         return !nativePointer.isReleased() && RealmInterop.realm_set_is_valid(nativePointer)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        val o = other as? ManagedRealmSet<*>
+        return when (o) {
+            null -> false
+            else -> RealmInterop.realm_equals(nativePointer, o.nativePointer)
+        }
+    }
+
+    override fun hashCode(): Int {
+        // TODO Improve distribution. Maybe something like parent.table + parent.ref + parent.key + version
+        return operator.realmReference.version().version.hashCode()
     }
 }
 
@@ -345,8 +356,8 @@ internal class RealmAnySetOperator(
                 transport, null, mediator, realmReference,
                 issueDynamicObject,
                 issueDynamicMutableObject,
-                { error("Set should never container lists") }
-            ) { error("Set should never container dictionaries") }
+                { error("Set should never contain lists") }
+            ) { error("Set should never contain dictionaries") }
         }
     }
 

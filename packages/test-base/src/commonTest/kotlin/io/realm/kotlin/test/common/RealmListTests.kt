@@ -67,6 +67,7 @@ import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
@@ -114,8 +115,11 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
 
     @Test
     fun unmanagedRealmList_equalsHash() {
-        assertEquals(realmListOf("1", "2"), realmListOf("1", "2"))
-        assertEquals(realmListOf("1", "2").hashCode(), realmListOf("1", "2").hashCode())
+        val list = realmListOf("1", "2")
+        assertEquals(list, list)
+        assertNotEquals(realmListOf("1", "2"), list)
+        assertEquals(list.hashCode(), list.hashCode())
+        assertNotEquals(realmListOf("1", "2").hashCode(), list.hashCode())
     }
 
     @Test
@@ -630,6 +634,51 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
             objectListField.query()
         }
         Unit
+    }
+
+    @Test
+    fun isEquals() = runBlocking<Unit> {
+        val frozen1 = realm.write {
+            val liveObject = copyToRealm(RealmListContainer().apply { intListField.addAll(listOf(1, 2, 3, 4)) })
+
+            assertContentEquals(liveObject.intListField, listOf(1,2, 3, 4))
+
+            assertEquals(liveObject.intListField, liveObject.intListField) // Same version
+            assertEquals(liveObject.intListField.hashCode(), liveObject.intListField.hashCode()) // Same version
+
+            assertEquals(1, liveObject.intListField.indexOf(2))
+            liveObject
+        }
+        val frozen2 = realm.write {
+            findLatest(frozen1)?.also { it.stringField = "UPDATED" }
+        }
+        assertContentEquals(frozen1.intListField, frozen2!!.intListField)
+        assertFalse { frozen1.intListField.equals(frozen2!!.intListField) }
+    }
+
+    @Test
+    fun contains() = runBlocking<Unit> {
+        realm.write {
+            val liveObject = copyToRealm(RealmListContainer().apply { intListField.addAll(listOf(1, 2, 3, 4)) })
+            assertTrue(liveObject.intListField.contains(2))
+            assertEquals(1, liveObject.intListField.indexOf(2))
+        }
+    }
+
+    @Test
+    fun contains_managed() = runBlocking<Unit> {
+        realm.write {
+            val liveObject = copyToRealm(
+                RealmListContainer().apply {
+                    stringField = "PARENT"
+                    objectListField.add(RealmListContainer().apply { stringField = "CHILD" })
+                    nullableRealmAnyListField.add(RealmAny.create(RealmListContainer().apply { stringField = "ANYCHILD" }))
+                }
+            )
+            assertEquals(3, query<RealmListContainer>().find().size)
+            assertTrue(liveObject.objectListField.contains(liveObject.objectListField[0]))
+            assertTrue(liveObject.nullableRealmAnyListField.contains(liveObject.nullableRealmAnyListField[0]))
+        }
     }
 
     @Test
