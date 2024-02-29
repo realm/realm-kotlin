@@ -61,10 +61,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '${{ vars.VERSION_CMAKE }}'
-
-      - name: Use cmake
-        run: cmake --version
+          cmake-version: ${{ vars.VERSION_CMAKE }}
 
       # Manually install SWIG 4.1.1 as only 4.0.2 is pre-installed
       # 4.1.1 is not available in apt-get, so use brew instead
@@ -121,9 +118,6 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: ${{ vars.VERSION_CMAKE }}
-
-      - name: Use cmake
-        run: cmake --version
 
       - name: Restore JNI Swig Stubs
         uses: actions/download-artifact@v3
@@ -550,9 +544,6 @@ jobs:
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
           cmake-version: '${{ vars.VERSION_CMAKE }}'
-
-      - name: Use cmake
-        run: cmake --version
 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
