@@ -253,6 +253,8 @@ fun uploadFiles(files: PackageData) {
         add("-Dfiles=${files.additionalFiles.map { "${files.fullPathToPackage}/${it.fileName}" }.joinToString(",")}")
         add("-Dclassifiers=${files.additionalFiles.map { it.classifier }.joinToString(",")}")
         add("-Dtypes=${files.additionalFiles.map { it.type }.joinToString(",")}")
+        add("-Dgpg.executable=./gpg_with_pinentry.sh") // work around https://stackoverflow.com/questions/60417391
+        
     }
     debug("Running command: ${args.joinToString(" ")}")
     runCommand(args, showOutput = true)
