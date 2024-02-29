@@ -547,7 +547,7 @@ jobs:
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v1.13
         with:
-          cmake-version: '${{ vars.VERSION_CMAKE }}'
+          cmake-version: ${{ vars.VERSION_CMAKE }}
 
       - name: Setup ninja
         uses: cmelchior/setup-ninja@master
