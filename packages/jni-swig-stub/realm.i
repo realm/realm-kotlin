@@ -283,13 +283,13 @@ typedef jstring realm_string_t;
 }
 %typemap(out) (realm_string_t) "$result = to_jstring(jenv, StringData{$1.data, $1.size});"
 
+// Type map to allow passing void* as Long
 %typemap(jstype) void* "long"
 %typemap(javain) void* "$javainput"
 %typemap(javadirectorin) void* "$1"
 %typemap(javaout) void* {
-return $jnicall;
+    return $jnicall;
 }
-
 // Reuse above type maps on other pointers too
 %apply void* { realm_t*, realm_config_t*, realm_schema_t*, realm_object_t* , realm_query_t*,
                realm_results_t*, realm_notification_token_t*, realm_object_changes_t*,
@@ -346,6 +346,9 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 // Array wrappers to allow building (continuous allocated) arrays of the corresponding types from
 // JVM
 %include "carrays.i"
+// Workaround for updated Swig behavior with 4.2.0
+// https://github.com/swig/swig/commit/ecaa052f3d319834a66aaa07047be3662e5e52e2#diff-cd2fcc891412baae0fc46479c0870cbdd18133d06d68dcd216be8a37ecf77b37R10
+%apply int { size_t nelements, size_t index }
 %array_functions(realm_class_info_t, classArray);
 %array_functions(realm_property_info_t, propertyArray);
 %array_functions(realm_property_info_t*, propertyArrayArray);
@@ -355,9 +358,9 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 %array_functions(realm_query_arg_t, queryArgArray);
 %array_functions(realm_user_identity_t, identityArray);
 %array_functions(realm_app_user_apikey_t, apiKeyArray);
-
-// Work around issues with realm_size_t on Windows https://jira.mongodb.org/browse/RKOTLIN-332
-%apply int64_t[] { size_t* };
+// Workaround for updated Swig behavior with 4.2.0
+// https://github.com/swig/swig/commit/ecaa052f3d319834a66aaa07047be3662e5e52e2#diff-cd2fcc891412baae0fc46479c0870cbdd18133d06d68dcd216be8a37ecf77b37R10
+%clear size_t nelements, size_t index;
 
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
@@ -367,30 +370,51 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };
 
-// Enable passing uint8_t* parameters for realm_config_get_encryption_key and realm_config_set_encryption_key as Byte[]
-%apply int8_t[] {uint8_t *key};
-%apply int8_t[] {uint8_t *out_key};
-%apply int8_t[] {const uint8_t* data};
-
-// Enable passing uint8_t [64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
-%apply int8_t[] {uint8_t [64]};
-
-// Enable passing uint8_t [2] parameter for realm_decimal128 as Long[]
-%apply int64_t[] {uint64_t w[2]};
-
-%typemap(out) uint64_t w[2] %{
-    $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
+// Enable passing uint8_t* as byte[]
+%apply int8_t[] {uint8_t*}; //
+%typemap(in) uint8_t* (jbyte *jarr) %{
+    if(!SWIG_JavaArrayInSchar(jenv, &jarr, (signed char **)&$1, $input)) return $null;
 %}
-
-%typemap(freearg) const uint8_t* data;
-%typemap(out) const uint8_t* data %{
+%typemap(out) uint8_t* %{
     $result = SWIG_JavaArrayOutSchar(jenv, (signed char *)result, arg1->size);
 %}
+%typemap(argout) uint8_t* %{
+SWIG_JavaArrayArgoutSchar(jenv, jarr$argnum, (signed char *)$1, $input);
+%}
+%typemap(freearg) uint8_t*;
 
-// Enable passing output argument pointers as long[]
+// Reuse above typemap for passing uint8_t[64] parameter for realm_sync_client_config_set_metadata_encryption_key as Byte[]
+%apply uint8_t* {uint8_t [64]};
+
+// Enable passing void** as long[]
 %apply int64_t[] {void **};
-%apply void** {realm_object_t**, realm_list_t**, size_t*, realm_class_key_t*,
-               realm_property_key_t*, realm_user_t**, realm_set_t**, realm_results_t**};
+%typemap(in) void ** (jlong *jarr) %{
+    if(!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
+%}
+%typemap(out) void ** %{
+    $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, arg1->size);
+%}
+%typemap(argout) void ** %{
+    SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
+%}
+%typemap(freearg) void**;
+
+// Reuse above typemap for void** (from apply int64_t[]) {void **}) to pass various pointer types as
+// long[]
+%apply void** {realm_object_t**, realm_list_t**, realm_class_key_t*, size_t*,
+realm_property_key_t*, realm_user_t**, realm_set_t**, realm_results_t**};
+
+// Enable passing uint64_t [2] parameter for realm_decimal128 as Long[]
+%apply int64_t[] {uint64_t w[2]};
+%typemap(in) uint64_t w[2] (jlong *jarr) %{
+if(!SWIG_JavaArrayInLonglong(jenv, &jarr, (long long **)&$1, $input)) return $null;
+%}
+%typemap(argout) uint64_t w[2] %{
+SWIG_JavaArrayArgoutLonglong(jenv, jarr$argnum, (long long *)$1, $input);
+%}
+%typemap(out) uint64_t w[2] %{
+$result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
+%}
 
 %apply uint32_t[] {realm_class_key_t*};
 
