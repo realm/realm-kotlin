@@ -122,7 +122,7 @@ echo
 
 
 
-exit 0 
+
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
   exit 1
