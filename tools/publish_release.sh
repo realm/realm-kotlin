@@ -65,60 +65,60 @@ GRADLE_BUILD_PARAMS="${11}"
 # echo "GRADLE_PORTAL_SECRET hash=`echo $GRADLE_PORTAL_SECRET | md5`"
 # echo "GRADLE_BUILD_PARAMS hash=`echo $GRADLE_BUILD_PARAMS | md5`"
 
-echo "debugging MAVEN_CENTRAL_USER"
-for (( i=0; i<${#MAVEN_CENTRAL_USER}; i++ )); do
-  echo "${MAVEN_CENTRAL_USER:i:1}"
-done
-echo
+# echo "debugging MAVEN_CENTRAL_USER"
+# for (( i=0; i<${#MAVEN_CENTRAL_USER}; i++ )); do
+#   echo "${MAVEN_CENTRAL_USER:i:1}"
+# done
+# echo
 
-echo "debugging MAVEN_CENTRAL_KEY"
-for (( i=0; i<${#MAVEN_CENTRAL_KEY}; i++ )); do
-  echo "${MAVEN_CENTRAL_KEY:i:1}"
-done
-echo
+# echo "debugging MAVEN_CENTRAL_KEY"
+# for (( i=0; i<${#MAVEN_CENTRAL_KEY}; i++ )); do
+#   echo "${MAVEN_CENTRAL_KEY:i:1}"
+# done
+# echo
 
 
-echo "debugging REALM_S3_ACCESS_KEY"
-for (( i=0; i<${#REALM_S3_ACCESS_KEY}; i++ )); do
-  echo "${REALM_S3_ACCESS_KEY:i:1}"
-done
-echo
+# echo "debugging REALM_S3_ACCESS_KEY"
+# for (( i=0; i<${#REALM_S3_ACCESS_KEY}; i++ )); do
+#   echo "${REALM_S3_ACCESS_KEY:i:1}"
+# done
+# echo
 
-echo "debugging REALM_S3_SECRET_KEY"
-for (( i=0; i<${#REALM_S3_SECRET_KEY}; i++ )); do
-  echo "${REALM_S3_SECRET_KEY:i:1}"
-done
-echo
+# echo "debugging REALM_S3_SECRET_KEY"
+# for (( i=0; i<${#REALM_S3_SECRET_KEY}; i++ )); do
+#   echo "${REALM_S3_SECRET_KEY:i:1}"
+# done
+# echo
 
-echo "debugging DOCS_S3_ACCESS_KEY"
-for (( i=0; i<${#DOCS_S3_ACCESS_KEY}; i++ )); do
-  echo "${DOCS_S3_ACCESS_KEY:i:1}"
-done
-echo
+# echo "debugging DOCS_S3_ACCESS_KEY"
+# for (( i=0; i<${#DOCS_S3_ACCESS_KEY}; i++ )); do
+#   echo "${DOCS_S3_ACCESS_KEY:i:1}"
+# done
+# echo
 
-echo "debugging DOCS_S3_SECRET_KEY"
-for (( i=0; i<${#DOCS_S3_SECRET_KEY}; i++ )); do
-  echo "${DOCS_S3_SECRET_KEY:i:1}"
-done
-echo
+# echo "debugging DOCS_S3_SECRET_KEY"
+# for (( i=0; i<${#DOCS_S3_SECRET_KEY}; i++ )); do
+#   echo "${DOCS_S3_SECRET_KEY:i:1}"
+# done
+# echo
 
-echo "debugging GRADLE_PORTAL_KEY"
-for (( i=0; i<${#GRADLE_PORTAL_KEY}; i++ )); do
-  echo "${GRADLE_PORTAL_KEY:i:1}"
-done
-echo
+# echo "debugging GRADLE_PORTAL_KEY"
+# for (( i=0; i<${#GRADLE_PORTAL_KEY}; i++ )); do
+#   echo "${GRADLE_PORTAL_KEY:i:1}"
+# done
+# echo
 
-echo "debugging GRADLE_PORTAL_SECRET"
-for (( i=0; i<${#GRADLE_PORTAL_SECRET}; i++ )); do
-  echo "${GRADLE_PORTAL_SECRET:i:1}"
-done
-echo
+# echo "debugging GRADLE_PORTAL_SECRET"
+# for (( i=0; i<${#GRADLE_PORTAL_SECRET}; i++ )); do
+#   echo "${GRADLE_PORTAL_SECRET:i:1}"
+# done
+# echo
 
-echo "debugging GRADLE_BUILD_PARAMS"
-for (( i=0; i<${#GRADLE_BUILD_PARAMS}; i++ )); do
-  echo "${GRADLE_BUILD_PARAMS:i:1}"
-done
-echo
+# echo "debugging GRADLE_BUILD_PARAMS"
+# for (( i=0; i<${#GRADLE_BUILD_PARAMS}; i++ )); do
+#   echo "${GRADLE_BUILD_PARAMS:i:1}"
+# done
+# echo
 
 
 
