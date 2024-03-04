@@ -583,7 +583,7 @@ jobs:
 
       - name: Build packages
         working-directory: packages
-        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false --info
 
       - name: Store build cache
         uses: actions/cache@v3
