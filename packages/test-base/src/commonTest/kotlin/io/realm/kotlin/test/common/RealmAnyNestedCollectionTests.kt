@@ -612,8 +612,9 @@ class RealmAnyNestedCollectionTests {
         realm.query<JsonStyleRealmObject>("value[0][*] == {4, 5, 6}").find().single().run {
             assertEquals("EMBEDDED", id)
         }
-        realm.query<JsonStyleRealmObject>("value[*][*] == {4, 5, 6}").find().single().run {
-            assertEquals("EMBEDDED", id)
-        }
+        // FIXME Core issue https://github.com/realm/realm-core/issues/7393
+        // realm.query<JsonStyleRealmObject>("value[*][*] == {4, 5, 6}").find().single().run {
+        //    assertEquals("EMBEDDED", id)
+        // }
     }
 }
