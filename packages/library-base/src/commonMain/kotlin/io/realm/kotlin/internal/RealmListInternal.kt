@@ -99,7 +99,6 @@ internal class ManagedRealmList<E>(
         return operator.indexOf(element)
     }
 
-
     override fun add(index: Int, element: E) {
         operator.insert(index, element)
     }
