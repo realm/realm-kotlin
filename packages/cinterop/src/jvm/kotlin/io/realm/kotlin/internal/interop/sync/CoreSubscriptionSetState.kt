@@ -25,11 +25,12 @@ actual enum class CoreSubscriptionSetState(override val nativeValue: Int) : Nati
     RLM_SYNC_SUBSCRIPTION_BOOTSTRAPPING(realm_flx_sync_subscription_set_state_e.RLM_SYNC_SUBSCRIPTION_BOOTSTRAPPING),
     RLM_SYNC_SUBSCRIPTION_COMPLETE(realm_flx_sync_subscription_set_state_e.RLM_SYNC_SUBSCRIPTION_COMPLETE),
     RLM_SYNC_SUBSCRIPTION_ERROR(realm_flx_sync_subscription_set_state_e.RLM_SYNC_SUBSCRIPTION_ERROR),
-    RLM_SYNC_SUBSCRIPTION_SUPERSEDED(realm_flx_sync_subscription_set_state_e.RLM_SYNC_SUBSCRIPTION_SUPERSEDED);
+    RLM_SYNC_SUBSCRIPTION_SUPERSEDED(realm_flx_sync_subscription_set_state_e.RLM_SYNC_SUBSCRIPTION_SUPERSEDED),
+    RLM_SYNC_SUBSCRIPTION_AWAITING_MARK(realm_flx_sync_subscription_set_state_e.RLM_SYNC_SUBSCRIPTION_AWAITING_MARK);
 
     companion object {
         fun of(state: Int): CoreSubscriptionSetState {
-            for (value in values()) {
+            for (value in entries) {
                 if (value.nativeValue == state) {
                     return value
                 }
