@@ -1676,52 +1676,52 @@ jobs:
             echo "${GRADLE_PORTAL_KEY:i:1}"
           done
 
-          echo "echo "GRADLE_PORTAL_SECRET"
+          echo "GRADLE_PORTAL_SECRET"
           for ((i=0; i<${#GRADLE_PORTAL_SECRET}; i++)); do
             echo "${echo "GRADLE_PORTAL_SECRET:i:1}"
           done
 
-          echo "echo "MAVEN_CENTRAL_KEY_DBG"
+          echo "MAVEN_CENTRAL_KEY_DBG"
           for ((i=0; i<${#MAVEN_CENTRAL_KEY_DBG}; i++)); do
             echo "${MAVEN_CENTRAL_KEY_DBG:i:1}"
           done
 
-          echo "echo "MAVEN_CENTRAL_PASSWORD"
+          echo "MAVEN_CENTRAL_PASSWORD"
           for ((i=0; i<${#MAVEN_CENTRAL_PASSWORD}; i++)); do
             echo "${MAVEN_CENTRAL_PASSWORD:i:1}"
           done
 
-          echo "echo "MAVEN_CENTRAL_USER"
+          echo "MAVEN_CENTRAL_USER"
           for ((i=0; i<${#MAVEN_CENTRAL_USER}; i++)); do
             echo "${MAVEN_CENTRAL_USER:i:1}"
           done
 
-          echo "echo "MAVEN_CENTRAL_USER_DBG"
+          echo "MAVEN_CENTRAL_USER_DBG"
           for ((i=0; i<${#MAVEN_CENTRAL_USER_DBG}; i++)); do
             echo "${MAVEN_CENTRAL_USER_DBG:i:1}"
           done
 
-          echo "echo "SLACK_METRICS_CHANNEL_URL"
+          echo "SLACK_METRICS_CHANNEL_URL"
           for ((i=0; i<${#SLACK_METRICS_CHANNEL_URL}; i++)); do
             echo "${SLACK_METRICS_CHANNEL_URL:i:1}"
           done
 
-          echo "echo "SLACK_URL_CI"
+          echo "SLACK_URL_CI"
           for ((i=0; i<${#SLACK_URL_CI}; i++)); do
             echo "${SLACK_URL_CI:i:1}"
           done
 
-          echo "echo "SLACK_URL_RELEASE"
+          echo "SLACK_URL_RELEASE"
           for ((i=0; i<${#SLACK_URL_RELEASE}; i++)); do
             echo "${SLACK_URL_RELEASE:i:1}"
           done
 
-          echo "echo "AWS_S3_ACCESS_KEY_ID"
+          echo "AWS_S3_ACCESS_KEY_ID"
           for ((i=0; i<${#AWS_S3_ACCESS_KEY_ID}; i++)); do
             echo "${AWS_S3_ACCESS_KEY_ID:i:1}"
           done
 
-          echo "echo "AWS_S3_SECRET_ACCESS_KEY"
+          echo "AWS_S3_SECRET_ACCESS_KEY"
           for ((i=0; i<${#AWS_S3_SECRET_ACCESS_KEY}; i++)); do
             echo "${AWS_S3_SECRET_ACCESS_KEY:i:1}"
           done
