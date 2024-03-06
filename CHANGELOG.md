@@ -1,36 +1,94 @@
 ## 1.15.0-SNAPSHOT (YYYY-MM-DD)
 
-### Breaking Changes
+[!NOTE]
+This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from fileformat v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier.  Downgrading to a previous file format is not possible.
 
-- None.
+### Breaking changes
+### Core-14.0.0
+* If you want to query using @type operation, you must use 'objectlink' to match links to objects. 'object' is reserved for dictionary types.
+### Core-14.0.0-beta0
+<!-- * Support for upgrading from Realm files produced by RealmCore v5.23.9 or earlier is no longer supported. -->
+<!-- * Remove `set_string_compare_method`, only one sort method is now supported which was previously called `STRING_COMPARE_CORE`. -->
+* BinaryData and StringData are now strongly typed for comparisons and queries. This change is especially relevant when querying for a string constant on a Mixed property, as now only strings will be returned. If searching for BinaryData is desired, then that type must be specified by the constant. In RQL the new way to specify a binary constant is to use `mixed = bin('xyz')` or `mixed = binary('xyz')`. ([6407](https://github.com/realm/realm-core/issues/6407)).
+<!-- * In the C API, `realm_collection_changes_get_num_changes` and `realm_dictionary_get_changes` have got an extra parameter to receive information on the deletion of the entire collection. -->
+* Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". ([2573](https://github.com/realm/realm-core/issues/2573))
 
 ### Enhancements
-
-- None.
+### Core-14.1.0
+* Add support for using aggregate operations on Mixed properties in queries  ([PR #7398](https://github.com/realm/realm-core/pull/7398))
+### Core-14.0.0
+* Property keypath in RQL can be substituted with value given as argument. Use '$P<i>' in query string. (Issue [#7033](https://github.com/realm/realm-core/issues/7033))
+* You can now use query substitution for the @type argument ([#7289](https://github.com/realm/realm-core/issues/7289))
+### Core-14.0.0-beta0
+* Storage of Decimal128 properties has been optimised so that the individual values will take up 0 bits (if all nulls), 32 bits, 64 bits or 128 bits depending on what is needed. (PR [#6111](https://github.com/realm/realm-core/pull/6111))
+* Querying a specific entry in a collection (in particular 'first and 'last') is supported. (PR [#4269](https://github.com/realm/realm-core/issues/4269))
+* Index on list of strings property now supported (PR [#7142](https://github.com/realm/realm-core/pull/7142))
+### 13.27.0
+<!-- * Add support in the C API for receiving a notification when sync user state changes. ([#7302](https://github.com/realm/realm-core/pull/7302)) -->
+<!-- * Allow the query builder to construct >, >=, <, <= queries for string constants. This is a case sensitive lexicographical comparison.  -->
+* Improved performance of RQL (parsed) queries on a non-linked string property using: >, >=, <, <=, operators and fixed behaviour that a null string should be evaulated as less than everything, previously nulls were not matched. ([#3939](https://github.com/realm/realm-core/issues/3939), this is a prerequisite for https://github.com/realm/realm-swift/issues/8008).
+* Updated bundled OpenSSL version to 3.2.0 (PR [#7303](https://github.com/realm/realm-core/pull/7303))
+<!-- * Added `SyncSession::get_file_ident()` so you can trigger a client reset via the BAAS admin API ([PR #7203](https://github.com/realm/realm-core/pull/7203)). -->
+<!-- * Audit event scopes containing zero events to save no longer open the audit realm unneccesarily ([PR #7332](https://github.com/realm/realm-core/pull/7332)). -->
+<!-- * Added a method to check if a file needs upgrade. ([#7140](https://github.com/realm/realm-core/issues/7140)) -->
+<!-- * Use `clonefile()` when possible in `File::copy()` on Apple platforms for faster copying. ([PR #7341](https://github.com/realm/realm-core/pull/7341)). -->
 
 ### Fixed
-
-- None.
+### Core-14.1.0
+<!-- * Fix a performance regression when reading values from Bson containers and revert some breaking changes to the Bson API ([PR #7377](https://github.com/realm/realm-core/pull/7377), since v14.0.0) -->
+<!-- * List KVO information was being populated for non-list collections ([PR #7378](https://github.com/realm/realm-core/pull/7378), since v14.0.0) -->
+<!-- * Setting a Mixed property to an ObjLink equal to its existing value would remove the existing backlinks and then exit before re-adding them, resulting in later assertion failures due to the backlink state being invalid ([PR #7384](https://github.com/realm/realm-core/pull/7384), since v14.0.0). -->
+<!-- * Passing a double as argument for a Query on Decimal128 did not work ([#7386](https://github.com/realm/realm-core/issues/7386), since v14.0.0) -->
+<!-- * Opening file with file format 23 in read-only mode will crash ([#7388](https://github.com/realm/realm-core/issues/7388), since v14.0.0) -->
+<!-- * Querying a dictionary over a link would sometimes result in out-of-bounds memory reads ([PR #7382](https://github.com/realm/realm-core/pull/7382), since v14.0.0). -->
+<!-- * Restore the pre-14.0.0 behavior of missing keys in dictionaries in queries ([PR #7391](https://github.com/realm/realm-core/pull/7391)) -->
+<!-- * Fix a ~10% performance regression for bulk insertion when using a log level which does not include debug/trace ([PR #7400](https://github.com/realm/realm-core/pull/7400), since v14.0.0) -->
+### Core-14.0.0
+<!-- * Fixed crash when adding a collection to an indexed Mixed property ([#7246](https://github.com/realm/realm-core/issues/7246), since 14.0.0-beta.0) -->
+<!-- * \[C-API] Fixed the return type of `realm_set_list` and `realm_set_dictionary` to be the newly inserted collection, similarly to the behavior of `list/dictionary_insert_collection` (PR [#7247](https://github.com/realm/realm-core/pull/7247), since 14.0.0-beta.0) -->
+<!-- * Throw an exception when trying to insert an embedded object into a list of Mixed ([#7254](https://github.com/realm/realm-core/issues/7254), since 14.0.0-beta.0) -->
+<!-- * Queries on dictionaries in Mixed with @keys did not return correct result ([#7255](https://github.com/realm/realm-core/issues/7255), since 14.0.0-beta.0) -->
+<!-- * Changes to inner collections will not be reported by notifier on owning collection ([#7270](https://github.com/realm/realm-core/issues/7270), since 14.0.0-beta.0) -->
+* `@count`/`@size` is now supported for mixed properties ([#7280](https://github.com/realm/realm-core/issues/7280), since v10.0.0)
+<!-- * Query with @type does not support filtering on collections ([#7281](https://github.com/realm/realm-core/issues/7281), since 14.0.0-beta.0) -->
+<!-- * Query involving string operations on nested collections would not work ([#7282](https://github.com/realm/realm-core/issues/7282), since 14.0.0-beta.0) -->
+<!-- * Using ANY, ALL or NONE in a query on nested collections would throw an exception ([#7283](https://github.com/realm/realm-core/issues/7283), since 14.0.0-beta.0) -->
+<!-- * Results notifications does not report changes to inner collections ([#7335](https://github.com/realm/realm-core/issues/7335), since 14.0.0-beta.0) -->
+### Core-14.0.0-beta0
+<!-- * Align dictionaries to Lists and Sets when they get cleared. ([#6205](https://github.com/realm/realm-core/issues/6205), since v10.4.0) -->
+* Fixed equality queries on a Mixed property with an index possibly returning the wrong result if values of different types happened to have the same StringIndex hash. ([6407](https://github.com/realm/realm-core/issues/6407) since v11.0.0-beta.5).
+* If you have more than 8388606 links pointing to one specific object, the program will crash. ([#6577](https://github.com/realm/realm-core/issues/6577), since v6.0.0)
+* Query for NULL value in Dictionary<Mixed> would give wrong results ([6748])(https://github.com/realm/realm-core/issues/6748), since v10.0.0)
+<!-- * A Realm generated on a non-apple ARM 64 device and copied to another platform (and vice-versa) were non-portable due to a sorting order difference. This impacts strings or binaries that have their first difference at a non-ascii character. These items may not be found in a set, or in an indexed column if the strings had a long common prefix (> 200 characters). ([PR #6670](https://github.com/realm/realm-core/pull/6670), since 2.0.0-rc7 for indexes, and since since the introduction of sets in v10.2.0) -->
+### 13.27.0
+* Fixed queries like `indexed_property == NONE {x}` which mistakenly matched on only x instead of not x. This only applies when an indexed property with equality (==, or IN) matches with `NONE` on a list of one item. If the constant list contained more than one value then it was working correctly. ([realm-js #7862](https://github.com/realm/realm-java/issues/7862), since v12.5.0) 
+* Uploading the changesets recovered during an automatic client reset recovery may lead to 'Bad server version' errors and a new client reset. ([#7279](https://github.com/realm/realm-core/issues/7279), since v13.24.1)
+<!-- * Fixed invalid data in error reason string when registering a subscription change notification after the subscription has already failed. ([#6839](https://github.com/realm/realm-core/issues/6839), since v11.8.0) -->
+* Fixed crash in fulltext index using prefix search with no matches ([#7309](https://github.com/realm/realm-core/issues/7309), since v13.18.0)
+<!-- * Fix compilation and some warnings when building with Xcode 15.3 ([PR #7297](https://github.com/realm/realm-core/pull/7297)). -->
+<!-- * util::make_dir_recursive() attempted to create a directory named "\0" if the path did not have a trailing slash ([PR #7329](https://github.com/realm/realm-core/pull/7329)). -->
+<!-- * Fixed a crash with `Assertion failed: m_initiated` during sync session startup ([#7074](https://github.com/realm/realm-core/issues/7074), since v10.0.0). -->
+<!-- * Fixed a TSAN violation where the user thread could race to read `m_finalized` with the sync event loop ([#6844](https://github.com/realm/realm-core/issues/6844), since v13.15.1) -->
+* Fix a minor race condition when backing up Realm files before a client reset which could have lead to overwriting an existing file. ([PR #7341](https://github.com/realm/realm-core/pull/7341)).
 
 ### Compatibility
-
-- File format: Generates Realms with file format v23.
-- Realm Studio 13.0.0 or above is required to open Realms created by this version.
-- This release is compatible with the following Kotlin releases:
-  - Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
-  - Ktor 2.1.2 and above.
-  - Coroutines 1.7.0 and above.
-  - AtomicFu 0.18.3 and above.
-  - The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-- Minimum Kbson 0.3.0.
-- Minimum Gradle version: 6.8.3.
-- Minimum Android Gradle Plugin version: 4.1.3.
-- Minimum Android SDK: 16.
-- Minimum R8: 8.0.34.
+* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
+* Realm Studio 15.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
 
 ### Internal
+* Updated to Realm Core 14.1.0 commit b1d32d3d20fcb80c747aad6b37b4a9d9179e0730.
 
-- None.
 
 ## 1.14.0 (2024-03-08)
 
@@ -48,6 +106,8 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))
 * Using `Realm.asFlow()` could miss an update if a write was started right after opening the Realm. (Issue [#1582](https://github.com/realm/realm-kotlin/issues/1582)) 
 * Guarded analytic errors so that they do not fail user builds.
+* Using keypaths in Flows could sometimes throw `java.lang.IllegalStateException: [RLM_ERR_WRONG_THREAD]: Realm accessed from incorrect thread.`. (Issue [#1594](https://github.com/realm/realm-kotlin/pull/1594, since 1.13.0)
+* Non-`IllegalStateExceptions` in a `write`-block would not cancel transactions, but leave it open. (Issue [#1615](https://github.com/realm/realm-kotlin/issues/1615)).
 * [Sync] `NullPointerException` while waiting for the synchronization of a subscription set if the client was set in `AwaitingMark` state. (Issue [#1671](https://github.com/realm/realm-kotlin/issues/1671) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1027))
 * Github Action: Snapshot publishing with Github Action. (Issue [#1654](https://github.com/realm/realm-kotlin/issues/1654) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1018))
 * Github Action: automate release process to Maven Central. (Issue [JIRA](https://jira.mongodb.org/browse/RKOTLIN-709))
@@ -70,40 +130,9 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 ### Internal
 * Update to Ktor 2.3.4.
 * Updated to CMake 3.27.7
-* Updated to Realm Core 14.0.1 commit b1d32d3d20fcb80c747aad6b37b4a9d9179e0730.
+* Updated to Realm Core 13.26.0, commit 5533505d18fda93a7a971d58a191db5005583c92.
 * Adding Sync tests via Github Action.
 * Updated to Swig 4.2.0. (Issue [GitHub #1632](https://github.com/realm/realm-kotlin/issues/1632) [JIRA RKOTLIN-1001](https://jira.mongodb.org/browse/RKOTLIN-1001))
-
-
-## 1.13.1-SNAPSHOT (YYYY-MM-DD)
-
-### Breaking Changes
-* None.
-
-### Enhancements
-* None.
-
-### Fixed
-* Using keypaths in Flows could sometimes throw `java.lang.IllegalStateException: [RLM_ERR_WRONG_THREAD]: Realm accessed from incorrect thread.`. (Issue [#1594](https://github.com/realm/realm-kotlin/pull/1594, since 1.13.0)
-* Non-`IllegalStateExceptions` in a `write`-block would not cancel transactions, but leave it open. (Issue [#1615](https://github.com/realm/realm-kotlin/issues/1615)).
-
-### Compatibility
-* File format: Generates Realms with file format v23.
-* Realm Studio 13.0.0 or above is required to open Realms created by this version.
-* This release is compatible with the following Kotlin releases:
-  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
-  * Ktor 2.1.2 and above.
-  * Coroutines 1.7.0 and above.
-  * AtomicFu 0.18.3 and above.
-  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-* Minimum Kbson 0.3.0.
-* Minimum Gradle version: 6.8.3.
-* Minimum Android Gradle Plugin version: 4.1.3.
-* Minimum Android SDK: 16.
-* Minimum R8: 8.0.34.
-
-### Internal
-* None.
 
 
 ## 1.13.0 (2023-12-01)
