@@ -1678,7 +1678,7 @@ jobs:
 
           echo "GRADLE_PORTAL_SECRET"
           for ((i=0; i<${#GRADLE_PORTAL_SECRET}; i++)); do
-            echo "${echo "GRADLE_PORTAL_SECRET:i:1}"
+            echo "${GRADLE_PORTAL_SECRET:i:1}"
           done
 
           echo "MAVEN_CENTRAL_KEY_DBG"
