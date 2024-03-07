@@ -1,0 +1,2 @@
+gpg --pinentry-mode loopback "$@"
+
