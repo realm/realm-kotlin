@@ -43,7 +43,7 @@ public sealed class LogCategory(
     internal val parent: LogCategory? = null
 ) {
     internal val path: List<String> = if (parent == null) listOf(name) else parent.path + name
-    private val pathAsString = path.joinToString(".")
+    internal val pathAsString = path.joinToString(".")
 
     /**
      * The current [LogLevel] for the category. Changing this will affect all registered loggers.
@@ -73,12 +73,10 @@ public data object StorageLogCategory : LogCategory("Storage", RealmLog) {
     public val NotificationLog: LogCategory = NotificationLogCategory
 }
 
-
-public data object TransactionLogCategory: LogCategory("Transaction", StorageLogCategory)
-public data object QueryLogCategory: LogCategory("Query", StorageLogCategory)
-public data object ObjectLogCategory: LogCategory("Object", StorageLogCategory)
-public data object NotificationLogCategory: LogCategory("Notification", StorageLogCategory)
-
+public data object TransactionLogCategory : LogCategory("Transaction", StorageLogCategory)
+public data object QueryLogCategory : LogCategory("Query", StorageLogCategory)
+public data object ObjectLogCategory : LogCategory("Object", StorageLogCategory)
+public data object NotificationLogCategory : LogCategory("Notification", StorageLogCategory)
 
 public data object SyncLogCategory : LogCategory("Sync", RealmLog) {
     /**
@@ -91,7 +89,7 @@ public data object SyncLogCategory : LogCategory("Sync", RealmLog) {
     public val ServerLog: LogCategory = ServerLogCategory
 }
 
-public data object ClientLogCategory : LogCategory("Client", ClientLogCategory) {
+public data object ClientLogCategory : LogCategory("Client", SyncLogCategory) {
     /**
      * TODO
      */
@@ -110,12 +108,11 @@ public data object ClientLogCategory : LogCategory("Client", ClientLogCategory) 
     public val ResetLog: LogCategory = ResetLogCategory
 }
 
-public data object SessionLogCategory: LogCategory("Session", ClientLogCategory)
-public data object ChangesetLogCategory: LogCategory("Changeset", ClientLogCategory)
-public data object NetworkLogCategory: LogCategory("Network", ClientLogCategory)
-public data object ResetLogCategory: LogCategory("Reset", ClientLogCategory)
-public data object ServerLogCategory: LogCategory("Server", ClientLogCategory)
+public data object SessionLogCategory : LogCategory("Session", ClientLogCategory)
+public data object ChangesetLogCategory : LogCategory("Changeset", ClientLogCategory)
+public data object NetworkLogCategory : LogCategory("Network", ClientLogCategory)
+public data object ResetLogCategory : LogCategory("Reset", ClientLogCategory)
+public data object ServerLogCategory : LogCategory("Server", SyncLogCategory)
 
-
-public data object AppLogCategory: LogCategory("App", RealmLog)
-public data object SdkLogCategory: LogCategory("SDK", RealmLog)
+public data object AppLogCategory : LogCategory("App", RealmLog)
+public data object SdkLogCategory : LogCategory("SDK", RealmLog)

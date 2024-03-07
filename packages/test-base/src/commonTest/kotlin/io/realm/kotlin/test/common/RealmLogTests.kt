@@ -16,6 +16,7 @@
 @file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.common
 
+import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -25,6 +26,7 @@ import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -42,6 +44,30 @@ class RealmLogTests {
 
     private lateinit var existingLogLevel: LogLevel
     private lateinit var log: RealmLog
+
+    private val logCategories = listOf(
+        RealmLog,
+
+        RealmLog.StorageLog,
+        RealmLog.SyncLog,
+
+        RealmLog.SyncLog.ClientLog,
+
+        RealmLog.SyncLog.ClientLog.SessionLog,
+        RealmLog.SyncLog.ClientLog.ChangesetLog,
+        RealmLog.SyncLog.ClientLog.NetworkLog,
+        RealmLog.SyncLog.ClientLog.ResetLog,
+
+        RealmLog.SyncLog.ServerLog,
+
+        RealmLog.AppLog,
+        RealmLog.SdkLog,
+
+        RealmLog.StorageLog.TransactionLog,
+        RealmLog.StorageLog.QueryLog,
+        RealmLog.StorageLog.ObjectLog,
+        RealmLog.StorageLog.NotificationLog,
+    )
 
     @BeforeTest
     fun setUp() {
@@ -330,7 +356,28 @@ class RealmLogTests {
 
     @Test
     fun setCategoryLevels() {
-        RealmLog.StorageLog.level = LogLevel.WARN
-        RealmLog.SyncLog.ClientLog.level = LogLevel.INFO
+        logCategories.forEach { logCategory ->
+            val previousLevel: LogLevel = logCategory.level
+            logCategory.level = LogLevel.TRACE
+            assertEquals(LogLevel.TRACE, logCategory.level)
+
+            // Restore the level to whatever it was set before
+            logCategory.level = previousLevel
+        }
+    }
+
+    @Test
+    fun categoriesWatchdog() {
+        val coreLogCategoryNames = RealmInterop.realm_get_category_names()
+
+        val logCategoriesPaths = logCategories.map { it.pathAsString }
+
+        logCategoriesPaths.forEach { path ->
+            assertContains(coreLogCategoryNames, path)
+        }
+
+        coreLogCategoryNames.forEach { path ->
+            assertContains(logCategoriesPaths, path)
+        }
     }
 }

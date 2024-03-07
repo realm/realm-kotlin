@@ -16,7 +16,6 @@
 package io.realm.kotlin.log
 
 import io.realm.kotlin.Realm
-import io.realm.kotlin.internal.interop.CoreLogCategory
 import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.internal.interop.LogCallback
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -24,7 +23,6 @@ import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.log.RealmLog.add
 import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
-
 
 /**
  * Global logger class used by all Realm components.

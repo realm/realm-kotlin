@@ -15,6 +15,7 @@
  */
 // TODO https://github.com/realm/realm-kotlin/issues/889
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
+@file:OptIn(ExperimentalForeignApi::class)
 
 package io.realm.kotlin.internal.interop
 
@@ -54,6 +55,7 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
@@ -2438,7 +2440,21 @@ actual object RealmInterop {
         realm_wrapper.realm_set_log_level_category(category, level.priority.toUInt())
     }
 
-    actual fun realm_get_log_level_category(category: String): CoreLogLevel = TODO()
+    actual fun realm_get_log_level_category(category: String): CoreLogLevel =
+        CoreLogLevel.valueFromPriority(realm_wrapper.realm_get_log_level_category(category).toShort())
+
+// public external expect fun realm_get_category_names(num_values: platform.posix.size_t /* = kotlin.ULong */, out_values: kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CPointerVar<kotlinx.cinterop.ByteVar /* = kotlinx.cinterop.ByteVarOf<kotlin.Byte> */> /* = kotlinx.cinterop.CPointerVarOf<kotlinx.cinterop.CPointer<kotlinx.cinterop.ByteVar /* = kotlinx.cinterop.ByteVarOf<kotlin.Byte> */>> */>?): platform.posix.size_t /* = kotlin.ULong */ { /* compiled code */ }
+    actual fun realm_get_category_names(): List<String> {
+        memScoped {
+            val namesCount = realm_wrapper.realm_get_category_names(0u, null)
+            val namesBuffer = allocArray<CPointerVar<ByteVar>>(namesCount.toInt())
+            realm_wrapper.realm_get_category_names(namesCount, namesBuffer)
+
+            return List(namesCount.toInt()) {
+                namesBuffer[it].safeKString()
+            }
+        }
+    }
 
     actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,

@@ -587,6 +587,8 @@ expect object RealmInterop {
 
     fun realm_get_log_level_category(category: String): CoreLogLevel
 
+    fun realm_get_category_names(): List<String>
+
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         metadataMode: MetadataMode
