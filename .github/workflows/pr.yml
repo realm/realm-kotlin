@@ -15,7 +15,6 @@ concurrency:
 
 env:
   REALM_DISABLE_ANALYTICS: true
-  REALM_PRINT_ANALYTICS: true
   CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
   CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
   # Workflow environment variables are not available in Job if statements: https://github.com/actions/runner/issues/1661
@@ -1645,7 +1644,7 @@ jobs:
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
 
-  # This job sets an output `publishBuild` to `true` if this is a release build
+  # This job sets an output `is_publish_build` to `true` if this is a release build
   check-release-build:
     runs-on: ubuntu-latest
     needs: [check-cache]
