@@ -1654,7 +1654,7 @@ jobs:
 
       - name: Get Git tag
         run: |
-          gitTag=$(git describe --tags --exact-match HEAD)
+          gitTag=$(git describe --tags --exact-match HEAD) || echo "NONE"
           echo "Git branch/tag: ${GITHUB_REF}/${gitTag:-'none'}"
 
       - name: Check if release build
