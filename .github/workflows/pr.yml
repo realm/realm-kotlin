@@ -1699,7 +1699,7 @@ jobs:
             ]
     if: |
       always() && 
-      needs.check-release-build.outputs.is_publish_build
+      (needs.check-release-build.outputs.is_publish_build == 'true')
 
     secrets: inherit
     with:
