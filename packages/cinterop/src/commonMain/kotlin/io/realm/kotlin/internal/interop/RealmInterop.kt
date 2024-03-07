@@ -583,6 +583,10 @@ expect object RealmInterop {
 
     fun realm_set_log_level(level: CoreLogLevel)
 
+    fun realm_set_log_level_category(category: String, level: CoreLogLevel)
+
+    fun realm_get_log_level_category(category: String): CoreLogLevel
+
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,
         metadataMode: MetadataMode

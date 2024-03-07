@@ -327,4 +327,10 @@ class RealmLogTests {
     fun addDefaultSystemLogger_failure() {
         assertFalse(RealmLog.addDefaultSystemLogger())
     }
+
+    @Test
+    fun setCategoryLevels() {
+        RealmLog.StorageLog.level = LogLevel.WARN
+        RealmLog.SyncLog.ClientLog.level = LogLevel.INFO
+    }
 }

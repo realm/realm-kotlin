@@ -1295,9 +1295,15 @@ actual object RealmInterop {
         realmc.realm_set_log_level(level.priority)
     }
 
+    actual fun realm_set_log_level_category(category: String, level: CoreLogLevel) {
+        realmc.realm_set_log_level_category(category, level.priority)
+    }
+
+    actual fun realm_get_log_level_category(category: String): CoreLogLevel = TODO()
+
     actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,
-        metadataMode: MetadataMode
+        metadataMode: MetadataMode,
     ) {
         realmc.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),
