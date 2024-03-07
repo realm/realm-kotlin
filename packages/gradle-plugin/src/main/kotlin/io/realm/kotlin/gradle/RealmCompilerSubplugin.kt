@@ -217,24 +217,43 @@ class RealmCompilerSubplugin : KotlinCompilerPluginSupportPlugin, AnalyticsError
             options.add(SubpluginOption(key = featureListPathKey, featureListPath))
 
             // Gather target specific information
-            val targetInfo: TargetInfo? = gatherTargetInfo(kotlinCompilation)
+            val targetInfo: TargetInfo? = muteErrors {
+                gatherTargetInfo(kotlinCompilation)
+            }
+
             // If we have something to submit register it for submission after the compilation has
             // gathered the feature list information
             targetInfo?.let {
                 kotlinCompilation.compileTaskProvider.get().doLast {
-                    val analyticsService = provider.get()
-                    val json = analyticsService.toJson(targetInfo)
-                    if (printAnalytics) {
-                        analyticsService.print(json)
-                    }
-                    if (submitAnalytics) {
-                        analyticsService.submit(json)
+                    muteErrors {
+                        val analyticsService = provider.get()
+                        val json = analyticsService.toJson(targetInfo)
+                        if (printAnalytics) {
+                            analyticsService.print(json)
+                        }
+                        if (submitAnalytics) {
+                            analyticsService.submit(json)
+                        }
                     }
                 }
             }
         }
         return project.provider {
             options
+        }
+    }
+
+    /**
+     * Wrapper that ignores error if `failOnAnalyticsError=true`.
+     */
+    private fun <R> muteErrors(block: () -> R): R? {
+        return try {
+            block()
+        } catch (e: Throwable) {
+            when {
+                failOnAnalyticsError -> { throw e }
+                else -> { null }
+            }
         }
     }
 }
@@ -336,15 +355,19 @@ fun nativeTarget(target: KonanTarget) = when (target.family) {
 }
 
 // Helper method to ensure that we align architecture strings for Kotlin native builds
-fun nativeArch(target: KonanTarget) = when (target.architecture) {
-    Architecture.X64 -> io.realm.kotlin.gradle.analytics.Architecture.X64.serializedName
-    Architecture.X86 -> io.realm.kotlin.gradle.analytics.Architecture.X86.serializedName
-    Architecture.ARM64 -> io.realm.kotlin.gradle.analytics.Architecture.ARM64.serializedName
-    Architecture.ARM32 -> io.realm.kotlin.gradle.analytics.Architecture.ARM.serializedName
-    Architecture.MIPS32 -> "Mips"
-    Architecture.MIPSEL32 -> "MipsEL32"
-    Architecture.WASM32 -> "Wasm"
-    else -> unknown(target.architecture.name)
+fun nativeArch(target: KonanTarget): String = try {
+    when (target.architecture) {
+        Architecture.X64 -> io.realm.kotlin.gradle.analytics.Architecture.X64.serializedName
+        Architecture.X86 -> io.realm.kotlin.gradle.analytics.Architecture.X86.serializedName
+        Architecture.ARM64 -> io.realm.kotlin.gradle.analytics.Architecture.ARM64.serializedName
+        Architecture.ARM32 -> io.realm.kotlin.gradle.analytics.Architecture.ARM.serializedName
+        Architecture.MIPS32 -> "Mips"
+        Architecture.MIPSEL32 -> "MipsEL32"
+        Architecture.WASM32 -> "Wasm"
+        else -> unknown(target.architecture.name)
+    }
+} catch (e: Throwable) {
+    unknown(target.architecture.name)
 }
 
 // Helper method to ensure that we align architecture strings for Android platforms
