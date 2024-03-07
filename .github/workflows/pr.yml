@@ -1678,8 +1678,6 @@ jobs:
         run: |
           echo "Is release build: ${{ steps.outputs.is_publish_build }}"
 
-
-
   deploy-release:
     uses: ./.github/workflows/include-deploy-release.yml
     needs: [ 
@@ -1706,4 +1704,5 @@ jobs:
 
     secrets: inherit
     with:
-      version-label: ${{ needs.check-cache.outputs.version-label }}      
+      version-label: ${{ needs.check-cache.outputs.version-label }}
+      packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}
