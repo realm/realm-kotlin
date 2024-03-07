@@ -1687,18 +1687,23 @@ jobs:
     needs: [ 
               check-cache,
               check-release-build, 
-              # static-analysis, 
-              # integration-tests, 
-              # test-jvm-packages, 
-              # test-macos-packages, 
-              # test-ios-packages, 
-              # test-android-packages-emulator, 
+              static-analysis, 
+              integration-tests, 
+              test-jvm-packages, 
+              test-macos-packages, 
+              test-ios-packages, 
+              test-android-packages-emulator, 
               # test-android-packages-device-farm,
-              # test-android-packages-device-farm-sync,
-              # package-all-artifacts
+              test-android-packages-device-farm-sync,
+              package-all-artifacts
             ]
     if: |
       always() && 
+      !cancelled() && 
+      !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases') && 
       (needs.check-release-build.outputs.is_publish_build == 'true')
 
     secrets: inherit
