@@ -1649,6 +1649,9 @@ jobs:
   check-release-build:
     runs-on: ubuntu-latest
     needs: [check-cache]
+    outputs:  
+      is_publish_build: ${{ steps.check_release.outputs.is_publish_build }}
+
     steps:
       - uses: actions/checkout@v3
 
@@ -1677,7 +1680,7 @@ jobs:
 
       - name: Print is release build
         run: |
-          echo "Is release build: ${{ steps.outputs.is_publish_build }}"
+          echo "Is release build: ${{ steps.check_release.outputs.is_publish_build }}"
 
   deploy-release:
     uses: ./.github/workflows/include-deploy-release.yml
@@ -1696,11 +1699,6 @@ jobs:
             ]
     if: |
       always() && 
-      !cancelled() && 
-      !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
-      !contains(needs.*.result, 'failure') && 
-      !contains(needs.*.result, 'cancelled') &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases') && 
       needs.check-release-build.outputs.is_publish_build
 
     secrets: inherit
