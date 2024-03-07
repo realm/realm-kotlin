@@ -49,80 +49,6 @@ GRADLE_PORTAL_KEY="$9"
 GRADLE_PORTAL_SECRET="${10}"
 GRADLE_BUILD_PARAMS="${11}"
 
-# echo "MAVEN_CENTRAL_USER hash=`echo $MAVEN_CENTRAL_USER | md5`"
-# echo "MAVEN_CENTRAL_KEY hash=`echo $MAVEN_CENTRAL_KEY | md5`"
-
-# echo "REALM_S3_ACCESS_KEY hash=`echo $REALM_S3_ACCESS_KEY | md5`"
-# echo "REALM_S3_SECRET_KEY hash=`echo $REALM_S3_SECRET_KEY | md5`"
-
-# echo "DOCS_S3_ACCESS_KEY hash=`echo $DOCS_S3_ACCESS_KEY | md5`"
-# echo "DOCS_S3_SECRET_KEY hash=`echo $DOCS_S3_SECRET_KEY | md5`"
-
-# echo "SLACK_WEBHOOK_RELEASES_URL hash=`echo $SLACK_WEBHOOK_RELEASES_URL | md5`"
-# echo "SLACK_WEBHOOK_JAVA_CI_URL hash=`echo $SLACK_WEBHOOK_JAVA_CI_URL | md5`"
-
-# echo "GRADLE_PORTAL_KEY hash=`echo $GRADLE_PORTAL_KEY | md5`"
-# echo "GRADLE_PORTAL_SECRET hash=`echo $GRADLE_PORTAL_SECRET | md5`"
-# echo "GRADLE_BUILD_PARAMS hash=`echo $GRADLE_BUILD_PARAMS | md5`"
-
-# echo "debugging MAVEN_CENTRAL_USER"
-# for (( i=0; i<${#MAVEN_CENTRAL_USER}; i++ )); do
-#   echo "${MAVEN_CENTRAL_USER:i:1}"
-# done
-# echo
-
-# echo "debugging MAVEN_CENTRAL_KEY"
-# for (( i=0; i<${#MAVEN_CENTRAL_KEY}; i++ )); do
-#   echo "${MAVEN_CENTRAL_KEY:i:1}"
-# done
-# echo
-
-
-# echo "debugging REALM_S3_ACCESS_KEY"
-# for (( i=0; i<${#REALM_S3_ACCESS_KEY}; i++ )); do
-#   echo "${REALM_S3_ACCESS_KEY:i:1}"
-# done
-# echo
-
-# echo "debugging REALM_S3_SECRET_KEY"
-# for (( i=0; i<${#REALM_S3_SECRET_KEY}; i++ )); do
-#   echo "${REALM_S3_SECRET_KEY:i:1}"
-# done
-# echo
-
-# echo "debugging DOCS_S3_ACCESS_KEY"
-# for (( i=0; i<${#DOCS_S3_ACCESS_KEY}; i++ )); do
-#   echo "${DOCS_S3_ACCESS_KEY:i:1}"
-# done
-# echo
-
-# echo "debugging DOCS_S3_SECRET_KEY"
-# for (( i=0; i<${#DOCS_S3_SECRET_KEY}; i++ )); do
-#   echo "${DOCS_S3_SECRET_KEY:i:1}"
-# done
-# echo
-
-# echo "debugging GRADLE_PORTAL_KEY"
-# for (( i=0; i<${#GRADLE_PORTAL_KEY}; i++ )); do
-#   echo "${GRADLE_PORTAL_KEY:i:1}"
-# done
-# echo
-
-# echo "debugging GRADLE_PORTAL_SECRET"
-# for (( i=0; i<${#GRADLE_PORTAL_SECRET}; i++ )); do
-#   echo "${GRADLE_PORTAL_SECRET:i:1}"
-# done
-# echo
-
-# echo "debugging GRADLE_BUILD_PARAMS"
-# for (( i=0; i<${#GRADLE_BUILD_PARAMS}; i++ )); do
-#   echo "${GRADLE_BUILD_PARAMS:i:1}"
-# done
-# echo
-
-
-
-
 abort_release() {
   # Reporting failures to #realm-java-team-ci is done from Jenkins
   exit 1
@@ -189,10 +115,9 @@ create_javadoc() {
 publish_artifacts() {
   echo "Releasing on MavenCentral"
   cd $REALM_KOTLIN_PATH/packages
-  # eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
-  eval "./gradlew publishToSonatype $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
-  # echo "Releasing on Gradle Plugin Portal"
-  # eval "./gradlew :gradle-plugin:publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
+  eval "./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository $GRADLE_BUILD_PARAMS -PossrhUsername=$MAVEN_CENTRAL_USER -PossrhPassword=$MAVEN_CENTRAL_KEY"
+  echo "Releasing on Gradle Plugin Portal"
+  eval "./gradlew :gradle-plugin:publishPlugin $GRADLE_BUILD_PARAMS -PgeneratePluginArtifactMarker=true -Pgradle.publish.key=$GRADLE_PORTAL_KEY -Pgradle.publish.secret=$GRADLE_PORTAL_SECRET"
   cd $HERE
 }
 
@@ -241,14 +166,14 @@ notify_slack_channels() {
 # Run Release steps
 ######################################\
 
-# check_env
-# verify_release_preconditions
-# verify_changelog
+check_env
+verify_release_preconditions
+verify_changelog
 
 if [ "$1" != "verify" ]; then
-  # create_javadoc
+  create_javadoc
   publish_artifacts
-  # upload_debug_symbols
-  # upload_dokka
-  # notify_slack_channels
+  upload_debug_symbols
+  upload_dokka
+  notify_slack_channels
 fi
