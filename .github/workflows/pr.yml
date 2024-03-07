@@ -1663,16 +1663,17 @@ jobs:
           if [[ -z "$gitTag" ]]; then
             gitSha=$(git rev-parse HEAD | cut -c1-8)
             echo "Building commit: ${{ needs.check-cache.outputs.version-label }} - ${gitSha}"
-            publishBuild=false
+            echo "is_publish_build=false" >> $GITHUB_OUTPUT
           else
             if [[ "$gitTag" != "v${{ needs.check-cache.outputs.version-label }}" ]]; then
               echo "Git tag '${gitTag}' does not match v${{ needs.check-cache.outputs.version-label }}"
+              echo "is_publish_build=false" >> $GITHUB_OUTPUT
             else
               echo "Building release: '${gitTag}'"
-              publishBuild=true
+              echo "is_publish_build=true" >> $GITHUB_OUTPUT
             fi
           fi
-          echo "is_publish_build=$publishBuild" >> $GITHUB_OUTPUT
+          
 
       - name: Print is release build
         run: |
@@ -1700,7 +1701,7 @@ jobs:
       !contains(needs.*.result, 'failure') && 
       !contains(needs.*.result, 'cancelled') &&
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases') && 
-      needs.outputs.is_publish_build
+      needs.check-release-build.outputs.is_publish_build
 
     secrets: inherit
     with:
