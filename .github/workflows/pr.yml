@@ -1657,6 +1657,7 @@ jobs:
 
       - name: Get Git tag
         run: |
+          git fetch --tags
           gitTag=$(git describe --tags --exact-match HEAD) || echo "NONE"
           echo "Git branch/tag: ${GITHUB_REF}/${gitTag:-'none'}"
 
