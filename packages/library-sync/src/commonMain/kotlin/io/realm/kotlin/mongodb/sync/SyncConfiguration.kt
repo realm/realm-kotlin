@@ -599,7 +599,6 @@ public interface SyncConfiguration : Configuration {
                 )
             }.let { auxSyncConfig ->
                 RealmInterop.realm_app_sync_client_get_default_file_path_for_realm(
-                    (user as UserImpl).app.nativePointer,
                     auxSyncConfig,
                     name
                 )

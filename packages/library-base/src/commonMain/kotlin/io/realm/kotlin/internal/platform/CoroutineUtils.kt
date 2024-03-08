@@ -15,7 +15,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 public expect fun singleThreadDispatcher(id: String): CloseableCoroutineDispatcher
 
 /**
- * Returns a default multithread dispatcher used by Sync.
+ * Returns a default multithreaded dispatcher used by Sync.
  * TODO https://github.com/realm/realm-kotlin/issues/501 compute size based on number of cores
  */
 public expect fun multiThreadDispatcher(size: Int = 3): CloseableCoroutineDispatcher

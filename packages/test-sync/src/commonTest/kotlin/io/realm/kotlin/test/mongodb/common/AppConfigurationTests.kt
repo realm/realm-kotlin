@@ -18,6 +18,7 @@
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.internal.platform.appFilesDirectory
+import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
@@ -33,9 +34,10 @@ import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
-import kotlinx.coroutines.channels.Channel
+import io.realm.kotlin.test.util.trySendOrFail
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -150,9 +152,13 @@ class AppConfigurationTests {
 
     @Test
     fun syncRootDirectory_writeProtectedDir() {
-        val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
-        val dir = PlatformUtils.createTempDir(readOnly = true)
-        assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
+        // Creating a read-only directory throws UnsupportedOperationException on Windows, so ignore
+        // for now.
+        if (!isWindows()) {
+            val builder: AppConfiguration.Builder = AppConfiguration.Builder(APP_ID)
+            val dir = PlatformUtils.createTempDir(readOnly = true)
+            assertFailsWith<IllegalArgumentException> { builder.syncRootDirectory(dir) }
+        }
     }
 
     // When creating the full path for a synced Realm, we will always append `/mongodb-realm` to
@@ -393,7 +399,7 @@ class AppConfigurationTests {
     private suspend fun doCustomHeaderTest(app: App) {
         val originalLevel = RealmLog.level
         RealmLog.level = LogLevel.ALL
-        val channel = Channel<Boolean>(1)
+        val channel = TestChannel<Boolean>()
 
         val logger = object : RealmLogger {
             override val level: LogLevel = LogLevel.DEBUG
@@ -409,7 +415,7 @@ class AppConfigurationTests {
                         "$AUTH_HEADER_NAME: "
                     )
                 ) {
-                    channel.trySend(true)
+                    channel.trySendOrFail(true)
                 }
             }
         }

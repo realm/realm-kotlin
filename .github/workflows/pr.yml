@@ -1,0 +1,1712 @@
+name: PR Build
+on:
+  workflow_dispatch:  # Add this line to enable manual triggering
+  pull_request:
+    paths-ignore:
+    - '**.md'
+  push:
+    branches:
+      - main
+      - releases
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REALM_DISABLE_ANALYTICS: true
+  REALM_PRINT_ANALYTICS: true
+  CMAKE_C_COMPILER: /usr/local/bin/ccache-clang
+  CMAKE_CXX_COMPILER: /usr/local/bin/ccache-clang++
+  # Workflow environment variables are not available in Job if statements: https://github.com/actions/runner/issues/1661
+  # For now move this check to the `deploy-snapshot` job and figure out if there is a better way to do this.
+  # IS_RELEASE_BRANCH: "${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' }}" 
+
+jobs:
+  static-analysis:
+    uses: ./.github/workflows/include-static-analysis.yml
+   
+  check-cache:
+    uses: ./.github/workflows/include-check-cache.yml
+
+  # We build the same JNI SWIG stub once and re-use it across platforms to ensure any problems
+  # with SWIG if we compile on each seperate platform. 
+  build-jni-swig-stub:
+    runs-on: ubuntu-latest
+    needs: check-cache
+    if: always() && !cancelled() && needs.check-cache.outputs.jni-swig-stub-cache-hit != 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Load build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/jni-swig-stub/build/generated/sources/jni
+          key: jni-swig-stubs-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+          
+      # Manually install SWIG 4.1.1 as only 4.0.2 is pre-installed
+      # 4.1.1 is not available in apt-get, so use brew instead
+      # We need to use the formulae directly from GitHub to pin the version as Homebrew does not have
+      # all versions available.
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
+      - name: Install SWIG
+        run: |
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+          cd ~
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
+
+
+      - name: Build JNI Stub
+        working-directory: ./packages
+        run: ./gradlew :jni-swig-stub:assemble -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/jni-swig-stub/build/generated/sources/jni/*
+          retention-days: 1
+
+  build-jvm-linux-native-lib:
+    runs-on: ubuntu-latest
+    needs: [check-cache, build-jni-swig-stub]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-linux-lib-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/cinterop/build/realmLinuxBuild
+          key: jni-linux-lib-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Restore JNI Swig Stubs
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/jni-swig-stub/build/generated/sources/jni
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v3
+        with:
+          tags: jvm-native-lib-linux:latest
+          file: ./packages/cinterop/src/jvmMain/generic.Dockerfile
+          push: false
+
+      - name: Build native lib
+        uses: addnab/docker-run-action@v3
+        with:
+          image: jvm-native-lib-linux:latest
+          shell: bash
+          options: -v ${{ github.workspace }}:/work
+          run: |
+            cd /work/packages/cinterop
+            mkdir build
+            cd build
+            rm -rf realmLinuxBuild
+            mkdir realmLinuxBuild
+            cd realmLinuxBuild
+            cmake ../../src/jvm
+            make -j8
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmLinuxBuild/librealmc.so 
+          retention-days: 1
+
+  build-jvm-windows-native-lib:
+    runs-on: windows-latest
+    needs: [check-cache, build-jni-swig-stub]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-windows-lib-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          # TODO See https://github.com/microsoft/vcpkg/issues/25349 which might describe the error here https://github.com/realm/realm-kotlin/runs/8099890473?check_suite_focus=true
+          # -- Building for: Visual Studio 17 2022
+          # -- Running vcpkg install
+          # Error: while checking out port openssl with git tree 7e4d802e3bde4154c227c0dd1da75c719be9f07a
+          # Error: Failed to tar port directory
+          # error: tar failed with exit code: (128).
+          # fatal: not a tree object: 7e4d802e3bde4154c227c0dd1da75c719be9f07a
+          # TODO Implement better work-around here: https://mongodb.slack.com/archives/C017MBM0A30/p1661889411467029?thread_ts=1661888738.117769&cid=C017MBM0A30
+          fetch-depth: 0 
+          submodules: "recursive"
+
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/cinterop/build/realmWindowsBuild
+          key: jni-windows-lib-${{ needs.check-cache.outputs.packages-sha }}
+          enableCrossOsArchive: true
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Restore JNI Swig Stubs
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni
+
+      - name: Build native lib
+        shell: powershell
+        working-directory: packages
+        run: |
+          cd cinterop
+          mkdir build  
+          cd build
+          Remove-Item -Path realmWindowsBuild -Force -Recurse -ErrorAction Ignore
+          mkdir realmWindowsBuild
+          cd realmWindowsBuild
+          cmake `
+          ..\..\src\jvm `
+          -DCMAKE_GENERATOR_PLATFORM=x64 `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DREALM_ENABLE_SYNC=ON `
+          -DREALM_NO_TESTS=1 `
+          -DVCPKG_TARGET_TRIPLET=x64-windows-static
+          cmake --build . --config Release
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmWindowsBuild/Release/realmc.dll
+          retention-days: 1
+
+  build-jvm-macos-native-lib:
+    runs-on: macos-latest
+    needs: [check-cache, build-jni-swig-stub]
+    if: |
+      always() &&
+      !cancelled() &&
+      !contains(needs.*.result, 'failure') &&
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.jni-macos-lib-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'jvm-macos-native-lib'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      - name: Debug environment
+        run: |
+          env
+          type cmake
+          cmake --version
+          type ninja
+          ninja --version
+
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/cinterop/build/realmMacOsBuild
+          key: jni-macos-lib-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Restore JNI Swig Stubs
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-stub-${{ needs.check-cache.outputs.version-label }}
+          path: ${{ github.workspace }}/packages/jni-swig-stub/build/generated/sources/jni        
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew buildJVMSharedLibs -Prealm.kotlin.mainHost=false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmMacOsBuild/librealmc.dylib
+          retention-days: 1     
+
+  build-kotlin-metadata-package:
+    runs-on: ubuntu-latest
+    needs: [check-cache]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.packages-metadata-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'metadata-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      # This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r23c
+
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-metadata-${{ needs.check-cache.outputs.packages-sha }}
+          
+      - name: Build Kotlin Metadata and Gradle and Compiler Plugin
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=gradlePlugin,compilerPlugin -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+
+  # This task is also responsible for creating the Gradle and Compiler Plugin as well as 
+  # all Kotlin Multiplatform Metadata
+  build-jvm-packages:
+    runs-on: macos-latest
+    needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib, build-jvm-macos-native-lib]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      needs.check-cache.outputs.packages-jvm-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'jvm-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r23c
+
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Setup build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-jvm-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Restore Linux JNI lib
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-linux-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmLinuxBuild
+
+      - name: Restore Windows JNI lib
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-windows-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmWindowsBuild/Release
+
+      - name: Restore MacOS JNI lib
+        uses: actions/download-artifact@v3
+        with:
+          name: jni-macos-lib-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/cinterop/build/realmMacOsBuild
+          
+      - name: Build JVM Package
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=jvm -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.copyNativeJvmLibs=linux,windows,macos -Prealm.kotlin.mainHost=false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+
+  build-android-packages:
+    runs-on: ubuntu-latest
+    needs: check-cache
+    outputs:
+      baas-container-id: ${{ steps.baas_cli_start.outputs.baas_container_id }}
+    if: |
+      always() && !cancelled() &&
+      (needs.check-cache.outputs.packages-android-cache-hit != 'true' ||
+      needs.check-cache.outputs.android-test-base-apk-cache-hit != 'true' ||
+      needs.check-cache.outputs.android-test-sync-apk-cache-hit != 'true')
+
+    steps:
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      # Manually install SWIG 4.1.1 as only 4.0.2 is pre-installed
+      # 4.1.1 is not available in apt-get, so use brew instead
+      # We need to use the formulae directly from GitHub to pin the version as Homebrew does not have
+      # all versions available.
+      # https://github.com/actions/runner-images/blob/main/images/linux/Ubuntu2204-Readme.md#ubuntu-22041-lts
+      # It seems to be required to manually add brew dirs to the PATH. This does not happen automatically.
+      - name: Install SWIG
+        run: |
+          test -d ~/.linuxbrew && eval "$(~/.linuxbrew/bin/brew shellenv)"
+          test -d /home/linuxbrew/.linuxbrew && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+          test -r ~/.bash_profile && echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.bash_profile
+          echo "eval \"\$($(brew --prefix)/bin/brew shellenv)\"" >> ~/.profile
+          echo "/home/linuxbrew/.linuxbrew/sbin" >> $GITHUB_PATH
+          echo "/home/linuxbrew/.linuxbrew/bin" >> $GITHUB_PATH
+          cd ~
+          curl -L ${{ vars.VERSION_SWIG}} > swig.rb && HOMEBREW_NO_INSTALLED_DEPENDENTS_CHECK=true brew install swig.rb
+
+      - name: Install JSON parser
+        run: brew install jq
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+ 
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'android-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r23c
+
+      - name: Build Android Base Test Apk
+        working-directory: packages
+        run: ./gradlew  :test-base:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
+
+      - name: Build Android Sync Test Apk
+        working-directory: packages
+        run: ./gradlew :test-sync:packageDebug :test-sync:assembleAndroidTest -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=android -Prealm.kotlin.buildRealmCore=false -Prealm.kotlin.mainHost=false
+
+      - name: Store build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-android-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      - name: Store build cache for Android Test APK
+        uses: actions/cache@v3
+        with:
+          path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+          key: android-base-test-apk-key-${{ needs.check-cache.outputs.packages-sha }}
+
+      # Must match naming found in include-check-cache.yml
+      - name: Store build cache for Android Sync Test APK
+        uses: actions/cache@v3
+        with:
+          key: android-sync-test-apk-key-${{ needs.check-cache.outputs.packages-sha }}
+          path: |
+            ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+            ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
+
+      # Must match naming found in include-check-cache.yml
+      # Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+      - name: Upload Android Base Test APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+          retention-days: 1
+
+      - name: Upload Android Sync Test APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: android-sync-test-apk-${{ needs.check-cache.outputs.version-label }}
+          retention-days: 1
+          path: |
+            ./packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+            ./packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
+
+
+  # TODO: ccache is not being used by this build for some reason
+  build-macos-x64-packages:
+    runs-on: macos-latest
+    needs: check-cache
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+ 
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'macos-x64-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosX64 -Prealm.kotlin.mainHost=false
+
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Store build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-macos-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      # Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+  build-macos-arm64-packages:
+    runs-on: macos-latest
+    needs: check-cache
+    # needs: static-analysis
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+ 
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'macos-arm64-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=macosArm64 -Prealm.kotlin.mainHost=false
+
+      - name: Store build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-macos-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      # Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+  build-ios-x64-packages:
+    runs-on: macos-latest
+    needs: check-cache
+    # needs: static-analysis
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-x64-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+ 
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'ios-x64-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosX64 -Prealm.kotlin.mainHost=false
+
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Store build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-ios-x64-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      # Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+  build-ios-arm64-packages:
+    runs-on: macos-latest
+    needs: check-cache
+    # needs: static-analysis
+    if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-arm64-cache-hit != 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v1.13
+        with:
+          cmake-version: ${{ vars.VERSION_CMAKE }}
+
+      - name: Setup ninja
+        uses: cmelchior/setup-ninja@master
+        with:
+          version: ${{ vars.VERSION_NINJA  }}
+ 
+      - name: Install ccache
+        uses: hendrikmuhs/ccache-action@v1.2.2
+        with:
+          key: 'ios-arm64-package'
+          max-size: '2.0G'
+
+      - name: Prepend ccache executables to the PATH
+        run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
+
+      # See https://github.com/hendrikmuhs/ccache-action/issues/94
+      - name: Configure ccache
+        run: |
+          ccache --set-config="compiler_check=content"
+          ccache --show-config
+          echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
+          echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
+
+      - name: Build packages
+        working-directory: packages
+        run: ./gradlew publishCIPackages -Prealm.kotlin.targets=iosArm64 -Prealm.kotlin.mainHost=false
+
+      # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
+      - name: Store build cache
+        uses: actions/cache@v3
+        with:
+          path: ./packages/build/m2-buildrepo
+          key: packages-m2-ios-arm64-sync-${{ needs.check-cache.outputs.packages-sha }}
+
+      # Must match naming found in include-check-cache.yml
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo/**/* 
+          retention-days: 1
+
+
+  # TODO Split into base and sync tests
+  # TODO If we hook up to Device Farm we can use ubuntu runners instead
+  # TODO Compare speed between emulator and Device Farm
+  # TODO We should be able to move this into a reusable work-flow
+
+  # TODO Compare speed between emulator and Device Farm
+  # TODO We should be able to move this into a reusable work-flow
+  test-android-packages-emulator:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        type: [base, sync]
+        include:
+          - type: base
+            test-title: Unit Test Results - Android Base (Emulator)
+          - type: sync
+            test-title: Unit Test Results - Android Sync (Emulator)
+ 
+    runs-on: macos-latest
+    needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        if: matrix.type == 'sync'
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+          #   curl: option --data: error encountered when reading a file
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore m2-buildrepo (Android)
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore m2-buildrepo (JVM)
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+      # TODO This action does not support using `\` to split multiline scripts.
+      - name: Run Integration Tests
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          api-level: ${{ vars.VERSION_ANDROID_EMULATOR_API_LEVEL }} # Must be 30 to support aosp_atd
+          target: default
+          arch: x86_64        
+          disk-size: 4096M
+          ram-size: 2048M
+          heap-size: 1024M
+          channel: canary
+          script: |
+            adb logcat -c
+            adb logcat > logcat.txt &
+            cd packages && ./gradlew :test-${{ matrix.type }}:connectedCheck -PsyncUsePlatformNetworking=true -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} -PincludeSdkModules=false --info --no-daemon
+
+      - name: Archive LogCat data
+        uses: actions/upload-artifact@v3
+        if: always() || failure()
+        with:
+          name: logcat-${{ matrix.type }}-emulator.txt
+          path: logcat.txt 
+          retention-days: 1
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: ${{ matrix.test-title }}
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+      - name: Stopping the BAAS container
+        if: always() && matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
+
+  # Disable device farm test for Base, because running two in parallel seems to interfer somehow 
+  test-android-packages-device-farm:
+    name: AWS Device Farm
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    needs: [ check-cache, build-android-packages, build-jvm-packages ]
+    if: |
+      false &&  
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Restore Android Test APK
+        uses: actions/download-artifact@v3
+        with:
+          name: android-base-test-apk-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/test-base/build/outputs/apk/androidTest/debug
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEVICEFARM_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Run the tests
+        uses: ./.github/actions/run-android-device-farm-test
+        id: run_android_tests
+        with:
+          apk-path: ${{ github.workspace }}/packages/test-base/build/outputs/apk/androidTest/debug/test-base-debug-androidTest.apk
+          app-id: io.realm.testapp
+          project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
+          device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
+
+
+  test-android-packages-device-farm-sync:
+    name: AWS Device Farm Sync Tests
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    needs: [ check-cache, build-android-packages, build-jvm-packages ]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Restore Android Sync Test APK
+        uses: actions/download-artifact@v3
+        with:
+          name: android-sync-test-apk-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/test-sync/build/outputs/apk/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEVICEFARM_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEVICEFARM_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Run the Sync tests
+        uses: ./.github/actions/run-android-device-farm-test
+        id: run_android_tests
+        with:
+          apk-path: ${{ github.workspace }}/packages/test-sync/build/outputs/apk/androidTest/debug/test-sync-debug-androidTest.apk
+          apk-auxiliary-path: ${{ github.workspace }}/packages/test-sync/build/outputs/apk/debug/test-sync-debug.apk
+          baas_url: ${{ steps.baas_cli_poll.outputs.baas_container_hostname }}
+          app-id: io.realm.sync.testapp.test
+          project-arn: ${{ secrets.DEVICEFARM_PROJECT_ARN }}
+          device-pool-arn: ${{ secrets.DEVICEFARM_POOL_ARN }}
+
+      - name: Stopping the BAAS container
+        if: always()
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi  
+
+  test-macos-packages:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest] # , macos-arm]
+        type: [base, sync]
+        include:
+          - os: macos-latest
+            type: base
+            os-id: macos
+            package-prefix: macos-x64
+            test-title: Unit Test Results - MacOS x64 Base
+          - os: macos-latest
+            type: sync
+            os-id: macos
+            package-prefix: macos-x64
+            test-title: Unit Test Results - MacOS x64 Sync
+          # - os: macos-arm
+          #   package-prefix: macos-arm64
+          #   test-title: Results - MacOS arm64 Base
+ 
+    runs-on: ${{ matrix.os }}
+    # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
+    # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
+    needs: [check-cache, build-macos-x64-packages, build-kotlin-metadata-package] #, build-macos-arm64-packages] 
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        if: matrix.type == 'sync'
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+          #   curl: option --data: error encountered when reading a file
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Run tests
+        working-directory: packages
+        run: >
+          ./gradlew :test-${{ matrix.type }}:macosTest
+          -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
+          -PincludeSdkModules=false 
+          --info --no-daemon
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: ${{ matrix.test-title }} 
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true        
+
+      - name: Stopping the BAAS container
+        if: always() && matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
+
+
+  test-ios-packages:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest] # , macos-arm]
+        type: [base, sync]
+        include:
+          - os: macos-latest
+            type: base
+            package-prefix: x64
+            test-title: Unit Test Results - iOS x64 Base
+            test-task: iosTest
+          - os: macos-latest
+            type: sync
+            package-prefix: x64
+            test-title: Unit Test Results - iOS x64 Sync
+            test-task: iosTest
+          # - os: macos-arm
+          #   package-prefix: macos-arm64
+          #   test-title: Results - MacOS arm64 Base
+ 
+    runs-on: ${{ matrix.os }}
+    # TODO Unclear why MacOS needs the metadata package when the Android Tests do not
+    # Disable macos-arm for now as the host needs to have the Android SDK installed even though it isn't really using it.
+    needs: [check-cache, build-ios-x64-packages, build-kotlin-metadata-package] # , build-ios-arm64-packages] 
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        if: matrix.type == 'sync'
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+          #   curl: option --data: error encountered when reading a file
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore m2-buildrepo (ios)
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-ios-${{ matrix.package-prefix }}-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+      # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
+      - name: Run tests
+        working-directory: packages
+        run: >
+          ./gradlew :test-${{ matrix.type }}:${{ matrix.test-task }}
+          -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
+          -PincludeSdkModules=false 
+          --info --no-daemon
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: ${{ matrix.test-title }} 
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+      - name: Stopping the BAAS container
+        if: always() && matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
+
+  test-jvm-packages:
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
+        type: [base, sync]
+        include:
+          - os: macos-latest
+            os-id: mac
+            type: base
+            test-title: Unit Test Results - Base JVM MacOS x64
+          - os: ubuntu-latest
+            os-id: ubu
+            type: base
+            test-title: Unit Test Results - Base JVM Linux
+          - os: windows-latest
+            os-id: win
+            type: base
+            test-title: Unit Test Results - Base JVM Windows
+          - os: macos-latest
+            os-id: mac
+            type: sync
+            test-title: Unit Test Results - Sync JVM MacOS x64
+          - os: ubuntu-latest
+            os-id: ubu
+            type: sync
+            test-title: Unit Test Results - Sync JVM Linux
+        exclude:
+          # Do not run Windows Sync Tests, because the bash script for
+          # starting the BAAS container doesn not work on Windows.
+          - os: windows-latest
+            #os-id: win
+            type: sync
+            #test-title: Unit Test Results - Sync JVM Windows
+
+    runs-on: ${{ matrix.os }}
+    needs: [check-cache, build-jvm-packages, build-kotlin-metadata-package]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # checkout BAAS CLI repo
+      - name: Checkout BAAS repo
+        if: matrix.type == 'sync'
+        run: |
+          echo ${{ secrets.BAAS_CLI }} | gh auth login --with-token
+          gh repo clone 10gen/baasaas
+
+      # Start BAAS instance in the background
+      # We save the container id to poll against and get the hostname info later
+      - name: Start Baas instance in the background
+        id: baas_cli_start
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          # Adding a dummy tag (foo=bar) to avoid the following issue on macos-runner
+          #   curl: option --data: error encountered when reading a file
+          OUTPUT=$(bash cli.sh start | jq -r '.id')
+          echo "baas_container_id=$OUTPUT" >> $GITHUB_OUTPUT
+
+      - name: Setup Java 11
+        uses: actions/setup-java@v3
+        with:
+          distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
+          java-version: ${{ vars.VERSION_JAVA }}
+
+      - name: Setup Gradle and task/dependency caching
+        uses: gradle/gradle-build-action@v2
+        with:
+          cache-read-only: false
+
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore m2-buildrepo
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      # We poll the previously started BAAS container to get the hostname of the container to use with Device Farm tests
+      - name: Fetching the BAAS CLI hostname
+        id: baas_cli_poll
+        if: matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          OUTPUT=$(bash cli.sh poll ${{ steps.baas_cli_start.outputs.baas_container_id }} | jq -r '.httpUrl')
+          echo "baas_container_hostname=$OUTPUT" >> $GITHUB_OUTPUT
+
+      # App names are limited to 32 characters, so the appNamePrefix should not exceed 22 characters.
+      - name: Run tests
+        working-directory: packages
+        run: >
+          ./gradlew :test-${{ matrix.type }}:jvmTest
+          -PsyncUsePlatformNetworking=true
+          -PsyncTestUrl=${{ steps.baas_cli_poll.outputs.baas_container_hostname }} 
+          -PincludeSdkModules=false 
+          --info --no-daemon
+
+      - name: Publish Unit Test Results
+        uses: dorny/test-reporter@v1
+        if: always() || failure()
+        with:
+          name: ${{ matrix.test-title }} 
+          path: ./packages/test-${{ matrix.type }}/build/**/TEST-*.xml
+          reporter: java-junit
+          list-suites: failed
+          list-tests: failed
+          fail-on-error: true
+
+      - name: Stopping the BAAS container
+        if: always() && matrix.type == 'sync'
+        working-directory: baasaas
+        env:
+          APIKEY: ${{ secrets.BAAS_CLI_API_KEY }}
+        run: |
+          if [ -n "${{ steps.baas_cli_start.outputs.baas_container_id }}" ]; then
+            bash cli.sh stop ${{ steps.baas_cli_start.outputs.baas_container_id }}
+          fi
+
+  package-all-artifacts: 
+    runs-on: ubuntu-latest
+    needs: [check-cache, build-jvm-packages, build-android-packages, build-macos-x64-packages, build-macos-arm64-packages, build-ios-x64-packages, build-ios-arm64-packages, build-kotlin-metadata-package]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # The Metadata artifact contain broken JVM publications, so it needs to be 
+      # restored first, it so they can be overidden with the correct ones.
+      - name: Restore Kotlin metadata artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-metadata-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore Android artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-android-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore JVM artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-jvm-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore MacOS x64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-macos-x64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore MacOS arm64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-macos-arm64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore iOS x64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-ios-x64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Restore iOS arm64 artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages-ios-arm64-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo 
+
+      - name: Upload artifacts bundle
+        uses: actions/upload-artifact@v3
+        with:
+          name: all-packages-${{ needs.check-cache.outputs.version-label }}
+          path: ./packages/build/m2-buildrepo
+          retention-days: 7
+
+  integration-tests:
+    uses: ./.github/workflows/include-integration-tests.yml
+    needs: [check-cache, package-all-artifacts]
+    if: |
+      always() && 
+      !cancelled() && 
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled')
+    with:
+      version-label: ${{ needs.check-cache.outputs.version-label }}
+
+  deploy-snapshot:
+    uses: ./.github/workflows/include-deploy-snapshot.yml
+    needs: [ 
+             check-cache, 
+             static-analysis, 
+             integration-tests, 
+             test-jvm-packages, 
+             test-macos-packages, 
+             test-ios-packages, 
+             test-android-packages-emulator, 
+             # test-android-packages-device-farm,
+             test-android-packages-device-farm-sync,
+             package-all-artifacts
+           ]
+    if: |
+      always() && 
+      !cancelled() && 
+      endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases')
+
+    secrets: inherit
+    with:
+      version-label: ${{ needs.check-cache.outputs.version-label }}
+
+  # This job sets an output `is_publish_build` to `true` if this is a release build
+  check-release-build:
+    runs-on: ubuntu-latest
+    needs: [check-cache]
+    outputs:  
+      is_publish_build: ${{ steps.check_release.outputs.is_publish_build }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get Git tag
+        run: |
+          gitTag=$(git describe --tags --exact-match HEAD) || echo "NONE"
+          echo "Git branch/tag: ${GITHUB_REF}/${gitTag:-'none'}"
+
+      - name: Check if release build
+        id: check_release
+        run: |
+          if [[ -z "$gitTag" ]]; then
+            gitSha=$(git rev-parse HEAD | cut -c1-8)
+            echo "Building commit: ${{ needs.check-cache.outputs.version-label }} - ${gitSha}"
+            echo "is_publish_build=false" >> $GITHUB_OUTPUT
+          else
+            if [[ "$gitTag" != "v${{ needs.check-cache.outputs.version-label }}" ]]; then
+              echo "Git tag '${gitTag}' does not match v${{ needs.check-cache.outputs.version-label }}"
+              echo "is_publish_build=false" >> $GITHUB_OUTPUT
+            else
+              echo "Building release: '${gitTag}'"
+              echo "is_publish_build=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+
+      - name: Print is release build
+        run: |
+          echo "Is release build: ${{ steps.check_release.outputs.is_publish_build }}"
+
+  deploy-release:
+    uses: ./.github/workflows/include-deploy-release.yml
+    needs: [ 
+              check-cache,
+              check-release-build, 
+              static-analysis, 
+              integration-tests, 
+              test-jvm-packages, 
+              test-macos-packages, 
+              test-ios-packages, 
+              test-android-packages-emulator, 
+              # test-android-packages-device-farm,
+              test-android-packages-device-farm-sync,
+              package-all-artifacts
+            ]
+    if: |
+      always() && 
+      !cancelled() && 
+      !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases') && 
+      (needs.check-release-build.outputs.is_publish_build == 'true')
+
+    secrets: inherit
+    with:
+      version-label: ${{ needs.check-cache.outputs.version-label }}
+      packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}

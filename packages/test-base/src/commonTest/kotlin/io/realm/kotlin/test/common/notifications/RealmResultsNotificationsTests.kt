@@ -36,6 +36,7 @@ import io.realm.kotlin.test.common.utils.FlowableTests
 import io.realm.kotlin.test.common.utils.KeyPathFlowableTests
 import io.realm.kotlin.test.common.utils.assertIsChangeSet
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -78,12 +79,12 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
     @Test
     override fun initialElement() {
         runBlocking {
-            val c = Channel<ResultsChange<Sample>>(1)
+            val c = TestChannel<ResultsChange<Sample>>()
             val observer = async {
                 realm.query<Sample>()
                     .asFlow()
                     .collect {
-                        c.trySend(it)
+                        c.send(it)
                     }
             }
 
@@ -111,7 +112,7 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
                     .sort("stringField")
                     .asFlow()
                     .collect {
-                        c.trySend(it)
+                        c.send(it)
                     }
             }
 
@@ -277,8 +278,8 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
     @Test
     override fun cancelAsFlow() {
         runBlocking {
-            val c1 = Channel<ResultsChange<Sample>>(1)
-            val c2 = Channel<ResultsChange<Sample>>(1)
+            val c1 = TestChannel<ResultsChange<Sample>>()
+            val c2 = TestChannel<ResultsChange<Sample>>()
 
             realm.write {
                 copyToRealm(Sample().apply { stringField = "Bar" })
@@ -288,14 +289,14 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
                 realm.query<Sample>()
                     .asFlow()
                     .collect {
-                        c1.trySend(it)
+                        c1.send(it)
                     }
             }
             val observer2 = async {
                 realm.query<Sample>()
                     .asFlow()
                     .collect {
-                        c2.trySend(it)
+                        c2.send(it)
                     }
             }
 
@@ -336,10 +337,10 @@ class RealmResultsNotificationsTests : FlowableTests, KeyPathFlowableTests {
                     .asFlow()
                     .collect {
                         when (counter.incrementAndGet()) {
-                            1 -> c.trySend(it.list.size)
+                            1 -> c.send(it.list.size)
                             2 -> {
                                 realm.close()
-                                c.trySend(-1)
+                                c.send(-1)
                                 println("realm closed")
                             }
                         }
