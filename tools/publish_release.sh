@@ -78,6 +78,7 @@ check_env() {
 
 verify_release_preconditions() {
   echo "Checking release branch..."
+  git fetch --tags
   gitTag=`git describe --tags | tr -d '[:space:]'`
   version=`grep "const val version" buildSrc/src/main/kotlin/Config.kt | cut -d \" -f2`
 
