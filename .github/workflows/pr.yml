@@ -1644,3 +1644,69 @@ jobs:
     secrets: inherit
     with:
       version-label: ${{ needs.check-cache.outputs.version-label }}
+
+  # This job sets an output `is_publish_build` to `true` if this is a release build
+  check-release-build:
+    runs-on: ubuntu-latest
+    needs: [check-cache]
+    outputs:  
+      is_publish_build: ${{ steps.check_release.outputs.is_publish_build }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get Git tag
+        run: |
+          gitTag=$(git describe --tags --exact-match HEAD) || echo "NONE"
+          echo "Git branch/tag: ${GITHUB_REF}/${gitTag:-'none'}"
+
+      - name: Check if release build
+        id: check_release
+        run: |
+          if [[ -z "$gitTag" ]]; then
+            gitSha=$(git rev-parse HEAD | cut -c1-8)
+            echo "Building commit: ${{ needs.check-cache.outputs.version-label }} - ${gitSha}"
+            echo "is_publish_build=false" >> $GITHUB_OUTPUT
+          else
+            if [[ "$gitTag" != "v${{ needs.check-cache.outputs.version-label }}" ]]; then
+              echo "Git tag '${gitTag}' does not match v${{ needs.check-cache.outputs.version-label }}"
+              echo "is_publish_build=false" >> $GITHUB_OUTPUT
+            else
+              echo "Building release: '${gitTag}'"
+              echo "is_publish_build=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+          
+
+      - name: Print is release build
+        run: |
+          echo "Is release build: ${{ steps.check_release.outputs.is_publish_build }}"
+
+  deploy-release:
+    uses: ./.github/workflows/include-deploy-release.yml
+    needs: [ 
+              check-cache,
+              check-release-build, 
+              static-analysis, 
+              integration-tests, 
+              test-jvm-packages, 
+              test-macos-packages, 
+              test-ios-packages, 
+              test-android-packages-emulator, 
+              # test-android-packages-device-farm,
+              test-android-packages-device-farm-sync,
+              package-all-artifacts
+            ]
+    if: |
+      always() && 
+      !cancelled() && 
+      !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
+      !contains(needs.*.result, 'failure') && 
+      !contains(needs.*.result, 'cancelled') &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases') && 
+      (needs.check-release-build.outputs.is_publish_build == 'true')
+
+    secrets: inherit
+    with:
+      version-label: ${{ needs.check-cache.outputs.version-label }}
+      packages-sha-label: ${{ needs.check-cache.outputs.packages-sha }}
