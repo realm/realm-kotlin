@@ -1655,15 +1655,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Get Git tag
+      - name: Check if release build
+        id: check_release
         run: |
           git fetch --tags
           gitTag=$(git describe --tags --exact-match HEAD) || echo "NONE"
           echo "Git branch/tag: ${GITHUB_REF}/${gitTag:-'none'}"
 
-      - name: Check if release build
-        id: check_release
-        run: |
           if [[ -z "$gitTag" ]]; then
             gitSha=$(git rev-parse HEAD | cut -c1-8)
             echo "Building commit: ${{ needs.check-cache.outputs.version-label }} - ${gitSha}"
