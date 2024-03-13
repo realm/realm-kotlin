@@ -36,24 +36,7 @@ import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
  * Java. Only `%s`, `%d` and `%f` are supported. See https://stackoverflow.com/a/64499248/1389357
  * and https://youtrack.jetbrains.com/issue/KT-25506 for more information.
  */
-public object RealmLog : LogCategory("Realm") {
-
-    /**
-     * TODO
-     */
-    public val StorageLog: StorageLogCategory = StorageLogCategory
-    /**
-     * TODO
-     */
-    public val SyncLog: SyncLogCategory = SyncLogCategory
-    /**
-     * TODO
-     */
-    public val AppLog: LogCategory = AppLogCategory
-    /**
-     * TODO
-     */
-    public val SdkLog: LogCategory = SdkLogCategory
+public object RealmLog {
 
     // Lock preventing multiple threads modifying the list of loggers.
     private val loggersMutex = SynchronizableObject()
@@ -67,7 +50,23 @@ public object RealmLog : LogCategory("Realm") {
     // copy this reference before using it.
     private var loggers: MutableList<RealmLogger> = mutableListOf()
 
-    init {
+    /**
+     * The current [LogLevel]. Changing this will affect all registered loggers.
+     */
+    public var level: LogLevel
+        get() = getLevel(LogCategory.Realm)
+        set(value) = setLevel(value, LogCategory.Realm)
+
+
+    public fun setLevel(level: LogLevel, category: LogCategory = LogCategory.Realm) {
+        RealmInterop.realm_set_log_level_category(category.pathAsString, level.toCoreLogLevel())
+    }
+
+    public fun getLevel(category: LogCategory): LogLevel =
+        RealmInterop.realm_get_log_level_category(category.pathAsString).fromCoreLogLevel()
+
+
+        init {
         addDefaultSystemLogger()
         RealmInterop.realm_set_log_callback(
             level.toCoreLogLevel(),

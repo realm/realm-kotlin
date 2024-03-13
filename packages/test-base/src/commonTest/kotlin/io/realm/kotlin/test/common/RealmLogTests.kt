@@ -17,6 +17,7 @@
 package io.realm.kotlin.test.common
 
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -46,27 +47,27 @@ class RealmLogTests {
     private lateinit var log: RealmLog
 
     private val logCategories = listOf(
-        RealmLog,
+        LogCategory.Realm,
 
-        RealmLog.StorageLog,
-        RealmLog.SyncLog,
+        LogCategory.Realm.Storage,
+        LogCategory.Realm.Sync,
 
-        RealmLog.SyncLog.ClientLog,
+        LogCategory.Realm.Sync.Client,
 
-        RealmLog.SyncLog.ClientLog.SessionLog,
-        RealmLog.SyncLog.ClientLog.ChangesetLog,
-        RealmLog.SyncLog.ClientLog.NetworkLog,
-        RealmLog.SyncLog.ClientLog.ResetLog,
+        LogCategory.Realm.Sync.Client.Session,
+        LogCategory.Realm.Sync.Client.Changeset,
+        LogCategory.Realm.Sync.Client.Network,
+        LogCategory.Realm.Sync.Client.Reset,
 
-        RealmLog.SyncLog.ServerLog,
+        LogCategory.Realm.Sync.Server,
 
-        RealmLog.AppLog,
-        RealmLog.SdkLog,
+        LogCategory.Realm.App,
+        LogCategory.Realm.Sdk,
 
-        RealmLog.StorageLog.TransactionLog,
-        RealmLog.StorageLog.QueryLog,
-        RealmLog.StorageLog.ObjectLog,
-        RealmLog.StorageLog.NotificationLog,
+        LogCategory.Realm.Storage.Transaction,
+        LogCategory.Realm.Storage.Query,
+        LogCategory.Realm.Storage.Object,
+        LogCategory.Realm.Storage.Notification,
     )
 
     @BeforeTest
@@ -127,7 +128,7 @@ class RealmLogTests {
     @Test
     fun smallLogEntry() {
         val message = "Testing the RealmLog implementation"
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
@@ -146,7 +147,7 @@ class RealmLogTests {
     fun smallLogEntryWithArgs() {
         val message = "Testing the RealmLog implementation: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
@@ -164,7 +165,7 @@ class RealmLogTests {
     @Test
     fun longLogEntry() {
         val message = Utils.createRandomString(8000)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
@@ -183,7 +184,7 @@ class RealmLogTests {
     fun longLogEntryWithArgs() {
         val message = "${Utils.createRandomString(8000)}: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
@@ -201,7 +202,7 @@ class RealmLogTests {
     @Test
     fun logException() {
         val error = IllegalArgumentException("BOOM")
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error)
@@ -221,7 +222,7 @@ class RealmLogTests {
         val error = IllegalArgumentException("BOOM")
         val message = "Details: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error, message, *args)
@@ -357,12 +358,12 @@ class RealmLogTests {
     @Test
     fun setCategoryLevels() {
         logCategories.forEach { logCategory ->
-            val previousLevel: LogLevel = logCategory.level
-            logCategory.level = LogLevel.TRACE
-            assertEquals(LogLevel.TRACE, logCategory.level)
+            val previousLevel: LogLevel = RealmLog.getLevel(logCategory)
+            RealmLog.setLevel(LogLevel.TRACE, logCategory)
+            assertEquals(LogLevel.TRACE, RealmLog.getLevel(logCategory))
 
             // Restore the level to whatever it was set before
-            logCategory.level = previousLevel
+            RealmLog.setLevel(previousLevel, logCategory)
         }
     }
 

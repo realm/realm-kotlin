@@ -38,6 +38,14 @@ public interface RealmLogger {
     /**
      * Log an event.
      */
+    public fun log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+        log(level, throwable, message, args)
+    }
+
+    /**
+     * Log an event.
+     */
+    @Deprecated("Use log with category instead", ReplaceWith("log"))
     public fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
 
     /**

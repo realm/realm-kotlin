@@ -35,6 +35,8 @@ import io.realm.kotlin.internal.interop.RealmInterop
  *      └─► Sdk
  */
 
+
+
 /**
  * TODO
  */
@@ -45,32 +47,56 @@ public sealed class LogCategory(
     internal val path: List<String> = if (parent == null) listOf(name) else parent.path + name
     internal val pathAsString = path.joinToString(".")
 
-    /**
-     * The current [LogLevel] for the category. Changing this will affect all registered loggers.
-     */
-    public var level: LogLevel
-        get() = RealmInterop.realm_get_log_level_category(pathAsString).fromCoreLogLevel()
-        set(value) = RealmInterop.realm_set_log_level_category(pathAsString, value.toCoreLogLevel())
+    public companion object {
+        internal fun fromCoreValue(category: String): LogCategory {
+            TODO("Not yet implemented")
+        }
+
+        public val Realm: RealmLogCategory = RealmLogCategory
+    }
 }
 
-public data object StorageLogCategory : LogCategory("Storage", RealmLog) {
+public data object RealmLogCategory: LogCategory("Realm") {
 
     /**
      * TODO
      */
-    public val TransactionLog: LogCategory = TransactionLogCategory
+    public val Storage:StorageLogCategory = StorageLogCategory
+
     /**
      * TODO
      */
-    public val QueryLog: LogCategory = QueryLogCategory
+    public val Sync:SyncLogCategory = SyncLogCategory
+
     /**
      * TODO
      */
-    public val ObjectLog: LogCategory = ObjectLogCategory
+    public val App:LogCategory = AppLogCategory
+
     /**
      * TODO
      */
-    public val NotificationLog: LogCategory = NotificationLogCategory
+    public val Sdk:LogCategory = SdkLogCategory
+}
+
+public data object StorageLogCategory : LogCategory("Storage", RealmLogCategory) {
+
+    /**
+     * TODO
+     */
+    public val Transaction:LogCategory = TransactionLogCategory
+    /**
+     * TODO
+     */
+    public val Query:LogCategory = QueryLogCategory
+    /**
+     * TODO
+     */
+    public val Object:LogCategory = ObjectLogCategory
+    /**
+     * TODO
+     */
+    public val Notification:LogCategory = NotificationLogCategory
 }
 
 public data object TransactionLogCategory : LogCategory("Transaction", StorageLogCategory)
@@ -78,34 +104,34 @@ public data object QueryLogCategory : LogCategory("Query", StorageLogCategory)
 public data object ObjectLogCategory : LogCategory("Object", StorageLogCategory)
 public data object NotificationLogCategory : LogCategory("Notification", StorageLogCategory)
 
-public data object SyncLogCategory : LogCategory("Sync", RealmLog) {
+public data object SyncLogCategory : LogCategory("Sync", RealmLogCategory) {
     /**
      * TODO
      */
-    public val ClientLog: ClientLogCategory = ClientLogCategory
+    public val Client:ClientLogCategory = ClientLogCategory
     /**
      * TODO
      */
-    public val ServerLog: LogCategory = ServerLogCategory
+    public val Server:LogCategory = ServerLogCategory
 }
 
 public data object ClientLogCategory : LogCategory("Client", SyncLogCategory) {
     /**
      * TODO
      */
-    public val SessionLog: LogCategory = SessionLogCategory
+    public val Session:LogCategory = SessionLogCategory
     /**
      * TODO
      */
-    public val ChangesetLog: LogCategory = ChangesetLogCategory
+    public val Changeset:LogCategory = ChangesetLogCategory
     /**
      * TODO
      */
-    public val NetworkLog: LogCategory = NetworkLogCategory
+    public val Network:LogCategory = NetworkLogCategory
     /**
      * TODO
      */
-    public val ResetLog: LogCategory = ResetLogCategory
+    public val Reset:LogCategory = ResetLogCategory
 }
 
 public data object SessionLogCategory : LogCategory("Session", ClientLogCategory)
@@ -114,5 +140,5 @@ public data object NetworkLogCategory : LogCategory("Network", ClientLogCategory
 public data object ResetLogCategory : LogCategory("Reset", ClientLogCategory)
 public data object ServerLogCategory : LogCategory("Server", SyncLogCategory)
 
-public data object AppLogCategory : LogCategory("App", RealmLog)
-public data object SdkLogCategory : LogCategory("SDK", RealmLog)
+public data object AppLogCategory : LogCategory("App", RealmLogCategory)
+public data object SdkLogCategory : LogCategory("SDK", RealmLogCategory)
