@@ -15,7 +15,6 @@
  */
 package io.realm.kotlin.log
 
-import io.realm.kotlin.internal.interop.RealmInterop
 /**
  * Hierarchy
  *      Realm
@@ -36,47 +35,59 @@ import io.realm.kotlin.internal.interop.RealmInterop
  */
 
 
-
 /**
  * TODO
  */
 public sealed class LogCategory(
     internal val name: String,
-    internal val parent: LogCategory? = null
+    internal val parent: LogCategory? = null,
 ) {
     internal val path: List<String> = if (parent == null) listOf(name) else parent.path + name
     internal val pathAsString = path.joinToString(".")
+    internal val children: MutableMap<String, LogCategory> = mutableMapOf()
+
+    init {
+        parent?.children?.put(name, this)
+    }
 
     public companion object {
-        internal fun fromCoreValue(category: String): LogCategory {
-            TODO("Not yet implemented")
+        internal fun fromCoreValue(categoryValue: String): LogCategory {
+            val path = categoryValue.split(".").asSequence()
+
+            var category :LogCategory = Realm
+
+            path.onEach { nextElement ->
+                category = category.children[nextElement]!!
+            }
+
+            return category
         }
 
         public val Realm: RealmLogCategory = RealmLogCategory
     }
 }
 
-public data object RealmLogCategory: LogCategory("Realm") {
+public data object RealmLogCategory : LogCategory("Realm") {
 
     /**
      * TODO
      */
-    public val Storage:StorageLogCategory = StorageLogCategory
+    public val Storage: StorageLogCategory = StorageLogCategory
 
     /**
      * TODO
      */
-    public val Sync:SyncLogCategory = SyncLogCategory
+    public val Sync: SyncLogCategory = SyncLogCategory
 
     /**
      * TODO
      */
-    public val App:LogCategory = AppLogCategory
+    public val App: LogCategory = AppLogCategory
 
     /**
      * TODO
      */
-    public val Sdk:LogCategory = SdkLogCategory
+    public val Sdk: LogCategory = SdkLogCategory
 }
 
 public data object StorageLogCategory : LogCategory("Storage", RealmLogCategory) {
@@ -84,19 +95,22 @@ public data object StorageLogCategory : LogCategory("Storage", RealmLogCategory)
     /**
      * TODO
      */
-    public val Transaction:LogCategory = TransactionLogCategory
+    public val Transaction: LogCategory = TransactionLogCategory
+
     /**
      * TODO
      */
-    public val Query:LogCategory = QueryLogCategory
+    public val Query: LogCategory = QueryLogCategory
+
     /**
      * TODO
      */
-    public val Object:LogCategory = ObjectLogCategory
+    public val Object: LogCategory = ObjectLogCategory
+
     /**
      * TODO
      */
-    public val Notification:LogCategory = NotificationLogCategory
+    public val Notification: LogCategory = NotificationLogCategory
 }
 
 public data object TransactionLogCategory : LogCategory("Transaction", StorageLogCategory)
@@ -108,30 +122,34 @@ public data object SyncLogCategory : LogCategory("Sync", RealmLogCategory) {
     /**
      * TODO
      */
-    public val Client:ClientLogCategory = ClientLogCategory
+    public val Client: ClientLogCategory = ClientLogCategory
+
     /**
      * TODO
      */
-    public val Server:LogCategory = ServerLogCategory
+    public val Server: LogCategory = ServerLogCategory
 }
 
 public data object ClientLogCategory : LogCategory("Client", SyncLogCategory) {
     /**
      * TODO
      */
-    public val Session:LogCategory = SessionLogCategory
+    public val Session: LogCategory = SessionLogCategory
+
     /**
      * TODO
      */
-    public val Changeset:LogCategory = ChangesetLogCategory
+    public val Changeset: LogCategory = ChangesetLogCategory
+
     /**
      * TODO
      */
-    public val Network:LogCategory = NetworkLogCategory
+    public val Network: LogCategory = NetworkLogCategory
+
     /**
      * TODO
      */
-    public val Reset:LogCategory = ResetLogCategory
+    public val Reset: LogCategory = ResetLogCategory
 }
 
 public data object SessionLogCategory : LogCategory("Session", ClientLogCategory)

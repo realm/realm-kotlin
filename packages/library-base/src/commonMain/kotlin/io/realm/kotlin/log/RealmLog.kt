@@ -71,11 +71,13 @@ public object RealmLog {
         RealmInterop.realm_set_log_callback(
             level.toCoreLogLevel(),
             object : LogCallback {
-                override fun log(logLevel: Short, message: String?) {
+                override fun log(categoryValue: String, logLevel: Short, message: String?) {
                     // Create concatenated up front, since Core should already filter messages
                     // not within the log range.
+                    val category: LogCategory = LogCategory.fromCoreValue(categoryValue)
                     val level: LogLevel = CoreLogLevel.valueFromPriority(logLevel).fromCoreLogLevel()
                     doLog(
+                        category,
                         level,
                         null,
                         if (message.isNullOrBlank()) { null } else { "[Core] $message" }
@@ -160,7 +162,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun trace(throwable: Throwable?) {
-        doLog(LogLevel.TRACE, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.TRACE, throwable, null)
     }
 
     /**
@@ -172,7 +174,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun trace(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.TRACE, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.TRACE, throwable, message, *args)
     }
 
     /**
@@ -183,7 +185,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun trace(message: String, vararg args: Any?) {
-        doLog(LogLevel.TRACE, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.TRACE, null, message, *args)
     }
 
     /**
@@ -192,7 +194,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun debug(throwable: Throwable?) {
-        doLog(LogLevel.DEBUG, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.DEBUG, throwable, null)
     }
 
     /**
@@ -204,7 +206,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun debug(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.DEBUG, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.DEBUG, throwable, message, *args)
     }
 
     /**
@@ -215,7 +217,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun debug(message: String, vararg args: Any?) {
-        doLog(LogLevel.DEBUG, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.DEBUG, null, message, *args)
     }
 
     /**
@@ -224,7 +226,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun info(throwable: Throwable?) {
-        doLog(LogLevel.INFO, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.INFO, throwable, null)
     }
 
     /**
@@ -236,7 +238,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun info(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.INFO, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.INFO, throwable, message, *args)
     }
 
     /**
@@ -247,7 +249,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun info(message: String, vararg args: Any?) {
-        doLog(LogLevel.INFO, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.INFO, null, message, *args)
     }
 
     /**
@@ -256,7 +258,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun warn(throwable: Throwable?) {
-        doLog(LogLevel.WARN, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WARN, throwable, null)
     }
 
     /**
@@ -268,7 +270,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun warn(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.WARN, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WARN, throwable, message, *args)
     }
 
     /**
@@ -279,7 +281,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun warn(message: String, vararg args: Any?) {
-        doLog(LogLevel.WARN, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WARN, null, message, *args)
     }
 
     /**
@@ -288,7 +290,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun error(throwable: Throwable?) {
-        doLog(LogLevel.ERROR, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.ERROR, throwable, null)
     }
 
     /**
@@ -300,7 +302,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun error(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.ERROR, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.ERROR, throwable, message, *args)
     }
 
     /**
@@ -311,7 +313,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun error(message: String, vararg args: Any?) {
-        doLog(LogLevel.ERROR, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.ERROR, null, message, *args)
     }
 
     /**
@@ -320,7 +322,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun wtf(throwable: Throwable?) {
-        doLog(LogLevel.WTF, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WTF, throwable, null)
     }
 
     /**
@@ -332,7 +334,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun wtf(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.WTF, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WTF, throwable, message, *args)
     }
 
     /**
@@ -343,18 +345,18 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun wtf(message: String, vararg args: Any?) {
-        doLog(LogLevel.WTF, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WTF, null, message, *args)
     }
 
     /**
      * Log a message.
      */
-    internal fun doLog(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+    internal fun doLog(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         if (level.priority >= this.level.priority) {
             // Copy the reference to loggers so they are stable while iterating them.
             val loggers = this.loggers
             loggers.forEach {
-                it.log(level, throwable, message, *args)
+                it.log(category, level, throwable, message, *args)
             }
         }
     }
@@ -363,13 +365,13 @@ public object RealmLog {
      * Internal method used to optimize logging from internal components. See
      * [io.realm.kotlin.internal.ContextLogger] for more details.
      */
-    internal inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
+    internal inline fun doLog(category: LogCategory, level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
         if (level.priority >= this.level.priority) {
             // Copy the reference to loggers so they are stable while iterating them.
             val loggers = this.loggers
             val msg = message()
             loggers.forEach {
-                it.log(level, throwable, msg, *args)
+                it.log(category, level, throwable, msg, *args)
             }
         }
     }

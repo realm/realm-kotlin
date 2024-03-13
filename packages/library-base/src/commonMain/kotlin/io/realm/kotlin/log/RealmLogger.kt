@@ -39,7 +39,7 @@ public interface RealmLogger {
      * Log an event.
      */
     public fun log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-        log(level, throwable, message, args)
+        log(level, throwable, message, *args)
     }
 
     /**
@@ -52,6 +52,6 @@ public interface RealmLogger {
      * Log an event.
      */
     public fun log(level: LogLevel, message: String) {
-        log(level, null, message)
+        log(LogCategory.Realm.Sdk, level, null, message)
     }
 }

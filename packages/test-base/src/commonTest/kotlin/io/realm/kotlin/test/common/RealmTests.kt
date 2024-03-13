@@ -28,6 +28,8 @@ import io.realm.kotlin.ext.version
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.internal.platform.pathOf
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils

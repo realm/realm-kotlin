@@ -2422,9 +2422,9 @@ actual object RealmInterop {
 
     actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
         realm_wrapper.realm_set_log_callback(
-            staticCFunction { userData, logLevel, message ->
+            staticCFunction { userData, category, logLevel, message ->
                 val userDataLogCallback = safeUserData<LogCallback>(userData)
-                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
+                userDataLogCallback.log(category!!.toKString(), logLevel.toShort(), message?.toKString())
             },
             level.priority.toUInt(),
             StableRef.create(callback).asCPointer(),

@@ -1,5 +1,6 @@
 package io.realm.kotlin.internal
 
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 
@@ -81,10 +82,10 @@ public class ContextLogger(public val context: String? = null) {
     }
 
     private inline fun doLog(level: LogLevel, throwable: Throwable?) {
-        RealmLog.doLog(level, throwable, null)
+        RealmLog.doLog(LogCategory.Realm.Sdk, level, throwable, null)
     }
 
     private inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
-        RealmLog.doLog(level, throwable, message, *args)
+        RealmLog.doLog(LogCategory.Realm.Sdk, level, throwable, message, *args)
     }
 }
