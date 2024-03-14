@@ -96,14 +96,14 @@ sourceSets {
 // Task to generate gradle plugin runtime constants for SDK and core versions
 tasks.create("versionConstants") {
     val coreDependenciesFile = layout.projectDirectory.file(
-        listOf("..", "external", "core", "dependencies.list").joinToString(File.separator)
+        listOf("..", "external", "core", "dependencies.yml").joinToString(File.separator)
     )
     val outputDir = file(versionDirectory)
     inputs.property("version", project.version)
     inputs.file(coreDependenciesFile)
     outputs.dir(outputDir)
 
-    val versionRegex = "^VERSION=(.*)\$".toRegex()
+    val versionRegex = "^VERSION: (.*)\$".toRegex()
     val coreVersion = providers.fileContents(coreDependenciesFile).asText.get().lineSequence()
         .map { dependecy -> versionRegex.find(dependecy)?.groups?.get(1)?.value }.single { it != null }
 

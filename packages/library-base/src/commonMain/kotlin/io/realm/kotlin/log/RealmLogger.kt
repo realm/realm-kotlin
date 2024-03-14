@@ -28,6 +28,7 @@ public interface RealmLogger {
     /**
      * The [LogLevel] used in this logger.
      */
+    @Deprecated("No longer in use")
     public val level: LogLevel
 
     /**
@@ -45,12 +46,15 @@ public interface RealmLogger {
     /**
      * Log an event.
      */
-    @Deprecated("Use log with category instead", ReplaceWith("log"))
-    public fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)
+    @Deprecated("Use log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)", ReplaceWith("log"))
+    public fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+        log(level, message!!)
+    }
 
     /**
      * Log an event.
      */
+    @Deprecated("Use log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)", ReplaceWith("log"))
     public fun log(level: LogLevel, message: String) {
         log(LogCategory.Realm.Sdk, level, null, message)
     }

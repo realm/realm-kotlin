@@ -34,6 +34,9 @@ package io.realm.kotlin.log
  *      └─► Sdk
  */
 
+// It cannot reside in the LogCategory companion because it would not be initialized
+// when we register categories.
+private val categoriesByPath: MutableMap<String, LogCategory> = mutableMapOf()
 
 /**
  * TODO
@@ -44,26 +47,15 @@ public sealed class LogCategory(
 ) {
     internal val path: List<String> = if (parent == null) listOf(name) else parent.path + name
     internal val pathAsString = path.joinToString(".")
-    internal val children: MutableMap<String, LogCategory> = mutableMapOf()
 
     init {
-        parent?.children?.put(name, this)
+        categoriesByPath[name] = this
     }
 
     public companion object {
-        internal fun fromCoreValue(categoryValue: String): LogCategory {
-            val path = categoryValue.split(".").asSequence()
-
-            var category :LogCategory = Realm
-
-            path.onEach { nextElement ->
-                category = category.children[nextElement]!!
-            }
-
-            return category
-        }
-
         public val Realm: RealmLogCategory = RealmLogCategory
+
+        internal fun fromCoreValue(categoryPath: String): LogCategory = LogCategory.Realm //categoriesByPath[categoryPath]!!
     }
 }
 

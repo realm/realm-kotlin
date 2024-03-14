@@ -25,6 +25,7 @@ import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.internal.createPlatformClient
 import kotlinx.serialization.json.Json
@@ -59,7 +60,7 @@ fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() ->
                     // TODO Hook up with AppConfiguration/RealmConfiguration logger
                     private val logger = createDefaultSystemLogger(name)
                     override fun log(message: String) {
-                        logger.log(LogLevel.DEBUG, throwable = null, message = message)
+                        logger.log(LogCategory.Realm.Sdk, LogLevel.DEBUG, throwable = null, message = message)
                     }
                 }
                 level = io.ktor.client.plugins.logging.LogLevel.ALL
