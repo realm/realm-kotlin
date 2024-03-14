@@ -53,20 +53,22 @@ public object RealmLog {
     /**
      * The current [LogLevel]. Changing this will affect all registered loggers.
      */
+
     public var level: LogLevel
         get() = getLevel(LogCategory.Realm)
-        set(value) = setLevel(value, LogCategory.Realm)
-
+        set(value) {
+            setLevel(value, LogCategory.Realm)
+        }
 
     public fun setLevel(level: LogLevel, category: LogCategory = LogCategory.Realm) {
-        RealmInterop.realm_set_log_level_category(category.pathAsString, level.toCoreLogLevel())
+        RealmInterop.realm_set_log_level_category(category.toString(), level.toCoreLogLevel())
     }
 
-    public fun getLevel(category: LogCategory): LogLevel =
-        RealmInterop.realm_get_log_level_category(category.pathAsString).fromCoreLogLevel()
+    public fun getLevel(category: LogCategory): LogLevel {
+        return RealmInterop.realm_get_log_level_category(category.toString()).fromCoreLogLevel()
+    }
 
-
-        init {
+    init {
         addDefaultSystemLogger()
         RealmInterop.realm_set_log_callback(
             level.toCoreLogLevel(),

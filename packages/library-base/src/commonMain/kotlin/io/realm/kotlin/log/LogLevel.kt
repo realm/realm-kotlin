@@ -37,7 +37,7 @@ internal fun LogLevel.toCoreLogLevel(): CoreLogLevel {
 
 internal fun CoreLogLevel.fromCoreLogLevel(): LogLevel {
     return when (this) {
-        CoreLogLevel.RLM_LOG_LEVEL_ALL,
+        CoreLogLevel.RLM_LOG_LEVEL_ALL -> LogLevel.ALL
         CoreLogLevel.RLM_LOG_LEVEL_TRACE -> LogLevel.TRACE
         CoreLogLevel.RLM_LOG_LEVEL_DEBUG,
         CoreLogLevel.RLM_LOG_LEVEL_DETAIL -> LogLevel.DEBUG

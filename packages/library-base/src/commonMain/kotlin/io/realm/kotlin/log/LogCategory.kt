@@ -34,33 +34,38 @@ package io.realm.kotlin.log
  *      └─► Sdk
  */
 
-// It cannot reside in the LogCategory companion because it would not be initialized
-// when we register categories.
 private val categoriesByPath: MutableMap<String, LogCategory> = mutableMapOf()
-
+internal fun newCategory(
+    name: String,
+    parent: LogCategory? = null,
+): LogCategory = LogCategoryImpl(name, parent).also { category ->
+    categoriesByPath["$category"] = category
+}
 /**
  * TODO
  */
-public sealed class LogCategory(
-    internal val name: String,
-    internal val parent: LogCategory? = null,
-) {
-    internal val path: List<String> = if (parent == null) listOf(name) else parent.path + name
-    internal val pathAsString = path.joinToString(".")
+public sealed interface LogCategory {
+    public val parent: LogCategory?
 
-    init {
-        categoriesByPath[name] = this
-    }
+    override fun toString(): String
 
     public companion object {
+
         public val Realm: RealmLogCategory = RealmLogCategory
 
-        internal fun fromCoreValue(categoryPath: String): LogCategory = LogCategory.Realm //categoriesByPath[categoryPath]!!
+        internal fun fromCoreValue(categoryPath: String): LogCategory =
+            categoriesByPath[categoryPath]!!
     }
 }
 
-public data object RealmLogCategory : LogCategory("Realm") {
+public class LogCategoryImpl(
+    internal val name: String,
+    override val parent: LogCategory? = null,
+) : LogCategory {
+    override fun toString(): String = if (parent != null) "$parent.$name" else name
+}
 
+public data object RealmLogCategory : LogCategory by newCategory("Realm") {
     /**
      * TODO
      */
@@ -82,7 +87,8 @@ public data object RealmLogCategory : LogCategory("Realm") {
     public val Sdk: LogCategory = SdkLogCategory
 }
 
-public data object StorageLogCategory : LogCategory("Storage", RealmLogCategory) {
+public data object StorageLogCategory :
+    LogCategory by newCategory("Storage", RealmLogCategory) {
 
     /**
      * TODO
@@ -105,12 +111,20 @@ public data object StorageLogCategory : LogCategory("Storage", RealmLogCategory)
     public val Notification: LogCategory = NotificationLogCategory
 }
 
-public data object TransactionLogCategory : LogCategory("Transaction", StorageLogCategory)
-public data object QueryLogCategory : LogCategory("Query", StorageLogCategory)
-public data object ObjectLogCategory : LogCategory("Object", StorageLogCategory)
-public data object NotificationLogCategory : LogCategory("Notification", StorageLogCategory)
+public data object TransactionLogCategory :
+    LogCategory by newCategory("Transaction", StorageLogCategory)
 
-public data object SyncLogCategory : LogCategory("Sync", RealmLogCategory) {
+public data object QueryLogCategory :
+    LogCategory by newCategory("Query", StorageLogCategory)
+
+public data object ObjectLogCategory :
+    LogCategory by newCategory("Object", StorageLogCategory)
+
+public data object NotificationLogCategory :
+    LogCategory by newCategory("Notification", StorageLogCategory)
+
+public data object SyncLogCategory :
+    LogCategory by newCategory("Sync", RealmLogCategory) {
     /**
      * TODO
      */
@@ -122,7 +136,8 @@ public data object SyncLogCategory : LogCategory("Sync", RealmLogCategory) {
     public val Server: LogCategory = ServerLogCategory
 }
 
-public data object ClientLogCategory : LogCategory("Client", SyncLogCategory) {
+public data object ClientLogCategory :
+    LogCategory by newCategory("Client", SyncLogCategory) {
     /**
      * TODO
      */
@@ -144,11 +159,20 @@ public data object ClientLogCategory : LogCategory("Client", SyncLogCategory) {
     public val Reset: LogCategory = ResetLogCategory
 }
 
-public data object SessionLogCategory : LogCategory("Session", ClientLogCategory)
-public data object ChangesetLogCategory : LogCategory("Changeset", ClientLogCategory)
-public data object NetworkLogCategory : LogCategory("Network", ClientLogCategory)
-public data object ResetLogCategory : LogCategory("Reset", ClientLogCategory)
-public data object ServerLogCategory : LogCategory("Server", SyncLogCategory)
+public data object SessionLogCategory :
+    LogCategory by newCategory("Session", ClientLogCategory)
 
-public data object AppLogCategory : LogCategory("App", RealmLogCategory)
-public data object SdkLogCategory : LogCategory("SDK", RealmLogCategory)
+public data object ChangesetLogCategory :
+    LogCategory by newCategory("Changeset", ClientLogCategory)
+
+public data object NetworkLogCategory :
+    LogCategory by newCategory("Network", ClientLogCategory)
+
+public data object ResetLogCategory :
+    LogCategory by newCategory("Reset", ClientLogCategory)
+
+public data object ServerLogCategory :
+    LogCategory by newCategory("Server", SyncLogCategory)
+
+public data object AppLogCategory : LogCategory by newCategory("App", RealmLogCategory)
+public data object SdkLogCategory : LogCategory by newCategory("SDK", RealmLogCategory)

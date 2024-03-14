@@ -23,8 +23,4 @@ class TestLogger : RealmLogger {
         this.message = message
         this.args = args
     }
-
-    override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-        TODO("Not yet implemented")
-    }
 }

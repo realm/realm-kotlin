@@ -371,7 +371,7 @@ class RealmLogTests {
     fun categoriesWatchdog() {
         val coreLogCategoryNames = RealmInterop.realm_get_category_names()
 
-        val logCategoriesPaths = logCategories.map { it.pathAsString }
+        val logCategoriesPaths = logCategories.map { "$it" }
 
         logCategoriesPaths.forEach { path ->
             assertContains(coreLogCategoryNames, path)
