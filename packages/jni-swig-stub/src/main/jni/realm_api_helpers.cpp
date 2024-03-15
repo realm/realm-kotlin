@@ -1387,5 +1387,7 @@ jobjectArray realm_get_log_category_names() {
         env->SetObjectArrayElement(array, i, string);
     }
 
+    delete[] category_names;
+
     return array;
 }
