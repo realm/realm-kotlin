@@ -63,14 +63,21 @@ public object RealmLog {
         }
 
     /**
-     * TODO
+     * Sets the log level of a log category. By setting the log level of a category all its subcategories
+     * would also be updated to match its level.
+     *
+     * @param level target log level.
+     * @param category target log category, [LogCategory.Realm] by default.
      */
     public fun setLevel(level: LogLevel, category: LogCategory = LogCategory.Realm) {
         RealmInterop.realm_set_log_level_category(category.toString(), level.toCoreLogLevel())
     }
 
     /**
-     * TODO
+     * Gets the current log level of a log category.
+     *
+     * @param category target log category.
+     * @return current [category] log level.
      */
     public fun getLevel(category: LogCategory): LogLevel {
         return RealmInterop.realm_get_log_level_category(category.toString()).fromCoreLogLevel()
