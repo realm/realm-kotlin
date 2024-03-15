@@ -238,7 +238,7 @@ class RealmLogTests {
     }
 
     @Test
-    fun addLogger() {
+    fun deprecatedMethodWork1() {
         val called = atomic<Boolean>(false)
         val customLogger = object : RealmLogger {
             override val level: LogLevel = LogLevel.ALL
@@ -259,17 +259,61 @@ class RealmLogTests {
     }
 
     @Test
+    fun deprecatedMethodWork2() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                message: String
+            ) {
+                assertEquals("Hello", message)
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertTrue(called.value)
+    }
+
+    @Test
+    fun addLogger() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                category: LogCategory,
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?
+            ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
+                assertEquals("Hello", message)
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertTrue(called.value)
+    }
+
+    @Test
     fun addLogger_twice() {
         val called = atomic(0)
         val customLogger = object : RealmLogger {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
                 vararg args: Any?
             ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
                 assertEquals("Hello", message)
                 called.incrementAndGet()
             }
@@ -287,11 +331,13 @@ class RealmLogTests {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
                 vararg args: Any?
             ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
                 assertEquals("Hello", message)
                 called.incrementAndGet()
             }
@@ -308,6 +354,7 @@ class RealmLogTests {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -325,6 +372,7 @@ class RealmLogTests {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -365,6 +413,15 @@ class RealmLogTests {
             // Restore the level to whatever it was set before
             RealmLog.setLevel(previousLevel, logCategory)
         }
+    }
+
+    @Test
+    fun categoryContains() {
+        assertFalse(LogCategory.Realm in LogCategory.Realm.Storage)
+
+        assertTrue(LogCategory.Realm.Storage in LogCategory.Realm)
+        assertTrue(LogCategory.Realm.Storage.Transaction in LogCategory.Realm)
+        assertTrue(LogCategory.Realm.Storage.Transaction in LogCategory.Realm.Storage)
     }
 
     @Test

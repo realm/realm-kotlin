@@ -39,6 +39,7 @@ internal fun newCategory(
 public sealed interface LogCategory {
     public val parent: LogCategory?
 
+    public operator fun contains(element: LogCategory): Boolean
     override fun toString(): String
 
     public companion object {
@@ -75,6 +76,8 @@ internal class LogCategoryImpl(
     internal val name: String,
     override val parent: LogCategory? = null,
 ) : LogCategory {
+    override fun contains(element: LogCategory): Boolean = "$element".contains("$this")
+
     override fun toString(): String = if (parent != null) "$parent.$name" else name
 }
 
