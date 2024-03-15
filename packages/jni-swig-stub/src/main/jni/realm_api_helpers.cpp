@@ -1375,9 +1375,10 @@ realm_class_info_t_cleanup(realm_class_info_t * value) {
 jobjectArray realm_get_log_category_names() {
     JNIEnv* env = get_env(true);
 
-    size_t bufferSize = 50;
-    const char* category_names[bufferSize];
-    size_t namesCount = realm_get_category_names(bufferSize, category_names);
+    size_t namesCount = realm_get_category_names(0, nullptr);
+
+    const char** category_names = new const char*[namesCount];
+    realm_get_category_names(namesCount, category_names);
 
     auto array = env->NewObjectArray(namesCount, JavaClassGlobalDef::java_lang_string(), nullptr);
 
