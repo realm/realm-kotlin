@@ -246,7 +246,7 @@ class RealmConfigurationTests {
     fun defaultLogLevel() {
         val config: RealmConfiguration = RealmConfiguration.Builder(schema = setOf(Sample::class))
             .build()
-        assertEquals(LogLevel.INFO, RealmLog.level)
+        assertEquals(LogLevel.WARN, RealmLog.level)
     }
 
     @Test

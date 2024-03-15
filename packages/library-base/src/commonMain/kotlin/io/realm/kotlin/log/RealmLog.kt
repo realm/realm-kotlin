@@ -50,20 +50,28 @@ public object RealmLog {
     // copy this reference before using it.
     private var loggers: MutableList<RealmLogger> = mutableListOf()
 
+    // Log level that would be set by default
+    private val defaultLogLevel = LogLevel.WARN
+
     /**
      * The current [LogLevel]. Changing this will affect all registered loggers.
      */
-
     public var level: LogLevel
         get() = getLevel(LogCategory.Realm)
         set(value) {
             setLevel(value, LogCategory.Realm)
         }
 
+    /**
+     * TODO
+     */
     public fun setLevel(level: LogLevel, category: LogCategory = LogCategory.Realm) {
         RealmInterop.realm_set_log_level_category(category.toString(), level.toCoreLogLevel())
     }
 
+    /**
+     * TODO
+     */
     public fun getLevel(category: LogCategory): LogLevel {
         return RealmInterop.realm_get_log_level_category(category.toString()).fromCoreLogLevel()
     }
@@ -71,7 +79,7 @@ public object RealmLog {
     init {
         addDefaultSystemLogger()
         RealmInterop.realm_set_log_callback(
-            level.toCoreLogLevel(),
+            defaultLogLevel.toCoreLogLevel(), // We set
             object : LogCallback {
                 override fun log(categoryValue: String, logLevel: Short, message: String?) {
                     // Create concatenated up front, since Core should already filter messages
