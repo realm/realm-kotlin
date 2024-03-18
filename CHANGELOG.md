@@ -30,7 +30,8 @@
 
 ### Internal
 
-- None.
+- Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
+
 
 ## 1.14.0 (2024-03-08)
 
