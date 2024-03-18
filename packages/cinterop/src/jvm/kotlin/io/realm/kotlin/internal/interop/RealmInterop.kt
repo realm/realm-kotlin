@@ -576,7 +576,7 @@ actual object RealmInterop {
         return if (found[0]) {
             index[0]
         } else {
-            -1
+            INDEX_NOT_FOUND
         }
     }
 

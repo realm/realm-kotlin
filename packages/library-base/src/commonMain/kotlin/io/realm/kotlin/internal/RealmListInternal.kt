@@ -51,6 +51,8 @@ import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
 
+internal const val INDEX_NOT_FOUND = io.realm.kotlin.internal.interop.INDEX_NOT_FOUND
+
 /**
  * Implementation for unmanaged lists, backed by a [MutableList].
  */

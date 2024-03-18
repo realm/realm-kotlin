@@ -1046,7 +1046,7 @@ actual object RealmInterop {
             return if (found.value) {
                 index.value.toLong()
             } else {
-                -1
+                INDEX_NOT_FOUND
             }
         }
     }
