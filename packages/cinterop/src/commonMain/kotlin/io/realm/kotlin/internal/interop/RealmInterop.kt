@@ -55,6 +55,8 @@ expect val INVALID_PROPERTY_KEY: PropertyKey
 const val OBJECT_ID_BYTES_SIZE = 12
 const val UUID_BYTES_SIZE = 16
 
+const val INDEX_NOT_FOUND = -1L
+
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT
 interface RealmConfigT : CapiT
@@ -317,6 +319,7 @@ expect object RealmInterop {
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
     fun MemAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue
+    fun realm_list_find(list: RealmListPointer, value: RealmValue): Long
     fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer
     fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
     fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue)
