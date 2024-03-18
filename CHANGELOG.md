@@ -6,7 +6,7 @@
 
 ### Enhancements
 
-- None.
+- Fixes missing binaries files for Windows and Linux platforms when releasing. (Issue [#1671](https://github.com/realm/realm-kotlin/issues/1690) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1037))
 
 ### Fixed
 
