@@ -49,8 +49,6 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ## 1.14.0 (2024-03-08)
 
-This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from fileformat v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier.  Downgrading to a previous file format is not possible.
-
 ### Breaking Changes
 * None.
 
