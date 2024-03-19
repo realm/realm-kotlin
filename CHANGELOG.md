@@ -45,6 +45,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ### Internal
 * Updated to Realm Core 14.2.0 commit 383bdc81e36293b22868ee085a6f5c265115556d.
+* Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
 
 
 ## 1.14.0 (2024-03-08)

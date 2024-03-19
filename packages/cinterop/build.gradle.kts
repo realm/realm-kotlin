@@ -449,7 +449,7 @@ val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
  * Consolidate shared CMake flags used across all configurations
  */
 fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<String> {
-    // Any change to CMAKE properties here, should be reflected in /JenkinsFile, specifically
+    // Any change to CMAKE properties here, should be reflected in GHA(.github/workflows/pr.yml), specifically
     // the `build_jvm_linux` and `build_jvm_windows` functions.
     val args = mutableListOf<String>()
     if (ccache) {
