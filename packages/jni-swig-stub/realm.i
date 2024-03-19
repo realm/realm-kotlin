@@ -365,7 +365,9 @@ import static io.realm.kotlin.internal.interop.realm_errno_e.*;
 // bool output parameter
 %apply bool* OUTPUT { bool* out_found, bool* did_create, bool* did_delete_realm, bool* out_inserted,
                       bool* erased, bool* out_erased, bool* did_refresh, bool* did_run,
-                      bool* found, bool* out_collection_was_cleared, bool* did_compact };
+                      bool* found, bool* out_collection_was_cleared, bool* did_compact,
+                      bool* collection_was_cleared, bool* out_collection_was_deleted,
+                      bool* out_was_deleted};
 
 // uint64_t output parameter for realm_get_num_versions
 %apply int64_t* OUTPUT { uint64_t* out_versions_count };

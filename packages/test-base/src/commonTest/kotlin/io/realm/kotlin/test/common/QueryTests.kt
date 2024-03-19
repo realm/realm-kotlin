@@ -114,7 +114,7 @@ class QueryTests {
 
     @Test
     fun query_wrongArgumentTypeThrows() {
-        assertFailsWithMessage<IllegalArgumentException>(" Unsupported comparison between type 'string' and type 'bool'") {
+        assertFailsWithMessage<IllegalArgumentException>("Cannot compare argument \$0 with value 'true' to a string") {
             realm.query<QuerySample>("stringField = $0", true)
         }
     }
