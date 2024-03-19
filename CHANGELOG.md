@@ -4,7 +4,7 @@
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
-* If you want to query using @type operation, you must use 'objectlink' to match links to objects. 'object' is reserved for dictionary types.
+* If you want to query using `@type` operation, you must use 'objectlink' to match links to objects. 'object' is reserved for dictionary types.
 * Binary data and String data are now strongly typed for comparisons and queries. This change is especially relevant when querying for a string constant on a RealmAny property, as now only strings will be returned. If searching for Binary data is desired, then that type must be specified by the constant. In RQL the new way to specify a binary constant is to use `mixed = bin('xyz')` or `mixed = binary('xyz')`. (Core issue [realm/realm-core#6407](https://github.com/realm/realm-core/issues/6407)).
 * Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
 
