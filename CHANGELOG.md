@@ -1,19 +1,15 @@
-## 1.14.1-SNAPSHOT (YYYY-MM-DD)
+## 1.14.1 (2024-03-19)
 
 ### Breaking Changes
-
 - None.
 
 ### Enhancements
-
 - Fixes missing binaries files for Windows and Linux platforms when releasing. (Issue [#1671](https://github.com/realm/realm-kotlin/issues/1690) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1037))
 
 ### Fixed
-
 - None.
 
 ### Compatibility
-
 - File format: Generates Realms with file format v23.
 - Realm Studio 13.0.0 or above is required to open Realms created by this version.
 - This release is compatible with the following Kotlin releases:
@@ -29,8 +25,8 @@
 - Minimum R8: 8.0.34.
 
 ### Internal
-
 - None.
+
 
 ## 1.14.0 (2024-03-08)
 
