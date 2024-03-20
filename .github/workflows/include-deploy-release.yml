@@ -108,5 +108,5 @@ jobs:
          "${{ secrets.DOCS_S3_ACCESS_KEY }}" "${{ secrets.DOCS_S3_SECRET_KEY }}" \
          "${{ secrets.SLACK_URL_RELEASE }}" "${{ secrets.SLACK_URL_CI }}" \
          "${{ secrets.GRADLE_PORTAL_KEY }}" "${{ secrets.GRADLE_PORTAL_SECRET }}" \
-         '-PsignBuild=true -PsignSecretRingFileKotlin="${{ secrets.GPG_SIGNING_KEY_BASE_64_DBG }}" -PsignPasswordKotlin=${{ secrets.GPG_PASS_PHRASE_DBG }}'
+         '-PsignBuild=true -PsignSecretRingFileKotlin="${{ secrets.GPG_SIGNING_KEY_BASE_64_DBG }}" -PsignPasswordKotlin=${{ secrets.GPG_PASS_PHRASE_DBG }} -Prealm.kotlin.copyNativeJvmLibs=linux,windows'
         

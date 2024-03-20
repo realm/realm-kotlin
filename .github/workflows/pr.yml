@@ -145,7 +145,11 @@ jobs:
             rm -rf realmLinuxBuild
             mkdir realmLinuxBuild
             cd realmLinuxBuild
-            cmake ../../src/jvm
+            cmake -DCMAKE_BUILD_TYPE=Release \
+            -DREALM_ENABLE_SYNC=1 \
+            -DREALM_NO_TESTS=1 \
+            -DREALM_BUILD_LIB_ONLY=true \
+            ../../src/jvm
             make -j8
 
       - name: Upload artifacts
