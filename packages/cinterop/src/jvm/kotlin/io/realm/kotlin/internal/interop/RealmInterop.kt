@@ -1287,17 +1287,29 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
     }
 
-    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
-        realmc.set_log_callback(level.priority, callback)
+    actual fun realm_set_log_callback(callback: LogCallback) {
+        realmc.set_log_callback(callback)
     }
 
     actual fun realm_set_log_level(level: CoreLogLevel) {
         realmc.realm_set_log_level(level.priority)
     }
 
+    actual fun realm_set_log_level_category(category: String, level: CoreLogLevel) {
+        realmc.realm_set_log_level_category(category, level.priority)
+    }
+
+    actual fun realm_get_log_level_category(category: String): CoreLogLevel =
+        CoreLogLevel.valueFromPriority(realmc.realm_get_log_level_category(category).toShort())
+
+    actual fun realm_get_category_names(): List<String> {
+        val names: Array<String> = realmc.realm_get_log_category_names() as Array<String>
+        return names.asList()
+    }
+
     actual fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,
-        metadataMode: MetadataMode
+        metadataMode: MetadataMode,
     ) {
         realmc.realm_sync_client_config_set_metadata_mode(
             syncClientConfig.cptr(),

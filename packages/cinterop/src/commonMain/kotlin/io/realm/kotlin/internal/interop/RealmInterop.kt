@@ -579,9 +579,15 @@ expect object RealmInterop {
 
     fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean)
 
-    fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
+    fun realm_set_log_callback(callback: LogCallback)
 
     fun realm_set_log_level(level: CoreLogLevel)
+
+    fun realm_set_log_level_category(category: String, level: CoreLogLevel)
+
+    fun realm_get_log_level_category(category: String): CoreLogLevel
+
+    fun realm_get_category_names(): List<String>
 
     fun realm_sync_client_config_set_metadata_mode(
         syncClientConfig: RealmSyncClientConfigurationPointer,

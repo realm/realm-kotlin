@@ -16,6 +16,8 @@
 @file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.common
 
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -25,6 +27,7 @@ import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -42,6 +45,30 @@ class RealmLogTests {
 
     private lateinit var existingLogLevel: LogLevel
     private lateinit var log: RealmLog
+
+    private val logCategories = listOf(
+        LogCategory.Realm,
+
+        LogCategory.Realm.Storage,
+        LogCategory.Realm.Sync,
+
+        LogCategory.Realm.Sync.Client,
+
+        LogCategory.Realm.Sync.Client.Session,
+        LogCategory.Realm.Sync.Client.Changeset,
+        LogCategory.Realm.Sync.Client.Network,
+        LogCategory.Realm.Sync.Client.Reset,
+
+        LogCategory.Realm.Sync.Server,
+
+        LogCategory.Realm.App,
+        LogCategory.Realm.Sdk,
+
+        LogCategory.Realm.Storage.Transaction,
+        LogCategory.Realm.Storage.Query,
+        LogCategory.Realm.Storage.Object,
+        LogCategory.Realm.Storage.Notification,
+    )
 
     @BeforeTest
     fun setUp() {
@@ -101,7 +128,7 @@ class RealmLogTests {
     @Test
     fun smallLogEntry() {
         val message = "Testing the RealmLog implementation"
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
@@ -120,7 +147,7 @@ class RealmLogTests {
     fun smallLogEntryWithArgs() {
         val message = "Testing the RealmLog implementation: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
@@ -138,7 +165,7 @@ class RealmLogTests {
     @Test
     fun longLogEntry() {
         val message = Utils.createRandomString(8000)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
@@ -157,7 +184,7 @@ class RealmLogTests {
     fun longLogEntryWithArgs() {
         val message = "${Utils.createRandomString(8000)}: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
@@ -175,7 +202,7 @@ class RealmLogTests {
     @Test
     fun logException() {
         val error = IllegalArgumentException("BOOM")
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error)
@@ -195,7 +222,7 @@ class RealmLogTests {
         val error = IllegalArgumentException("BOOM")
         val message = "Details: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error, message, *args)
@@ -211,7 +238,7 @@ class RealmLogTests {
     }
 
     @Test
-    fun addLogger() {
+    fun deprecatedMethodWork1() {
         val called = atomic<Boolean>(false)
         val customLogger = object : RealmLogger {
             override val level: LogLevel = LogLevel.ALL
@@ -232,17 +259,61 @@ class RealmLogTests {
     }
 
     @Test
+    fun deprecatedMethodWork2() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                message: String
+            ) {
+                assertEquals("Hello", message)
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertTrue(called.value)
+    }
+
+    @Test
+    fun addLogger() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                category: LogCategory,
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?
+            ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
+                assertEquals("Hello", message)
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertTrue(called.value)
+    }
+
+    @Test
     fun addLogger_twice() {
         val called = atomic(0)
         val customLogger = object : RealmLogger {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
                 vararg args: Any?
             ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
                 assertEquals("Hello", message)
                 called.incrementAndGet()
             }
@@ -260,11 +331,13 @@ class RealmLogTests {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
                 vararg args: Any?
             ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
                 assertEquals("Hello", message)
                 called.incrementAndGet()
             }
@@ -281,6 +354,7 @@ class RealmLogTests {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -298,6 +372,7 @@ class RealmLogTests {
             override val level: LogLevel = LogLevel.ALL
             override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -326,5 +401,41 @@ class RealmLogTests {
     @Test
     fun addDefaultSystemLogger_failure() {
         assertFalse(RealmLog.addDefaultSystemLogger())
+    }
+
+    @Test
+    fun setCategoryLevels() {
+        logCategories.forEach { logCategory ->
+            val previousLevel: LogLevel = RealmLog.getLevel(logCategory)
+            RealmLog.setLevel(LogLevel.TRACE, logCategory)
+            assertEquals(LogLevel.TRACE, RealmLog.getLevel(logCategory))
+
+            // Restore the level to whatever it was set before
+            RealmLog.setLevel(previousLevel, logCategory)
+        }
+    }
+
+    @Test
+    fun categoryContains() {
+        assertFalse(LogCategory.Realm in LogCategory.Realm.Storage)
+
+        assertTrue(LogCategory.Realm.Storage in LogCategory.Realm)
+        assertTrue(LogCategory.Realm.Storage.Transaction in LogCategory.Realm)
+        assertTrue(LogCategory.Realm.Storage.Transaction in LogCategory.Realm.Storage)
+    }
+
+    @Test
+    fun categoriesWatchdog() {
+        val coreLogCategoryNames = RealmInterop.realm_get_category_names()
+
+        val logCategoriesPaths = logCategories.map { "$it" }
+
+        logCategoriesPaths.forEach { path ->
+            assertContains(coreLogCategoryNames, path)
+        }
+
+        coreLogCategoryNames.forEach { path ->
+            assertContains(logCategoriesPaths, path)
+        }
     }
 }

@@ -45,6 +45,7 @@ private:
     JavaClassGlobalDef(JNIEnv* env)
         : m_java_util_hashmap(env, "java/util/HashMap", false)
         , m_java_lang_int(env, "java/lang/Integer", false)
+        , m_java_lang_string(env, "java/lang/String", false)
         , m_kotlin_jvm_functions_function0(env, "kotlin/jvm/functions/Function0", false)
         , m_kotlin_jvm_functions_function1(env, "kotlin/jvm/functions/Function1", false)
         , m_io_realm_kotlin_internal_interop_sync_network_transport(env, "io/realm/kotlin/internal/interop/sync/NetworkTransport", false)
@@ -74,6 +75,7 @@ private:
 
     jni_util::JavaClass m_java_util_hashmap;
     jni_util::JavaClass m_java_lang_int;
+    jni_util::JavaClass m_java_lang_string;
     jni_util::JavaClass m_kotlin_jvm_functions_function0;
     jni_util::JavaClass m_kotlin_jvm_functions_function1;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_network_transport;
@@ -131,6 +133,11 @@ public:
                                          "<init>",
                                          "(I)V");
         return env->NewObject(instance()->m_java_lang_int, init, value);
+    }
+
+    inline static const jni_util::JavaClass& java_lang_string()
+    {
+        return instance()->m_java_lang_string;
     }
 
     inline static const jni_util::JavaClass& network_transport_class()

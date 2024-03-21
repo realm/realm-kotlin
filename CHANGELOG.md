@@ -17,6 +17,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Index on list of strings property now supported (Core issue [realm/realm-core#7142](https://github.com/realm/realm-core/pull/7142))
 * Improved performance of RQL (parsed) queries on a non-linked string property using: >, >=, <, <=, operators and fixed behaviour that a null string should be evaulated as less than everything, previously nulls were not matched. (Core issue [realm/realm-core#3939](https://github.com/realm/realm-core/issues/3939).
 * Updated bundled OpenSSL version to 3.2.0 (Core issue [realm/realm-core#7303](https://github.com/realm/realm-core/pull/7303))
+* Add support for filtering logs by category. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
 
 ### Fixed
 * `@count`/`@size` is now supported for `RealmAny` properties (Core issue [realm/realm-core#7280](https://github.com/realm/realm-core/issues/7280), since v10.0.0)

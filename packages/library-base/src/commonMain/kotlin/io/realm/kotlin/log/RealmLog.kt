@@ -1,3 +1,18 @@
+/*
+ * Copyright 2023 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.realm.kotlin.log
 
 import io.realm.kotlin.Realm
@@ -23,15 +38,6 @@ import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
  */
 public object RealmLog {
 
-    /**
-     * The current [LogLevel]. Changing this will affect all registered loggers.
-     */
-    public var level: LogLevel = LogLevel.WARN
-        set(value) {
-            RealmInterop.realm_set_log_level(value.toCoreLogLevel())
-            field = value
-        }
-
     // Lock preventing multiple threads modifying the list of loggers.
     private val loggersMutex = SynchronizableObject()
     // Reference to the currently installed system logger (if any)
@@ -44,16 +50,51 @@ public object RealmLog {
     // copy this reference before using it.
     private var loggers: MutableList<RealmLogger> = mutableListOf()
 
+    // Log level that would be set by default
+    private val defaultLogLevel = LogLevel.WARN
+
+    /**
+     * The current [LogLevel]. Changing this will affect all registered loggers.
+     */
+    public var level: LogLevel
+        get() = getLevel(LogCategory.Realm)
+        set(value) {
+            setLevel(value, LogCategory.Realm)
+        }
+
+    /**
+     * Sets the log level of a log category. By setting the log level of a category all its subcategories
+     * would also be updated to match its level.
+     *
+     * @param level target log level.
+     * @param category target log category, [LogCategory.Realm] by default.
+     */
+    public fun setLevel(level: LogLevel, category: LogCategory = LogCategory.Realm) {
+        RealmInterop.realm_set_log_level_category(category.toString(), level.toCoreLogLevel())
+    }
+
+    /**
+     * Gets the current log level of a log category.
+     *
+     * @param category target log category.
+     * @return current [category] log level.
+     */
+    public fun getLevel(category: LogCategory): LogLevel {
+        return RealmInterop.realm_get_log_level_category(category.toString()).fromCoreLogLevel()
+    }
+
     init {
         addDefaultSystemLogger()
+        setLevel(level = defaultLogLevel) // Set the log level to the SDKs (might be different from cores default INFO)
         RealmInterop.realm_set_log_callback(
-            level.toCoreLogLevel(),
             object : LogCallback {
-                override fun log(logLevel: Short, message: String?) {
+                override fun log(categoryValue: String, logLevel: Short, message: String?) {
                     // Create concatenated up front, since Core should already filter messages
                     // not within the log range.
-                    val level: LogLevel = fromCoreLogLevel(CoreLogLevel.valueFromPriority(logLevel))
+                    val category: LogCategory = LogCategory.fromCoreValue(categoryValue)
+                    val level: LogLevel = CoreLogLevel.valueFromPriority(logLevel).fromCoreLogLevel()
                     doLog(
+                        category,
                         level,
                         null,
                         if (message.isNullOrBlank()) { null } else { "[Core] $message" }
@@ -138,7 +179,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun trace(throwable: Throwable?) {
-        doLog(LogLevel.TRACE, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.TRACE, throwable, null)
     }
 
     /**
@@ -150,7 +191,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun trace(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.TRACE, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.TRACE, throwable, message, *args)
     }
 
     /**
@@ -161,7 +202,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun trace(message: String, vararg args: Any?) {
-        doLog(LogLevel.TRACE, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.TRACE, null, message, *args)
     }
 
     /**
@@ -170,7 +211,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun debug(throwable: Throwable?) {
-        doLog(LogLevel.DEBUG, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.DEBUG, throwable, null)
     }
 
     /**
@@ -182,7 +223,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun debug(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.DEBUG, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.DEBUG, throwable, message, *args)
     }
 
     /**
@@ -193,7 +234,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun debug(message: String, vararg args: Any?) {
-        doLog(LogLevel.DEBUG, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.DEBUG, null, message, *args)
     }
 
     /**
@@ -202,7 +243,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun info(throwable: Throwable?) {
-        doLog(LogLevel.INFO, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.INFO, throwable, null)
     }
 
     /**
@@ -214,7 +255,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun info(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.INFO, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.INFO, throwable, message, *args)
     }
 
     /**
@@ -225,7 +266,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun info(message: String, vararg args: Any?) {
-        doLog(LogLevel.INFO, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.INFO, null, message, *args)
     }
 
     /**
@@ -234,7 +275,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun warn(throwable: Throwable?) {
-        doLog(LogLevel.WARN, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WARN, throwable, null)
     }
 
     /**
@@ -246,7 +287,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun warn(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.WARN, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WARN, throwable, message, *args)
     }
 
     /**
@@ -257,7 +298,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun warn(message: String, vararg args: Any?) {
-        doLog(LogLevel.WARN, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WARN, null, message, *args)
     }
 
     /**
@@ -266,7 +307,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun error(throwable: Throwable?) {
-        doLog(LogLevel.ERROR, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.ERROR, throwable, null)
     }
 
     /**
@@ -278,7 +319,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun error(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.ERROR, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.ERROR, throwable, message, *args)
     }
 
     /**
@@ -289,7 +330,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun error(message: String, vararg args: Any?) {
-        doLog(LogLevel.ERROR, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.ERROR, null, message, *args)
     }
 
     /**
@@ -298,7 +339,7 @@ public object RealmLog {
      * @param throwable optional exception to log.
      */
     internal fun wtf(throwable: Throwable?) {
-        doLog(LogLevel.WTF, throwable, null)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WTF, throwable, null)
     }
 
     /**
@@ -310,7 +351,7 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun wtf(throwable: Throwable?, message: String, vararg args: Any?) {
-        doLog(LogLevel.WTF, throwable, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WTF, throwable, message, *args)
     }
 
     /**
@@ -321,18 +362,18 @@ public object RealmLog {
      * options. Only `%s`, `%d` and `%f` are supported.
      */
     internal fun wtf(message: String, vararg args: Any?) {
-        doLog(LogLevel.WTF, null, message, *args)
+        doLog(LogCategory.Realm.Sdk, LogLevel.WTF, null, message, *args)
     }
 
     /**
      * Log a message.
      */
-    internal fun doLog(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+    internal fun doLog(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         if (level.priority >= this.level.priority) {
             // Copy the reference to loggers so they are stable while iterating them.
             val loggers = this.loggers
             loggers.forEach {
-                it.log(level, throwable, message, *args)
+                it.log(category, level, throwable, message, *args)
             }
         }
     }
@@ -341,13 +382,13 @@ public object RealmLog {
      * Internal method used to optimize logging from internal components. See
      * [io.realm.kotlin.internal.ContextLogger] for more details.
      */
-    internal inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
+    internal inline fun doLog(category: LogCategory, level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
         if (level.priority >= this.level.priority) {
             // Copy the reference to loggers so they are stable while iterating them.
             val loggers = this.loggers
             val msg = message()
             loggers.forEach {
-                it.log(level, throwable, msg, *args)
+                it.log(category, level, throwable, msg, *args)
             }
         }
     }
@@ -359,33 +400,5 @@ public object RealmLog {
         removeAll()
         addDefaultSystemLogger()
         level = LogLevel.WARN
-    }
-
-    private fun LogLevel.toCoreLogLevel(): CoreLogLevel {
-        return when (this) {
-            LogLevel.ALL -> CoreLogLevel.RLM_LOG_LEVEL_ALL
-            LogLevel.TRACE -> CoreLogLevel.RLM_LOG_LEVEL_TRACE
-            LogLevel.DEBUG -> CoreLogLevel.RLM_LOG_LEVEL_DEBUG
-            LogLevel.INFO -> CoreLogLevel.RLM_LOG_LEVEL_INFO
-            LogLevel.WARN -> CoreLogLevel.RLM_LOG_LEVEL_WARNING
-            LogLevel.ERROR -> CoreLogLevel.RLM_LOG_LEVEL_ERROR
-            LogLevel.WTF -> CoreLogLevel.RLM_LOG_LEVEL_FATAL
-            LogLevel.NONE -> CoreLogLevel.RLM_LOG_LEVEL_OFF
-        }
-    }
-
-    private fun fromCoreLogLevel(level: CoreLogLevel): LogLevel {
-        return when (level) {
-            CoreLogLevel.RLM_LOG_LEVEL_ALL,
-            CoreLogLevel.RLM_LOG_LEVEL_TRACE -> LogLevel.TRACE
-            CoreLogLevel.RLM_LOG_LEVEL_DEBUG,
-            CoreLogLevel.RLM_LOG_LEVEL_DETAIL -> LogLevel.DEBUG
-            CoreLogLevel.RLM_LOG_LEVEL_INFO -> LogLevel.INFO
-            CoreLogLevel.RLM_LOG_LEVEL_WARNING -> LogLevel.WARN
-            CoreLogLevel.RLM_LOG_LEVEL_ERROR -> LogLevel.ERROR
-            CoreLogLevel.RLM_LOG_LEVEL_FATAL -> LogLevel.WTF
-            CoreLogLevel.RLM_LOG_LEVEL_OFF -> LogLevel.NONE
-            else -> throw IllegalArgumentException("Invalid core log level: $level")
-        }
     }
 }

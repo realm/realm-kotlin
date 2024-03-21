@@ -959,10 +959,9 @@ realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jo
 
 // *** END - WebSocket Client (Platform Networking) *** //
 
-void set_log_callback(jint j_log_level, jobject log_callback) {
+void set_log_callback(jobject log_callback) {
 auto jenv = get_env(false);
-auto log_level = static_cast<realm_log_level_e>(j_log_level);
-realm_set_log_callback([](void *userdata, realm_log_level_e level, const char *message) {
+realm_set_log_callback([](void *userdata, const char *category, realm_log_level_e level, const char *message) {
                                auto log_callback = static_cast<jobject>(userdata);
                                auto jenv = get_env(true);
 
@@ -971,14 +970,13 @@ realm_set_log_callback([](void *userdata, realm_log_level_e level, const char *m
                                static JavaMethod log_method(jenv,
                                                             JavaClassGlobalDef::log_callback(),
                                                             "log",
-                                                            "(SLjava/lang/String;)V");
+                                                            "(Ljava/lang/String;SLjava/lang/String;)V");
 
                                push_local_frame(jenv, 1);
-                               jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, message));
+                               jenv->CallVoidMethod(log_callback, log_method, to_jstring(jenv, category), java_level, to_jstring(jenv, message));
                                jni_check_exception(jenv);
                                jenv->PopLocalFrame(NULL);
                           },
-                          log_level,
                           jenv->NewGlobalRef(log_callback), // userdata is the log callback
                           [](void* userdata) {
                               // The log callback is a static global method that is intended to
@@ -1370,4 +1368,24 @@ void
 realm_class_info_t_cleanup(realm_class_info_t * value) {
     delete[] value->primary_key;
     delete[] value->name;
+}
+
+jobjectArray realm_get_log_category_names() {
+    JNIEnv* env = get_env(true);
+
+    size_t namesCount = realm_get_category_names(0, nullptr);
+
+    const char** category_names = new const char*[namesCount];
+    realm_get_category_names(namesCount, category_names);
+
+    auto array = env->NewObjectArray(namesCount, JavaClassGlobalDef::java_lang_string(), nullptr);
+
+    for(size_t i = 0; i < namesCount; i++) {
+        jstring string = env->NewStringUTF(category_names[i]);
+        env->SetObjectArrayElement(array, i, string);
+    }
+
+    delete[] category_names;
+
+    return array;
 }
