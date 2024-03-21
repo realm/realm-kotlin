@@ -2420,13 +2420,12 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
     }
 
-    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
+    actual fun realm_set_log_callback(callback: LogCallback) {
         realm_wrapper.realm_set_log_callback(
             staticCFunction { userData, category, logLevel, message ->
                 val userDataLogCallback = safeUserData<LogCallback>(userData)
                 userDataLogCallback.log(category!!.toKString(), logLevel.toShort(), message?.toKString())
             },
-            level.priority.toUInt(),
             StableRef.create(callback).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> LogCallback>(userData) }
         )

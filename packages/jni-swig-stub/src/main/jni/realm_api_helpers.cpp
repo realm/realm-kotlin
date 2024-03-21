@@ -959,9 +959,8 @@ realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jo
 
 // *** END - WebSocket Client (Platform Networking) *** //
 
-void set_log_callback(jint j_log_level, jobject log_callback) {
+void set_log_callback(jobject log_callback) {
 auto jenv = get_env(false);
-auto log_level = static_cast<realm_log_level_e>(j_log_level);
 realm_set_log_callback([](void *userdata, const char *category, realm_log_level_e level, const char *message) {
                                auto log_callback = static_cast<jobject>(userdata);
                                auto jenv = get_env(true);
@@ -978,7 +977,6 @@ realm_set_log_callback([](void *userdata, const char *category, realm_log_level_
                                jni_check_exception(jenv);
                                jenv->PopLocalFrame(NULL);
                           },
-                          log_level,
                           jenv->NewGlobalRef(log_callback), // userdata is the log callback
                           [](void* userdata) {
                               // The log callback is a static global method that is intended to
