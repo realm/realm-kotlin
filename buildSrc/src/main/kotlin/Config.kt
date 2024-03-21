@@ -61,7 +61,7 @@ private fun findHostOs(): OperatingSystem {
 val HOST_OS: OperatingSystem = findHostOs()
 
 object Realm {
-    val ciBuild = (System.getenv("JENKINS_HOME") != null || System.getenv("CI") != null)
+    val ciBuild = (System.getenv("CI") != null)
     const val version = "1.15.0-SNAPSHOT"
     const val group = "io.realm.kotlin"
     const val projectUrl = "https://realm.io"
@@ -138,6 +138,7 @@ object Versions {
     const val relinker = "1.4.5" // https://github.com/KeepSafe/ReLinker
     const val serialization = "1.6.0" // https://kotlinlang.org/docs/releases.html#release-details
     const val shadowJar =  "6.1.0" // https://mvnrepository.com/artifact/com.github.johnrengelman.shadow/com.github.johnrengelman.shadow.gradle.plugin?repo=gradle-plugins
+    const val snakeYaml = "1.33" // https://github.com/snakeyaml/snakeyaml
     val sourceCompatibilityVersion = JavaVersion.VERSION_1_8 // Language level of any Java source code.
     val targetCompatibilityVersion = JavaVersion.VERSION_1_8 // Version of generated JVM bytecode from Java files.
 }

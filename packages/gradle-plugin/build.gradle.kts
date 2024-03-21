@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import kotlin.text.toBoolean
+import org.yaml.snakeyaml.Yaml
+import java.io.FileInputStream
 
 plugins {
     kotlin("jvm")
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version Versions.gradlePluginPublishPlugin
     id("realm-publisher")
+}
+
+buildscript {
+    dependencies {
+        classpath("org.yaml:snakeyaml:1.33")
+    }
 }
 
 dependencies {
@@ -98,14 +105,14 @@ tasks.create("versionConstants") {
     val coreDependenciesFile = layout.projectDirectory.file(
         listOf("..", "external", "core", "dependencies.yml").joinToString(File.separator)
     )
-    val outputDir = file(versionDirectory)
-    inputs.property("version", project.version)
     inputs.file(coreDependenciesFile)
+    inputs.property("version", project.version)
+    val outputDir = file(versionDirectory)
     outputs.dir(outputDir)
 
-    val versionRegex = "^VERSION: (.*)\$".toRegex()
-    val coreVersion = providers.fileContents(coreDependenciesFile).asText.get().lineSequence()
-        .map { dependecy -> versionRegex.find(dependecy)?.groups?.get(1)?.value }.single { it != null }
+    val yaml = Yaml()
+    val coreDependencies: Map<String, String> = yaml.load(FileInputStream(coreDependenciesFile.asFile))
+    val coreVersion = coreDependencies["VERSION"]
 
     doLast {
         val versionFile = file("$outputDir/io/realm/kotlin/gradle/version.kt")
