@@ -2442,7 +2442,6 @@ actual object RealmInterop {
     actual fun realm_get_log_level_category(category: String): CoreLogLevel =
         CoreLogLevel.valueFromPriority(realm_wrapper.realm_get_log_level_category(category).toShort())
 
-// public external expect fun realm_get_category_names(num_values: platform.posix.size_t /* = kotlin.ULong */, out_values: kotlinx.cinterop.CValuesRef<kotlinx.cinterop.CPointerVar<kotlinx.cinterop.ByteVar /* = kotlinx.cinterop.ByteVarOf<kotlin.Byte> */> /* = kotlinx.cinterop.CPointerVarOf<kotlinx.cinterop.CPointer<kotlinx.cinterop.ByteVar /* = kotlinx.cinterop.ByteVarOf<kotlin.Byte> */>> */>?): platform.posix.size_t /* = kotlin.ULong */ { /* compiled code */ }
     actual fun realm_get_category_names(): List<String> {
         memScoped {
             val namesCount = realm_wrapper.realm_get_category_names(0u, null)
