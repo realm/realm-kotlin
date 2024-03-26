@@ -25,7 +25,7 @@
 - Minimum R8: 8.0.34.
 
 ### Internal
-- None
+- Remove CMake required version.
 
 ## 1.14.2-SNAPSHOT (YYYY-MM-DD)
 
