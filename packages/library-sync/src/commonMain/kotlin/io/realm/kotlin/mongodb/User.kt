@@ -20,7 +20,10 @@ import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
 import io.realm.kotlin.mongodb.ext.profileAsBsonDocument
+import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 /**
  * A **user** holds the user's metadata and tokens for accessing App Services and Device Sync
@@ -200,6 +203,21 @@ public interface User {
      * communicating with App Services. See [AppException] for details.
      */
     public suspend fun linkCredentials(credentials: Credentials): User
+
+    /**
+     * Get a [MongoClient] for accessing documents from App Service's _Data Source_.
+     *
+     * Serialization to and from EJSON is performed with [KBSON](https://github.com/mongodb/kbson)
+     * and requires to opt-in to the experimental [ExperimentalKBsonSerializerApi]-feature.
+     *
+     * @param serviceName the name of the data service.
+     * @param eJson the EJson serializer that the [MongoClient] should use to convert objects and
+     * primary keys with. Will default to the apps [EJson] instance configured with
+     * [AppConfiguration.Builder.ejson].
+     * throws IllegalStateException if trying to obtain a [MongoClient] from a logged out [User].
+     */
+    @ExperimentalKBsonSerializerApi
+    public fun mongoClient(serviceName: String, eJson: EJson? = null): MongoClient
 
     /**
      * Two Users are considered equal if they have the same user identity and are associated

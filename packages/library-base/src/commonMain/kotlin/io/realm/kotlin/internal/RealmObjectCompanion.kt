@@ -30,7 +30,7 @@ import kotlin.reflect.KProperty1
 public interface RealmObjectCompanion {
     public val `io_realm_kotlin_class`: KClass<out TypedRealmObject>
     public val `io_realm_kotlin_className`: String
-    public val `io_realm_kotlin_fields`: Map<String, KProperty1<BaseRealmObject, Any?>>
+    public val `io_realm_kotlin_fields`: Map<String, Pair<KClass<*>, KProperty1<BaseRealmObject, Any?>>>
     public val `io_realm_kotlin_primaryKey`: KMutableProperty1<*, *>?
     public val `io_realm_kotlin_classKind`: RealmClassKind
     public fun `io_realm_kotlin_schema`(): RealmClassImpl

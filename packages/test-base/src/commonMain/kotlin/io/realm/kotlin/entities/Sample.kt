@@ -48,6 +48,7 @@ class Sample : RealmObject {
     var decimal128Field: Decimal128 = Decimal128("1.8446744073709551618E-6157")
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
     var objectIdField: ObjectId = ObjectId.from("507f1f77bcf86cd799439011")
+    var objectIdField2: org.mongodb.kbson.ObjectId = org.mongodb.kbson.ObjectId()
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f1f77bcf86cd799439011")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)

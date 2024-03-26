@@ -17,6 +17,8 @@ package io.realm.kotlin.test.mongodb.common.utils
 
 import io.realm.kotlin.mongodb.sync.SubscriptionSet
 import io.realm.kotlin.mongodb.sync.SyncSession
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.runBlocking
 import kotlin.reflect.KClass
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -51,6 +53,13 @@ fun <T : Throwable> assertFailsWithMessage(exceptionClass: KClass<T>, exceptionM
 
 inline fun <reified T : Throwable> assertFailsWithMessage(exceptionMessage: String, noinline block: () -> Unit): T =
     assertFailsWithMessage(T::class, exceptionMessage, block)
+
+inline fun <reified T : Throwable> CoroutineScope.assertFailsWithMessage(exceptionMessage: String, noinline block: suspend CoroutineScope.() -> Unit): T =
+    assertFailsWithMessage(T::class, exceptionMessage) {
+        runBlocking(this.coroutineContext) {
+            block()
+        }
+    }
 
 suspend inline fun SubscriptionSet<*>.waitForSynchronizationOrFail() {
     val timeout = 5.minutes

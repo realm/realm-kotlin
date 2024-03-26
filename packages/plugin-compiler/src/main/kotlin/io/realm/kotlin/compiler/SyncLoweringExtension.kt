@@ -102,10 +102,10 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
         appCreateAppId.symbol to (
             appCreateAppIdBundleId to { expression: IrCall ->
                 IrGetObjectValueImpl(
-                    expression.startOffset,
-                    expression.endOffset,
-                    IrSimpleTypeImpl(appImplCompanionSymbol, false, emptyList(), emptyList()),
-                    appImplCompanionSymbol
+                    startOffset = expression.startOffset,
+                    endOffset = expression.endOffset,
+                    type = IrSimpleTypeImpl(appImplCompanionSymbol, false, emptyList(), emptyList()),
+                    symbol = appImplCompanionSymbol
                 )
             }
             ),
