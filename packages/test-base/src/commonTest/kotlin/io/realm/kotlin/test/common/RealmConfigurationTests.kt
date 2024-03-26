@@ -34,6 +34,7 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.platform.platformFileSystem
 import io.realm.kotlin.test.util.TestLogger
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.newSingleThreadContext
 import okio.Path.Companion.toPath
@@ -41,6 +42,7 @@ import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -491,6 +493,37 @@ class RealmConfigurationTests {
         assertEquals(expectedLogLevel, RealmLog.level)
 
         RealmLog.reset()
+    }
+
+    @Test
+    fun customTypeAdapters_defaultEmpty() {
+        val typeAdapter = object : RealmTypeAdapter<String, String> {
+            override fun toPublic(value: String): String = TODO("Not yet implemented")
+
+            override fun toRealm(value: String): String = TODO("Not yet implemented")
+        }
+
+        val config = RealmConfiguration.Builder(setOf())
+            .build()
+
+        assertTrue(config.typeAdapters.isEmpty())
+    }
+
+    @Test
+    fun defineCustomTypeAdapters() {
+        val typeAdapter = object : RealmTypeAdapter<String, String> {
+            override fun toPublic(value: String): String = TODO("Not yet implemented")
+
+            override fun toRealm(value: String): String = TODO("Not yet implemented")
+        }
+
+        val config = RealmConfiguration.Builder(setOf())
+            .typeAdapters {
+                add(typeAdapter)
+            }
+            .build()
+
+        assertContains(config.typeAdapters, typeAdapter)
     }
 
     private fun assertFailsWithEncryptionKey(builder: RealmConfiguration.Builder, keyLength: Int) {

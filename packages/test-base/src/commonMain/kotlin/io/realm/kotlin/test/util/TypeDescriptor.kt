@@ -365,6 +365,9 @@ object TypeDescriptor {
         allSingularFieldTypes + allListFieldTypes + allSetFieldTypes + allDictionaryFieldTypes
     val allPrimaryKeyFieldTypes = allFieldTypes.filter { it.isPrimaryKeySupported }
 
+    val unsupportedRealmTypeAdaptersClassifiers =
+        setOf(Byte::class, Char::class, Short::class, Int::class, MutableRealmInt::class)
+
     // Realm field type represents the type of a given user specified field in the RealmObject
     data class RealmFieldType(
         val collectionType: CollectionType,
@@ -383,9 +386,9 @@ object TypeDescriptor {
                 (elementType.classifier as KClass<*>).simpleName + (if (elementType.nullable) "?" else "")
             return when (collectionType) {
                 CollectionType.RLM_COLLECTION_TYPE_NONE -> element
-                CollectionType.RLM_COLLECTION_TYPE_LIST -> "List<$element>"
-                CollectionType.RLM_COLLECTION_TYPE_SET -> TODO()
-                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> TODO()
+                CollectionType.RLM_COLLECTION_TYPE_LIST -> "RealmList<$element>"
+                CollectionType.RLM_COLLECTION_TYPE_SET -> "RealmSet<$element>"
+                CollectionType.RLM_COLLECTION_TYPE_DICTIONARY -> "RealmDictionary<$element>"
                 else -> throw IllegalArgumentException("Wrong collection type: $collectionType")
             }
         }

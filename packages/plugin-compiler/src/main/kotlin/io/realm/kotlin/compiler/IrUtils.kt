@@ -22,6 +22,7 @@ import io.realm.kotlin.compiler.ClassIds.EMBEDDED_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.KOTLIN_COLLECTIONS_LISTOF
 import io.realm.kotlin.compiler.ClassIds.PERSISTED_NAME_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_TYPE_ADAPTER_INTERFACE
 import io.realm.kotlin.compiler.FqNames.PACKAGE_TYPES
 import io.realm.kotlin.compiler.Names.ASYMMETRIC_REALM_OBJECT
 import io.realm.kotlin.compiler.Names.EMBEDDED_REALM_OBJECT
@@ -138,7 +139,7 @@ inline fun IrProperty.addSetter(builder: IrFunctionBuilder.() -> Unit = {}): IrS
 
 fun IrPluginContext.blockBody(
     symbol: IrSymbol,
-    block: IrBlockBodyBuilder.() -> Unit
+    block: IrBlockBodyBuilder.() -> Unit,
 ): IrBlockBody =
     DeclarationIrBuilder(this, symbol).irBlockBody { block() }
 
@@ -148,9 +149,11 @@ val ClassDescriptor.isRealmObjectCompanion
 val realmObjectInterfaceFqNames = setOf(REALM_OBJECT_INTERFACE)
 val realmEmbeddedObjectInterfaceFqNames = setOf(EMBEDDED_OBJECT_INTERFACE)
 val realmAsymmetricObjectInterfaceFqNames = setOf(ASYMMETRIC_OBJECT_INTERFACE)
-val anyRealmObjectInterfacesFqNames = realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames + realmAsymmetricObjectInterfaceFqNames
+val anyRealmObjectInterfacesFqNames =
+    realmObjectInterfaceFqNames + realmEmbeddedObjectInterfaceFqNames + realmAsymmetricObjectInterfaceFqNames
 
-fun IrType.classIdOrFail(): ClassId = getClass()?.classId ?: error("Can't get classId of ${render()}")
+fun IrType.classIdOrFail(): ClassId =
+    getClass()?.classId ?: error("Can't get classId of ${render()}")
 
 inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
     var hasRealmObjectAsSuperType = false
@@ -179,6 +182,7 @@ inline fun PsiElement.hasInterface(interfaces: Set<String>): Boolean {
 
     return hasRealmObjectAsSuperType
 }
+
 inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
     // Using PSI to find super types to avoid cyclic reference (see https://github.com/realm/realm-kotlin/issues/339)
     return this.findPsi()?.hasInterface(interfaces) ?: false
@@ -190,17 +194,24 @@ inline fun ClassDescriptor.hasInterfacePsi(interfaces: Set<String>): Boolean {
 // type. Fortunately that is visible in the PSI as `RealmObject()` (Java, abstract class) vs.
 // `RealmObject` (Kotlin, interface).
 val realmObjectPsiNames = setOf("RealmObject", "io.realm.kotlin.types.RealmObject")
-val embeddedRealmObjectPsiNames = setOf("EmbeddedRealmObject", "io.realm.kotlin.types.EmbeddedRealmObject")
-val asymmetricRealmObjectPsiNames = setOf("AsymmetricRealmObject", "io.realm.kotlin.types.AsymmetricRealmObject")
+val embeddedRealmObjectPsiNames =
+    setOf("EmbeddedRealmObject", "io.realm.kotlin.types.EmbeddedRealmObject")
+val asymmetricRealmObjectPsiNames =
+    setOf("AsymmetricRealmObject", "io.realm.kotlin.types.AsymmetricRealmObject")
 val realmJavaObjectPsiNames = setOf("io.realm.RealmObject()", "RealmObject()")
 val ClassDescriptor.isRealmObject: Boolean
-    get() = this.hasInterfacePsi(realmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+    get() = this.hasInterfacePsi(realmObjectPsiNames) && !this.hasInterfacePsi(
+        realmJavaObjectPsiNames
+    )
 val ClassDescriptor.isEmbeddedRealmObject: Boolean
     get() = this.hasInterfacePsi(embeddedRealmObjectPsiNames)
 val ClassDescriptor.isBaseRealmObject: Boolean
-    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(realmJavaObjectPsiNames)
+    get() = this.hasInterfacePsi(realmObjectPsiNames + embeddedRealmObjectPsiNames + asymmetricRealmObjectPsiNames) && !this.hasInterfacePsi(
+        realmJavaObjectPsiNames
+    )
 
-val realmObjectTypes: Set<Name> = setOf(REALM_OBJECT, EMBEDDED_REALM_OBJECT, ASYMMETRIC_REALM_OBJECT)
+val realmObjectTypes: Set<Name> =
+    setOf(REALM_OBJECT, EMBEDDED_REALM_OBJECT, ASYMMETRIC_REALM_OBJECT)
 val realmObjectClassIds = realmObjectTypes.map { name -> ClassId(PACKAGE_TYPES, name) }
 
 // This is the K2 equivalent of our PSI hack to determine if a symbol has a RealmObject base class.
@@ -251,6 +262,9 @@ val IrClass.isEmbeddedRealmObject: Boolean
 val IrClass.isAsymmetricRealmObject: Boolean
     get() = superTypes.any { it.classId == ASYMMETRIC_OBJECT_INTERFACE }
 
+val IrClass.isRealmTypeAdapter: Boolean
+    get() = superTypes.any { it.classId == REALM_TYPE_ADAPTER_INTERFACE }
+
 val IrType.classId: ClassId?
     get() = this.getClass()?.classId
 
@@ -275,7 +289,10 @@ internal fun IrPropertyBuilder.at(startOffset: Int, endOffset: Int) = also {
     this.endOffset = endOffset
 }
 
-internal fun IrClass.lookupFunction(name: Name, predicate: Predicate<IrSimpleFunction>? = null): IrSimpleFunction {
+internal fun IrClass.lookupFunction(
+    name: Name,
+    predicate: Predicate<IrSimpleFunction>? = null,
+): IrSimpleFunction {
     return functions.firstOrNull { it.name == name && predicate?.test(it) ?: true }
         ?: throw AssertionError("Function '$name' not found in class '${this.name}'")
 }
@@ -287,7 +304,7 @@ internal fun IrClass.lookupProperty(name: Name): IrProperty {
 
 internal fun IrPluginContext.lookupFunctionInClass(
     clazz: ClassId,
-    function: String
+    function: String,
 ): IrSimpleFunction {
     return lookupClassOrThrow(clazz).functions.first {
         it.name == Name.identifier(function)
@@ -301,7 +318,7 @@ internal fun IrPluginContext.lookupClassOrThrow(name: ClassId): IrClass {
 
 internal fun IrPluginContext.lookupConstructorInClass(
     clazz: ClassId,
-    filter: (ctor: IrConstructorSymbol) -> Boolean = { true }
+    filter: (ctor: IrConstructorSymbol) -> Boolean = { true },
 ): IrConstructorSymbol {
     return referenceConstructors(clazz).first {
         filter(it)
@@ -309,7 +326,7 @@ internal fun IrPluginContext.lookupConstructorInClass(
 }
 
 internal fun <T> IrClass.lookupCompanionDeclaration(
-    name: Name
+    name: Name,
 ): T {
     return this.companionObject()?.declarations?.first {
         it is IrDeclarationWithName && it.name == name
@@ -324,12 +341,20 @@ internal fun KotlinType.getKotlinTypeFqNameCompat(printTypeArguments: Boolean): 
         "declarationDescriptor is null for constructor = $constructor with ${constructor.javaClass}"
     }
     if (declaration is TypeParameterDescriptor) {
-        return StringUtil.join(declaration.upperBounds, { type -> type.getKotlinTypeFqNameCompat(printTypeArguments) }, "&")
+        return StringUtil.join(
+            declaration.upperBounds,
+            { type -> type.getKotlinTypeFqNameCompat(printTypeArguments) },
+            "&"
+        )
     }
 
     val typeArguments = arguments
     val typeArgumentsAsString = if (printTypeArguments && !typeArguments.isEmpty()) {
-        val joinedTypeArguments = StringUtil.join(typeArguments, { projection -> projection.type.getKotlinTypeFqNameCompat(false) }, ", ")
+        val joinedTypeArguments = StringUtil.join(
+            typeArguments,
+            { projection -> projection.type.getKotlinTypeFqNameCompat(false) },
+            ", "
+        )
 
         "<$joinedTypeArguments>"
     } else {
@@ -376,26 +401,30 @@ enum class PropertyType {
 
 data class CoreType(
     val propertyType: PropertyType,
-    val nullable: Boolean
+    val nullable: Boolean,
 )
 
 private const val NO_ALIAS = ""
+
 // FIXME use PropertyType instead of "type: String", consider using a common/shared type when implementing public schema
 //  see (https://github.com/realm/realm-kotlin/issues/238)
 data class SchemaProperty(
     val propertyType: PropertyType,
     val declaration: IrProperty,
+    val computedType: IrType,
     val collectionType: CollectionType = CollectionType.NONE,
     val coreGenericTypes: List<CoreType>? = null
 ) {
     val isComputed = propertyType == PropertyType.RLM_PROPERTY_TYPE_LINKING_OBJECTS
-    val hasPersistedNameAnnotation = declaration.backingField != null && declaration.hasAnnotation(PERSISTED_NAME_ANNOTATION)
+    val hasPersistedNameAnnotation =
+        declaration.backingField != null && declaration.hasAnnotation(PERSISTED_NAME_ANNOTATION)
     val persistedName: String
     val publicName: String
 
     init {
         val declarationName = declaration.name.identifier
-        val persistedAnnotationName: String? = if (hasPersistedNameAnnotation) getPersistedName(declaration) else null
+        val persistedAnnotationName: String? =
+            if (hasPersistedNameAnnotation) getPersistedName(declaration) else null
 
         // We only set the public name if the persisted and public names are different
         // because core would otherwise detect it as a duplicated name and fail.
@@ -420,7 +449,10 @@ data class SchemaProperty(
     companion object {
         fun getPersistedName(declaration: IrProperty): String {
             @Suppress("UNCHECKED_CAST")
-            return (declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
+            return (
+                declaration.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName())
+                    .getValueArgument(0)!! as IrConstImpl<String>
+                ).value
         }
     }
 }
@@ -435,7 +467,7 @@ internal fun <T : IrExpression> buildOf(
     function: IrSimpleFunctionSymbol,
     containerType: IrClass,
     elementType: IrType,
-    args: List<T>
+    args: List<T>,
 ): IrExpression {
     return IrCallImpl(
         startOffset = startOffset, endOffset = endOffset,
@@ -465,9 +497,14 @@ internal fun <T : IrExpression> buildSetOf(
     startOffset: Int,
     endOffset: Int,
     elementType: IrType,
-    args: List<T>
+    args: List<T>,
 ): IrExpression {
-    val setOf = context.referenceFunctions(CallableId(FqName("kotlin.collections"), Name.identifier("setOf")))
+    val setOf = context.referenceFunctions(
+        CallableId(
+            FqName("kotlin.collections"),
+            Name.identifier("setOf")
+        )
+    )
         .first {
             val parameters = it.owner.valueParameters
             parameters.size == 1 && parameters.first().isVararg
@@ -481,7 +518,7 @@ internal fun <T : IrExpression> buildListOf(
     startOffset: Int,
     endOffset: Int,
     elementType: IrType,
-    args: List<T>
+    args: List<T>,
 ): IrExpression {
     val listOf = context.referenceFunctions(KOTLIN_COLLECTIONS_LISTOF)
         .first {
@@ -497,7 +534,7 @@ fun IrClass.addValueProperty(
     superClass: IrClass,
     propertyName: Name,
     propertyType: IrType,
-    initExpression: (startOffset: Int, endOffset: Int) -> IrExpression
+    initExpression: (startOffset: Int, endOffset: Int) -> IrExpression,
 ): IrProperty {
     // PROPERTY name:realmPointer visibility:public modality:OPEN [var]
     val property = addProperty {
@@ -678,7 +715,10 @@ fun getLinkingObjectPropertyName(backingField: IrField): String {
 fun getSchemaClassName(clazz: IrClass): String {
     return if (clazz.hasAnnotation(PERSISTED_NAME_ANNOTATION)) {
         @Suppress("UNCHECKED_CAST")
-        return (clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName()).getValueArgument(0)!! as IrConstImpl<String>).value
+        return (
+            clazz.getAnnotation(PERSISTED_NAME_ANNOTATION.asSingleFqName())
+                .getValueArgument(0)!! as IrConstImpl<String>
+            ).value
     } else {
         clazz.name.identifier
     }
@@ -701,7 +741,11 @@ fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
 }
 
 /** Wrapper method to overcome API differences from Kotlin 1.7.20-1.8.20 */
-fun IrBuilderWithScope.irGetFieldWrapper(receiver: IrGetValueImpl, field: IrField, type: IrType = field.type): IrExpression =
+fun IrBuilderWithScope.irGetFieldWrapper(
+    receiver: IrGetValueImpl,
+    field: IrField,
+    type: IrType = field.type,
+): IrExpression =
     IrGetFieldImpl(startOffset, endOffset, field.symbol, type, receiver)
 
 /**

@@ -146,8 +146,8 @@ public class CachedClassMetadata(
         ).let { interopProperties ->
             properties = interopProperties.map { propertyInfo: PropertyInfo ->
                 CachedPropertyMetadata(
-                    propertyInfo,
-                    companion?.io_realm_kotlin_fields?.get(propertyInfo.name)
+                    propertyInfo = propertyInfo,
+                    accessor = companion?.io_realm_kotlin_fields?.get(propertyInfo.name),
                 )
             }
         }
@@ -168,7 +168,7 @@ public class CachedClassMetadata(
 
 public class CachedPropertyMetadata(
     propertyInfo: PropertyInfo,
-    override val accessor: KProperty1<BaseRealmObject, Any?>? = null
+    override val accessor: KProperty1<BaseRealmObject, Any?>? = null,
 ) : PropertyMetadata {
     override val name: String = propertyInfo.name
     override val publicName: String = propertyInfo.publicName

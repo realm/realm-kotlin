@@ -90,6 +90,14 @@ public interface RealmConfiguration : Configuration {
             apply { this.directory = directoryPath }
 
         /**
+         * Sets the type adapters that would be available in runtime.
+         */
+        public fun typeAdapters(block: TypeAdapterBuilder.() -> Unit): Builder =
+            apply {
+                this.typeAdapters = TypeAdapterBuilder().apply(block).typeAdapters
+            }
+
+        /**
          * Setting this will change the behavior of how migration exceptions are handled. Instead of
          * throwing an exception the on-disc Realm will be cleared and recreated with the new Realm
          * schema.
@@ -192,7 +200,8 @@ public interface RealmConfiguration : Configuration {
                 initialDataCallback,
                 inMemory,
                 initialRealmFileConfiguration,
-                realmLogger
+                realmLogger,
+                typeAdapters,
             )
         }
     }

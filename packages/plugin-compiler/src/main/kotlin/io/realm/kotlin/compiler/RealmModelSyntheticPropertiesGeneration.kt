@@ -106,7 +106,6 @@ import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
-import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.Name
@@ -174,6 +173,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             val parameters = it.owner.valueParameters
             parameters.size == 1 && parameters.first().isVararg
         }
+
     private val companionFieldsType = mapClass.typeWith(
         pluginContext.irBuiltIns.stringType,
         realmObjectMutablePropertyType
@@ -500,24 +500,24 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         buildListOf(
                             pluginContext, startOffset, endOffset, propertyClass.defaultType,
                             fields.map { entry ->
-                                val value = entry.value
+                                val schemaProperty = entry.value
 
                                 // Extract type based on whether the field is a:
                                 // 1 - primitive type, in which case it is extracted as is
                                 // 2 - collection type, in which case the collection type(s)
                                 //     specified in value.genericTypes should be used as type
-                                val type: IrEnumEntry = when (val primitiveType = getType(value.propertyType)) {
+                                val type: IrEnumEntry = when (val primitiveType = getType(schemaProperty.propertyType)) {
                                     null -> // Primitive type is null for collections
-                                        when (value.collectionType) {
+                                        when (schemaProperty.collectionType) {
                                             CollectionType.LIST,
                                             CollectionType.SET ->
                                                 // Extract generic type as mentioned
-                                                getType(getCollectionType(value.coreGenericTypes))
-                                                    ?: error("Unknown type ${value.propertyType} - should be a valid type for collections.")
+                                                getType(getCollectionType(schemaProperty.coreGenericTypes))
+                                                    ?: error("Unknown type ${schemaProperty.propertyType} - should be a valid type for collections.")
                                             CollectionType.DICTIONARY ->
                                                 error("Dictionaries not available yet.")
                                             else ->
-                                                error("Unknown type ${value.propertyType}.")
+                                                error("Unknown type ${schemaProperty.propertyType}.")
                                         }
                                     else -> // Primitive type is non-null
                                         primitiveType
@@ -525,40 +525,40 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
                                 val objectType: IrEnumEntry = propertyTypes.firstOrNull {
                                     it.name == PROPERTY_TYPE_OBJECT
-                                } ?: error("Unknown type ${value.propertyType}")
+                                } ?: error("Unknown type ${schemaProperty.propertyType}")
 
                                 val linkingObjectType: IrEnumEntry = propertyTypes.firstOrNull {
                                     it.name == PROPERTY_TYPE_LINKING_OBJECTS
-                                } ?: error("Unknown type ${value.propertyType}")
+                                } ?: error("Unknown type ${schemaProperty.propertyType}")
 
-                                val property: IrProperty = value.declaration
+                                val property: IrProperty = schemaProperty.declaration
                                 val backingField: IrField = property.backingField
                                     ?: fatalError("Property without backing field or type.")
                                 // Nullability applies to the generic type in collections
-                                val nullable = if (value.collectionType == CollectionType.NONE) {
-                                    backingField.type.isNullable()
+                                val nullable = if (schemaProperty.collectionType == CollectionType.NONE) {
+                                    schemaProperty.computedType.isNullable()
                                 } else {
-                                    value.coreGenericTypes?.get(0)?.nullable
+                                    schemaProperty.coreGenericTypes?.get(0)?.nullable
                                         ?: fatalError("Missing generic type while processing a collection field.")
                                 }
                                 val primaryKey = backingField.hasAnnotation(PRIMARY_KEY_ANNOTATION)
-                                if (primaryKey && validPrimaryKeyTypes.find { it.classFqName == backingField.type.classFqName } == null) {
+                                if (primaryKey && validPrimaryKeyTypes.find { it.classFqName == schemaProperty.computedType.classFqName } == null) {
                                     logError(
-                                        "Primary key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${validPrimaryKeyTypes.map { it.classId?.shortClassName }}",
+                                        "Primary key ${property.name} is of type ${schemaProperty.computedType.classId?.shortClassName} but must be of type ${validPrimaryKeyTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isIndexed = backingField.hasAnnotation(INDEX_ANNOTATION)
-                                if (isIndexed && indexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
+                                if (isIndexed && indexableTypes.find { it.classFqName == schemaProperty.computedType.classFqName } == null) {
                                     logError(
-                                        "Indexed key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${indexableTypes.map { it.classId?.shortClassName }}",
+                                        "Indexed key ${property.name} is of type ${schemaProperty.computedType.classId?.shortClassName} but must be of type ${indexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
                                 val isFullTextIndexed = backingField.hasAnnotation(FULLTEXT_ANNOTATION)
-                                if (isFullTextIndexed && fullTextIndexableTypes.find { it.classFqName == backingField.type.classFqName } == null) {
+                                if (isFullTextIndexed && fullTextIndexableTypes.find { it.classFqName == schemaProperty.computedType.classFqName } == null) {
                                     logError(
-                                        "Full-text key ${property.name} is of type ${backingField.type.classId?.shortClassName} but must be of type ${fullTextIndexableTypes.map { it.classId?.shortClassName }}",
+                                        "Full-text key ${property.name} is of type ${schemaProperty.computedType.classId?.shortClassName} but must be of type ${fullTextIndexableTypes.map { it.classId?.shortClassName }}",
                                         property.locationOf()
                                     )
                                 }
@@ -578,8 +578,8 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 }
 
                                 val location = property.locationOf()
-                                val persistedName = value.persistedName
-                                val publicName = value.publicName
+                                val persistedName = schemaProperty.persistedName
+                                val publicName = schemaProperty.publicName
 
                                 // Ensure that the names are valid and do not conflict with prior persisted or public names
                                 ensureValidName(persistedName, persistedAndPublicNameToLocation, location)
@@ -596,15 +596,15 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                 when (type) {
                                     objectType -> {
                                         // Collections of type RealmObject require the type parameter be retrieved from the generic argument
-                                        when (value.collectionType) {
+                                        when (schemaProperty.collectionType) {
                                             CollectionType.NONE -> {
-                                                backingField.type
+                                                schemaProperty.computedType
                                             }
                                             CollectionType.LIST,
                                             CollectionType.SET,
                                             CollectionType.DICTIONARY -> {
-                                                getCollectionElementType(backingField.type)
-                                                    ?: error("Could not get collection type from ${backingField.type}")
+                                                getCollectionElementType(schemaProperty.computedType)
+                                                    ?: error("Could not get collection type from ${schemaProperty.computedType}")
                                             }
                                         }
                                     }
@@ -632,7 +632,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
                                 // Collection type: remember to specify it correctly here - the
                                 // type of the contents itself is specified as "type" above!
-                                val collectionTypeSymbol = when (value.collectionType) {
+                                val collectionTypeSymbol = when (schemaProperty.collectionType) {
                                     CollectionType.NONE -> PROPERTY_COLLECTION_TYPE_NONE
                                     CollectionType.LIST -> PROPERTY_COLLECTION_TYPE_LIST
                                     CollectionType.SET -> PROPERTY_COLLECTION_TYPE_SET
@@ -655,12 +655,12 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         // Collections of type RealmObject require the type parameter be retrieved from the generic argument
                                         when (collectionTypeSymbol) {
                                             PROPERTY_COLLECTION_TYPE_NONE ->
-                                                backingField.type
+                                                schemaProperty.computedType
                                             PROPERTY_COLLECTION_TYPE_LIST,
                                             PROPERTY_COLLECTION_TYPE_SET,
                                             PROPERTY_COLLECTION_TYPE_DICTIONARY ->
-                                                getCollectionElementType(backingField.type)
-                                                    ?: error("Could not get collection type from ${backingField.type}")
+                                                getCollectionElementType(schemaProperty.computedType)
+                                                    ?: error("Could not get collection type from ${schemaProperty.computedType}")
                                             else ->
                                                 error("Unsupported collection type '$collectionTypeSymbol' for field ${entry.key}")
                                         }

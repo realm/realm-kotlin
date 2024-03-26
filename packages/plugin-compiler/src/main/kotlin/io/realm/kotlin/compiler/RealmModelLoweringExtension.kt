@@ -19,6 +19,7 @@ package io.realm.kotlin.compiler
 import io.realm.kotlin.compiler.ClassIds.MODEL_OBJECT_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
+import io.realm.kotlin.compiler.ClassIds.REALM_TYPE_ADAPTER_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
@@ -31,8 +32,15 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.types.IrSimpleType
+import org.jetbrains.kotlin.ir.types.IrStarProjection
+import org.jetbrains.kotlin.ir.types.classFqName
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
+import org.jetbrains.kotlin.ir.types.makeNotNull
 import org.jetbrains.kotlin.ir.types.starProjectedType
+import org.jetbrains.kotlin.ir.types.superTypes
+import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.isAnonymousObject
@@ -58,7 +66,48 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
 
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)
 
+    @Suppress("LongMethod", "ComplexMethod", "NestedBlockDepth")
     override fun lower(irClass: IrClass) {
+        val realmPluginContext by lazy { RealmPluginContextImpl(pluginContext) }
+
+        if (irClass.isRealmTypeAdapter) {
+            with(realmPluginContext) {
+                // Validate that the R type parameter on a RealmTypeAdapter is a valid persisted type
+                val realmType = irClass.symbol
+                    .superTypes()
+                    .first {
+                        it.classId == REALM_TYPE_ADAPTER_INTERFACE
+                    }
+                    .let {
+                        it as IrSimpleType
+                    }
+                    .arguments
+                    .let { arguments ->
+                        arguments[0].typeOrNull!!
+                    }
+
+                val type =
+                    if (realmType.isRealmList() || realmType.isRealmSet() || realmType.isRealmDictionary()) {
+                        val typeArgument = (realmType as IrSimpleTypeImpl).arguments[0]
+                        if (typeArgument is IrStarProjection) {
+                            logError(
+                                "Error in class ${irClass.name} - ${realmType.classFqName?.shortName()} cannot use a '*' projection.",
+                                irClass.locationOf()
+                            )
+                            return
+                        }
+
+                        typeArgument.typeOrNull!!
+                    } else {
+                        realmType
+                    }
+
+                if (!type.makeNotNull().isValidPersistedType()) {
+                    logError("Invalid adapter persisted type '${realmType.classFqName}', only Realm persistable types are supported.")
+                }
+            }
+        }
+
         if (irClass.isBaseRealmObject) {
             // Throw error with classes that we do not support
             if (irClass.isData) {
@@ -105,7 +154,7 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
             generator.addRealmObjectInternalProperties(irClass)
 
             // Modify properties accessor to generate custom getter/setter
-            AccessorModifierIrGeneration(pluginContext).modifyPropertiesAndCollectSchema(irClass)
+            AccessorModifierIrGeneration(realmPluginContext).modifyPropertiesAndCollectSchema(irClass)
 
             // Add custom toString, equals and hashCode methods
             val methodGenerator = RealmModelDefaultMethodGeneration(pluginContext)

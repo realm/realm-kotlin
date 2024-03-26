@@ -25,6 +25,7 @@ import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.BaseRealmObject
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
 
@@ -47,6 +48,16 @@ public fun interface CompactOnLaunchCallback {
      * compaction will be skipped.
      */
     public fun shouldCompact(totalBytes: Long, usedBytes: Long): Boolean
+}
+
+/**
+ * Builder for setting up any runtime type adapters.
+ */
+public class TypeAdapterBuilder {
+    internal val typeAdapters: MutableList<RealmTypeAdapter<*, *>> = mutableListOf()
+    public fun add(adapter: RealmTypeAdapter<*, *>) {
+        typeAdapters.add(adapter)
+    }
 }
 
 /**
@@ -197,6 +208,11 @@ public interface Configuration {
     public val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
     /**
+     * List of types adapters that would be available in runtime.
+     */
+    public val typeAdapters: List<RealmTypeAdapter<*, *>>
+
+    /**
      * Base class for configuration builders that holds properties available to both
      * [RealmConfiguration] and [SyncConfiguration].
      *
@@ -238,6 +254,7 @@ public interface Configuration {
         protected var initialDataCallback: InitialDataCallback? = null
         protected var inMemory: Boolean = false
         protected var initialRealmFileConfiguration: InitialRealmFileConfiguration? = null
+        protected var typeAdapters: List<RealmTypeAdapter<*, *>> = listOf()
 
         /**
          * Sets the filename of the realm file.

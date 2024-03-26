@@ -41,6 +41,7 @@ import io.realm.kotlin.notifications.internal.UpdatedListImpl
 import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmList
+import io.realm.kotlin.types.RealmTypeAdapter
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -247,6 +248,37 @@ internal interface ListOperator<E> : CollectionOperator<E, RealmListPointer> {
 
     // Creates a new operator from an existing one to be able to issue frozen/thawed instances of the list operating on the new version of the list
     fun copy(realmReference: RealmReference, nativePointer: RealmListPointer): ListOperator<E>
+}
+
+internal class TypeAdaptedListOperator<E, S>(
+    private val listOperator: ListOperator<S>,
+    private val typeAdapter: RealmTypeAdapter<S, E>
+) : ListOperator<E> {
+    override val nativePointer: RealmListPointer by listOperator::nativePointer
+    override val mediator: Mediator by listOperator::mediator
+    override val realmReference: RealmReference by listOperator::realmReference
+    override val valueConverter: RealmValueConverter<E> by lazy { throw IllegalStateException("TypeAdaptedListOperator does not have a valueConverter") }
+
+    override fun get(index: Int): E = typeAdapter.toPublic(listOperator.get(index))
+
+    override fun copy(
+        realmReference: RealmReference,
+        nativePointer: RealmListPointer,
+    ): ListOperator<E> = TypeAdaptedListOperator(listOperator.copy(realmReference, nativePointer), typeAdapter)
+
+    override fun set(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache,
+    ): E = typeAdapter.toPublic(listOperator.set(index, typeAdapter.toRealm(element), updatePolicy, cache))
+
+    override fun insert(
+        index: Int,
+        element: E,
+        updatePolicy: UpdatePolicy,
+        cache: UnmanagedToManagedObjectCache,
+    ) = listOperator.insert(index, typeAdapter.toRealm(element), updatePolicy, cache)
 }
 
 internal class PrimitiveListOperator<E>(

@@ -69,6 +69,9 @@ internal object Names {
     val REALM_OBJECT_HELPER_SET_OBJECT = Name.identifier("setObject")
     val REALM_OBJECT_HELPER_SET_EMBEDDED_REALM_OBJECT = Name.identifier("setEmbeddedRealmObject")
 
+    val REALM_TYPE_ADAPTER_TO_PUBLIC = Name.identifier("toPublic")
+    val REALM_TYPE_ADAPTER_TO_REALM = Name.identifier("toRealm")
+
     // C-interop methods
     val REALM_OBJECT_HELPER_GET_LIST = Name.identifier("getList")
     val REALM_OBJECT_HELPER_SET_LIST = Name.identifier("setList")
@@ -121,11 +124,13 @@ object ClassIds {
     val TYPED_REALM_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("TypedRealmObject"))
     val EMBEDDED_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("EmbeddedRealmObject"))
     val ASYMMETRIC_OBJECT_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("AsymmetricRealmObject"))
+    val REALM_TYPE_ADAPTER_INTERFACE = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmTypeAdapter"))
 
     val CLASS_APP_CONFIGURATION = ClassId(FqNames.PACKAGE_MONGODB, Name.identifier("AppConfiguration"))
 
     // External visible interface of Realm objects
     val KOTLIN_COLLECTIONS_SET = ClassId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("Set"))
+    val KOTLIN_COLLECTIONS_SETOF = CallableId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("setOf"))
     val KOTLIN_COLLECTIONS_LIST = ClassId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("List"))
     val KOTLIN_COLLECTIONS_LISTOF = CallableId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("listOf"))
     val KOTLIN_COLLECTIONS_MAP = ClassId(FqNames.PACKAGE_KOTLIN_COLLECTIONS, Name.identifier("Map"))
@@ -146,6 +151,7 @@ object ClassIds {
     val PERSISTED_NAME_ANNOTATION = ClassId(FqNames.PACKAGE_ANNOTATIONS, Name.identifier("PersistedName"))
     val TRANSIENT_ANNOTATION = ClassId(FqName("kotlin.jvm"), Name.identifier("Transient"))
     val MODEL_OBJECT_ANNOTATION = ClassId(FqName("io.realm.kotlin.internal.platform"), Name.identifier("ModelObject"))
+    val TYPE_ADAPTER_ANNOTATION = ClassId(FqNames.PACKAGE_ANNOTATIONS, Name.identifier("TypeAdapter"))
     val PROPERTY_INFO_CREATE = CallableId(FqName("io.realm.kotlin.internal.schema"), Name.identifier("createPropertyInfo"))
     val CLASS_KIND_TYPE = ClassId(FqName("io.realm.kotlin.schema"), Name.identifier("RealmClassKind"))
 
