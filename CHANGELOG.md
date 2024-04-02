@@ -6,7 +6,6 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 ### Breaking changes
 * If you want to query using `@type` operation, you must use 'objectlink' to match links to objects. 'object' is reserved for dictionary types.
 * Binary data and String data are now strongly typed for comparisons and queries. This change is especially relevant when querying for a string constant on a RealmAny property, as now only strings will be returned. If searching for Binary data is desired, then that type must be specified by the constant. In RQL the new way to specify a binary constant is to use `mixed = bin('xyz')` or `mixed = binary('xyz')`. (Core issue [realm/realm-core#6407](https://github.com/realm/realm-core/issues/6407)).
-* Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
 
 ### Enhancements
 * Add support for using aggregate operations on RealmAny properties in queries  (Core issue [realm/realm-core#7398](https://github.com/realm/realm-core/pull/7398))
@@ -19,6 +18,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Updated bundled OpenSSL version to 3.2.0 (Core issue [realm/realm-core#7303](https://github.com/realm/realm-core/pull/7303))
 
 ### Fixed
+* Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
 * `@count`/`@size` is now supported for `RealmAny` properties (Core issue [realm/realm-core#7280](https://github.com/realm/realm-core/issues/7280), since v10.0.0)
 * Fixed equality queries on a `RealmAny` property with an index possibly returning the wrong result if values of different types happened to have the same StringIndex hash. (Core issue [realm/realm-core6407](https://github.com/realm/realm-core/issues/6407) since v11.0.0-beta.5).
 * If you have more than 8388606 links pointing to one specific object, the program will crash. (Core issue [realm/realm-core#6577](https://github.com/realm/realm-core/issues/6577), since v6.0.0)
@@ -27,6 +27,10 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Uploading the changesets recovered during an automatic client reset recovery may lead to 'Bad server version' errors and a new client reset. (Core issue [realm/realm-core7279](https://github.com/realm/realm-core/issues/7279), since v13.24.1)
 * Fixed crash in fulltext index using prefix search with no matches (Core issue [realm/realm-core#7309](https://github.com/realm/realm-core/issues/7309), since v13.18.0)
 * Fix a minor race condition when backing up Realm files before a client reset which could have lead to overwriting an existing file. (Core issue [realm/realm-core#7341](https://github.com/realm/realm-core/pull/7341)).
+* Fix opening realm with cached user while offline results in fatal error and session does not retry connection. (Core issue [realm/realm-core#7349](https://github.com/realm/realm-core/issues/7349), since v13.26.0)
+* Fixed conflict resolution bug which may result in an crash when the AddInteger instruction on Mixed properties is merged against updates to a non-integer type (Core issue [realm/realm-code#7353](https://github.com/realm/realm-core/pull/7353))
+* Fix a spurious crash related to opening a Realm on background thread while the process was in the middle of exiting (Core issue [realm/realm-core#7420](https://github.com/realm/realm-core/issues/7420))
+
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
