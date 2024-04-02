@@ -44,7 +44,8 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-- Updated to Realm Core 14.2.0 commit 383bdc81e36293b22868ee085a6f5c265115556d.
+* Updated to Realm Core 14.4.1 commit 374dd672af357732dccc135fecc905406fec3223.
+* Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
 - Remove CMake required version.
 
 
