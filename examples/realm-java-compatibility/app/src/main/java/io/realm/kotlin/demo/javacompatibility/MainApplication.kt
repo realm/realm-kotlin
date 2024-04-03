@@ -30,7 +30,11 @@ class MainApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        java = JavaRepository(this)
-        kotlin = KotlinRepository()
+        (1..100).forEach {
+            java = JavaRepository(this)
+            kotlin = KotlinRepository()
+            kotlin.close()
+            java.close()
+        }
     }
 }
