@@ -502,6 +502,7 @@ fun Task.buildSharedLibrariesForJVMMacOs() {
             .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
     }
 
+    inputs.dir(project.file("src/jvm"))
     inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
 }
