@@ -1518,41 +1518,6 @@ class SyncedRealmTests {
         }
     }
 
-    @Test
-    fun cannotSyncCollectionsInMixed() = runBlocking {
-        TestApp(
-            "cannotSyncCollectionsInMixed",
-            logLevel = LogLevel.ALL,
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
-            builder = {
-                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
-            }
-        ).use { flexApp ->
-            val (email, password) = randomEmail() to "password1234"
-            val user = flexApp.createUserAndLogIn(email, password)
-            val local = createFlexibleSyncConfig(
-                user = user,
-                name = "local",
-                schema = setOf(JsonStyleRealmObject::class)
-            ) {
-                initialSubscriptions {
-                    this.add(it.query<JsonStyleRealmObject>())
-                }
-            }
-            Realm.open(local).use {
-                it.write {
-                    val obj = copyToRealm(JsonStyleRealmObject())
-                    assertFailsWithMessage<IllegalStateException>("Cannot sync nested list") {
-                        obj.value = realmAnyListOf()
-                    }
-                    assertFailsWithMessage<IllegalStateException>("Cannot sync nested dictionary") {
-                        obj.value = realmAnyDictionaryOf()
-                    }
-                }
-            }
-        }
-    }
-
 //    @Test
 //    fun initialVersion() {
 //        assertEquals(INITIAL_VERSION, realm.version())
