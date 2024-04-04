@@ -20,7 +20,6 @@ import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
-import io.realm.kotlin.entities.JsonStyleRealmObject
 import io.realm.kotlin.entities.sync.BinaryObject
 import io.realm.kotlin.entities.sync.ChildPk
 import io.realm.kotlin.entities.sync.ParentPk
@@ -29,8 +28,6 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.ext.realmAnyDictionaryOf
-import io.realm.kotlin.ext.realmAnyListOf
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
