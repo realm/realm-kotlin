@@ -1130,7 +1130,7 @@ actual object RealmInterop {
             insertions,
             modificationStructs,
             modifications,
-            collectionWasCleared
+            collectionWasCleared,
         )
 
         // TODO optimize - integrate within mem allocator?
@@ -1346,8 +1346,8 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
     }
 
-    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
-        realmc.set_log_callback(level.priority, callback)
+    actual fun realm_set_log_callback(callback: LogCallback) {
+        realmc.set_log_callback(callback)
     }
 
     actual fun realm_set_log_level(level: CoreLogLevel) {

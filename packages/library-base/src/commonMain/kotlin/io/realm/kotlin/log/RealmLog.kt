@@ -47,12 +47,12 @@ public object RealmLog {
     init {
         addDefaultSystemLogger()
         RealmInterop.realm_set_log_callback(
-            level.toCoreLogLevel(),
             object : LogCallback {
-                override fun log(logLevel: Short, message: String?) {
+                override fun log(logLevel: Short, category: String?, message: String?) {
                     // Create concatenated up front, since Core should already filter messages
                     // not within the log range.
                     val level: LogLevel = fromCoreLogLevel(CoreLogLevel.valueFromPriority(logLevel))
+                    // TODO Add category - Will come with https://github.com/realm/realm-kotlin/pull/1692
                     doLog(
                         level,
                         null,

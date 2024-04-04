@@ -130,7 +130,7 @@ internal class SuspendableWriter(
                         if (shouldClose.value)
                             throw IllegalStateException("Cannot commit transaction on closed realm")
                     }
-                } catch (e: IllegalStateException) {
+                } catch (e: Throwable) {
                     if (realm.isInTransaction()) {
                         realm.cancelWrite()
                     }
