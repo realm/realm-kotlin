@@ -1864,6 +1864,7 @@ actual object RealmInterop {
             val modificationCount = allocArray<ULongVar>(1)
             val movesCount = allocArray<ULongVar>(1)
             val collectionWasErased = alloc<BooleanVar>()
+            val collectionWasDeleted = alloc<BooleanVar>()
 
             realm_wrapper.realm_collection_changes_get_num_changes(
                 change.cptr(),
@@ -1871,7 +1872,8 @@ actual object RealmInterop {
                 insertionCount,
                 modificationCount,
                 movesCount,
-                collectionWasErased.ptr
+                collectionWasErased.ptr,
+                collectionWasDeleted.ptr,
             )
 
             val deletionIndices = initArray<ULongVar>(deletionCount)
@@ -1953,12 +1955,15 @@ actual object RealmInterop {
             val deletions = allocArray<ULongVar>(1)
             val insertions = allocArray<ULongVar>(1)
             val modifications = allocArray<ULongVar>(1)
+            val collectionWasCleared = alloc<BooleanVar>()
+            val collectionWasDeleted = alloc<BooleanVar>()
 
             realm_wrapper.realm_dictionary_get_changes(
                 change.cptr(),
                 deletions,
                 insertions,
-                modifications
+                modifications,
+                collectionWasDeleted.ptr
             )
             val deletionStructs = allocArray<realm_value_t>(deletions[0].toInt())
             val insertionStructs = allocArray<realm_value_t>(insertions[0].toInt())
@@ -1971,7 +1976,8 @@ actual object RealmInterop {
                 insertionStructs,
                 insertions,
                 modificationStructs,
-                modifications
+                modifications,
+                collectionWasCleared.ptr
             )
 
             val deletedKeys = (0 until deletions[0].toInt()).map {
@@ -2412,13 +2418,12 @@ actual object RealmInterop {
         realm_wrapper.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
     }
 
-    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
+    actual fun realm_set_log_callback(callback: LogCallback) {
         realm_wrapper.realm_set_log_callback(
-            staticCFunction { userData, logLevel, message ->
+            staticCFunction { userData, category, logLevel, message ->
                 val userDataLogCallback = safeUserData<LogCallback>(userData)
-                userDataLogCallback.log(logLevel.toShort(), message?.toKString())
+                userDataLogCallback.log(logLevel.toShort(), category?.toKString(), message?.toKString())
             },
-            level.priority.toUInt(),
             StableRef.create(callback).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> LogCallback>(userData) }
         )

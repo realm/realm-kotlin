@@ -942,7 +942,11 @@ actual object RealmInterop {
         val deletionCount = LongArray(1)
         val modificationCount = LongArray(1)
         val movesCount = LongArray(1)
+        // Not exposed in SDK yet, but could be used to provide optimized notifications when
+        // collections are cleared.
+        //  https://github.com/realm/realm-kotlin/issues/1498
         val collectionWasCleared = BooleanArray(1)
+        val collectionWasDeleted = BooleanArray(1)
 
         realmc.realm_collection_changes_get_num_changes(
             change.cptr(),
@@ -950,7 +954,8 @@ actual object RealmInterop {
             insertionCount,
             modificationCount,
             movesCount,
-            collectionWasCleared
+            collectionWasCleared,
+            collectionWasDeleted,
         )
 
         val insertionIndices: LongArray = initIndicesArray(insertionCount)
@@ -1042,16 +1047,22 @@ actual object RealmInterop {
         val deletions = longArrayOf(0)
         val insertions = longArrayOf(0)
         val modifications = longArrayOf(0)
+        val collectionWasDeleted = BooleanArray(1)
         realmc.realm_dictionary_get_changes(
             change.cptr(),
             deletions,
             insertions,
-            modifications
+            modifications,
+            collectionWasDeleted
         )
 
         val deletionStructs = realmc.new_valueArray(deletions[0].toInt())
         val insertionStructs = realmc.new_valueArray(insertions[0].toInt())
         val modificationStructs = realmc.new_valueArray(modifications[0].toInt())
+        // Not exposed in SDK yet, but could be used to provide optimized notifications when
+        // collections are cleared.
+        //  https://github.com/realm/realm-kotlin/issues/1498
+        val collectionWasCleared = booleanArrayOf(false)
         realmc.realm_dictionary_get_changed_keys(
             change.cptr(),
             deletionStructs,
@@ -1059,7 +1070,8 @@ actual object RealmInterop {
             insertionStructs,
             insertions,
             modificationStructs,
-            modifications
+            modifications,
+            collectionWasCleared,
         )
 
         // TODO optimize - integrate within mem allocator?
@@ -1275,8 +1287,8 @@ actual object RealmInterop {
         realmc.realm_sync_client_config_set_multiplex_sessions(syncClientConfig.cptr(), enabled)
     }
 
-    actual fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback) {
-        realmc.set_log_callback(level.priority, callback)
+    actual fun realm_set_log_callback(callback: LogCallback) {
+        realmc.set_log_callback(callback)
     }
 
     actual fun realm_set_log_level(level: CoreLogLevel) {

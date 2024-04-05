@@ -242,7 +242,10 @@ fun uploadFiles(files: PackageData) {
     args.run {
         // See https://maven.apache.org/plugins/maven-gpg-plugin/sign-and-deploy-file-mojo.html
         add("mvn")
-        add("gpg:sign-and-deploy-file")
+        // TODO upgrade to latest sign-and-deploy once https://issues.apache.org/jira/browse/MGPG-85 is fixed
+        //      context https://github.com/eclipse-lsp4j/lsp4j/issues/610
+        add("org.apache.maven.plugins:maven-gpg-plugin:1.6:sign-and-deploy-file")
+        add("-Daether.checksums.algorithms=SHA-512,SHA-256,SHA-1,MD5")
         add("-Durl=https://oss.sonatype.org/content/repositories/snapshots")
         add("-DrepositoryId=ossrh")
         add("-DpomFile=${files.fullPathToPackage}/${files.pomFile.fileName}")
@@ -250,6 +253,8 @@ fun uploadFiles(files: PackageData) {
         add("-Dfiles=${files.additionalFiles.map { "${files.fullPathToPackage}/${it.fileName}" }.joinToString(",")}")
         add("-Dclassifiers=${files.additionalFiles.map { it.classifier }.joinToString(",")}")
         add("-Dtypes=${files.additionalFiles.map { it.type }.joinToString(",")}")
+        add("-Dgpg.executable=./gpg_with_pinentry.sh") // work around https://stackoverflow.com/questions/60417391
+        
     }
     debug("Running command: ${args.joinToString(" ")}")
     runCommand(args, showOutput = true)

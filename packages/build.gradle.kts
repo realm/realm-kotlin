@@ -185,6 +185,8 @@ tasks.register("uploadDokka") {
                 commandLine = listOf(
                     "s3cmd",
                     "put",
+                    "--no-mime-magic",
+                    "--guess-mime-type",
                     "--recursive",
                     "--acl-public",
                     "--access_key=$awsAccessKey",

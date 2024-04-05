@@ -15,7 +15,8 @@
  */
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import java.lang.IllegalArgumentException
+import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
 
 plugins {
     id("org.jetbrains.kotlin.multiplatform")
@@ -328,7 +329,10 @@ android {
     // Inner externalNativeBuild (inside defaultConfig) does not seem to have correct type for setting path
     externalNativeBuild {
         cmake {
-            version = Versions.cmake
+            // We need to grab cmake version from `cmake --version` on the path and set it here
+            // otherwise the build system will use the one from the NDK
+            @Suppress("UnstableApiUsage")
+            version = project.providers.of(CmakeVersionProvider::class) {}.get()
             path = project.file("src/jvm/CMakeLists.txt")
         }
     }
@@ -449,7 +453,7 @@ val copyJVMSharedLibs: TaskProvider<Task> by tasks.registering {
  * Consolidate shared CMake flags used across all configurations
  */
 fun getSharedCMakeFlags(buildType: BuildType, ccache: Boolean = true): Array<String> {
-    // Any change to CMAKE properties here, should be reflected in /JenkinsFile, specifically
+    // Any change to CMAKE properties here, should be reflected in GHA(.github/workflows/pr.yml), specifically
     // the `build_jvm_linux` and `build_jvm_windows` functions.
     val args = mutableListOf<String>()
     if (ccache) {
@@ -503,6 +507,7 @@ fun Task.buildSharedLibrariesForJVMMacOs() {
             .copyTo(project.file("$jvmJniPath/macos/librealmc.dylib"), overwrite = true)
     }
 
+    inputs.dir(project.file("src/jvm"))
     inputs.dir(project.file("$absoluteCorePath/src"))
     outputs.file(project.file("$jvmJniPath/macos/librealmc.dylib"))
 }
@@ -756,5 +761,24 @@ tasks.named("clean") {
     doLast {
         delete(buildJVMSharedLibs.get().outputs)
         delete(project.file(".cxx"))
+    }
+}
+
+// Provider that reads the version of cmake that is on the PATH
+@Suppress("UnstableApiUsage")
+abstract class CmakeVersionProvider : ValueSource<String, ValueSourceParameters.None> {
+    @get:Inject
+    abstract val execOperations: ExecOperations
+    override fun obtain(): String? {
+        val output = ByteArrayOutputStream()
+        execOperations.exec {
+            commandLine("cmake", "--version")
+            standardOutput = output
+        }
+        val cmakeOutput = String(output.toByteArray(), Charset.defaultCharset())
+        val regex = "cmake version (?<version>[0-9\\.]*)".toRegex()
+        val cmakeVersion = regex.find(cmakeOutput)?.groups?.get("version")
+            ?: throw RuntimeException("Couldn't match cmake version from: '$cmakeOutput'")
+        return cmakeVersion.value
     }
 }

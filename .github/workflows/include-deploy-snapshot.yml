@@ -13,6 +13,11 @@ jobs:
     name: Deploy SNAPSHOT 
 
     steps:
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       - name: git checkout
         uses: actions/checkout@v3
         with:
@@ -36,10 +41,12 @@ jobs:
           path: ./packages/build/m2-buildrepo 
 
       - name: Publish SNAPSHOT to Maven Central
-        env:    
-          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY_BASE_64 }}
-          GPG_PASS_PHRASE: ${{ secrets.GPG_PASS_PHRASE }}
-          MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
-          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        # env:    
+        #   GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY_BASE_64 }}
+        #   GPG_PASS_PHRASE: ${{ secrets.GPG_PASS_PHRASE }}
+        #   MAVEN_CENTRAL_USER: ${{ secrets.MAVEN_CENTRAL_USER }}
+        #   MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
         working-directory: tools
-        run: kotlin ./publish_snapshots.main.kts "../" "${{ inputs.version-label }}" "$GPG_SIGNING_KEY" "$GPG_PASS_PHRASE" "$MAVEN_CENTRAL_USER" "$MAVEN_CENTRAL_PASSWORD"
+        run: |
+          export GPG_TTY=$(tty)
+          kotlin ./publish_snapshots.main.kts "../" "${{ inputs.version-label }}" "${{ secrets.GPG_SIGNING_KEY_BASE_64 }}" "${{ secrets.GPG_PASS_PHRASE }}" "${{ secrets.MAVEN_CENTRAL_USER }}" "${{ secrets.MAVEN_CENTRAL_PASSWORD }}"
