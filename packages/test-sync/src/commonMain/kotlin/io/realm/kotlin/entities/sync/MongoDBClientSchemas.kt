@@ -20,12 +20,7 @@ import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
 import kotlin.random.Random

@@ -2,8 +2,6 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.types.RealmInstant
-import org.mongodb.kbson.BsonBinary
-import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonDateTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -49,4 +47,3 @@ internal fun RealmInstant.restrictToMillisPrecision() =
 
 public inline fun RealmInstant.asBsonDateTime(): BsonDateTime = BsonDateTime(toDuration().inWholeMilliseconds)
 public inline fun BsonDateTime.asRealmInstant(): RealmInstant = value.milliseconds.toRealmInstant()
-

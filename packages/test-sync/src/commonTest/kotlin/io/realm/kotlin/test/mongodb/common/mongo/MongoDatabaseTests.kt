@@ -18,10 +18,9 @@ package io.realm.kotlin.test.mongodb.common.mongo
 
 import io.realm.kotlin.entities.sync.CollectionDataType
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.mongodb.AppConfiguration
+import io.realm.kotlin.mongodb.ext.insertOne
 import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.mongo.MongoDatabase
-import io.realm.kotlin.mongodb.ext.insertOne
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage

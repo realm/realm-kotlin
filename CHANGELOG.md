@@ -16,6 +16,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Index on list of strings property now supported (Core issue [realm/realm-core#7142](https://github.com/realm/realm-core/pull/7142))
 * Improved performance of RQL (parsed) queries on a non-linked string property using: >, >=, <, <=, operators and fixed behaviour that a null string should be evaulated as less than everything, previously nulls were not matched. (Core issue [realm/realm-core#3939](https://github.com/realm/realm-core/issues/3939).
 * Updated bundled OpenSSL version to 3.2.0 (Core issue [realm/realm-core#7303](https://github.com/realm/realm-core/pull/7303))
+* [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972))
 
 ### Fixed
 * Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
@@ -123,7 +124,6 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * The Unpacking of JVM native library will use the current library version instead of a calculated hash for the path. (Issue [#1617](https://github.com/realm/realm-kotlin/issues/1617)).
 * [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
 * [Sync] `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
-* [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972))
 
 ### Fixed
 * Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))

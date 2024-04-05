@@ -30,8 +30,8 @@ import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.customData
 import io.realm.kotlin.mongodb.ext.customDataAsBsonDocument
-import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.ext.insertOne
+import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp

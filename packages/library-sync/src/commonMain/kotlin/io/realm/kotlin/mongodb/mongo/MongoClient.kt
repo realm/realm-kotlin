@@ -16,10 +16,8 @@
 
 package io.realm.kotlin.mongodb.mongo
 
-import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.RealmObjectCompanion
 import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
-import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.internal.MongoDBSerializer
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.RealmObject
@@ -103,11 +101,9 @@ public interface MongoClient {
 public fun realmSerializerModule(schema: Set<KClass<out BaseRealmObject>>): SerializersModule {
     val companions: Map<String, RealmObjectCompanion> =
         schema.associate { kClass -> realmObjectCompanionOrThrow(kClass).let { it.io_realm_kotlin_className to it } }
-    RealmConfiguration.Builder(
-        emptySet()).build().schema
-
     val serializers: List<Pair<KClass<out BaseRealmObject>, KSerializer<*>>> = schema.map {
-        it to MongoDBSerializer(it, companions) }
+        it to MongoDBSerializer(it, companions)
+    }
 
     return SerializersModule {
         serializers.forEach {

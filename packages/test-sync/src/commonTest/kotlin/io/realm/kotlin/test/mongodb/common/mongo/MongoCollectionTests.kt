@@ -408,9 +408,13 @@ sealed class MongoCollectionTests {
             delay(3.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
-            val parentCollection = collection<ParentCollectionDataType, String>(EJson(serializersModule = realmSerializerModule(
-                setOf(ParentCollectionDataType::class)
-            )))
+            val parentCollection = collection<ParentCollectionDataType, String>(
+                EJson(
+                    serializersModule = realmSerializerModule(
+                        setOf(ParentCollectionDataType::class)
+                    )
+                )
+            )
 
             assertFailsWithMessage<SerializationException>("Cannot resolve target class in schema: Unknown class '${"$"} ref=ChildCollectionDataType'") {
                 parentCollection.findOne()

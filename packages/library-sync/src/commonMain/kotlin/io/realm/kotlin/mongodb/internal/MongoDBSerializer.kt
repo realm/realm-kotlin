@@ -63,7 +63,7 @@ import kotlin.reflect.KProperty1
  * realm objects. To be able to deserialize and create the correct instance, the serializer needs to
  * know of all potential target types.
  */
-public open class MongoDBSerializer internal constructor (
+public open class MongoDBSerializer internal constructor(
     clazz: KClass<out BaseRealmObject>,
     internal val schema: Map<String, RealmObjectCompanion> = emptyMap()
 ) : KSerializer<BaseRealmObject> {
@@ -113,6 +113,7 @@ public open class MongoDBSerializer internal constructor (
         return document
     }
 
+    @Suppress("LongMethod", "ComplexMethod")
     private fun storageTypeToBsonValue(
         storageType: RealmStorageType,
         clazz: KClass<*>,
@@ -182,6 +183,7 @@ public open class MongoDBSerializer internal constructor (
         }
     }
 
+    @Suppress("LongMethod", "ComplexMethod")
     internal fun bsonValueToStorageType(
         storageType: RealmStorageType,
         kClass: KClass<*>,
