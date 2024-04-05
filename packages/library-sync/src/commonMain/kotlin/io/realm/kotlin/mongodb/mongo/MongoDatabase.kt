@@ -55,7 +55,8 @@ public interface MongoDatabase {
      * @param collectionName the name of the collection name that the [MongoCollection] will
      * connect to.
      * @param eJson the EJson serializer that the [MongoCollection] should use to convert objects and
-     * primary keys with. Will default to the databases [EJson] instance.
+     * primary keys with. Will default to the databases [EJson] instance. For details on
+     * configuration of serialization see [MongoClient].
      * @param T the default type that remote entities of the collection will be serialized from and
      * to.
      * @param K the default type that primary keys will be serialized into.

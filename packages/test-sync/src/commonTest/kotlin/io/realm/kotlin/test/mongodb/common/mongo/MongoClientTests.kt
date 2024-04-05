@@ -19,9 +19,9 @@ package io.realm.kotlin.test.mongodb.common.mongo
 import io.realm.kotlin.entities.sync.CollectionDataType
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.mongodb.exceptions.ServiceException
-import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.mongodb.ext.collection
 import io.realm.kotlin.mongodb.ext.insertOne
+import io.realm.kotlin.mongodb.mongo.MongoClient
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
@@ -71,13 +71,13 @@ class MongoClientTests {
     }
 
     @Test
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     fun database_customSerializer() = runBlocking<Unit> {
         val collectionWithDefaultSerializer = client.database(app.clientAppId)
             .collection<CustomDataType, BsonValue>("CollectionDataType")
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
             collectionWithDefaultSerializer.insertOne(CustomDataType("object-1"))
         }
-
         val collectionWithCustomSerializer = client.database(app.clientAppId, customEjsonSerializer)
             .collection<CustomDataType, CustomIdType>("CollectionDataType")
         assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("object-1")))

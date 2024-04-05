@@ -16,11 +16,16 @@
 
 package io.realm.kotlin.entities.sync
 
-import io.realm.kotlin.mongodb.mongo.MongoDBSerializer
 import io.realm.kotlin.types.EmbeddedRealmObject
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
@@ -32,8 +37,6 @@ class CollectionDataType(var name: String = "Default", @PrimaryKey var _id: Int 
     constructor() : this("Default")
 }
 
-class ParentSerializer : MongoDBSerializer<ParentCollectionDataType>(ParentCollectionDataType::class)
-@Serializable(ParentSerializer::class)
 class ParentCollectionDataType : RealmObject {
     @PrimaryKey
     @Suppress("VariableNaming")
@@ -41,7 +44,9 @@ class ParentCollectionDataType : RealmObject {
     var name: String = "PARENT-DEFAULT"
     var child: ChildCollectionDataType? = null
     var embeddedChild: EmbeddedChildCollectionDataType? = null
+    var any: RealmAny? = null
 }
+
 @Serializable
 class ChildCollectionDataType : RealmObject {
     @PrimaryKey

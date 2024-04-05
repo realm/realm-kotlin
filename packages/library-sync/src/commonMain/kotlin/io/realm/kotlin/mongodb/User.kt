@@ -208,12 +208,16 @@ public interface User {
      * Get a [MongoClient] for accessing documents from App Service's _Data Source_.
      *
      * Serialization to and from EJSON is performed with [KBSON](https://github.com/mongodb/kbson)
-     * and requires to opt-in to the experimental [ExperimentalKBsonSerializerApi]-feature.
+     * that supports the [Kotlin Serialization framework](https://github.com/Kotlin/kotlinx.serialization)
+     * and handles serialization to and from classes marked with [Serializable]. Serialization of
+     * realm objects and links have some caveats and requires special configuration. For full
+     * details see [MongoClient].
      *
      * @param serviceName the name of the data service.
      * @param eJson the EJson serializer that the [MongoClient] should use to convert objects and
      * primary keys with. Will default to the apps [EJson] instance configured with
-     * [AppConfiguration.Builder.ejson].
+     * [AppConfiguration.Builder.ejson]. For details on configuration of serialization see
+     * [MongoClient].
      * throws IllegalStateException if trying to obtain a [MongoClient] from a logged out [User].
      */
     @ExperimentalKBsonSerializerApi
