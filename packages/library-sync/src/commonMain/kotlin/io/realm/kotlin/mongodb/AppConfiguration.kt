@@ -129,7 +129,7 @@ public interface AppConfiguration {
          *
          * @see Builder#baseUrl(String)
          */
-        public const val DEFAULT_BASE_URL: String = "https://realm.mongodb.com"
+        public const val DEFAULT_BASE_URL: String = "https://services.cloud.mongodb.com"
 
         /**
          * The default header name used to carry authorization data when making network requests
