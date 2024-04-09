@@ -50,7 +50,7 @@
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.4.1 commit 374dd672af357732dccc135fecc905406fec3223.
+* Updated to Realm Core 14.5.0 commit f9212cc5db8599278cd3d1d73d95df3188b5c3b9.
 * Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
 - Remove CMake required version.
 

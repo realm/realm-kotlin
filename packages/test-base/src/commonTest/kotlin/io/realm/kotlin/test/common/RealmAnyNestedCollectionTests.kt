@@ -276,9 +276,7 @@ class RealmAnyNestedCollectionTests {
 
             // Overwriting exact list with new list
             instance.value!!.asList()[0] = realmAnyListOf(7)
-            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]
-            }
+            assertEquals(7, nestedList[0]!!.asInt())
 
             nestedList = instance.value!!.asList()[0]!!.asList()
             assertEquals(7, nestedList[0]!!.asInt())
@@ -470,9 +468,7 @@ class RealmAnyNestedCollectionTests {
             // Overwriting exact list with new list
             instance.value!!.asDictionary()["key"] = realmAnyListOf(7)
 
-            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]
-            }
+            assertEquals(7, nestedList[0]!!.asInt())
 
             // Getting updated reference to embedded list
             nestedList = instance.value!!.asDictionary()["key"]!!.asList()
@@ -499,10 +495,9 @@ class RealmAnyNestedCollectionTests {
 
             // Overwriting with new list
             instance.value = realmAnyListOf(7)
-            // Accessing original orphaned list return 7 from the new instance, but expected ILLEGAL_STATE_EXCEPTION["List is no longer valid"]
-            assertFailsWithMessage<IllegalStateException>("List is no longer valid") {
-                nestedList[0]
-            }
+
+            // Accessing original orphaned list return 7 from the new instance
+            assertEquals(7, nestedList[0]!!.asInt())
 
             // Overwriting with null value
             instance.value = null

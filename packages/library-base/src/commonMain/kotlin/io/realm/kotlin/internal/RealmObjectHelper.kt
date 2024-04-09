@@ -238,15 +238,15 @@ internal object RealmObjectHelper {
                             setObjectByKey(obj, key, realmValue.asRealmObject(), updatePolicy, cache)
                         },
                         listAsRealmAnyHandler = { realmValue ->
-                            RealmInterop.realm_set_value(obj.objectPointer, key, nullTransport(), false)
                             val nativePointer = RealmInterop.realm_set_list(obj.objectPointer, key)
+                            RealmInterop.realm_list_clear(nativePointer)
                             val operator =
                                 realmAnyListOperator(obj.mediator, obj.owner, nativePointer, false, false)
                             operator.insertAll(0, value.asList(), updatePolicy, cache)
                         },
                         dictionaryAsRealmAnyHandler = { realmValue ->
-                            RealmInterop.realm_set_value(obj.objectPointer, key, nullTransport(), false)
                             val nativePointer = RealmInterop.realm_set_dictionary(obj.objectPointer, key)
+                            RealmInterop.realm_dictionary_clear(nativePointer)
                             val operator =
                                 realmAnyMapOperator(obj.mediator, obj.owner, nativePointer, false, false)
                             operator.putAll(value.asDictionary(), updatePolicy, cache)

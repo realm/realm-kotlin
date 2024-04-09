@@ -2768,8 +2768,9 @@ actual object RealmInterop {
         return CPointerWrapper(
             realm_wrapper.realm_sync_session_register_progress_notifier(
                 syncSession.cptr(),
-                staticCFunction<COpaquePointer?, ULong, ULong, Unit> { userData, transferred_bytes, total_bytes ->
+                staticCFunction<COpaquePointer?, ULong, ULong, Double, Unit> { userData, transferred_bytes, total_bytes, _ ->
                     safeUserData<ProgressCallback>(userData).run {
+                        // TODO Progress ignored until https://github.com/realm/realm-kotlin/pull/1575
                         onChange(transferred_bytes.toLong(), total_bytes.toLong())
                     }
                 },

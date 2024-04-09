@@ -521,10 +521,9 @@ internal class RealmAnyMapOperator<K> constructor(
                     }
                 },
                 listAsRealmAnyHandler = { realmValue ->
-                    // Have to clear existing elements for core to know if we are updating with a new collection
-                    realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_list(nativePointer, keyTransport)
+                    RealmInterop.realm_list_clear(nativePointer)
                     val operator = realmAnyListOperator(
                         mediator,
                         realmReference,
@@ -535,10 +534,9 @@ internal class RealmAnyMapOperator<K> constructor(
                     previous to true
                 },
                 dictionaryAsRealmAnyHandler = { realmValue ->
-                    // Have to clear existing elements for core to know if we are updating with a new collection
-                    realm_dictionary_insert(nativePointer, keyTransport, nullTransport())
                     val previous = getInternal(key)
                     val nativePointer = RealmInterop.realm_dictionary_insert_dictionary(nativePointer, keyTransport)
+                    RealmInterop.realm_dictionary_clear(nativePointer)
                     val operator =
                         realmAnyMapOperator(mediator, realmReference, nativePointer, issueDynamicObject, issueDynamicMutableObject)
                     operator.putAll(realmValue.asDictionary(), updatePolicy, cache)

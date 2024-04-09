@@ -206,7 +206,7 @@ class RealmAnyNestedListNotificationTest : FlowableTests, DeletableEntityNotific
 
         // Await that notifier has signalled the deletion so we are certain that the entity
         // has been deleted
-        withTimeout(10.seconds) {
+        withTimeout(3.seconds) {
             flow.await()
         }
     }

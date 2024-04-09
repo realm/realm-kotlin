@@ -124,7 +124,7 @@ internal class SuspendableNotifier(
                                 // the fine-grained notification data might be out of sync.
                                 // TODO Currently verifying that lifeRef is still valid to indicate
                                 //  if it was actually deleted. This is only a problem for
-                                //  collections as they seemed to be freezable from a delete
+                                //  collections as they seemed to be freezable from a deleted
                                 //  reference (contrary to other objects that returns null from
                                 //  freeze). An `out_collection_was_deleted` flag was added to the
                                 //  change object, which would probably be the way to go, but
