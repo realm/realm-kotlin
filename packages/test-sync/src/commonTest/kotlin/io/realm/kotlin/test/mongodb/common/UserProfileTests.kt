@@ -231,10 +231,10 @@ class UserProfileTests {
         setEmptyProfile()
 
         val user = app.createUserAndLogin()
-        assertFailsWithMessage<SerializationException>("Fields [name, email, picture_url, first_name, last_name, gender, birthday, min_age, max_age] are required for type with serial name 'io.realm.kotlin.test.mongodb.common.UserProfile', but they were missing") {
+        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
             user.profile<UserProfile>()
         }
-        assertFailsWithMessage<SerializationException>("Fields [name, email, picture_url, first_name, last_name, gender, birthday, min_age, max_age] are required for type with serial name 'io.realm.kotlin.test.mongodb.common.UserProfile', but they were missing") {
+        assertFailsWithMessage<SerializationException>("Could not decode field 'name': Undefined value on a non-optional field") {
             user.profile<UserProfile>(UserProfile.serializer())
         }
     }

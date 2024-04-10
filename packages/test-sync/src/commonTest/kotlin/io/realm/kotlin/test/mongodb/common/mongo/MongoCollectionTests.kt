@@ -55,6 +55,7 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.FLEXIBLE_SYNC_SCHEMA
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.common.utils.retry
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.BaseRealmObject
@@ -63,7 +64,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PersistedName
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -333,23 +333,25 @@ sealed class MongoCollectionTests {
     @Test
     open fun findOne_links() = runBlocking<Unit> {
         Realm.open(
-            SyncConfiguration.Builder(user, COLLECTION_SCHEMAS)
+            SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .initialSubscriptions {
                     add(it.query<ParentCollectionDataType>())
                     add(it.query<ChildCollectionDataType>())
                 }
                 .build()
-        ).use {
-            val syncedParent = it.write {
+        ).use { realm ->
+            val syncedParent = realm.write {
                 copyToRealm(ParentCollectionDataType().apply { child = ChildCollectionDataType() })
             }
-            // We need to upload schema before proceeding
-            it.syncSession.uploadAllLocalChanges(30.seconds)
-            // The translator should have some time to integrate the synced data
-            delay(5.seconds)
+            realm.syncSession.uploadAllLocalChanges(30.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
-            val mongoDBClientParent = collection<ParentCollectionDataType, String>().findOne()
+            val parentCollection = collection<ParentCollectionDataType, String>()
+
+            val mongoDBClientParent = retry(
+                { parentCollection.findOne() },
+                { response: ParentCollectionDataType? -> response != null },
+            )
             assertEquals(syncedParent._id, mongoDBClientParent!!._id)
             assertEquals(syncedParent.child!!._id, mongoDBClientParent!!.child!!._id)
         }
@@ -358,14 +360,14 @@ sealed class MongoCollectionTests {
     @Test
     open fun findOne_typedLinks() = runBlocking<Unit> {
         Realm.open(
-            SyncConfiguration.Builder(user, COLLECTION_SCHEMAS)
+            SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .initialSubscriptions {
                     add(it.query<ParentCollectionDataType>())
                     add(it.query<ChildCollectionDataType>())
                 }
                 .build()
-        ).use {
-            val syncedParent = it.write {
+        ).use { realm ->
+            val syncedParent = realm.write {
                 copyToRealm(
                     ParentCollectionDataType().apply {
                         any = RealmAny.create(ChildCollectionDataType())
@@ -373,12 +375,15 @@ sealed class MongoCollectionTests {
                 )
             }
             // We need to upload schema before proceeding
-            it.syncSession.uploadAllLocalChanges(30.seconds)
-            // The translator should have some time to integrate the synced data
-            delay(5.seconds)
+            realm.syncSession.uploadAllLocalChanges(30.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
-            val mongoDBClientParent = collection<ParentCollectionDataType, String>().findOne()
+            val parentCollection = collection<ParentCollectionDataType, String>()
+
+            val mongoDBClientParent = retry(
+                action = { parentCollection.findOne() },
+                until = { response -> response != null }
+            )
             assertEquals(syncedParent._id, mongoDBClientParent!!._id)
             assertEquals(syncedParent.any!!.asRealmObject<ChildCollectionDataType>()._id, mongoDBClientParent.any!!.asRealmObject<ChildCollectionDataType>()._id)
         }
@@ -393,8 +398,8 @@ sealed class MongoCollectionTests {
                     add(it.query<ChildCollectionDataType>())
                 }
                 .build()
-        ).use {
-            val syncedParent = it.write {
+        ).use { realm ->
+            val syncedParent = realm.write {
                 copyToRealm(
                     ParentCollectionDataType().apply {
                         any = RealmAny.create(ChildCollectionDataType())
@@ -402,9 +407,7 @@ sealed class MongoCollectionTests {
                 )
             }
             // We need to upload schema before proceeding
-            it.syncSession.uploadAllLocalChanges(30.seconds)
-            // The translator should have some time to integrate the synced data
-            delay(3.seconds)
+            realm.syncSession.uploadAllLocalChanges(30.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
             val parentCollection = collection<ParentCollectionDataType, String>(
@@ -416,7 +419,12 @@ sealed class MongoCollectionTests {
             )
 
             assertFailsWithMessage<SerializationException>("Cannot resolve target class in schema: Unknown class '${"$"}ref=ChildCollectionDataType'") {
-                parentCollection.findOne()
+                // We need to await until the response is non-null otherwise there will be nothing
+                // to deserialize and no exception will be thrown
+                retry(
+                    action = { parentCollection.findOne() },
+                    until = { response -> response != null }
+                )
             }
         }
     }

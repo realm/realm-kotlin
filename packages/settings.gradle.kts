@@ -24,9 +24,6 @@ dependencyResolutionManagement {
         getPropertyValue("testRepository")?.let {
             maven("file://${rootDir.absolutePath}/$it")
         }
-        maven {
-            url = uri("https://oss.sonatype.org/content/repositories/snapshots")
-        }
     }
 }
 fun getPropertyValue(propertyName: String): String? {
