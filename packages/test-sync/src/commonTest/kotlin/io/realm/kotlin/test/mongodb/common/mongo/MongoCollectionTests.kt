@@ -183,7 +183,6 @@ sealed class MongoCollectionTests {
                 )
             )
         )
-
     }
 
     @AfterTest
