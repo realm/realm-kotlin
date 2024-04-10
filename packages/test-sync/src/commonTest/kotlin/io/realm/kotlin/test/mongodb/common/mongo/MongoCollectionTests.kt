@@ -416,7 +416,7 @@ sealed class MongoCollectionTests {
                 )
             )
 
-            assertFailsWithMessage<SerializationException>("Cannot resolve target class in schema: Unknown class '${"$"} ref=ChildCollectionDataType'") {
+            assertFailsWithMessage<SerializationException>("Cannot resolve target class in schema: Unknown class '${"$"}ref=ChildCollectionDataType'") {
                 parentCollection.findOne()
             }
         }
