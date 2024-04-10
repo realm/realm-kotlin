@@ -18,19 +18,19 @@ This repository holds the source code for the Kotlin SDK for Realm, which runs o
 * **Intuitive to Developers:** Realm’s object-oriented data model is simple to learn, doesn’t need an ORM, and lets you write less code.
 * **Built for Mobile:** Realm is fully-featured, lightweight, and efficiently uses memory, disk space, and battery life.
 * **Designed for Offline Use:** Realm’s local database persists data on-disk, so apps work as well offline as they do online.
-* **[MongoDB Atlas Device Sync](https://www.mongodb.com/atlas/app-services/device-sync)**: Makes it simple to keep data in sync across users, devices, and your backend in real-time. Get started for free with [a template application](https://github.com/mongodb/template-app-kotlin-todo) and [create the cloud backend](http://mongodb.com/realm/register?utm_medium=github_atlas_CTA&utm_source=realm_kotlin_github).
+* **[Atlas Device Sync](https://www.mongodb.com/docs/atlas/app-services/sync/)**: Makes it simple to keep data in sync across users, devices, and your backend in real-time. Get started for free with [a template application](https://github.com/mongodb/template-app-kotlin-todo) and [create the cloud backend](http://mongodb.com/realm/register?utm_medium=github_atlas_CTA&utm_source=realm_kotlin_github).
 
 # General Availability 
 
 The Realm Kotlin SDK is GA.
 
-Documentation can be found [here](https://docs.mongodb.com/realm/sdk/kotlin-multiplatform/).
+Documentation can be found [here](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/).
 
 Sample projects can be found [here](https://github.com/realm/realm-kotlin-samples).
 
 If you are upgrading from a previous beta release of Realm Kotlin, please see the [CHANGELOG](CHANGELOG.md) for the full list of changes.
 
-If you are migrating from [Realm Java](https://github.com/realm/realm-java), please see the [Migration Guide](https://www.mongodb.com/docs/realm/sdk/kotlin/migrate-from-java-sdk-to-kotlin-sdk/).
+If you are migrating from [Realm Java](https://github.com/realm/realm-java), please see the [Migration Guide](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/migrate-from-java-sdk-to-kotlin-sdk/).
 
 
 # Usage
@@ -39,8 +39,8 @@ If you are migrating from [Realm Java](https://github.com/realm/realm-java), ple
 
 Installation differs slightly depending on the type of project and whether or not you are using Device Sync. See the details in the documentation:
 
-* [Android](https://www.mongodb.com/docs/realm/sdk/kotlin/install/android/#installation)
-* [Kotlin Multiplatform](https://www.mongodb.com/docs/realm/sdk/kotlin/install/kotlin-multiplatform/#installation)
+* [Android](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/install/#std-label-kotlin-install-android)
+* [Kotlin Multiplatform](https://www.mongodb.com/docs/atlas/device-sdks/sdk/kotlin/install/#std-label-kotlin-install-kotlin-multiplatform)
 
 Also pay attention to restrictions on which versions of Kotlin and other dependencies that are supported. You can read 
 more in the [version compatibility matrix](#version-compatibility-matrix).
@@ -97,7 +97,7 @@ CoroutineScope(context).async {
 
 ## Query
 
-The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://docs.mongodb.com/realm/sdk/kotlin/realm-database/query-language/)
+The query language supported by Realm is inspired by Apple’s [NSPredicate](https://developer.apple.com/documentation/foundation/nspredicate), see more examples [here](https://www.mongodb.com/docs/atlas/device-sdks/realm-query-language/)
 
 ```Kotlin
 // All persons
