@@ -17,6 +17,7 @@
 
 package io.realm.kotlin.compiler
 
+import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.PluginOption
 import com.tschuchort.compiletesting.SourceFile
@@ -394,10 +395,9 @@ class GenerationExtensionTest {
         inputs: Files,
         plugins: List<ComponentRegistrar> = listOf(Registrar()),
         options: List<PluginOption> = emptyList(),
-    ): KotlinCompilation.Result {
+    ): JvmCompilationResult {
         return KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
-            useIR = true
             messageOutputStream = System.out
             componentRegistrars = plugins
             inheritClassPath = true

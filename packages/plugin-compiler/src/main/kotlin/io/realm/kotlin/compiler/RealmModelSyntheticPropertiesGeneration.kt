@@ -864,7 +864,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
     }
 
     private fun irNull(startOffset: Int, endOffset: Int): IrExpressionBody =
-        IrExpressionBodyImpl(
+        pluginContext.irFactory.createExpressionBody(
             startOffset,
             endOffset,
             IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
@@ -872,7 +872,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     @Suppress("UnusedPrivateMember")
     private fun irFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
-        IrExpressionBodyImpl(
+        pluginContext.irFactory.createExpressionBody(
             startOffset,
             endOffset,
             IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType)

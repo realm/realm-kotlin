@@ -17,6 +17,7 @@
 
 package io.realm.kotlin.test.util
 
+import com.tschuchort.compiletesting.JvmCompilationResult
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.compiler.Registrar
@@ -27,10 +28,9 @@ object Compiler {
     fun compileFromSource(
         source: SourceFile,
         plugins: List<Registrar> = listOf(Registrar())
-    ): KotlinCompilation.Result =
+    ): JvmCompilationResult =
         KotlinCompilation().apply {
             sources = listOf(source)
-            useIR = true
             messageOutputStream = System.out
             componentRegistrars = plugins
             inheritClassPath = true

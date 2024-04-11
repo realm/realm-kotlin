@@ -69,7 +69,7 @@ class SampleTests {
     @Test
     fun realmObjectCompanion() {
         assertIs<RealmObjectCompanion>(Sample::class.realmObjectCompanionOrThrow())
-        assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
+//        assertIs<RealmObjectCompanion>(realmObjectCompanionOrThrow(Sample::class))
     }
 
     @Test

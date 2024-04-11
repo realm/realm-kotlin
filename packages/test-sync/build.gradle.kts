@@ -123,6 +123,7 @@ kotlin {
     // JVM specific KotlinCompilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+        kotlinOptions.freeCompilerArgs += "-opt-in=org.mongodb.kbson.ExperimentalKBsonSerializerApi"
     }
 }
 
@@ -236,7 +237,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
-                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+                implementation("dev.zacsweers.kctfork:core:0.5.0-alpha07")
             }
         }
         val jvmTest by getting {

@@ -19,6 +19,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -35,6 +36,7 @@ class NonLatinTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         app = TestApp(this::class.simpleName)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {

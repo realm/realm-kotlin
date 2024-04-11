@@ -516,7 +516,7 @@ fun IrClass.addValueProperty(
         modality = property.modality
         type = propertyType
     }.apply {
-        initializer = IrExpressionBodyImpl(initExpression(startOffset, endOffset))
+        initializer = factory.createExpressionBody(startOffset, endOffset, initExpression(startOffset, endOffset))
     }
     property.backingField?.parent = this
     property.backingField?.correspondingPropertySymbol = property.symbol
