@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -510,7 +511,6 @@ fun IrClass.addValueProperty(
     // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
     property.backingField = pluginContext.irFactory.buildField {
         at(this@addValueProperty.startOffset, this@addValueProperty.endOffset)
-        origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
         name = property.name
         visibility = DescriptorVisibilities.PRIVATE
         modality = property.modality
@@ -526,7 +526,6 @@ fun IrClass.addValueProperty(
         visibility = DescriptorVisibilities.PUBLIC
         modality = Modality.FINAL
         returnType = propertyType
-        origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
     }
     // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
     getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
@@ -543,7 +542,11 @@ fun IrClass.addValueProperty(
     getter.body = pluginContext.blockBody(getter.symbol) {
         at(startOffset, endOffset)
         +irReturn(
-            irGetFieldWrapper(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
+            irGetField(
+                irGet(getter.dispatchReceiverParameter!!),
+                property.backingField!!,
+                property.backingField!!.type
+            )
         )
     }
     return property
@@ -699,10 +702,6 @@ fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
         lineContent = null
     )!!
 }
-
-/** Wrapper method to overcome API differences from Kotlin 1.7.20-1.8.20 */
-fun IrBuilderWithScope.irGetFieldWrapper(receiver: IrGetValueImpl, field: IrField, type: IrType = field.type): IrExpression =
-    IrGetFieldImpl(startOffset, endOffset, field.symbol, type, receiver)
 
 /**
  * Method to indicate fatal issues that should not have happeneded; as opposed to user modeling

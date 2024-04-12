@@ -319,6 +319,11 @@ private fun gatherTargetInfo(kotlinCompilation: KotlinCompilation<*>): TargetInf
                     Family.LINUX,
                     Family.MINGW,
                     Family.ANDROID -> null // Not supported yet
+                    // Remaining options are removed in Kotlin 2, so cannot reference them but need
+                    // an else clause to be exhaustive
+                    // Family.WASM,
+                    // Family.ZEPHYR,
+                    else -> null
                 }
             }
             TargetInfo(

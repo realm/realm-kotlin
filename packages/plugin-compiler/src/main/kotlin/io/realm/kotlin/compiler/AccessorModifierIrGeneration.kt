@@ -58,18 +58,23 @@ import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_LIST
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_OBJECT
 import io.realm.kotlin.compiler.Names.REALM_OBJECT_HELPER_SET_SET
 import io.realm.kotlin.compiler.Names.REALM_SYNTHETIC_PROPERTY_PREFIX
+import io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
 import org.jetbrains.kotlin.ir.builders.Scope
+import org.jetbrains.kotlin.ir.builders.irBlock
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irIfNull
 import org.jetbrains.kotlin.ir.builders.irLetS
 import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
+import org.jetbrains.kotlin.ir.builders.irTemporary
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -79,7 +84,6 @@ import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedKotlinType
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrDeclarationReference
-import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
@@ -812,7 +816,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
             //  way to go. Until then we can achieve high performance by having one accessor
             //  call per supported storage type.
 
-            origin = IrDeclarationOrigin.DEFINED
+            origin = IrDeclarationOrigin.GeneratedByPlugin(RealmPluginGeneratorKey)
 
             body = IrBlockBuilder(
                 pluginContext,
@@ -823,26 +827,26 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 val receiver: IrValueParameter = getter.dispatchReceiverParameter!!
 
                 +irReturn(
-                    irLetS(
-                        value = irCall(
-                            objectReferenceProperty.getter!!,
-                            origin = IrStatementOrigin.GET_PROPERTY
-                        ).also {
-                            it.dispatchReceiver = irGet(receiver)
-                        },
-                        nameHint = "objectReference",
-                        irType = objectReferenceType,
-                    ) { valueSymbol ->
+                    irBlock {
+                        val tmp = irTemporary(
+                            irCall(
+                                objectReferenceProperty.getter!!,
+                            ).also {
+                                it.dispatchReceiver = irGet(receiver)
+                            },
+                            nameHint = "objectReference",
+                            irType = objectReferenceType,
+                        )
                         val managedObjectGetValueCall: IrCall = irCall(
                             callee = getFunction,
-                            origin = IrStatementOrigin.GET_PROPERTY
+                            origin = null
                         ).also {
                             it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
                         }.apply {
                             if (typeArgumentsCount > 0) {
                                 putTypeArgument(0, type)
                             }
-                            putValueArgument(0, irGet(objectReferenceType, valueSymbol))
+                            putValueArgument(0, irGet(objectReferenceType, tmp.symbol))
                             putValueArgument(1, irString(property.persistedName))
                         }
                         val storageValue = fromRealmValue?.let {
@@ -858,11 +862,11 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                                 putValueArgument(0, storageValue)
                             }
                         } ?: storageValue
-                        irIfNull(
+                        +irIfNull(
                             type = getter.returnType,
-                            subject = irGet(objectReferenceType, valueSymbol),
+                            subject = irGet(objectReferenceType, tmp.symbol),
                             // Unmanaged object, return backing field
-                            thenPart = irGetFieldWrapper(irGet(receiver), backingField),
+                            thenPart = irGetField(irGet(receiver), backingField, backingField.type),
                             // Managed object, return realm value
                             elsePart = publicValue
                         )
@@ -888,7 +892,7 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 // TODO optimize: similarly to what is written above about the getters, we could do
                 //  something similar for the setters and 'inputScope/inputScopeTracked {...}'.
 
-                origin = IrDeclarationOrigin.DEFINED
+                origin = IrDeclarationOrigin.GeneratedByPlugin(RealmPluginGeneratorKey)
 
                 body = IrBlockBuilder(
                     pluginContext,
@@ -898,59 +902,54 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                 ).irBlockBody {
                     val receiver: IrValueParameter = setter.dispatchReceiverParameter!!
 
-                    +irLetS(
-                        value = irCall(
+                    val tmp = irTemporary(
+                        irCall(
                             objectReferenceProperty.getter!!,
-                            origin = IrStatementOrigin.GET_PROPERTY
                         ).also {
                             it.dispatchReceiver = irGet(receiver)
                         },
                         nameHint = "objectReference",
                         irType = objectReferenceType,
-                    ) { valueSymbol ->
-                        val storageValue: IrDeclarationReference = fromPublic?.let {
-                            irCall(callee = it).apply {
-                                putValueArgument(0, irGet(setter.valueParameters.first()))
-                            }
-                        } ?: irGet(setter.valueParameters.first())
-                        val realmValue: IrDeclarationReference = toRealmValue?.let {
-                            irCall(callee = it).apply {
-                                if (typeArgumentsCount > 0) {
-                                    putTypeArgument(0, type)
-                                }
-                                putValueArgument(0, storageValue)
-                            }
-                        } ?: storageValue
-                        val cinteropCall = irCall(
-                            callee = setFunction,
-                            origin = IrStatementOrigin.GET_PROPERTY
-                        ).also {
-                            it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
-                        }.apply {
+                    )
+                    val storageValue: IrDeclarationReference = fromPublic?.let {
+                        irCall(callee = it).apply {
+                            putValueArgument(0, irGet(setter.valueParameters.first()))
+                        }
+                    } ?: irGet(setter.valueParameters.first())
+                    val realmValue: IrDeclarationReference = toRealmValue?.let {
+                        irCall(callee = it).apply {
                             if (typeArgumentsCount > 0) {
                                 putTypeArgument(0, type)
                             }
-                            putValueArgument(0, irGet(objectReferenceType, valueSymbol))
-                            putValueArgument(1, irString(property.persistedName))
-                            putValueArgument(2, realmValue)
+                            putValueArgument(0, storageValue)
                         }
-
-                        irIfNull(
-                            type = pluginContext.irBuiltIns.unitType,
-                            subject = irGet(objectReferenceType, valueSymbol),
-                            // Unmanaged object, set the backing field
-                            thenPart = IrSetFieldImpl(
-                                startOffset = startOffset,
-                                endOffset = endOffset,
-                                symbol = backingField.symbol,
-                                receiver = irGet(receiver),
-                                value = irGet(setter.valueParameters.first()),
-                                type = context.irBuiltIns.unitType
-                            ),
-                            // Managed object, return realm value
-                            elsePart = cinteropCall
-                        )
+                    } ?: storageValue
+                    val cinteropCall = irCall(
+                        callee = setFunction,
+                    ).also {
+                        it.dispatchReceiver = irGetObject(realmObjectHelper.symbol)
+                    }.apply {
+                        if (typeArgumentsCount > 0) {
+                            putTypeArgument(0, type)
+                        }
+                        putValueArgument(0, irGet(objectReferenceType, tmp.symbol))
+                        putValueArgument(1, irString(property.persistedName))
+                        putValueArgument(2, realmValue)
                     }
+
+                    +irIfNull(
+                        type = pluginContext.irBuiltIns.unitType,
+                        subject = irGet(objectReferenceType, tmp.symbol),
+                        // Unmanaged object, set the backing field
+                        thenPart =
+                        irSetField(
+                            irGet(receiver),
+                            backingField.symbol.owner,
+                            irGet(setter.valueParameters.first()),
+                        ),
+                        // Managed object, return realm value
+                        elsePart = cinteropCall
+                    )
                 }
             }
         }
