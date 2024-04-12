@@ -53,6 +53,8 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
 - Remove CMake required version.
 * Updated URL to documentation.
+* Refactored to allow compilation with Kotlin 2.0
+
 
 ## 1.14.2-SNAPSHOT (YYYY-MM-DD)
 
