@@ -1244,9 +1244,10 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
 }
 
 void
-realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes) {
+realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes, double progress) {
     auto env = get_env(true);
 
+    // TODO Progress ignored until https://github.com/realm/realm-kotlin/pull/1575
     static JavaMethod java_callback_method(env, JavaClassGlobalDef::progress_callback(), "onChange", "(JJ)V");
 
     jni_check_exception(env);

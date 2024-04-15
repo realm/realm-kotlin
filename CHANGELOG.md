@@ -1,13 +1,14 @@
 ## 1.15.0-SNAPSHOT (YYYY-MM-DD)
 
-[!NOTE]
-This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+> [!NOTE]
+> This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
 * If you want to query using `@type` operation, you must use 'objectlink' to match links to objects. 'object' is reserved for dictionary types.
 * Binary data and String data are now strongly typed for comparisons and queries. This change is especially relevant when querying for a string constant on a RealmAny property, as now only strings will be returned. If searching for Binary data is desired, then that type must be specified by the constant. In RQL the new way to specify a binary constant is to use `mixed = bin('xyz')` or `mixed = binary('xyz')`. (Core issue [realm/realm-core#6407](https://github.com/realm/realm-core/issues/6407)).
 
 ### Enhancements
+* Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 * Add support for using aggregate operations on RealmAny properties in queries  (Core issue [realm/realm-core#7398](https://github.com/realm/realm-core/pull/7398))
 * Property keypath in RQL can be substituted with value given as argument. Use '$P<i>' in query string. (Core issue [realm/realm-core#7033](https://github.com/realm/realm-core/issues/7033))
 * You can now use query substitution for the @type argument (Core issue [realm/realm-core#7289](https://github.com/realm/realm-core/issues/7289))
@@ -16,7 +17,8 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Index on list of strings property now supported (Core issue [realm/realm-core#7142](https://github.com/realm/realm-core/pull/7142))
 * Improved performance of RQL (parsed) queries on a non-linked string property using: >, >=, <, <=, operators and fixed behaviour that a null string should be evaulated as less than everything, previously nulls were not matched. (Core issue [realm/realm-core#3939](https://github.com/realm/realm-core/issues/3939).
 * Updated bundled OpenSSL version to 3.2.0 (Core issue [realm/realm-core#7303](https://github.com/realm/realm-core/pull/7303))
-* The default base url in `AppConfiguration` has been updated to point to `services.cloud.mongodb.com`. See https://www.mongodb.com/docs/atlas/app-services/domain-migration/ for more information. (Issue [#1685](https://github.com/realm/realm-kotlin/issues/1685))
+* Optimized `RealmList.indexOf()` and `RealmList.contains()` using Core implementation of operations instead of iterating elements and comparing them in Kotlin. (Issue [#1625](https://github.com/realm/realm-kotlin/pull/1666) [RKOTLIN-995](https://jira.mongodb.org/browse/RKOTLIN-995)).
+* [Sync] The default base url in `AppConfiguration` has been updated to point to `services.cloud.mongodb.com`. See https://www.mongodb.com/docs/atlas/app-services/domain-migration/ for more information. (Issue [#1685](https://github.com/realm/realm-kotlin/issues/1685))
 
 ### Fixed
 * Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
@@ -49,7 +51,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.4.1 commit 374dd672af357732dccc135fecc905406fec3223.
+* Updated to Realm Core 14.5.1 commit 316889b967f845fbc10b4422f96c7eadd47136f2.
 * Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
 - Remove CMake required version.
 * Updated URL to documentation.

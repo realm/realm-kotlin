@@ -66,6 +66,8 @@ import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
@@ -80,6 +82,7 @@ import okio.Path.Companion.toPath
 import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -1336,6 +1339,8 @@ class SyncedRealmTests {
         println("Partition based sync bundled realm is in ${config2.path}")
     }
 
+    // This test cannot run multiple times on the same server instance as the primary
+    // key of the objects from asset-pbs.realm will not be unique on secondary runs.
     @Test
     fun initialRealm_partitionBasedSync() {
         val (email, password) = randomEmail() to "password1234"
@@ -1365,26 +1370,24 @@ class SyncedRealmTests {
             }
         }
 
+        val initialDataVerified = atomic(false)
         val config2 = createPartitionSyncConfig(
-            user = user, partitionValue = partitionValue, name = "db1",
+            user = user, partitionValue = partitionValue, name = "db2",
             errorHandler = object : SyncSession.ErrorHandler {
                 override fun onError(session: SyncSession, error: SyncException) {
-                    fail("Realm 1: $error")
+                    fail("Realm 2: $error")
                 }
             }
         ) {
             waitForInitialRemoteData(30.seconds)
             initialData {
-                // Verify that initial data is running before data is synced
-                assertEquals(0, query<ParentPk>().find().size)
+                // Verify that initial data is running after data is synced
+                assertEquals(4, query<ParentPk>().find().size)
+                initialDataVerified.value = true
             }
         }
-        Realm.open(config2).use {
-            runBlocking {
-                it.syncSession.downloadAllServerChanges(30.seconds)
-                assertEquals(4, it.query<ParentPk>().find().size)
-            }
-        }
+        Realm.open(config2).use { }
+        assertTrue { initialDataVerified.value }
     }
 
     @Test
@@ -1497,6 +1500,7 @@ class SyncedRealmTests {
 
     @Test
     fun flexibleSync_throwsWithLocalInitialRealmFile() {
+
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -1860,9 +1864,10 @@ class SyncedRealmTests {
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out BaseRealmObject>> = PARTITION_BASED_SCHEMA,
         block: SyncConfiguration.Builder.() -> Unit = {}
     ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = PARTITION_BASED_SCHEMA,
+        schema = schema,
         user = user,
         partitionValue = partitionValue
     ).name(name).also { builder ->
@@ -1879,11 +1884,12 @@ class SyncedRealmTests {
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out BaseRealmObject>> = FLEXIBLE_SYNC_SCHEMA,
         initialSubscriptions: InitialSubscriptionsCallback? = null,
         block: SyncConfiguration.Builder.() -> Unit = {},
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
-        schema = FLEXIBLE_SYNC_SCHEMA
+        schema = schema
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
