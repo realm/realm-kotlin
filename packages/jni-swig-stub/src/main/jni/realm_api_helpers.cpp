@@ -959,10 +959,9 @@ realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jo
 
 // *** END - WebSocket Client (Platform Networking) *** //
 
-void set_log_callback(jint j_log_level, jobject log_callback) {
-auto jenv = get_env(false);
-auto log_level = static_cast<realm_log_level_e>(j_log_level);
-realm_set_log_callback([](void *userdata, realm_log_level_e level, const char *message) {
+void set_log_callback(jobject log_callback) {
+auto jenv = get_env(true);
+realm_set_log_callback([](void *userdata, const char* category, realm_log_level_e level, const char *message) {
                                auto log_callback = static_cast<jobject>(userdata);
                                auto jenv = get_env(true);
 
@@ -971,14 +970,13 @@ realm_set_log_callback([](void *userdata, realm_log_level_e level, const char *m
                                static JavaMethod log_method(jenv,
                                                             JavaClassGlobalDef::log_callback(),
                                                             "log",
-                                                            "(SLjava/lang/String;)V");
+                                                            "(SLjava/lang/String;Ljava/lang/String;)V");
 
-                               push_local_frame(jenv, 1);
-                               jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, message));
+                               push_local_frame(jenv, 2);
+                               jenv->CallVoidMethod(log_callback, log_method, java_level, to_jstring(jenv, category), to_jstring(jenv, message));
                                jni_check_exception(jenv);
                                jenv->PopLocalFrame(NULL);
                           },
-                          log_level,
                           jenv->NewGlobalRef(log_callback), // userdata is the log callback
                           [](void* userdata) {
                               // The log callback is a static global method that is intended to
@@ -1246,9 +1244,10 @@ sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handl
 }
 
 void
-realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes) {
+realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes, double progress) {
     auto env = get_env(true);
 
+    // TODO Progress ignored until https://github.com/realm/realm-kotlin/pull/1575
     static JavaMethod java_callback_method(env, JavaClassGlobalDef::progress_callback(), "onChange", "(JJ)V");
 
     jni_check_exception(env);

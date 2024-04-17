@@ -51,7 +51,7 @@ realm_http_transport_t*
 realm_network_transport_new(jobject network_transport);
 
 void
-set_log_callback(jint log_level, jobject log_callback);
+set_log_callback(jobject log_callbac);
 
 realm_scheduler_t*
 realm_create_scheduler(jobject dispatchScheduler);
@@ -107,7 +107,7 @@ void
 sync_after_client_reset_handler(realm_sync_config_t* config, jobject after_handler);
 
 void
-realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes);
+realm_sync_session_progress_notifier_callback(void *userdata, uint64_t transferred_bytes, uint64_t total_bytes, double progress);
 
 void
 realm_sync_session_connection_state_change_callback(void *userdata, realm_sync_connection_state_e old_state, realm_sync_connection_state_e new_state);
