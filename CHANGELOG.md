@@ -9,7 +9,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ### Enhancements
 * Add support for using aggregate operations on RealmAny properties in queries  (Core issue [realm/realm-core#7398](https://github.com/realm/realm-core/pull/7398))
-* Property keypath in RQL can be substituted with value given as argument. Use '$P<i>' in query string. (Core issue [realm/realm-core#7033](https://github.com/realm/realm-core/issues/7033))
+* Property keypath in RQL can be substituted with value given as argument. Use `$P<i>` in query string. (Core issue [realm/realm-core#7033](https://github.com/realm/realm-core/issues/7033))
 * You can now use query substitution for the @type argument (Core issue [realm/realm-core#7289](https://github.com/realm/realm-core/issues/7289))
 * Storage of Decimal128 properties has been optimised so that the individual values will take up 0 bits (if all nulls), 32 bits, 64 bits or 128 bits depending on what is needed. (Core issue [realm/realm-core#6111](https://github.com/realm/realm-core/pull/6111))
 * Querying a specific entry in a collection (in particular 'first and 'last') is supported. (Core issue [realm/realm-core#4269](https://github.com/realm/realm-core/issues/4269))
@@ -21,7 +21,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 ### Fixed
 * Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
 * `@count`/`@size` is now supported for `RealmAny` properties (Core issue [realm/realm-core#7280](https://github.com/realm/realm-core/issues/7280), since v10.0.0)
-* Fixed equality queries on a `RealmAny` property with an index possibly returning the wrong result if values of different types happened to have the same StringIndex hash. (Core issue [realm/realm-core6407](https://github.com/realm/realm-core/issues/6407) since v11.0.0-beta.5).
+* Fixed equality queries on a `RealmAny` property with an index possibly returning the wrong result if values of different types happened to have the same StringIndex hash. (Core issue [realm/realm-core6407](https://github.com/realm/realm-core/issues/6407), since v11.0.0-beta.5).
 * If you have more than 8388606 links pointing to one specific object, the program will crash. (Core issue [realm/realm-core#6577](https://github.com/realm/realm-core/issues/6577), since v6.0.0)
 * Query for NULL value in `RealmAny<RealmAny>` would give wrong results (Core issue [realm/realm-core6748])(https://github.com/realm/realm-core/issues/6748), since v10.0.0)
 * Fixed queries like `indexed_property == NONE {x}` which mistakenly matched on only x instead of not x. This only applies when an indexed property with equality (==, or IN) matches with `NONE` on a list of one item. If the constant list contained more than one value then it was working correctly. (Core issue [realm/realm-core#7777](https://github.com/realm/realm-java/issues/7862), since v12.5.0)
