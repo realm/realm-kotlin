@@ -19,7 +19,7 @@ package io.realm.kotlin.internal.interop
 import realm_wrapper.realm_errno
 
 actual enum class ErrorCode(
-    override val description: String,
+    actual override val description: String?,
     nativeError: realm_errno
 ) : CodeDescription {
     RLM_ERR_NONE("None", realm_errno.RLM_ERR_NONE),
@@ -186,7 +186,7 @@ actual enum class ErrorCode(
     RLM_ERR_CALLBACK("Callback", realm_errno.RLM_ERR_CALLBACK),
     RLM_ERR_UNKNOWN("Unknown", realm_errno.RLM_ERR_UNKNOWN);
 
-    override val nativeValue: Int = nativeError.value.toInt()
+    actual override val nativeValue: Int = nativeError.value.toInt()
 
     val asNativeEnum: realm_errno = nativeError
 

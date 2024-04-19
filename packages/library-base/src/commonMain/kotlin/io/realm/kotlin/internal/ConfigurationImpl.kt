@@ -70,38 +70,38 @@ public open class ConfigurationImpl(
     logger: ContextLogger
 ) : InternalConfiguration {
 
-    override val path: String
+    final override val path: String
 
-    override val name: String
+    final override val name: String
 
-    override val schema: Set<KClass<out BaseRealmObject>>
+    final override val schema: Set<KClass<out BaseRealmObject>>
 
-    override val log: LogConfiguration
+    final override val log: LogConfiguration
 
-    override val maxNumberOfActiveVersions: Long
+    final override val maxNumberOfActiveVersions: Long
 
-    override val schemaVersion: Long
+    final override val schemaVersion: Long
 
-    override val schemaMode: SchemaMode
+    final override val schemaMode: SchemaMode
 
     override val logger: ContextLogger = logger
 
     override val encryptionKey: ByteArray?
         get(): ByteArray? = userEncryptionKey
 
-    override val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
+    final override val mapOfKClassWithCompanion: Map<KClass<out BaseRealmObject>, RealmObjectCompanion>
 
-    override val mediator: Mediator
+    final override val mediator: Mediator
 
-    override val notificationDispatcherFactory: CoroutineDispatcherFactory
+    final override val notificationDispatcherFactory: CoroutineDispatcherFactory
 
-    override val writeDispatcherFactory: CoroutineDispatcherFactory
+    final override val writeDispatcherFactory: CoroutineDispatcherFactory
 
-    override val compactOnLaunchCallback: CompactOnLaunchCallback?
+    final override val compactOnLaunchCallback: CompactOnLaunchCallback?
 
-    override val initialDataCallback: InitialDataCallback?
-    override val inMemory: Boolean
-    override val initialRealmFileConfiguration: InitialRealmFileConfiguration?
+    final override val initialDataCallback: InitialDataCallback?
+    final override val inMemory: Boolean
+    final override val initialRealmFileConfiguration: InitialRealmFileConfiguration?
 
     override fun createNativeConfiguration(): RealmConfigurationPointer {
         val nativeConfig: RealmConfigurationPointer = RealmInterop.realm_config_new()

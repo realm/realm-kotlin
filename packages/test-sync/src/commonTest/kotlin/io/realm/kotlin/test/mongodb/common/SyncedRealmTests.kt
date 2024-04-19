@@ -79,6 +79,7 @@ import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
@@ -101,6 +102,7 @@ import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("LargeClass")
+@OptIn(ExperimentalKBsonSerializerApi::class)
 class SyncedRealmTests {
 
     companion object {
@@ -1453,6 +1455,7 @@ class SyncedRealmTests {
     // Sanity check that we can in fact open a flexible sync realm file as initial file
     @Test
     fun initialRealm_flexibleSync() = runBlocking {
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         TestApp(
             "initialRealm_flexibleSync",
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,

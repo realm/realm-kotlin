@@ -185,6 +185,9 @@ expect enum class ErrorCode : CodeDescription {
     RLM_ERR_CALLBACK,
     RLM_ERR_UNKNOWN;
 
+    override val nativeValue: Int
+    override val description: String?
+
     companion object {
         fun of(nativeValue: Int): ErrorCode?
     }

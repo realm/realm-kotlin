@@ -318,9 +318,13 @@ private fun gatherTargetInfo(kotlinCompilation: KotlinCompilation<*>): TargetInf
                     Family.WATCHOS -> cocoapods.watchos.deploymentTarget
                     Family.LINUX,
                     Family.MINGW,
-                    Family.ANDROID,
-                    Family.WASM,
-                    Family.ZEPHYR -> null // Not supported yet
+                    Family.ANDROID -> null // Not supported yet
+                    // TODO 1.9-DEPRECATION Revert to exhaustive branch strategy when leaving 1.9 support
+                    // Remaining options are removed in Kotlin 2, so cannot reference them but need
+                    // an else clause to be exhaustive
+                    // Family.WASM,
+                    // Family.ZEPHYR,
+                    else -> null
                 }
             }
             TargetInfo(
@@ -349,8 +353,6 @@ fun nativeTarget(target: KonanTarget) = when (target.family) {
     Family.LINUX -> "Linux"
     Family.MINGW -> "MinGW"
     Family.ANDROID -> "Android(native)"
-    Family.WASM -> "Wasm"
-    Family.ZEPHYR -> "Zephyr"
     else -> unknown(target.family.name)
 }
 
@@ -361,9 +363,6 @@ fun nativeArch(target: KonanTarget): String = try {
         Architecture.X86 -> io.realm.kotlin.gradle.analytics.Architecture.X86.serializedName
         Architecture.ARM64 -> io.realm.kotlin.gradle.analytics.Architecture.ARM64.serializedName
         Architecture.ARM32 -> io.realm.kotlin.gradle.analytics.Architecture.ARM.serializedName
-        Architecture.MIPS32 -> "Mips"
-        Architecture.MIPSEL32 -> "MipsEL32"
-        Architecture.WASM32 -> "Wasm"
         else -> unknown(target.architecture.name)
     }
 } catch (e: Throwable) {
