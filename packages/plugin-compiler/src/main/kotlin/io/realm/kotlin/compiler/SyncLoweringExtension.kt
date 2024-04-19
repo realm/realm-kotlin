@@ -18,11 +18,12 @@ package io.realm.kotlin.compiler
 
 import io.realm.kotlin.compiler.ClassIds.APP_CONFIGURATION_BUILDER
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
+import org.jetbrains.kotlin.backend.common.CompilationException
 import org.jetbrains.kotlin.backend.common.DeclarationContainerLoweringPass
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
+import org.jetbrains.kotlin.backend.common.wrapWithCompilationException
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrDeclarationContainer
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 /**
  * Lowering extension that injects the 'io.realm.kotlin.bundleId' compiler plugin option into
@@ -52,7 +54,7 @@ class SyncLoweringExtension(private val bundleId: String) : IrGenerationExtensio
         // symbol
         val syncSymbol = pluginContext.referenceClass(ClassIds.APP)?.owner
         if (syncSymbol != null) {
-            SyncLowering(pluginContext, bundleId).lower(moduleFragment)
+            SyncLowering(pluginContext, bundleId).lowerFromModuleFragment(moduleFragment)
         }
     }
 }
@@ -157,6 +159,33 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
                 }
             }
             return super.visitCall(expression)
+        }
+    }
+
+    // TODO 1.9-DEPRECATION Remove and rely on ClassLoweringPass.lower(IrModuleFragment) when leaving i
+    //  1.9 support
+    // Workaround that FileLoweringPass.lower(IrModuleFragment) is implemented as extension method
+    // in 1.9 but as proper interface method in 2.0. Implementation in both versions are more or
+    // less the same but this common implementation can loose some information as the IrElement is
+    // also not uniformly available on the CompilationException across versions.
+    fun lowerFromModuleFragment(
+        moduleFragment: IrModuleFragment
+    ) = moduleFragment.files.forEach {
+        try {
+            lower(it)
+        } catch (e: CompilationException) {
+            // Unfortunately we cannot access the IR element of e uniformly across 1.9 and 2.0 so
+            // leaving it as null. Hopefully the embedded cause will give the appropriate pointers
+            // to fix this.
+            throw e.wrapWithCompilationException("Internal error in realm lowering", it, null)
+        } catch (e: KotlinExceptionWithAttachments) {
+            throw e
+        } catch (e: Throwable) {
+            throw e.wrapWithCompilationException(
+                "Internal error in file lowering",
+                it,
+                null
+            )
         }
     }
 

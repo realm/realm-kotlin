@@ -21,8 +21,8 @@ import realm_wrapper.realm_error_category
  * Error categories are composed of multiple categories in once, it is a flag property.
  */
 actual enum class ErrorCategory(
-    override val description: String,
-    override val nativeValue: Int
+    actual override val description: String?,
+    actual override val nativeValue: Int
 ) : CodeDescription {
     RLM_ERR_CAT_LOGIC("Logic", realm_error_category.RLM_ERR_CAT_LOGIC.value.toInt()),
     RLM_ERR_CAT_RUNTIME("Runtime", realm_error_category.RLM_ERR_CAT_RUNTIME.value.toInt()),

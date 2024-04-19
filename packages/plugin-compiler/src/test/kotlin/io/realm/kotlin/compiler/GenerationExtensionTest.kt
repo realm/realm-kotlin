@@ -397,7 +397,6 @@ class GenerationExtensionTest {
     ): KotlinCompilation.Result {
         return KotlinCompilation().apply {
             sources = inputs.fileMap.values.map { SourceFile.fromPath(it) }
-            useIR = true
             messageOutputStream = System.out
             componentRegistrars = plugins
             inheritClassPath = true

@@ -29,6 +29,7 @@ import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.timeIntervalSince1970
 import platform.posix.memcpy
 import platform.posix.pthread_threadid_np
+import kotlin.experimental.ExperimentalNativeApi
 import kotlin.native.identityHashCode
 import kotlin.reflect.KMutableProperty1
 import kotlin.reflect.KType
@@ -194,4 +195,5 @@ private fun NSData.toByteArray(): ByteArray = ByteArray(this@toByteArray.length.
 
 public actual fun isWindows(): Boolean = false
 
+@OptIn(ExperimentalNativeApi::class)
 internal actual fun identityHashCode(obj: Any?): Int = obj.identityHashCode()

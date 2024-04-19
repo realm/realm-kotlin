@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.internal.interop
 
-actual enum class ErrorCode(override val description: String, override val nativeValue: Int) :
+actual enum class ErrorCode(actual override val description: String?, actual override val nativeValue: Int) :
     CodeDescription {
     RLM_ERR_NONE("None", realm_errno_e.RLM_ERR_NONE),
     RLM_ERR_RUNTIME("Runtime", realm_errno_e.RLM_ERR_RUNTIME),

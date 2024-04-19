@@ -1,6 +1,9 @@
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 import org.junit.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
