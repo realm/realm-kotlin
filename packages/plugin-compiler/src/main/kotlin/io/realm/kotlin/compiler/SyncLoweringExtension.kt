@@ -162,6 +162,8 @@ private class SyncLowering(private val pluginContext: IrPluginContext, private v
         }
     }
 
+    // TODO 1.9-DEPRECATION Remove and rely on ClassLoweringPass.lower(IrModuleFragment) when leaving i
+    //  1.9 support
     // Workaround that FileLoweringPass.lower(IrModuleFragment) is implemented as extension method
     // in 1.9 but as proper interface method in 2.0. Implementation in both versions are more or
     // less the same but this common implementation can loose some information as the IrElement is

@@ -58,6 +58,8 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
         pluginContext.lookupClassOrThrow(MODEL_OBJECT_ANNOTATION)
     }
 
+    // TODO 1.9-DEPRECATION Remove and rely on ClassLoweringPass.lower(IrModuleFragment) when
+    //  leaving 1.9 support
     // Workaround that FileLoweringPass.lower(IrModuleFragment) is implemented as extension method
     // in 1.9 but as proper interface method in 2.0. Implementation in both versions are more or
     // less the same but this common implementation can loose some information as the IrElement is

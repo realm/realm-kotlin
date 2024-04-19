@@ -319,6 +319,7 @@ private fun gatherTargetInfo(kotlinCompilation: KotlinCompilation<*>): TargetInf
                     Family.LINUX,
                     Family.MINGW,
                     Family.ANDROID -> null // Not supported yet
+                    // TODO 1.9-DEPRECATION Revert to exhaustive branch strategy when leaving 1.9 support
                     // Remaining options are removed in Kotlin 2, so cannot reference them but need
                     // an else clause to be exhaustive
                     // Family.WASM,
