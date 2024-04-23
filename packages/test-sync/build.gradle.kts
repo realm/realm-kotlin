@@ -117,13 +117,11 @@ kotlin {
     }
 
     // All kotlin compilation tasks
-    tasks.withType(org.jetbrains.kotlin.gradle.dsl.KotlinCompile::class.java).all {
-        kotlinOptions.freeCompilerArgs += listOf( "-P", "plugin:io.realm.kotlin:bundleId=TEST_BUNDLE_ID", )
-    }
-    // JVM specific KotlinCompilation tasks
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
-        kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
-        kotlinOptions.freeCompilerArgs += "-opt-in=org.mongodb.kbson.ExperimentalKBsonSerializerApi"
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>> {
+        compilerOptions.freeCompilerArgs.addAll(
+            "-P", "plugin:io.realm.kotlin:bundleId=TEST_BUNDLE_ID",
+            "-opt-in=org.mongodb.kbson.ExperimentalKBsonSerializerApi"
+        )
     }
 }
 
@@ -237,7 +235,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
-                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+                implementation("dev.zacsweers.kctfork:core:${Versions.kotlinCompileTesting}")
             }
         }
         val jvmTest by getting {

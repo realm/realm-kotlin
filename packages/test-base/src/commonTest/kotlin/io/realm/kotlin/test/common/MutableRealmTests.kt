@@ -46,6 +46,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import kotlin.test.fail
 
@@ -543,7 +544,7 @@ class MutableRealmTests {
         realm.writeBlocking {
             val instance = copyToRealm(StringPropertyWithPrimaryKey())
             val latest = findLatest(instance)
-            assert(instance === latest)
+            assertSame(instance, latest)
         }
     }
 

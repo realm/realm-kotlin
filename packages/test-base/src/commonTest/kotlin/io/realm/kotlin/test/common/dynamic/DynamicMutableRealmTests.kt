@@ -50,6 +50,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @Suppress("LargeClass")
@@ -469,7 +470,7 @@ class DynamicMutableRealmTests {
         val instance =
             dynamicMutableRealm.copyToRealm(DynamicMutableRealmObject.create("Sample"))
         val latest = dynamicMutableRealm.findLatest(instance)
-        assert(instance === latest)
+        assertSame(instance, latest)
     }
 
     @Test
