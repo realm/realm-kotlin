@@ -1,4 +1,6 @@
-## 1.15.1-SNAPSHOT (YYYY-MM-DD)
+## 1.15.1-K2-SNAPSHOT (YYYY-MM-DD)
+
+This is an experimental branch for Kotlin 2.0. The branch is built with Kotlin 2.0.0-RC1.
 
 [!NOTE]
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
@@ -16,7 +18,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
 * Realm Studio 15.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Kotlin 2.0.0-RC1.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
@@ -28,7 +30,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* None.
+* Changed Kotlin compiler testing framework to https://github.com/zacsweers/kotlin-compile-testing
 
 
 ## 1.15.0 (2024-04-17)

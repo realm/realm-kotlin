@@ -237,7 +237,7 @@ kotlin {
             dependencies {
                 implementation("org.jetbrains.kotlin:kotlin-compiler-embeddable:${Versions.kotlin}")
                 implementation("io.realm.kotlin:plugin-compiler:${Realm.version}")
-                implementation("com.github.tschuchortdev:kotlin-compile-testing:${Versions.kotlinCompileTesting}")
+                implementation("dev.zacsweers.kctfork:core:${Versions.kotlinCompileTesting}")
             }
         }
         val jvmTest by getting {
