@@ -20,10 +20,11 @@ import io.realm.kotlin.compiler.ClassIds.MODEL_OBJECT_ANNOTATION
 import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
 import org.jetbrains.kotlin.backend.common.ClassLoweringPass
+import org.jetbrains.kotlin.backend.common.CompilationException
 import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
-import org.jetbrains.kotlin.backend.common.lower
 import org.jetbrains.kotlin.backend.common.runOnFilePostfix
+import org.jetbrains.kotlin.backend.common.wrapWithCompilationException
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -42,10 +43,11 @@ import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.util.primaryConstructor
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 class RealmModelLoweringExtension : IrGenerationExtension {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
-        RealmModelLowering(pluginContext).lower(moduleFragment)
+        RealmModelLowering(pluginContext).lowerFromModuleFragment(moduleFragment)
     }
 }
 
@@ -54,6 +56,33 @@ private class RealmModelLowering(private val pluginContext: IrPluginContext) : C
     // NOTE This is only available on Native platforms
     val modelObjectAnnotationClass by lazy {
         pluginContext.lookupClassOrThrow(MODEL_OBJECT_ANNOTATION)
+    }
+
+    // TODO 1.9-DEPRECATION Remove and rely on ClassLoweringPass.lower(IrModuleFragment) when
+    //  leaving 1.9 support
+    // Workaround that FileLoweringPass.lower(IrModuleFragment) is implemented as extension method
+    // in 1.9 but as proper interface method in 2.0. Implementation in both versions are more or
+    // less the same but this common implementation can loose some information as the IrElement is
+    // also not uniformly available on the CompilationException across versions.
+    fun lowerFromModuleFragment(
+        moduleFragment: IrModuleFragment
+    ) = moduleFragment.files.forEach {
+        try {
+            lower(it)
+        } catch (e: CompilationException) {
+            // Unfortunately we cannot access the IR element of e uniformly across 1.9 and 2.0 so
+            // leaving it as null. Hopefully the embedded cause will give the appropriate pointers
+            // to fix this.
+            throw e.wrapWithCompilationException("Internal error in realm lowering", it, null)
+        } catch (e: KotlinExceptionWithAttachments) {
+            throw e
+        } catch (e: Throwable) {
+            throw e.wrapWithCompilationException(
+                "Internal error in file lowering",
+                it,
+                null
+            )
+        }
     }
 
     override fun lower(irFile: IrFile) = runOnFilePostfix(irFile)

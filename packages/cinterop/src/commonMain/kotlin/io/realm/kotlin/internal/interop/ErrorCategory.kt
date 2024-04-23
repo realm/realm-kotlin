@@ -35,6 +35,9 @@ expect enum class ErrorCategory : CodeDescription {
     RLM_ERR_CAT_WEBSOCKET_ERROR,
     RLM_ERR_CAT_SYNC_ERROR;
 
+    override val nativeValue: Int
+    override val description: String?
+
     companion object {
         internal fun of(nativeValue: Int): ErrorCategory?
     }
