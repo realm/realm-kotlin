@@ -412,11 +412,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Setup Java 11
+      - name: Setup Java 17
         uses: actions/setup-java@v3
         with:
           distribution: ${{ vars.VERSION_JAVA_DISTRIBUTION }}
-          java-version: ${{ vars.VERSION_JAVA }}
+          java-version: '17'
 
       - name: Setup Gradle and task/dependency caching
         uses: gradle/gradle-build-action@v2
