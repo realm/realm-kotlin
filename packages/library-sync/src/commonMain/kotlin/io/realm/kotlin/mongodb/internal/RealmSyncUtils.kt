@@ -156,11 +156,8 @@ internal fun convertAppError(appError: AppError): Throwable {
                 ErrorCode.RLM_ERR_CLIENT_USER_NOT_FOUND -> {
                     IllegalStateException(msg)
                 }
-                ErrorCode.RLM_ERR_CLIENT_USER_NOT_LOGGED_IN -> {
-                    InvalidCredentialsException(msg)
-                }
-                ErrorCode.RLM_ERR_CLIENT_APP_DEALLOCATED -> {
-                    AppException(msg)
+                ErrorCode.RLM_ERR_CLIENT_USER_ALREADY_NAMED ->{
+                    CredentialsCannotBeLinkedException(msg)
                 }
                 else -> {
                     AppException(msg)

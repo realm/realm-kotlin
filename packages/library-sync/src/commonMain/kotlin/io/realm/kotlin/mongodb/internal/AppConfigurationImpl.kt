@@ -132,7 +132,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         bundleId: String,
         networkTransport: NetworkTransport
     ): RealmAppConfigurationPointer {
-        return RealmInterop.realm_app_config_new(
+        val appConfigPtr = RealmInterop.realm_app_config_new(
             appId = appId,
             baseUrl = baseUrl,
             networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
@@ -146,6 +146,15 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                 frameworkVersion = RUNTIME_VERSION
             )
         )
+        RealmInterop.realm_app_config_set_base_file_path(appConfigPtr, syncRootDirectory)
+        RealmInterop.realm_app_config_set_metadata_mode(appConfigPtr, metadataMode)
+        encryptionKey?.let {
+            RealmInterop.realm_app_config_set_metadata_encryption_key(
+                appConfigPtr,
+                it
+            )
+        }
+        return appConfigPtr
     }
 
     private fun initializeSyncClientConfig(
@@ -157,21 +166,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
             .also { syncClientConfig ->
                 // Initialize client configuration first
                 RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)
-                RealmInterop.realm_sync_client_config_set_metadata_mode(
-                    syncClientConfig,
-                    metadataMode
-                )
-                RealmInterop.realm_sync_client_config_set_base_file_path(
-                    syncClientConfig,
-                    syncRootDirectory
-                )
 
-                encryptionKey?.let {
-                    RealmInterop.realm_sync_client_config_set_metadata_encryption_key(
-                        syncClientConfig,
-                        it
-                    )
-                }
 
                 sdkInfo?.let {
                     RealmInterop.realm_sync_client_config_set_user_agent_binding_info(
