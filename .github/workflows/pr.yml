@@ -439,6 +439,9 @@ jobs:
           key: 'jvm-package'
           max-size: '2.0G'
 
+      - name: Install SWIG
+        run: brew install swig
+
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
