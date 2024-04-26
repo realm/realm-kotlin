@@ -2060,7 +2060,7 @@ actual object RealmInterop {
         name: String,
         callback: AppCallback<ApiKeyWrapper>
     ) {
-            checkedBooleanResult(
+        checkedBooleanResult(
             realm_wrapper.realm_app_user_apikey_provider_client_create_apikey(
                 app.cptr(),
                 user.cptr(),

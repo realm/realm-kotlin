@@ -167,7 +167,6 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                 // Initialize client configuration first
                 RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)
 
-
                 sdkInfo?.let {
                     RealmInterop.realm_sync_client_config_set_user_agent_binding_info(
                         syncClientConfig,

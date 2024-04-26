@@ -493,6 +493,8 @@ jobs:
 
   build-android-packages:
     runs-on: ubuntu-latest
+    env:
+      NDK_VERSION: 23.2.8568313
     needs: check-cache
     outputs:
       baas-container-id: ${{ steps.baas_cli_start.outputs.baas_container_id }}
@@ -571,11 +573,11 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
-      - name: Setup NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r23c
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install NDK
+        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
 
       - name: Build Android Base Test Apk
         working-directory: packages
@@ -675,6 +677,9 @@ jobs:
           key: 'macos-x64-package'
           max-size: '2.0G'
 
+      - name: Install SWIG
+        run: brew install swig
+
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -744,6 +749,9 @@ jobs:
           key: 'macos-arm64-package'
           max-size: '2.0G'
 
+      - name: Install SWIG
+        run: brew install swig
+
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
 
@@ -811,6 +819,9 @@ jobs:
         with:
           key: 'ios-x64-package'
           max-size: '2.0G'
+
+      - name: Install SWIG
+        run: brew install swig
 
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
@@ -880,6 +891,9 @@ jobs:
         with:
           key: 'ios-arm64-package'
           max-size: '2.0G'
+
+      - name: Install SWIG
+        run: brew install swig
 
       - name: Prepend ccache executables to the PATH
         run: echo "/usr/lib/ccache:/usr/local/opt/ccache/libexec" >> $GITHUB_PATH
