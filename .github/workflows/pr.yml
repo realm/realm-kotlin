@@ -397,6 +397,8 @@ jobs:
   build-jvm-packages:
     runs-on: macos-latest
     needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib, build-jvm-macos-native-lib]
+    env:
+      NDK_VERSION: 23.2.8568313
     if: |
       always() && 
       !cancelled() && 
@@ -448,11 +450,11 @@ jobs:
           echo '#!/bin/bash\nccache clang "$@"%"' > /usr/local/bin/ccache-clang 
           echo '#!/bin/bash\nccache clang++ "$@"%"' > /usr/local/bin/ccache-clang++          
 
-      # TODO This matches 23.2.8568313, but what happens if we a define specific ndk version in our build? 
-      - name: Setup NDK
-        uses: nttld/setup-ndk@v1
-        with:
-          ndk-version: r23c
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install NDK
+        run: sdkmanager --install "ndk;${{ env.NDK_VERSION }}"
 
       # We cannot use artifacts as they cannot be shared between workflows, so use cache instead.
       - name: Setup build cache
