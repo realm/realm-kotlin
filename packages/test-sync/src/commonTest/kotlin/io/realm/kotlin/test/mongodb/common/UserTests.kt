@@ -488,7 +488,7 @@ class UserTests {
             emailUser1.linkCredentials(Credentials.anonymous())
         }.let {
             assertTrue(
-                it.message!!.contains("linking an anonymous identity is not allowed"),
+                it.message!!.contains("Cannot add anonymous credentials to an existing user"),
                 it.message
             )
         }

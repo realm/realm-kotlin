@@ -258,7 +258,7 @@ kotlin {
     }
     targets.filterIsInstance<KotlinNativeTargetWithSimulatorTests>().forEach { simulatorTargets ->
         simulatorTargets.testRuns.forEach { testRun ->
-            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
+            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 14"
         }
     }
     sourceSets {

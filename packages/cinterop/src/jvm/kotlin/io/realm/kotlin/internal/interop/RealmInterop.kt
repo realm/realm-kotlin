@@ -17,7 +17,6 @@
 package io.realm.kotlin.internal.interop
 
 import io.realm.kotlin.internal.interop.Constants.ENCRYPTION_KEY_LENGTH
-import io.realm.kotlin.internal.interop.RealmInterop.cptr
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
 import io.realm.kotlin.internal.interop.sync.AuthProvider
 import io.realm.kotlin.internal.interop.sync.CoreConnectionState
@@ -1099,7 +1098,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = true)
+        return LongPointerWrapper(realmc.realm_app_create(appConfig.cptr()), managed = true)
     }
 
     actual fun realm_app_log_in_with_credentials(
@@ -1276,11 +1275,11 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_client_config_set_base_file_path(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    actual fun realm_app_config_set_base_file_path(
+        appConfig: RealmAppConfigurationPointer,
         basePath: String
     ) {
-        realmc.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
+        realmc.realm_app_config_set_base_file_path(appConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
@@ -1295,22 +1294,22 @@ actual object RealmInterop {
         realmc.realm_set_log_level(level.priority)
     }
 
-    actual fun realm_sync_client_config_set_metadata_mode(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    actual fun realm_app_config_set_metadata_mode(
+        appConfig: RealmAppConfigurationPointer,
         metadataMode: MetadataMode
     ) {
-        realmc.realm_sync_client_config_set_metadata_mode(
-            syncClientConfig.cptr(),
+        realmc.realm_app_config_set_metadata_mode(
+            appConfig.cptr(),
             metadataMode.nativeValue
         )
     }
 
-    actual fun realm_sync_client_config_set_metadata_encryption_key(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    actual fun realm_app_config_set_metadata_encryption_key(
+        appConfig: RealmAppConfigurationPointer,
         encryptionKey: ByteArray
     ) {
-        realmc.realm_sync_client_config_set_metadata_encryption_key(
-            syncClientConfig.cptr(),
+        realmc.realm_app_config_set_metadata_encryption_key(
+            appConfig.cptr(),
             encryptionKey
         )
     }

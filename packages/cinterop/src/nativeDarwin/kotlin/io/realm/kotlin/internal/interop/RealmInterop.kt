@@ -97,7 +97,6 @@ import platform.posix.strerror
 import platform.posix.uint64_t
 import platform.posix.uint8_tVar
 import realm_wrapper.realm_app_error_t
-import realm_wrapper.realm_app_user_apikey_t
 import realm_wrapper.realm_binary_t
 import realm_wrapper.realm_class_info_t
 import realm_wrapper.realm_class_key_tVar
@@ -123,7 +122,6 @@ import realm_wrapper.realm_results_t
 import realm_wrapper.realm_scheduler_t
 import realm_wrapper.realm_set_t
 import realm_wrapper.realm_string_t
-import realm_wrapper.realm_sync_client_metadata_mode
 import realm_wrapper.realm_sync_session_resync_mode
 import realm_wrapper.realm_sync_session_state_e
 import realm_wrapper.realm_sync_session_stop_policy_e
@@ -134,7 +132,6 @@ import realm_wrapper.realm_sync_socket_timer_t
 import realm_wrapper.realm_sync_socket_websocket_t
 import realm_wrapper.realm_sync_socket_write_callback_t
 import realm_wrapper.realm_t
-import realm_wrapper.realm_user_identity
 import realm_wrapper.realm_user_t
 import realm_wrapper.realm_value_t
 import realm_wrapper.realm_value_type
@@ -2001,7 +1998,7 @@ actual object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         basePath: String
     ): RealmAppPointer {
-        return CPointerWrapper(realm_wrapper.realm_app_create(appConfig.cptr(), syncClientConfig.cptr()), managed = true)
+        return CPointerWrapper(realm_wrapper.realm_app_create(appConfig.cptr()), managed = true)
     }
 
     actual fun realm_app_get_current_user(app: RealmAppPointer): RealmUserPointer? {
@@ -2068,7 +2065,7 @@ actual object RealmInterop {
                 app.cptr(),
                 user.cptr(),
                 name,
-                staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_app_user_apikey_t>?, error: CPointer<realm_app_error_t>? ->
+                staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_wrapper.realm_app_user_apikey>?, error: CPointer<realm_app_error_t>? ->
                     handleAppCallback(userData, error) {
                         apiKey!!.pointed.let {
                             ApiKeyWrapper(
@@ -2159,7 +2156,7 @@ actual object RealmInterop {
                 app.cptr(),
                 user.cptr(),
                 id.realm_object_id_t(),
-                staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_app_user_apikey_t>?, error: CPointer<realm_app_error_t>? ->
+                staticCFunction { userData: CPointer<out CPointed>?, apiKey: CPointer<realm_wrapper.realm_app_user_apikey>?, error: CPointer<realm_app_error_t>? ->
                     handleAppCallback(userData, error) {
                         apiKey!!.pointed.let {
                             ApiKeyWrapper(
@@ -2188,7 +2185,7 @@ actual object RealmInterop {
             realm_wrapper.realm_app_user_apikey_provider_client_fetch_apikeys(
                 app.cptr(),
                 user.cptr(),
-                staticCFunction { userData: CPointer<out CPointed>?, apiKeys: CPointer<realm_app_user_apikey_t>?, count: size_t, error: CPointer<realm_app_error_t>? ->
+                staticCFunction { userData: CPointer<out CPointed>?, apiKeys: CPointer<realm_wrapper.realm_app_user_apikey>?, count: size_t, error: CPointer<realm_app_error_t>? ->
                     handleAppCallback(userData, error) {
                         val result = arrayOfNulls<ApiKeyWrapper>(count.toInt())
                         for (i in 0 until count.toInt()) {
@@ -2312,8 +2309,8 @@ actual object RealmInterop {
     actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
         memScoped {
             val count = AuthProvider.values().size
-            val properties = allocArray<realm_user_identity>(count)
-            val outCount = alloc<size_tVar>()
+            val properties = allocArray<realm_wrapper.realm_user_identity>(count)
+            val outCount: ULongVarOf<size_t> = alloc<size_tVar>()
             realm_wrapper.realm_user_get_all_identities(
                 user.cptr(),
                 properties,
@@ -2407,11 +2404,11 @@ actual object RealmInterop {
         )
     }
 
-    actual fun realm_sync_client_config_set_base_file_path(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    actual fun realm_app_config_set_base_file_path(
+        appConfig: RealmAppConfigurationPointer,
         basePath: String
     ) {
-        realm_wrapper.realm_sync_client_config_set_base_file_path(syncClientConfig.cptr(), basePath)
+        realm_wrapper.realm_app_config_set_base_file_path(appConfig.cptr(), basePath)
     }
 
     actual fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean) {
@@ -2433,24 +2430,24 @@ actual object RealmInterop {
         realm_wrapper.realm_set_log_level(level.priority.toUInt())
     }
 
-    actual fun realm_sync_client_config_set_metadata_mode(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    actual fun realm_app_config_set_metadata_mode(
+        appConfig: RealmAppConfigurationPointer,
         metadataMode: MetadataMode
     ) {
-        realm_wrapper.realm_sync_client_config_set_metadata_mode(
-            syncClientConfig.cptr(),
-            realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
+        realm_wrapper.realm_app_config_set_metadata_mode(
+            appConfig.cptr(),
+            realm_wrapper.realm_sync_client_metadata_mode.byValue(metadataMode.metadataValue.toUInt())
         )
     }
 
-    actual fun realm_sync_client_config_set_metadata_encryption_key(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    actual fun realm_app_config_set_metadata_encryption_key(
+        appConfig: RealmAppConfigurationPointer,
         encryptionKey: ByteArray
     ) {
         memScoped {
             val encryptionKeyPointer = encryptionKey.refTo(0).getPointer(memScope)
-            realm_wrapper.realm_sync_client_config_set_metadata_encryption_key(
-                syncClientConfig.cptr(),
+            realm_wrapper.realm_app_config_set_metadata_encryption_key(
+                appConfig.cptr(),
                 encryptionKeyPointer as CPointer<uint8_tVar>
             )
         }
