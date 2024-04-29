@@ -1200,13 +1200,13 @@ jobs:
           - os: macos-latest
             type: base
             os-id: macos
-            package-prefix: macos-x64
-            test-title: Unit Test Results - MacOS x64 Base
+            package-prefix: macos-arm64
+            test-title: Unit Test Results - MacOS arm64 Base
           - os: macos-latest
             type: sync
             os-id: macos
-            package-prefix: macos-x64
-            test-title: Unit Test Results - MacOS x64 Sync
+            package-prefix: macos-arm64
+            test-title: Unit Test Results - MacOS arm64 Sync
           # - os: macos-arm
           #   package-prefix: macos-arm64
           #   test-title: Results - MacOS arm64 Base
@@ -1321,13 +1321,13 @@ jobs:
         include:
           - os: macos-latest
             type: base
-            package-prefix: x64
-            test-title: Unit Test Results - iOS x64 Base
+            package-prefix: arm64
+            test-title: Unit Test Results - iOS arm64 Base
             test-task: iosTest
           - os: macos-latest
             type: sync
-            package-prefix: x64
-            test-title: Unit Test Results - iOS x64 Sync
+            package-prefix: arm64
+            test-title: Unit Test Results - iOS arm64 Sync
             test-task: iosTest
           # - os: macos-arm
           #   package-prefix: macos-arm64
