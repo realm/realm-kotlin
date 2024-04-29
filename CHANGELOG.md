@@ -16,7 +16,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
 * Realm Studio 15.0.0 or above is required to open Realms created by this version.
 * This release is compatible with the following Kotlin releases:
-  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Kotlin 1.9.10 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
   * Ktor 2.1.2 and above.
   * Coroutines 1.7.0 and above.
   * AtomicFu 0.18.3 and above.
@@ -28,7 +28,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.5.2 commit bec09f89ebc9dc52596375cbf20451429ed9fe89.
+* Updated to Realm Core 14.5.2 commit e3578163cdb799eeda9e531f2ca33b8d80b2d2d2.
 
 
 ## 1.15.0 (2024-04-17)
