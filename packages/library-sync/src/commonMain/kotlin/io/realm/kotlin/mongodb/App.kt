@@ -85,6 +85,18 @@ public interface App {
     public val sync: Sync
 
     /**
+     * Current base URL to communicate with App Services.
+     */
+    public val baseUrl: String
+
+    /**
+     * Sets the App Services base url. The default base URL is defined by [AppConfiguration.DEFAULT_BASE_URL].
+     *
+     * @param baseUrl App Services base URL. An empty string would set it to [AppConfiguration.DEFAULT_BASE_URL].
+     */
+    public suspend fun updateBaseUrl(baseUrl: String)
+
+    /**
      * Returns all known users that are either [User.State.LOGGED_IN] or [User.State.LOGGED_OUT].
      * Only users that at some point logged into this device will be returned.
      *

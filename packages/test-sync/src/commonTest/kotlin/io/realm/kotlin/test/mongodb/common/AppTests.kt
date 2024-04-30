@@ -31,6 +31,7 @@ import io.realm.kotlin.mongodb.LoggedOut
 import io.realm.kotlin.mongodb.Removed
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
@@ -475,6 +476,69 @@ class AppTests {
             // Open the metadata realm file without a valid encryption key
             assertFailsWithMessage<IllegalStateException>("Failed to open Realm file at path") {
                 Realm.open(config)
+            }
+        }
+    }
+
+    /**
+     * The app id must exist on the new base url, it is validated and an exception would be thrown.
+     *
+     * This test case circumvents this issue by initializing an app to a url that does not contain the
+     * app, as it is not validated on initialization. And then updating the base url the the test server.
+     */
+    @Test
+    fun changeBaseUrl() {
+        TestApp(
+            testId = "changeBaseUrl",
+            builder = { builder ->
+                // We create a test app that points to the default base url
+                // this app is not going to be validated yet.
+                builder.baseUrl(AppConfiguration.DEFAULT_BASE_URL)
+            }
+        ).use { testApp ->
+            assertEquals(AppConfiguration.DEFAULT_BASE_URL, testApp.baseUrl)
+
+            runBlocking {
+                // Update the base url, this method will validate the app
+                // if the app id is not available it would fail.
+                testApp.updateBaseUrl(app.configuration.baseUrl)
+            }
+            assertEquals(app.configuration.baseUrl, testApp.baseUrl)
+        }
+    }
+
+    @Test
+    fun changeBaseUrl_trailing_slashes_trimmed() {
+        assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
+            runBlocking {
+                app.updateBaseUrl(AppConfiguration.DEFAULT_BASE_URL + "///")
+            }
+        }
+    }
+
+    @Test
+    fun changeBaseUrl_empty() {
+        assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
+            runBlocking {
+                app.updateBaseUrl("")
+            }
+        }
+    }
+
+    @Test
+    fun changeBaseUrl_invalidUrl() {
+        assertFailsWithMessage<IllegalArgumentException>("URL missing scheme separator") {
+            runBlocking {
+                app.updateBaseUrl("hello world")
+            }
+        }
+    }
+
+    @Test
+    fun changeBaseUrl_nonAppServicesUrl() {
+        assertFailsWithMessage<ServiceException>("http error code considered fatal") {
+            runBlocking {
+                app.updateBaseUrl("https://www.google.com/")
             }
         }
     }

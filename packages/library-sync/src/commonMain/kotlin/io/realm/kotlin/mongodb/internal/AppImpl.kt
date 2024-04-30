@@ -63,6 +63,22 @@ public class AppImpl(
     @Suppress("MagicNumber")
     private val reconnectThreshold = 5.seconds
 
+    override val baseUrl: String
+        get() = RealmInterop.realm_app_get_base_url(nativePointer)
+
+    override suspend fun updateBaseUrl(baseUrl: String) {
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_update_base_url(
+                app = nativePointer,
+                baseUrl = baseUrl.trimEnd('/'), // trailing slashes are not handled properly in core
+                callback = channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }
+            )
+            channel.receive().getOrThrow()
+        }
+    }
+
     @Suppress("invisible_member", "invisible_reference", "MagicNumber")
     private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
         // In an ideal world, we would be able to reliably detect the network coming and

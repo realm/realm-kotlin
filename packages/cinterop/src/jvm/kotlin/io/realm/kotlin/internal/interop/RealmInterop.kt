@@ -1170,6 +1170,18 @@ actual object RealmInterop {
         return result
     }
 
+    actual fun realm_app_get_base_url(
+        app: RealmAppPointer,
+    ): String = realmc.realm_app_get_base_url(app.cptr())
+
+    actual fun realm_app_update_base_url(
+        app: RealmAppPointer,
+        baseUrl: String,
+        callback: AppCallback<Unit>,
+    ) {
+        realmc.realm_app_update_base_url(app.cptr(), baseUrl, callback)
+    }
+
     actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
         val count = AuthProvider.values().size.toLong() // Optimistically allocate the max size of the array
         val keys = realmc.new_identityArray(count.toInt())
