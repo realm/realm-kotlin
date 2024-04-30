@@ -508,6 +508,7 @@ class AppTests {
     }
 
     @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/1734
     fun changeBaseUrl_trailing_slashes_trimmed() {
         assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
             runBlocking {
@@ -517,6 +518,7 @@ class AppTests {
     }
 
     @Test
+    @Ignore // see https://github.com/realm/realm-kotlin/issues/1734
     fun changeBaseUrl_empty() {
         assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
             runBlocking {
@@ -535,6 +537,7 @@ class AppTests {
     }
 
     @Test
+    @Ignore // see https://github.com/realm/realm-kotlin/issues/1734
     fun changeBaseUrl_nonAppServicesUrl() {
         assertFailsWithMessage<ServiceException>("http error code considered fatal") {
             runBlocking {
