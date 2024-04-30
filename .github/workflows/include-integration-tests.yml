@@ -16,7 +16,7 @@ jobs:
 
   # TODO: The Monkey seems to crash the app all the time, but with failures that are not coming from the app. Figure out why.
   # android-sample-app:
-  #   runs-on: macos-latest
+  #   runs-on: macos-12
   #   steps:
   #     - name: Checkout code
   #       uses: actions/checkout@v3
@@ -87,7 +87,7 @@ jobs:
           ./gradlew assembleDebug jvmJar
 
   realm-java-compatibiliy:
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -217,7 +217,7 @@ jobs:
           - type: gradle75
             path: integration-tests/gradle/gradle75-test
             arguments: integrationTest
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v3
 
@@ -295,7 +295,7 @@ jobs:
           - type: gradle8
             path: integration-tests/gradle/gradle8-test
             arguments: integrationTest
-    runs-on: macos-latest
+    runs-on: macos-12
     steps:
       - uses: actions/checkout@v3
 
