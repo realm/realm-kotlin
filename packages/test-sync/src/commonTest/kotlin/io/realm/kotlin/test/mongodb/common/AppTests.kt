@@ -555,7 +555,7 @@ class AppTests {
     @Test
     @OptIn(ExperimentalEdgeServerApi::class)
     fun changeBaseUrl_invalidUrl() {
-        assertFailsWithMessage<IllegalArgumentException>("URL missing scheme separator") {
+        assertFailsWithMessage<IllegalArgumentException>("URL missing scheme") {
             runBlocking {
                 app.updateBaseUrl("hello world")
             }

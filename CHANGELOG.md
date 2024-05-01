@@ -10,7 +10,12 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Add support for changing the App Services base URL. It allows to roam between Atlas and Edge Server. Changing the url would trigger a client reset. (Issue [#1659](https://github.com/realm/realm-kotlin/issues/1659)/[RKOTLIN-1013](https://jira.mongodb.org/browse/RKOTLIN-1023))
 
 ### Fixed
-* None.
+* Fixed a bug when running a IN query (or a query of the pattern `x == 1 OR x == 2 OR x == 3`) when evaluating on a string property with an empty string in the search condition. Matches with an empty string would have been evaluated as if searching for a null string instead. (Core issue [realm/realm-core#7628](https://github.com/realm/realm-core/pull/7628) since Core v10.0.0-beta.9)
+* Fixed several issues around encrypted file portability (copying a "bundled" encrypted Realm from one device to another). (Core issues [realm/realm-core#7322](https://github.com/realm/realm-core/issues/7322) and [realm/realm-core#7319](https://github.com/realm/realm-core/issues/7319))
+* Queries using query paths on Mixed values returns inconsistent results (Core issue [realm/realm-core#7587](https://github.com/realm/realm-core/issues/7587), since Core v14.0.0)
+* [Sync] `App.allUsers()` included logged out users only if they were logged out while the App instance existed. It now always includes all logged out users. (Core issue [realm/realm-core#7300](https://github.com/realm/realm-core/pull/7300))
+* [Sync] Deleting the active user left the active user unset rather than selecting another logged-in user as the active user like logging out and removing users did. (Core issue [realm/realm-core#7300](https://github.com/realm/realm-core/pull/7300))
+* [Sync] Schema initialization could hit an assertion failure if the sync client applied a downloaded changeset while the Realm file was in the process of being opened (Core issue [realm/realm-core#7041](https://github.com/realm/realm-core/issues/7041), since Core v11.4.0).
 
 ### Known issues
 * Missing initial download progress notification when there is no active downloads. (Issue [realm/realm-core#7627](https://github.com/realm/realm-core/issues/7627), since 1.15.1)
@@ -31,7 +36,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.5.2 commit e3578163cdb799eeda9e531f2ca33b8d80b2d2d2.
+* Updated to Realm Core 14.6.1 commit 8d15ce65c9bd4a60cc17aa970f6d890e790602fd.
 
 
 ## 1.15.0 (2024-04-17)
