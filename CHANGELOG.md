@@ -12,6 +12,9 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 ### Fixed
 * None.
 
+### Known issues
+* Missing initial download progress notification when there is no active downloads. (Issue [realm/realm-core#7627](https://github.com/realm/realm-core/issues/7627), since 1.15.1)
+
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
 * Realm Studio 15.0.0 or above is required to open Realms created by this version.
