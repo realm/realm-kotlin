@@ -36,7 +36,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.6.1 commit 8d15ce65c9bd4a60cc17aa970f6d890e790602fd.
+* Updated to Realm Core 14.6.1 commit cde3adb7649d3361806dbbae0cf353b8fdc4d54e.
 
 
 ## 1.15.0 (2024-04-17)
