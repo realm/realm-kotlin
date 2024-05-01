@@ -2309,6 +2309,33 @@ actual object RealmInterop {
             .also { realm_wrapper.realm_free(cPath) }
     }
 
+    actual fun realm_app_get_base_url(
+        app: RealmAppPointer,
+    ): String = realm_wrapper.realm_app_get_base_url(app.cptr())?.toKString()!!
+
+    actual fun realm_app_update_base_url(
+        app: RealmAppPointer,
+        baseUrl: String?,
+        callback: AppCallback<Unit>,
+    ) {
+        checkedBooleanResult(
+            realm_wrapper.realm_app_update_base_url(
+                app.cptr(),
+                baseUrl,
+                callback = staticCFunction { userData, error ->
+                    handleAppCallback(
+                        userData,
+                        error
+                    ) { /* No-op, returns Unit */ }
+                },
+                StableRef.create(callback).asCPointer(),
+                staticCFunction { userdata ->
+                    disposeUserData<AppCallback<Unit>>(userdata)
+                }
+            )
+        )
+    }
+
     actual fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity> {
         memScoped {
             val count = AuthProvider.values().size

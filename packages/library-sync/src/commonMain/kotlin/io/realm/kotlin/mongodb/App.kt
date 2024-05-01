@@ -17,6 +17,7 @@
 package io.realm.kotlin.mongodb
 
 import io.realm.kotlin.internal.util.Validation
+import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import io.realm.kotlin.mongodb.exceptions.AppException
 import io.realm.kotlin.mongodb.exceptions.AuthException
@@ -83,6 +84,23 @@ public interface App {
      * with this app.
      */
     public val sync: Sync
+
+    /**
+     * Current base URL to communicate with App Services.
+     */
+    @ExperimentalEdgeServerApi
+    public val baseUrl: String
+
+    /**
+     * Sets the App Services base url.
+     *
+     * *NOTE* Changing the URL would trigger a client reset.
+     *
+     * @param baseUrl The new App Services base url. If `null` it will be using the default value
+     * ([AppConfiguration.DEFAULT_BASE_URL]).
+     */
+    @ExperimentalEdgeServerApi
+    public suspend fun updateBaseUrl(baseUrl: String?)
 
     /**
      * Returns all known users that are either [User.State.LOGGED_IN] or [User.State.LOGGED_OUT].
