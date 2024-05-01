@@ -31,6 +31,7 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import io.realm.kotlin.mongodb.sync.Sync
 import io.realm.kotlin.types.RealmInstant
@@ -63,9 +64,11 @@ public class AppImpl(
     @Suppress("MagicNumber")
     private val reconnectThreshold = 5.seconds
 
+    @ExperimentalEdgeServerApi
     override val baseUrl: String
         get() = RealmInterop.realm_app_get_base_url(nativePointer)
 
+    @ExperimentalEdgeServerApi
     override suspend fun updateBaseUrl(baseUrl: String?) {
         Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_update_base_url(

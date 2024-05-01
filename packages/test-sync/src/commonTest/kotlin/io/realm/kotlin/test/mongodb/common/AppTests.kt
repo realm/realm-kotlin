@@ -512,10 +512,10 @@ class AppTests {
         }
     }
 
-//    @OptIn(ExperimentalEdgeServerApi::class)
     @Test
-    @Ignore // We don't have a way to test this on CI, so for now just verify manually that the
-            // request towards the server after setting the URL to null is using the default URL.
+    // We don't have a way to test this on CI, so for now just verify manually that the
+    // request towards the server after setting the URL to null is using the default URL.
+    @Ignore
     @OptIn(ExperimentalEdgeServerApi::class)
     fun changeBaseUrl_null() {
         TestApp(
