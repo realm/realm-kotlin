@@ -90,11 +90,10 @@ public interface App {
     public val baseUrl: String
 
     /**
-     * Sets the App Services base url. The default base URL is defined by [AppConfiguration.DEFAULT_BASE_URL].
+     * Sets the App Services base url. Changing the URL would trigger a client reset.
      *
-     * Changing the URL would trigger a client reset.
-     *
-     * @param baseUrl App Services base URL. An empty string would set it to [AppConfiguration.DEFAULT_BASE_URL].
+     * @param baseUrl The new App Services base url. Use [AppConfiguration.DEFAULT_BASE_URL] to set it
+     * to the default value.
      */
     public suspend fun updateBaseUrl(baseUrl: String)
 
