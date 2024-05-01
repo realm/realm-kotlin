@@ -115,6 +115,7 @@ actual enum class ErrorCode(actual override val description: String?, actual ove
     RLM_ERR_BAD_SERVER_URL("BadServerUrl", realm_errno_e.RLM_ERR_BAD_SERVER_URL),
     RLM_ERR_CUSTOM_ERROR("CustomError", realm_errno_e.RLM_ERR_CUSTOM_ERROR),
     RLM_ERR_CLIENT_USER_NOT_FOUND("ClientUserNotFound", realm_errno_e.RLM_ERR_CLIENT_USER_NOT_FOUND),
+    RLM_ERR_CLIENT_USER_NOT_LOGGED_IN("ClientUserNotLoggedIn", realm_errno_e.RLM_ERR_CLIENT_USER_NOT_LOGGED_IN),
     RLM_ERR_CLIENT_REDIRECT_ERROR("ClientRedirectError", realm_errno_e.RLM_ERR_CLIENT_REDIRECT_ERROR),
     RLM_ERR_CLIENT_TOO_MANY_REDIRECTS("ClientTooManyRedirects", realm_errno_e.RLM_ERR_CLIENT_TOO_MANY_REDIRECTS),
     RLM_ERR_CLIENT_USER_ALREADY_NAMED("ClientUserAlreadyNamed", realm_errno_e.RLM_ERR_CLIENT_USER_ALREADY_NAMED),
