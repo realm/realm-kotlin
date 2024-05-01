@@ -7,7 +7,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * None.
 
 ### Enhancements
-* Add support for changing the App Services base URL. It allows to roam between Atlas and Edge Server. Changing the url would trigger a client reset. ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-1023)
+* Add support for changing the App Services base URL. It allows to roam between Atlas and Edge Server. Changing the url would trigger a client reset. (Issue [#1659](https://github.com/realm/realm-kotlin/issues/1659)/[RKOTLIN-1013](https://jira.mongodb.org/browse/RKOTLIN-1023))
 
 ### Fixed
 * None.
