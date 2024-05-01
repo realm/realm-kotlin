@@ -66,11 +66,11 @@ public class AppImpl(
     override val baseUrl: String
         get() = RealmInterop.realm_app_get_base_url(nativePointer)
 
-    override suspend fun updateBaseUrl(baseUrl: String) {
+    override suspend fun updateBaseUrl(baseUrl: String?) {
         Channel<Result<Unit>>(1).use { channel ->
             RealmInterop.realm_app_update_base_url(
                 app = nativePointer,
-                baseUrl = baseUrl.trimEnd('/'), // trailing slashes are not handled properly in core
+                baseUrl = baseUrl?.trimEnd('/'), // trailing slashes are not handled properly in core
                 callback = channelResultCallback<Unit, Unit>(channel) {
                     // No-op
                 }

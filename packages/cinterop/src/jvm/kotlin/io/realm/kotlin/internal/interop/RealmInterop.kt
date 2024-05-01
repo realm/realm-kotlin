@@ -1176,7 +1176,7 @@ actual object RealmInterop {
 
     actual fun realm_app_update_base_url(
         app: RealmAppPointer,
-        baseUrl: String,
+        baseUrl: String?,
         callback: AppCallback<Unit>,
     ) {
         realmc.realm_app_update_base_url(app.cptr(), baseUrl, callback)

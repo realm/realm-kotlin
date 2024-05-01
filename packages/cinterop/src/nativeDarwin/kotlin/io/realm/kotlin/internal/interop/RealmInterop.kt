@@ -2315,7 +2315,7 @@ actual object RealmInterop {
 
     actual fun realm_app_update_base_url(
         app: RealmAppPointer,
-        baseUrl: String,
+        baseUrl: String?,
         callback: AppCallback<Unit>,
     ) {
         checkedBooleanResult(

@@ -21,6 +21,8 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
@@ -30,9 +32,11 @@ import io.realm.kotlin.mongodb.LoggedIn
 import io.realm.kotlin.mongodb.LoggedOut
 import io.realm.kotlin.mongodb.Removed
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
@@ -487,6 +491,7 @@ class AppTests {
      * app, as it is not validated on initialization. And then updating the base url the the test server.
      */
     @Test
+    @OptIn(ExperimentalEdgeServerApi::class)
     fun changeBaseUrl() {
         TestApp(
             testId = "changeBaseUrl",
@@ -507,8 +512,27 @@ class AppTests {
         }
     }
 
+//    @OptIn(ExperimentalEdgeServerApi::class)
+    @Test
+    @Ignore // We don't have a way to test this on CI, so for now just verify manually that the
+            // request towards the server after setting the URL to null is using the default URL.
+    @OptIn(ExperimentalEdgeServerApi::class)
+    fun changeBaseUrl_null() {
+        TestApp(
+            testId = "changeBaseUrl",
+        ).use { testApp ->
+            assertEquals(SyncServerConfig.url, testApp.baseUrl)
+
+            RealmLog.level = LogLevel.ALL
+            runBlocking {
+                testApp.updateBaseUrl(null)
+            }
+        }
+    }
+
     @Test
     @Ignore // See https://github.com/realm/realm-kotlin/issues/1734
+    @OptIn(ExperimentalEdgeServerApi::class)
     fun changeBaseUrl_trailing_slashes_trimmed() {
         assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
             runBlocking {
@@ -519,6 +543,7 @@ class AppTests {
 
     @Test
     @Ignore // see https://github.com/realm/realm-kotlin/issues/1734
+    @OptIn(ExperimentalEdgeServerApi::class)
     fun changeBaseUrl_empty() {
         assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
             runBlocking {
@@ -528,6 +553,7 @@ class AppTests {
     }
 
     @Test
+    @OptIn(ExperimentalEdgeServerApi::class)
     fun changeBaseUrl_invalidUrl() {
         assertFailsWithMessage<IllegalArgumentException>("URL missing scheme separator") {
             runBlocking {
@@ -538,6 +564,7 @@ class AppTests {
 
     @Test
     @Ignore // see https://github.com/realm/realm-kotlin/issues/1734
+    @OptIn(ExperimentalEdgeServerApi::class)
     fun changeBaseUrl_nonAppServicesUrl() {
         assertFailsWithMessage<ServiceException>("http error code considered fatal") {
             runBlocking {

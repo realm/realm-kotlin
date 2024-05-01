@@ -557,7 +557,7 @@ expect object RealmInterop {
 
     fun realm_app_update_base_url(
         app: RealmAppPointer,
-        baseUrl: String,
+        baseUrl: String?,
         callback: AppCallback<Unit>,
     )
 
