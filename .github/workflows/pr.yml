@@ -229,7 +229,7 @@ jobs:
           retention-days: 1
 
   build-jvm-macos-native-lib:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: [check-cache, build-jni-swig-stub]
     if: |
       always() &&
@@ -395,7 +395,7 @@ jobs:
   # This task is also responsible for creating the Gradle and Compiler Plugin as well as 
   # all Kotlin Multiplatform Metadata
   build-jvm-packages:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: [check-cache, build-jvm-linux-native-lib, build-jvm-windows-native-lib, build-jvm-macos-native-lib]
     if: |
       always() && 
@@ -638,7 +638,7 @@ jobs:
 
   # TODO: ccache is not being used by this build for some reason
   build-macos-x64-packages:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: check-cache
     if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-x64-cache-hit != 'true'
 
@@ -706,7 +706,7 @@ jobs:
           retention-days: 1
 
   build-macos-arm64-packages:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: check-cache
     # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-macos-arm64-cache-hit != 'true'
@@ -774,7 +774,7 @@ jobs:
           retention-days: 1
 
   build-ios-x64-packages:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: check-cache
     # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-x64-cache-hit != 'true'
@@ -843,7 +843,7 @@ jobs:
           retention-days: 1
 
   build-ios-arm64-packages:
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: check-cache
     # needs: static-analysis
     if: always() && !cancelled() && needs.check-cache.outputs.packages-ios-arm64-cache-hit != 'true'
@@ -931,7 +931,7 @@ jobs:
           - type: sync
             test-title: Unit Test Results - Android Sync (Emulator)
  
-    runs-on: macos-latest
+    runs-on: macos-12
     needs: [check-cache, build-android-packages, build-jvm-packages, build-kotlin-metadata-package]
     if: |
       always() && 
@@ -1175,15 +1175,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest] # , macos-arm]
+        os: [macos-12] # , macos-arm]
         type: [base, sync]
         include:
-          - os: macos-latest
+          - os: macos-12
             type: base
             os-id: macos
             package-prefix: macos-x64
             test-title: Unit Test Results - MacOS x64 Base
-          - os: macos-latest
+          - os: macos-12
             type: sync
             os-id: macos
             package-prefix: macos-x64
@@ -1297,15 +1297,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest] # , macos-arm]
+        os: [macos-12] # , macos-arm]
         type: [base, sync]
         include:
-          - os: macos-latest
+          - os: macos-12
             type: base
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Base
             test-task: iosTest
-          - os: macos-latest
+          - os: macos-12
             type: sync
             package-prefix: x64
             test-title: Unit Test Results - iOS x64 Sync
@@ -1419,10 +1419,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
+        os: [macos-12, ubuntu-latest, windows-latest] # TODO Should we also test om MacOS arm64?
         type: [base, sync]
         include:
-          - os: macos-latest
+          - os: macos-12
             os-id: mac
             type: base
             test-title: Unit Test Results - Base JVM MacOS x64
@@ -1434,7 +1434,7 @@ jobs:
             os-id: win
             type: base
             test-title: Unit Test Results - Base JVM Windows
-          - os: macos-latest
+          - os: macos-12
             os-id: mac
             type: sync
             test-title: Unit Test Results - Sync JVM MacOS x64

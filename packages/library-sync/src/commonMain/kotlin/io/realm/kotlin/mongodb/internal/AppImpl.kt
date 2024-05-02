@@ -31,6 +31,7 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import io.realm.kotlin.mongodb.sync.Sync
 import io.realm.kotlin.types.RealmInstant
@@ -62,6 +63,24 @@ public class AppImpl(
     private var lastConnectedState: Boolean? = null // null = unknown, true = connected, false = disconnected
     @Suppress("MagicNumber")
     private val reconnectThreshold = 5.seconds
+
+    @ExperimentalEdgeServerApi
+    override val baseUrl: String
+        get() = RealmInterop.realm_app_get_base_url(nativePointer)
+
+    @ExperimentalEdgeServerApi
+    override suspend fun updateBaseUrl(baseUrl: String?) {
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_update_base_url(
+                app = nativePointer,
+                baseUrl = baseUrl?.trimEnd('/'), // trailing slashes are not handled properly in core
+                callback = channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }
+            )
+            channel.receive().getOrThrow()
+        }
+    }
 
     @Suppress("invisible_member", "invisible_reference", "MagicNumber")
     private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->

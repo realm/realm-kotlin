@@ -575,6 +575,16 @@ expect object RealmInterop {
         callback: AppCallback<Array<ApiKeyWrapper>>,
     )
 
+    fun realm_app_get_base_url(
+        app: RealmAppPointer,
+    ): String
+
+    fun realm_app_update_base_url(
+        app: RealmAppPointer,
+        baseUrl: String?,
+        callback: AppCallback<Unit>,
+    )
+
     // User
     fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
     fun realm_user_get_identity(user: RealmUserPointer): String
@@ -596,8 +606,8 @@ expect object RealmInterop {
         appId: String
     )
 
-    fun realm_sync_client_config_set_base_file_path(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    fun realm_app_config_set_base_file_path(
+        appConfig: RealmAppConfigurationPointer,
         basePath: String
     )
 
@@ -607,13 +617,13 @@ expect object RealmInterop {
 
     fun realm_set_log_level(level: CoreLogLevel)
 
-    fun realm_sync_client_config_set_metadata_mode(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    fun realm_app_config_set_metadata_mode(
+        appConfig: RealmAppConfigurationPointer,
         metadataMode: MetadataMode
     )
 
-    fun realm_sync_client_config_set_metadata_encryption_key(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    fun realm_app_config_set_metadata_encryption_key(
+        appConfig: RealmAppConfigurationPointer,
         encryptionKey: ByteArray
     )
     fun realm_sync_client_config_set_user_agent_binding_info(
