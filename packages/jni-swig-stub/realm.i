@@ -1,5 +1,7 @@
 %module(directors="1") realmc
 
+#define REALM_APP_SERVICES 1
+
 %{
 #include "realm.h"
 #include <cstring>
@@ -522,6 +524,8 @@ $result = SWIG_JavaArrayOutLonglong(jenv, (long long *)result, 2);
 %ignore "realm_set_add_notification_callback";
 %ignore "realm_dictionary_add_notification_callback";
 %ignore "realm_results_add_notification_callback";
+
+%ignore "realm_app_config_get_sync_client_config";
 
 // Swig doesn't understand __attribute__ so eliminate it
 #define __attribute__(x)
