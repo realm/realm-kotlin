@@ -976,6 +976,13 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_set_embedded(obj.cptr(), key.key))
     }
 
+    actual fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_set_list(obj.cptr(), key.key))
+    }
+    actual fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_set_dictionary(obj.cptr(), key.key))
+    }
+
     actual fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long) {
         checkedBooleanResult(realm_wrapper.realm_object_add_int(obj.cptr(), key.key, value))
     }
@@ -1028,6 +1035,25 @@ actual object RealmInterop {
         return RealmValue(struct)
     }
 
+    actual fun realm_list_find(list: RealmListPointer, value: RealmValue): Long {
+        memScoped {
+            val index = alloc<ULongVar>()
+            val found = alloc<BooleanVar>()
+            checkedBooleanResult(realm_wrapper.realm_list_find(list.cptr(), value.value.readValue(), index.ptr, found.ptr))
+            return if (found.value) {
+                index.value.toLong()
+            } else {
+                INDEX_NOT_FOUND
+            }
+        }
+    }
+
+    actual fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer =
+        CPointerWrapper(realm_wrapper.realm_list_get_list(list.cptr(), index.toULong()))
+
+    actual fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer =
+        CPointerWrapper(realm_wrapper.realm_list_get_dictionary(list.cptr(), index.toULong()))
+
     actual fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue) {
         checkedBooleanResult(
             realm_wrapper.realm_list_insert(
@@ -1036,6 +1062,18 @@ actual object RealmInterop {
                 transport.value.readValue()
             )
         )
+    }
+    actual fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_insert_list(list.cptr(), index.toULong()))
+    }
+    actual fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_insert_dictionary(list.cptr(), index.toULong()))
+    }
+    actual fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_set_list(list.cptr(), index.toULong()))
+    }
+    actual fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_list_set_dictionary(list.cptr(), index.toULong()))
     }
 
     actual fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer {
@@ -1252,6 +1290,19 @@ actual object RealmInterop {
         }
     }
 
+    actual fun realm_dictionary_find_list(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_get_list(dictionary.cptr(), mapKey.value.readValue()))
+    }
+    actual fun realm_dictionary_find_dictionary(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_get_dictionary(dictionary.cptr(), mapKey.value.readValue()))
+    }
+
     actual fun MemAllocator.realm_dictionary_get(
         dictionary: RealmMapPointer,
         pos: Int
@@ -1371,6 +1422,14 @@ actual object RealmInterop {
             struct
         }
         return RealmValue(outputStruct)
+    }
+
+    actual fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_insert_list(dictionary.cptr(), mapKey.value.readValue()))
+    }
+
+    actual fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer {
+        return CPointerWrapper(realm_wrapper.realm_dictionary_insert_dictionary(dictionary.cptr(), mapKey.value.readValue()))
     }
 
     actual fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer {
@@ -1627,6 +1686,12 @@ actual object RealmInterop {
         )
         return RealmValue(value)
     }
+
+    actual fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer =
+        CPointerWrapper(realm_wrapper.realm_results_get_list(results.cptr(), index.toULong()))
+
+    actual fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer =
+        CPointerWrapper(realm_wrapper.realm_results_get_dictionary(results.cptr(), index.toULong()))
 
     actual fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer {
         val ptr = checkedPointerResult(
@@ -1960,7 +2025,7 @@ actual object RealmInterop {
                 deletions,
                 insertions,
                 modifications,
-                collectionWasDeleted.ptr
+                collectionWasDeleted.ptr,
             )
             val deletionStructs = allocArray<realm_value_t>(deletions[0].toInt())
             val insertionStructs = allocArray<realm_value_t>(insertions[0].toInt())
@@ -1974,7 +2039,7 @@ actual object RealmInterop {
                 insertions,
                 modificationStructs,
                 modifications,
-                collectionWasCleared.ptr
+                collectionWasCleared.ptr,
             )
 
             val deletedKeys = (0 until deletions[0].toInt()).map {

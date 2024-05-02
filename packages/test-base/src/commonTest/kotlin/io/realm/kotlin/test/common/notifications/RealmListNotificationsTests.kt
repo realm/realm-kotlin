@@ -21,6 +21,7 @@ import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.entities.list.RealmListContainer
 import io.realm.kotlin.entities.list.listTestSchema
+import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.notifications.DeletedList
 import io.realm.kotlin.notifications.InitialList
@@ -35,6 +36,8 @@ import io.realm.kotlin.test.common.utils.assertIsChangeSet
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
+import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmList
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -412,7 +415,7 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
     }
 
     @Test
-    override fun asFlowOnDeleteEntity() {
+    override fun asFlowOnDeletedEntity() {
         runBlocking {
             val container = realm.write { copyToRealm(RealmListContainer()) }
             val mutex = Mutex(true)
@@ -731,6 +734,80 @@ class RealmListNotificationsTests : RealmEntityNotificationTests {
         }
         assertFailsWith<IllegalArgumentException> {
             list.asFlow(listOf("objectListField.intListField.foo"))
+        }
+    }
+
+    @Test
+    fun eventsOnObjectChangesInList() {
+        runBlocking {
+            val channel = Channel<ListChange<RealmListContainer>>(10)
+            val parent = realm.write { copyToRealm(RealmListContainer()).apply { stringField = "PARENT" } }
+
+            val listener = async {
+                parent.objectListField.asFlow().collect {
+                    channel.trySendOrFail(it)
+                }
+            }
+
+            channel.receiveOrFail(message = "Initial event").let { assertIs<InitialList<*>>(it) }
+
+            realm.write {
+                findLatest(parent)!!.objectListField.add(
+                    RealmListContainer().apply { stringField = "CHILD" }
+                )
+            }
+            channel.receiveOrFail(message = "List add").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+            }
+
+            realm.write {
+                findLatest(parent)!!.objectListField[0].stringField = "TEST"
+            }
+            channel.receiveOrFail(message = "Object updated").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+                assertEquals("TEST", it.list[0].stringField)
+            }
+
+            listener.cancel()
+        }
+    }
+    @Test
+    @Ignore // https://github.com/realm/realm-core/issues/7264
+    fun eventsOnObjectChangesInRealmAnyList() {
+        runBlocking {
+            val channel = Channel<ListChange<RealmAny?>>(10)
+            val parent = realm.write { copyToRealm(RealmListContainer()).apply { stringField = "PARENT" } }
+
+            val listener = async {
+                parent.nullableRealmAnyListField.asFlow().collect {
+                    channel.trySendOrFail(it)
+                }
+            }
+
+            channel.receiveOrFail(message = "Initial event").let { assertIs<InitialList<*>>(it) }
+
+            realm.write {
+                findLatest(parent)!!.nullableRealmAnyListField.add(
+                    RealmAny.create(RealmListContainer().apply { stringField = "CHILD" })
+                )
+            }
+            channel.receiveOrFail(message = "List add").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+            }
+
+            realm.write {
+                findLatest(parent)!!.nullableRealmAnyListField[0]!!.asRealmObject<RealmListContainer>().stringField = "TEST"
+            }
+            channel.receiveOrFail(message = "Object updated").let {
+                assertIs<UpdatedList<*>>(it)
+                assertEquals(1, it.list.size)
+                assertEquals("TEST", it.list[0]!!.asRealmObject<RealmListContainer>().stringField)
+            }
+
+            listener.cancel()
         }
     }
 

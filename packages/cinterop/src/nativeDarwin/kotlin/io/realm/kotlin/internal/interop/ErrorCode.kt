@@ -182,7 +182,7 @@ actual enum class ErrorCode(
     RLM_ERR_MAINTENANCE_IN_PROGRESS("MaintenanceInProgress", realm_errno.RLM_ERR_MAINTENANCE_IN_PROGRESS),
     RLM_ERR_USERPASS_TOKEN_INVALID("UserpassTokenInvalid", realm_errno.RLM_ERR_USERPASS_TOKEN_INVALID),
     RLM_ERR_INVALID_SERVER_RESPONSE("InvalidServerResponse", realm_errno.RLM_ERR_INVALID_SERVER_RESPONSE),
-    REALM_ERR_APP_SERVER_ERROR("AppServerError", realm_errno.RLM_ERR_APP_SERVER_ERROR),
+    RLM_ERR_APP_SERVER_ERROR("AppServerError", realm_errno.RLM_ERR_APP_SERVER_ERROR),
     RLM_ERR_CALLBACK("Callback", realm_errno.RLM_ERR_CALLBACK),
     RLM_ERR_UNKNOWN("Unknown", realm_errno.RLM_ERR_UNKNOWN);
 
