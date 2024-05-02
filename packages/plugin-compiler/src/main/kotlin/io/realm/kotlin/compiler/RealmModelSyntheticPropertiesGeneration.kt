@@ -68,14 +68,15 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irBoolean
 import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irGetObject
 import org.jetbrains.kotlin.ir.builders.irLong
 import org.jetbrains.kotlin.ir.builders.irNull
 import org.jetbrains.kotlin.ir.builders.irReturn
+import org.jetbrains.kotlin.ir.builders.irSetField
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
-import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrEnumEntry
 import org.jetbrains.kotlin.ir.declarations.IrField
 import org.jetbrains.kotlin.ir.declarations.IrProperty
@@ -87,10 +88,8 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrSetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
@@ -106,7 +105,6 @@ import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.getPropertyGetter
 import org.jetbrains.kotlin.ir.util.getPropertySetter
-import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.isVararg
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.name.Name
@@ -780,7 +778,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
         property.backingField = pluginContext.irFactory.buildField {
             at(this@addInternalVarProperty.startOffset, this@addInternalVarProperty.endOffset)
-            origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
             name = property.name
             visibility = DescriptorVisibilities.PRIVATE
             modality = property.modality
@@ -800,7 +797,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = propertyType
-            origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
         }
         // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
         getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
@@ -817,7 +813,11 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         getter.body = pluginContext.blockBody(getter.symbol) {
             at(startOffset, endOffset)
             +irReturn(
-                irGetFieldWrapper(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
+                irGetField(
+                    irGet(getter.dispatchReceiverParameter!!),
+                    property.backingField!!,
+                    property.backingField!!.type
+                )
             )
         }
 
@@ -828,7 +828,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             visibility = DescriptorVisibilities.PUBLIC
             modality = Modality.OPEN
             returnType = pluginContext.irBuiltIns.unitType
-            origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
         }
         // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Child
         setter.dispatchReceiverParameter = thisReceiver!!.copyTo(setter)
@@ -851,20 +850,16 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
         }
         setter.body = DeclarationIrBuilder(pluginContext, setter.symbol).irBlockBody {
             at(startOffset, endOffset)
-
-            +IrSetFieldImpl(
-                startOffset = startOffset,
-                endOffset = endOffset,
-                symbol = property.backingField!!.symbol,
-                receiver = irGet(setter.dispatchReceiverParameter!!),
-                value = irGet(valueParameter),
-                type = context.irBuiltIns.unitType
+            +irSetField(
+                irGet(setter.dispatchReceiverParameter!!),
+                property.backingField!!.symbol.owner,
+                irGet(valueParameter),
             )
         }
     }
 
     private fun irNull(startOffset: Int, endOffset: Int): IrExpressionBody =
-        IrExpressionBodyImpl(
+        pluginContext.irFactory.createExpressionBody(
             startOffset,
             endOffset,
             IrConstImpl.constNull(startOffset, endOffset, pluginContext.irBuiltIns.nothingNType)
@@ -872,7 +867,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     @Suppress("UnusedPrivateMember")
     private fun irFalse(startOffset: Int, endOffset: Int): IrExpressionBody =
-        IrExpressionBodyImpl(
+        pluginContext.irFactory.createExpressionBody(
             startOffset,
             endOffset,
             IrConstImpl.constFalse(startOffset, endOffset, pluginContext.irBuiltIns.booleanType)

@@ -240,7 +240,7 @@ class AppConfigurationTests {
 
     @Test
     fun baseUrl_defaultValue() {
-        val url = "https://realm.mongodb.com"
+        val url = "https://services.cloud.mongodb.com"
         val config = AppConfiguration.Builder("foo").build()
         assertEquals(url, config.baseUrl)
     }

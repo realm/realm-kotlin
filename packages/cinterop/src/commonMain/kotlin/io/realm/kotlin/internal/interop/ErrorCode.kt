@@ -181,9 +181,12 @@ expect enum class ErrorCode : CodeDescription {
     RLM_ERR_MAINTENANCE_IN_PROGRESS,
     RLM_ERR_USERPASS_TOKEN_INVALID,
     RLM_ERR_INVALID_SERVER_RESPONSE,
-    REALM_ERR_APP_SERVER_ERROR,
+    RLM_ERR_APP_SERVER_ERROR,
     RLM_ERR_CALLBACK,
     RLM_ERR_UNKNOWN;
+
+    override val nativeValue: Int
+    override val description: String?
 
     companion object {
         fun of(nativeValue: Int): ErrorCode?

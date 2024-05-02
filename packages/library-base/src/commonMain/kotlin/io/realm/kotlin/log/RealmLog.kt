@@ -88,11 +88,12 @@ public object RealmLog {
         setLevel(level = defaultLogLevel) // Set the log level to the SDKs (might be different from cores default INFO)
         RealmInterop.realm_set_log_callback(
             object : LogCallback {
-                override fun log(categoryValue: String, logLevel: Short, message: String?) {
+                override fun log(logLevel: Short, categoryValue: String, message: String?) {
                     // Create concatenated up front, since Core should already filter messages
                     // not within the log range.
                     val category: LogCategory = LogCategory.fromCoreValue(categoryValue)
                     val level: LogLevel = CoreLogLevel.valueFromPriority(logLevel).fromCoreLogLevel()
+
                     doLog(
                         category,
                         level,

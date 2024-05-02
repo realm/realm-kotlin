@@ -43,7 +43,7 @@ interface SyncSessionTransferCompletionCallback {
 
 interface LogCallback {
     // Passes core log levels as shorts to avoid unnecessary jumping between the SDK and JNI
-    fun log(categoryValue: String, logLevel: Short, message: String?)
+    fun log(logLevel: Short, categoryValue: String, message: String?)
 }
 
 interface SyncBeforeClientResetHandler {

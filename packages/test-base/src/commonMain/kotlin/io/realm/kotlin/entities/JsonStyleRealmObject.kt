@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Realm Inc.
+ * Copyright 2023 Realm Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package io.realm.kotlin.internal
+package io.realm.kotlin.entities
 
-import io.realm.kotlin.internal.interop.CapiT
-import io.realm.kotlin.internal.interop.NativePointer
+import io.realm.kotlin.types.RealmAny
+import io.realm.kotlin.types.RealmObject
+import io.realm.kotlin.types.annotations.PersistedName
+import io.realm.kotlin.types.annotations.PrimaryKey
 
-internal interface CollectionOperator<E, T> {
-    val mediator: Mediator
-    val realmReference: RealmReference
-    val nativePointer: NativePointer<out CapiT>
-}
-
-internal enum class CollectionOperatorType {
-    PRIMITIVE,
-    REALM_ANY,
-    REALM_OBJECT,
-    EMBEDDED_OBJECT
+class JsonStyleRealmObject(id: String) : RealmObject {
+    constructor() : this("JsonStyleRealmObject")
+    @PrimaryKey
+    @PersistedName("_id")
+    var id: String = id
+    var value: RealmAny? = null
 }

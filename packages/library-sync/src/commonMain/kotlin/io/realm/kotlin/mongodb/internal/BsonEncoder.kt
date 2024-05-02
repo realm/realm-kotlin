@@ -246,6 +246,7 @@ internal object BsonEncoder {
             RealmAny.Type.OBJECT_ID -> asObjectId()
             RealmAny.Type.UUID -> asRealmUUID()
             RealmAny.Type.OBJECT -> asRealmObject()
+            else -> TODO("Unsupported type $type")
         }
     )
 

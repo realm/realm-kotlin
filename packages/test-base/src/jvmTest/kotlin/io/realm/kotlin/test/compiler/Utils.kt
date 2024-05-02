@@ -1,9 +1,12 @@
+@file:OptIn(ExperimentalCompilerApi::class)
+
 package io.realm.kotlin.test.compiler
 
 import com.tschuchort.compiletesting.KotlinCompilation
 import com.tschuchort.compiletesting.SourceFile
 import io.realm.kotlin.compiler.CollectionType
 import io.realm.kotlin.test.util.Compiler
+import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
 
 fun createFileAndCompile(fileName: String, code: String): KotlinCompilation.Result =
     Compiler.compileFromSource(SourceFile.kotlin(fileName, code))

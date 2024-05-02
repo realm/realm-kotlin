@@ -17,8 +17,8 @@
 package io.realm.kotlin.internal.interop
 
 actual enum class ErrorCategory(
-    override val description: String,
-    override val nativeValue: Int
+    actual override val description: String?,
+    actual override val nativeValue: Int
 ) : CodeDescription {
     RLM_ERR_CAT_LOGIC("Logic", realm_error_category_e.RLM_ERR_CAT_LOGIC),
     RLM_ERR_CAT_RUNTIME("Runtime", realm_error_category_e.RLM_ERR_CAT_RUNTIME),
