@@ -28,7 +28,7 @@ import org.mongodb.kbson.serialization.EJson
  * for a detailed description of methods and arguments.
  *
  * Input arguments and responses to the App Service HTTP requests will be serialized from and to
- * the type [T] and [K] using [Kotlin's Serialization framework](https://kotlinlang.org/docs/serialization.html)
+ * the type [T] using [Kotlin's Serialization framework](https://kotlinlang.org/docs/serialization.html)
  * and can be customized by [Serializable]-annotations or customizing the [EJson]-serializer passed
  * to the various [MongoClient], [MongoDatabase] and [MongoCollection]-factory methods. For details
  * on configuring the serialization see [MongoClient].
@@ -40,9 +40,8 @@ import org.mongodb.kbson.serialization.EJson
  *
  * @param T the default type that remote entities of the collection will be serialized from and
  * to.
- * @param K the default type that primary keys will be serialized into.
  */
-public interface MongoCollection<T, K> {
+public interface MongoCollection<T> {
 
     /**
      * Name of the remote collection.
@@ -57,5 +56,5 @@ public interface MongoCollection<T, K> {
      * configuration of serialization see [MongoClient].
      */
     @ExperimentalKBsonSerializerApi
-    public fun <T, K> withDocumentClass(eJson: EJson? = null): MongoCollection<T, K>
+    public fun <T> withDocumentClass(eJson: EJson? = null): MongoCollection<T>
 }

@@ -36,12 +36,11 @@ import org.mongodb.kbson.serialization.EJson
  * primary keys with. Will default to the databases [EJson] instance.
  * @param T the schema type indicating which for which remote entities of the collection will be
  * serialized from and to.
- * @param K the default type that primary keys will be serialized into.
  * @return a [MongoCollection] that will accept and return entities from the remote collection
  * as [T] values.
  */
 @ExperimentalKBsonSerializerApi
-public inline fun <reified T : BaseRealmObject, K> MongoClient.collection(eJson: EJson? = null): MongoCollection<T, K> {
+public inline fun <reified T : BaseRealmObject> MongoClient.collection(eJson: EJson? = null): MongoCollection<T> {
     @Suppress("invisible_reference", "invisible_member")
     return MongoClientCollection(this as MongoClientImpl, realmObjectCompanionOrThrow(T::class).io_realm_kotlin_className, eJson ?: this.eJson)
 }

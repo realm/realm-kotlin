@@ -24,6 +24,7 @@ import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonInt64
 import org.mongodb.kbson.BsonNull
 import org.mongodb.kbson.BsonString
+import org.mongodb.kbson.BsonType
 import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
@@ -32,33 +33,33 @@ import org.mongodb.kbson.serialization.encodeToBsonValue
 
 @PublishedApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
-internal class MongoDatabaseCollection<T, K>(@PublishedApi internal val database: MongoDatabaseImpl, override val name: String, eJson: EJson) : MongoCollectionImpl<T, K>(database.client.functions, eJson) {
+internal class MongoDatabaseCollection<T>(@PublishedApi internal val database: MongoDatabaseImpl, override val name: String, eJson: EJson) : MongoCollectionImpl<T>(database.client.functions, eJson) {
     override val defaults: Map<String, BsonValue> = mapOf(
         "database" to BsonString(database.name),
         "collection" to BsonString(name),
     )
-    override fun <T, K> withDocumentClass(eJson: EJson?): MongoCollection<T, K> {
+    override fun <T> withDocumentClass(eJson: EJson?): MongoCollection<T> {
         return MongoDatabaseCollection(this.database, this.name, eJson ?: this.eJson)
     }
 }
 
 @PublishedApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
-internal class MongoClientCollection<T, K>(@PublishedApi internal val clientImpl: MongoClientImpl, override val name: String, eJson: EJson) : MongoCollectionImpl<T, K>(clientImpl.functions, eJson) {
+internal class MongoClientCollection<T>(@PublishedApi internal val clientImpl: MongoClientImpl, override val name: String, eJson: EJson) : MongoCollectionImpl<T>(clientImpl.functions, eJson) {
     override val defaults: Map<String, BsonValue> = mapOf(
         "schema_name" to BsonString(name),
     )
-    override fun <T, K> withDocumentClass(eJson: EJson?): MongoCollection<T, K> {
+    override fun <T> withDocumentClass(eJson: EJson?): MongoCollection<T> {
         return MongoClientCollection(clientImpl, name, eJson ?: this.eJson)
     }
 }
 
 @PublishedApi
 @OptIn(ExperimentalKBsonSerializerApi::class)
-internal abstract class MongoCollectionImpl<T, K> constructor(
+internal abstract class MongoCollectionImpl<T> constructor(
     val functions: FunctionsImpl,
     val eJson: EJson,
-) : MongoCollection<T, K> {
+) : MongoCollection<T> {
 
     // Default entries for the argument document submitted for the function call.
     abstract val defaults: Map<String, BsonValue>
@@ -214,13 +215,13 @@ internal abstract class MongoCollectionImpl<T, K> constructor(
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
-internal inline fun <reified R : Any> MongoCollectionImpl<*, *>.encodeToBsonValue(value: R): BsonValue {
+internal inline fun <reified R : Any> MongoCollectionImpl<*>.encodeToBsonValue(value: R): BsonValue {
     return eJson.encodeToBsonValue(value)
 }
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
-internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bsonValue: BsonValue): R =
+internal inline fun <reified R> MongoCollectionImpl<*>.decodeFromBsonValue(bsonValue: BsonValue): R =
     when {
         bsonValue == BsonNull -> null as R
         R::class == BsonValue::class -> bsonValue as R
@@ -229,10 +230,38 @@ internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValue(bs
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 @PublishedApi
-internal inline fun <reified R> MongoCollectionImpl<*, *>.decodeFromBsonValueList(bsonValues: List<BsonValue>): List<R> {
+internal inline fun <reified R> MongoCollectionImpl<*>.decodeFromBsonValueList(bsonValues: List<BsonValue>): List<R> {
     return if (R::class == BsonValue::class) {
         bsonValues as List<R>
     } else {
         bsonValues.map { eJson.decodeFromBsonValue(it) }
+    }
+}
+
+@Suppress("ComplexMethod")
+public fun BsonValue.toAny(): Any? {
+    return when (this.bsonType) {
+        BsonType.NULL -> null
+        BsonType.INT32 -> asInt32().value
+        BsonType.INT64 -> asInt64().value
+        BsonType.OBJECT_ID -> this.asObjectId()
+        BsonType.STRING -> this.asString().value
+        BsonType.DOUBLE -> this.asDouble().value
+        BsonType.BINARY -> this.asBinary().data
+        BsonType.BOOLEAN -> this.asBoolean().value
+        BsonType.DATE_TIME -> this.asDateTime()
+        BsonType.ARRAY -> this.asArray().values.map { it.toAny() }
+        BsonType.DOCUMENT -> this.asDocument().mapValues { (k, v) -> v.toAny() }
+        BsonType.TIMESTAMP -> asTimestamp()
+        BsonType.DECIMAL128 -> asDecimal128()
+        BsonType.DB_POINTER,
+        BsonType.JAVASCRIPT,
+        BsonType.SYMBOL,
+        BsonType.JAVASCRIPT_WITH_SCOPE,
+        BsonType.REGULAR_EXPRESSION,
+        BsonType.MIN_KEY,
+        BsonType.MAX_KEY,
+        BsonType.END_OF_DOCUMENT,
+        BsonType.UNDEFINED -> this
     }
 }

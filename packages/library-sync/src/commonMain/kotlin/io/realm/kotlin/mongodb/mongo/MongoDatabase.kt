@@ -17,7 +17,6 @@
 package io.realm.kotlin.mongodb.mongo
 
 import org.mongodb.kbson.BsonDocument
-import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
@@ -41,9 +40,9 @@ public interface MongoDatabase {
      * @param collectionName the name of the collection name that the [MongoCollection] will
      * connect to.
      * @return a [MongoCollection] that will accept and return entities from the remote collection
-     * as [BsonValue] values.
+     * as [BsonDocument] values.
      */
-    public fun collection(collectionName: String): MongoCollection<BsonDocument, BsonValue>
+    public fun collection(collectionName: String): MongoCollection<BsonDocument>
 
     /**
      * Get a [MongoCollection] that exposed methods to retrieve and update data from the database's
@@ -59,10 +58,9 @@ public interface MongoDatabase {
      * configuration of serialization see [MongoClient].
      * @param T the default type that remote entities of the collection will be serialized from and
      * to.
-     * @param K the default type that primary keys will be serialized into.
      * @return a [MongoCollection] that will accept and return entities from the remote collection
      * as [T] values.
      */
     @ExperimentalKBsonSerializerApi
-    public fun <T, K> collection(collectionName: String, eJson: EJson? = null): MongoCollection<T, K>
+    public fun <T> collection(collectionName: String, eJson: EJson? = null): MongoCollection<T>
 }

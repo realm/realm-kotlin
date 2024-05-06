@@ -114,7 +114,7 @@ class MongoCollectionFromDatabaseTests : MongoCollectionTests() {
         // Unknown collections will create the collection if inserting document, so only use
         // NonSchemaType for queries
         @OptIn(ExperimentalKBsonSerializerApi::class)
-        val unknownCollection = collection<NonSchemaType, BsonValue>()
+        val unknownCollection = collection<NonSchemaType>()
         assertNull(unknownCollection.findOne())
     }
 }
@@ -135,14 +135,14 @@ class MongoCollectionFromClientTests : MongoCollectionTests() {
     @Test
     fun name_persistedName() {
         @OptIn(ExperimentalKBsonSerializerApi::class)
-        assertEquals("CollectionDataType", client.collection<CustomDataType, ObjectId>().name)
+        assertEquals("CollectionDataType", client.collection<CustomDataType>().name)
     }
 
     @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     override fun findOne_unknownCollection() = runBlocking<Unit> {
         @OptIn(ExperimentalKBsonSerializerApi::class)
-        val unknownCollection = collection<NonSchemaType, BsonValue>()
+        val unknownCollection = collection<NonSchemaType>()
         assertFailsWithMessage<ServiceException>("no matching collection found that maps to a table with title \"NonSchemaType\"") {
             unknownCollection.findOne()
         }
@@ -154,7 +154,7 @@ sealed class MongoCollectionTests {
     lateinit var app: TestApp
     lateinit var user: User
     lateinit var client: MongoClient
-    lateinit var collection: MongoCollection<CollectionDataType, Int>
+    lateinit var collection: MongoCollection<CollectionDataType>
 
     @BeforeTest
     open fun setUp() {
@@ -212,8 +212,8 @@ sealed class MongoCollectionTests {
 
         // Reshaped
         @OptIn(ExperimentalKBsonSerializerApi::class)
-        val bsonCollection: MongoCollection<BsonDocument, BsonValue> = collection.withDocumentClass()
-        assertIs<BsonValue>(bsonCollection.insertOne(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-2"))))
+        val bsonCollection: MongoCollection<BsonDocument> = collection.withDocumentClass()
+        assertIs<Int>(bsonCollection.insertOne(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-2"))))
         assertIs<BsonDocument>(bsonCollection.findOne())
         assertEquals(2, bsonCollection.count())
     }
@@ -221,7 +221,7 @@ sealed class MongoCollectionTests {
     @Test
     fun withDocumentClass_withCustomSerialization() = runBlocking<Unit> {
         @OptIn(ExperimentalKBsonSerializerApi::class)
-        val reshapedCollectionWithDefaultSerializer: MongoCollection<CustomDataType, CustomIdType> =
+        val reshapedCollectionWithDefaultSerializer: MongoCollection<CustomDataType> =
             collection.withDocumentClass()
 
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
@@ -229,10 +229,10 @@ sealed class MongoCollectionTests {
         }
 
         @OptIn(ExperimentalKBsonSerializerApi::class)
-        val reshapedCollectionWithCustomSerializer: MongoCollection<CustomDataType, CustomIdType> =
+        val reshapedCollectionWithCustomSerializer: MongoCollection<CustomDataType> =
             collection.withDocumentClass(customEjsonSerializer)
 
-        assertIs<CustomIdType>(reshapedCollectionWithCustomSerializer.insertOne(CustomDataType("object-2")))
+        assertIs<Int>(reshapedCollectionWithCustomSerializer.insertOne(CustomDataType("object-2")))
     }
 
     @Test
@@ -316,15 +316,17 @@ sealed class MongoCollectionTests {
         }
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun findOne_explicitTypes() = runBlocking {
         // Empty collection
-        assertNull(collection.findOne<BsonValue>())
+        assertNull(collection.findOne())
 
         collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
 
         // Explicit types
-        collection.findOne<BsonDocument>(filter = BsonDocument("name", "object-0")).run {
+        val findOne: BsonDocument? = collection.withDocumentClass<BsonDocument>().findOne(filter = BsonDocument("name", "object-0"))
+        findOne.run {
             assertIs<BsonDocument>(this)
             assertEquals("object-0", this["name"]!!.asString().value)
         }
@@ -346,7 +348,7 @@ sealed class MongoCollectionTests {
             realm.syncSession.uploadAllLocalChanges(30.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
-            val parentCollection = collection<ParentCollectionDataType, String>()
+            val parentCollection = collection<ParentCollectionDataType>()
 
             val mongoDBClientParent = retry(
                 { parentCollection.findOne() },
@@ -378,7 +380,7 @@ sealed class MongoCollectionTests {
             realm.syncSession.uploadAllLocalChanges(30.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
-            val parentCollection = collection<ParentCollectionDataType, String>()
+            val parentCollection = collection<ParentCollectionDataType>()
 
             val mongoDBClientParent = retry(
                 action = { parentCollection.findOne() },
@@ -410,7 +412,7 @@ sealed class MongoCollectionTests {
             realm.syncSession.uploadAllLocalChanges(30.seconds)
 
             @OptIn(ExperimentalKBsonSerializerApi::class)
-            val parentCollection = collection<ParentCollectionDataType, String>(
+            val parentCollection = collection<ParentCollectionDataType>(
                 EJson(
                     serializersModule = realmSerializerModule(
                         setOf(ParentCollectionDataType::class)
@@ -435,7 +437,7 @@ sealed class MongoCollectionTests {
         // Empty collections
         assertNull(collection.findOne())
 
-        val parentCollection = collection<ParentCollectionDataType, ObjectId>()
+        val parentCollection = collection<ParentCollectionDataType>()
         parentCollection.insertOne(
             ParentCollectionDataType().apply {
                 embeddedChild = EmbeddedChildCollectionDataType().apply { name = "EMBEDDED-NAME" }
@@ -447,9 +449,11 @@ sealed class MongoCollectionTests {
         }
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun findOne_extraFieldsAreDiscarded() = runBlocking<Unit> {
-        collection.insertOne<BsonDocument, Int>(
+        val withDocumentClass = collection.withDocumentClass<BsonDocument>()
+        withDocumentClass.insertOne(
             BsonDocument(
                 mapOf(
                     "_id" to BsonInt32(Random.nextInt()),
@@ -460,7 +464,7 @@ sealed class MongoCollectionTests {
         )
 
         // Show that remote method returns extra properties
-        collection.findOne<BsonDocument>()!!.let {
+        withDocumentClass.findOne()!!.let {
             assertEquals("extra", it["extra"]!!.asString().value)
         }
         // But these properties are silently discarded by the serialization framework
@@ -493,7 +497,7 @@ sealed class MongoCollectionTests {
         assertTrue { collection.find().isEmpty() }
 
         val names = (1..10).map { "object-${it % 5}" }
-        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+        val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
 
         assertEquals(10, collection.find().size)
 
@@ -542,13 +546,16 @@ sealed class MongoCollectionTests {
     }
 
     @Test
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     fun find_explicitTypes() = runBlocking<Unit> {
-        collection.find<BsonDocument>().let { assertTrue { it.isEmpty() } }
+        collection.find().let { assertTrue { it.isEmpty() } }
+
+        val reshapedCollection = collection.withDocumentClass<BsonDocument>()
 
         val names = (1..10).map { "object-${it % 5}" }
-        collection.insertMany<BsonDocument, BsonValue>(names.map { BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString(it)) })
+        reshapedCollection.insertMany(names.map { BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString(it)) })
 
-        collection.find<BsonDocument>().let { results ->
+        reshapedCollection.find().let { results ->
             results.forEach {
                 assertIs<BsonDocument>(it)
                 assertTrue { it.asDocument()["name"]!!.asString().value in names }
@@ -559,16 +566,16 @@ sealed class MongoCollectionTests {
     @Test
     fun find_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
-            collection.find<BsonDocument>(BsonDocument("\$who", 1)).first()
+            collection.find(BsonDocument("\$who", 1)).first()
         }
     }
 
     @Test
     fun aggregate() = runBlocking<Unit> {
-        collection.aggregate(listOf()).let { assertTrue { it.isEmpty() } }
+        collection.aggregate<BsonDocument>(listOf()).let { assertTrue { it.isEmpty() } }
 
         val names = (1..10).map { "object-${it % 5}" }
-        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+        val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
 
         collection.aggregate<CollectionDataType>(listOf()).let {
             assertEquals(10, it.size)
@@ -588,7 +595,7 @@ sealed class MongoCollectionTests {
     @Test
     fun aggregate_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("Unrecognized pipeline stage name: '\$who'.") {
-            collection.aggregate(pipeline = listOf(BsonDocument("\$who", 1)))
+            collection.aggregate<BsonDocument>(pipeline = listOf(BsonDocument("\$who", 1)))
         }
     }
 
@@ -631,7 +638,7 @@ sealed class MongoCollectionTests {
                 assertTrue { it.list.isEmpty() }
             }
 
-            val childCollection = collection<ChildCollectionDataType, ObjectId>()
+            val childCollection = collection<ChildCollectionDataType>()
             val unmanagedChild = ChildCollectionDataType()
             assertEquals(unmanagedChild._id, childCollection.insertOne(unmanagedChild))
             // We can't rely on the translator to incorporate the insertOnes in order so we need to
@@ -640,7 +647,7 @@ sealed class MongoCollectionTests {
                 assertEquals(unmanagedChild._id, it.list.first()._id)
             }
 
-            val parentCollection = collection<ParentCollectionDataType, ObjectId>()
+            val parentCollection = collection<ParentCollectionDataType>()
             val unmanagedParent = ParentCollectionDataType().apply {
                 this.child = unmanagedChild
             }
@@ -693,7 +700,7 @@ sealed class MongoCollectionTests {
                 assertTrue { it.list.isEmpty() }
             }
 
-            val childCollection = collection<ChildCollectionDataType, ObjectId>()
+            val childCollection = collection<ChildCollectionDataType>()
             assertEquals(0, childCollection.find().size)
             val unmanagedChild = ChildCollectionDataType()
             RealmLog.level = LogLevel.ALL
@@ -704,7 +711,7 @@ sealed class MongoCollectionTests {
                 assertEquals(unmanagedChild._id, it.list.first()._id)
             }
 
-            val parentCollection = collection<ParentCollectionDataType, ObjectId>()
+            val parentCollection = collection<ParentCollectionDataType>()
             val unmanagedParent = ParentCollectionDataType().apply {
                 this.any = RealmAny.create(unmanagedChild)
             }
@@ -732,7 +739,7 @@ sealed class MongoCollectionTests {
     @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun insertOne_embeddedObjects() = runBlocking<Unit> {
-        val parentCollection = collection<ParentCollectionDataType, ObjectId>()
+        val parentCollection = collection<ParentCollectionDataType>()
         // Empty collections
         assertNull(parentCollection.findOne())
         parentCollection.insertOne(
@@ -746,16 +753,17 @@ sealed class MongoCollectionTests {
         }
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun insertOne_explicitTypes() = runBlocking<Unit> {
         assertEquals(0, collection.find().size)
         // Inserting document without _id will use ObjectId as _id
-        collection.insertOne<BsonDocument, BsonValue>(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-1"))).let {
-            assertIs<BsonInt32>(it)
+        collection.withDocumentClass<BsonDocument>().insertOne(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-1"))).let {
+            assertIs<Int>(it)
         }
         // Inserted document will have ObjectId key and cannot be serialized into CollectionDataType
         // so find must also  use BsonDocument
-        assertEquals(1, collection.find<BsonDocument>().size)
+        assertEquals(1, collection.find().size)
     }
 
     @Test
@@ -772,17 +780,19 @@ sealed class MongoCollectionTests {
         assertEquals(1, collection.find().size)
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     open fun insertOne_throwsOnMissingRequiredFields() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertOne<BsonDocument, BsonValue>(BsonDocument("_id", ObjectId()))
+            collection.withDocumentClass<BsonDocument>().insertOne(BsonDocument("_id", ObjectId()))
         }
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun insertOne_throwsOnTypeMismatch() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertOne<BsonDocument, ObjectId>(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1"))))
+            collection.withDocumentClass<BsonDocument>().insertOne(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1"))))
         }
     }
     @Test
@@ -803,17 +813,17 @@ sealed class MongoCollectionTests {
     fun insertMany_explictTyped() = runBlocking<Unit> {
         assertEquals(0, collection.find().size)
 
-        collection.insertMany<BsonDocument, BsonValue>(
+        collection.insertMany<BsonDocument>(
             (1..10).map {
                 BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-${it % 5}"))
             }
         ).let {
             assertEquals(10, it.size)
             it.forEach {
-                assertIs<BsonInt32>(it)
+                assertIs<Int>(it)
             }
         }
-        assertEquals(10, collection.find<BsonDocument>().size)
+        assertEquals(10, collection.find().size)
     }
 
     // InsertMany with links
@@ -840,14 +850,14 @@ sealed class MongoCollectionTests {
     @Test
     open fun insertMany_throwsOnMissingRequiredFields() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertMany<BsonDocument, BsonValue>(listOf(BsonDocument()))
+            collection.insertMany(listOf(BsonDocument()))
         }
     }
 
     @Test
     fun insertMany_throwsOnTypeMismatch() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertMany<BsonDocument, ObjectId>(listOf(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1")))))
+            collection.insertMany(listOf(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1")))))
         }
     }
 
@@ -857,7 +867,7 @@ sealed class MongoCollectionTests {
 
         assertEquals(
             2,
-            collection.insertMany<CollectionDataType, BsonValue>(
+            collection.insertMany(
                 listOf(
                     CollectionDataType("object-1"),
                     CollectionDataType("object-1")
@@ -904,7 +914,7 @@ sealed class MongoCollectionTests {
 
         assertEquals(
             4,
-            collection.insertMany<CollectionDataType, BsonValue>(
+            collection.insertMany(
                 listOf(
                     CollectionDataType("object-1"),
                     CollectionDataType("object-1"),
@@ -941,7 +951,7 @@ sealed class MongoCollectionTests {
             BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
         ).let { (updated, upsertedId) ->
             assertFalse(updated)
-            assertIs<Int>(upsertedId)
+            assertIs<Long>(upsertedId)
         }
         assertEquals(5, collection.count())
         assertEquals(2, collection.count(filter = BsonDocument("""{"name": "object-2"}""")))
@@ -959,12 +969,12 @@ sealed class MongoCollectionTests {
 
     @Test
     fun updateOne_explicitTypes() = runBlocking<Unit> {
-        val upsertWithoutMatch = collection.updateOne<BsonValue>(
+        val upsertWithoutMatch = collection.updateOne(
             BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
         )
         upsertWithoutMatch.let { (updated, upsertedId) ->
             assertFalse(updated)
-            assertIs<BsonValue>(upsertedId)
+            assertIs<Long>(upsertedId)
         }
     }
 
@@ -980,7 +990,7 @@ sealed class MongoCollectionTests {
         assertEquals(0, collection.count())
         assertEquals(
             4,
-            collection.insertMany<CollectionDataType, BsonValue>(
+            collection.insertMany(
                 listOf(
                     CollectionDataType("x"),
                     CollectionDataType("x"),
@@ -1019,7 +1029,7 @@ sealed class MongoCollectionTests {
             upsert = true
         ).let { (modifiedCount, upsertedId) ->
             assertEquals(0L, modifiedCount)
-            assertIs<Int>(upsertedId)
+            assertIs<Long>(upsertedId)
         }
         assertEquals(5, collection.count())
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "UPSERTED"}""")))
@@ -1037,13 +1047,13 @@ sealed class MongoCollectionTests {
 
     @Test
     fun updateMany_explicitTypes() = runBlocking<Unit> {
-        collection.updateMany<BsonValue>(
+        collection.updateMany(
             BsonDocument("""{ "name": "object-3"}"""),
             BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""),
             upsert = true
         ).let { (modifiedCount, upsertedId) ->
             assertEquals(0, modifiedCount)
-            assertIs<BsonValue>(upsertedId)
+            assertIs<Long>(upsertedId)
         }
     }
 
@@ -1059,7 +1069,7 @@ sealed class MongoCollectionTests {
         assertNull(collection.findOneAndUpdate(BsonDocument(), BsonDocument()))
 
         val names = (1..10).map { "object-${it % 5}" }
-        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+        val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
 
         // Update with no match
         assertNull(
@@ -1162,11 +1172,12 @@ sealed class MongoCollectionTests {
         }
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun findOneAndUpdate_explicitTypes() = runBlocking<Unit> {
         collection.insertOne(CollectionDataType("object-1"))
 
-        collection.findOneAndUpdate<BsonDocument>(
+        collection.withDocumentClass<BsonDocument>().findOneAndUpdate(
             BsonDocument("""{ "name": "object-1"}"""),
             BsonDocument("""{ "name": "UPDATED"}"""),
         )!!.let {
@@ -1186,7 +1197,7 @@ sealed class MongoCollectionTests {
         assertNull(collection.findOneAndReplace(BsonDocument(), BsonDocument()))
 
         val names = (1..10).map { "object-${it % 5}" }
-        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+        val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
 
         // Replace with no match
         assertNull(
@@ -1290,11 +1301,12 @@ sealed class MongoCollectionTests {
         }
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun findOneAndReplace_explicitTypes() = runBlocking<Unit> {
         collection.insertOne(CollectionDataType("object-1"))
 
-        collection.findOneAndReplace<BsonDocument>(
+        collection.withDocumentClass<BsonDocument>().findOneAndReplace(
             BsonDocument("""{ "name": "object-1"}"""),
             BsonDocument("""{ "name": "REPLACED"}"""),
         )!!.let {
@@ -1314,7 +1326,7 @@ sealed class MongoCollectionTests {
         assertNull(collection.findOneAndDelete(BsonDocument(), BsonDocument()))
 
         val names = (1..10).map { "object-${it % 5}" }
-        val ids: List<Int> = collection.insertMany(names.map { CollectionDataType(it) })
+        val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
 
         // Delete with no match
         assertNull(collection.findOneAndDelete(BsonDocument("""{"name": "NOMATCH"}""")))
@@ -1363,11 +1375,12 @@ sealed class MongoCollectionTests {
         }
     }
 
+    @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
     fun findOneAndDelete_explicitTypes() = runBlocking<Unit> {
         collection.insertOne(CollectionDataType("object-1"))
 
-        collection.findOneAndDelete<BsonDocument>(
+        collection.withDocumentClass<BsonDocument>().findOneAndDelete(
             BsonDocument("""{ "name": "object-1"}"""),
         )!!.let {
             assertEquals("object-1", it.asDocument()["name"]!!.asString().value)
@@ -1392,7 +1405,7 @@ sealed class MongoCollectionTests {
 
 // Helper method to be able to differentiate collection creation across test classes
 @OptIn(ExperimentalKBsonSerializerApi::class)
-inline fun <reified T : BaseRealmObject, K> MongoCollectionTests.collection(eJson: EJson? = null): MongoCollection<T, K> {
+inline fun <reified T : BaseRealmObject> MongoCollectionTests.collection(eJson: EJson? = null): MongoCollection<T> {
     return when (this) {
         is MongoCollectionFromDatabaseTests -> database.collection(T::class.simpleName!!, eJson)
         is MongoCollectionFromClientTests -> client.collection(eJson)
@@ -1423,8 +1436,6 @@ class CustomDataType(var name: String, var _id: Int = Random.nextInt()) : RealmO
     @Suppress("unused")
     constructor() : this("Default")
 }
-// Custom Id type to showcase that we can use custom serializers for primary key return values.
-class CustomIdType(val id: Int)
 
 // Custom serializers to showcase that we can inject serializers throughout the MongoClient APIs.
 class CustomDataTypeSerializer : KSerializer<CustomDataType> {
@@ -1446,24 +1457,10 @@ class CustomDataTypeSerializer : KSerializer<CustomDataType> {
         encoder.encodeSerializableValue(serializer, document)
     }
 }
-class CustomIdSerializer : KSerializer<CustomIdType> {
-    val serializer = BsonInt32.serializer()
-    override val descriptor: SerialDescriptor = serializer.descriptor
-    override fun deserialize(decoder: Decoder): CustomIdType {
-        return decoder.decodeSerializableValue(serializer).let {
-            CustomIdType(it.asInt32().value)
-        }
-    }
-
-    override fun serialize(encoder: Encoder, value: CustomIdType) {
-        encoder.encodeSerializableValue(serializer, BsonInt32(value.id))
-    }
-}
 
 @OptIn(ExperimentalKBsonSerializerApi::class)
 val customEjsonSerializer = EJson(
     serializersModule = SerializersModule {
         contextual(CustomDataType::class, CustomDataTypeSerializer())
-        contextual(CustomIdType::class, CustomIdSerializer())
     }
 )

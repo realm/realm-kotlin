@@ -31,7 +31,7 @@ import io.realm.kotlin.internal.interop.CodeDescription
  * @see BadRequestException
  * @see AuthException
  */
-public open class ServiceException internal constructor(
+public open class ServiceException @PublishedApi internal constructor(
     message: String,
     internal val errorCode: CodeDescription? = null
 ) : AppException(message)

@@ -28,7 +28,6 @@ import kotlinx.serialization.SerializationException
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonInt32
 import org.mongodb.kbson.BsonString
-import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -73,29 +72,29 @@ class MongoDatabaseTests {
     fun collection_defaultTypes() = runBlocking<Unit> {
         val collection = database.collection("CollectionDataType")
         val value = collection.insertOne(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-1")))
-        assertIs<BsonValue>(value)
+        assertIs<Int>(value)
     }
 
     @Test
     fun collection_typed() = runBlocking<Unit> {
-        val collection = database.collection<CollectionDataType, Int>("CollectionDataType")
+        val collection = database.collection<CollectionDataType>("CollectionDataType")
         val value = collection.insertOne(CollectionDataType("object-1", Random.nextInt()))
         assertIs<Int>(value)
     }
 
     @Test
     fun collection_defaultSerializer() = runBlocking<Unit> {
-        assertIs<Int>(database.collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
+        assertIs<Int>(database.collection<CollectionDataType>("CollectionDataType").insertOne(CollectionDataType("object-1")))
     }
 
     @Test
     fun collection_customSerializer() = runBlocking<Unit> {
-        val collectionWithDefaultSerializer = database.collection<CustomDataType, BsonValue>("CollectionDataType")
+        val collectionWithDefaultSerializer = database.collection<CustomDataType>("CollectionDataType")
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
             collectionWithDefaultSerializer.insertOne(CustomDataType("object-1"))
         }
 
-        val collectionWithCustomSerializer = database.collection<CustomDataType, CustomIdType>("CollectionDataType", customEjsonSerializer)
-        assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("object-1")))
+        val collectionWithCustomSerializer = database.collection<CustomDataType>("CollectionDataType", customEjsonSerializer)
+        assertIs<Int>(collectionWithCustomSerializer.insertOne(CustomDataType("object-1")))
     }
 }

@@ -215,7 +215,7 @@ public interface User {
      *
      * @param serviceName the name of the data service.
      * @param eJson the EJson serializer that the [MongoClient] should use to convert objects and
-     * primary keys with. Will default to the apps [EJson] instance configured with
+     * primary keys with. Will default to the app's [EJson] instance configured with
      * [AppConfiguration.Builder.ejson]. For details on configuration of serialization see
      * [MongoClient].
      * throws IllegalStateException if trying to obtain a [MongoClient] from a logged out [User].

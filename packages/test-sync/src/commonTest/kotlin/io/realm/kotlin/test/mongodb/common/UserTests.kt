@@ -36,7 +36,6 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.mongo.CustomDataType
-import io.realm.kotlin.test.mongodb.common.mongo.CustomIdType
 import io.realm.kotlin.test.mongodb.common.mongo.TEST_SERVICE_NAME
 import io.realm.kotlin.test.mongodb.common.mongo.customEjsonSerializer
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
@@ -47,9 +46,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import org.mongodb.kbson.BsonDocument
 import org.mongodb.kbson.BsonString
-import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
-import org.mongodb.kbson.ObjectId
 import org.mongodb.kbson.serialization.Bson
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -745,7 +742,7 @@ class UserTests {
         }
         @OptIn(ExperimentalRealmSerializerApi::class)
         val client: MongoClient = user.mongoClient(TEST_SERVICE_NAME)
-        assertIs<Int>(client.database(app.clientAppId).collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
+        assertIs<Int>(client.database(app.clientAppId).collection<CollectionDataType>("CollectionDataType").insertOne(CollectionDataType("object-1")))
     }
 
     @Test
@@ -758,15 +755,15 @@ class UserTests {
         val collectionWithDefaultSerializer =
             user.mongoClient(TEST_SERVICE_NAME)
                 .database(app.clientAppId)
-                .collection<CustomDataType, BsonValue>("CollectionDataType")
+                .collection<CustomDataType>("CollectionDataType")
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
             collectionWithDefaultSerializer.insertOne(CustomDataType("dog-1"))
         }
 
         val collectionWithCustomSerializer =
             user.mongoClient(TEST_SERVICE_NAME, customEjsonSerializer).database(app.clientAppId)
-                .collection<CustomDataType, CustomIdType>("CollectionDataType")
-        assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("dog-1")))
+                .collection<CustomDataType>("CollectionDataType")
+        assertIs<Int>(collectionWithCustomSerializer.insertOne(CustomDataType("dog-1")))
     }
 
     @Test
@@ -778,7 +775,7 @@ class UserTests {
         }
         val mongoClient = user.mongoClient("UNKNOWN_SERVICE")
         val collection =
-            mongoClient.database(app.clientAppId).collection<CollectionDataType, ObjectId>("CollectionDataType")
+            mongoClient.database(app.clientAppId).collection<CollectionDataType>("CollectionDataType")
         assertFailsWithMessage<ServiceException>("Cannot access member 'insertOne' of undefined") {
             collection.insertOne(CollectionDataType("object-1"))
         }

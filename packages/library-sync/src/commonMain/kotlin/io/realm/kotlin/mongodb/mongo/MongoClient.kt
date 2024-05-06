@@ -64,7 +64,7 @@ import kotlin.reflect.KClass
  * property set. All other properties from the realm objects will have the default values specified
  * in the class definition.
  *
- * *NOTE* The EJSON serializer requires to opt-in to the experimental.
+ * *NOTE* The EJSON serializer requires to opt-in to the experimental [ExperimentalKBsonSerializerApi].
  */
 public interface MongoClient {
 

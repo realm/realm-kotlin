@@ -26,9 +26,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import kotlinx.serialization.SerializationException
-import org.mongodb.kbson.BsonValue
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
-import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -67,45 +65,45 @@ class MongoClientTests {
 
     @Test
     fun database_defaultSerializer() = runBlocking<Unit> {
-        assertIs<Int>(client.database(app.clientAppId).collection<CollectionDataType, Int>("CollectionDataType").insertOne(CollectionDataType("object-1")))
+        assertIs<Int>(client.database(app.clientAppId).collection<CollectionDataType>("CollectionDataType").insertOne(CollectionDataType("object-1")))
     }
 
     @Test
     @OptIn(ExperimentalKBsonSerializerApi::class)
     fun database_customSerializer() = runBlocking<Unit> {
         val collectionWithDefaultSerializer = client.database(app.clientAppId)
-            .collection<CustomDataType, BsonValue>("CollectionDataType")
+            .collection<CustomDataType>("CollectionDataType")
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
             collectionWithDefaultSerializer.insertOne(CustomDataType("object-1"))
         }
         val collectionWithCustomSerializer = client.database(app.clientAppId, customEjsonSerializer)
-            .collection<CustomDataType, CustomIdType>("CollectionDataType")
-        assertIs<CustomIdType>(collectionWithCustomSerializer.insertOne(CustomDataType("object-1")))
+            .collection<CustomDataType>("CollectionDataType")
+        assertIs<Int>(collectionWithCustomSerializer.insertOne(CustomDataType("object-1")))
     }
 
     @Test
     fun database_createsCollectionOnInsertToUnknownDatabase() = runBlocking<Unit> {
         val database = client.database("Unknown")
-        val collection = database.collection<CollectionDataType, Int>("NewCollection")
-        assertIs<Int>(collection.insertOne(CollectionDataType("object-1")))
+        val collection = database.collection<CollectionDataType>("NewCollection")
+        assertIs<Int>(collection.insertOne<CollectionDataType>(CollectionDataType("object-1")) as Int)
     }
 
     @Test
     fun collection_defaultSerializer() = runBlocking<Unit> {
-        assertIs<Int>(client.collection<CollectionDataType, Int>().insertOne(CollectionDataType("object-1")))
+        assertIs<Int>(client.collection<CollectionDataType>().insertOne(CollectionDataType("object-1")))
     }
 
     @Test
     fun collection_customSerializer() = runBlocking<Unit> {
-        val collectionWithDefaultSerializer = client.collection<CollectionDataType, Int>()
+        val collectionWithDefaultSerializer = client.collection<CollectionDataType>()
         assertFailsWithMessage<SerializationException>("Serializer for class 'CustomDataType' is not found.") {
-            collectionWithDefaultSerializer.insertOne(CustomDataType("object-1"))
+            collectionWithDefaultSerializer.withDocumentClass<CustomDataType>().insertOne(CustomDataType("object-1"))
         }
 
-        val collectionWithCustomSerializer = client.collection<CustomDataType, CustomIdType>(
+        val collectionWithCustomSerializer = client.collection<CustomDataType>(
             customEjsonSerializer
         )
-        assertIs<CustomIdType>(
+        assertIs<Int>(
             collectionWithCustomSerializer.insertOne(
                 CustomDataType("object-1")
             )
@@ -114,7 +112,7 @@ class MongoClientTests {
 
     @Test
     fun collection_unknownSchemaType() = runBlocking<Unit> {
-        val collectionWithDefaultSerializer = client.collection<NonSchemaType, ObjectId>()
+        val collectionWithDefaultSerializer = client.collection<NonSchemaType>()
         assertFailsWithMessage<ServiceException>("no matching collection found that maps to a table with title \"NonSchemaType\".") {
             collectionWithDefaultSerializer.insertOne(NonSchemaType())
         }
