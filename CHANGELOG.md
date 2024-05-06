@@ -122,12 +122,6 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum Android Gradle Plugin version: 4.1.3.
 * Minimum Android SDK: 16.
 * Minimum R8: 8.0.34.
-<<<<<<< HEAD
-
-### Internal
-* Updated to Realm Core 14.2.0 commit 383bdc81e36293b22868ee085a6f5c265115556d.
-* Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
-=======
 
 ### Internal
 * Updated to Realm Core 14.5.1 commit 316889b967f845fbc10b4422f96c7eadd47136f2.
@@ -166,7 +160,6 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ### Internal
 - Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
->>>>>>> main
 
 
 ## 1.14.0 (2024-03-08)
