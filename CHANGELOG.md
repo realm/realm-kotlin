@@ -1,3 +1,39 @@
+## 1.16.1-SNAPSHOT (2024-05-01)
+
+[!NOTE]
+This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+
+### Breaking changes
+* None.
+
+### Enhancements
+* None.
+
+### Fixed
+* None.
+
+### Known issues
+* Missing initial download progress notification when there is no active downloads. (Issue [realm/realm-core#7627](https://github.com/realm/realm-core/issues/7627), since 1.15.1)
+
+### Compatibility
+* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
+* Realm Studio 15.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* None.
+
+
 ## 1.16.0 (2024-05-01)
 
 [!NOTE]
