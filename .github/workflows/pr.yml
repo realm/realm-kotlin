@@ -1643,7 +1643,7 @@ jobs:
       endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
       !contains(needs.*.result, 'failure') && 
       !contains(needs.*.result, 'cancelled') &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases')
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2')
 
     secrets: inherit
     with:
@@ -1706,7 +1706,7 @@ jobs:
       !endsWith(needs.check-cache.outputs.version-label, '-SNAPSHOT') &&
       !contains(needs.*.result, 'failure') && 
       !contains(needs.*.result, 'cancelled') &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases') && 
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/releases' || github.ref == 'refs/heads/release/k2') &&
       (needs.check-release-build.outputs.is_publish_build == 'true')
 
     secrets: inherit
