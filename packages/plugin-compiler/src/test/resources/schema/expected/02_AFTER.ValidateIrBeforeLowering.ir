@@ -7,12 +7,65 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
           INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:A modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]'
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:hashCode visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.Int
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.A
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun hashCode (): kotlin.Int declared in schema.input.A'
+            CALL 'internal final fun realmHashCode (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.Int declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Int origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.A declared in schema.input.A.hashCode' type=schema.input.A origin=null
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:equals visibility:public modality:OPEN <> ($this:schema.input.A, other:kotlin.Any?) returnType:kotlin.Boolean
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.A
+        VALUE_PARAMETER GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean declared in schema.input.A'
+            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.A declared in schema.input.A.equals' type=schema.input.A origin=null
+              other: GET_VAR 'other: kotlin.Any? declared in schema.input.A.equals' type=kotlin.Any? origin=null
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:toString visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.String
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.A
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.A'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.A declared in schema.input.A.toString' type=schema.input.A origin=null
+      CLASS GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
-        CONSTRUCTOR visibility:private <> () returnType:schema.input.A.Companion [primary]
+        CONSTRUCTOR GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] visibility:private <> () returnType:schema.input.A.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
+        FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:io_realm_kotlin_schema visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun io_realm_kotlin_schema (): io.realm.kotlin.internal.schema.RealmClassImpl declared in io.realm.kotlin.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.A.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                  $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
+                  name: CONST String type=kotlin.String value="A"
+                  primaryKey: CONST Null type=kotlin.Nothing? value=null
+                  numProperties: CONST Long type=kotlin.Long value=0
+                  isEmbedded: CONST Boolean type=kotlin.Boolean value=false
+                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
+                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
+                  <T>: io.realm.kotlin.internal.interop.PropertyInfo
+                  elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
+        FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:io_realm_kotlin_newInstance visibility:public modality:FINAL <> ($this:schema.input.A.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun io_realm_kotlin_newInstance (): kotlin.Any declared in io.realm.kotlin.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.A.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.A' type=schema.input.A origin=null
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -26,30 +79,6 @@ MODULE_FRAGMENT name:<main>
           overridden:
             public open fun toString (): kotlin.String declared in kotlin.Any
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        FUN name:io_realm_kotlin_schema visibility:public modality:OPEN <> ($this:schema.input.A.Companion) returnType:kotlin.Any
-          overridden:
-            public abstract fun io_realm_kotlin_schema (): io.realm.kotlin.internal.schema.RealmClassImpl declared in io.realm.kotlin.internal.RealmObjectCompanion
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.A.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
-                  $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
-                  name: CONST String type=kotlin.String value="A"
-                  primaryKey: CONST Null type=kotlin.Nothing? value=null
-                  numProperties: CONST Long type=kotlin.Long value=0
-                  isEmbedded: CONST Boolean type=kotlin.Boolean value=false
-                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
-                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
-                  <T>: io.realm.kotlin.internal.interop.PropertyInfo
-                  elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
-        FUN name:io_realm_kotlin_newInstance visibility:public modality:OPEN <> ($this:schema.input.A.Companion) returnType:kotlin.Any
-          overridden:
-            public abstract fun io_realm_kotlin_newInstance (): kotlin.Any declared in io.realm.kotlin.internal.RealmObjectCompanion
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A.Companion
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.A.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.A' type=schema.input.A origin=null
         PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.A> visibility:private
             EXPRESSION_BODY
@@ -118,35 +147,6 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.A.Companion'
                 GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: schema.input.A.Companion declared in schema.input.A.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.A.Companion origin=null
-      FUN name:equals visibility:public modality:OPEN <> ($this:schema.input.A, other:kotlin.Any?) returnType:kotlin.Boolean [operator]
-        overridden:
-          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.A
-        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in schema.input.A'
-            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.A declared in schema.input.A.equals' type=schema.input.A origin=null
-              other: GET_VAR 'other: kotlin.Any? declared in schema.input.A.equals' type=kotlin.Any? origin=null
-      FUN name:hashCode visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.Int
-        overridden:
-          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.A
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun hashCode (): kotlin.Int declared in schema.input.A'
-            CALL 'internal final fun realmHashCode (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.Int declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Int origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.A declared in schema.input.A.hashCode' type=schema.input.A origin=null
-      FUN name:toString visibility:public modality:OPEN <> ($this:schema.input.A) returnType:kotlin.String
-        overridden:
-          public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.A
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.A'
-            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.A declared in schema.input.A.toString' type=schema.input.A origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>? visibility:private
           EXPRESSION_BODY
@@ -163,7 +163,7 @@ MODULE_FRAGMENT name:<main>
         FUN name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.A, <set-?>:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>?): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectInternal
+            public abstract fun <set-io_realm_kotlin_objectReference> (value: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>?): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.A
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.internal.RealmObjectReference<schema.input.A>?
           BLOCK_BODY
@@ -176,12 +176,65 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
           INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:B modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]'
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:hashCode visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.Int
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.B
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun hashCode (): kotlin.Int declared in schema.input.B'
+            CALL 'internal final fun realmHashCode (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.Int declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Int origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.B declared in schema.input.B.hashCode' type=schema.input.B origin=null
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:equals visibility:public modality:OPEN <> ($this:schema.input.B, other:kotlin.Any?) returnType:kotlin.Boolean
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.B
+        VALUE_PARAMETER GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean declared in schema.input.B'
+            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.B declared in schema.input.B.equals' type=schema.input.B origin=null
+              other: GET_VAR 'other: kotlin.Any? declared in schema.input.B.equals' type=kotlin.Any? origin=null
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:toString visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.String
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.B
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.B'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.B declared in schema.input.B.toString' type=schema.input.B origin=null
+      CLASS GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
-        CONSTRUCTOR visibility:private <> () returnType:schema.input.B.Companion [primary]
+        CONSTRUCTOR GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] visibility:private <> () returnType:schema.input.B.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
+        FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:io_realm_kotlin_schema visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun io_realm_kotlin_schema (): io.realm.kotlin.internal.schema.RealmClassImpl declared in io.realm.kotlin.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.B.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                  $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
+                  name: CONST String type=kotlin.String value="B"
+                  primaryKey: CONST Null type=kotlin.Nothing? value=null
+                  numProperties: CONST Long type=kotlin.Long value=0
+                  isEmbedded: CONST Boolean type=kotlin.Boolean value=false
+                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
+                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
+                  <T>: io.realm.kotlin.internal.interop.PropertyInfo
+                  elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
+        FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:io_realm_kotlin_newInstance visibility:public modality:FINAL <> ($this:schema.input.B.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun io_realm_kotlin_newInstance (): kotlin.Any declared in io.realm.kotlin.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.B.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.B' type=schema.input.B origin=null
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -195,30 +248,6 @@ MODULE_FRAGMENT name:<main>
           overridden:
             public open fun toString (): kotlin.String declared in kotlin.Any
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        FUN name:io_realm_kotlin_schema visibility:public modality:OPEN <> ($this:schema.input.B.Companion) returnType:kotlin.Any
-          overridden:
-            public abstract fun io_realm_kotlin_schema (): io.realm.kotlin.internal.schema.RealmClassImpl declared in io.realm.kotlin.internal.RealmObjectCompanion
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.B.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
-                  $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
-                  name: CONST String type=kotlin.String value="B"
-                  primaryKey: CONST Null type=kotlin.Nothing? value=null
-                  numProperties: CONST Long type=kotlin.Long value=0
-                  isEmbedded: CONST Boolean type=kotlin.Boolean value=false
-                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
-                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
-                  <T>: io.realm.kotlin.internal.interop.PropertyInfo
-                  elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
-        FUN name:io_realm_kotlin_newInstance visibility:public modality:OPEN <> ($this:schema.input.B.Companion) returnType:kotlin.Any
-          overridden:
-            public abstract fun io_realm_kotlin_newInstance (): kotlin.Any declared in io.realm.kotlin.internal.RealmObjectCompanion
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B.Companion
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.B.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.B' type=schema.input.B origin=null
         PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.B> visibility:private
             EXPRESSION_BODY
@@ -287,35 +316,6 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.B.Companion'
                 GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: schema.input.B.Companion declared in schema.input.B.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.B.Companion origin=null
-      FUN name:equals visibility:public modality:OPEN <> ($this:schema.input.B, other:kotlin.Any?) returnType:kotlin.Boolean [operator]
-        overridden:
-          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.B
-        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in schema.input.B'
-            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.B declared in schema.input.B.equals' type=schema.input.B origin=null
-              other: GET_VAR 'other: kotlin.Any? declared in schema.input.B.equals' type=kotlin.Any? origin=null
-      FUN name:hashCode visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.Int
-        overridden:
-          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.B
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun hashCode (): kotlin.Int declared in schema.input.B'
-            CALL 'internal final fun realmHashCode (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.Int declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Int origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.B declared in schema.input.B.hashCode' type=schema.input.B origin=null
-      FUN name:toString visibility:public modality:OPEN <> ($this:schema.input.B) returnType:kotlin.String
-        overridden:
-          public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.B
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.B'
-            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.B declared in schema.input.B.toString' type=schema.input.B origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>? visibility:private
           EXPRESSION_BODY
@@ -332,7 +332,7 @@ MODULE_FRAGMENT name:<main>
         FUN name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.B, <set-?>:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>?): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectInternal
+            public abstract fun <set-io_realm_kotlin_objectReference> (value: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>?): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.B
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.internal.RealmObjectReference<schema.input.B>?
           BLOCK_BODY
@@ -345,12 +345,65 @@ MODULE_FRAGMENT name:<main>
         BLOCK_BODY
           DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
           INSTANCE_INITIALIZER_CALL classDescriptor='CLASS CLASS name:C modality:OPEN visibility:public superTypes:[io.realm.kotlin.types.RealmObject; io.realm.kotlin.internal.RealmObjectInternal]'
-      CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:hashCode visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.Int
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.C
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun hashCode (): kotlin.Int declared in schema.input.C'
+            CALL 'internal final fun realmHashCode (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.Int declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Int origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.C declared in schema.input.C.hashCode' type=schema.input.C origin=null
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:equals visibility:public modality:OPEN <> ($this:schema.input.C, other:kotlin.Any?) returnType:kotlin.Boolean
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.C
+        VALUE_PARAMETER GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean declared in schema.input.C'
+            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.C declared in schema.input.C.equals' type=schema.input.C origin=null
+              other: GET_VAR 'other: kotlin.Any? declared in schema.input.C.equals' type=kotlin.Any? origin=null
+      FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:toString visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.String
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
+        $this: VALUE_PARAMETER name:<this> type:schema.input.C
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.C'
+            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
+              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
+              obj: GET_VAR '<this>: schema.input.C declared in schema.input.C.toString' type=schema.input.C origin=null
+      CLASS GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]
         $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
-        CONSTRUCTOR visibility:private <> () returnType:schema.input.C.Companion [primary]
+        CONSTRUCTOR GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] visibility:private <> () returnType:schema.input.C.Companion [primary]
           BLOCK_BODY
             DELEGATING_CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in kotlin.Any'
-            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
+            INSTANCE_INITIALIZER_CALL classDescriptor='CLASS GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any; io.realm.kotlin.internal.RealmObjectCompanion]'
+        FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:io_realm_kotlin_schema visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun io_realm_kotlin_schema (): io.realm.kotlin.internal.schema.RealmClassImpl declared in io.realm.kotlin.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.C.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
+                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
+                  $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
+                  name: CONST String type=kotlin.String value="C"
+                  primaryKey: CONST Null type=kotlin.Nothing? value=null
+                  numProperties: CONST Long type=kotlin.Long value=0
+                  isEmbedded: CONST Boolean type=kotlin.Boolean value=false
+                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
+                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
+                  <T>: io.realm.kotlin.internal.interop.PropertyInfo
+                  elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
+        FUN GENERATED[io.realm.kotlin.compiler.fir.RealmPluginGeneratorKey] name:io_realm_kotlin_newInstance visibility:public modality:FINAL <> ($this:schema.input.C.Companion) returnType:kotlin.Any
+          overridden:
+            public abstract fun io_realm_kotlin_newInstance (): kotlin.Any declared in io.realm.kotlin.internal.RealmObjectCompanion
+          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.C.Companion'
+              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.C' type=schema.input.C origin=null
         FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
           overridden:
             public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
@@ -364,30 +417,6 @@ MODULE_FRAGMENT name:<main>
           overridden:
             public open fun toString (): kotlin.String declared in kotlin.Any
           $this: VALUE_PARAMETER name:<this> type:kotlin.Any
-        FUN name:io_realm_kotlin_schema visibility:public modality:OPEN <> ($this:schema.input.C.Companion) returnType:kotlin.Any
-          overridden:
-            public abstract fun io_realm_kotlin_schema (): io.realm.kotlin.internal.schema.RealmClassImpl declared in io.realm.kotlin.internal.RealmObjectCompanion
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_schema (): kotlin.Any declared in schema.input.C.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> (cinteropClass: io.realm.kotlin.internal.interop.ClassInfo, cinteropProperties: kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>) [primary] declared in io.realm.kotlin.internal.schema.RealmClassImpl' type=io.realm.kotlin.internal.schema.RealmClassImpl origin=null
-                cinteropClass: CALL 'public final fun create (name: kotlin.String, primaryKey: kotlin.String?, numProperties: kotlin.Long, isEmbedded: kotlin.Boolean, isAsymmetric: kotlin.Boolean): io.realm.kotlin.internal.interop.ClassInfo declared in io.realm.kotlin.internal.interop.ClassInfo.Companion' type=io.realm.kotlin.internal.interop.ClassInfo origin=null
-                  $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:Companion modality:FINAL visibility:public [companion] superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.interop.ClassInfo.Companion
-                  name: CONST String type=kotlin.String value="C"
-                  primaryKey: CONST Null type=kotlin.Nothing? value=null
-                  numProperties: CONST Long type=kotlin.Long value=0
-                  isEmbedded: CONST Boolean type=kotlin.Boolean value=false
-                  isAsymmetric: CONST Boolean type=kotlin.Boolean value=false
-                cinteropProperties: CALL 'public final fun listOf <T> (vararg elements: T of kotlin.collections.CollectionsKt.listOf): kotlin.collections.List<T of kotlin.collections.CollectionsKt.listOf> declared in kotlin.collections.CollectionsKt' type=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo> origin=null
-                  <T>: io.realm.kotlin.internal.interop.PropertyInfo
-                  elements: VARARG type=kotlin.Array<io.realm.kotlin.internal.interop.PropertyInfo> varargElementType=kotlin.collections.List<io.realm.kotlin.internal.interop.PropertyInfo>
-        FUN name:io_realm_kotlin_newInstance visibility:public modality:OPEN <> ($this:schema.input.C.Companion) returnType:kotlin.Any
-          overridden:
-            public abstract fun io_realm_kotlin_newInstance (): kotlin.Any declared in io.realm.kotlin.internal.RealmObjectCompanion
-          $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C.Companion
-          BLOCK_BODY
-            RETURN type=kotlin.Nothing from='public open fun io_realm_kotlin_newInstance (): kotlin.Any declared in schema.input.C.Companion'
-              CONSTRUCTOR_CALL 'public constructor <init> () [primary] declared in schema.input.C' type=schema.input.C origin=null
         PROPERTY name:io_realm_kotlin_class visibility:public modality:FINAL [var]
           FIELD name:io_realm_kotlin_class type:kotlin.reflect.KClass<schema.input.C> visibility:private
             EXPRESSION_BODY
@@ -456,35 +485,6 @@ MODULE_FRAGMENT name:<main>
               RETURN type=kotlin.Nothing from='public final fun <get-io_realm_kotlin_classKind> (): io.realm.kotlin.schema.RealmClassKind declared in schema.input.C.Companion'
                 GET_FIELD 'FIELD name:io_realm_kotlin_classKind type:io.realm.kotlin.schema.RealmClassKind visibility:private' type=io.realm.kotlin.schema.RealmClassKind origin=null
                   receiver: GET_VAR '<this>: schema.input.C.Companion declared in schema.input.C.Companion.<get-io_realm_kotlin_classKind>' type=schema.input.C.Companion origin=null
-      FUN name:equals visibility:public modality:OPEN <> ($this:schema.input.C, other:kotlin.Any?) returnType:kotlin.Boolean [operator]
-        overridden:
-          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.C
-        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in schema.input.C'
-            CALL 'internal final fun realmEquals (obj: io.realm.kotlin.types.BaseRealmObject, other: kotlin.Any?): kotlin.Boolean declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Boolean origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.C declared in schema.input.C.equals' type=schema.input.C origin=null
-              other: GET_VAR 'other: kotlin.Any? declared in schema.input.C.equals' type=kotlin.Any? origin=null
-      FUN name:hashCode visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.Int
-        overridden:
-          public open fun hashCode (): kotlin.Int [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.C
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun hashCode (): kotlin.Int declared in schema.input.C'
-            CALL 'internal final fun realmHashCode (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.Int declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.Int origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.C declared in schema.input.C.hashCode' type=schema.input.C origin=null
-      FUN name:toString visibility:public modality:OPEN <> ($this:schema.input.C) returnType:kotlin.String
-        overridden:
-          public open fun toString (): kotlin.String [fake_override] declared in io.realm.kotlin.types.RealmObject
-        $this: VALUE_PARAMETER name:<this> type:schema.input.C
-        BLOCK_BODY
-          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in schema.input.C'
-            CALL 'internal final fun realmToString (obj: io.realm.kotlin.types.BaseRealmObject): kotlin.String declared in io.realm.kotlin.internal.RealmObjectHelper' type=kotlin.String origin=null
-              $this: GET_OBJECT 'CLASS IR_EXTERNAL_DECLARATION_STUB OBJECT name:RealmObjectHelper modality:FINAL visibility:internal superTypes:[kotlin.Any]' type=io.realm.kotlin.internal.RealmObjectHelper
-              obj: GET_VAR '<this>: schema.input.C declared in schema.input.C.toString' type=schema.input.C origin=null
       PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
         FIELD name:io_realm_kotlin_objectReference type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>? visibility:private
           EXPRESSION_BODY
@@ -501,7 +501,7 @@ MODULE_FRAGMENT name:<main>
         FUN name:<set-io_realm_kotlin_objectReference> visibility:public modality:OPEN <> ($this:schema.input.C, <set-?>:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>?) returnType:kotlin.Unit
           correspondingProperty: PROPERTY name:io_realm_kotlin_objectReference visibility:public modality:OPEN [var]
           overridden:
-            public abstract fun <set-io_realm_kotlin_objectReference> (<set-?>: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>?): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectInternal
+            public abstract fun <set-io_realm_kotlin_objectReference> (value: io.realm.kotlin.internal.RealmObjectReference<out io.realm.kotlin.types.BaseRealmObject>?): kotlin.Unit declared in io.realm.kotlin.internal.RealmObjectInternal
           $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:schema.input.C
           VALUE_PARAMETER name:<set-?> index:0 type:io.realm.kotlin.internal.RealmObjectReference<schema.input.C>?
           BLOCK_BODY
