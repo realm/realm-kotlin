@@ -15,18 +15,23 @@
  * limitations under the License.
  */
 
-package io.realm.test.multiplatform.util.platform
+rootProject.name = "gradle72-plugin-test"
 
-import java.io.File
-import java.nio.file.Files
-import kotlin.io.path.absolutePathString
-
-actual object PlatformUtils {
-    actual fun createTempDir(prefix: String): String {
-        return Files.createTempDirectory("$prefix-jvm_tests").absolutePathString()
-    }
-
-    actual fun deleteTempDir(path: String) {
-        File(path).deleteRecursively()
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        google()
+        mavenCentral()
+        maven("file://${rootDir.absolutePath}/../../../packages/build/m2-buildrepo")
     }
 }
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven("file://${rootDir.absolutePath}/../../../packages/build/m2-buildrepo")
+    }
+}
+
+include(":single-platform")
+include(":multi-platform")
