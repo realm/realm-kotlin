@@ -387,6 +387,43 @@ class RealmLogTests {
     }
 
     @Test
+    fun addDeprecatedLogger_1() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?,
+            ) {
+                assertEquals("Hello", message)
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertTrue(called.value)
+    }
+
+    @Test
+    fun addDeprecatedLogger_2() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(level: LogLevel, message: String) {
+                assertEquals("Hello", message)
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+        RealmLog.trace("Hello")
+        assertTrue(called.value)
+    }
+
+    @Test
     fun removeAll_falseIfNoLoggerWereRemoved() {
         assertTrue(RealmLog.removeAll())
         assertFalse(RealmLog.removeAll())
