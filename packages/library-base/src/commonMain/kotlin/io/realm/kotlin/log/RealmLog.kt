@@ -97,7 +97,7 @@ public object RealmLog {
                     doLog(
                         level,
                         null,
-                        if (message.isNullOrBlank()) { null } else { "[Core] $message" },
+                        if (message.isNullOrBlank()) { null } else { "[$category] $message" },
                         category,
                     )
                 }
