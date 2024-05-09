@@ -16,6 +16,7 @@
 @file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.common
 
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
@@ -26,6 +27,7 @@ import io.realm.kotlin.test.util.Utils
 import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -473,6 +475,32 @@ class RealmLogTests {
 
         coreLogCategoryNames.forEach { path ->
             assertContains(logCategoriesPaths, path)
+        }
+    }
+
+    @Test
+    @Ignore // https://jira.mongodb.org/browse/RKOTLIN-1076
+    fun filterSdkLogs() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override val level: LogLevel = LogLevel.ALL
+            override val tag: String = "CUSTOM"
+            override fun log(
+                category: LogCategory,
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?,
+            ) {
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+
+        ContextLogger("Sdk").run {
+            RealmLog.setLevel(LogLevel.NONE, LogCategory.Realm.Sdk)
+            warn("should be filtered")
+            assertFalse(called.value, "Unexpected message logged")
         }
     }
 }
