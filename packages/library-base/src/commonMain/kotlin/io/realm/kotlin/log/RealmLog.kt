@@ -373,18 +373,10 @@ public object RealmLog {
         vararg args: Any?,
     ) = doLog(LogCategory.Realm.Sdk, level, throwable, message, *args)
 
-    internal fun doLog(
-        level: LogLevel,
-        throwable: Throwable?,
-        message: () -> String?,
-        vararg args: Any?,
-    ) = doLog(LogCategory.Realm.Sdk, level, throwable, message, *args)
-
-
     /**
      * Log a message.
      */
-    internal fun doLog(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?, ) {
+    internal fun doLog(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         if (level.priority >= this.level.priority) {
             // Copy the reference to loggers so they are stable while iterating them.
             val loggers = this.loggers
