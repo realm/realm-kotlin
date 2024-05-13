@@ -123,6 +123,7 @@ kotlin {
     // JVM specific KotlinCompilation tasks
     tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class.java).all {
         kotlinOptions.freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+        kotlinOptions.freeCompilerArgs += "-opt-in=org.mongodb.kbson.ExperimentalKBsonSerializerApi"
     }
 }
 
@@ -258,7 +259,7 @@ kotlin {
     }
     targets.filterIsInstance<KotlinNativeTargetWithSimulatorTests>().forEach { simulatorTargets ->
         simulatorTargets.testRuns.forEach { testRun ->
-            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 12"
+            testRun.deviceId = project.findProperty("iosDevice")?.toString() ?: "iPhone 14"
         }
     }
     sourceSets {

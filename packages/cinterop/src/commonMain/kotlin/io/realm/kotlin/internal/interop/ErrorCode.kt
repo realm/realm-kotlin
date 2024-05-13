@@ -119,9 +119,9 @@ expect enum class ErrorCode : CodeDescription {
     RLM_ERR_CUSTOM_ERROR,
     RLM_ERR_CLIENT_USER_NOT_FOUND,
     RLM_ERR_CLIENT_USER_NOT_LOGGED_IN,
-    RLM_ERR_CLIENT_APP_DEALLOCATED,
     RLM_ERR_CLIENT_REDIRECT_ERROR,
     RLM_ERR_CLIENT_TOO_MANY_REDIRECTS,
+    RLM_ERR_CLIENT_USER_ALREADY_NAMED,
     RLM_ERR_BAD_TOKEN,
     RLM_ERR_MALFORMED_JSON,
     RLM_ERR_MISSING_JSON_KEY,
@@ -181,9 +181,12 @@ expect enum class ErrorCode : CodeDescription {
     RLM_ERR_MAINTENANCE_IN_PROGRESS,
     RLM_ERR_USERPASS_TOKEN_INVALID,
     RLM_ERR_INVALID_SERVER_RESPONSE,
-    REALM_ERR_APP_SERVER_ERROR,
+    RLM_ERR_APP_SERVER_ERROR,
     RLM_ERR_CALLBACK,
     RLM_ERR_UNKNOWN;
+
+    override val nativeValue: Int
+    override val description: String?
 
     companion object {
         fun of(nativeValue: Int): ErrorCode?

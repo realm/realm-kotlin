@@ -34,6 +34,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import org.mongodb.kbson.BsonArray
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBoolean
 import org.mongodb.kbson.BsonDocument
@@ -181,6 +182,25 @@ public open class MongoDBSerializer internal constructor(
                             "\$id" to primaryKey
                         )
                     }
+                    RealmAny.Type.LIST -> {
+                        val map: List<BsonValue> = realmAny.asList().map {
+                            storageTypeToBsonValue(
+                                RealmStorageType.ANY,
+                                RealmAny::class/* Argument not used for RealmAny conversion, so just pass in arbitrary class */,
+                                it
+                            ) ?: BsonNull
+                        }
+                        BsonArray(map)
+                    }
+                    RealmAny.Type.DICTIONARY -> BsonDocument(
+                        realmAny.asDictionary().mapValues { (_, v) ->
+                            storageTypeToBsonValue(
+                                RealmStorageType.ANY,
+                                RealmAny::class,
+                                v
+                            ) ?: BsonNull
+                        }
+                    )
                 }
             }
         }

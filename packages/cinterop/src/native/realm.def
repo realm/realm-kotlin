@@ -1,5 +1,6 @@
 headers = realm.h realm/error_codes.h
 headerFilter = realm.h realm/error_codes.h
+compilerOpts = -DREALM_APP_SERVICES=1
 // Relative paths in def file depends are resolved differently dependent on execution
 // location
 // https://youtrack.jetbrains.com/issue/KT-43439

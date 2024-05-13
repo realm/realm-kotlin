@@ -23,8 +23,8 @@ import io.realm.kotlin.internal.interop.realm_sync_socket_callback_result_e
 import io.realm.kotlin.internal.interop.realm_web_socket_errno_e
 
 actual enum class SyncConnectionErrorCode(
-    override val description: String,
-    override val nativeValue: Int
+    actual override val description: String?,
+    actual override val nativeValue: Int
 ) : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED("ConnectionClosed", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED),
     RLM_SYNC_ERR_CONNECTION_OTHER_ERROR("OtherError", realm_sync_errno_connection_e.RLM_SYNC_ERR_CONNECTION_OTHER_ERROR),
@@ -51,8 +51,8 @@ actual enum class SyncConnectionErrorCode(
 }
 
 actual enum class SyncSessionErrorCode(
-    override val description: String,
-    override val nativeValue: Int
+    actual override val description: String?,
+    actual override val nativeValue: Int
 ) : CodeDescription {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED("SessionClosed", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_SESSION_CLOSED),
     RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR("OtherSessioError", realm_sync_errno_session_e.RLM_SYNC_ERR_SESSION_OTHER_SESSION_ERROR),
@@ -100,8 +100,8 @@ actual enum class SyncSessionErrorCode(
 }
 
 actual enum class WebsocketErrorCode(
-    override val description: String,
-    override val nativeValue: Int
+    actual override val description: String?,
+    actual override val nativeValue: Int
 ) : CodeDescription {
     RLM_ERR_WEBSOCKET_OK("Ok", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_OK),
     RLM_ERR_WEBSOCKET_GOINGAWAY("GoingAway", realm_web_socket_errno_e.RLM_ERR_WEBSOCKET_GOINGAWAY),
@@ -139,7 +139,7 @@ actual enum class WebsocketErrorCode(
     }
 }
 
-actual enum class WebsocketCallbackResult(override val description: String, override val nativeValue: Int) : CodeDescription {
+actual enum class WebsocketCallbackResult(actual override val description: String?, actual override val nativeValue: Int) : CodeDescription {
 
     RLM_ERR_SYNC_SOCKET_SUCCESS(
         "Websocket callback success",

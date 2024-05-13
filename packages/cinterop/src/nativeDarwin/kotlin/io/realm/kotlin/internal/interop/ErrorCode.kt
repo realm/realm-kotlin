@@ -19,7 +19,7 @@ package io.realm.kotlin.internal.interop
 import realm_wrapper.realm_errno
 
 actual enum class ErrorCode(
-    override val description: String,
+    actual override val description: String?,
     nativeError: realm_errno
 ) : CodeDescription {
     RLM_ERR_NONE("None", realm_errno.RLM_ERR_NONE),
@@ -120,9 +120,9 @@ actual enum class ErrorCode(
     RLM_ERR_CUSTOM_ERROR("CustomError", realm_errno.RLM_ERR_CUSTOM_ERROR),
     RLM_ERR_CLIENT_USER_NOT_FOUND("ClientUserNotFound", realm_errno.RLM_ERR_CLIENT_USER_NOT_FOUND),
     RLM_ERR_CLIENT_USER_NOT_LOGGED_IN("ClientUserNotLoggedIn", realm_errno.RLM_ERR_CLIENT_USER_NOT_LOGGED_IN),
-    RLM_ERR_CLIENT_APP_DEALLOCATED("ClientAppDeallocated", realm_errno.RLM_ERR_CLIENT_APP_DEALLOCATED),
     RLM_ERR_CLIENT_REDIRECT_ERROR("ClientRedirectError", realm_errno.RLM_ERR_CLIENT_REDIRECT_ERROR),
     RLM_ERR_CLIENT_TOO_MANY_REDIRECTS("ClientTooManyRedirects", realm_errno.RLM_ERR_CLIENT_TOO_MANY_REDIRECTS),
+    RLM_ERR_CLIENT_USER_ALREADY_NAMED("ClientUserAlreadyNamed", realm_errno.RLM_ERR_CLIENT_USER_ALREADY_NAMED),
     RLM_ERR_BAD_TOKEN("BadToken", realm_errno.RLM_ERR_BAD_TOKEN),
     RLM_ERR_MALFORMED_JSON("MalformedJson", realm_errno.RLM_ERR_MALFORMED_JSON),
     RLM_ERR_MISSING_JSON_KEY("MissingJsonKey", realm_errno.RLM_ERR_MISSING_JSON_KEY),
@@ -182,11 +182,11 @@ actual enum class ErrorCode(
     RLM_ERR_MAINTENANCE_IN_PROGRESS("MaintenanceInProgress", realm_errno.RLM_ERR_MAINTENANCE_IN_PROGRESS),
     RLM_ERR_USERPASS_TOKEN_INVALID("UserpassTokenInvalid", realm_errno.RLM_ERR_USERPASS_TOKEN_INVALID),
     RLM_ERR_INVALID_SERVER_RESPONSE("InvalidServerResponse", realm_errno.RLM_ERR_INVALID_SERVER_RESPONSE),
-    REALM_ERR_APP_SERVER_ERROR("AppServerError", realm_errno.RLM_ERR_APP_SERVER_ERROR),
+    RLM_ERR_APP_SERVER_ERROR("AppServerError", realm_errno.RLM_ERR_APP_SERVER_ERROR),
     RLM_ERR_CALLBACK("Callback", realm_errno.RLM_ERR_CALLBACK),
     RLM_ERR_UNKNOWN("Unknown", realm_errno.RLM_ERR_UNKNOWN);
 
-    override val nativeValue: Int = nativeError.value.toInt()
+    actual override val nativeValue: Int = nativeError.value.toInt()
 
     val asNativeEnum: realm_errno = nativeError
 

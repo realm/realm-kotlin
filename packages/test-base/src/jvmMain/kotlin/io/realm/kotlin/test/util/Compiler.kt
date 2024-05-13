@@ -30,7 +30,6 @@ object Compiler {
     ): KotlinCompilation.Result =
         KotlinCompilation().apply {
             sources = listOf(source)
-            useIR = true
             messageOutputStream = System.out
             componentRegistrars = plugins
             inheritClassPath = true

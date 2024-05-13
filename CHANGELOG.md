@@ -1,7 +1,82 @@
-## 1.15.0-SNAPSHOT (YYYY-MM-DD)
+## 1.17.0-SNAPSHOT (YYYY-MM-DD)
 
 [!NOTE]
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+
+### Breaking changes
+* None.
+
+### Enhancements
+* Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
+* Optimized `RealmList.indexOf()` and `RealmList.contains()` using Core implementation of operations instead of iterating elements and comparing them in Kotlin. (Issue [#1625](https://github.com/realm/realm-kotlin/pull/1666) [RKOTLIN-995](https://jira.mongodb.org/browse/RKOTLIN-995)).
+* [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972))
+
+### Fixed
+* None.
+
+### Compatibility
+* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
+* Realm Studio 15.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* None.
+
+## 1.16.0 (2024-05-01)
+
+[!NOTE]
+This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+
+### Breaking changes
+* None.
+
+### Enhancements
+* Add support for changing the App Services base URL. It allows to roam between Atlas and Edge Server. Changing the url would trigger a client reset. (Issue [#1659](https://github.com/realm/realm-kotlin/issues/1659)/[RKOTLIN-1013](https://jira.mongodb.org/browse/RKOTLIN-1023))
+
+### Fixed
+* Fixed a bug when running a IN query (or a query of the pattern `x == 1 OR x == 2 OR x == 3`) when evaluating on a string property with an empty string in the search condition. Matches with an empty string would have been evaluated as if searching for a null string instead. (Core issue [realm/realm-core#7628](https://github.com/realm/realm-core/pull/7628) since Core v10.0.0-beta.9)
+* Fixed several issues around encrypted file portability (copying a "bundled" encrypted Realm from one device to another). (Core issues [realm/realm-core#7322](https://github.com/realm/realm-core/issues/7322) and [realm/realm-core#7319](https://github.com/realm/realm-core/issues/7319))
+* Queries using query paths on Mixed values returns inconsistent results (Core issue [realm/realm-core#7587](https://github.com/realm/realm-core/issues/7587), since Core v14.0.0)
+* [Sync] `App.allUsers()` included logged out users only if they were logged out while the App instance existed. It now always includes all logged out users. (Core issue [realm/realm-core#7300](https://github.com/realm/realm-core/pull/7300))
+* [Sync] Deleting the active user left the active user unset rather than selecting another logged-in user as the active user like logging out and removing users did. (Core issue [realm/realm-core#7300](https://github.com/realm/realm-core/pull/7300))
+* [Sync] Schema initialization could hit an assertion failure if the sync client applied a downloaded changeset while the Realm file was in the process of being opened (Core issue [realm/realm-core#7041](https://github.com/realm/realm-core/issues/7041), since Core v11.4.0).
+
+### Known issues
+* Missing initial download progress notification when there is no active downloads. (Issue [realm/realm-core#7627](https://github.com/realm/realm-core/issues/7627), since 1.15.1)
+
+### Compatibility
+* File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
+* Realm Studio 15.0.0 or above is required to open Realms created by this version.
+* This release is compatible with the following Kotlin releases:
+  * Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
+  * Ktor 2.1.2 and above.
+  * Coroutines 1.7.0 and above.
+  * AtomicFu 0.18.3 and above.
+  * The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
+* Minimum Kbson 0.3.0.
+* Minimum Gradle version: 6.8.3.
+* Minimum Android Gradle Plugin version: 4.1.3.
+* Minimum Android SDK: 16.
+* Minimum R8: 8.0.34.
+
+### Internal
+* Updated to Realm Core 14.6.1 commit cde3adb7649d3361806dbbae0cf353b8fdc4d54e.
+
+
+## 1.15.0 (2024-04-17)
+
+> [!NOTE]
+> This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
 * If you want to query using `@type` operation, you must use 'objectlink' to match links to objects. 'object' is reserved for dictionary types.
@@ -9,7 +84,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 
 ### Enhancements
 * Add support for using aggregate operations on RealmAny properties in queries  (Core issue [realm/realm-core#7398](https://github.com/realm/realm-core/pull/7398))
-* Property keypath in RQL can be substituted with value given as argument. Use '$P<i>' in query string. (Core issue [realm/realm-core#7033](https://github.com/realm/realm-core/issues/7033))
+* Property keypath in RQL can be substituted with value given as argument. Use `$P<i>` in query string. (Core issue [realm/realm-core#7033](https://github.com/realm/realm-core/issues/7033))
 * You can now use query substitution for the @type argument (Core issue [realm/realm-core#7289](https://github.com/realm/realm-core/issues/7289))
 * Storage of Decimal128 properties has been optimised so that the individual values will take up 0 bits (if all nulls), 32 bits, 64 bits or 128 bits depending on what is needed. (Core issue [realm/realm-core#6111](https://github.com/realm/realm-core/pull/6111))
 * Querying a specific entry in a collection (in particular 'first and 'last') is supported. (Core issue [realm/realm-core#4269](https://github.com/realm/realm-core/issues/4269))
@@ -17,12 +92,11 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Improved performance of RQL (parsed) queries on a non-linked string property using: >, >=, <, <=, operators and fixed behaviour that a null string should be evaulated as less than everything, previously nulls were not matched. (Core issue [realm/realm-core#3939](https://github.com/realm/realm-core/issues/3939).
 * Updated bundled OpenSSL version to 3.2.0 (Core issue [realm/realm-core#7303](https://github.com/realm/realm-core/pull/7303))
 * [Sync] The default base url in `AppConfiguration` has been updated to point to `services.cloud.mongodb.com`. See https://www.mongodb.com/docs/atlas/app-services/domain-migration/ for more information. (Issue [#1685](https://github.com/realm/realm-kotlin/issues/1685))
-* [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972))
 
 ### Fixed
 * Sorting order of strings has changed to use standard unicode codepoint order instead of grouping similar english letters together. A noticeable change will be from "aAbBzZ" to "ABZabz". (Core issue [realm/realm-core#2573](https://github.com/realm/realm-core/issues/2573))
 * `@count`/`@size` is now supported for `RealmAny` properties (Core issue [realm/realm-core#7280](https://github.com/realm/realm-core/issues/7280), since v10.0.0)
-* Fixed equality queries on a `RealmAny` property with an index possibly returning the wrong result if values of different types happened to have the same StringIndex hash. (Core issue [realm/realm-core6407](https://github.com/realm/realm-core/issues/6407) since v11.0.0-beta.5).
+* Fixed equality queries on a `RealmAny` property with an index possibly returning the wrong result if values of different types happened to have the same StringIndex hash. (Core issue [realm/realm-core6407](https://github.com/realm/realm-core/issues/6407), since v11.0.0-beta.5).
 * If you have more than 8388606 links pointing to one specific object, the program will crash. (Core issue [realm/realm-core#6577](https://github.com/realm/realm-core/issues/6577), since v6.0.0)
 * Query for NULL value in `RealmAny<RealmAny>` would give wrong results (Core issue [realm/realm-core6748])(https://github.com/realm/realm-core/issues/6748), since v10.0.0)
 * Fixed queries like `indexed_property == NONE {x}` which mistakenly matched on only x instead of not x. This only applies when an indexed property with equality (==, or IN) matches with `NONE` on a list of one item. If the constant list contained more than one value then it was working correctly. (Core issue [realm/realm-core#7777](https://github.com/realm/realm-java/issues/7862), since v12.5.0)
@@ -50,40 +124,12 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.4.1 commit 374dd672af357732dccc135fecc905406fec3223.
+* Updated to Realm Core 14.5.1 commit 316889b967f845fbc10b4422f96c7eadd47136f2.
 * Deprecated Jenkins and switching to Github Action ([JIRA]https://jira.mongodb.org/browse/RKOTLIN-825).
 - Remove CMake required version.
 * Updated URL to documentation.
+* Refactored to allow compilation with Kotlin 2.0
 
-## 1.14.2-SNAPSHOT (YYYY-MM-DD)
-
-### Breaking Changes
-- None.
-
-### Enhancements
-
-- None.
-
-### Fixed
-- None.
-
-### Compatibility
-- File format: Generates Realms with file format v23.
-- Realm Studio 13.0.0 or above is required to open Realms created by this version.
-- This release is compatible with the following Kotlin releases:
-  - Kotlin 1.9.0 and above. Support for experimental K2-compilation with `kotlin.experimental.tryK2=true`.
-  - Ktor 2.1.2 and above.
-  - Coroutines 1.7.0 and above.
-  - AtomicFu 0.18.3 and above.
-  - The new memory model only. See https://github.com/realm/realm-kotlin#kotlin-memory-model-and-coroutine-compatibility
-- Minimum Kbson 0.3.0.
-- Minimum Gradle version: 6.8.3.
-- Minimum Android Gradle Plugin version: 4.1.3.
-- Minimum Android SDK: 16.
-- Minimum R8: 8.0.34.
-
-### Internal
-- None.
 
 
 ## 1.14.1 (2024-03-19)
