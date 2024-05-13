@@ -46,8 +46,7 @@ public interface RealmLogger {
         message: String?,
         vararg args: Any?,
     ) {
-        log(level, message!!)
-        log(level, null, message)
+        log(level, throwable, message, *args)
     }
 
     /**
@@ -58,6 +57,7 @@ public interface RealmLogger {
         ReplaceWith("log")
     )
     public fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+        TODO("log() shouldn't be called. Overwrite the category-variant instead")
     }
 
     /**
@@ -68,5 +68,11 @@ public interface RealmLogger {
         ReplaceWith("log")
     )
     public fun log(level: LogLevel, message: String) {
+        log(
+            category = LogCategory.Realm.Sdk,
+            level = level,
+            throwable = null,
+            message = message
+        )
     }
 }
