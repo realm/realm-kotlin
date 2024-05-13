@@ -16,6 +16,8 @@
 
 package io.realm.kotlin.mongodb.internal
 
+import io.realm.kotlin.ext.toRealmDictionary
+import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.internal.RealmObjectCompanion
 import io.realm.kotlin.internal.asBsonBinary
 import io.realm.kotlin.internal.asBsonDateTime
@@ -151,58 +153,45 @@ public open class MongoDBSerializer internal constructor(
             RealmStorageType.TIMESTAMP -> (value as RealmInstant).asBsonDateTime()
             RealmStorageType.OBJECT_ID -> (value as ObjectId)
             RealmStorageType.UUID -> (value as RealmUUID).asBsonBinary()
-            RealmStorageType.ANY -> {
-                val realmAny = value as RealmAny
-                when (realmAny.type) {
-                    RealmAny.Type.BOOL -> BsonBoolean(realmAny.asBoolean())
-                    RealmAny.Type.INT -> BsonInt64(realmAny.asLong())
-                    RealmAny.Type.STRING -> BsonString(realmAny.asString())
-                    RealmAny.Type.BINARY -> BsonBinary(realmAny.asByteArray())
-                    RealmAny.Type.TIMESTAMP -> realmAny.asRealmInstant().asBsonDateTime()
-                    RealmAny.Type.FLOAT -> BsonDouble(realmAny.asFloat().toDouble())
-                    RealmAny.Type.DOUBLE -> BsonDouble(realmAny.asDouble())
-                    RealmAny.Type.DECIMAL128 -> realmAny.asDecimal128()
-                    RealmAny.Type.OBJECT_ID -> realmAny.asObjectId()
-                    RealmAny.Type.UUID -> realmAny.asRealmUUID().asBsonBinary()
-                    RealmAny.Type.OBJECT -> {
-                        // Objects in RealmAny cannot be EmbeddedObjects
-                        val target = realmAny.asRealmObject(BaseRealmObject::class)
-                        val targetCompanion =
-                            @Suppress("invisible_reference", "invisible_member")
-                            io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(target as KClass<BaseRealmObject>)
-                        val primaryKeySchemaProperty: RealmProperty = targetCompanion.io_realm_kotlin_schema().primaryKey ?: throw SerializationException(
-                            "Cannot serialize class without primary key: '${targetCompanion.io_realm_kotlin_className}'"
-                        )
-                        val (primaryKeyType, primaryKeyAccessor) = targetCompanion.io_realm_kotlin_fields[primaryKeySchemaProperty.name] ?: throw SerializationException(
-                            "Cannot serialize class without primary key: '${targetCompanion.io_realm_kotlin_className}'"
-                        )
-                        val primaryKey: BsonValue = storageTypeToBsonValue(primaryKeySchemaProperty.type.storageType, primaryKeyType, primaryKeyAccessor.get(target)) ?: BsonNull
-                        BsonDocument(
-                            "\$ref" to BsonString(targetCompanion.io_realm_kotlin_className),
-                            "\$id" to primaryKey
-                        )
-                    }
-                    RealmAny.Type.LIST -> {
-                        val map: List<BsonValue> = realmAny.asList().map {
-                            storageTypeToBsonValue(
-                                RealmStorageType.ANY,
-                                RealmAny::class/* Argument not used for RealmAny conversion, so just pass in arbitrary class */,
-                                it
-                            ) ?: BsonNull
-                        }
-                        BsonArray(map)
-                    }
-                    RealmAny.Type.DICTIONARY -> BsonDocument(
-                        realmAny.asDictionary().mapValues { (_, v) ->
-                            storageTypeToBsonValue(
-                                RealmStorageType.ANY,
-                                RealmAny::class,
-                                v
-                            ) ?: BsonNull
-                        }
-                    )
-                }
-            }
+            RealmStorageType.ANY -> { realmAnyToBsonValue(value as RealmAny) }
+        }
+    }
+
+    @Suppress("ComplexMethod")
+    private fun realmAnyToBsonValue(realmAny: RealmAny?): BsonValue = when (realmAny?.type) {
+        null -> BsonNull
+        RealmAny.Type.BOOL -> BsonBoolean(realmAny.asBoolean())
+        RealmAny.Type.INT -> BsonInt64(realmAny.asLong())
+        RealmAny.Type.STRING -> BsonString(realmAny.asString())
+        RealmAny.Type.BINARY -> BsonBinary(realmAny.asByteArray())
+        RealmAny.Type.TIMESTAMP -> realmAny.asRealmInstant().asBsonDateTime()
+        RealmAny.Type.FLOAT -> BsonDouble(realmAny.asFloat().toDouble())
+        RealmAny.Type.DOUBLE -> BsonDouble(realmAny.asDouble())
+        RealmAny.Type.DECIMAL128 -> realmAny.asDecimal128()
+        RealmAny.Type.OBJECT_ID -> realmAny.asObjectId()
+        RealmAny.Type.UUID -> realmAny.asRealmUUID().asBsonBinary()
+        RealmAny.Type.OBJECT -> {
+            // Objects in RealmAny cannot be EmbeddedObjects
+            val target = realmAny.asRealmObject(BaseRealmObject::class)
+            @Suppress("invisible_reference", "invisible_member")
+            val targetCompanion = io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(target::class)
+            val primaryKeySchemaProperty: RealmProperty = targetCompanion.io_realm_kotlin_schema().primaryKey ?: throw SerializationException(
+                "Cannot serialize class without primary key: '${targetCompanion.io_realm_kotlin_className}'"
+            )
+            val (primaryKeyType, primaryKeyAccessor) = targetCompanion.io_realm_kotlin_fields[primaryKeySchemaProperty.name] ?: throw SerializationException(
+                "Cannot serialize class without primary key: '${targetCompanion.io_realm_kotlin_className}'"
+            )
+            val primaryKey: BsonValue = storageTypeToBsonValue(primaryKeySchemaProperty.type.storageType, primaryKeyType, primaryKeyAccessor.get(target)) ?: BsonNull
+            BsonDocument(
+                "\$ref" to BsonString(targetCompanion.io_realm_kotlin_className),
+                "\$id" to primaryKey
+            )
+        }
+        RealmAny.Type.LIST -> {
+            BsonArray(realmAny.asList().map { realmAnyToBsonValue(realmAny) })
+        }
+        RealmAny.Type.DICTIONARY -> {
+            BsonDocument(realmAny.asDictionary().mapValues { (_, v) -> realmAnyToBsonValue(v) })
         }
     }
 
@@ -244,62 +233,82 @@ public open class MongoDBSerializer internal constructor(
             RealmStorageType.TIMESTAMP -> bsonValue.asDateTime().asRealmInstant()
             RealmStorageType.OBJECT_ID -> bsonValue.asObjectId()
             RealmStorageType.UUID -> bsonValue.asBinary().asRealmUUID()
-            RealmStorageType.ANY -> when (bsonValue.bsonType) {
-                // RealmAny.Type.FLOAT
-                // RealmAny.Type.DOUBLE
-                BsonType.DOUBLE -> bsonValue.asDouble().value
-                // RealmAny.Type.STRING
-                BsonType.STRING -> bsonValue.asString().value
-                // RealmAny.Type.INT
-                BsonType.INT32 -> bsonValue.asInt32().value
-                BsonType.INT64 -> bsonValue.asInt64().value
-                // RealmAny.Type.DECIMAL128
-                BsonType.DECIMAL128 -> bsonValue.asDecimal128()
-                // RealmAny.Type.BINARY
-                // RealmAny.Type.UUID handled as binary, we can't distinguish it
-                BsonType.BINARY -> bsonValue.asBinary()
-                // RealmAny.Type.OBJECT_ID
-                BsonType.OBJECT_ID -> bsonValue.asObjectId()
-                // RealmAny.Type.BOOL
-                BsonType.BOOLEAN -> bsonValue.asBoolean().value
-                // RealmAny.Type.TIMESTAMP
-                BsonType.DATE_TIME -> bsonValue.asDateTime().asRealmInstant()
-                BsonType.DOCUMENT -> {
-                    val dbRef = bsonValue.asDocument()
-                    val type = dbRef["\$ref"]?.asString()?.value ?: throw SerializationException("Cannot resolve target class: Missing '${"$"}ref'")
-                    val primaryKey = dbRef["\$id"] ?: throw SerializationException("Cannot resolve target primary key: Missing '${"$"}id'")
-                    val targetCompanion = schema[type] ?: throw SerializationException("Cannot resolve target class in schema: Unknown class '${"$"}ref=$type'")
-                    val primaryKeySchemaProperty = targetCompanion.io_realm_kotlin_schema().primaryKey ?: throw SerializationException(
-                        "Target class does not have a primary key: '${"$"}ref=$type'"
-                    )
-                    val (primaryKeyType, primaryKeyAccessor) = targetCompanion.io_realm_kotlin_fields[primaryKeySchemaProperty.name] ?: throw SerializationException(
-                        "Target class does not have a primary key: '${"$"}ref=$type'"
-                    )
-                    val instance: RealmObject = targetCompanion.io_realm_kotlin_newInstance() as RealmObject
-                    (primaryKeyAccessor as KMutableProperty1<BaseRealmObject, Any?>).set(
-                        instance,
-                        bsonValueToStorageType(
-                            primaryKeySchemaProperty.type.storageType,
-                            primaryKeyType,
-                            primaryKey
+            RealmStorageType.ANY -> bsonValueToRealmAny(bsonValue)
+        }
+    }
+
+    @Suppress("ComplexMethod")
+    private fun bsonValueToRealmAny(
+        bsonValue: BsonValue?,
+    ): RealmAny? {
+        return when (bsonValue?.bsonType) {
+            null,
+            BsonType.NULL -> null
+            // RealmAny.Type.FLOAT
+            // RealmAny.Type.DOUBLE
+            BsonType.DOUBLE -> RealmAny.create(bsonValue.asDouble().value)
+            // RealmAny.Type.STRING
+            BsonType.STRING -> RealmAny.create(bsonValue.asString().value)
+            // RealmAny.Type.INT
+            BsonType.INT32 -> RealmAny.create(bsonValue.asInt32().value)
+            BsonType.INT64 -> RealmAny.create(bsonValue.asInt64().value)
+            // RealmAny.Type.DECIMAL128
+            BsonType.DECIMAL128 -> RealmAny.create(bsonValue.asDecimal128())
+            // RealmAny.Type.BINARY
+            // RealmAny.Type.UUID handled as binary, we can't distinguish it
+            BsonType.BINARY -> RealmAny.create(bsonValue.asBinary().data)
+            // RealmAny.Type.OBJECT_ID
+            BsonType.OBJECT_ID -> RealmAny.Companion.create(bsonValue.asObjectId())
+            // RealmAny.Type.BOOL
+            BsonType.BOOLEAN -> RealmAny.create(bsonValue.asBoolean().value)
+            // RealmAny.Type.TIMESTAMP
+            BsonType.DATE_TIME -> RealmAny.Companion.create(bsonValue.asDateTime().asRealmInstant())
+            BsonType.DOCUMENT -> {
+                val document = bsonValue.asDocument()
+                val type: String? = document["\$ref"]?.asString()?.value
+                when {
+                    type != null -> {
+                        val primaryKey = document["\$id"] ?: throw SerializationException("Cannot resolve target primary key: Missing '${"$"}id'")
+                        val targetCompanion = schema[type] ?: throw SerializationException("Cannot resolve target class in schema: Unknown class '${"$"}ref=$type'")
+                        val primaryKeySchemaProperty = targetCompanion.io_realm_kotlin_schema().primaryKey ?: throw SerializationException(
+                            "Target class does not have a primary key: '${"$"}ref=$type'"
                         )
-                    )
-                    RealmAny.create(instance)
+                        val (primaryKeyType, primaryKeyAccessor) = targetCompanion.io_realm_kotlin_fields[primaryKeySchemaProperty.name] ?: throw SerializationException(
+                            "Target class does not have a primary key: '${"$"}ref=$type'"
+                        )
+                        val instance: RealmObject = targetCompanion.io_realm_kotlin_newInstance() as RealmObject
+                        (primaryKeyAccessor as KMutableProperty1<BaseRealmObject, Any?>).set(
+                            instance,
+                            bsonValueToStorageType(
+                                primaryKeySchemaProperty.type.storageType,
+                                primaryKeyType,
+                                primaryKey
+                            )
+                        )
+                        RealmAny.create(instance)
+                    }
+                    else -> {
+                        RealmAny.create(
+                            document.mapValues { (_, v) -> bsonValueToRealmAny(v) }
+                                .toRealmDictionary()
+                        )
+                    }
                 }
-                BsonType.NULL -> null
-                BsonType.TIMESTAMP,
-                BsonType.END_OF_DOCUMENT,
-                BsonType.ARRAY,
-                BsonType.UNDEFINED,
-                BsonType.REGULAR_EXPRESSION,
-                BsonType.DB_POINTER,
-                BsonType.JAVASCRIPT,
-                BsonType.SYMBOL,
-                BsonType.JAVASCRIPT_WITH_SCOPE,
-                BsonType.MIN_KEY,
-                BsonType.MAX_KEY
-                -> throw SerializationException("Deserializer does not support ${bsonValue.bsonType}")
             }
+            BsonType.ARRAY -> {
+                RealmAny.create(bsonValue.asArray().map { bsonValueToRealmAny(it) }.toRealmList())
+            }
+            BsonType.TIMESTAMP,
+            BsonType.END_OF_DOCUMENT,
+            BsonType.UNDEFINED,
+            BsonType.REGULAR_EXPRESSION,
+            BsonType.DB_POINTER,
+            BsonType.JAVASCRIPT,
+            BsonType.SYMBOL,
+            BsonType.JAVASCRIPT_WITH_SCOPE,
+            BsonType.MIN_KEY,
+            BsonType.MAX_KEY
+            -> throw SerializationException("Deserializer does not support ${bsonValue.bsonType}")
         }
     }
 }
