@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.mongodb.ext
 
-import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
 import io.realm.kotlin.mongodb.internal.MongoClientCollection
 import io.realm.kotlin.mongodb.internal.MongoClientImpl
 import io.realm.kotlin.mongodb.mongo.MongoClient
@@ -42,5 +41,5 @@ import org.mongodb.kbson.serialization.EJson
 @ExperimentalKBsonSerializerApi
 public inline fun <reified T : BaseRealmObject> MongoClient.collection(eJson: EJson? = null): MongoCollection<T> {
     @Suppress("invisible_reference", "invisible_member")
-    return MongoClientCollection(this as MongoClientImpl, realmObjectCompanionOrThrow(T::class).io_realm_kotlin_className, eJson ?: this.eJson)
+    return MongoClientCollection(this as MongoClientImpl, io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(T::class).io_realm_kotlin_className, eJson ?: this.eJson)
 }

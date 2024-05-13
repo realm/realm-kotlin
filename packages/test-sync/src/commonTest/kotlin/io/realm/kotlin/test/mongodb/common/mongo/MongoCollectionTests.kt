@@ -159,8 +159,11 @@ sealed class MongoCollectionTests {
     @BeforeTest
     open fun setUp() {
         app = TestApp(
-            this::class.simpleName,
-            TEST_APP_FLEX,
+            testId = this::class.simpleName,
+            appName = TEST_APP_FLEX,
+            builder = {
+                it.httpLogObfuscator(null)
+            }
         )
 
         app.asTestApp.run {
@@ -173,8 +176,8 @@ sealed class MongoCollectionTests {
         user = app.createUserAndLogin()
         @OptIn(ExperimentalKBsonSerializerApi::class)
         client = user.mongoClient(
-            TEST_SERVICE_NAME,
-            EJson(
+            serviceName = TEST_SERVICE_NAME,
+            eJson = EJson(
                 serializersModule = realmSerializerModule(
                     setOf(
                         ParentCollectionDataType::class,
@@ -186,7 +189,7 @@ sealed class MongoCollectionTests {
     }
 
     @AfterTest
-    fun teadDown() {
+    fun tearDown() {
         app.asTestApp.run {
             runBlocking {
                 COLLECTION_SCHEMAS.forEach {
@@ -205,7 +208,7 @@ sealed class MongoCollectionTests {
     }
 
     @Test
-    open fun withDocumentClass() = runBlocking<Unit> {
+    fun withDocumentClass() = runBlocking<Unit> {
         // Original typing
         assertIs<Int>(collection.insertOne(CollectionDataType("object-1", Random.nextInt())))
         assertIs<CollectionDataType>(collection.findOne())
@@ -259,7 +262,7 @@ sealed class MongoCollectionTests {
     }
 
     @Test
-    open fun findOne() = runBlocking<Unit> {
+    fun findOne() = runBlocking<Unit> {
         // Empty collections
         assertNull(collection.findOne())
 
@@ -333,7 +336,7 @@ sealed class MongoCollectionTests {
     }
 
     @Test
-    open fun findOne_links() = runBlocking<Unit> {
+    fun findOne_links() = runBlocking<Unit> {
         Realm.open(
             SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .initialSubscriptions {
@@ -360,7 +363,7 @@ sealed class MongoCollectionTests {
     }
 
     @Test
-    open fun findOne_typedLinks() = runBlocking<Unit> {
+    fun findOne_typedLinks() = runBlocking<Unit> {
         Realm.open(
             SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .initialSubscriptions {
@@ -392,7 +395,7 @@ sealed class MongoCollectionTests {
     }
 
     @Test
-    open fun findOne_typedLinks_throwsOnMissingTargetSchema() = runBlocking<Unit> {
+    fun findOne_typedLinks_throwsOnMissingTargetSchema() = runBlocking<Unit> {
         Realm.open(
             SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .initialSubscriptions {
@@ -433,7 +436,7 @@ sealed class MongoCollectionTests {
 
     @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
-    open fun findOne_embeddedObjects() = runBlocking<Unit> {
+    fun findOne_embeddedObjects() = runBlocking<Unit> {
         // Empty collections
         assertNull(collection.findOne())
 
@@ -566,7 +569,7 @@ sealed class MongoCollectionTests {
     @Test
     fun find_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
-            collection.find(BsonDocument("\$who", 1)).first()
+            collection.find(filter = BsonDocument("\$who", 1)).first()
         }
     }
 
@@ -577,14 +580,18 @@ sealed class MongoCollectionTests {
         val names = (1..10).map { "object-${it % 5}" }
         val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
 
-        collection.aggregate<CollectionDataType>(listOf()).let {
+        collection.aggregate<CollectionDataType>(
+            pipeline = listOf()
+        ).let {
             assertEquals(10, it.size)
             it.forEach {
                 assertTrue { it.name in names }
             }
         }
 
-        collection.aggregate<CollectionDataType>(listOf(BsonDocument("\$sort", BsonDocument("name", -1)), BsonDocument("\$limit", 2))).let {
+        collection.aggregate<CollectionDataType>(
+            pipeline = listOf(BsonDocument("\$sort", BsonDocument("name", -1)), BsonDocument("\$limit", 2))
+        ).let {
             assertEquals(2, it.size)
             it.forEach {
                 assertEquals("object-4", it.name)
@@ -611,7 +618,7 @@ sealed class MongoCollectionTests {
 
     @Test
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    open fun insertOne_links() = runBlocking<Unit> {
+    fun insertOne_links() = runBlocking<Unit> {
         // Open a synced realm and verified that the linked entities we upload through the
         Realm.open(
             SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
@@ -673,7 +680,7 @@ sealed class MongoCollectionTests {
 
     @Test
     @OptIn(ExperimentalKBsonSerializerApi::class)
-    open fun insertOne_typedLinks() = runBlocking<Unit> {
+    fun insertOne_typedLinks() = runBlocking<Unit> {
         // Open a synced realm and verified that the linked entities we upload through the
         Realm.open(
             SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
@@ -758,7 +765,9 @@ sealed class MongoCollectionTests {
     fun insertOne_explicitTypes() = runBlocking<Unit> {
         assertEquals(0, collection.find().size)
         // Inserting document without _id will use ObjectId as _id
-        collection.withDocumentClass<BsonDocument>().insertOne(BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-1"))).let {
+        collection.withDocumentClass<BsonDocument>().insertOne(
+            BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-1"))
+        ).let {
             assertIs<Int>(it)
         }
         // Inserted document will have ObjectId key and cannot be serialized into CollectionDataType
@@ -782,7 +791,7 @@ sealed class MongoCollectionTests {
 
     @OptIn(ExperimentalKBsonSerializerApi::class)
     @Test
-    open fun insertOne_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+    fun insertOne_throwsOnMissingRequiredFields() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
             collection.withDocumentClass<BsonDocument>().insertOne(BsonDocument("_id", ObjectId()))
         }
@@ -792,7 +801,9 @@ sealed class MongoCollectionTests {
     @Test
     fun insertOne_throwsOnTypeMismatch() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.withDocumentClass<BsonDocument>().insertOne(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1"))))
+            collection.withDocumentClass<BsonDocument>().insertOne(
+                BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1")))
+            )
         }
     }
     @Test
@@ -815,7 +826,10 @@ sealed class MongoCollectionTests {
 
         collection.insertMany<BsonDocument>(
             (1..10).map {
-                BsonDocument("_id" to BsonInt32(Random.nextInt()), "name" to BsonString("object-${it % 5}"))
+                BsonDocument(
+                    "_id" to BsonInt32(Random.nextInt()),
+                    "name" to BsonString("object-${it % 5}")
+                )
             }
         ).let {
             assertEquals(10, it.size)
@@ -848,7 +862,7 @@ sealed class MongoCollectionTests {
     }
 
     @Test
-    open fun insertMany_throwsOnMissingRequiredFields() = runBlocking<Unit> {
+    fun insertMany_throwsOnMissingRequiredFields() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
             collection.insertMany(listOf(BsonDocument()))
         }
@@ -857,13 +871,22 @@ sealed class MongoCollectionTests {
     @Test
     fun insertMany_throwsOnTypeMismatch() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("insert not permitted") {
-            collection.insertMany(listOf(BsonDocument(mapOf("_id" to ObjectId(), "name" to BsonString("object-1")))))
+            collection.insertMany(
+                listOf(
+                    BsonDocument(
+                        mapOf(
+                            "_id" to ObjectId(),
+                            "name" to BsonString("object-1")
+                        )
+                    )
+                )
+            )
         }
     }
 
     @Test
     fun deleteOne() = runBlocking {
-        assertFalse { collection.deleteOne(BsonDocument()) }
+        assertFalse { collection.deleteOne(filter = BsonDocument()) }
 
         assertEquals(
             2,
@@ -874,42 +897,42 @@ sealed class MongoCollectionTests {
                 )
             ).size
         )
-        assertEquals(2, collection.count(BsonDocument("""{ "name": "object-1" }""")))
+        assertEquals(2, collection.count(filter = BsonDocument("""{ "name": "object-1" }""")))
 
-        assertTrue { collection.deleteOne(BsonDocument("""{ "name": "object-1" }""")) }
-        assertEquals(1, collection.count(BsonDocument("""{ "name": "object-1" }""")))
+        assertTrue { collection.deleteOne(filter = BsonDocument("""{ "name": "object-1" }""")) }
+        assertEquals(1, collection.count(filter = BsonDocument("""{ "name": "object-1" }""")))
     }
 
     @Test
     fun deleteOne_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
-            collection.deleteOne(BsonDocument("\$who", 1))
+            collection.deleteOne(filter = BsonDocument("\$who", 1))
         }
     }
 
     @Test
     fun deleteMany() = runBlocking {
-        assertEquals(0, collection.deleteMany(BsonDocument()))
+        assertEquals(0, collection.deleteMany(filter = BsonDocument()))
 
         collection.insertMany((1..10).map { CollectionDataType("object-${it % 5}") })
         assertEquals(10, collection.find().size)
 
-        assertEquals(2, collection.deleteMany(BsonDocument("""{ "name": "object-1" }""")))
+        assertEquals(2, collection.deleteMany(filter = BsonDocument("""{ "name": "object-1" }""")))
 
         assertEquals(8, collection.find().size)
 
-        assertEquals(8, collection.deleteMany(BsonDocument()))
+        assertEquals(8, collection.deleteMany(filter = BsonDocument()))
     }
 
     @Test
     fun deleteMany_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
-            collection.deleteMany(BsonDocument("\$who", 1))
+            collection.deleteMany(filter = BsonDocument("\$who", 1))
         }
     }
 
     @Test
-    open fun updateOne() = runBlocking<Unit> {
+    fun updateOne() = runBlocking<Unit> {
         assertEquals(0, collection.count())
 
         assertEquals(
@@ -927,8 +950,8 @@ sealed class MongoCollectionTests {
 
         // Update no match
         collection.updateOne(
-            BsonDocument("""{ "name": "NOMATCH"}"""),
-            BsonDocument("\$set", BsonDocument("""{ "name": "UPDATED"}""")),
+            filter = BsonDocument("""{ "name": "NOMATCH"}"""),
+            update = BsonDocument("\$set", BsonDocument("""{ "name": "UPDATED"}""")),
         ).let { (updated, upsertedId) ->
             assertFalse(updated)
             assertNull(upsertedId)
@@ -936,8 +959,8 @@ sealed class MongoCollectionTests {
 
         // Update with match match
         collection.updateOne(
-            BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument("\$set", BsonDocument("""{ "name": "object-2"}""")),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
+            update = BsonDocument("\$set", BsonDocument("""{ "name": "object-2"}""")),
         ).let { (updated, upsertedId) ->
             assertTrue(updated)
             assertNull(upsertedId)
@@ -948,7 +971,9 @@ sealed class MongoCollectionTests {
 
         // Upsert no match
         collection.updateOne(
-            BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
+            filter = BsonDocument("""{ "name": "object-3"}"""),
+            update = BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""),
+            upsert = true
         ).let { (updated, upsertedId) ->
             assertFalse(updated)
             assertIs<Long>(upsertedId)
@@ -958,7 +983,9 @@ sealed class MongoCollectionTests {
 
         // Upsert with match
         collection.updateOne(
-            BsonDocument("""{ "name": "object-2"}"""), BsonDocument(""" { "name": "object-3"}"""), upsert = true
+            filter = BsonDocument(json = """{ "name": "object-2"}"""),
+            update = BsonDocument(""" { "name": "object-3"}"""),
+            upsert = true
         ).let { (updated, upsertedId) ->
             assertTrue(updated)
             assertNull(upsertedId)
@@ -970,7 +997,9 @@ sealed class MongoCollectionTests {
     @Test
     fun updateOne_explicitTypes() = runBlocking<Unit> {
         val upsertWithoutMatch = collection.updateOne(
-            BsonDocument("""{ "name": "object-3"}"""), BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""), upsert = true
+            filter = BsonDocument("""{ "name": "object-3"}"""),
+            update = BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""),
+            upsert = true
         )
         upsertWithoutMatch.let { (updated, upsertedId) ->
             assertFalse(updated)
@@ -981,7 +1010,7 @@ sealed class MongoCollectionTests {
     @Test
     fun updateOne_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
-            collection.updateOne(BsonDocument("\$who", 1), BsonDocument())
+            collection.updateOne(filter = BsonDocument("\$who", 1), update = BsonDocument())
         }
     }
 
@@ -1002,8 +1031,8 @@ sealed class MongoCollectionTests {
         assertEquals(4, collection.count())
         // Update with no match
         collection.updateMany(
-            BsonDocument("""{"name": "NOMATCH"}"""),
-            BsonDocument("""{"name": "UPDATED"}"""),
+            filter = BsonDocument("""{"name": "NOMATCH"}"""),
+            update = BsonDocument("""{"name": "UPDATED"}"""),
         ).let { (modifiedCount, upsertedId) ->
             assertEquals(0L, modifiedCount)
             assertNull(upsertedId)
@@ -1013,8 +1042,8 @@ sealed class MongoCollectionTests {
 
         // Update with match
         collection.updateMany(
-            BsonDocument("""{ "name": "x"}"""),
-            BsonDocument("""{ "name": "UPDATED"}"""),
+            filter = BsonDocument("""{ "name": "x"}"""),
+            update = BsonDocument("""{ "name": "UPDATED"}"""),
         ).let { (modifiedCount, upsertedId) ->
             assertEquals(2L, modifiedCount)
             assertNull(upsertedId)
@@ -1024,8 +1053,8 @@ sealed class MongoCollectionTests {
 
         // Upsert no match
         collection.updateMany(
-            BsonDocument("""{ "name": "NOMATCH"}"""),
-            BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""),
+            filter = BsonDocument("""{ "name": "NOMATCH"}"""),
+            update = BsonDocument(""" { "name": "UPSERTED", "_id" : ${Random.nextInt()}}"""),
             upsert = true
         ).let { (modifiedCount, upsertedId) ->
             assertEquals(0L, modifiedCount)
@@ -1036,7 +1065,8 @@ sealed class MongoCollectionTests {
 
         // Upsert with match
         collection.updateMany(
-            BsonDocument("""{ "name": "y"}"""), BsonDocument(""" { "name": "z"}"""), upsert = true
+            filter = BsonDocument("""{ "name": "y"}"""),
+            update = BsonDocument(""" { "name": "z"}"""), upsert = true
         ).let { (modifiedCount, upsertedId) ->
             assertEquals(1L, modifiedCount)
             assertNull(upsertedId)
@@ -1048,8 +1078,8 @@ sealed class MongoCollectionTests {
     @Test
     fun updateMany_explicitTypes() = runBlocking<Unit> {
         collection.updateMany(
-            BsonDocument("""{ "name": "object-3"}"""),
-            BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""),
+            filter = BsonDocument("""{ "name": "object-3"}"""),
+            update = BsonDocument(""" { "name": "object-2", "_id" : ${Random.nextInt()}}"""),
             upsert = true
         ).let { (modifiedCount, upsertedId) ->
             assertEquals(0, modifiedCount)
@@ -1060,13 +1090,13 @@ sealed class MongoCollectionTests {
     @Test
     fun updateMany_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("Unknown modifier: \$who") {
-            collection.updateOne(BsonDocument(), BsonDocument("\$who", 1))
+            collection.updateOne(filter = BsonDocument(), update = BsonDocument("\$who", 1))
         }
     }
 
     @Test
     fun findOneAndUpdate() = runBlocking<Unit> {
-        assertNull(collection.findOneAndUpdate(BsonDocument(), BsonDocument()))
+        assertNull(collection.findOneAndUpdate(filter = BsonDocument(), update = BsonDocument()))
 
         val names = (1..10).map { "object-${it % 5}" }
         val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
@@ -1074,24 +1104,24 @@ sealed class MongoCollectionTests {
         // Update with no match
         assertNull(
             collection.findOneAndUpdate(
-                BsonDocument("""{"name": "NOMATCH"}"""),
-                BsonDocument("""{"name": "UPDATED"}"""),
+                filter = BsonDocument("""{"name": "NOMATCH"}"""),
+                update = BsonDocument("""{"name": "UPDATED"}"""),
             )
         )
         assertEquals(0, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
 
         // Update with match - return old
         collection.findOneAndUpdate(
-            BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument("""{ "name": "UPDATED"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
+            update = BsonDocument("""{ "name": "UPDATED"}"""),
         )!!.let {
             assertEquals("object-1", it.name)
         }
         assertEquals(1, collection.count(filter = BsonDocument("""{"name": "UPDATED"}""")))
         // Update with match - return new
         collection.findOneAndUpdate(
-            BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument("""{ "name": "UPDATED"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
+            update = BsonDocument("""{ "name": "UPDATED"}"""),
             returnNewDoc = true
         )!!.let {
             assertEquals("UPDATED", it.name)
@@ -1178,8 +1208,8 @@ sealed class MongoCollectionTests {
         collection.insertOne(CollectionDataType("object-1"))
 
         collection.withDocumentClass<BsonDocument>().findOneAndUpdate(
-            BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument("""{ "name": "UPDATED"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
+            update = BsonDocument("""{ "name": "UPDATED"}"""),
         )!!.let {
             assertEquals("object-1", it.asDocument()["name"]!!.asString().value)
         }
@@ -1188,13 +1218,13 @@ sealed class MongoCollectionTests {
     @Test
     fun findOneAndUpdate_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("Unknown modifier: \$who") {
-            collection.findOneAndUpdate(BsonDocument(), BsonDocument("\$who", 1))
+            collection.findOneAndUpdate(filter = BsonDocument(), update = BsonDocument("\$who", 1))
         }
     }
 
     @Test
     fun findOneAndReplace() = runBlocking<Unit> {
-        assertNull(collection.findOneAndReplace(BsonDocument(), BsonDocument()))
+        assertNull(collection.findOneAndReplace(filter = BsonDocument(), document = BsonDocument()))
 
         val names = (1..10).map { "object-${it % 5}" }
         val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
@@ -1202,16 +1232,16 @@ sealed class MongoCollectionTests {
         // Replace with no match
         assertNull(
             collection.findOneAndReplace(
-                BsonDocument("""{"name": "NOMATCH"}"""),
-                BsonDocument(""" { "name": "REPLACED", "_id" : ${Random.nextInt()}}"""),
+                filter = BsonDocument("""{"name": "NOMATCH"}"""),
+                document = BsonDocument(""" { "name": "REPLACED", "_id" : ${Random.nextInt()}}"""),
             )
         )
         assertEquals(0, collection.count(filter = BsonDocument("""{"name": "REPLACED"}""")))
 
         // Replace with match - return old
         collection.findOneAndReplace(
-            BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument(""" { "name": "REPLACED"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
+            document = BsonDocument(""" { "name": "REPLACED"}"""),
         )!!.let {
             assertEquals("object-1", it.name)
         }
@@ -1219,8 +1249,8 @@ sealed class MongoCollectionTests {
 
         // Replace with match - return new
         collection.findOneAndReplace(
-            BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument("""{ "name": "REPLACED"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
+            document = BsonDocument("""{ "name": "REPLACED"}"""),
             returnNewDoc = true
         )!!.let {
             assertEquals("REPLACED", it.name)
@@ -1307,8 +1337,8 @@ sealed class MongoCollectionTests {
         collection.insertOne(CollectionDataType("object-1"))
 
         collection.withDocumentClass<BsonDocument>().findOneAndReplace(
-            BsonDocument("""{ "name": "object-1"}"""),
-            BsonDocument("""{ "name": "REPLACED"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
+            document = BsonDocument("""{ "name": "REPLACED"}"""),
         )!!.let {
             assertEquals("object-1", it.asDocument()["name"]!!.asString().value)
         }
@@ -1317,24 +1347,27 @@ sealed class MongoCollectionTests {
     @Test
     fun findOneAndReplace_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("the replace operation document must not contain atomic operators") {
-            collection.findOneAndReplace(BsonDocument(), BsonDocument("\$who", 1))
+            collection.findOneAndReplace(
+                filter = BsonDocument(),
+                document = BsonDocument("\$who", 1)
+            )
         }
     }
 
     @Test
     fun findOneAndDelete() = runBlocking<Unit> {
-        assertNull(collection.findOneAndDelete(BsonDocument(), BsonDocument()))
+        assertNull(collection.findOneAndDelete(filter = BsonDocument(), projection = BsonDocument()))
 
         val names = (1..10).map { "object-${it % 5}" }
         val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
 
         // Delete with no match
-        assertNull(collection.findOneAndDelete(BsonDocument("""{"name": "NOMATCH"}""")))
+        assertNull(collection.findOneAndDelete(filter = BsonDocument("""{"name": "NOMATCH"}""")))
         assertEquals(10, collection.count(filter = BsonDocument()))
 
         // Delete with match
         collection.findOneAndDelete(
-            BsonDocument("""{ "name": "object-1"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
         )!!.let {
             assertEquals("object-1", it.name)
         }
@@ -1381,7 +1414,7 @@ sealed class MongoCollectionTests {
         collection.insertOne(CollectionDataType("object-1"))
 
         collection.withDocumentClass<BsonDocument>().findOneAndDelete(
-            BsonDocument("""{ "name": "object-1"}"""),
+            filter = BsonDocument("""{ "name": "object-1"}"""),
         )!!.let {
             assertEquals("object-1", it.asDocument()["name"]!!.asString().value)
         }
@@ -1390,7 +1423,7 @@ sealed class MongoCollectionTests {
     @Test
     fun findOneAndDelete_fails() = runBlocking<Unit> {
         assertFailsWithMessage<ServiceException>("unknown top level operator: \$who.") {
-            collection.findOneAndDelete(BsonDocument("\$who", 1))
+            collection.findOneAndDelete(filter = BsonDocument("\$who", 1))
         }
     }
 

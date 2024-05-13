@@ -21,8 +21,6 @@ import io.realm.kotlin.internal.asBsonBinary
 import io.realm.kotlin.internal.asBsonDateTime
 import io.realm.kotlin.internal.asRealmInstant
 import io.realm.kotlin.internal.asRealmUUID
-import io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow
-import io.realm.kotlin.internal.realmObjectCompanionOrNull
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.schema.RealmProperty
 import io.realm.kotlin.schema.RealmStorageType
@@ -68,7 +66,8 @@ public open class MongoDBSerializer internal constructor(
     internal val schema: Map<String, RealmObjectCompanion> = emptyMap()
 ) : KSerializer<BaseRealmObject> {
     override val descriptor: SerialDescriptor = BsonDocument.serializer().descriptor
-    private val companion = realmObjectCompanionOrThrow(clazz)
+    @Suppress("invisible_reference", "invisible_member")
+    private val companion = io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(clazz)
 
     override fun deserialize(decoder: Decoder): BaseRealmObject {
         return bsonToObject(companion, decoder.decodeSerializableValue(BsonDocument.serializer()))
@@ -127,7 +126,9 @@ public open class MongoDBSerializer internal constructor(
             RealmStorageType.BINARY -> BsonBinary(value as ByteArray)
             RealmStorageType.OBJECT -> {
                 @Suppress("UNCHECKED_CAST")
-                val targetCompanion = realmObjectCompanionOrThrow(clazz as KClass<BaseRealmObject>)
+                val targetCompanion =
+                    @Suppress("invisible_reference", "invisible_member")
+                    io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(clazz as KClass<BaseRealmObject>)
                 @Suppress("UNCHECKED_CAST")
                 val primaryKeyProperty: KMutableProperty1<BaseRealmObject, Any>? =
                     targetCompanion.io_realm_kotlin_primaryKey as KMutableProperty1<BaseRealmObject, Any>?
@@ -165,7 +166,9 @@ public open class MongoDBSerializer internal constructor(
                     RealmAny.Type.OBJECT -> {
                         // Objects in RealmAny cannot be EmbeddedObjects
                         val target = realmAny.asRealmObject(BaseRealmObject::class)
-                        val targetCompanion = realmObjectCompanionOrThrow(target::class)
+                        val targetCompanion =
+                            @Suppress("invisible_reference", "invisible_member")
+                            io.realm.kotlin.internal.platform.realmObjectCompanionOrThrow(target as KClass<BaseRealmObject>)
                         val primaryKeySchemaProperty: RealmProperty = targetCompanion.io_realm_kotlin_schema().primaryKey ?: throw SerializationException(
                             "Cannot serialize class without primary key: '${targetCompanion.io_realm_kotlin_className}'"
                         )
@@ -196,7 +199,8 @@ public open class MongoDBSerializer internal constructor(
             RealmStorageType.STRING -> bsonValue.asString().value
             RealmStorageType.BINARY -> bsonValue.asBinary().data
             RealmStorageType.OBJECT -> {
-                val targetCompanion = kClass.realmObjectCompanionOrNull()!!
+                @Suppress("invisible_reference", "invisible_member")
+                val targetCompanion = io.realm.kotlin.internal.platform.realmObjectCompanionOrNull(kClass)!!
                 @Suppress("UNCHECKED_CAST")
                 val primaryKeyAccessor =
                     (targetCompanion.io_realm_kotlin_primaryKey as KMutableProperty1<BaseRealmObject, Any?>?)

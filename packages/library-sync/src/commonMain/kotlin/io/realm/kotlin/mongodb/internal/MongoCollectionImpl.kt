@@ -239,7 +239,8 @@ internal inline fun <reified R> MongoCollectionImpl<*>.decodeFromBsonValueList(b
 }
 
 @Suppress("ComplexMethod")
-public fun BsonValue.toAny(): Any? {
+@PublishedApi
+internal fun BsonValue.toAny(): Any? {
     return when (this.bsonType) {
         BsonType.NULL -> null
         BsonType.INT32 -> asInt32().value
