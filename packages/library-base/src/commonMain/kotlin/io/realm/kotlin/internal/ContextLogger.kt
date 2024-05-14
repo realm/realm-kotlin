@@ -3,6 +3,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
+import io.realm.kotlin.log.SdkLogCategory
 
 /**
  * Internal logger class used to inject context aware information into log message
@@ -85,7 +86,14 @@ public class ContextLogger(public val context: String? = null) {
         RealmLog.doLog(LogCategory.Realm.Sdk, level, throwable, null)
     }
 
-    private inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
-        RealmLog.doLog(LogCategory.Realm.Sdk, level, throwable, message, *args)
+    private inline fun doLog(
+        level: LogLevel,
+        throwable: Throwable?,
+        message: () -> String?,
+        vararg args: Any?,
+    ) {
+        if (level >= RealmLog.getLevel(SdkLogCategory)) {
+            RealmLog.doLog(LogCategory.Realm.Sdk, level, throwable, message(), *args)
+        }
     }
 }
