@@ -1,6 +1,21 @@
+/*
+ * Copyright 2021 Realm Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.realm.kotlin.log
 
-import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.log.LogLevel.TRACE
 import io.realm.kotlin.log.LogLevel.WTF
 
@@ -20,32 +35,4 @@ public enum class LogLevel(public val priority: Int) {
     ERROR(5),
     WTF(6),
     NONE(7);
-}
-
-internal fun LogLevel.toCoreLogLevel(): CoreLogLevel {
-    return when (this) {
-        LogLevel.ALL -> CoreLogLevel.RLM_LOG_LEVEL_ALL
-        LogLevel.TRACE -> CoreLogLevel.RLM_LOG_LEVEL_TRACE
-        LogLevel.DEBUG -> CoreLogLevel.RLM_LOG_LEVEL_DEBUG
-        LogLevel.INFO -> CoreLogLevel.RLM_LOG_LEVEL_INFO
-        LogLevel.WARN -> CoreLogLevel.RLM_LOG_LEVEL_WARNING
-        LogLevel.ERROR -> CoreLogLevel.RLM_LOG_LEVEL_ERROR
-        LogLevel.WTF -> CoreLogLevel.RLM_LOG_LEVEL_FATAL
-        LogLevel.NONE -> CoreLogLevel.RLM_LOG_LEVEL_OFF
-    }
-}
-
-internal fun CoreLogLevel.fromCoreLogLevel(): LogLevel {
-    return when (this) {
-        CoreLogLevel.RLM_LOG_LEVEL_ALL -> LogLevel.ALL
-        CoreLogLevel.RLM_LOG_LEVEL_TRACE -> LogLevel.TRACE
-        CoreLogLevel.RLM_LOG_LEVEL_DEBUG,
-        CoreLogLevel.RLM_LOG_LEVEL_DETAIL -> LogLevel.DEBUG
-        CoreLogLevel.RLM_LOG_LEVEL_INFO -> LogLevel.INFO
-        CoreLogLevel.RLM_LOG_LEVEL_WARNING -> LogLevel.WARN
-        CoreLogLevel.RLM_LOG_LEVEL_ERROR -> LogLevel.ERROR
-        CoreLogLevel.RLM_LOG_LEVEL_FATAL -> LogLevel.WTF
-        CoreLogLevel.RLM_LOG_LEVEL_OFF -> LogLevel.NONE
-        else -> throw IllegalArgumentException("Invalid core log level: $this")
-    }
 }

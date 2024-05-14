@@ -16,6 +16,7 @@
 package io.realm.kotlin.internal.platform
 
 import android.util.Log
+import io.realm.kotlin.internal.messageWithCategory
 import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
@@ -42,7 +43,11 @@ internal class LogCatLogger(
         vararg args: Any?,
     ) {
         val priority: Int = level.priority
-        val logMessage: String = prepareLogMessage(throwable, message, *args)
+        val logMessage: String = prepareLogMessage(
+            throwable = throwable,
+            message = messageWithCategory(category, message),
+            args = *args
+        )
 
         // Short circuit if message can fit into a single line in LogCat
         if (logMessage.length < MAX_LOG_LENGTH) {

@@ -16,22 +16,15 @@
 
 package io.realm.kotlin.log
 
+import io.realm.kotlin.internal.categoriesByPath
+import io.realm.kotlin.internal.newCategory
+
 /*
  * Core does not expose the different categories in compile time.
  *
  * This LogCategory design tries to overcome this issue by expressing the categories hierarchy
  * in the kotlin type system, then validate it with a test watchdog.
  */
-
-// at package level as a workaround to ensure compatibility with darwin and jvm
-private val categoriesByPath: MutableMap<String, LogCategory> = mutableMapOf()
-
-internal fun newCategory(
-    name: String,
-    parent: LogCategory? = null,
-): LogCategory = LogCategoryImpl(name, parent).also { category ->
-    categoriesByPath["$category"] = category
-}
 
 /**
  * Defines a log category for the Realm logger.

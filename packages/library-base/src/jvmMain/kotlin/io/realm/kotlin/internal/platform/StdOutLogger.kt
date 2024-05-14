@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.internal.messageWithCategory
 import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
@@ -23,7 +24,6 @@ import java.io.StringWriter
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.*
 
 /**
  * Logger implementation outputting to stdout.
@@ -39,7 +39,11 @@ internal class StdOutLogger(
         message: String?,
         vararg args: Any?,
     ) {
-        val logMessage: String = prepareLogMessage(throwable, message, *args)
+        val logMessage: String = prepareLogMessage(
+            throwable = throwable,
+            message = messageWithCategory(category, message),
+            args = *args
+        )
         val timestamp: String = getTimestamp()
         println("$timestamp ${level.name}: [$tag] $logMessage")
     }

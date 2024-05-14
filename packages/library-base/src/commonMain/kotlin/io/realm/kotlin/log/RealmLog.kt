@@ -16,11 +16,13 @@
 package io.realm.kotlin.log
 
 import io.realm.kotlin.Realm
+import io.realm.kotlin.internal.fromCoreLogLevel
 import io.realm.kotlin.internal.interop.CoreLogLevel
 import io.realm.kotlin.internal.interop.LogCallback
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.platform.createDefaultSystemLogger
+import io.realm.kotlin.internal.toCoreLogLevel
 import io.realm.kotlin.log.RealmLog.add
 import io.realm.kotlin.log.RealmLog.addDefaultSystemLogger
 
@@ -391,7 +393,7 @@ public object RealmLog {
             category = category,
             level = level,
             throwable = throwable,
-            message = if (message.isNullOrBlank()) { null } else { "[$category] $message" },
+            message = message,
             args = *args
         )
     }

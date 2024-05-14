@@ -15,6 +15,7 @@
  */
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.internal.messageWithCategory
 import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
@@ -38,7 +39,12 @@ internal class NSLogLogger(
         message: String?,
         vararg args: Any?,
     ) {
-        val logMessage: String = prepareLogMessage(throwable, message, *args)
+        val logMessage: String = prepareLogMessage(
+            throwable = throwable,
+            message = messageWithCategory(category, message),
+            args = *args,
+        )
+
         NSLog("%s: [%s] %s", level.name, tag, logMessage)
     }
 
