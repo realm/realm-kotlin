@@ -150,7 +150,7 @@ public interface RealmConfiguration : Configuration {
 
         override fun build(): RealmConfiguration {
             verifyConfig()
-            val realmLogger = ContextLogger("Sdk")
+            val realmLogger = ContextLogger()
 
             // Sync configs might not set 'name' but local configs always do, therefore it will
             // never be null here

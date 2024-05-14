@@ -98,7 +98,7 @@ public object RealmLog {
                         category,
                         level,
                         null,
-                        if (message.isNullOrBlank()) { null } else { "[$category] $message" },
+                        message,
                     )
                 }
             }
@@ -387,7 +387,13 @@ public object RealmLog {
         message: String?,
         vararg args: Any?,
     ) = loggers.forEach {
-        it.log(category, level, throwable, message, *args)
+        it.log(
+            category = category,
+            level = level,
+            throwable = throwable,
+            message = if (message.isNullOrBlank()) { null } else { "[$category] $message" },
+            args = *args
+        )
     }
 
     /**

@@ -493,7 +493,7 @@ public interface SyncConfiguration : Configuration {
 
         @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
-            val realmLogger = ContextLogger("Sdk")
+            val realmLogger = ContextLogger()
 
             // Set default error handler after setting config logging logic
             if (this.errorHandler == null) {

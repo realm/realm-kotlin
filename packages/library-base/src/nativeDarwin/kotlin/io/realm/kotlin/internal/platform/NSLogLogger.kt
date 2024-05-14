@@ -28,11 +28,16 @@ import platform.Foundation.stringWithFormat
  * Inspiration from: https://github.com/touchlab/Kermit/blob/master/kermit/src/darwinMain/kotlin/co/touchlab/kermit/NSLogLogger.kt
  */
 internal class NSLogLogger(
-    override val tag: String = "REALM",
-    override val level: LogLevel
+    private val tag: String,
 ) : RealmLogger {
 
-    override fun log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+    override fun log(
+        category: LogCategory,
+        level: LogLevel,
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?,
+    ) {
         val logMessage: String = prepareLogMessage(throwable, message, *args)
         NSLog("%s: [%s] %s", level.name, tag, logMessage)
     }

@@ -435,7 +435,7 @@ public interface AppConfiguration {
                 CoroutineDispatcherFactory.managed("app-dispatcher-$appId")
             }
 
-            val appLogger = ContextLogger("Sdk")
+            val appLogger = ContextLogger()
             val networkTransport: (dispatcher: DispatcherHolder) -> NetworkTransport =
                 { dispatcherHolder ->
                     val logger: Logger = object : Logger {

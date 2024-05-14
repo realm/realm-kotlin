@@ -17,6 +17,7 @@
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.Credentials
@@ -52,11 +53,8 @@ class HttpLogObfuscatorTests {
     private class ObfuscatorLoggerInspector(
         private val channel: Channel<Operation>
     ) : RealmLogger {
-
-        override val level: LogLevel = LogLevel.DEBUG
-        override val tag: String = "ObfuscatorLoggerInspector"
-
         override fun log(
+            category: LogCategory,
             level: LogLevel,
             throwable: Throwable?,
             message: String?,

@@ -24,18 +24,6 @@ import io.realm.kotlin.Configuration
  * @see Configuration.SharedBuilder.log
  */
 public interface RealmLogger {
-
-    /**
-     * The [LogLevel] used in this logger.
-     */
-    @Deprecated("No longer in use")
-    public val level: LogLevel
-
-    /**
-     * Tag that can be used to describe the output.
-     */
-    public val tag: String
-
     /**
      * Log an event.
      */
@@ -45,34 +33,5 @@ public interface RealmLogger {
         throwable: Throwable?,
         message: String?,
         vararg args: Any?,
-    ) {
-        log(level, throwable, message, *args)
-    }
-
-    /**
-     * Log an event.
-     */
-    @Deprecated(
-        "Use log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)",
-        ReplaceWith("log")
     )
-    public fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-        TODO("log() shouldn't be called. Overwrite the category-variant instead")
-    }
-
-    /**
-     * Log an event.
-     */
-    @Deprecated(
-        "Use log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?)",
-        ReplaceWith("log")
-    )
-    public fun log(level: LogLevel, message: String) {
-        log(
-            category = LogCategory.Realm.Sdk,
-            level = level,
-            throwable = null,
-            message = message
-        )
-    }
 }

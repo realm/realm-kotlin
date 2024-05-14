@@ -27,7 +27,6 @@ import io.realm.kotlin.test.util.Utils
 import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -243,13 +242,12 @@ class RealmLogTests {
     fun deprecatedMethodWork1() {
         val called = atomic<Boolean>(false)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
-                vararg args: Any?
+                vararg args: Any?,
             ) {
                 assertEquals("Hello", message)
                 called.value = true
@@ -264,11 +262,12 @@ class RealmLogTests {
     fun deprecatedMethodWork2() {
         val called = atomic<Boolean>(false)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
-                message: String
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?,
             ) {
                 assertEquals("Hello", message)
                 called.value = true
@@ -283,8 +282,6 @@ class RealmLogTests {
     fun addLogger() {
         val called = atomic<Boolean>(false)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
                 category: LogCategory,
                 level: LogLevel,
@@ -306,8 +303,6 @@ class RealmLogTests {
     fun addLogger_twice() {
         val called = atomic(0)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
                 category: LogCategory,
                 level: LogLevel,
@@ -330,8 +325,6 @@ class RealmLogTests {
     fun removeLogger_success() {
         val called = atomic(0)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
                 category: LogCategory,
                 level: LogLevel,
@@ -353,8 +346,6 @@ class RealmLogTests {
     @Test
     fun removeLogger_falseForNonExistingLogger() {
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
                 category: LogCategory,
                 level: LogLevel,
@@ -371,8 +362,6 @@ class RealmLogTests {
     @Test
     fun removeAll_success() {
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
                 category: LogCategory,
                 level: LogLevel,
@@ -386,43 +375,6 @@ class RealmLogTests {
         RealmLog.add(customLogger)
         assertTrue(RealmLog.removeAll())
         RealmLog.trace("Hello") // Should not hit `fail()`
-    }
-
-    @Test
-    fun addDeprecatedLogger_1() {
-        val called = atomic<Boolean>(false)
-        val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
-            override fun log(
-                level: LogLevel,
-                throwable: Throwable?,
-                message: String?,
-                vararg args: Any?,
-            ) {
-                assertEquals("Hello", message)
-                called.value = true
-            }
-        }
-        RealmLog.add(customLogger)
-        RealmLog.trace("Hello")
-        assertTrue(called.value)
-    }
-
-    @Test
-    fun addDeprecatedLogger_2() {
-        val called = atomic<Boolean>(false)
-        val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
-            override fun log(level: LogLevel, message: String) {
-                assertEquals("Hello", message)
-                called.value = true
-            }
-        }
-        RealmLog.add(customLogger)
-        RealmLog.trace("Hello")
-        assertTrue(called.value)
     }
 
     @Test
@@ -479,12 +431,9 @@ class RealmLogTests {
     }
 
     @Test
-    @Ignore // https://jira.mongodb.org/browse/RKOTLIN-1076
     fun filterSdkLogs() {
         val called = atomic<Boolean>(false)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
                 category: LogCategory,
                 level: LogLevel,
@@ -497,7 +446,7 @@ class RealmLogTests {
         }
         RealmLog.add(customLogger)
 
-        ContextLogger("Sdk").run {
+        ContextLogger().run {
             RealmLog.setLevel(LogLevel.NONE, LogCategory.Realm.Sdk)
             warn("should be filtered")
             assertFalse(called.value, "Unexpected message logged")

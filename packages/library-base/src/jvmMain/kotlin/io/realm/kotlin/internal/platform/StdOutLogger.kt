@@ -29,11 +29,16 @@ import java.util.*
  * Logger implementation outputting to stdout.
  */
 internal class StdOutLogger(
-    override val tag: String = "REALM",
-    override val level: LogLevel
+    private val tag: String,
 ) : RealmLogger {
 
-    override fun log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+    override fun log(
+        category: LogCategory,
+        level: LogLevel,
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?,
+    ) {
         val logMessage: String = prepareLogMessage(throwable, message, *args)
         val timestamp: String = getTimestamp()
         println("$timestamp ${level.name}: [$tag] $logMessage")

@@ -26,6 +26,7 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -306,12 +307,8 @@ class SyncClientResetIntegrationTests {
         val channel: Channel<ClientResetLogEvents>
     ) : RealmLogger {
 
-        override val level: LogLevel
-            get() = LogLevel.WARN
-        override val tag: String
-            get() = "SyncClientResetIntegrationTests"
-
         override fun log(
+            category: LogCategory,
             level: LogLevel,
             throwable: Throwable?,
             message: String?,
