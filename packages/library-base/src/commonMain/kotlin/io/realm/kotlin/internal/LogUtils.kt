@@ -21,7 +21,6 @@ import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogCategoryImpl
 import io.realm.kotlin.log.LogLevel
 
-
 internal fun LogLevel.toCoreLogLevel(): CoreLogLevel {
     return when (this) {
         LogLevel.ALL -> CoreLogLevel.RLM_LOG_LEVEL_ALL
@@ -64,5 +63,5 @@ internal fun messageWithCategory(
     category: LogCategory,
     message: String?,
 ): String? = if (message.isNullOrBlank()) { null } else {
-    "[${category}] $message" // TODO: .toString().substring(6)
+    "[$category] $message" // todo .toString().substring(6)
 }
