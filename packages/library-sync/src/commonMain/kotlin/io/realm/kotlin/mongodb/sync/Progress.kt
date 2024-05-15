@@ -32,7 +32,7 @@ public data class Progress(
      * the flow will complete when this returns `true`.
      *
      * If the [Progress]-flow was created with [ProgressMode.INDEFINITELY] then the
-     * flow can continue to emit events with `isTransferComplete = true` for subsequent events
+     * flow can continue to emit events with `isTransferComplete = false` for subsequent events
      * after returning a progress indicator with `isTransferComplete = true`.
      */
     public val isTransferComplete: Boolean = estimate == 1.0
