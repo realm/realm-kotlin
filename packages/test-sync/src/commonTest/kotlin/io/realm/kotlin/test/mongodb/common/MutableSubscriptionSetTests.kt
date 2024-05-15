@@ -18,7 +18,6 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -30,6 +29,7 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.toRealmInstant
@@ -64,7 +64,7 @@ class MutableSubscriptionSetTests {
         }
         config = SyncConfiguration.Builder(
             user,
-            schema = FLX_SYNC_SCHEMA
+            schema = FLEXIBLE_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -369,7 +369,7 @@ class MutableSubscriptionSetTests {
 
     private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
         val user = app.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class))
+        val config = SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
             .initialSubscriptions {
                 it.query<FlexParentObject>().subscribe()
             }
@@ -382,7 +382,7 @@ class MutableSubscriptionSetTests {
                     copyToRealm(FlexParentObject(sectionId))
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
     }
 }

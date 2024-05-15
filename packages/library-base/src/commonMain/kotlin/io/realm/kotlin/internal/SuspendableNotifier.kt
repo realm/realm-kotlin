@@ -4,6 +4,7 @@ import io.realm.kotlin.VersionId
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.schema.RealmSchemaImpl
 import io.realm.kotlin.internal.util.LiveRealmContext
@@ -43,7 +44,7 @@ internal class SuspendableNotifier(
     // see https://github.com/Kotlin/kotlinx.coroutines/blob/master/kotlinx-coroutines-core/common/src/flow/SharedFlow.kt#L78
     private val _realmChanged = MutableSharedFlow<VersionId>(
         onBufferOverflow = BufferOverflow.DROP_OLDEST,
-        extraBufferCapacity = 1
+        replay = 1
     )
 
     val dispatcher: CoroutineDispatcher = scheduler.dispatcher
@@ -88,12 +89,15 @@ internal class SuspendableNotifier(
         // Touching realm will open the underlying realm and register change listeners, but must
         // happen on the dispatcher as the realm can only be touched on the dispatcher's thread.
         if (!realmInitializer.isInitialized()) {
-            withContext(dispatcher) { realm }
+            withContext(dispatcher) {
+                realm
+                _realmChanged.emit(realm.version())
+            }
         }
         return _realmChanged.asSharedFlow()
     }
 
-    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>): Flow<C> {
+    internal fun <T : CoreNotifiable<T, C>, C> registerObserver(flowable: Observable<T, C>, keyPathsPtr: RealmKeyPathArrayPointer?): Flow<C> {
         return callbackFlow {
             val token: AtomicRef<Cancellable> =
                 kotlinx.atomicfu.atomic(NO_OP_NOTIFICATION_TOKEN)
@@ -103,7 +107,7 @@ internal class SuspendableNotifier(
                 // notifications on newer objects.
                 realm.refresh()
                 val observable = flowable.notifiable()
-                val lifeRef = observable.coreObservable(realm)
+                val lifeRef: CoreNotifiable<T, C>? = observable.coreObservable(realm)
                 val changeFlow = observable.changeFlow(this@callbackFlow)
                 // Only emit events during registration if the observed entity is already deleted
                 // (lifeRef == null) as there is no guarantee when the first callback is delivered
@@ -118,11 +122,20 @@ internal class SuspendableNotifier(
                             override fun onChange(change: RealmChangesPointer) {
                                 // Notifications need to be delivered with the version they where created on, otherwise
                                 // the fine-grained notification data might be out of sync.
-                                val frozenObservable = lifeRef.freeze(realm.gcTrackedSnapshot())
+                                // TODO Currently verifying that lifeRef is still valid to indicate
+                                //  if it was actually deleted. This is only a problem for
+                                //  collections as they seemed to be freezable from a deleted
+                                //  reference (contrary to other objects that returns null from
+                                //  freeze). An `out_collection_was_deleted` flag was added to the
+                                //  change object, which would probably be the way to go, but
+                                //  requires rework of our change set build infrastructure.
+                                val frozenObservable: T? = if (lifeRef.isValid())
+                                    lifeRef.freeze(realm.gcTrackedSnapshot())
+                                else null
                                 changeFlow.emit(frozenObservable, change)
                             }
                         }
-                    token.value = NotificationToken(lifeRef.registerForNotification(interopCallback))
+                    token.value = NotificationToken(lifeRef.registerForNotification(keyPathsPtr, interopCallback))
                 } else {
                     changeFlow.emit(null)
                 }

@@ -22,6 +22,7 @@ import io.realm.kotlin.internal.interop.ClassKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmInterop.realm_results_get
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmResultsPointer
 import io.realm.kotlin.internal.interop.getterScope
@@ -35,7 +36,6 @@ import io.realm.kotlin.query.RealmQuery
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.query.TRUE_PREDICATE
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.RealmObject
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.flow.Flow
 import kotlin.reflect.KClass
@@ -57,13 +57,6 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
     private val mode: Mode = Mode.RESULTS,
 ) : AbstractList<E>(), RealmResults<E>, InternalDeleteable, CoreNotifiable<RealmResultsImpl<E>, ResultsChange<E>>, RealmStateHolder {
 
-    @Suppress("UNCHECKED_CAST")
-    private val converter = realmObjectConverter(
-        clazz as KClass<out RealmObject>,
-        mediator,
-        realm
-    ) as RealmValueConverter<E>
-
     internal enum class Mode {
         // FIXME Needed to make working with @LinkingObjects easier.
         EMPTY, // RealmResults that is always empty.
@@ -74,10 +67,12 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         get() = RealmInterop.realm_results_count(nativePointer).toInt()
 
     override fun get(index: Int): E = getterScope {
-        with(converter) {
-            val transport = realm_results_get(nativePointer, index.toLong())
-            realmValueToPublic(transport)
-        } as E
+        realmValueToRealmObject(
+            realm_results_get(nativePointer, index.toLong()),
+            clazz,
+            mediator,
+            realm
+        ) as E
     }
 
     override fun query(query: String, vararg args: Any?): RealmQuery<E> = inputScope {
@@ -104,9 +99,12 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         )
     }
 
-    override fun asFlow(): Flow<ResultsChange<E>> {
+    override fun asFlow(keyPaths: List<String>?): Flow<ResultsChange<E>> {
         realm.checkClosed()
-        return realm.owner.registerObserver(this)
+        val keyPathInfo = keyPaths?.let {
+            Pair(classKey, keyPaths)
+        }
+        return realm.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun delete() {
@@ -134,8 +132,11 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
         return RealmResultsImpl(liveRealm, liveResultPtr, classKey, clazz, mediator)
     }
 
-    override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
-        return RealmInterop.realm_results_add_notification_callback(nativePointer, callback)
+    override fun registerForNotification(
+        keyPaths: RealmKeyPathArrayPointer?,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
+        return RealmInterop.realm_results_add_notification_callback(nativePointer, keyPaths, callback)
     }
 
     override fun changeFlow(scope: ProducerScope<ResultsChange<E>>): ChangeFlow<RealmResultsImpl<E>, ResultsChange<E>> =
@@ -143,7 +144,7 @@ internal class RealmResultsImpl<E : BaseRealmObject> constructor(
 
     override fun realmState(): RealmState = realm
 
-    internal fun isValid(): Boolean {
+    override fun isValid(): Boolean {
         return !nativePointer.isReleased() && !realm.isClosed()
     }
 }

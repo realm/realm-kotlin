@@ -18,6 +18,7 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.Versioned
 import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.RealmChangesPointer
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.util.Validation.sdkError
 import io.realm.kotlin.internal.util.trySendWithBufferOverflowCheck
@@ -126,13 +127,16 @@ public abstract class ChangeFlow<T, C>(private val producerScope: ProducerScope<
  * @param T the type of entity that is observed.
  * @param C the type of change events emitted for the T entity.
  */
-internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Versioned, Flowable<C>
+internal interface CoreNotifiable<T, C> : Notifiable<T, C>, Observable<T, C>, Versioned, KeyPathFlowable<C>
         where T : CoreNotifiable<T, C> {
     public fun thaw(liveRealm: RealmReference): T?
-    public fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
+    public fun registerForNotification(keyPaths: RealmKeyPathArrayPointer?, callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer
     public fun freeze(frozenRealm: RealmReference): T?
 
     // Default implementation as all Observables are just thawing themselves.
     override fun notifiable(): Notifiable<T, C> = this
     override fun coreObservable(liveRealm: LiveRealm): CoreNotifiable<T, C>? = thaw(liveRealm.realmReference)
+
+    // Checks if the underlying native pointer points still points to a valid object.
+    fun isValid(): Boolean
 }

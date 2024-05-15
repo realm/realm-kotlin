@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.Callback
 import io.realm.kotlin.internal.interop.PropertyKey
 import io.realm.kotlin.internal.interop.RealmChangesPointer
 import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.internal.interop.RealmKeyPathArrayPointer
 import io.realm.kotlin.internal.interop.RealmNotificationTokenPointer
 import io.realm.kotlin.internal.interop.RealmObjectInterop
 import io.realm.kotlin.internal.interop.RealmObjectPointer
@@ -103,10 +104,14 @@ public class RealmObjectReference<T : BaseRealmObject>(
             } as RealmObjectReference<T>?
     }
 
-    override fun registerForNotification(callback: Callback<RealmChangesPointer>): RealmNotificationTokenPointer {
+    override fun registerForNotification(
+        keyPaths: RealmKeyPathArrayPointer?,
+        callback: Callback<RealmChangesPointer>
+    ): RealmNotificationTokenPointer {
         // We should never get here unless it is a managed object as unmanaged doesn't support observing
         return RealmInterop.realm_object_add_notification_callback(
             this.objectPointer,
+            keyPaths,
             callback
         )
     }
@@ -124,8 +129,11 @@ public class RealmObjectReference<T : BaseRealmObject>(
         }.toTypedArray()
     }
 
-    override fun asFlow(): Flow<ObjectChange<T>> {
-        return this.owner.owner.registerObserver(this)
+    override fun asFlow(keyPaths: List<String>?): Flow<ObjectChange<T>> {
+        val keyPathInfo = keyPaths?.let {
+            Pair(metadata.classKey, it)
+        }
+        return this.owner.owner.registerObserver(this, keyPathInfo)
     }
 
     override fun delete() {
@@ -141,7 +149,7 @@ public class RealmObjectReference<T : BaseRealmObject>(
         objectPointer.let { RealmInterop.realm_object_delete(it) }
     }
 
-    internal fun isValid(): Boolean {
+    override fun isValid(): Boolean {
         val ptr = objectPointer
         return if (ptr != null) {
             !ptr.isReleased() && RealmInterop.realm_object_is_valid(ptr)

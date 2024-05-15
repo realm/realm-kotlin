@@ -10,10 +10,10 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
 import kotlin.test.AfterTest
@@ -43,10 +43,10 @@ class RealmInMemoryTests {
 
     @AfterTest
     fun tearDown() {
-        PlatformUtils.deleteTempDir(tmpDir)
         if (this::realm.isInitialized && !realm.isClosed()) {
             realm.close()
         }
+        PlatformUtils.deleteTempDir(tmpDir)
     }
 
     @Test
@@ -181,9 +181,9 @@ class RealmInMemoryTests {
     @Test
     fun multiThread() {
         val threadError = arrayOfNulls<Exception>(1)
-        val workerCommittedChannel = Channel<Boolean>(1)
-        val workerClosedChannel = Channel<Boolean>(1)
-        val realmInMainClosedChannel = Channel<Boolean>(1)
+        val workerCommittedChannel = TestChannel<Boolean>()
+        val workerClosedChannel = TestChannel<Boolean>()
+        val realmInMainClosedChannel = TestChannel<Boolean>()
         runBlocking {
             // Step 2.
             async {

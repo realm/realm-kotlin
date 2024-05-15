@@ -18,11 +18,11 @@ package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
-import io.realm.kotlin.entities.sync.ChildPk
-import io.realm.kotlin.entities.sync.ParentPk
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
@@ -32,19 +32,22 @@ import io.realm.kotlin.mongodb.LoggedIn
 import io.realm.kotlin.mongodb.LoggedOut
 import io.realm.kotlin.mongodb.Removed
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
 import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
+import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.test.mongodb.SyncServerConfig
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.test.AfterTest
@@ -274,7 +277,7 @@ class AppTests {
 //
     @Test
     fun authenticationChangeAsFlow() = runBlocking<Unit> {
-        val c = Channel<AuthenticationChange>(1)
+        val c = TestChannel<AuthenticationChange>()
         val job = async {
             app.authenticationChangeAsFlow().collect {
                 c.send(it)
@@ -304,7 +307,7 @@ class AppTests {
 
     @Test
     fun authenticationChangeAsFlow_removeUser() = runBlocking<Unit> {
-        val c = Channel<AuthenticationChange>(1)
+        val c = TestChannel<AuthenticationChange>()
         val job = async {
             app.authenticationChangeAsFlow().collect {
                 c.send(it)
@@ -329,7 +332,7 @@ class AppTests {
 
     @Test
     fun authenticationChangeAsFlow_deleteUser() = runBlocking<Unit> {
-        val c = Channel<AuthenticationChange>(1)
+        val c = TestChannel<AuthenticationChange>()
         val job = async {
             app.authenticationChangeAsFlow().collect {
                 c.send(it)
@@ -386,7 +389,7 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 
@@ -423,7 +426,7 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 
@@ -461,7 +464,7 @@ class AppTests {
             // Create Realm in order to create the sync metadata Realm
             val user = app.asTestApp.createUserAndLogin()
             val syncConfig = SyncConfiguration
-                .Builder(user, setOf(ParentPk::class, ChildPk::class))
+                .Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .build()
             Realm.open(syncConfig).close()
 
@@ -477,6 +480,95 @@ class AppTests {
             // Open the metadata realm file without a valid encryption key
             assertFailsWithMessage<IllegalStateException>("Failed to open Realm file at path") {
                 Realm.open(config)
+            }
+        }
+    }
+
+    /**
+     * The app id must exist on the new base url, it is validated and an exception would be thrown.
+     *
+     * This test case circumvents this issue by initializing an app to a url that does not contain the
+     * app, as it is not validated on initialization. And then updating the base url the the test server.
+     */
+    @Test
+    @OptIn(ExperimentalEdgeServerApi::class)
+    fun changeBaseUrl() {
+        TestApp(
+            testId = "changeBaseUrl",
+            builder = { builder ->
+                // We create a test app that points to the default base url
+                // this app is not going to be validated yet.
+                builder.baseUrl(AppConfiguration.DEFAULT_BASE_URL)
+            }
+        ).use { testApp ->
+            assertEquals(AppConfiguration.DEFAULT_BASE_URL, testApp.baseUrl)
+
+            runBlocking {
+                // Update the base url, this method will validate the app
+                // if the app id is not available it would fail.
+                testApp.updateBaseUrl(app.configuration.baseUrl)
+            }
+            assertEquals(app.configuration.baseUrl, testApp.baseUrl)
+        }
+    }
+
+    @Test
+    // We don't have a way to test this on CI, so for now just verify manually that the
+    // request towards the server after setting the URL to null is using the default URL.
+    @Ignore
+    @OptIn(ExperimentalEdgeServerApi::class)
+    fun changeBaseUrl_null() {
+        TestApp(
+            testId = "changeBaseUrl",
+        ).use { testApp ->
+            assertEquals(SyncServerConfig.url, testApp.baseUrl)
+
+            RealmLog.level = LogLevel.ALL
+            runBlocking {
+                testApp.updateBaseUrl(null)
+            }
+        }
+    }
+
+    @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/1734
+    @OptIn(ExperimentalEdgeServerApi::class)
+    fun changeBaseUrl_trailing_slashes_trimmed() {
+        assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
+            runBlocking {
+                app.updateBaseUrl(AppConfiguration.DEFAULT_BASE_URL + "///")
+            }
+        }
+    }
+
+    @Test
+    @Ignore // see https://github.com/realm/realm-kotlin/issues/1734
+    @OptIn(ExperimentalEdgeServerApi::class)
+    fun changeBaseUrl_empty() {
+        assertFailsWithMessage<ServiceException>("cannot find app using Client App ID") {
+            runBlocking {
+                app.updateBaseUrl("")
+            }
+        }
+    }
+
+    @Test
+    @OptIn(ExperimentalEdgeServerApi::class)
+    fun changeBaseUrl_invalidUrl() {
+        assertFailsWithMessage<IllegalArgumentException>("URL missing scheme") {
+            runBlocking {
+                app.updateBaseUrl("hello world")
+            }
+        }
+    }
+
+    @Test
+    @Ignore // see https://github.com/realm/realm-kotlin/issues/1734
+    @OptIn(ExperimentalEdgeServerApi::class)
+    fun changeBaseUrl_nonAppServicesUrl() {
+        assertFailsWithMessage<ServiceException>("http error code considered fatal") {
+            runBlocking {
+                app.updateBaseUrl("https://www.google.com/")
             }
         }
     }

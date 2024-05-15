@@ -19,8 +19,8 @@ package io.realm.kotlin.internal.interop
 import realm_wrapper.realm_errno
 
 actual enum class ErrorCode(
-    override val description: String,
-    private val nativeError: realm_errno
+    actual override val description: String?,
+    nativeError: realm_errno
 ) : CodeDescription {
     RLM_ERR_NONE("None", realm_errno.RLM_ERR_NONE),
     RLM_ERR_RUNTIME("Runtime", realm_errno.RLM_ERR_RUNTIME),
@@ -68,6 +68,8 @@ actual enum class ErrorCode(
     RLM_ERR_TLS_HANDSHAKE_FAILED("TLSHandshakeFailed", realm_errno.RLM_ERR_TLS_HANDSHAKE_FAILED),
     RLM_ERR_WRONG_SYNC_TYPE("WrongSyncType", realm_errno.RLM_ERR_WRONG_SYNC_TYPE),
     RLM_ERR_SYNC_WRITE_NOT_ALLOWED("SyncWriteNotAllowed", realm_errno.RLM_ERR_SYNC_WRITE_NOT_ALLOWED),
+    RLM_ERR_SYNC_LOCAL_CLOCK_BEFORE_EPOCH("SyncLocalClockBeforeEpoch", realm_errno.RLM_ERR_SYNC_LOCAL_CLOCK_BEFORE_EPOCH),
+    RLM_ERR_SYNC_SCHEMA_MIGRATION_ERROR("SyncSchemaMigrationError", realm_errno.RLM_ERR_SYNC_SCHEMA_MIGRATION_ERROR),
     RLM_ERR_SYSTEM_ERROR("SystemError", realm_errno.RLM_ERR_SYSTEM_ERROR),
     RLM_ERR_LOGIC("Logic", realm_errno.RLM_ERR_LOGIC),
     RLM_ERR_NOT_SUPPORTED("NotSupported", realm_errno.RLM_ERR_NOT_SUPPORTED),
@@ -118,9 +120,9 @@ actual enum class ErrorCode(
     RLM_ERR_CUSTOM_ERROR("CustomError", realm_errno.RLM_ERR_CUSTOM_ERROR),
     RLM_ERR_CLIENT_USER_NOT_FOUND("ClientUserNotFound", realm_errno.RLM_ERR_CLIENT_USER_NOT_FOUND),
     RLM_ERR_CLIENT_USER_NOT_LOGGED_IN("ClientUserNotLoggedIn", realm_errno.RLM_ERR_CLIENT_USER_NOT_LOGGED_IN),
-    RLM_ERR_CLIENT_APP_DEALLOCATED("ClientAppDeallocated", realm_errno.RLM_ERR_CLIENT_APP_DEALLOCATED),
     RLM_ERR_CLIENT_REDIRECT_ERROR("ClientRedirectError", realm_errno.RLM_ERR_CLIENT_REDIRECT_ERROR),
     RLM_ERR_CLIENT_TOO_MANY_REDIRECTS("ClientTooManyRedirects", realm_errno.RLM_ERR_CLIENT_TOO_MANY_REDIRECTS),
+    RLM_ERR_CLIENT_USER_ALREADY_NAMED("ClientUserAlreadyNamed", realm_errno.RLM_ERR_CLIENT_USER_ALREADY_NAMED),
     RLM_ERR_BAD_TOKEN("BadToken", realm_errno.RLM_ERR_BAD_TOKEN),
     RLM_ERR_MALFORMED_JSON("MalformedJson", realm_errno.RLM_ERR_MALFORMED_JSON),
     RLM_ERR_MISSING_JSON_KEY("MissingJsonKey", realm_errno.RLM_ERR_MISSING_JSON_KEY),
@@ -180,11 +182,11 @@ actual enum class ErrorCode(
     RLM_ERR_MAINTENANCE_IN_PROGRESS("MaintenanceInProgress", realm_errno.RLM_ERR_MAINTENANCE_IN_PROGRESS),
     RLM_ERR_USERPASS_TOKEN_INVALID("UserpassTokenInvalid", realm_errno.RLM_ERR_USERPASS_TOKEN_INVALID),
     RLM_ERR_INVALID_SERVER_RESPONSE("InvalidServerResponse", realm_errno.RLM_ERR_INVALID_SERVER_RESPONSE),
-    REALM_ERR_APP_SERVER_ERROR("AppServerError", realm_errno.RLM_ERR_APP_SERVER_ERROR),
+    RLM_ERR_APP_SERVER_ERROR("AppServerError", realm_errno.RLM_ERR_APP_SERVER_ERROR),
     RLM_ERR_CALLBACK("Callback", realm_errno.RLM_ERR_CALLBACK),
     RLM_ERR_UNKNOWN("Unknown", realm_errno.RLM_ERR_UNKNOWN);
 
-    override val nativeValue: Int = nativeError.value.toInt()
+    actual override val nativeValue: Int = nativeError.value.toInt()
 
     val asNativeEnum: realm_errno = nativeError
 

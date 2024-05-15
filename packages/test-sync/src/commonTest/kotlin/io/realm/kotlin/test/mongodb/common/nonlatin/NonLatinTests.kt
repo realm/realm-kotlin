@@ -8,17 +8,18 @@ import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
-import io.realm.kotlin.test.mongodb.common.PARTITION_SYNC_SCHEMA
+import io.realm.kotlin.test.mongodb.common.PARTITION_BASED_SCHEMA
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import org.mongodb.kbson.BsonObjectId
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -35,6 +36,7 @@ class NonLatinTests {
     @BeforeTest
     fun setup() {
         partitionValue = TestHelper.randomPartitionValue()
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         app = TestApp(this::class.simpleName)
         val (email, password) = TestHelper.randomEmail() to "password1234"
         user = runBlocking {
@@ -55,7 +57,7 @@ class NonLatinTests {
     @Test
     fun readNullCharacterFromMongoDB() = runBlocking {
         val adminApi = app.asTestApp
-        val config = SyncConfiguration.Builder(user, partitionValue, schema = PARTITION_SYNC_SCHEMA).build()
+        val config = SyncConfiguration.Builder(user, partitionValue, schema = PARTITION_BASED_SCHEMA).build()
         Realm.open(config).use { realm ->
             val json: JsonObject = adminApi.insertDocument(
                 ObjectIdPk::class.simpleName!!,
@@ -69,12 +71,12 @@ class NonLatinTests {
             val oid = json["insertedId"]!!.jsonObject["${'$'}oid"]!!.jsonPrimitive.content
             assertNotNull(oid)
 
-            val channel = Channel<ObjectIdPk>(1)
+            val channel = TestChannel<ObjectIdPk>()
             val job = async {
                 realm.query<ObjectIdPk>("_id = $0", BsonObjectId(oid)).first()
                     .asFlow().collect {
                         if (it.obj != null) {
-                            channel.trySend(it.obj!!)
+                            channel.send(it.obj!!)
                         }
                     }
             }

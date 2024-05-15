@@ -16,8 +16,6 @@
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.Realm
-import io.realm.kotlin.entities.sync.flx.FlexChildObject
-import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
@@ -29,6 +27,7 @@ import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.waitForSynchronizationOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.util.TestHelper
@@ -64,7 +63,7 @@ class SubscriptionSetTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = FLX_SYNC_SCHEMA
+            schema = FLEXIBLE_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -98,7 +97,7 @@ class SubscriptionSetTests {
             val config = SyncConfiguration.create(
                 user,
                 TestHelper.randomPartitionValue(),
-                setOf(FlexParentObject::class, FlexChildObject::class, FlexEmbeddedObject::class)
+                PARTITION_BASED_SCHEMA
             )
             Realm.open(config).use { partionBasedRealm ->
                 assertFailsWith<IllegalStateException> { partionBasedRealm.subscriptions }
@@ -156,7 +155,7 @@ class SubscriptionSetTests {
             realm.query<FlexParentObject>().subscribe("test1")
         }
         assertEquals(SubscriptionSetState.PENDING, subscriptions.state)
-        subscriptions.waitForSynchronization()
+        subscriptions.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         subscriptions.update {
             // Flexible Sync queries cannot use limit
@@ -192,14 +191,11 @@ class SubscriptionSetTests {
         assertFailsWith<BadFlexibleSyncQueryException> {
             subscriptions.waitForSynchronization()
         }
-        assertTrue(
-            subscriptions.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
-            subscriptions.errorMessage
-        )
+        assertTrue(subscriptions.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"))
         subscriptions.update {
             removeAll()
         }
-        subscriptions.waitForSynchronization()
+        subscriptions.waitForSynchronizationOrFail()
         assertNull(subscriptions.errorMessage)
     }
 
@@ -228,7 +224,7 @@ class SubscriptionSetTests {
     @Test
     fun waitForSynchronizationInitialSubscriptions() = runBlocking {
         val subscriptions = realm.subscriptions
-        assertTrue(subscriptions.waitForSynchronization())
+        subscriptions.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         assertEquals(0, subscriptions.size)
     }
@@ -237,7 +233,7 @@ class SubscriptionSetTests {
     fun waitForSynchronizationInitialEmptySubscriptionSet() = runBlocking {
         val subscriptions = realm.subscriptions
         subscriptions.update { /* Do nothing */ }
-        assertTrue(subscriptions.waitForSynchronization())
+        subscriptions.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, subscriptions.state)
         assertEquals(0, subscriptions.size)
     }
@@ -248,7 +244,7 @@ class SubscriptionSetTests {
             realm.query<FlexParentObject>().subscribe("test")
         }
         assertNotEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
-        assertTrue(updatedSubs.waitForSynchronization())
+        updatedSubs.waitForSynchronizationOrFail()
         assertEquals(SubscriptionSetState.COMPLETE, updatedSubs.state)
     }
 
@@ -261,10 +257,7 @@ class SubscriptionSetTests {
             updatedSubs.waitForSynchronization()
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
-        assertTrue(
-            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
-            updatedSubs.errorMessage
-        )
+        assertTrue(updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"))
     }
 
     // Test case for https://github.com/realm/realm-core/issues/5504
@@ -278,10 +271,7 @@ class SubscriptionSetTests {
         }
         assertEquals(SubscriptionSetState.ERROR, updatedSubs.state)
         assertEquals("TRUEPREDICATE and TRUEPREDICATE LIMIT(1)", updatedSubs.first().queryDescription)
-        assertTrue(
-            updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"),
-            updatedSubs.errorMessage
-        )
+        assertTrue(updatedSubs.errorMessage!!.contains("Invalid query: invalid RQL for table \"FlexParentObject\": syntax error: unexpected Limit, expecting Or or RightParenthesis"))
     }
 
     @Test
@@ -310,7 +300,7 @@ class SubscriptionSetTests {
         val subs = realm.subscriptions.update {
             realm.query<FlexParentObject>().subscribe("sub")
         }.also {
-            it.waitForSynchronization()
+            it.waitForSynchronizationOrFail()
         }
         realm.close()
 

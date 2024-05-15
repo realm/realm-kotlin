@@ -13,13 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import kotlin.text.toBoolean
+import org.yaml.snakeyaml.Yaml
+import java.io.FileInputStream
 
 plugins {
     kotlin("jvm")
     `java-gradle-plugin`
     id("com.gradle.plugin-publish") version Versions.gradlePluginPublishPlugin
     id("realm-publisher")
+}
+
+buildscript {
+    dependencies {
+        classpath("org.yaml:snakeyaml:1.33")
+    }
 }
 
 dependencies {
@@ -92,11 +99,20 @@ sourceSets {
         java.srcDir(versionDirectory)
     }
 }
-tasks.create("pluginVersion") {
-    val outputDir = file(versionDirectory)
 
+// Task to generate gradle plugin runtime constants for SDK and core versions
+tasks.create("versionConstants") {
+    val coreDependenciesFile = layout.projectDirectory.file(
+        listOf("..", "external", "core", "dependencies.yml").joinToString(File.separator)
+    )
+    inputs.file(coreDependenciesFile)
     inputs.property("version", project.version)
+    val outputDir = file(versionDirectory)
     outputs.dir(outputDir)
+
+    val yaml = Yaml()
+    val coreDependencies: Map<String, String> = yaml.load(FileInputStream(coreDependenciesFile.asFile))
+    val coreVersion = coreDependencies["VERSION"]
 
     doLast {
         val versionFile = file("$outputDir/io/realm/kotlin/gradle/version.kt")
@@ -106,8 +122,10 @@ tasks.create("pluginVersion") {
             // Generated file. Do not edit!
             package io.realm.kotlin.gradle
             internal const val PLUGIN_VERSION = "${project.version}"
+            internal const val CORE_VERSION = "${coreVersion}"
             """.trimIndent()
         )
     }
 }
-tasks.getByName("compileKotlin").dependsOn("pluginVersion")
+
+tasks.getByName("compileKotlin").dependsOn("versionConstants")

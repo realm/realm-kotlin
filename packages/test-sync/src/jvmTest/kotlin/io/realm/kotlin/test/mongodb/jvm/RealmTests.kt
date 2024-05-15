@@ -25,6 +25,8 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestHelper
 import kotlinx.coroutines.runBlocking
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -37,7 +39,9 @@ class RealmTests {
     // lifecycle, it is very difficult to track all threads. Instead this test just makes a best
     // effort in detecting the cases we do know about.
     @Test
+    @Ignore // See https://github.com/realm/realm-kotlin/issues/1627
     fun cleanupAllRealmThreadsOnClose() = runBlocking {
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         val app = TestApp("cleanupAllRealmThreadsOnClose")
         val user = app.login(Credentials.anonymous())
         val configuration = SyncConfiguration.create(user, TestHelper.randomPartitionValue(), setOf(ParentPk::class, ChildPk::class))

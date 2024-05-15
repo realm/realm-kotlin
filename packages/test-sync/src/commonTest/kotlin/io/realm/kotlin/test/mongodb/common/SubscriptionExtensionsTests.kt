@@ -30,6 +30,7 @@ import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.query.RealmResults
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TestApp
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.use
@@ -64,7 +65,7 @@ class SubscriptionExtensionsTests {
         }
         val config = SyncConfiguration.Builder(
             user,
-            schema = FLX_SYNC_SCHEMA
+            schema = FLEXIBLE_SYNC_SCHEMA
         )
             .build()
         realm = Realm.open(config)
@@ -133,7 +134,7 @@ class SubscriptionExtensionsTests {
         val user1 = app.createUserAndLogIn(email, password)
         val config = SyncConfiguration.Builder(
             user1,
-            schema = FLX_SYNC_SCHEMA
+            schema = FLEXIBLE_SYNC_SCHEMA
         ).initialSubscriptions { realm: Realm ->
             realm.query<FlexParentObject>("section = $0", section).subscribe()
         }.build()
@@ -391,7 +392,7 @@ class SubscriptionExtensionsTests {
 
     private suspend fun uploadServerData(sectionId: Int, noOfObjects: Int) {
         val user = app.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, FLX_SYNC_SCHEMA)
+        val config = SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
             .initialSubscriptions {
                 it.query<FlexParentObject>().subscribe()
             }
@@ -404,7 +405,7 @@ class SubscriptionExtensionsTests {
                     copyToRealm(FlexParentObject(sectionId))
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
     }
 }

@@ -22,7 +22,7 @@ import realm_wrapper.realm_sync_socket_callback_result
 import realm_wrapper.realm_web_socket_errno
 
 actual enum class SyncConnectionErrorCode(
-    override val description: String,
+    actual override val description: String?,
     errorCode: realm_sync_errno_connection
 ) : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED("ConnectionClosed", realm_sync_errno_connection.RLM_SYNC_ERR_CONNECTION_CONNECTION_CLOSED),
@@ -41,7 +41,7 @@ actual enum class SyncConnectionErrorCode(
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC("SwitchToFlxSync", realm_sync_errno_connection.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC),
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS("SwitchToPbs", realm_sync_errno_connection.RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS);
 
-    override val nativeValue: Int = errorCode.value.toInt()
+    actual override val nativeValue: Int = errorCode.value.toInt()
 
     actual companion object {
         internal actual fun of(nativeValue: Int): SyncConnectionErrorCode? =
@@ -52,7 +52,7 @@ actual enum class SyncConnectionErrorCode(
 }
 
 actual enum class SyncSessionErrorCode(
-    override val description: String,
+    actual override val description: String?,
     errorCode: realm_sync_errno_session
 ) : CodeDescription {
     RLM_SYNC_ERR_SESSION_SESSION_CLOSED("SessionClosed", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_SESSION_CLOSED),
@@ -88,9 +88,11 @@ actual enum class SyncSessionErrorCode(
     RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE("CompensatingWrite", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE),
     RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX("MigrateToFlexibleSync", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX),
     RLM_SYNC_ERR_SESSION_BAD_PROGRESS("BadProgress", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_BAD_PROGRESS),
-    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS("RevertToPartitionBasedSync", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_REVERT_TO_PBS);
+    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS("RevertToPartitionBasedSync", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_REVERT_TO_PBS),
+    RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION("BadSchemaVersion", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION),
+    RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED("SchemaVersionChanged", realm_sync_errno_session.RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED);
 
-    override val nativeValue: Int = errorCode.value.toInt()
+    actual override val nativeValue: Int = errorCode.value.toInt()
 
     actual companion object {
         internal actual fun of(nativeValue: Int): SyncSessionErrorCode? =
@@ -101,7 +103,7 @@ actual enum class SyncSessionErrorCode(
 }
 
 actual enum class WebsocketErrorCode(
-    override val description: String,
+    actual override val description: String?,
     errorCode: realm_web_socket_errno,
 ) : CodeDescription {
     RLM_ERR_WEBSOCKET_OK("Ok", realm_web_socket_errno.RLM_ERR_WEBSOCKET_OK),
@@ -130,10 +132,12 @@ actual enum class WebsocketErrorCode(
     RLM_ERR_WEBSOCKET_RETRY_ERROR("RetryError", realm_web_socket_errno.RLM_ERR_WEBSOCKET_RETRY_ERROR),
     RLM_ERR_WEBSOCKET_FATAL_ERROR("FatalError", realm_web_socket_errno.RLM_ERR_WEBSOCKET_FATAL_ERROR);
 
-    override val nativeValue: Int = errorCode.value.toInt()
+    actual override val nativeValue: Int = errorCode.value.toInt()
+
+    val asNativeEnum: realm_web_socket_errno = errorCode
 
     actual companion object {
-        internal actual fun of(nativeValue: Int): WebsocketErrorCode? =
+        actual fun of(nativeValue: Int): WebsocketErrorCode? =
             values().firstOrNull { value ->
                 value.nativeValue == nativeValue
             }
@@ -141,7 +145,7 @@ actual enum class WebsocketErrorCode(
 }
 
 actual enum class WebsocketCallbackResult(
-    override val description: String,
+    actual override val description: String?,
     nativeError: realm_sync_socket_callback_result
 ) : CodeDescription {
 
@@ -178,7 +182,7 @@ actual enum class WebsocketCallbackResult(
         realm_sync_socket_callback_result.RLM_ERR_SYNC_SOCKET_INVALID_ARGUMENT
     );
 
-    override val nativeValue: Int = nativeError.value.toInt()
+    actual override val nativeValue: Int = nativeError.value.toInt()
     val asNativeEnum: realm_sync_socket_callback_result = nativeError
 
     actual companion object {

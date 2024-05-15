@@ -30,6 +30,7 @@ import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
+import io.realm.kotlin.types.annotations.PersistedName
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 
@@ -177,6 +178,9 @@ class Sample : RealmObject {
     val objectBacklinks by backlinks(Sample::nullableObject)
     val listBacklinks by backlinks(Sample::objectListField)
     val setBacklinks by backlinks(Sample::objectSetField)
+
+    @PersistedName("persistedStringField")
+    var publicStringField = "Realm"
 
     // For verification that references inside class is also using our modified accessors and are
     // not optimized to use the backing field directly.

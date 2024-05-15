@@ -22,6 +22,7 @@ import io.realm.kotlin.annotations.ExperimentalRealmSerializerApi
 import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.canWrite
 import io.realm.kotlin.internal.platform.directoryExists
@@ -38,7 +39,10 @@ import io.realm.kotlin.mongodb.ext.profile
 import io.realm.kotlin.mongodb.internal.AppConfigurationImpl
 import io.realm.kotlin.mongodb.internal.KtorNetworkTransport
 import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
+import io.realm.kotlin.mongodb.internal.RealmWebSocketTransport
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
+import io.realm.kotlin.mongodb.sync.SyncTimeoutOptions
+import io.realm.kotlin.mongodb.sync.SyncTimeoutOptionsBuilder
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
@@ -102,13 +106,30 @@ public interface AppConfiguration {
      */
     public val httpLogObfuscator: HttpLogObfuscator?
 
+    /**
+     * If enabled, a single connection is used for all Realms opened
+     * with a single sync user. If disabled, a separate connection is used for each
+     * Realm.
+     *
+     * Session multiplexing reduces resources used and typically improves
+     * performance. When multiplexing is enabled, the connection is not immediately
+     * closed when the last session is closed, but remains open for
+     * [SyncTimeoutOptions.connectionLingerTime] defined in [syncTimeoutOptions].
+     */
+    public val enableSessionMultiplexing: Boolean
+
+    /**
+     * The configured timeouts for various aspects of the sync connection from realms.
+     */
+    public val syncTimeoutOptions: SyncTimeoutOptions
+
     public companion object {
         /**
          * The default url for App Services applications.
          *
          * @see Builder#baseUrl(String)
          */
-        public const val DEFAULT_BASE_URL: String = "https://realm.mongodb.com"
+        public const val DEFAULT_BASE_URL: String = "https://services.cloud.mongodb.com"
 
         /**
          * The default header name used to carry authorization data when making network requests
@@ -141,6 +162,7 @@ public interface AppConfiguration {
         private var syncRootDirectory: String = appFilesDirectory()
         private var userLoggers: List<RealmLogger> = listOf()
         private var networkTransport: NetworkTransport? = null
+        private var websocketTransport: WebSocketTransport? = null
         private var appName: String? = null
         private var appVersion: String? = null
 
@@ -149,6 +171,9 @@ public interface AppConfiguration {
         private var httpLogObfuscator: HttpLogObfuscator? = LogObfuscatorImpl
         private val customRequestHeaders = mutableMapOf<String, String>()
         private var authorizationHeaderName: String = DEFAULT_AUTHORIZATION_HEADER_NAME
+        private var enableSessionMultiplexing: Boolean = false
+        private var syncTimeoutOptions: SyncTimeoutOptions = SyncTimeoutOptionsBuilder().build()
+        private var usePlatformNetworking: Boolean = false
 
         /**
          * Sets the encryption key used to encrypt the user metadata Realm only. Individual
@@ -326,6 +351,44 @@ public interface AppConfiguration {
         }
 
         /**
+         * If enabled, a single connection is used for all Realms opened
+         * with a single sync user. If disabled, a separate connection is used for each
+         * Realm.
+         *
+         * Session multiplexing reduces resources used and typically improves
+         * performance. When multiplexing is enabled, the connection is not immediately
+         * closed when the last session is closed, but remains open for
+         * [SyncTimeoutOptions.connectionLingerTime] as defined by [syncTimeouts] (30 seconds by
+         * default).
+         */
+        public fun enableSessionMultiplexing(enabled: Boolean): Builder {
+            this.enableSessionMultiplexing = enabled
+            return this
+        }
+
+        /**
+         *  Configure the assorted types of connection timeouts for sync connections.
+         *  See [SyncTimeoutOptionsBuilder] for a description of each option.
+         */
+        public fun syncTimeouts(action: SyncTimeoutOptionsBuilder.() -> Unit): Builder {
+            val builder = SyncTimeoutOptionsBuilder()
+            action(builder)
+            syncTimeoutOptions = builder.build()
+            return this
+        }
+
+        /**
+         * Platform Networking offer improved support for proxies and firewalls that require authentication,
+         * instead of Realm's built-in WebSocket client for Sync traffic. This will become the default in a future version.
+         *
+         * Note: Only Android and JVM targets are supported so far.
+         */
+        public fun usePlatformNetworking(enable: Boolean = true): Builder =
+            apply {
+                this.usePlatformNetworking = enable
+            }
+
+        /**
          * Allows defining a custom network transport. It is used by some tests that require simulating
          * network responses.
          */
@@ -385,13 +448,20 @@ public interface AppConfiguration {
                         // FIXME Add AppConfiguration.Builder option to set timeout as a Duration with default \
                         //  constant in AppConfiguration.Companion
                         //  https://github.com/realm/realm-kotlin/issues/408
-                        timeoutMs = 60000,
+                        timeoutMs = 120_000,
                         dispatcherHolder = dispatcherHolder,
                         logger = logger,
                         customHeaders = customRequestHeaders,
                         authorizationHeaderName = authorizationHeaderName
                     )
                 }
+
+            val websocketTransport: WebSocketTransport? =
+                if (usePlatformNetworking) {
+                    websocketTransport ?: RealmWebSocketTransport(
+                        timeoutMs = 60000
+                    )
+                } else null
 
             return AppConfigurationImpl(
                 appId = appId,
@@ -402,6 +472,7 @@ public interface AppConfiguration {
                 else MetadataMode.RLM_SYNC_CLIENT_METADATA_MODE_ENCRYPTED,
                 appNetworkDispatcherFactory = appNetworkDispatcherFactory,
                 networkTransportFactory = networkTransport,
+                websocketTransport = websocketTransport,
                 syncRootDirectory = syncRootDirectory,
                 logger = logConfig,
                 appName = appName,
@@ -411,6 +482,8 @@ public interface AppConfiguration {
                 httpLogObfuscator = httpLogObfuscator,
                 customRequestHeaders = customRequestHeaders,
                 authorizationHeaderName = authorizationHeaderName,
+                enableSessionMultiplexing = enableSessionMultiplexing,
+                syncTimeoutOptions = syncTimeoutOptions,
             )
         }
     }

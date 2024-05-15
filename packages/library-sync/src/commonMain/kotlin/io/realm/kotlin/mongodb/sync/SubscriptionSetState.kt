@@ -55,5 +55,11 @@ public enum class SubscriptionSetState {
      * are ignored by the server. Get the latest subscription set by calling
      * [SubscriptionSet.refresh].
      */
-    SUPERCEDED;
+    SUPERCEDED,
+
+    /**
+     * The last bootstrap message containing the initial state for this subscription set has been received. The
+     * client is awaiting a mark message to mark this subscription as fully caught up to history.
+     */
+    AWAITING_MARK;
 }

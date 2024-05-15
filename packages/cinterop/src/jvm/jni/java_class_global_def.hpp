@@ -66,6 +66,9 @@ private:
         , m_io_realm_kotlin_internal_interop_app_callback(env, "io/realm/kotlin/internal/interop/AppCallback", false)
         , m_io_realm_kotlin_internal_interop_connection_state_change_callback(env, "io/realm/kotlin/internal/interop/ConnectionStateChangeCallback", false)
         , m_io_realm_kotlin_internal_interop_sync_thread_observer(env, "io/realm/kotlin/internal/interop/SyncThreadObserver", false)
+        , m_io_realm_kotlin_internal_interop_sync_websocket_transport(env, "io/realm/kotlin/internal/interop/sync/WebSocketTransport", false)
+        , m_io_realm_kotlin_internal_interop_sync_websocket_client(env, "io/realm/kotlin/internal/interop/sync/WebSocketClient", false)
+        , m_io_realm_kotlin_internal_interop_notification_callback(env, "io/realm/kotlin/internal/interop/NotificationCallback", false)
     {
     }
 
@@ -92,6 +95,9 @@ private:
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_app_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_connection_state_change_callback;
     jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_thread_observer;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_websocket_transport;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_sync_websocket_client;
+    jni_util::JavaClass m_io_realm_kotlin_internal_interop_notification_callback;
 
     inline static std::unique_ptr<JavaClassGlobalDef>& instance()
     {
@@ -219,6 +225,11 @@ public:
         return instance()->m_io_realm_kotlin_internal_interop_sync_thread_observer;
     }
 
+    inline static const jni_util::JavaClass& notification_callback()
+    {
+        return instance()->m_io_realm_kotlin_internal_interop_notification_callback;
+    }
+
     inline static const jni_util::JavaMethod function0Method(JNIEnv* env) {
         return jni_util::JavaMethod(env, instance()->m_kotlin_jvm_functions_function0, "invoke",
                                     "()Ljava/lang/Object;");
@@ -227,6 +238,14 @@ public:
     inline static const jni_util::JavaMethod function1Method(JNIEnv* env) {
         return jni_util::JavaMethod(env, instance()->m_kotlin_jvm_functions_function1, "invoke",
                 "(Ljava/lang/Object;)Ljava/lang/Object;");
+    }
+
+    inline static const jni_util::JavaClass& sync_websocket_transport() {
+        return instance()->m_io_realm_kotlin_internal_interop_sync_websocket_transport;
+    }
+
+    inline static const jni_util::JavaClass& sync_websocket_client() {
+        return instance()->m_io_realm_kotlin_internal_interop_sync_websocket_client;
     }
 };
 

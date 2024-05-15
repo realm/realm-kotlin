@@ -124,8 +124,8 @@ internal open class SyncSessionImpl(
                             Direction.UPLOAD -> ProgressDirection.RLM_SYNC_PROGRESS_DIRECTION_UPLOAD
                         },
                         progressMode == ProgressMode.INDEFINITELY
-                    ) { transferredBytes: Long, totalBytes: Long, progressEstimate: Double ->
-                        val progress = Progress(transferredBytes.toULong(), totalBytes.toULong(), progressEstimate)
+                    ) { progressEstimate: Double ->
+                        val progress = Progress(progressEstimate)
                         trySendWithBufferOverflowCheck(progress)
                         if (progressMode == ProgressMode.CURRENT_CHANGES && progress.isTransferComplete) {
                             close()

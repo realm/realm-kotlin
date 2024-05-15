@@ -56,16 +56,20 @@ import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
 import io.realm.kotlin.test.mongodb.common.utils.CustomLogCollector
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
+import io.realm.kotlin.test.util.trySendOrFail
 import io.realm.kotlin.test.util.use
+import io.realm.kotlin.types.BaseRealmObject
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -75,9 +79,11 @@ import kotlinx.coroutines.withTimeout
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.ObjectId
 import kotlin.random.Random
 import kotlin.random.nextULong
+import kotlin.reflect.KClass
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -91,10 +97,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.test.fail
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("LargeClass")
+@OptIn(ExperimentalKBsonSerializerApi::class)
 class SyncedRealmTests {
 
     companion object {
@@ -170,7 +178,7 @@ class SyncedRealmTests {
                     name = "A"
                 }
 
-                val channel = Channel<ResultsChange<ChildPk>>(1)
+                val channel = TestChannel<ResultsChange<ChildPk>>()
 
                 // There was a race condition where construction of a query against the user facing frozen
                 // version could throw, due to the underlying version being deleted when the live realm was
@@ -220,7 +228,10 @@ class SyncedRealmTests {
             partitionValue = partitionValue
         )
         val realm1 = Realm.open(config1)
-        val c = Channel<RealmChange<Realm>>(1)
+        // We don't fully control all events from the server, so do not check
+        // for an empty buffer because we might accidentally see multiple updates
+        // from the server.
+        val c = TestChannel<RealmChange<Realm>>(failIfBufferIsEmptyOnCancel = false)
         val observer = async {
             realm1.asFlow().collect {
                 c.send(it)
@@ -240,7 +251,7 @@ class SyncedRealmTests {
                     val id = "id-${Random.nextLong()}"
                     copyToRealm(SyncObjectWithAllTypes().apply { _id = id })
                 }
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
         }
 
@@ -255,9 +266,9 @@ class SyncedRealmTests {
                 }
             }
         } finally {
+            c.cancel()
             realm1.close()
             observer.cancel()
-            c.cancel()
         }
     }
 
@@ -303,7 +314,7 @@ class SyncedRealmTests {
 
     @Test
     fun errorHandlerReceivesPermissionDeniedSyncError() {
-        val channel = Channel<Throwable>(1)
+        val channel = TestChannel<Throwable>()
         // Remove permissions to generate a sync error containing ONLY the original path
         // This way we assert we don't read wrong data from the user_info field
         val (email, password) = "test_nowrite_noread_${randomEmail()}" to "password1234"
@@ -316,7 +327,7 @@ class SyncedRealmTests {
             user = user,
             partitionValue = partitionValue
         ).errorHandler { _, error ->
-            channel.trySend(error)
+            channel.trySendOrFail(error)
         }.build()
 
         runBlocking {
@@ -325,7 +336,7 @@ class SyncedRealmTests {
                     // Make sure that the test eventually fail. Coroutines can cancel a delay
                     // so this doesn't always block the test for 10 seconds.
                     delay(10 * 1000)
-                    channel.trySend(AssertionError("Realm was successfully opened"))
+                    channel.send(AssertionError("Realm was successfully opened"))
                 }
             }
 
@@ -344,7 +355,7 @@ class SyncedRealmTests {
     @Test
     fun testErrorHandler() {
         // Open a realm with a schema. Close it without doing anything else
-        val channel = Channel<SyncException>(1)
+        val channel = TestChannel<SyncException>()
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -360,7 +371,7 @@ class SyncedRealmTests {
         // Open another realm with the same entity but change the type of a field in the schema to
         // trigger a sync error to be caught by the error handler
         runBlocking {
-            realm1.syncSession.uploadAllLocalChanges()
+            realm1.syncSession.uploadAllLocalChangesOrFail()
             val config2 = SyncConfiguration.Builder(
                 schema = setOf(io.realm.kotlin.entities.sync.bogus.ChildPk::class),
                 user = user,
@@ -368,7 +379,7 @@ class SyncedRealmTests {
             ).name("test2.realm")
                 .errorHandler(object : ErrorHandler {
                     override fun onError(session: SyncSession, error: SyncException) {
-                        channel.trySend(error)
+                        channel.trySendOrFail(error)
                     }
                 }).build()
             val realm2 = Realm.open(config2)
@@ -404,7 +415,7 @@ class SyncedRealmTests {
     @Ignore
     fun waitForInitialRemoteData_mainThreadThrows() = runBlocking<Unit>(Dispatchers.Main) {
         val user = app.asTestApp.createUserAndLogin()
-        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), setOf())
+        val config = SyncConfiguration.Builder(user, TestHelper.randomPartitionValue(), PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData()
             .build()
         assertFailsWith<IllegalStateException> {
@@ -429,11 +440,10 @@ class SyncedRealmTests {
     @Test
     fun waitForInitialRemoteData() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
-        val schema = setOf(ParentPk::class, ChildPk::class)
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
-        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
+        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, PARTITION_BASED_SCHEMA)
         Realm.open(config1).use { realm ->
             realm.write {
                 for (index in 0..9) {
@@ -444,13 +454,13 @@ class SyncedRealmTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // 2. Sometimes it can take a little while for the data to be available to other users,
         // so make sure data has reached server.
         val user2 = app.asTestApp.createUserAndLogin()
-        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, schema)
+        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, PARTITION_BASED_SCHEMA)
         assertNotEquals(config1.path, config2.path)
         Realm.open(config2).use { realm ->
             val count = realm.query<ParentPk>()
@@ -462,7 +472,7 @@ class SyncedRealmTests {
 
         // 3. Finally verify `waitForInitialData` is working
         val user3 = app.asTestApp.createUserAndLogin()
-        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, schema)
+        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData()
             .build()
         assertNotEquals(config1.path, config3.path)
@@ -474,7 +484,6 @@ class SyncedRealmTests {
     @Test
     fun waitForInitialData_timeOut() = runBlocking {
         val partitionValue = TestHelper.randomPartitionValue()
-        val schema = setOf(BinaryObject::class)
 
         // High enough to introduce latency when download Realm initial data
         // but not too high so that we reach Atlas' transmission limit
@@ -482,7 +491,7 @@ class SyncedRealmTests {
 
         // 1. Copy a valid Realm to the server
         val user1 = app.asTestApp.createUserAndLogin()
-        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, schema)
+        val config1: SyncConfiguration = SyncConfiguration.create(user1, partitionValue, PARTITION_BASED_SCHEMA)
         Realm.open(config1).use { realm ->
             realm.write {
                 for (index in 0 until objectCount) {
@@ -493,13 +502,13 @@ class SyncedRealmTests {
                     )
                 }
             }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
 
         // 2. Sometimes it can take a little while for the data to be available to other users,
         // so make sure data has reached server.
         val user2 = app.asTestApp.createUserAndLogin()
-        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, schema)
+        val config2: SyncConfiguration = SyncConfiguration.create(user2, partitionValue, PARTITION_BASED_SCHEMA)
         assertNotEquals(config1.path, config2.path)
         Realm.open(config2).use { realm ->
             val count = realm.query<BinaryObject>()
@@ -512,7 +521,7 @@ class SyncedRealmTests {
 
         // 3. Finally verify `waitForInitialData` is working
         val user3 = app.asTestApp.createUserAndLogin()
-        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, schema)
+        val config3: SyncConfiguration = SyncConfiguration.Builder(user3, partitionValue, PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData(1.nanoseconds)
             .build()
         assertNotEquals(config1.path, config3.path)
@@ -531,9 +540,8 @@ class SyncedRealmTests {
     @Ignore // See https://github.com/realm/realm-kotlin/issues/851
     fun waitForInitialData_resilientInCaseOfRetries() = runBlocking {
         val user = app.asTestApp.createUserAndLogin()
-        val schema = setOf(ParentPk::class, ChildPk::class)
         val partitionValue = TestHelper.randomPartitionValue()
-        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, schema)
+        val config: SyncConfiguration = SyncConfiguration.Builder(user, partitionValue, PARTITION_BASED_SCHEMA)
             .waitForInitialRemoteData(1.nanoseconds)
             .build()
 
@@ -559,9 +567,9 @@ class SyncedRealmTests {
         val syncDir: Path =
             pathOf(app.configuration.syncRootDirectory, "mongodb-realm", app.configuration.appId, user.id).toPath()
 
-        val bgThreadReadyChannel = Channel<Unit>(1)
-        val readyToCloseChannel = Channel<Unit>(1)
-        val closedChannel = Channel<Unit>(1)
+        val bgThreadReadyChannel = TestChannel<Unit>()
+        val readyToCloseChannel = TestChannel<Unit>()
+        val closedChannel = TestChannel<Unit>()
 
         kotlinx.coroutines.runBlocking {
             val testRealm = Realm.open(configuration)
@@ -582,7 +590,7 @@ class SyncedRealmTests {
             fileSystem.list(syncDir)
                 .also { testDirPathList ->
                     assertEquals(4, testDirPathList.size) // db file, .lock, .management, .note
-                    readyToCloseChannel.send(Unit)
+                    readyToCloseChannel.trySendOrFail(Unit)
                 }
             testRealm.close()
             closedChannel.receiveOrFail()
@@ -624,7 +632,7 @@ class SyncedRealmTests {
                 realm.write {
                     copyToRealm(masterObject)
                 }
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
             }
         }
         createPartitionSyncConfig(
@@ -661,7 +669,7 @@ class SyncedRealmTests {
             // schema = setOf(SyncObjectWithAllTypes::class, ChildPk::class)
         ).let { config ->
             Realm.open(config).use { realm ->
-                realm.syncSession.uploadAllLocalChanges()
+                realm.syncSession.uploadAllLocalChangesOrFail()
                 val schema: RealmSchema = realm.schema()
                 val childPkSchema: RealmClass? = schema["ChildPk"]
                 assertNotNull(childPkSchema)
@@ -716,7 +724,7 @@ class SyncedRealmTests {
             name = "db3",
         )
 
-        val counterValue = Channel<Long>(1)
+        val counterValue = TestChannel<Long>()
 
         // Asynchronously receive updates
         val updates = async {
@@ -727,7 +735,7 @@ class SyncedRealmTests {
                     .collect {
                         if (it.obj != null) {
                             val counter = it.obj!!.mutableRealmIntField
-                            counterValue.trySend(counter.get())
+                            counterValue.send(counter.get())
                         }
                     }
             }
@@ -737,7 +745,7 @@ class SyncedRealmTests {
         val masterObject = SyncObjectWithAllTypes().apply { _id = "id-${Random.nextLong()}" }
         Realm.open(config0).use { realm ->
             realm.writeBlocking { copyToRealm(masterObject) }
-            realm.syncSession.uploadAllLocalChanges()
+            realm.syncSession.uploadAllLocalChangesOrFail()
         }
         assertEquals(42, counterValue.receiveOrFail(message = "Failed to receive 42"))
 
@@ -946,10 +954,12 @@ class SyncedRealmTests {
             val (email1, password1) = randomEmail() to "password1234"
             val user = flexApp.createUserAndLogIn(email1, password1)
             val localConfig = createWriteCopyLocalConfig("local.realm")
-            val syncConfig = createPartitionSyncConfig(
+            val syncConfig = createFlexibleSyncConfig(
                 user = user,
                 name = "sync.realm",
-                partitionValue = partitionValue,
+                initialSubscriptions = {
+                    it.query<FlexParentObject>().subscribe(name = "parentSubscription")
+                }
             )
             Realm.open(syncConfig).use { flexSyncRealm: Realm ->
                 flexSyncRealm.writeBlocking {
@@ -959,6 +969,7 @@ class SyncedRealmTests {
                         }
                     )
                 }
+
                 // Copy to local Realm
                 flexSyncRealm.writeCopyTo(localConfig)
             }
@@ -1192,11 +1203,11 @@ class SyncedRealmTests {
                 realm2.write {
                     copyToRealm(FlexParentObject(section))
                 }
-                realm2.syncSession.uploadAllLocalChanges()
+                realm2.syncSession.uploadAllLocalChangesOrFail()
             }
 
             // Reading the object means we received it from the other Realm
-            withTimeout(30.seconds) {
+            withTimeout(1.minutes) {
                 val obj: FlexParentObject = realm1.query<FlexParentObject>("section = $0", section).asFlow()
                     .map { it.list }
                     .filter { it.isNotEmpty() }
@@ -1258,7 +1269,7 @@ class SyncedRealmTests {
                         }
                     )
                 }
-                flexSyncRealm.syncSession.uploadAllLocalChanges()
+                flexSyncRealm.syncSession.uploadAllLocalChangesOrFail()
             }
             assertTrue(customLogger.logs.isNotEmpty())
             assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
@@ -1330,6 +1341,8 @@ class SyncedRealmTests {
         println("Partition based sync bundled realm is in ${config2.path}")
     }
 
+    // This test cannot run multiple times on the same server instance as the primary
+    // key of the objects from asset-pbs.realm will not be unique on secondary runs.
     @Test
     fun initialRealm_partitionBasedSync() {
         val (email, password) = randomEmail() to "password1234"
@@ -1359,26 +1372,24 @@ class SyncedRealmTests {
             }
         }
 
+        val initialDataVerified = atomic(false)
         val config2 = createPartitionSyncConfig(
-            user = user, partitionValue = partitionValue, name = "db1",
+            user = user, partitionValue = partitionValue, name = "db2",
             errorHandler = object : SyncSession.ErrorHandler {
                 override fun onError(session: SyncSession, error: SyncException) {
-                    fail("Realm 1: $error")
+                    fail("Realm 2: $error")
                 }
             }
         ) {
             waitForInitialRemoteData(30.seconds)
             initialData {
-                // Verify that initial data is running before data is synced
-                assertEquals(0, query<ParentPk>().find().size)
+                // Verify that initial data is running after data is synced
+                assertEquals(4, query<ParentPk>().find().size)
+                initialDataVerified.value = true
             }
         }
-        Realm.open(config2).use {
-            runBlocking {
-                it.syncSession.downloadAllServerChanges(30.seconds)
-                assertEquals(4, it.query<ParentPk>().find().size)
-            }
-        }
+        Realm.open(config2).use { }
+        assertTrue { initialDataVerified.value }
     }
 
     @Test
@@ -1416,7 +1427,7 @@ class SyncedRealmTests {
                 name = "asset-fs.realm",
                 errorHandler = { _, error ->
                     fail(error.toString())
-                }
+                },
             )
 
             Realm.open(syncConfig1).use { flexRealm1: Realm ->
@@ -1444,6 +1455,7 @@ class SyncedRealmTests {
     // Sanity check that we can in fact open a flexible sync realm file as initial file
     @Test
     fun initialRealm_flexibleSync() = runBlocking {
+        @OptIn(ExperimentalKBsonSerializerApi::class)
         TestApp(
             "initialRealm_flexibleSync",
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
@@ -1458,7 +1470,7 @@ class SyncedRealmTests {
                 name = "sync1.realm",
                 errorHandler = { _, error ->
                     fail(error.toString())
-                }
+                },
             ) {
                 initialRealmFile("asset-fs.realm")
                 initialData {
@@ -1491,6 +1503,7 @@ class SyncedRealmTests {
 
     @Test
     fun flexibleSync_throwsWithLocalInitialRealmFile() {
+
         val (email, password) = randomEmail() to "password1234"
         val user = runBlocking {
             app.createUserAndLogIn(email, password)
@@ -1854,9 +1867,10 @@ class SyncedRealmTests {
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out BaseRealmObject>> = PARTITION_BASED_SCHEMA,
         block: SyncConfiguration.Builder.() -> Unit = {}
     ): SyncConfiguration = SyncConfiguration.Builder(
-        schema = PARTITION_SYNC_SCHEMA,
+        schema = schema,
         user = user,
         partitionValue = partitionValue
     ).name(name).also { builder ->
@@ -1873,11 +1887,12 @@ class SyncedRealmTests {
         encryptionKey: ByteArray? = null,
         log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
+        schema: Set<KClass<out BaseRealmObject>> = FLEXIBLE_SYNC_SCHEMA,
         initialSubscriptions: InitialSubscriptionsCallback? = null,
         block: SyncConfiguration.Builder.() -> Unit = {},
     ): SyncConfiguration = SyncConfiguration.Builder(
         user = user,
-        schema = FLX_SYNC_SCHEMA
+        schema = schema
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)

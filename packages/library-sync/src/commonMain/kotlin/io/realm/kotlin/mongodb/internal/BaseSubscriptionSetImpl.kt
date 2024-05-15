@@ -129,6 +129,8 @@ internal abstract class BaseSubscriptionSetImpl<T : BaseRealm>(
                     SubscriptionSetState.ERROR
                 CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_SUPERSEDED ->
                     SubscriptionSetState.SUPERCEDED
+                CoreSubscriptionSetState.RLM_SYNC_SUBSCRIPTION_AWAITING_MARK ->
+                    SubscriptionSetState.AWAITING_MARK
                 else -> TODO("Unsupported state: $coreState")
             }
         }

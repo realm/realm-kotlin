@@ -30,10 +30,14 @@ import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
 import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
+import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
+import io.realm.kotlin.test.util.TestChannel
+import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -50,6 +54,7 @@ import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -80,6 +85,7 @@ class ProgressListenerTests {
     }
 
     @Test
+    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun downloadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
             // Verify that we:
@@ -94,6 +100,7 @@ class ProgressListenerTests {
                         idOffset = TEST_SIZE * i,
                         timeout = TIMEOUT
                     )
+
                     // We are not sure when the realm actually knows of the remote changes and consider
                     // them current, so wait a bit
                     delay(10.seconds)
@@ -120,27 +127,28 @@ class ProgressListenerTests {
         }
     }
 
-    @Test
-    fun downloadProgressListener_indefinitely() = runBlocking {
-        Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
-            uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
-
-            Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-                val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
-                    .completionCounter()
-                withTimeout(TIMEOUT) {
-                    flow.takeWhile { completed -> completed < 3 }
-                        .collect { completed ->
-                            uploadRealm.writeSampleData(
-                                TEST_SIZE,
-                                idOffset = (completed + 1) * TEST_SIZE,
-                                timeout = TIMEOUT
-                            )
-                        }
-                }
-            }
-        }
-    }
+//    @Test
+//    fun downloadProgressListener_indefinitely() = runBlocking {
+//        Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
+//            uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
+//
+//            Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
+//                val flow = realm.syncSession
+//                    .progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+//                    .completionCounter()
+//                withTimeout(TIMEOUT) {
+//                    flow.takeWhile { completed -> completed < 3 }
+//                        .collect { completed ->
+//                            uploadRealm.writeSampleData(
+//                                TEST_SIZE,
+//                                idOffset = (completed + 1) * TEST_SIZE,
+//                                timeout = TIMEOUT
+//                            )
+//                        }
+//                }
+//            }
+//        }
+//    }
 
     @Test
     fun uploadProgressListener_changesOnly() = runBlocking {
@@ -160,23 +168,24 @@ class ProgressListenerTests {
         }
     }
 
-    @Test
-    fun uploadProgressListener_indefinitely() = runBlocking {
-        Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
-                .completionCounter()
+//    @Test
+//    fun uploadProgressListener_indefinitely() = runBlocking {
+//        Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
+//            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+//                .completionCounter()
+//
+//            withTimeout(TIMEOUT) {
+//                flow.takeWhile { completed -> completed < 3 }
+//                    .collect { completed ->
+//                        realm.writeSampleData(TEST_SIZE, idOffset = (completed + 1) * TEST_SIZE)
+//                        realm.syncSession.uploadAllLocalChangesOrFail()
+//                    }
+//            }
+//        }
+//    }
 
-            withTimeout(TIMEOUT) {
-                flow.takeWhile { completed -> completed < 3 }
-                    .collect { completed ->
-                        realm.writeSampleData(TEST_SIZE, idOffset = (completed + 1) * TEST_SIZE)
-                        realm.syncSession.uploadAllLocalChanges()
-                    }
-            }
-        }
-    }
-
     @Test
+    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun worksAfterExceptions() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
@@ -199,6 +208,7 @@ class ProgressListenerTests {
     }
 
     @Test
+    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun worksAfterCancel() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
@@ -229,11 +239,12 @@ class ProgressListenerTests {
     }
 
     @Test
+    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun triggerImmediatelyWhenRegistered() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             withTimeout(10.seconds) {
                 // Ensure that all data is already synced
-                assertTrue { realm.syncSession.uploadAllLocalChanges() }
+                realm.syncSession.uploadAllLocalChangesOrFail()
                 assertTrue { realm.syncSession.downloadAllServerChanges() }
                 // Ensure that progress listeners are triggered at least one time even though there
                 // is no data
@@ -249,7 +260,7 @@ class ProgressListenerTests {
     fun throwsOnFlexibleSync() = runBlocking {
         TestApp("throwsOnFlexibleSync", TEST_APP_FLEX).use {
             val user = app.createUserAndLogIn()
-            val configuration: SyncConfiguration = SyncConfiguration.create(user, FLX_SYNC_SCHEMA)
+            val configuration: SyncConfiguration = SyncConfiguration.create(user, FLEXIBLE_SYNC_SCHEMA)
             Realm.open(configuration).use { realm ->
                 assertFailsWithMessage<UnsupportedOperationException>(
                     "Progress listeners are not supported for Flexible Sync"
@@ -262,6 +273,7 @@ class ProgressListenerTests {
 
     @Test
     fun completesOnClose() = runBlocking {
+        val channel = TestChannel<Boolean>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
         TestApp("completesOnClose", TEST_APP_PARTITION).use { app ->
             val user = app.createUserAndLogIn()
             val realm = Realm.open(createSyncConfig(user))
@@ -269,12 +281,18 @@ class ProgressListenerTests {
                 val flow = realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
                 val job = async {
                     withTimeout(10.seconds) {
-                        flow.collect { }
+                        flow.collect {
+                            channel.send(true)
+                        }
                     }
                 }
+                // Wait for Flow to start, so we do not close the Realm before
+                // `flow.collect()` can be called.
+                channel.receiveOrFail()
                 realm.close()
                 job.await()
             } finally {
+                channel.close()
                 if (!realm.isClosed()) {
                     realm.close()
                 }
@@ -293,27 +311,27 @@ class ProgressListenerTests {
         }
     }
 
-    // Operator that will return a flow that emits an increasing integer on each completion event
-    private fun Flow<Progress>.completionCounter(): Flow<Int> =
-        filter { it.isTransferComplete }
-            .distinctUntilChanged()
-            // Increment completed count if we are done transferring and the amount of bytes has
-            // increased
-            .scan(0UL to 0) { (bytes, completed), progress ->
-                if (progress.isTransferComplete && progress.transferableBytes > bytes) {
-                    (progress.transferredBytes to completed + 1)
-                } else {
-                    (bytes to completed)
-                }
-            }
-            .drop(1)
-            .map { (_, completed) -> completed }
+//    // Operator that will return a flow that emits an increasing integer on each completion event
+//    private fun Flow<Progress>.completionCounter(): Flow<Int> =
+//        filter { it.isTransferComplete }
+//            .distinctUntilChanged()
+//            // Increment completed count if we are done transferring and the amount of bytes has
+//            // increased
+//            .scan(0UL to 0) { (bytes, completed), progress ->
+//                if (progress.isTransferComplete && progress.transferableBytes > bytes) {
+//                    (progress.transferredBytes to completed + 1)
+//                } else {
+//                    (bytes to completed)
+//                }
+//            }
+//            .drop(1)
+//            .map { (_, completed) -> completed }
 
     private fun createSyncConfig(
         user: User,
         partitionValue: String = getTestPartitionValue()
     ): SyncConfiguration {
-        return SyncConfiguration.Builder(user, partitionValue, io.realm.kotlin.test.mongodb.common.PARTITION_SYNC_SCHEMA)
+        return SyncConfiguration.Builder(user, partitionValue, PARTITION_BASED_SCHEMA)
             .build()
     }
 

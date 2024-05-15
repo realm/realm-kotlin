@@ -41,7 +41,7 @@ import io.realm.kotlin.notifications.UpdatedResults
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
-import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CloseableCoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
@@ -57,7 +57,7 @@ import kotlin.test.Test
  */
 class ReadMeTests {
     private lateinit var scope: CoroutineScope
-    private lateinit var context: CoroutineDispatcher
+    private lateinit var context: CloseableCoroutineDispatcher
     lateinit var tmpDir: String
     lateinit var realm: Realm
 
@@ -79,6 +79,7 @@ class ReadMeTests {
         scope.cancel()
         context.cancel()
         realm.close()
+        context.close()
         PlatformUtils.deleteTempDir(tmpDir)
     }
 

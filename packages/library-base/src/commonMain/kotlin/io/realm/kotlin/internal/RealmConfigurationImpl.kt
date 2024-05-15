@@ -46,7 +46,7 @@ internal class RealmConfigurationImpl(
     automaticBacklinkHandling: Boolean,
     initialDataCallback: InitialDataCallback?,
     inMemory: Boolean,
-    override val initialRealmFileConfiguration: InitialRealmFileConfiguration?,
+    initialRealmFileConfiguration: InitialRealmFileConfiguration?,
     logger: ContextLogger
 ) : ConfigurationImpl(
     directory,

@@ -46,7 +46,6 @@ import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.IrBlockBodyBuilder
 import org.jetbrains.kotlin.ir.builders.IrBlockBuilder
-import org.jetbrains.kotlin.ir.builders.IrBuilderWithScope
 import org.jetbrains.kotlin.ir.builders.at
 import org.jetbrains.kotlin.ir.builders.declarations.IrFieldBuilder
 import org.jetbrains.kotlin.ir.builders.declarations.IrFunctionBuilder
@@ -59,6 +58,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.buildField
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irGet
+import org.jetbrains.kotlin.ir.builders.irGetField
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.IrAnnotationContainer
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -80,8 +80,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrBranchImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrElseBranchImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrExpressionBodyImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrWhenImpl
@@ -510,13 +508,12 @@ fun IrClass.addValueProperty(
     // FIELD PROPERTY_BACKING_FIELD name:objectPointer type:kotlin.Long? visibility:private
     property.backingField = pluginContext.irFactory.buildField {
         at(this@addValueProperty.startOffset, this@addValueProperty.endOffset)
-        origin = IrDeclarationOrigin.PROPERTY_BACKING_FIELD
         name = property.name
         visibility = DescriptorVisibilities.PRIVATE
         modality = property.modality
         type = propertyType
     }.apply {
-        initializer = IrExpressionBodyImpl(initExpression(startOffset, endOffset))
+        initializer = factory.createExpressionBody(startOffset, endOffset, initExpression(startOffset, endOffset))
     }
     property.backingField?.parent = this
     property.backingField?.correspondingPropertySymbol = property.symbol
@@ -526,7 +523,6 @@ fun IrClass.addValueProperty(
         visibility = DescriptorVisibilities.PUBLIC
         modality = Modality.FINAL
         returnType = propertyType
-        origin = IrDeclarationOrigin.DEFAULT_PROPERTY_ACCESSOR
     }
     // $this: VALUE_PARAMETER name:<this> type:dev.nhachicha.Foo.$RealmHandler
     getter.dispatchReceiverParameter = thisReceiver!!.copyTo(getter)
@@ -543,7 +539,11 @@ fun IrClass.addValueProperty(
     getter.body = pluginContext.blockBody(getter.symbol) {
         at(startOffset, endOffset)
         +irReturn(
-            irGetFieldWrapper(irGet(getter.dispatchReceiverParameter!!), property.backingField!!)
+            irGetField(
+                irGet(getter.dispatchReceiverParameter!!),
+                property.backingField!!,
+                property.backingField!!.type
+            )
         )
     }
     return property
@@ -699,10 +699,6 @@ fun IrDeclaration.locationOf(): CompilerMessageSourceLocation {
         lineContent = null
     )!!
 }
-
-/** Wrapper method to overcome API differences from Kotlin 1.7.20-1.8.20 */
-fun IrBuilderWithScope.irGetFieldWrapper(receiver: IrGetValueImpl, field: IrField, type: IrType = field.type): IrExpression =
-    IrGetFieldImpl(startOffset, endOffset, field.symbol, type, receiver)
 
 /**
  * Method to indicate fatal issues that should not have happeneded; as opposed to user modeling

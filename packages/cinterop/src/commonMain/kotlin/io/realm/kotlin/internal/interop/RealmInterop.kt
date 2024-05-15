@@ -29,6 +29,9 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.interop.sync.ProgressDirection
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.interop.sync.SyncUserIdentity
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
+import io.realm.kotlin.internal.interop.sync.WebsocketCallbackResult
+import io.realm.kotlin.internal.interop.sync.WebsocketErrorCode
 import kotlinx.coroutines.CoroutineDispatcher
 import org.mongodb.kbson.ObjectId
 import kotlin.jvm.JvmInline
@@ -52,6 +55,8 @@ expect val INVALID_PROPERTY_KEY: PropertyKey
 const val OBJECT_ID_BYTES_SIZE = 12
 const val UUID_BYTES_SIZE = 16
 
+const val INDEX_NOT_FOUND = -1L
+
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
 interface CapiT
 interface RealmConfigT : CapiT
@@ -69,6 +74,7 @@ interface RealmCallbackTokenT : CapiT
 interface RealmNotificationTokenT : CapiT
 interface RealmChangesT : CapiT
 interface RealmSchedulerT : CapiT
+interface RealmKeyPathArrayT : CapiT
 
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
@@ -88,6 +94,7 @@ typealias RealmCallbackTokenPointer = NativePointer<RealmCallbackTokenT>
 typealias RealmNotificationTokenPointer = NativePointer<RealmNotificationTokenT>
 typealias RealmChangesPointer = NativePointer<RealmChangesT>
 typealias RealmSchedulerPointer = NativePointer<RealmSchedulerT>
+typealias RealmKeyPathArrayPointer = NativePointer<RealmKeyPathArrayT>
 
 // Sync types
 // Pure marker interfaces corresponding to the C-API realm_x_t struct types
@@ -101,9 +108,15 @@ interface RealmUserT : CapiT
 interface RealmNetworkTransportT : CapiT
 interface RealmSyncSessionT : CapiT
 interface RealmSubscriptionT : CapiT
+interface RealmSyncSocketObserverPointerT : CapiT
+interface RealmSyncSocketCallbackPointerT : CapiT
+
 interface RealmBaseSubscriptionSet : CapiT
+interface RealmSyncSocket : CapiT
 interface RealmSubscriptionSetT : RealmBaseSubscriptionSet
 interface RealmMutableSubscriptionSetT : RealmBaseSubscriptionSet
+interface RealmSyncSocketT : RealmSyncSocket
+
 // Public type aliases binding to internal verbose type safe type definitions. This should allow us
 // to easily change implementation details later on.
 typealias RealmAsyncOpenTaskPointer = NativePointer<RealmAsyncOpenTaskT>
@@ -119,7 +132,11 @@ typealias RealmSubscriptionPointer = NativePointer<RealmSubscriptionT>
 typealias RealmBaseSubscriptionSetPointer = NativePointer<out RealmBaseSubscriptionSet>
 typealias RealmSubscriptionSetPointer = NativePointer<RealmSubscriptionSetT>
 typealias RealmMutableSubscriptionSetPointer = NativePointer<RealmMutableSubscriptionSetT>
-
+typealias RealmSyncSocketPointer = NativePointer<RealmSyncSocketT>
+typealias RealmSyncSocketObserverPointer = NativePointer<RealmSyncSocketObserverPointerT>
+typealias RealmSyncSocketCallbackPointer = NativePointer<RealmSyncSocketCallbackPointerT>
+typealias RealmWebsocketHandlerCallbackPointer = NativePointer<CapiT>
+typealias RealmWebsocketProviderPointer = NativePointer<CapiT>
 /**
  * Class for grouping and normalizing values we want to send as part of
  * logging in Sync Users.
@@ -289,6 +306,8 @@ expect object RealmInterop {
         isDefault: Boolean
     )
     fun realm_set_embedded(obj: RealmObjectPointer, key: PropertyKey): RealmObjectPointer
+    fun realm_set_list(obj: RealmObjectPointer, key: PropertyKey): RealmListPointer
+    fun realm_set_dictionary(obj: RealmObjectPointer, key: PropertyKey): RealmMapPointer
     fun realm_object_add_int(obj: RealmObjectPointer, key: PropertyKey, value: Long)
     fun <T> realm_object_get_parent(
         obj: RealmObjectPointer,
@@ -300,10 +319,17 @@ expect object RealmInterop {
     fun realm_get_backlinks(obj: RealmObjectPointer, sourceClassKey: ClassKey, sourcePropertyKey: PropertyKey): RealmResultsPointer
     fun realm_list_size(list: RealmListPointer): Long
     fun MemAllocator.realm_list_get(list: RealmListPointer, index: Long): RealmValue
+    fun realm_list_find(list: RealmListPointer, value: RealmValue): Long
+    fun realm_list_get_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_get_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
     fun realm_list_add(list: RealmListPointer, index: Long, transport: RealmValue)
     fun realm_list_insert_embedded(list: RealmListPointer, index: Long): RealmObjectPointer
     // Returns the element previously at the specified position
     fun realm_list_set(list: RealmListPointer, index: Long, inputTransport: RealmValue)
+    fun realm_list_insert_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_insert_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
+    fun realm_list_set_list(list: RealmListPointer, index: Long): RealmListPointer
+    fun realm_list_set_dictionary(list: RealmListPointer, index: Long): RealmMapPointer
 
     // Returns the newly inserted element as the previous embedded element is automatically delete
     // by this operation
@@ -335,10 +361,19 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue
+    fun realm_dictionary_find_list(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmListPointer
+    fun realm_dictionary_find_dictionary(
+        dictionary: RealmMapPointer,
+        mapKey: RealmValue
+    ): RealmMapPointer
     fun MemAllocator.realm_dictionary_get(
         dictionary: RealmMapPointer,
         pos: Int
     ): Pair<RealmValue, RealmValue>
+
     fun MemAllocator.realm_dictionary_insert(
         dictionary: RealmMapPointer,
         mapKey: RealmValue,
@@ -360,6 +395,8 @@ expect object RealmInterop {
         dictionary: RealmMapPointer,
         mapKey: RealmValue
     ): RealmValue
+    fun realm_dictionary_insert_list(dictionary: RealmMapPointer, mapKey: RealmValue): RealmListPointer
+    fun realm_dictionary_insert_dictionary(dictionary: RealmMapPointer, mapKey: RealmValue): RealmMapPointer
     fun realm_dictionary_get_keys(dictionary: RealmMapPointer): RealmResultsPointer
     fun realm_dictionary_resolve_in(
         dictionary: RealmMapPointer,
@@ -424,6 +461,8 @@ expect object RealmInterop {
 
     // FIXME OPTIMIZE Get many
     fun MemAllocator.realm_results_get(results: RealmResultsPointer, index: Long): RealmValue
+    fun realm_results_get_list(results: RealmResultsPointer, index: Long): RealmListPointer
+    fun realm_results_get_dictionary(results: RealmResultsPointer, index: Long): RealmMapPointer
     fun realm_results_delete_all(results: RealmResultsPointer)
 
     fun realm_get_object(realm: RealmPointer, link: Link): RealmObjectPointer
@@ -435,24 +474,30 @@ expect object RealmInterop {
     ): RealmObjectPointer?
     fun realm_object_delete(obj: RealmObjectPointer)
 
+    fun realm_create_key_paths_array(realm: RealmPointer, clazz: ClassKey, keyPaths: List<String>): RealmKeyPathArrayPointer
     fun realm_object_add_notification_callback(
         obj: RealmObjectPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_results_add_notification_callback(
         results: RealmResultsPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_list_add_notification_callback(
         list: RealmListPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_set_add_notification_callback(
         set: RealmSetPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_dictionary_add_notification_callback(
         map: RealmMapPointer,
+        keyPaths: RealmKeyPathArrayPointer?,
         callback: Callback<RealmChangesPointer>
     ): RealmNotificationTokenPointer
     fun realm_object_changes_get_modified_properties(
@@ -486,7 +531,6 @@ expect object RealmInterop {
     fun realm_app_link_credentials(app: RealmAppPointer, user: RealmUserPointer, credentials: RealmCredentialsPointer, callback: AppCallback<RealmUserPointer>)
     fun realm_clear_cached_apps()
     fun realm_app_sync_client_get_default_file_path_for_realm(
-        app: RealmAppPointer,
         syncConfig: RealmSyncConfigurationPointer,
         overriddenName: String?
     ): String
@@ -531,6 +575,16 @@ expect object RealmInterop {
         callback: AppCallback<Array<ApiKeyWrapper>>,
     )
 
+    fun realm_app_get_base_url(
+        app: RealmAppPointer,
+    ): String
+
+    fun realm_app_update_base_url(
+        app: RealmAppPointer,
+        baseUrl: String?,
+        callback: AppCallback<Unit>,
+    )
+
     // User
     fun realm_user_get_all_identities(user: RealmUserPointer): List<SyncUserIdentity>
     fun realm_user_get_identity(user: RealmUserPointer): String
@@ -552,24 +606,24 @@ expect object RealmInterop {
         appId: String
     )
 
-    fun realm_sync_client_config_set_base_file_path(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    fun realm_app_config_set_base_file_path(
+        appConfig: RealmAppConfigurationPointer,
         basePath: String
     )
 
     fun realm_sync_client_config_set_multiplex_sessions(syncClientConfig: RealmSyncClientConfigurationPointer, enabled: Boolean)
 
-    fun realm_set_log_callback(level: CoreLogLevel, callback: LogCallback)
+    fun realm_set_log_callback(callback: LogCallback)
 
     fun realm_set_log_level(level: CoreLogLevel)
 
-    fun realm_sync_client_config_set_metadata_mode(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    fun realm_app_config_set_metadata_mode(
+        appConfig: RealmAppConfigurationPointer,
         metadataMode: MetadataMode
     )
 
-    fun realm_sync_client_config_set_metadata_encryption_key(
-        syncClientConfig: RealmSyncClientConfigurationPointer,
+    fun realm_app_config_set_metadata_encryption_key(
+        appConfig: RealmAppConfigurationPointer,
         encryptionKey: ByteArray
     )
     fun realm_sync_client_config_set_user_agent_binding_info(
@@ -580,6 +634,12 @@ expect object RealmInterop {
         syncClientConfig: RealmSyncClientConfigurationPointer,
         applicationInfo: String
     )
+
+    fun realm_sync_client_config_set_connect_timeout(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
+    fun realm_sync_client_config_set_connection_linger_time(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
+    fun realm_sync_client_config_set_ping_keepalive_period(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
+    fun realm_sync_client_config_set_pong_keepalive_timeout(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
+    fun realm_sync_client_config_set_fast_reconnect_limit(syncClientConfig: RealmSyncClientConfigurationPointer, timeoutMs: ULong)
 
     fun realm_sync_config_new(
         user: RealmUserPointer,
@@ -785,4 +845,22 @@ expect object RealmInterop {
     fun realm_sync_subscriptionset_commit(
         mutableSubscriptionSet: RealmMutableSubscriptionSetPointer
     ): RealmSubscriptionSetPointer
+
+    fun realm_sync_set_websocket_transport(
+        syncClientConfig: RealmSyncClientConfigurationPointer,
+        webSocketTransport: WebSocketTransport
+    )
+
+    fun realm_sync_socket_callback_complete(nativePointer: RealmWebsocketHandlerCallbackPointer, cancelled: Boolean = false, status: WebsocketCallbackResult = WebsocketCallbackResult.RLM_ERR_SYNC_SOCKET_SUCCESS, reason: String = "")
+
+    fun realm_sync_socket_websocket_connected(nativePointer: RealmWebsocketProviderPointer, protocol: String)
+
+    fun realm_sync_socket_websocket_error(nativePointer: RealmWebsocketProviderPointer)
+
+    fun realm_sync_socket_websocket_message(
+        nativePointer: RealmWebsocketProviderPointer,
+        data: ByteArray
+    ): Boolean
+
+    fun realm_sync_socket_websocket_closed(nativePointer: RealmWebsocketProviderPointer, wasClean: Boolean, errorCode: WebsocketErrorCode, reason: String = "")
 }

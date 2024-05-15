@@ -3,7 +3,7 @@
 // been built and deployed to a local filesystem
 // maven repo. We cannot reference `Realm.ciBuild`
 // from buildSrc here.
-if (System.getenv("JENKINS_HOME") == null) {
+if (System.getenv("CI") == null) {
     includeBuild("../../packages")
 }
 

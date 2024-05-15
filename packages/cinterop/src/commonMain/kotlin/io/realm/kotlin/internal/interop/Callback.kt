@@ -43,7 +43,7 @@ interface SyncSessionTransferCompletionCallback {
 
 interface LogCallback {
     // Passes core log levels as shorts to avoid unnecessary jumping between the SDK and JNI
-    fun log(logLevel: Short, message: String?)
+    fun log(logLevel: Short, category: String?, message: String?)
 }
 
 interface SyncBeforeClientResetHandler {
@@ -85,7 +85,7 @@ fun interface AsyncOpenCallback {
 }
 
 fun interface ProgressCallback {
-    fun onChange(transferredBytes: Long, totalBytes: Long, progressEstimate: Double)
+    fun onChange(progressEstimate: Double)
 }
 
 fun interface ConnectionStateChangeCallback {

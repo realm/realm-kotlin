@@ -33,7 +33,6 @@ import org.gradle.kotlin.dsl.withType
 import org.gradle.plugins.signing.SigningExtension
 import org.gradle.plugins.signing.SigningPlugin
 import java.io.File
-import java.net.URI
 import java.time.Duration
 
 // Custom options for POM configurations that might differ between Realm modules

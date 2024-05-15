@@ -20,6 +20,7 @@ import io.realm.kotlin.internal.interop.RealmAppPointer
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
@@ -30,6 +31,7 @@ import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.User
+import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
 import io.realm.kotlin.mongodb.auth.EmailPasswordAuth
 import io.realm.kotlin.mongodb.sync.Sync
 import io.realm.kotlin.types.RealmInstant
@@ -40,7 +42,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-internal typealias AppResources = Triple<DispatcherHolder, NetworkTransport, RealmAppPointer>
+public data class AppResources(
+    val dispatcherHolder: DispatcherHolder,
+    val networkTransport: NetworkTransport,
+    val websocketTransport: WebSocketTransport?,
+    val realmAppPointer: RealmAppPointer
+)
 
 // TODO Public due to being a transitive dependency to UserImpl
 public class AppImpl(
@@ -50,11 +57,30 @@ public class AppImpl(
     internal val nativePointer: RealmAppPointer
     internal val appNetworkDispatcher: DispatcherHolder
     private val networkTransport: NetworkTransport
+    private val websocketTransport: WebSocketTransport?
 
     private var lastOnlineStateReported: Duration? = null
     private var lastConnectedState: Boolean? = null // null = unknown, true = connected, false = disconnected
     @Suppress("MagicNumber")
     private val reconnectThreshold = 5.seconds
+
+    @ExperimentalEdgeServerApi
+    override val baseUrl: String
+        get() = RealmInterop.realm_app_get_base_url(nativePointer)
+
+    @ExperimentalEdgeServerApi
+    override suspend fun updateBaseUrl(baseUrl: String?) {
+        Channel<Result<Unit>>(1).use { channel ->
+            RealmInterop.realm_app_update_base_url(
+                app = nativePointer,
+                baseUrl = baseUrl?.trimEnd('/'), // trailing slashes are not handled properly in core
+                callback = channelResultCallback<Unit, Unit>(channel) {
+                    // No-op
+                }
+            )
+            channel.receive().getOrThrow()
+        }
+    }
 
     @Suppress("invisible_member", "invisible_reference", "MagicNumber")
     private val connectionListener = NetworkStateObserver.ConnectionListener { connectionAvailable ->
@@ -95,9 +121,10 @@ public class AppImpl(
 
     init {
         val appResources: AppResources = configuration.createNativeApp()
-        appNetworkDispatcher = appResources.first
-        networkTransport = appResources.second
-        nativePointer = appResources.third
+        appNetworkDispatcher = appResources.dispatcherHolder
+        networkTransport = appResources.networkTransport
+        websocketTransport = appResources.websocketTransport
+        nativePointer = appResources.realmAppPointer
         NetworkStateObserver.addListener(connectionListener)
     }
 

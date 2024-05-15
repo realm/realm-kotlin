@@ -60,7 +60,12 @@ public interface RealmElementQuery<T : BaseRealmObject> : Deleteable {
      *
      * **It is not allowed to call [asFlow] on queries generated from a [MutableRealm].**
      *
+     * @param keyPaths An optional list of properties that defines when a change to the object will
+     * result in a change being emitted. Nested properties can be defined using a dotted
+     * syntax, e.g. `parent.child.name`. If no keypaths are provided, changes to all top-level
+     * properties and nested properties 4 levels down will trigger a change.
      * @return a flow representing changes to the [RealmResults] resulting from running this query.
+     * @throws IllegalArgumentException if an invalid keypath is provided.
      */
-    public fun asFlow(): Flow<ResultsChange<T>>
+    public fun asFlow(keyPath: List<String>? = null): Flow<ResultsChange<T>>
 }

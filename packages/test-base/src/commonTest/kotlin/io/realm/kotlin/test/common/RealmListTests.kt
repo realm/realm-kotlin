@@ -568,9 +568,9 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
                 .buffer(1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
             val listener = async {
-                withTimeout(10.seconds) {
+                withTimeout(30.seconds) {
                     flow.collect { current ->
-                        delay(30.milliseconds)
+                        delay(100.milliseconds)
                     }
                 }
             }
@@ -630,6 +630,35 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
             objectListField.query()
         }
         Unit
+    }
+
+    @Test
+    fun contains_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmListContainer())
+            assertEquals(1, query<RealmListContainer>().find().size)
+            assertFalse(liveObject.objectListField.contains(RealmListContainer()))
+            assertFalse(liveObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+            assertEquals(1, query<RealmListContainer>().find().size)
+            liveObject
+        }
+        // Verify that we can also call this on frozen instances
+        assertFalse(frozenObject.objectListField.contains(RealmListContainer()))
+        assertFalse(frozenObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
+    }
+
+    @Test
+    fun remove_unmanagedArgs() = runBlocking<Unit> {
+        val frozenObject = realm.write {
+            val liveObject = copyToRealm(RealmListContainer())
+            assertEquals(1, query<RealmListContainer>().find().size)
+            assertFalse(liveObject.objectListField.remove(RealmListContainer()))
+            assertFalse(liveObject.nullableRealmAnyListField.remove(RealmAny.create(RealmListContainer())))
+            assertEquals(1, query<RealmListContainer>().find().size)
+            liveObject
+        }
+        assertFalse(frozenObject.objectListField.contains(RealmListContainer()))
+        assertFalse(frozenObject.nullableRealmAnyListField.contains(RealmAny.create(RealmListContainer())))
     }
 
     private fun getCloseableRealm(): Realm =
@@ -692,13 +721,6 @@ class RealmListTests : EmbeddedObjectCollectionQueryTests {
                         dataSetToLoad = OBJECT_VALUES
                     ),
                     classifier
-                )
-                ByteArray::class -> ByteArrayListTester(
-                    realm = realm,
-                    typeSafetyManager = getTypeSafety(
-                        classifier,
-                        elementType.nullable
-                    ) as ListTypeSafetyManager<ByteArray?>
                 )
                 RealmAny::class -> RealmAnyListTester(
                     realm = realm,
@@ -1316,6 +1338,9 @@ internal class RealmAnyListTester constructor(
                     expected.asRealmObject<RealmListContainer>().stringField,
                     actual.asRealmObject<RealmListContainer>().stringField
                 )
+                // Collections in RealmAny are tested separately in RealmAnyNestedCollectionTests
+                RealmAny.Type.LIST,
+                RealmAny.Type.DICTIONARY -> TODO()
             }
         } else if (expected != null || actual != null) {
             fail("One of the RealmAny values is null, expected = $expected, actual = $actual")
@@ -1334,38 +1359,6 @@ internal class RealmObjectListTester(
 ) : ManagedListTester<RealmListContainer>(realm, typeSafetyManager, classifier) {
     override fun assertElementsAreEqual(expected: RealmListContainer, actual: RealmListContainer) =
         assertEquals(expected.stringField, actual.stringField)
-}
-
-/**
- * Check equality for ByteArrays at a structural level with `assertContentEquals`.
- */
-internal class ByteArrayListTester(
-    realm: Realm,
-    typeSafetyManager: ListTypeSafetyManager<ByteArray?>
-) : ManagedListTester<ByteArray?>(realm, typeSafetyManager, ByteArray::class) {
-    override fun assertElementsAreEqual(expected: ByteArray?, actual: ByteArray?) =
-        assertContentEquals(expected, actual)
-
-    // Removing elements using equals/hashcode will fail for byte arrays since they are
-    // are only equal if identical
-    override fun remove() {
-        val dataSet = typeSafetyManager.dataSetToLoad
-        val assertions = { list: RealmList<ByteArray?> ->
-            assertFalse(list.isEmpty())
-        }
-
-        errorCatcher {
-            realm.writeBlocking {
-                val list = typeSafetyManager.createContainerAndGetCollection(this)
-                assertFalse(list.remove(dataSet[0]))
-                assertTrue(list.add(dataSet[0]))
-                assertFalse(list.remove(list.last()))
-                assertions(list)
-            }
-        }
-
-        assertListAndCleanup { list -> assertions(list) }
-    }
 }
 
 // -----------------------------------

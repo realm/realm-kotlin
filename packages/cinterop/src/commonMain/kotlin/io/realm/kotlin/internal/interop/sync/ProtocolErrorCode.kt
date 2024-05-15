@@ -39,6 +39,9 @@ expect enum class SyncConnectionErrorCode : CodeDescription {
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_FLX_SYNC,
     RLM_SYNC_ERR_CONNECTION_SWITCH_TO_PBS;
 
+    override val nativeValue: Int
+    override val description: String?
+
     companion object {
         internal fun of(nativeValue: Int): SyncConnectionErrorCode?
     }
@@ -82,7 +85,12 @@ expect enum class SyncSessionErrorCode : CodeDescription {
     RLM_SYNC_ERR_SESSION_COMPENSATING_WRITE,
     RLM_SYNC_ERR_SESSION_MIGRATE_TO_FLX,
     RLM_SYNC_ERR_SESSION_BAD_PROGRESS,
-    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS;
+    RLM_SYNC_ERR_SESSION_REVERT_TO_PBS,
+    RLM_SYNC_ERR_SESSION_BAD_SCHEMA_VERSION,
+    RLM_SYNC_ERR_SESSION_SCHEMA_VERSION_CHANGED;
+
+    override val nativeValue: Int
+    override val description: String?
 
     companion object {
         internal fun of(nativeValue: Int): SyncSessionErrorCode?
@@ -120,8 +128,11 @@ expect enum class WebsocketErrorCode : CodeDescription {
     RLM_ERR_WEBSOCKET_RETRY_ERROR,
     RLM_ERR_WEBSOCKET_FATAL_ERROR;
 
+    override val nativeValue: Int
+    override val description: String?
+
     companion object {
-        internal fun of(nativeValue: Int): WebsocketErrorCode?
+        fun of(nativeValue: Int): WebsocketErrorCode?
     }
 }
 
@@ -138,6 +149,9 @@ expect enum class WebsocketCallbackResult : CodeDescription {
     RLM_ERR_SYNC_SOCKET_CONNECTION_CLOSED,
     RLM_ERR_SYNC_SOCKET_NOT_SUPPORTED,
     RLM_ERR_SYNC_SOCKET_INVALID_ARGUMENT;
+
+    override val nativeValue: Int
+    override val description: String?
 
     companion object {
         fun of(nativeValue: Int): WebsocketCallbackResult?

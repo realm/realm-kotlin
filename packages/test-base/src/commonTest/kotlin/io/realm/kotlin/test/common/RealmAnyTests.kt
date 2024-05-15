@@ -26,6 +26,9 @@ import io.realm.kotlin.entities.embedded.EmbeddedParent
 import io.realm.kotlin.entities.embedded.embeddedSchema
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
+import io.realm.kotlin.ext.realmDictionaryOf
+import io.realm.kotlin.ext.realmListOf
+import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.notifications.DeletedObject
 import io.realm.kotlin.notifications.InitialObject
@@ -35,6 +38,7 @@ import io.realm.kotlin.notifications.UpdatedObject
 import io.realm.kotlin.query.find
 import io.realm.kotlin.test.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.platform.PlatformUtils
+import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
@@ -44,7 +48,6 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.Index
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.BsonDecimal128
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
@@ -373,8 +376,8 @@ class RealmAnyTests {
     @Test
     fun managed_deleteObjectInsideRealmAnyTriggersUpdateInContainer() {
         runBlocking {
-            val sampleChannel = Channel<SingleQueryChange<Sample>>(1)
-            val containerChannel = Channel<SingleQueryChange<RealmAnyContainer>>(1)
+            val sampleChannel = TestChannel<SingleQueryChange<Sample>>()
+            val containerChannel = TestChannel<SingleQueryChange<RealmAnyContainer>>()
 
             val sampleObserver = async {
                 realm.query<Sample>()
@@ -486,6 +489,9 @@ class RealmAnyTests {
                     // Different objects of same type are not equal
                     assertNotEquals(RealmAny.create(Sample()), RealmAny.create(realmObject))
                 }
+                // Collections in RealmAny are tested in RealmAnyNestedCollections.kt
+                RealmAny.Type.LIST,
+                RealmAny.Type.DICTIONARY -> {}
             }
         }
     }
@@ -505,6 +511,23 @@ class RealmAnyTests {
         }
         assertEquals(1, realm.query<EmbeddedParent>().count().find())
         assertEquals(1, realm.query<EmbeddedChild>().count().find())
+    }
+
+    @Test
+    fun importWithDuplicateReference() = runBlocking {
+        val child = realm.write {
+            Sample().apply { stringField = "CHILD" }
+        }
+        realm.write {
+            val parent = Sample().apply {
+                nullableRealmAnyField = RealmAny.create(child)
+                nullableRealmAnySetField = realmSetOf(RealmAny.create(child))
+                nullableRealmAnyListField = realmListOf(RealmAny.create(child))
+                nullableRealmAnyDictionaryField = realmDictionaryOf("key" to RealmAny.create(child))
+            }
+            copyToRealm(parent)
+        }
+        assertEquals(1, realm.query<Sample>("stringField = 'CHILD'").find().size)
     }
 
     private fun assertCoreIntValuesAreTheSame(

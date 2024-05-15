@@ -24,6 +24,7 @@ import io.realm.kotlin.internal.interop.RealmSyncClientConfigurationPointer
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.interop.sync.MetadataMode
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
+import io.realm.kotlin.internal.interop.sync.WebSocketTransport
 import io.realm.kotlin.internal.platform.DEVICE_MANUFACTURER
 import io.realm.kotlin.internal.platform.DEVICE_MODEL
 import io.realm.kotlin.internal.platform.OS_VERSION
@@ -35,6 +36,7 @@ import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AppConfiguration.Companion.DEFAULT_BASE_URL
 import io.realm.kotlin.mongodb.HttpLogObfuscator
+import io.realm.kotlin.mongodb.sync.SyncTimeoutOptions
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
 import org.mongodb.kbson.serialization.EJson
 
@@ -46,6 +48,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val encryptionKey: ByteArray?,
     private val appNetworkDispatcherFactory: CoroutineDispatcherFactory,
     internal val networkTransportFactory: (dispatcher: DispatcherHolder) -> NetworkTransport,
+    private val websocketTransport: WebSocketTransport?,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
     public val logger: LogConfiguration?,
@@ -56,6 +59,8 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val httpLogObfuscator: HttpLogObfuscator?,
     override val customRequestHeaders: Map<String, String>,
     override val authorizationHeaderName: String,
+    override val enableSessionMultiplexing: Boolean,
+    override val syncTimeoutOptions: SyncTimeoutOptions,
 ) : AppConfiguration {
 
     /**
@@ -85,12 +90,15 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         }
         val sdkInfo = "RealmKotlin/$SDK_VERSION"
         val synClientConfig: RealmSyncClientConfigurationPointer = initializeSyncClientConfig(
+            websocketTransport,
             sdkInfo,
             applicationInfo.toString()
         )
-        return Triple(
+
+        return AppResources(
             appDispatcher,
             networkTransport,
+            websocketTransport,
             RealmInterop.realm_app_get(
                 appConfigPointer,
                 synClientConfig,
@@ -124,7 +132,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
         bundleId: String,
         networkTransport: NetworkTransport
     ): RealmAppConfigurationPointer {
-        return RealmInterop.realm_app_config_new(
+        val appConfigPtr = RealmInterop.realm_app_config_new(
             appId = appId,
             baseUrl = baseUrl,
             networkTransport = RealmInterop.realm_network_transport_new(networkTransport),
@@ -138,31 +146,26 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                 frameworkVersion = RUNTIME_VERSION
             )
         )
+        RealmInterop.realm_app_config_set_base_file_path(appConfigPtr, syncRootDirectory)
+        RealmInterop.realm_app_config_set_metadata_mode(appConfigPtr, metadataMode)
+        encryptionKey?.let {
+            RealmInterop.realm_app_config_set_metadata_encryption_key(
+                appConfigPtr,
+                it
+            )
+        }
+        return appConfigPtr
     }
 
-    private fun initializeSyncClientConfig(sdkInfo: String?, applicationInfo: String?): RealmSyncClientConfigurationPointer =
+    private fun initializeSyncClientConfig(
+        webSocketTransport: WebSocketTransport?,
+        sdkInfo: String?,
+        applicationInfo: String?
+    ): RealmSyncClientConfigurationPointer =
         RealmInterop.realm_sync_client_config_new()
             .also { syncClientConfig ->
                 // Initialize client configuration first
                 RealmInterop.realm_sync_client_config_set_default_binding_thread_observer(syncClientConfig, appId)
-                RealmInterop.realm_sync_client_config_set_metadata_mode(
-                    syncClientConfig,
-                    metadataMode
-                )
-                RealmInterop.realm_sync_client_config_set_base_file_path(
-                    syncClientConfig,
-                    syncRootDirectory
-                )
-
-                // Disable multiplexing. See https://github.com/realm/realm-core/issues/6656
-                RealmInterop.realm_sync_client_config_set_multiplex_sessions(syncClientConfig, false)
-
-                encryptionKey?.let {
-                    RealmInterop.realm_sync_client_config_set_metadata_encryption_key(
-                        syncClientConfig,
-                        it
-                    )
-                }
 
                 sdkInfo?.let {
                     RealmInterop.realm_sync_client_config_set_user_agent_binding_info(
@@ -176,6 +179,36 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                         syncClientConfig,
                         it
                     )
+                }
+
+                // Setup multiplexing
+                RealmInterop.realm_sync_client_config_set_multiplex_sessions(syncClientConfig, enableSessionMultiplexing)
+
+                // Setup SyncTimeoutOptions
+                RealmInterop.realm_sync_client_config_set_connect_timeout(
+                    syncClientConfig,
+                    syncTimeoutOptions.connectTimeout.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_connection_linger_time(
+                    syncClientConfig,
+                    syncTimeoutOptions.connectionLingerTime.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_ping_keepalive_period(
+                    syncClientConfig,
+                    syncTimeoutOptions.pingKeepalivePeriod.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_pong_keepalive_timeout(
+                    syncClientConfig,
+                    syncTimeoutOptions.pongKeepalivePeriod.inWholeMilliseconds.toULong()
+                )
+                RealmInterop.realm_sync_client_config_set_fast_reconnect_limit(
+                    syncClientConfig,
+                    syncTimeoutOptions.fastReconnectLimit.inWholeMilliseconds.toULong()
+                )
+
+                // Use platform networking for Sync client WebSockets if provided
+                webSocketTransport?.let {
+                    RealmInterop.realm_sync_set_websocket_transport(syncClientConfig, it)
                 }
             }
 
