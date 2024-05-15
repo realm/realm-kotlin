@@ -82,8 +82,19 @@ public class ContextLogger(public val context: String? = null) {
         doLog(LogLevel.WTF, null, { contextPrefix + message }, *args)
     }
 
+    private inline fun checkPriority(
+        level: LogLevel,
+        block: () -> Unit,
+    ) {
+        if (level.priority >= RealmLog.getLevel(SdkLogCategory).priority) {
+            block()
+        }
+    }
+
     private inline fun doLog(level: LogLevel, throwable: Throwable?) {
-        RealmLog.doLog(LogCategory.Realm.Sdk, level, throwable, null)
+        checkPriority(level) {
+            RealmLog.log(LogCategory.Realm.Sdk, level, throwable, null)
+        }
     }
 
     private inline fun doLog(
@@ -92,8 +103,8 @@ public class ContextLogger(public val context: String? = null) {
         message: () -> String?,
         vararg args: Any?,
     ) {
-        if (level >= RealmLog.getLevel(SdkLogCategory)) {
-            RealmLog.doLog(LogCategory.Realm.Sdk, level, throwable, message(), *args)
+        checkPriority(level) {
+            RealmLog.log(LogCategory.Realm.Sdk, level, throwable, message(), *args)
         }
     }
 }
