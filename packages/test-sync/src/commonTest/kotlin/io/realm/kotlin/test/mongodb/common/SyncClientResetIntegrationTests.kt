@@ -114,11 +114,11 @@ class SyncClientResetIntegrationTests {
                 builder: SyncConfiguration.Builder
             ) -> Unit
         ) {
+            RealmLog.add(ClientResetLoggerInspector(logChannel))
             val app = TestApp(
                 this::class.simpleName,
                 appName = appName,
                 logLevel = LogLevel.INFO,
-                customLogger = ClientResetLoggerInspector(logChannel),
                 initialSetup = { app, service ->
                     addEmailProvider(app)
                     when (syncMode) {
@@ -332,20 +332,16 @@ class SyncClientResetIntegrationTests {
         }
     }
 
-    private lateinit var initialLogLevel: LogLevel
     private lateinit var partitionValue: String
 
     @BeforeTest
     fun setup() {
-        initialLogLevel = RealmLog.level
         partitionValue = TestHelper.randomPartitionValue()
     }
 
     @AfterTest
     fun tearDown() {
-        RealmLog.removeAll()
-        RealmLog.addDefaultSystemLogger()
-        RealmLog.level = initialLogLevel
+        RealmLog.reset()
     }
 
     // ---------------------------------------------------------------------------------------

@@ -27,7 +27,6 @@ import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
@@ -103,7 +102,6 @@ open class TestApp private constructor(
             it.syncRootDirectory(PlatformUtils.createTempDir("$appName-$testId"))
         },
         debug: Boolean = false,
-        customLogger: RealmLogger? = null,
         networkTransport: NetworkTransport? = null,
         ejson: EJson = EJson,
         initialSetup: suspend AppServicesClient.(app: BaasApp, service: Service) -> Unit = { app: BaasApp, service: Service ->

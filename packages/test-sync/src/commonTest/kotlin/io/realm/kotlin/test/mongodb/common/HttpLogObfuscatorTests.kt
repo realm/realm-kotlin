@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_reference", "invisible_member")
 
 package io.realm.kotlin.test.mongodb.common
 
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.GoogleAuthType
@@ -112,7 +114,9 @@ class HttpLogObfuscatorTests {
 
     @BeforeTest
     fun setUp() {
+        RealmLog.level = LogLevel.DEBUG
         channel = Channel(1)
+        RealmLog.add(ObfuscatorLoggerInspector(channel))
     }
 
     private fun initApp(): TestApp {
@@ -120,7 +124,6 @@ class HttpLogObfuscatorTests {
             this::class.simpleName,
             appName = syncServerAppName("obfsctr"),
             logLevel = LogLevel.DEBUG,
-            customLogger = ObfuscatorLoggerInspector(channel),
             initialSetup = { app, service ->
                 initializeDefault(app, service)
                 app.addFunction(TestAppInitializer.FIRST_ARG_FUNCTION)
@@ -133,6 +136,7 @@ class HttpLogObfuscatorTests {
     @AfterTest
     fun tearDown() {
         channel.close()
+        RealmLog.reset()
 
         if (this::app.isInitialized) {
             app.close()
@@ -142,12 +146,12 @@ class HttpLogObfuscatorTests {
     @Test
     fun nullObfuscator() = runBlocking {
         val logger = CustomLogCollector()
+        RealmLog.add(logger)
         app = TestApp(
             "nullObfuscator",
             appName = syncServerAppName("null-obf"),
             logLevel = LogLevel.DEBUG,
             builder = { it.httpLogObfuscator(null) },
-            customLogger = logger,
             initialSetup = { app, service ->
                 initializeDefault(app, service)
                 app.addFunction(TestAppInitializer.FIRST_ARG_FUNCTION)
