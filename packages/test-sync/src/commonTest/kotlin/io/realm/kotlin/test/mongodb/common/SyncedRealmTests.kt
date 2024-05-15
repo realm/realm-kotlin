@@ -1240,7 +1240,7 @@ class SyncedRealmTests {
 
     @Test
     fun customLoggersReceiveSyncLogs() = runBlocking {
-        val customLogger = CustomLogCollector("CUSTOM", LogLevel.ALL)
+        val customLogger = CustomLogCollector()
         val section = Random.nextInt()
         TestApp(
             "customLoggersReceiveSyncLogs",

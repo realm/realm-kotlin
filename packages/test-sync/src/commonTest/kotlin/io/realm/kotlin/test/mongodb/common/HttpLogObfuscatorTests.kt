@@ -141,7 +141,7 @@ class HttpLogObfuscatorTests {
 
     @Test
     fun nullObfuscator() = runBlocking {
-        val logger = CustomLogCollector("NULL-OBFUSCATOR", LogLevel.DEBUG)
+        val logger = CustomLogCollector()
         app = TestApp(
             "nullObfuscator",
             appName = syncServerAppName("null-obf"),
