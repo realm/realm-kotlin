@@ -91,12 +91,16 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrConstructorCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetEnumValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrPropertyReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classFqName
+import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.types.starProjectedType
+import org.jetbrains.kotlin.ir.types.typeOrNull
 import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.companionObject
 import org.jetbrains.kotlin.ir.util.constructors
@@ -250,7 +254,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
      * - `public fun `io_realm_kotlin_schema`(): RealmClassImpl` is added by calling [addSchemaMethodBody].
      * - `public fun `io_realm_kotlin_newInstance`(): Any` is added by calling [addNewInstanceMethodBody].
      */
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "ComplexMethod")
     fun addCompanionFields(
         clazz: IrClass,
         companion: IrClass,
@@ -316,14 +320,19 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                         // Generate list of properties: List<Pair<String, Pair<KClass<*>, KMutableProperty1<*, *>>>>
                         properties!!.entries.map {
                             val property = it.value.declaration
-                            val targetType = property.backingField!!.type
-                            val targetIrClass = pluginContext.lookupClassOrThrow(targetType.classId!!)
-                            val targetKClassRef = IrClassReferenceImpl(
+                            val targetType: IrType = property.backingField!!.type
+                            val propertyElementType: IrType = when (it.value.collectionType) {
+                                CollectionType.NONE -> targetType
+                                CollectionType.LIST -> (targetType as IrSimpleType).arguments[0].typeOrNull!!
+                                CollectionType.SET -> (targetType as IrSimpleType).arguments[0].typeOrNull!!
+                                CollectionType.DICTIONARY -> (targetType as IrSimpleType).arguments[0].typeOrNull!!
+                            }
+                            val elementKClassRef = IrClassReferenceImpl(
                                 startOffset = startOffset,
                                 endOffset = endOffset,
-                                type = pluginContext.irBuiltIns.kClassClass.typeWith(targetType),
-                                symbol = targetIrClass.symbol,
-                                classType = targetIrClass.defaultType,
+                                type = pluginContext.irBuiltIns.kClassClass.typeWith(propertyElementType),
+                                symbol = propertyElementType.classOrNull!!,
+                                classType = propertyElementType.classOrNull!!.defaultType,
                             )
                             val objectPropertyType = if (it.value.isComputed) realmObjectPropertyType else
                                 realmObjectMutablePropertyType
@@ -361,7 +370,7 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
                                         putTypeArgument(1, objectPropertyType)
                                         putValueArgument(
                                             0,
-                                            targetKClassRef
+                                            elementKClassRef
                                         )
                                         putValueArgument(
                                             1,

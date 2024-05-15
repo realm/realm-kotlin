@@ -38,8 +38,9 @@ public fun RealmInstant.toDuration(): Duration {
 
 public fun Duration.toRealmInstant(): RealmInstant {
     val seconds: Long = this.inWholeSeconds
-    val nanos: Duration = (this - seconds.seconds)
-    return RealmInstant.from(seconds, nanos.inWholeNanoseconds.toInt())
+    // We cannot do duration arithmetic as some operations on INFINITE and NEG_INFINITE will overflow
+    val nanos: Int = (this.inWholeNanoseconds - (seconds * RealmInstant.SEC_AS_NANOSECOND)).toInt()
+    return RealmInstant.from(seconds, nanos)
 }
 
 internal fun RealmInstant.restrictToMillisPrecision() =

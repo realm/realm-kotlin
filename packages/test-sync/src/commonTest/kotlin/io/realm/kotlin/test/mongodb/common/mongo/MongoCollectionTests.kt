@@ -358,7 +358,7 @@ sealed class MongoCollectionTests {
                 { response: ParentCollectionDataType? -> response != null },
             )
             assertEquals(syncedParent._id, mongoDBClientParent!!._id)
-            assertEquals(syncedParent.child!!._id, mongoDBClientParent!!.child!!._id)
+            assertEquals(syncedParent.child!!._id, mongoDBClientParent.child!!._id)
         }
     }
 
@@ -395,7 +395,7 @@ sealed class MongoCollectionTests {
     }
 
     @Test
-    fun findOne_typedLinks_throwsOnMissingTargetSchema() = runBlocking<Unit> {
+    fun findOne_typedLinks_unknownClassBecomesDictionary() = runBlocking<Unit> {
         Realm.open(
             SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
                 .initialSubscriptions {
@@ -404,7 +404,7 @@ sealed class MongoCollectionTests {
                 }
                 .build()
         ).use { realm ->
-            val syncedParent = realm.write {
+            realm.write {
                 copyToRealm(
                     ParentCollectionDataType().apply {
                         any = RealmAny.create(ChildCollectionDataType())
@@ -423,13 +423,13 @@ sealed class MongoCollectionTests {
                 )
             )
 
-            assertFailsWithMessage<SerializationException>("Cannot resolve target class in schema: Unknown class '${"$"}ref=ChildCollectionDataType'") {
-                // We need to await until the response is non-null otherwise there will be nothing
-                // to deserialize and no exception will be thrown
-                retry(
-                    action = { parentCollection.findOne() },
-                    until = { response -> response != null }
-                )
+            // We need to await until the response is non-null otherwise there will be nothing
+            // to deserialize and no exception will be thrown
+            retry(
+                action = { parentCollection.findOne() },
+                until = { response -> response != null }
+            )!!.run {
+                assertEquals("ChildCollectionDataType", any!!.asDictionary()["${"$"}ref"]!!.asString())
             }
         }
     }
@@ -578,7 +578,7 @@ sealed class MongoCollectionTests {
         collection.aggregate<BsonDocument>(listOf()).let { assertTrue { it.isEmpty() } }
 
         val names = (1..10).map { "object-${it % 5}" }
-        val ids: List<Any> = collection.insertMany(names.map { CollectionDataType(it) })
+        collection.insertMany(names.map { CollectionDataType(it) })
 
         collection.aggregate<CollectionDataType>(
             pipeline = listOf()
@@ -668,7 +668,7 @@ sealed class MongoCollectionTests {
             ).let {
                 val parent = it.list.first()
                 assertEquals(unmanagedParent._id, parent._id)
-                parent!!.child!!.let {
+                parent.child!!.let {
                     assertEquals(unmanagedChild._id, it._id)
                     assertEquals(unmanagedChild.name, it.name)
                 }
@@ -1185,7 +1185,7 @@ sealed class MongoCollectionTests {
         }
 
         // Sort
-        val sortedNames: List<String> = collection.find().map { it.name!! }.sorted()
+        val sortedNames: List<String> = collection.find().map { it.name }.sorted()
         collection.findOneAndUpdate(
             filter = BsonDocument(),
             update = BsonDocument(""" { "name": "FIRST"}"""),

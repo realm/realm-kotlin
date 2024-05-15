@@ -32,6 +32,7 @@ import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.Decimal128
+import kotlin.math.absoluteValue
 import kotlin.random.Random
 
 private typealias FieldDataFactory = (SyncObjectWithAllTypes) -> Unit
@@ -40,8 +41,9 @@ private typealias FieldValidator = (SyncObjectWithAllTypes) -> Unit
 @Suppress("MagicNumber")
 class SyncObjectWithAllTypes : RealmObject {
     @PrimaryKey
+
     @Suppress("VariableNaming")
-    var _id: String = "id-${Random.nextLong()}"
+    var _id: String = "id-${Random.nextLong().absoluteValue}"
 
     // Non-nullable types
     var stringField: String = "hello world"
