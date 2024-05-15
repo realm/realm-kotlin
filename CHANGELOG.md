@@ -4,11 +4,12 @@
 This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
-* None.
+* Sync progress updates no longer report `transferredBytes` and `totalBytes`. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
 
 ### Enhancements
 * Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 * Optimized `RealmList.indexOf()` and `RealmList.contains()` using Core implementation of operations instead of iterating elements and comparing them in Kotlin. (Issue [#1625](https://github.com/realm/realm-kotlin/pull/1666) [RKOTLIN-995](https://jira.mongodb.org/browse/RKOTLIN-995)).
+* Sync progress updates now report an estimate ranged from `0.0` to `1.0` with `Progress.estimate`. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
 
 ### Fixed
 * None.

@@ -40,9 +40,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.last
 import kotlinx.coroutines.flow.map
@@ -111,7 +108,7 @@ class ProgressListenerTests {
                         withTimeout(TIMEOUT) {
                             last().let { progress: Progress ->
                                 assertTrue(progress.isTransferComplete)
-                                assertEquals(1.0, progress.progressEstimate)
+                                assertEquals(1.0, progress.estimate)
                             }
                         }
                     }
@@ -127,28 +124,29 @@ class ProgressListenerTests {
         }
     }
 
-//    @Test
-//    fun downloadProgressListener_indefinitely() = runBlocking {
-//        Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
-//            uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
-//
-//            Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-//                val flow = realm.syncSession
-//                    .progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
-//                    .completionCounter()
-//                withTimeout(TIMEOUT) {
-//                    flow.takeWhile { completed -> completed < 3 }
-//                        .collect { completed ->
-//                            uploadRealm.writeSampleData(
-//                                TEST_SIZE,
-//                                idOffset = (completed + 1) * TEST_SIZE,
-//                                timeout = TIMEOUT
-//                            )
-//                        }
-//                }
-//            }
-//        }
-//    }
+    @Test
+    fun downloadProgressListener_indefinitely() = runBlocking {
+        Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
+            uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
+
+            Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
+                val flow = realm.syncSession
+                    .progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                    .completionCounter()
+
+                withTimeout(TIMEOUT) {
+                    flow.takeWhile { completed -> println(completed); completed < 3 }
+                        .collect { completed ->
+                            uploadRealm.writeSampleData(
+                                TEST_SIZE,
+                                idOffset = (completed + 1) * TEST_SIZE,
+                                timeout = TIMEOUT
+                            )
+                        }
+                }
+            }
+        }
+    }
 
     @Test
     fun uploadProgressListener_changesOnly() = runBlocking {
@@ -160,7 +158,7 @@ class ProgressListenerTests {
                         withTimeout(TIMEOUT) {
                             last().let {
                                 assertTrue(it.isTransferComplete)
-                                assertEquals(1.0, it.progressEstimate)
+                                assertEquals(1.0, it.estimate)
                             }
                         }
                     }
@@ -168,21 +166,21 @@ class ProgressListenerTests {
         }
     }
 
-//    @Test
-//    fun uploadProgressListener_indefinitely() = runBlocking {
-//        Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-//            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
-//                .completionCounter()
-//
-//            withTimeout(TIMEOUT) {
-//                flow.takeWhile { completed -> completed < 3 }
-//                    .collect { completed ->
-//                        realm.writeSampleData(TEST_SIZE, idOffset = (completed + 1) * TEST_SIZE)
-//                        realm.syncSession.uploadAllLocalChangesOrFail()
-//                    }
-//            }
-//        }
-//    }
+    @Test
+    fun uploadProgressListener_indefinitely() = runBlocking {
+        Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
+            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+                .completionCounter()
+
+            withTimeout(TIMEOUT) {
+                flow.takeWhile { completed -> completed < 3 }
+                    .collect { completed ->
+                        realm.writeSampleData(TEST_SIZE, idOffset = (completed + 1) * TEST_SIZE)
+                        realm.syncSession.uploadAllLocalChangesOrFail()
+                    }
+            }
+        }
+    }
 
     @Test
     @Ignore // https://github.com/realm/realm-core/issues/7627
@@ -311,25 +309,17 @@ class ProgressListenerTests {
         }
     }
 
-//    // Operator that will return a flow that emits an increasing integer on each completion event
-//    private fun Flow<Progress>.completionCounter(): Flow<Int> =
-//        filter { it.isTransferComplete }
-//            .distinctUntilChanged()
-//            // Increment completed count if we are done transferring and the amount of bytes has
-//            // increased
-//            .scan(0UL to 0) { (bytes, completed), progress ->
-//                if (progress.isTransferComplete && progress.transferableBytes > bytes) {
-//                    (progress.transferredBytes to completed + 1)
-//                } else {
-//                    (bytes to completed)
-//                }
-//            }
-//            .drop(1)
-//            .map { (_, completed) -> completed }
+    // Operator that will return a flow that emits an increasing integer on each completion event
+    private fun Flow<Progress>.completionCounter(): Flow<Int> =
+        map {
+            it.estimate.toInt()
+        }.scan(0) { accumulator, _ ->
+            accumulator + 1
+        }
 
     private fun createSyncConfig(
         user: User,
-        partitionValue: String = getTestPartitionValue()
+        partitionValue: String = getTestPartitionValue(),
     ): SyncConfiguration {
         return SyncConfiguration.Builder(user, partitionValue, PARTITION_BASED_SCHEMA)
             .build()

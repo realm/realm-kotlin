@@ -23,7 +23,7 @@ public data class Progress(
     /**
      * Transfer progress estimation ranged from 0.0 to 1.0.
      */
-    val progressEstimate: Double,
+    val estimate: Double,
 ) {
     /**
      * Property indicating if all pending bytes have been transferred.
@@ -32,8 +32,8 @@ public data class Progress(
      * the flow will complete when this returns `true`.
      *
      * If the [Progress]-flow was created with [ProgressMode.INDEFINITELY] then the
-     * flow can continue to emit events with `isTransferComplete = false` for subsequent events
+     * flow can continue to emit events with `isTransferComplete = true` for subsequent events
      * after returning a progress indicator with `isTransferComplete = true`.
      */
-    public val isTransferComplete: Boolean = progressEstimate == 1.0
+    public val isTransferComplete: Boolean = estimate == 1.0
 }
