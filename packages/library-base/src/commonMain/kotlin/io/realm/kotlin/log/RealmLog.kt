@@ -96,7 +96,7 @@ public object RealmLog {
                     val category: LogCategory = LogCategory.fromCoreValue(categoryValue)
                     val level: LogLevel = CoreLogLevel.valueFromPriority(logLevel).fromCoreLogLevel()
 
-                    log(
+                    doLog(
                         category,
                         level,
                         null,
@@ -179,7 +179,7 @@ public object RealmLog {
     /**
      * Log a message.
      */
-    internal inline fun log(
+    internal inline fun doLog(
         category: LogCategory,
         level: LogLevel,
         throwable: Throwable?,

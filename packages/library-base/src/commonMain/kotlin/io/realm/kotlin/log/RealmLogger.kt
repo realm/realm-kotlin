@@ -16,12 +16,10 @@
 
 package io.realm.kotlin.log
 
-import io.realm.kotlin.Configuration
-
 /**
  * Interface describing a logger implementation.
  *
- * @see Configuration.SharedBuilder.log
+ * @see RealmLog
  */
 public interface RealmLogger {
     /**

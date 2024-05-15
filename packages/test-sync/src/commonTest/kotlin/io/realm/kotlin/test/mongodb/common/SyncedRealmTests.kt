@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.test.mongodb.common
 
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.Realm
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.VersionId
@@ -54,7 +53,6 @@ import io.realm.kotlin.schema.RealmSchema
 import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.asTestApp
-import io.realm.kotlin.test.mongodb.common.utils.CustomLogCollector
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
@@ -1238,44 +1236,6 @@ class SyncedRealmTests {
         }
     }
 
-    @Test
-    fun customLoggersReceiveSyncLogs() = runBlocking {
-        val customLogger = CustomLogCollector()
-        val section = Random.nextInt()
-        TestApp(
-            "customLoggersReceiveSyncLogs",
-            appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
-            builder = {
-                it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
-                it.log(level = LogLevel.ALL, listOf(customLogger))
-                it.appName("MyCustomApp")
-                it.appVersion("1.0.0")
-            }
-        ).use { flexApp ->
-            val (email, password) = randomEmail() to "password1234"
-            val user = flexApp.createUserAndLogIn(email, password)
-            val syncConfig = createFlexibleSyncConfig(
-                user = user,
-                name = "flex.realm",
-                initialSubscriptions = { realm: Realm ->
-                    realm.query<FlexParentObject>("section = $0", section).subscribe()
-                }
-            )
-            Realm.open(syncConfig).use { flexSyncRealm: Realm ->
-                flexSyncRealm.writeBlocking {
-                    copyToRealm(
-                        FlexParentObject().apply {
-                            name = "local object"
-                        }
-                    )
-                }
-                flexSyncRealm.syncSession.uploadAllLocalChangesOrFail()
-            }
-            assertTrue(customLogger.logs.isNotEmpty())
-            assertTrue(customLogger.logs.any { it.contains("Connection[1]: Negotiated protocol version:") }, "Missing Connection[1]")
-        }
-    }
-
     // This test verifies that the user facing Realm instance is actually advanced on an on-needed
     // basis even though there is no actual listener or explicit await download/upload calls.
     @Test
@@ -1865,7 +1825,6 @@ class SyncedRealmTests {
         partitionValue: String,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
-        log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
         schema: Set<KClass<out BaseRealmObject>> = PARTITION_BASED_SCHEMA,
         block: SyncConfiguration.Builder.() -> Unit = {}
@@ -1876,7 +1835,6 @@ class SyncedRealmTests {
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
-        if (log != null) builder.log(log.level, log.loggers)
         block(builder)
     }.build()
 
@@ -1885,7 +1843,6 @@ class SyncedRealmTests {
         user: User,
         name: String = DEFAULT_NAME,
         encryptionKey: ByteArray? = null,
-        log: LogConfiguration? = null,
         errorHandler: ErrorHandler? = null,
         schema: Set<KClass<out BaseRealmObject>> = FLEXIBLE_SYNC_SCHEMA,
         initialSubscriptions: InitialSubscriptionsCallback? = null,
@@ -1896,7 +1853,6 @@ class SyncedRealmTests {
     ).name(name).also { builder ->
         if (encryptionKey != null) builder.encryptionKey(encryptionKey)
         if (errorHandler != null) builder.errorHandler(errorHandler)
-        if (log != null) builder.log(log.level, log.loggers)
         if (initialSubscriptions != null) builder.initialSubscriptions(false, initialSubscriptions)
         block(builder)
     }.build()

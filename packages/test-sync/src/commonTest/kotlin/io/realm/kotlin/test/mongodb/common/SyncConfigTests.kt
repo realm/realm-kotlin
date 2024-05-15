@@ -29,7 +29,6 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
@@ -97,22 +96,6 @@ class SyncConfigTests {
             app.asTestApp.close()
         }
         RealmLog.reset()
-    }
-
-    @Test
-    fun logConfiguration() {
-        val user = createTestUser()
-        val logger = createDefaultSystemLogger("TEST")
-        val customLoggers = listOf(logger)
-        val config = SyncConfiguration.Builder(
-            schema = PARTITION_BASED_SCHEMA,
-            user = user,
-            partitionValue = partitionValue
-        ).also { builder ->
-            builder.log(LogLevel.DEBUG, customLoggers)
-        }.build()
-        assertEquals(LogLevel.DEBUG, config.log.level)
-        assertEquals(logger, config.log.loggers[1]) // Additional logger placed after default logger
     }
 
     @Test

@@ -65,7 +65,7 @@ class VersionTrackingTests {
                 Sample::class,
                 SampleWithPrimaryKey::class
             ) + embeddedSchema
-        ).directory(tmpDir).log(LogLevel.DEBUG).build()
+        ).directory(tmpDir).build()
         realm = Realm.open(configuration)
     }
 
