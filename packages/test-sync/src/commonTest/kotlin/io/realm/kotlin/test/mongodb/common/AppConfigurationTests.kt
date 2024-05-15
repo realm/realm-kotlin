@@ -403,9 +403,6 @@ class AppConfigurationTests {
         val channel = TestChannel<Boolean>()
 
         val logger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.DEBUG
-            override val tag: String = "LOGGER"
-
             override fun log(
                 category: LogCategory,
                 level: LogLevel,
