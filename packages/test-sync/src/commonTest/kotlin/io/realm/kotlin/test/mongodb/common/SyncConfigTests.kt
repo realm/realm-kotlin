@@ -102,7 +102,7 @@ class SyncConfigTests {
     @Test
     fun logConfiguration() {
         val user = createTestUser()
-        val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
+        val logger = createDefaultSystemLogger("TEST")
         val customLoggers = listOf(logger)
         val config = SyncConfiguration.Builder(
             schema = PARTITION_BASED_SCHEMA,

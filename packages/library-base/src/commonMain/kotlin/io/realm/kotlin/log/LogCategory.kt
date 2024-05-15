@@ -31,6 +31,7 @@ import io.realm.kotlin.internal.newCategory
  */
 public sealed interface LogCategory {
     public val parent: LogCategory?
+    public val name: String
 
     public operator fun contains(element: LogCategory): Boolean
     override fun toString(): String
@@ -66,7 +67,7 @@ public sealed interface LogCategory {
 }
 
 internal class LogCategoryImpl(
-    internal val name: String,
+    override val name: String,
     override val parent: LogCategory? = null,
 ) : LogCategory {
     override fun contains(element: LogCategory): Boolean = "$element".contains("$this")

@@ -63,5 +63,5 @@ internal fun messageWithCategory(
     category: LogCategory,
     message: String?,
 ): String? = if (message.isNullOrBlank()) { null } else {
-    "[$category] $message" // todo .toString().substring(6)
+    "[${category.name}] $message"
 }

@@ -74,7 +74,6 @@ class RealmTests {
 
     @BeforeTest
     fun setup() {
-        RealmLog.level = LogLevel.ALL
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration.Builder(setOf(Parent::class, Child::class))
             .directory(tmpDir)
