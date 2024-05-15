@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+@file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.mongodb.util
 
 import io.ktor.client.HttpClient
@@ -24,9 +24,8 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.serialization.kotlinx.json.json
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
-import io.realm.kotlin.log.LogCategory
-import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.internal.ContextLogger
+import io.realm.kotlin.mongodb.internal.LogObfuscatorImpl
 import io.realm.kotlin.mongodb.internal.createPlatformClient
 import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
@@ -52,15 +51,12 @@ fun defaultClient(name: String, debug: Boolean, block: HttpClientConfig<*>.() ->
             )
         }
 
-        // TODO figure out logging and obfuscating sensitive info
-        //  https://github.com/realm/realm-kotlin/issues/410
         if (debug) {
             install(Logging) {
                 logger = object : Logger {
-                    // TODO Hook up with AppConfiguration/RealmConfiguration logger
-                    private val logger = createDefaultSystemLogger(name)
+                    private val logger = ContextLogger(name)
                     override fun log(message: String) {
-                        logger.log(LogCategory.Realm.Sdk, LogLevel.DEBUG, throwable = null, message = message)
+                        logger.debug(LogObfuscatorImpl.obfuscate(message))
                     }
                 }
                 level = io.ktor.client.plugins.logging.LogLevel.ALL
