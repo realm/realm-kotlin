@@ -51,6 +51,7 @@ class RealmLogTests {
     @BeforeTest
     fun setUp() {
         existingLogLevel = RealmLog.getLevel()
+        RealmLog.setLevel(LogLevel.ALL)
     }
 
     @AfterTest
