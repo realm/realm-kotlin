@@ -23,7 +23,7 @@ import io.realm.kotlin.log.LogLevel.WTF
  * Enum describing the log levels available to the Realm logger.
  *
  * Each log entry is assigned a priority between [TRACE] and [WTF]. If the log level is equal or
- * higher than the priority defined in [RealmLog.level] the event will be logged.
+ * higher than the priority defined in [RealmLog.getLevel] the event will be logged.
  */
 @Suppress("MagicNumber")
 public enum class LogLevel(public val priority: Int) {

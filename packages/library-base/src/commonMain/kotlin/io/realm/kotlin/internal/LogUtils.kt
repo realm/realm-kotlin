@@ -57,6 +57,7 @@ internal fun newCategory(
 }
 
 // at package level as a workaround to ensure compatibility with darwin and jvm
+// safe to use because it is loaded during class loading.
 internal val categoriesByPath: MutableMap<String, LogCategory> = mutableMapOf()
 
 internal fun messageWithCategory(

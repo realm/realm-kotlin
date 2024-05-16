@@ -55,7 +55,7 @@ class VersionTrackingTests {
 
     @BeforeTest
     fun setup() {
-        initialLogLevel = RealmLog.level
+        initialLogLevel = RealmLog.getLevel()
         tmpDir = PlatformUtils.createTempDir()
         configuration = RealmConfiguration.Builder(
             schema = setOf(
@@ -75,7 +75,7 @@ class VersionTrackingTests {
             realm.close()
         }
         PlatformUtils.deleteTempDir(tmpDir)
-        RealmLog.level = initialLogLevel
+        RealmLog.setLevel(initialLogLevel)
     }
 
     @Test

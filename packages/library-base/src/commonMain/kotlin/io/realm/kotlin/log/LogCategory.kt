@@ -19,13 +19,6 @@ package io.realm.kotlin.log
 import io.realm.kotlin.internal.categoriesByPath
 import io.realm.kotlin.internal.newCategory
 
-/*
- * Core does not expose the different categories in compile time.
- *
- * This LogCategory design tries to overcome this issue by expressing the categories hierarchy
- * in the kotlin type system, then validate it with a test watchdog.
- */
-
 /**
  * Defines a log category for the Realm logger.
  */

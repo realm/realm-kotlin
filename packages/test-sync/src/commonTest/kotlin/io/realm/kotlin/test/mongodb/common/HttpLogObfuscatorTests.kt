@@ -114,7 +114,7 @@ class HttpLogObfuscatorTests {
 
     @BeforeTest
     fun setUp() {
-        RealmLog.level = LogLevel.DEBUG
+        RealmLog.setLevel(LogLevel.DEBUG)
         channel = Channel(1)
         RealmLog.add(ObfuscatorLoggerInspector(channel))
     }

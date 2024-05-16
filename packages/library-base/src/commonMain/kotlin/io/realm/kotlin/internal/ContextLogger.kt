@@ -85,7 +85,7 @@ public class ContextLogger(public val context: String? = null) {
         level: LogLevel,
         block: () -> Unit,
     ) {
-        if (level.priority >= RealmLog.getLevel(SdkLogCategory).priority) {
+        if (level.priority >= RealmLog.sdkLogLevel.priority) {
             block()
         }
     }

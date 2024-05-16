@@ -44,7 +44,7 @@ public object RealmLog {
     private val loggersMutex = SynchronizableObject()
     // Reference to the currently installed system logger (if any)
     // `internal` until we can remove the old log API
-    internal var systemLoggerInstalled: RealmLogger? = null
+    private var systemLoggerInstalled: RealmLogger? = null
     // Kotlin Multiplatform is currently lacking primitives like CopyOnWriteArrayList. We could
     // use `io.realm.kotlin.internal.interop.SynchronizableObject`, but it would require locking
     // when reporting a log statement which feel a bit heavy, so instead we have added locks around
@@ -55,14 +55,8 @@ public object RealmLog {
     // Log level that would be set by default
     private val defaultLogLevel = LogLevel.WARN
 
-    /**
-     * The current [LogLevel]. Changing this will affect all registered loggers.
-     */
-    public var level: LogLevel
-        get() = getLevel(LogCategory.Realm)
-        set(value) {
-            setLevel(value, LogCategory.Realm)
-        }
+    // Cached value of the SDK log level
+    internal var sdkLogLevel = defaultLogLevel
 
     /**
      * Sets the log level of a log category. By setting the log level of a category all its subcategories
@@ -73,6 +67,7 @@ public object RealmLog {
      */
     public fun setLevel(level: LogLevel, category: LogCategory = LogCategory.Realm) {
         RealmInterop.realm_set_log_level_category(category.toString(), level.toCoreLogLevel())
+        sdkLogLevel = getLevel(SdkLogCategory)
     }
 
     /**
@@ -81,7 +76,7 @@ public object RealmLog {
      * @param category target log category.
      * @return current [category] log level.
      */
-    public fun getLevel(category: LogCategory): LogLevel {
+    public fun getLevel(category: LogCategory = LogCategory.Realm): LogLevel {
         return RealmInterop.realm_get_log_level_category(category.toString()).fromCoreLogLevel()
     }
 
@@ -201,6 +196,6 @@ public object RealmLog {
     internal fun reset() {
         removeAll()
         addDefaultSystemLogger()
-        level = LogLevel.WARN
+        setLevel(LogLevel.WARN)
     }
 }

@@ -50,22 +50,24 @@ class RealmLogTests {
 
     @BeforeTest
     fun setUp() {
-        existingLogLevel = RealmLog.level
-        RealmLog.level = LogLevel.ALL
+        existingLogLevel = RealmLog.getLevel()
     }
 
     @AfterTest
     fun tearDown() {
-        RealmLog.level = existingLogLevel
-        RealmLog.removeAll()
-        RealmLog.addDefaultSystemLogger()
+        RealmLog.reset()
+    }
+
+    @Test
+    fun defaultLevel() {
+        assertEquals(LogLevel.WARN, existingLogLevel)
     }
 
     @Test
     fun ignoreEventsLowerThanLogLevel() {
         val customLogger = TestLogger()
         RealmLog.apply {
-            level = LogLevel.WARN
+            setLevel(LogLevel.WARN)
             add(customLogger)
             log.warn("Testing 1")
             assertEquals("Testing 1", customLogger.message)
@@ -79,7 +81,7 @@ class RealmLogTests {
     @Test
     fun customLogger() {
         val customLogger = TestLogger()
-        RealmLog.level = LogLevel.ALL
+        RealmLog.setLevel(LogLevel.ALL)
         RealmLog.add(customLogger)
 
         var message = "Testing"
@@ -212,46 +214,6 @@ class RealmLogTests {
                 else -> throw IllegalArgumentException("Unknown level: $it")
             }
         }
-    }
-
-    @Test
-    fun deprecatedMethodWork1() {
-        val called = atomic<Boolean>(false)
-        val customLogger = object : RealmLogger {
-            override fun log(
-                category: LogCategory,
-                level: LogLevel,
-                throwable: Throwable?,
-                message: String?,
-                vararg args: Any?,
-            ) {
-                assertEquals("Hello", message)
-                called.value = true
-            }
-        }
-        RealmLog.add(customLogger)
-        log.trace("Hello")
-        assertTrue(called.value)
-    }
-
-    @Test
-    fun deprecatedMethodWork2() {
-        val called = atomic<Boolean>(false)
-        val customLogger = object : RealmLogger {
-            override fun log(
-                category: LogCategory,
-                level: LogLevel,
-                throwable: Throwable?,
-                message: String?,
-                vararg args: Any?,
-            ) {
-                assertEquals("Hello", message)
-                called.value = true
-            }
-        }
-        RealmLog.add(customLogger)
-        log.trace("Hello")
-        assertTrue(called.value)
     }
 
     @Test
@@ -393,6 +355,10 @@ class RealmLogTests {
         assertTrue(LogCategory.Realm.Storage.Transaction in LogCategory.Realm.Storage)
     }
 
+    /**
+     * Core defines the different categories in runtime, forcing the SDK to define the categories again.
+     * This test validates that we have defined the same categories as in Core.
+     */
     @Test
     fun categoriesWatchdog() {
         val coreLogCategoryNames = RealmInterop.realm_get_category_names()

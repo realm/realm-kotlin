@@ -38,7 +38,7 @@ import io.realm.kotlin.internal.RealmInitializer
 internal class RealmSyncInitializer : Initializer<Context> {
 
     companion object {
-        val logger: ContextLogger = ContextLogger()
+        val logger: ContextLogger = ContextLogger("RealmSyncInitializer")
 
         @Suppress("DEPRECATION") // Should only be called below API 21
         fun isConnected(cm: ConnectivityManager?): Boolean {

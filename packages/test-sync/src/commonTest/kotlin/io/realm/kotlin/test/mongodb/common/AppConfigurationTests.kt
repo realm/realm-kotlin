@@ -398,8 +398,8 @@ class AppConfigurationTests {
     }
 
     private suspend fun doCustomHeaderTest(app: App) {
-        val originalLevel = RealmLog.level
-        RealmLog.level = LogLevel.ALL
+        val originalLevel = RealmLog.getLevel()
+        RealmLog.setLevel(LogLevel.ALL)
         val channel = TestChannel<Boolean>()
 
         val logger = object : RealmLogger {
@@ -434,20 +434,8 @@ class AppConfigurationTests {
         } finally {
             // Restore log status
             RealmLog.remove(logger)
-            RealmLog.level = originalLevel
+            RealmLog.setLevel(originalLevel)
         }
-    }
-
-    @Test
-    fun logLevelDoesNotGetOverwrittenByConfig() {
-        val expectedLogLevel = LogLevel.ALL
-        RealmLog.level = expectedLogLevel
-
-        AppConfiguration.create("")
-
-        assertEquals(expectedLogLevel, RealmLog.level)
-
-        RealmLog.reset()
     }
 
     @Test

@@ -450,14 +450,14 @@ class RealmConfigurationTests {
     @Test
     fun logLevelDoesNotGetOverwrittenByConfig() {
         val expectedLogLevel = LogLevel.ALL
-        RealmLog.level = expectedLogLevel
+        RealmLog.setLevel(expectedLogLevel)
 
-        assertEquals(expectedLogLevel, RealmLog.level)
+        assertEquals(expectedLogLevel, RealmLog.getLevel())
 
         RealmConfiguration.Builder(setOf(Sample::class))
             .build()
 
-        assertEquals(expectedLogLevel, RealmLog.level)
+        assertEquals(expectedLogLevel, RealmLog.getLevel())
 
         RealmLog.reset()
     }
