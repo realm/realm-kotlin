@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@file:Suppress("invisible_reference", "invisible_member")
 
 package io.realm.kotlin.test.mongodb.common
 
@@ -31,6 +32,7 @@ import io.realm.kotlin.internal.platform.fileExists
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
@@ -137,6 +139,8 @@ class SyncedRealmTests {
         if (this::app.isInitialized) {
             app.asTestApp.close()
         }
+
+        RealmLog.reset()
     }
 
     @Test
@@ -1067,7 +1071,6 @@ class SyncedRealmTests {
     fun writeCopyTo_flexibleSyncToFlexibleSync() = runBlocking {
         TestApp(
             "writeCopyTo_flexibleSyncToFlexibleSync",
-            logLevel = io.realm.kotlin.log.LogLevel.ALL,
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))
@@ -1362,7 +1365,6 @@ class SyncedRealmTests {
     fun createInitialRealmFx() = runBlocking {
         TestApp(
             "createInitialRealmFx",
-            logLevel = LogLevel.ALL,
             appName = io.realm.kotlin.test.mongodb.TEST_APP_FLEX,
             builder = {
                 it.syncRootDirectory(PlatformUtils.createTempDir("flx-sync-"))

@@ -114,11 +114,11 @@ class SyncClientResetIntegrationTests {
                 builder: SyncConfiguration.Builder
             ) -> Unit
         ) {
+            RealmLog.setLevel(LogLevel.INFO)
             RealmLog.add(ClientResetLoggerInspector(logChannel))
             val app = TestApp(
                 this::class.simpleName,
                 appName = appName,
-                logLevel = LogLevel.INFO,
                 initialSetup = { app, service ->
                     addEmailProvider(app)
                     when (syncMode) {

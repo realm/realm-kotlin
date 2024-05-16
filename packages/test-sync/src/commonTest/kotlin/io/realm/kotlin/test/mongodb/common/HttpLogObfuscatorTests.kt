@@ -123,7 +123,6 @@ class HttpLogObfuscatorTests {
         return TestApp(
             this::class.simpleName,
             appName = syncServerAppName("obfsctr"),
-            logLevel = LogLevel.DEBUG,
             initialSetup = { app, service ->
                 initializeDefault(app, service)
                 app.addFunction(TestAppInitializer.FIRST_ARG_FUNCTION)
@@ -150,7 +149,6 @@ class HttpLogObfuscatorTests {
         app = TestApp(
             "nullObfuscator",
             appName = syncServerAppName("null-obf"),
-            logLevel = LogLevel.DEBUG,
             builder = { it.httpLogObfuscator(null) },
             initialSetup = { app, service ->
                 initializeDefault(app, service)

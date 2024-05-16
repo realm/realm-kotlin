@@ -1210,30 +1210,6 @@ class SyncConfigTests {
         assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
     }
 
-    @Test
-    fun logLevelDoesNotGetOverwrittenByConfig() {
-        app.asTestApp.close()
-        // Prevent AppConfiguration to set a log level
-        app = TestApp("logLevelDoesNotGetOverwrittenByConfig", logLevel = null)
-
-        val expectedLogLevel = LogLevel.ALL
-
-        RealmLog.level = expectedLogLevel
-
-        val (email, password) = randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
-
-        SyncConfiguration.Builder(
-            schema = FLEXIBLE_SYNC_SCHEMA,
-            user = user,
-            partitionValue = partitionValue
-        ).build()
-
-        assertEquals(expectedLogLevel, RealmLog.level)
-    }
-
     private fun createTestUser(): User = runBlocking {
         val (email, password) = randomEmail() to "password1234"
         app.createUserAndLogIn(email, password)

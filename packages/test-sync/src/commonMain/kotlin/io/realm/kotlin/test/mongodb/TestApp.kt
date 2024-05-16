@@ -97,7 +97,6 @@ open class TestApp private constructor(
         testId: String?,
         appName: String = TEST_APP_PARTITION,
         dispatcher: CoroutineDispatcher = singleThreadDispatcher("$testId-dispatcher"),
-        logLevel: LogLevel? = LogLevel.WARN,
         builder: (AppConfiguration.Builder) -> AppConfiguration.Builder = {
             it.syncRootDirectory(PlatformUtils.createTempDir("$appName-$testId"))
         },
