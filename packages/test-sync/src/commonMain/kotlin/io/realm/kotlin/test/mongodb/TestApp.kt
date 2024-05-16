@@ -26,7 +26,6 @@ import io.realm.kotlin.internal.interop.SynchronizableObject
 import io.realm.kotlin.internal.interop.sync.NetworkTransport
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
