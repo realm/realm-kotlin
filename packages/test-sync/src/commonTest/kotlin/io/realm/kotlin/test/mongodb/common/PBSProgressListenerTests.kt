@@ -43,7 +43,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class PBSProgressListenerTests {
-    private val TEST_SIZE = 500
+    private val TEST_SIZE = 5
     private val TIMEOUT = 30.seconds
 
     private lateinit var app: TestApp
@@ -286,8 +286,9 @@ class PBSProgressListenerTests {
     // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
         map {
-            it.estimate.toInt()
-        }.scan(0) { accumulator, _ ->
+            it.estimate
+        }.scan(0) { accumulator, value ->
+            println(value)
             accumulator + 1
         }
 

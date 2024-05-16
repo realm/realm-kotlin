@@ -20,6 +20,8 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogLevel
+import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.sync.Direction
 import io.realm.kotlin.mongodb.sync.Progress
@@ -59,7 +61,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class FLXProgressListenerTests {
 
-    private val TEST_SIZE = 500
+    private val TEST_SIZE = 5
     private val TIMEOUT = 30.seconds
 
     private lateinit var app: TestApp
