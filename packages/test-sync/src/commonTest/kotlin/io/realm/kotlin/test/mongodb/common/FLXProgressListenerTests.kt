@@ -27,9 +27,7 @@ import io.realm.kotlin.mongodb.sync.ProgressMode
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.mongodb.syncSession
 import io.realm.kotlin.test.mongodb.TEST_APP_FLEX
-import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
-import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.mongodb.common.utils.uploadAllLocalChangesOrFail
 import io.realm.kotlin.test.mongodb.createUserAndLogIn
 import io.realm.kotlin.test.mongodb.use
@@ -48,7 +46,7 @@ import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
-import org.mongodb.kbson.ObjectId
+import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -56,22 +54,19 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import kotlin.test.fail
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-private const val TEST_SIZE = 500
-private val TIMEOUT = 30.seconds
+class FLXProgressListenerTests {
 
-class ProgressListenerTests {
+    private val TEST_SIZE = 500
+    private val TIMEOUT = 30.seconds
 
     private lateinit var app: TestApp
-    private lateinit var partitionValue: String
 
     @BeforeTest
     fun setup() {
-        app = TestApp(this::class.simpleName, appName = TEST_APP_PARTITION)
-        partitionValue = ObjectId().toString()
+        app = TestApp(this::class.simpleName, appName = TEST_APP_FLEX)
     }
 
     @AfterTest
@@ -135,7 +130,7 @@ class ProgressListenerTests {
                     .completionCounter()
 
                 withTimeout(TIMEOUT) {
-                    flow.takeWhile { completed -> println(completed); completed < 3 }
+                    flow.takeWhile { completed -> completed < 3 }
                         .collect { completed ->
                             uploadRealm.writeSampleData(
                                 TEST_SIZE,
@@ -255,24 +250,9 @@ class ProgressListenerTests {
     }
 
     @Test
-    fun throwsOnFlexibleSync() = runBlocking {
-        TestApp("throwsOnFlexibleSync", TEST_APP_FLEX).use {
-            val user = app.createUserAndLogIn()
-            val configuration: SyncConfiguration = SyncConfiguration.create(user, FLEXIBLE_SYNC_SCHEMA)
-            Realm.open(configuration).use { realm ->
-                assertFailsWithMessage<UnsupportedOperationException>(
-                    "Progress listeners are not supported for Flexible Sync"
-                ) {
-                    realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES)
-                }
-            }
-        }
-    }
-
-    @Test
     fun completesOnClose() = runBlocking {
         val channel = TestChannel<Boolean>(capacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-        TestApp("completesOnClose", TEST_APP_PARTITION).use { app ->
+        TestApp("completesOnClose", TEST_APP_FLEX).use { app ->
             val user = app.createUserAndLogIn()
             val realm = Realm.open(createSyncConfig(user))
             try {
@@ -301,11 +281,11 @@ class ProgressListenerTests {
     private suspend fun Realm.writeSampleData(count: Int, idOffset: Int = 0, timeout: Duration? = null) {
         write {
             for (i in idOffset until count + idOffset) {
-                copyToRealm(SyncObjectWithAllTypes().apply { stringField = "Object $i" })
+                copyToRealm(SyncObjectWithAllTypes().apply { binaryField = Random.nextBytes(1_000_000) })
             }
         }
         timeout?.let {
-            assertTrue { syncSession.uploadAllLocalChanges(timeout) }
+            syncSession.uploadAllLocalChanges(timeout)
         }
     }
 
@@ -319,16 +299,11 @@ class ProgressListenerTests {
 
     private fun createSyncConfig(
         user: User,
-        partitionValue: String = getTestPartitionValue(),
     ): SyncConfiguration {
-        return SyncConfiguration.Builder(user, partitionValue, PARTITION_BASED_SCHEMA)
+        return SyncConfiguration.Builder(user, PARTITION_BASED_SCHEMA)
+            .initialSubscriptions {
+                add(it.query<SyncObjectWithAllTypes>())
+            }
             .build()
-    }
-
-    private fun getTestPartitionValue(): String {
-        if (!this::partitionValue.isInitialized) {
-            fail("Test not setup correctly. Partition value is missing")
-        }
-        return partitionValue
     }
 }

@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.internal.InternalConfiguration
 import io.realm.kotlin.internal.NotificationToken
 import io.realm.kotlin.internal.RealmImpl
 import io.realm.kotlin.internal.interop.CoreError
@@ -109,9 +108,6 @@ internal open class SyncSessionImpl(
         direction: Direction,
         progressMode: ProgressMode,
     ): Flow<Progress> {
-        if ((configuration as InternalConfiguration).isFlexibleSyncConfiguration) {
-            throw UnsupportedOperationException("Progress listeners are not supported for Flexible Sync.")
-        }
         return realm.scopedFlow {
             callbackFlow {
                 val token: AtomicRef<Cancellable> =

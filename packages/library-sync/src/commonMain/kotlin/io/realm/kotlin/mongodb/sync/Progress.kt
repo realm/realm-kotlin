@@ -35,5 +35,5 @@ public data class Progress(
      * flow can continue to emit events with `isTransferComplete = false` for subsequent events
      * after returning a progress indicator with `isTransferComplete = true`.
      */
-    public val isTransferComplete: Boolean = estimate == 1.0
+    public val isTransferComplete: Boolean = estimate >= 1.0
 }
