@@ -286,9 +286,8 @@ class PBSProgressListenerTests {
     // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
         map {
-            it.estimate
-        }.scan(0) { accumulator, value ->
-            println(value)
+            it.estimate.toInt()
+        }.scan(0) { accumulator, _ ->
             accumulator + 1
         }
 
