@@ -20,11 +20,11 @@ import io.realm.kotlin.test.util.receiveOrFail
 import io.realm.kotlin.test.util.use
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.last
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.takeWhile
 import kotlinx.coroutines.supervisorScope
@@ -43,7 +43,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class PBSProgressListenerTests {
-    private val TEST_SIZE = 5
+    private val TEST_SIZE = 10
     private val TIMEOUT = 30.seconds
 
     private lateinit var app: TestApp
@@ -63,7 +63,6 @@ class PBSProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun downloadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
             // Verify that we:
@@ -73,26 +72,23 @@ class PBSProgressListenerTests {
             Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
                 // Ensure that we can do consecutive CURRENT_CHANGES registrations
                 for (i in 0 until 3) {
-                    uploadRealm.writeSampleData(
-                        TEST_SIZE,
-                        idOffset = TEST_SIZE * i,
-                        timeout = TIMEOUT
-                    )
-
-                    // We are not sure when the realm actually knows of the remote changes and consider
-                    // them current, so wait a bit
-                    delay(10.seconds)
-                    realm.syncSession.progressAsFlow(
-                        Direction.DOWNLOAD,
-                        ProgressMode.CURRENT_CHANGES
-                    ).run {
-                        withTimeout(TIMEOUT) {
-                            last().let { progress: Progress ->
-                                assertTrue(progress.isTransferComplete)
-                                assertEquals(1.0, progress.estimate)
+                    val transferCompleteJob = async {
+                        realm.syncSession.progressAsFlow(
+                            Direction.DOWNLOAD,
+                            ProgressMode.CURRENT_CHANGES
+                        ).run {
+                            withTimeout(TIMEOUT) {
+                                last().let { progress: Progress ->
+                                    assertTrue(progress.isTransferComplete)
+                                    assertEquals(1.0, progress.estimate)
+                                }
                             }
                         }
                     }
+                    uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
+
+                    transferCompleteJob.await()
+
                     // Progress.isTransferComplete does not guarantee that changes are integrated and
                     // visible in the realm
                     realm.syncSession.downloadAllServerChanges(TIMEOUT)
@@ -117,10 +113,10 @@ class PBSProgressListenerTests {
 
                 withTimeout(TIMEOUT) {
                     flow.takeWhile { completed -> completed < 3 }
+                        .buffer(10000)
                         .collect { completed ->
                             uploadRealm.writeSampleData(
                                 TEST_SIZE,
-                                idOffset = (completed + 1) * TEST_SIZE,
                                 timeout = TIMEOUT
                             )
                         }
@@ -133,7 +129,7 @@ class PBSProgressListenerTests {
     fun uploadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             for (i in 0..3) {
-                realm.writeSampleData(TEST_SIZE, idOffset = TEST_SIZE * i, timeout = TIMEOUT)
+                realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
                 realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES)
                     .run {
                         withTimeout(TIMEOUT) {
@@ -156,7 +152,7 @@ class PBSProgressListenerTests {
             withTimeout(TIMEOUT) {
                 flow.takeWhile { completed -> completed < 3 }
                     .collect { completed ->
-                        realm.writeSampleData(TEST_SIZE, idOffset = (completed + 1) * TEST_SIZE)
+                        realm.writeSampleData(TEST_SIZE)
                         realm.syncSession.uploadAllLocalChangesOrFail()
                     }
             }
@@ -164,23 +160,20 @@ class PBSProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun worksAfterExceptions() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
         }
 
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
+            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
             assertFailsWith<RuntimeException> {
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
-                    .collect {
-                        @Suppress("TooGenericExceptionThrown")
-                        throw RuntimeException("Crashing progress flow")
-                    }
+                flow.collect {
+                    @Suppress("TooGenericExceptionThrown")
+                    throw RuntimeException("Crashing progress flow")
+                }
             }
 
-            val flow =
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
             withTimeout(TIMEOUT) {
                 flow.first { it.isTransferComplete }
             }
@@ -188,7 +181,6 @@ class PBSProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun worksAfterCancel() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
@@ -197,7 +189,7 @@ class PBSProgressListenerTests {
         Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
             // Setup a flow that we are just going to cancel
             val flow =
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
+                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
             supervisorScope {
                 val mutex = Mutex(true)
                 val task = async {
@@ -211,10 +203,8 @@ class PBSProgressListenerTests {
             }
 
             // Verify that progress listeners still work
-            realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES).run {
-                withTimeout(TIMEOUT) {
-                    flow.first { it.isTransferComplete }
-                }
+            withTimeout(TIMEOUT) {
+                flow.first { it.isTransferComplete }
             }
         }
     }
@@ -272,9 +262,9 @@ class PBSProgressListenerTests {
         }
     }
 
-    private suspend fun Realm.writeSampleData(count: Int, idOffset: Int = 0, timeout: Duration? = null) {
-        write {
-            for (i in idOffset until count + idOffset) {
+    private suspend fun Realm.writeSampleData(count: Int, timeout: Duration? = null) {
+        repeat(count) {
+            write {
                 copyToRealm(SyncObjectWithAllTypes().apply { binaryField = Random.nextBytes(1_000_000) })
             }
         }
@@ -285,11 +275,11 @@ class PBSProgressListenerTests {
 
     // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
-        map {
-            it.estimate.toInt()
-        }.scan(0) { accumulator, _ ->
-            accumulator + 1
-        }
+        buffer(10000)
+            .filter { it.isTransferComplete }
+            .scan(0) { accumulator, _ ->
+                accumulator + 1
+            }
 
     private fun createSyncConfig(
         user: User,

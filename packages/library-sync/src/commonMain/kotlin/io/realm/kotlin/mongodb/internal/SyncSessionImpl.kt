@@ -128,9 +128,6 @@ internal open class SyncSessionImpl(
                         }
                     }
                 )
-                // some of our tests need an initial event, core does not always send it,
-                // we send it for them
-                trySendWithBufferOverflowCheck(Progress(0.0))
                 awaitClose {
                     token.value.cancel()
                 }
