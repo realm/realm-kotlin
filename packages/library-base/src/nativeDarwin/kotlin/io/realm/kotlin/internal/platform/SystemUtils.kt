@@ -3,7 +3,6 @@ package io.realm.kotlin.internal.platform
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.util.Exceptions
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
 import kotlinx.cinterop.BooleanVar
@@ -43,8 +42,8 @@ public actual val RUNTIME_VERSION: String = ""
 @Suppress("MayBeConst") // Cannot make expect/actual const
 public actual val PATH_SEPARATOR: String = "/"
 
-public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
-    NSLogLogger(tag, logLevel)
+public actual fun createDefaultSystemLogger(tag: String): RealmLogger =
+    NSLogLogger(tag)
 
 public actual fun threadId(): ULong {
     memScoped {

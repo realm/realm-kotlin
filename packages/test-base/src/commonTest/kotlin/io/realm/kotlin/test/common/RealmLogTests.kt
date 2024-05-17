@@ -16,6 +16,10 @@
 @file:Suppress("invisible_reference", "invisible_member")
 package io.realm.kotlin.test.common
 
+import io.realm.kotlin.internal.ContextLogger
+import io.realm.kotlin.internal.categoriesByPath
+import io.realm.kotlin.internal.interop.RealmInterop
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -25,6 +29,7 @@ import kotlinx.atomicfu.atomic
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -41,33 +46,35 @@ import kotlin.test.fail
 class RealmLogTests {
 
     private lateinit var existingLogLevel: LogLevel
-    private lateinit var log: RealmLog
+    private val log: ContextLogger = ContextLogger()
 
     @BeforeTest
     fun setUp() {
-        existingLogLevel = RealmLog.level
-        RealmLog.level = LogLevel.ALL
-        log = RealmLog
+        existingLogLevel = RealmLog.getLevel()
+        RealmLog.setLevel(LogLevel.ALL)
     }
 
     @AfterTest
     fun tearDown() {
-        RealmLog.level = existingLogLevel
-        RealmLog.removeAll()
-        RealmLog.addDefaultSystemLogger()
+        RealmLog.reset()
+    }
+
+    @Test
+    fun defaultLevel() {
+        assertEquals(LogLevel.WARN, existingLogLevel)
     }
 
     @Test
     fun ignoreEventsLowerThanLogLevel() {
         val customLogger = TestLogger()
         RealmLog.apply {
-            level = LogLevel.WARN
+            setLevel(LogLevel.WARN)
             add(customLogger)
-            warn("Testing 1")
+            log.warn("Testing 1")
             assertEquals("Testing 1", customLogger.message)
-            this.error("Testing 2")
+            log.error("Testing 2")
             assertEquals("Testing 2", customLogger.message)
-            info("Testing 3") // This should be swallowed
+            log.info("Testing 3") // This should be swallowed
             assertEquals("Testing 2", customLogger.message)
         }
     }
@@ -75,13 +82,13 @@ class RealmLogTests {
     @Test
     fun customLogger() {
         val customLogger = TestLogger()
-        RealmLog.level = LogLevel.ALL
+        RealmLog.setLevel(LogLevel.ALL)
         RealmLog.add(customLogger)
 
         var message = "Testing"
 
         // Simple message
-        RealmLog.warn(message)
+        log.warn(message)
         assertEquals(LogLevel.WARN, customLogger.logLevel)
         assertNull(customLogger.throwable)
         assertEquals(message, customLogger.message)
@@ -91,7 +98,7 @@ class RealmLogTests {
         val throwable = RuntimeException("BOOM")
         message = "Message: %s"
         val args: Array<out Any?> = arrayOf("foo")
-        RealmLog.error(throwable, message, *args)
+        log.error(throwable, message, *args)
         assertEquals(LogLevel.ERROR, customLogger.logLevel)
         assertEquals(throwable, customLogger.throwable)
         assertEquals(message, customLogger.message)
@@ -101,7 +108,7 @@ class RealmLogTests {
     @Test
     fun smallLogEntry() {
         val message = "Testing the RealmLog implementation"
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
@@ -120,7 +127,7 @@ class RealmLogTests {
     fun smallLogEntryWithArgs() {
         val message = "Testing the RealmLog implementation: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
@@ -138,7 +145,7 @@ class RealmLogTests {
     @Test
     fun longLogEntry() {
         val message = Utils.createRandomString(8000)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message)
@@ -157,7 +164,7 @@ class RealmLogTests {
     fun longLogEntryWithArgs() {
         val message = "${Utils.createRandomString(8000)}: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(message, *args)
@@ -175,7 +182,7 @@ class RealmLogTests {
     @Test
     fun logException() {
         val error = IllegalArgumentException("BOOM")
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error)
@@ -195,7 +202,7 @@ class RealmLogTests {
         val error = IllegalArgumentException("BOOM")
         val message = "Details: (%s, %d, %f)"
         val args: Array<out Any?> = arrayOf("foo", Long.MAX_VALUE, Float.MAX_VALUE)
-        LogLevel.values().forEach {
+        LogLevel.entries.forEach {
             when (it) {
                 LogLevel.ALL -> { /* Ignore */ }
                 LogLevel.TRACE -> log.trace(error, message, *args)
@@ -214,20 +221,20 @@ class RealmLogTests {
     fun addLogger() {
         val called = atomic<Boolean>(false)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
                 vararg args: Any?
             ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
                 assertEquals("Hello", message)
                 called.value = true
             }
         }
         RealmLog.add(customLogger)
-        RealmLog.trace("Hello")
+        log.trace("Hello")
         assertTrue(called.value)
     }
 
@@ -235,21 +242,21 @@ class RealmLogTests {
     fun addLogger_twice() {
         val called = atomic(0)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
                 vararg args: Any?
             ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
                 assertEquals("Hello", message)
                 called.incrementAndGet()
             }
         }
         RealmLog.add(customLogger)
         RealmLog.add(customLogger)
-        RealmLog.trace("Hello")
+        log.trace("Hello")
         assertEquals(2, called.value)
     }
 
@@ -257,14 +264,14 @@ class RealmLogTests {
     fun removeLogger_success() {
         val called = atomic(0)
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
                 vararg args: Any?
             ) {
+                assertEquals(LogCategory.Realm.Sdk, category)
                 assertEquals("Hello", message)
                 called.incrementAndGet()
             }
@@ -278,9 +285,8 @@ class RealmLogTests {
     @Test
     fun removeLogger_falseForNonExistingLogger() {
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -295,9 +301,8 @@ class RealmLogTests {
     @Test
     fun removeAll_success() {
         val customLogger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.ALL
-            override val tag: String = "CUSTOM"
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -308,7 +313,7 @@ class RealmLogTests {
         }
         RealmLog.add(customLogger)
         assertTrue(RealmLog.removeAll())
-        RealmLog.trace("Hello") // Should not hit `fail()`
+        log.trace("Hello") // Should not hit `fail()`
     }
 
     @Test
@@ -326,5 +331,71 @@ class RealmLogTests {
     @Test
     fun addDefaultSystemLogger_failure() {
         assertFalse(RealmLog.addDefaultSystemLogger())
+    }
+
+    @Test
+    fun setCategoryLevels() {
+        categoriesByPath
+            .values
+            .forEach { logCategory ->
+                val previousLevel: LogLevel = RealmLog.getLevel(logCategory)
+                RealmLog.setLevel(LogLevel.TRACE, logCategory)
+                assertEquals(LogLevel.TRACE, RealmLog.getLevel(logCategory))
+
+                // Restore the level to whatever it was set before
+                RealmLog.setLevel(previousLevel, logCategory)
+            }
+    }
+
+    @Test
+    fun categoryContains() {
+        assertFalse(LogCategory.Realm in LogCategory.Realm.Storage)
+
+        assertTrue(LogCategory.Realm.Storage in LogCategory.Realm)
+        assertTrue(LogCategory.Realm.Storage.Transaction in LogCategory.Realm)
+        assertTrue(LogCategory.Realm.Storage.Transaction in LogCategory.Realm.Storage)
+    }
+
+    /**
+     * Core defines the different categories in runtime, forcing the SDK to define the categories again.
+     * This test validates that we have defined the same categories as in Core.
+     */
+    @Test
+    fun categoriesWatchdog() {
+        val coreLogCategoryNames = RealmInterop.realm_get_category_names()
+
+        val logCategoriesPaths = categoriesByPath
+            .keys
+
+        logCategoriesPaths.forEach { path ->
+            assertContains(coreLogCategoryNames, path)
+        }
+
+        coreLogCategoryNames.forEach { path ->
+            assertContains(logCategoriesPaths, path)
+        }
+    }
+
+    @Test
+    fun filterSdkLogs() {
+        val called = atomic<Boolean>(false)
+        val customLogger = object : RealmLogger {
+            override fun log(
+                category: LogCategory,
+                level: LogLevel,
+                throwable: Throwable?,
+                message: String?,
+                vararg args: Any?,
+            ) {
+                called.value = true
+            }
+        }
+        RealmLog.add(customLogger)
+
+        ContextLogger().run {
+            RealmLog.setLevel(LogLevel.NONE, LogCategory.Realm.Sdk)
+            warn("should be filtered")
+            assertFalse(called.value, "Unexpected message logged")
+        }
     }
 }
