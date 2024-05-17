@@ -25,8 +25,6 @@ import io.realm.kotlin.entities.sync.ParentCollectionDataType
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.query
 import io.realm.kotlin.internal.platform.runBlocking
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.ext.aggregate
@@ -710,7 +708,6 @@ sealed class MongoCollectionTests {
             val childCollection = collection<ChildCollectionDataType>()
             assertEquals(0, childCollection.find().size)
             val unmanagedChild = ChildCollectionDataType()
-            RealmLog.level = LogLevel.ALL
             assertEquals(unmanagedChild._id, childCollection.insertOne(unmanagedChild))
             // We can't rely on the translator to incorporate the insertOnes in order so we need to
             // assure that the child is actually added before verifying the link in the parent.
