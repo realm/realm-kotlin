@@ -299,7 +299,7 @@ class FLXProgressListenerTests {
     private fun createSyncConfig(
         user: User,
     ): SyncConfiguration {
-        return SyncConfiguration.Builder(user, PARTITION_BASED_SCHEMA)
+        return SyncConfiguration.Builder(user, FLEXIBLE_SYNC_SCHEMA)
             .initialSubscriptions {
                 add(it.query<SyncObjectWithAllTypes>())
             }
