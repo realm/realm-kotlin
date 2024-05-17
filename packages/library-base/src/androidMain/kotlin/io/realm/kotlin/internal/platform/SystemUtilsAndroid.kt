@@ -5,7 +5,6 @@ import io.realm.kotlin.internal.RealmInitializer
 import io.realm.kotlin.internal.RealmInstantImpl
 import io.realm.kotlin.internal.interop.SyncConnectionParams
 import io.realm.kotlin.internal.util.Exceptions
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
 import java.io.FileNotFoundException
@@ -37,8 +36,8 @@ public actual fun assetFileAsStream(assetFilename: String): InputStream = try {
 }
 
 // Returns the default logger for the platform
-public actual fun createDefaultSystemLogger(tag: String, logLevel: LogLevel): RealmLogger =
-    LogCatLogger(tag, logLevel)
+public actual fun createDefaultSystemLogger(tag: String): RealmLogger =
+    LogCatLogger(tag)
 
 public actual fun currentTime(): RealmInstant {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

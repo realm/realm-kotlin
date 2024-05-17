@@ -15,6 +15,8 @@
  */
 package io.realm.kotlin.internal.platform
 
+import io.realm.kotlin.internal.messageWithCategory
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import platform.Foundation.NSLog
@@ -27,12 +29,22 @@ import platform.Foundation.stringWithFormat
  * Inspiration from: https://github.com/touchlab/Kermit/blob/master/kermit/src/darwinMain/kotlin/co/touchlab/kermit/NSLogLogger.kt
  */
 internal class NSLogLogger(
-    override val tag: String = "REALM",
-    override val level: LogLevel
+    private val tag: String,
 ) : RealmLogger {
 
-    override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
-        val logMessage: String = prepareLogMessage(throwable, message, *args)
+    override fun log(
+        category: LogCategory,
+        level: LogLevel,
+        throwable: Throwable?,
+        message: String?,
+        vararg args: Any?,
+    ) {
+        val logMessage: String = prepareLogMessage(
+            throwable = throwable,
+            message = messageWithCategory(category, message),
+            args = *args,
+        )
+
         NSLog("%s: [%s] %s", level.name, tag, logMessage)
     }
 

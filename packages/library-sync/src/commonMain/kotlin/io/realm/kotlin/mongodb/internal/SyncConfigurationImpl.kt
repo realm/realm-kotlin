@@ -36,7 +36,6 @@ import io.realm.kotlin.internal.interop.SyncErrorCallback
 import io.realm.kotlin.internal.interop.sync.SyncError
 import io.realm.kotlin.internal.interop.sync.SyncSessionResyncMode
 import io.realm.kotlin.internal.platform.fileExists
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.exceptions.ClientResetRequiredException
 import io.realm.kotlin.mongodb.exceptions.DownloadingRealmTimeOutException
 import io.realm.kotlin.mongodb.subscriptions
@@ -223,7 +222,7 @@ internal class SyncConfigurationImpl(
                         }
                     } catch (ex: Exception) {
                         @Suppress("invisible_member", "invisible_reference")
-                        RealmLog.error("Error thrown and ignored in `onManualResetFallback`: $ex")
+                        configuration.logger.error("Error thrown and ignored in `onManualResetFallback`: $ex")
                     }
                 } else {
                     userErrorHandler.onError(session, syncError)

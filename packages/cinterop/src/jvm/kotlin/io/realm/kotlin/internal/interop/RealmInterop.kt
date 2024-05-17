@@ -1365,9 +1365,21 @@ actual object RealmInterop {
         realmc.realm_set_log_level(level.priority)
     }
 
+    actual fun realm_set_log_level_category(category: String, level: CoreLogLevel) {
+        realmc.realm_set_log_level_category(category, level.priority)
+    }
+
+    actual fun realm_get_log_level_category(category: String): CoreLogLevel =
+        CoreLogLevel.valueFromPriority(realmc.realm_get_log_level_category(category).toShort())
+
+    actual fun realm_get_category_names(): List<String> {
+        val names: Array<String> = realmc.realm_get_log_category_names() as Array<String>
+        return names.asList()
+    }
+
     actual fun realm_app_config_set_metadata_mode(
         appConfig: RealmAppConfigurationPointer,
-        metadataMode: MetadataMode
+        metadataMode: MetadataMode,
     ) {
         realmc.realm_app_config_set_metadata_mode(
             appConfig.cptr(),

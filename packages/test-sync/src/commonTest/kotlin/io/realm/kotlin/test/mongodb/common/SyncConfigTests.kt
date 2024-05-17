@@ -29,11 +29,9 @@ import io.realm.kotlin.entities.sync.flx.FlexChildObject
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
 import io.realm.kotlin.ext.query
-import io.realm.kotlin.internal.platform.createDefaultSystemLogger
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.User
@@ -97,22 +95,6 @@ class SyncConfigTests {
             app.asTestApp.close()
         }
         RealmLog.reset()
-    }
-
-    @Test
-    fun logConfiguration() {
-        val user = createTestUser()
-        val logger = createDefaultSystemLogger("TEST", LogLevel.DEBUG)
-        val customLoggers = listOf(logger)
-        val config = SyncConfiguration.Builder(
-            schema = PARTITION_BASED_SCHEMA,
-            user = user,
-            partitionValue = partitionValue
-        ).also { builder ->
-            builder.log(LogLevel.DEBUG, customLoggers)
-        }.build()
-        assertEquals(LogLevel.DEBUG, config.log.level)
-        assertEquals(logger, config.log.loggers[1]) // Additional logger placed after default logger
     }
 
     @Test
@@ -1225,30 +1207,6 @@ class SyncConfigTests {
             })
             .build()
         assertTrue(config.syncClientResetStrategy is RecoverOrDiscardUnsyncedChangesStrategy)
-    }
-
-    @Test
-    fun logLevelDoesNotGetOverwrittenByConfig() {
-        app.asTestApp.close()
-        // Prevent AppConfiguration to set a log level
-        app = TestApp("logLevelDoesNotGetOverwrittenByConfig", logLevel = null)
-
-        val expectedLogLevel = LogLevel.ALL
-
-        RealmLog.level = expectedLogLevel
-
-        val (email, password) = randomEmail() to "password1234"
-        val user = runBlocking {
-            app.createUserAndLogIn(email, password)
-        }
-
-        SyncConfiguration.Builder(
-            schema = FLEXIBLE_SYNC_SCHEMA,
-            user = user,
-            partitionValue = partitionValue
-        ).build()
-
-        assertEquals(expectedLogLevel, RealmLog.level)
     }
 
     private fun createTestUser(): User = runBlocking {

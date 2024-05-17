@@ -2,6 +2,7 @@ package io.realm.kotlin.internal
 
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
+import io.realm.kotlin.log.SdkLogCategory
 
 /**
  * Internal logger class used to inject context aware information into log message
@@ -80,11 +81,29 @@ public class ContextLogger(public val context: String? = null) {
         doLog(LogLevel.WTF, null, { contextPrefix + message }, *args)
     }
 
-    private inline fun doLog(level: LogLevel, throwable: Throwable?) {
-        RealmLog.doLog(level, throwable, null)
+    private inline fun checkPriority(
+        level: LogLevel,
+        block: () -> Unit,
+    ) {
+        if (level.priority >= RealmLog.sdkLogLevel.priority) {
+            block()
+        }
     }
 
-    private inline fun doLog(level: LogLevel, throwable: Throwable?, message: () -> String?, vararg args: Any?) {
-        RealmLog.doLog(level, throwable, message, *args)
+    private inline fun doLog(level: LogLevel, throwable: Throwable?) {
+        checkPriority(level) {
+            RealmLog.doLog(SdkLogCategory, level, throwable, null)
+        }
+    }
+
+    private inline fun doLog(
+        level: LogLevel,
+        throwable: Throwable?,
+        message: () -> String?,
+        vararg args: Any?,
+    ) {
+        checkPriority(level) {
+            RealmLog.doLog(SdkLogCategory, level, throwable, message(), *args)
+        }
     }
 }

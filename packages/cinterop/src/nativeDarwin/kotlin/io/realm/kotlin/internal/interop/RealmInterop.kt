@@ -15,6 +15,7 @@
  */
 // TODO https://github.com/realm/realm-kotlin/issues/889
 @file:Suppress("TooGenericExceptionThrown", "TooGenericExceptionCaught")
+@file:OptIn(ExperimentalForeignApi::class)
 
 package io.realm.kotlin.internal.interop
 
@@ -54,6 +55,7 @@ import kotlinx.cinterop.CPointerVar
 import kotlinx.cinterop.CPointerVarOf
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.CVariable
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.LongVar
 import kotlinx.cinterop.MemScope
 import kotlinx.cinterop.StableRef
@@ -2511,7 +2513,7 @@ actual object RealmInterop {
         realm_wrapper.realm_set_log_callback(
             staticCFunction { userData, category, logLevel, message ->
                 val userDataLogCallback = safeUserData<LogCallback>(userData)
-                userDataLogCallback.log(logLevel.toShort(), category?.toKString(), message?.toKString())
+                userDataLogCallback.log(logLevel.toShort(), category!!.toKString(), message?.toKString())
             },
             StableRef.create(callback).asCPointer(),
             staticCFunction { userData -> disposeUserData<() -> LogCallback>(userData) }
@@ -2522,9 +2524,28 @@ actual object RealmInterop {
         realm_wrapper.realm_set_log_level(level.priority.toUInt())
     }
 
+    actual fun realm_set_log_level_category(category: String, level: CoreLogLevel) {
+        realm_wrapper.realm_set_log_level_category(category, level.priority.toUInt())
+    }
+
+    actual fun realm_get_log_level_category(category: String): CoreLogLevel =
+        CoreLogLevel.valueFromPriority(realm_wrapper.realm_get_log_level_category(category).toShort())
+
+    actual fun realm_get_category_names(): List<String> {
+        memScoped {
+            val namesCount = realm_wrapper.realm_get_category_names(0u, null)
+            val namesBuffer = allocArray<CPointerVar<ByteVar>>(namesCount.toInt())
+            realm_wrapper.realm_get_category_names(namesCount, namesBuffer)
+
+            return List(namesCount.toInt()) {
+                namesBuffer[it].safeKString()
+            }
+        }
+    }
+
     actual fun realm_app_config_set_metadata_mode(
         appConfig: RealmAppConfigurationPointer,
-        metadataMode: MetadataMode
+        metadataMode: MetadataMode,
     ) {
         realm_wrapper.realm_app_config_set_metadata_mode(
             appConfig.cptr(),

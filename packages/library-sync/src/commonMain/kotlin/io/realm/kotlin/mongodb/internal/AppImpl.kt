@@ -25,7 +25,6 @@ import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.internal.util.DispatcherHolder
 import io.realm.kotlin.internal.util.Validation
 import io.realm.kotlin.internal.util.use
-import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.AuthenticationChange
@@ -93,15 +92,15 @@ public class AppImpl(
         // Due to the way network interfaces are re-enabled on Android, we might see multiple
         // "isOnline" messages in short order. So in order to prevent resetting the network
         // too often we throttle messages, so a reconnect can only happen ever 5 seconds.
-        RealmLog.debug("Network state change detected. ConnectionAvailable = $connectionAvailable")
+        configuration.logger.debug("Network state change detected. ConnectionAvailable = $connectionAvailable")
         val now: Duration = RealmInstant.now().toDuration()
         if (connectionAvailable && (lastOnlineStateReported == null || now.minus(lastOnlineStateReported!!) > reconnectThreshold)
         ) {
-            RealmLog.info("Trigger network reconnect.")
+            configuration.logger.info("Trigger network reconnect.")
             try {
                 sync.reconnect()
             } catch (ex: Exception) {
-                RealmLog.error(ex.toString())
+                configuration.logger.error(ex.toString())
             }
             lastOnlineStateReported = now
         }

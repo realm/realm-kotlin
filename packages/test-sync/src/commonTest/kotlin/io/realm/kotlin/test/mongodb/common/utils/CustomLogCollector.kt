@@ -16,6 +16,7 @@
 
 package io.realm.kotlin.test.mongodb.common.utils
 
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import kotlinx.coroutines.runBlocking
@@ -25,10 +26,7 @@ import kotlinx.coroutines.sync.withLock
 /**
  * Logged collecting all logs it has seen.
  */
-class CustomLogCollector(
-    override val tag: String,
-    override val level: LogLevel
-) : RealmLogger {
+class CustomLogCollector : RealmLogger {
 
     private val mutex = Mutex()
     private val _logs = mutableListOf<String>()
@@ -42,7 +40,7 @@ class CustomLogCollector(
             }
         }
 
-    override fun log(level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
+    override fun log(category: LogCategory, level: LogLevel, throwable: Throwable?, message: String?, vararg args: Any?) {
         val logMessage: String = message!!
         runBlocking {
             mutex.withLock {

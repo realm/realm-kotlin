@@ -16,7 +16,7 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.LogConfiguration
+import io.realm.kotlin.internal.ContextLogger
 import io.realm.kotlin.internal.SDK_VERSION
 import io.realm.kotlin.internal.interop.RealmAppConfigurationPointer
 import io.realm.kotlin.internal.interop.RealmInterop
@@ -51,7 +51,6 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     private val websocketTransport: WebSocketTransport?,
     override val metadataMode: MetadataMode,
     override val syncRootDirectory: String,
-    public val logger: LogConfiguration?,
     override val appName: String?,
     override val appVersion: String?,
     internal val bundleId: String,
@@ -61,6 +60,7 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
     override val authorizationHeaderName: String,
     override val enableSessionMultiplexing: Boolean,
     override val syncTimeoutOptions: SyncTimeoutOptions,
+    public val logger: ContextLogger,
 ) : AppConfiguration {
 
     /**

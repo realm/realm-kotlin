@@ -21,9 +21,6 @@ import io.realm.kotlin.internal.MISSING_PLUGIN_MESSAGE
 import io.realm.kotlin.internal.REALM_FILE_EXTENSION
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.realmObjectCompanionOrNull
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.BaseRealmObject
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.reflect.KClass
@@ -75,23 +72,6 @@ public fun interface InitialDataCallback {
 }
 
 /**
- * Configuration for log events created by a Realm instance.
- */
-@Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
-public data class LogConfiguration(
-    /**
-     * The [LogLevel] for which all log events of equal or higher priority will be reported.
-     */
-    public val level: LogLevel,
-
-    /**
-     * Any loggers to install. They will receive all log events with a priority equal to or higher
-     * than the value defined in [LogConfiguration.level].
-     */
-    public val loggers: List<RealmLogger>
-)
-
-/**
  * Configuration for pre-bundled asset files used as initial state of the realm file.
  */
 public data class InitialRealmFileConfiguration(
@@ -125,12 +105,6 @@ public interface Configuration {
      * The set of classes included in the schema for the realm.
      */
     public val schema: Set<KClass<out BaseRealmObject>>
-
-    /**
-     * The log configuration used for the realm instance.
-     */
-    @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
-    public val log: LogConfiguration
 
     /**
      * Maximum number of active versions.
@@ -226,9 +200,6 @@ public interface Configuration {
 
         // 'name' must be nullable as it is optional when getting SyncClient's default path!
         protected abstract var name: String?
-        protected var logLevel: LogLevel = RealmLog.level
-        protected var appConfigLoggers: List<RealmLogger> = listOf()
-        protected var realmConfigLoggers: List<RealmLogger> = listOf()
         protected var maxNumberOfActiveVersions: Long = Long.MAX_VALUE
         protected var notificationDispatcher: CoroutineDispatcher? = null
         protected var writeDispatcher: CoroutineDispatcher? = null
@@ -280,23 +251,6 @@ public interface Configuration {
                 throw IllegalArgumentException("Only positive numbers above 0 are allowed. Yours was: $maxVersions")
             }
             this.maxNumberOfActiveVersions = maxVersions
-        } as S
-
-        /**
-         * Configure how Realm will report log events.
-         *
-         * @param level all events at this level or higher will be reported.
-         * @param customLoggers any custom loggers to send log events to. A default system logger is
-         * installed by default that will redirect to the common logging framework on the platform,
-         * i.e. LogCat on Android and NSLog on iOS.
-         */
-        @Deprecated("Use io.realm.kotlin.log.RealmLog instead.")
-        public open fun log(
-            level: LogLevel = LogLevel.WARN,
-            customLoggers: List<RealmLogger> = emptyList()
-        ): S = apply {
-            this.logLevel = level
-            this.realmConfigLoggers = customLoggers
         } as S
 
         /**
