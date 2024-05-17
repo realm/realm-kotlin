@@ -16,7 +16,6 @@
 package io.realm.kotlin.mongodb.sync
 
 import io.realm.kotlin.Configuration
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.MutableRealm
 import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
@@ -27,9 +26,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
-import io.realm.kotlin.log.LogLevel
-import io.realm.kotlin.log.RealmLog
-import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.mongodb.App
 import io.realm.kotlin.mongodb.AppConfiguration
 import io.realm.kotlin.mongodb.Credentials
@@ -373,11 +369,6 @@ public interface SyncConfiguration : Configuration {
             if (!user.loggedIn) {
                 throw IllegalArgumentException("A valid, logged in user is required.")
             }
-            // Prime builder with log configuration from AppConfiguration
-            (user as UserImpl).app.configuration.logger?.let { appLog ->
-                this.logLevel = appLog.level
-                this.appConfigLoggers = appLog.loggers
-            }
         }
 
         /**
@@ -399,13 +390,6 @@ public interface SyncConfiguration : Configuration {
         public fun syncClientResetStrategy(resetStrategy: SyncClientResetStrategy): Builder =
             apply {
                 this.syncClientResetStrategy = resetStrategy
-            }
-
-        override fun log(level: LogLevel, customLoggers: List<RealmLogger>): Builder =
-            apply {
-                // Will clear any primed configuration
-                this.logLevel = level
-                this.realmConfigLoggers = customLoggers
             }
 
         /**
@@ -493,7 +477,7 @@ public interface SyncConfiguration : Configuration {
 
         @Suppress("LongMethod")
         override fun build(): SyncConfiguration {
-            val realmLogger = ContextLogger("Sdk")
+            val realmLogger = ContextLogger()
 
             // Set default error handler after setting config logging logic
             if (this.errorHandler == null) {
@@ -539,18 +523,10 @@ public interface SyncConfiguration : Configuration {
             val fileName = fullPathToFile.substringAfterLast(PATH_SEPARATOR)
             val directory = fullPathToFile.removeSuffix("$PATH_SEPARATOR$fileName")
 
-            // Configure logging during creation of a (Realm/Sync)Configuration to keep old behavior
-            // for configuring logging. This should be removed when `LogConfiguration` is removed.
-            RealmLog.level = logLevel
-            realmConfigLoggers.forEach { RealmLog.add(it) }
-            @Suppress("invisible_reference", "invisible_member")
-            val allLoggers: List<RealmLogger> = listOf(RealmLog.systemLoggerInstalled).filterNotNull() + appConfigLoggers + realmConfigLoggers
-
             val baseConfiguration = ConfigurationImpl(
                 directory,
                 fileName,
                 schema,
-                LogConfiguration(logLevel, allLoggers),
                 maxNumberOfActiveVersions,
                 if (notificationDispatcher != null) {
                     CoroutineDispatcherFactory.unmanaged(notificationDispatcher!!)

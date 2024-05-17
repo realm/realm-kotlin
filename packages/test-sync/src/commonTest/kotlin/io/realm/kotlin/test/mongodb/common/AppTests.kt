@@ -523,7 +523,7 @@ class AppTests {
         ).use { testApp ->
             assertEquals(SyncServerConfig.url, testApp.baseUrl)
 
-            RealmLog.level = LogLevel.ALL
+            RealmLog.setLevel(LogLevel.ALL)
             runBlocking {
                 testApp.updateBaseUrl(null)
             }

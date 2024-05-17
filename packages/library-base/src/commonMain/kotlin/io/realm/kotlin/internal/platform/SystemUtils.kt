@@ -2,7 +2,6 @@
 package io.realm.kotlin.internal.platform
 
 import io.realm.kotlin.internal.interop.SyncConnectionParams
-import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLogger
 import io.realm.kotlin.types.RealmInstant
 import kotlin.jvm.JvmName
@@ -123,7 +122,7 @@ public expect fun prepareRealmFilePath(directoryPath: String, filename: String):
 /**
  * Returns the default logger for the platform.
  */
-public expect fun createDefaultSystemLogger(tag: String, logLevel: LogLevel = LogLevel.NONE): RealmLogger
+public expect fun createDefaultSystemLogger(tag: String): RealmLogger
 
 /**
  * Return the current thread id.

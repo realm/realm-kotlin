@@ -19,7 +19,6 @@ package io.realm.kotlin.internal
 import io.realm.kotlin.CompactOnLaunchCallback
 import io.realm.kotlin.InitialDataCallback
 import io.realm.kotlin.InitialRealmFileConfiguration
-import io.realm.kotlin.LogConfiguration
 import io.realm.kotlin.RealmConfiguration
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.util.CoroutineDispatcherFactory
@@ -34,7 +33,6 @@ internal class RealmConfigurationImpl(
     directory: String,
     name: String,
     schema: Set<KClass<out BaseRealmObject>>,
-    logConfig: LogConfiguration,
     maxNumberOfActiveVersions: Long,
     notificationDispatcherFactory: CoroutineDispatcherFactory,
     writeDispatcherFactory: CoroutineDispatcherFactory,
@@ -52,7 +50,6 @@ internal class RealmConfigurationImpl(
     directory,
     name,
     schema,
-    logConfig,
     maxNumberOfActiveVersions,
     notificationDispatcherFactory,
     writeDispatcherFactory,

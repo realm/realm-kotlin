@@ -21,6 +21,7 @@ import io.realm.kotlin.internal.platform.appFilesDirectory
 import io.realm.kotlin.internal.platform.isWindows
 import io.realm.kotlin.internal.platform.pathOf
 import io.realm.kotlin.internal.platform.runBlocking
+import io.realm.kotlin.log.LogCategory
 import io.realm.kotlin.log.LogLevel
 import io.realm.kotlin.log.RealmLog
 import io.realm.kotlin.log.RealmLogger
@@ -397,15 +398,13 @@ class AppConfigurationTests {
     }
 
     private suspend fun doCustomHeaderTest(app: App) {
-        val originalLevel = RealmLog.level
-        RealmLog.level = LogLevel.ALL
+        val originalLevel = RealmLog.getLevel()
+        RealmLog.setLevel(LogLevel.ALL)
         val channel = TestChannel<Boolean>()
 
         val logger = object : RealmLogger {
-            override val level: LogLevel = LogLevel.DEBUG
-            override val tag: String = "LOGGER"
-
             override fun log(
+                category: LogCategory,
                 level: LogLevel,
                 throwable: Throwable?,
                 message: String?,
@@ -435,20 +434,8 @@ class AppConfigurationTests {
         } finally {
             // Restore log status
             RealmLog.remove(logger)
-            RealmLog.level = originalLevel
+            RealmLog.setLevel(originalLevel)
         }
-    }
-
-    @Test
-    fun logLevelDoesNotGetOverwrittenByConfig() {
-        val expectedLogLevel = LogLevel.ALL
-        RealmLog.level = expectedLogLevel
-
-        AppConfiguration.create("")
-
-        assertEquals(expectedLogLevel, RealmLog.level)
-
-        RealmLog.reset()
     }
 
     @Test
