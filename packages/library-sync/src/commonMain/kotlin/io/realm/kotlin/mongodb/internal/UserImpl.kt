@@ -20,7 +20,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.util.use
-import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User

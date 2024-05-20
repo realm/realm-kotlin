@@ -48,7 +48,6 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.receiveOrFail
 import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.test.AfterTest
@@ -62,7 +61,6 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 class AppTests {
 
