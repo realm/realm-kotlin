@@ -106,10 +106,9 @@ public interface App {
      * Returns all known users that are either [User.State.LOGGED_IN] or [User.State.LOGGED_OUT].
      * Only users that at some point logged into this device will be returned.
      *
-     * @return a map of user identifiers and users known locally. User identifiers will match what
-     * is returned by [User.identity].
+     * @return a list of users known locally.
      */
-    public fun allUsers(): Map<String, User>
+    public fun allUsers(): List<User>
 
     /**
      * Log in as a user with the given credentials associated with an authentication provider.
