@@ -407,6 +407,7 @@ expect object RealmInterop {
     ): RealmQueryPointer
     fun realm_query_find_first(query: RealmQueryPointer): Link?
     fun realm_query_find_all(query: RealmQueryPointer): RealmResultsPointer
+    fun realm_query_find_knn(query: RealmQueryPointer, property: String, queryVector: Array<Float>, numberOfNeighbours: Int): RealmResultsPointer
     fun realm_query_count(query: RealmQueryPointer): Long
     fun realm_query_append_query(
         query: RealmQueryPointer,

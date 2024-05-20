@@ -937,6 +937,25 @@ void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error
     realm_sync_socket_websocket_closed(reinterpret_cast<realm_websocket_observer_t*>(observer_ptr), was_clean, static_cast<realm_web_socket_errno_e>(error_code), reason);
 }
 
+realm_results_t* realm_knnsearch(const realm_query_t* existing_query, const char* property, jfloatArray floats, int numberOfNeighbours) {
+    auto table = existing_query->query.get_table();
+    auto jenv = get_env(false);
+
+    jsize len = jenv->GetArrayLength( floats);
+    jfloat *vec = jenv->GetFloatArrayElements(floats, 0);
+    std::vector<float> query_vector;
+    query_vector.reserve(len);
+    for (size_t i = 0; i < len; ++i) {
+        query_vector.push_back(vec[i]);
+    }
+    jenv->ReleaseFloatArrayElements(floats, vec, 0);
+
+    auto col_lst = table->get_column_key(property);
+
+    Results results(existing_query->weak_realm.lock(), table->where());
+    return new realm_results{results.knn_search(col_lst, query_vector, numberOfNeighbours)};
+}
+
 realm_sync_socket_t* realm_sync_websocket_new(int64_t sync_client_config_ptr, jobject websocket_transport) {
     auto jenv = get_env(false); // Always called from JVM
     realm_sync_socket_t* socket_provider = realm_sync_socket_new(jenv->NewGlobalRef(websocket_transport), /*userdata*/

@@ -1499,6 +1499,10 @@ actual object RealmInterop {
         return CPointerWrapper(realm_wrapper.realm_query_find_all(query.cptr()))
     }
 
+    actual fun realm_query_find_knn(query: RealmQueryPointer, property: String, queryVector: Array<Float>, numberOfNeighbours: Int): RealmResultsPointer {
+        TODO("realm_query_find_knn not yet implemented for darwin")
+    }
+
     actual fun realm_query_count(query: RealmQueryPointer): Long {
         memScoped {
             val count = alloc<ULongVar>()

@@ -161,4 +161,5 @@ bool realm_sync_websocket_message(int64_t observer_ptr, jbyteArray data, size_t 
 
 void realm_sync_websocket_closed(int64_t observer_ptr, bool was_clean, int error_code, const char* reason);
 
+realm_results_t* realm_knnsearch(const realm_query_t* existing_query, const char* property, jfloatArray floats, int numberOfNeighbours);
 #endif //TEST_REALM_API_HELPERS_H

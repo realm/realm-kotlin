@@ -3080,6 +3080,66 @@ class QueryTests {
     }
 
     // ----------------
+    // KNN search
+    // ----------------
+    @Test
+    fun knn_search() {
+        val realm = Realm.open(RealmConfiguration.create(setOf(VectorEmbeddingSample::class)))
+        realm.writeBlocking {
+            copyToRealm(VectorEmbeddingSample().apply {
+                stringField = "vector 1"
+                embedding.addAll(
+                    listOf(
+                        0.003f, 0.004f, 0.005f, 0.100f, 0.010f
+                    )
+                )
+            })
+
+            copyToRealm(VectorEmbeddingSample().apply {
+                stringField = "vector 2"
+                embedding.addAll(
+                    listOf(
+                        0.001f, 0.004f, 0.005f, 0.100f, 0.010f
+                    )
+                )
+            })
+
+            copyToRealm(VectorEmbeddingSample().apply {
+                stringField = "vector 3"
+                embedding.addAll(
+                    listOf(
+                        0.001f, 0.004f, 0.005f, 0.100f, 0.010f
+                    )
+                )
+            })
+
+            copyToRealm(VectorEmbeddingSample().apply {
+                stringField = "vector 4"
+                embedding.addAll(
+                    listOf(
+                        0.004f, 0.005f, 0.010f, 0.025f, 0.100f
+                    )
+                )
+            })
+
+            copyToRealm(VectorEmbeddingSample().apply {
+                stringField = "vector 5"
+                embedding.addAll(
+                    listOf(
+                        0.003f, 0.007f, 0.008f, 0.020f, 0.100f
+                    )
+                )
+            })
+        }
+        val knn: RealmResults<VectorEmbeddingSample> = realm.query<VectorEmbeddingSample>()
+            .knn("embedding", arrayOf(0.003f, 0.005f, 0.010f, 0.020f, 0.100f), 2)
+        assertEquals(2, knn.size)
+        assertEquals("vector 4", knn[0].stringField)
+        assertEquals("vector 5", knn[1].stringField)
+    }
+
+
+    // ----------------
     // Coercion helpers
     // ----------------
 
@@ -3297,6 +3357,10 @@ private data class PropertyDescriptor constructor(
     val values: List<Any?>
 )
 
+class VectorEmbeddingSample : RealmObject {
+    var stringField: String = ""
+    var embedding: RealmList<Float> = realmListOf()
+}
 /**
  * Use this and not [io.realm.kotlin.entities.Sample] as that class has default initializers that make
  * aggregating operations harder to assert.

@@ -115,6 +115,10 @@ internal class ObjectQuery<E : BaseRealmObject> constructor(
         return query(stringBuilder.toString())
     }
 
+    override fun knn(property: String, queryVector: Array<Float>, numberOfNeighbours: Int): RealmResults<E> {
+        return RealmResultsImpl(realmReference, RealmInterop.realm_query_find_knn(queryPointer, property, queryVector, numberOfNeighbours), classKey, clazz, mediator)
+    }
+
     override fun distinct(property: String, vararg extraProperties: String): RealmQuery<E> {
         val stringBuilder = StringBuilder().append("TRUEPREDICATE DISTINCT($property")
         extraProperties.forEach { extraProperty ->

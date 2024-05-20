@@ -67,6 +67,8 @@ public interface RealmQuery<T : BaseRealmObject> : RealmElementQuery<T> {
      */
     public fun sort(property: String, sortOrder: Sort = Sort.ASCENDING): RealmQuery<T>
 
+    public fun knn(property: String, queryVector: Array<Float>, numberOfNeighbours: Int): RealmResults<T>
+
     /**
      * Sorts the query result by the specific property name according to [Pair]s of properties and
      * sorting order.

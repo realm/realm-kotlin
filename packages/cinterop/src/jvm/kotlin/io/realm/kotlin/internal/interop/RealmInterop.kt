@@ -1777,6 +1777,10 @@ actual object RealmInterop {
         return LongPointerWrapper(realmc.realm_query_find_all(query.cptr()))
     }
 
+    actual fun realm_query_find_knn(query: RealmQueryPointer, property: String, queryVector: Array<Float>, numberOfNeighbours: Int): RealmResultsPointer {
+        return LongPointerWrapper(realmc.realm_knnsearch(query.cptr(), property, queryVector.toFloatArray(), numberOfNeighbours))
+    }
+
     actual fun realm_query_count(query: RealmQueryPointer): Long {
         val count = LongArray(1)
         realmc.realm_query_count(query.cptr(), count)
