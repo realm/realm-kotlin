@@ -22,7 +22,6 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -31,6 +30,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.random.Random
 
@@ -55,7 +55,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatField: Float = 0.0.toFloat()
     var decimal128Field: Decimal128 = Decimal128("0")
     var realmInstantField: RealmInstant = RealmInstant.MIN
-    var objectIdField: ObjectId = ObjectId.create()
+    var objectIdField: BsonObjectId = BsonObjectId()
     var realmUUIDField: RealmUUID = RealmUUID.random()
     var binaryField: ByteArray = byteArrayOf(42)
     var mutableRealmIntField: MutableRealmInt = MutableRealmInt.create(42)
@@ -73,7 +73,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatNullableField: Float? = null
     var decimal128NullableField: Decimal128? = null
     var realmInstantNullableField: RealmInstant? = null
-    var objectIdNullableField: ObjectId? = null
+    var objectIdNullableField: BsonObjectId? = null
     var realmUUIDNullableField: RealmUUID? = null
     var binaryNullableField: ByteArray? = null
     var objectNullableField: SyncObjectWithAllTypes? = null
@@ -93,7 +93,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatRealmList: RealmList<Float> = realmListOf(0.0.toFloat())
     var decimal128RealmList: RealmList<Decimal128> = realmListOf(Decimal128("0.0"))
     var realmInstantRealmList: RealmList<RealmInstant> = realmListOf(RealmInstant.MIN)
-    var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
+    var objectIdRealmList: RealmList<BsonObjectId> = realmListOf(BsonObjectId())
     var realmUUIDRealmList: RealmList<RealmUUID> = realmListOf(RealmUUID.random())
     var binaryRealmList: RealmList<ByteArray> = realmListOf(byteArrayOf(42))
     var objectRealmList: RealmList<SyncObjectWithAllTypes> = realmListOf()
@@ -115,7 +115,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatRealmSet: RealmSet<Float> = realmSetOf(0.0.toFloat())
     var decimal128RealmSet: RealmSet<Decimal128> = realmSetOf(Decimal128("0.0"))
     var realmInstantRealmSet: RealmSet<RealmInstant> = realmSetOf(RealmInstant.MIN)
-    var objectIdRealmSet: RealmSet<ObjectId> = realmSetOf(ObjectId.create())
+    var objectIdRealmSet: RealmSet<BsonObjectId> = realmSetOf(BsonObjectId())
     var realmUUIDRealmSet: RealmSet<RealmUUID> = realmSetOf(RealmUUID.random())
     var binaryRealmSet: RealmSet<ByteArray> = realmSetOf(byteArrayOf(42))
     var objectRealmSet: RealmSet<SyncObjectWithAllTypes> = realmSetOf()
@@ -137,7 +137,7 @@ class SyncObjectWithAllTypes : RealmObject {
     var floatRealmDictionary: RealmDictionary<Float> = realmDictionaryOf("A" to 0.0.toFloat())
     var decimal128RealmDictionary: RealmDictionary<Decimal128> = realmDictionaryOf("A" to Decimal128("0.0"))
     var realmInstantRealmDictionary: RealmDictionary<RealmInstant> = realmDictionaryOf("A" to RealmInstant.MIN)
-    var objectIdRealmDictionary: RealmDictionary<ObjectId> = realmDictionaryOf("A" to ObjectId.create())
+    var objectIdRealmDictionary: RealmDictionary<BsonObjectId> = realmDictionaryOf("A" to BsonObjectId())
     var realmUUIDRealmDictionary: RealmDictionary<RealmUUID> = realmDictionaryOf("A" to RealmUUID.random())
     var binaryRealmDictionary: RealmDictionary<ByteArray> = realmDictionaryOf("A" to byteArrayOf(42))
 
@@ -401,9 +401,9 @@ class SyncObjectWithAllTypes : RealmObject {
                                 )
                             }
                             RealmStorageType.OBJECT_ID -> {
-                                val minObjId = ObjectId.from("000000000000000000000000")
-                                val maxObjId = ObjectId.from("ffffffffffffffffffffffff")
-                                val randomObjId = ObjectId.from("503f1f77bcf86cd793439011")
+                                val minObjId = BsonObjectId("000000000000000000000000")
+                                val maxObjId = BsonObjectId("ffffffffffffffffffffffff")
+                                val randomObjId = BsonObjectId("503f1f77bcf86cd793439011")
                                 Pair(
                                     { obj: SyncObjectWithAllTypes ->
                                         obj.objectIdField = randomObjId

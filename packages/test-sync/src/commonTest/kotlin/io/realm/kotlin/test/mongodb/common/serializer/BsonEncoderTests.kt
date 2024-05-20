@@ -17,13 +17,11 @@
 
 package io.realm.kotlin.test.mongodb.common.serializer
 
-import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -143,13 +141,6 @@ class BsonEncoderTests {
                             bsonValue = BsonBinary(BsonBinarySubType.UUID_STANDARD, uuid.bytes),
                         )
                     }
-                ObjectId::class -> ObjectId.create().let { objectId ->
-                    DecoderAsserter(
-                        type = ObjectId::class,
-                        value = objectId,
-                        bsonValue = objectId.asBsonObjectId(),
-                    )
-                }
                 RealmInstant::class -> RealmInstant.from(
                     epochSeconds = 1668425451,
                     nanosecondAdjustment = 862000000

@@ -46,7 +46,6 @@ import io.realm.kotlin.schema.ValuePropertyType
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -932,7 +931,6 @@ class CopyFromRealmTests {
                 Double::class -> 1.234
                 ByteArray::class -> byteArrayOf(43)
                 RealmInstant::class -> RealmInstant.from(1, 100)
-                ObjectId::class -> ObjectId.from("635a1a95184a200db8a07bfc")
                 RealmUUID::class -> RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a")
                 MutableRealmInt::class -> MutableRealmInt.create(7)
                 RealmAny::class -> RealmAny.create(1)
@@ -964,7 +962,6 @@ class CopyFromRealmTests {
             Double::class -> realmListOf(1.234, 1.345)
             ByteArray::class -> realmListOf(byteArrayOf(42), byteArrayOf(43))
             RealmInstant::class -> realmListOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
-            ObjectId::class -> realmListOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             RealmUUID::class -> realmListOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             BsonObjectId::class -> realmListOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             Decimal128::class -> realmListOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
@@ -997,7 +994,6 @@ class CopyFromRealmTests {
             Double::class -> realmSetOf(1.234, 1.345)
             ByteArray::class -> realmSetOf(byteArrayOf(42), byteArrayOf(43))
             RealmInstant::class -> realmSetOf(RealmInstant.from(1, 0), RealmInstant.from(1, 1))
-            ObjectId::class -> realmSetOf(ObjectId.from("635a1a95184a200db8a07bfc"), ObjectId.from("735a1a95184a200db8a07bfc"))
             RealmUUID::class -> realmSetOf(RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             BsonObjectId::class -> realmSetOf(BsonObjectId("635a1a95184a200db8a07bfc"), BsonObjectId("735a1a95184a200db8a07bfc"))
             Decimal128::class -> realmSetOf(Decimal128("1.8446744073709551618E-615"), Decimal128("2.8446744073709551618E-6151"))
@@ -1032,7 +1028,6 @@ class CopyFromRealmTests {
             Double::class -> realmDictionaryOf("A" to 1.234, "B" to 1.345)
             ByteArray::class -> realmDictionaryOf("A" to byteArrayOf(42), "B" to byteArrayOf(43))
             RealmInstant::class -> realmDictionaryOf("A" to RealmInstant.from(1, 0), "B" to RealmInstant.from(1, 1))
-            ObjectId::class -> realmDictionaryOf("A" to ObjectId.from("635a1a95184a200db8a07bfc"), "B" to ObjectId.from("735a1a95184a200db8a07bfc"))
             RealmUUID::class -> realmDictionaryOf("A" to RealmUUID.from("defda04c-80ac-4ed9-86f5-334fef3dcf8a"), "B" to RealmUUID.from("eefda04c-80ac-4ed9-86f5-334fef3dcf8a"))
             BsonObjectId::class -> realmDictionaryOf("A" to BsonObjectId("635a1a95184a200db8a07bfc"), "B" to BsonObjectId("735a1a95184a200db8a07bfc"))
             Decimal128::class -> realmDictionaryOf("A" to Decimal128("1.8446744073709551618E-615"), "B" to Decimal128("2.8446744073709551618E-6151"))

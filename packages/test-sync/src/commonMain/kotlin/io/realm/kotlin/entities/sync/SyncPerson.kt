@@ -16,14 +16,14 @@
 
 package io.realm.kotlin.entities.sync
 
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.BsonObjectId
 
 class SyncPerson : RealmObject {
     @PrimaryKey
     @Suppress("VariableNaming")
-    var _id: ObjectId? = ObjectId.create()
+    var _id: BsonObjectId? = BsonObjectId()
     var age: Long = 0
     var firstName: String = ""
     var lastName: String = ""

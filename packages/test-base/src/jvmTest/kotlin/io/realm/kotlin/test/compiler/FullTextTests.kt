@@ -24,7 +24,6 @@ import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.test.util.Compiler.compileFromSource
 import io.realm.kotlin.test.util.TypeDescriptor.allFieldTypes
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
@@ -52,7 +51,6 @@ class FullTextTests {
             Decimal128::class to "BsonDecimal128(\"1.4E100\")",
             String::class to "\"Realm\"",
             RealmInstant::class to "RealmInstant.from(42, 420)",
-            ObjectId::class to "ObjectId.create()",
             BsonObjectId::class to "BsonObjectId()",
             RealmUUID::class to "RealmUUID.random()",
             ByteArray::class to "byteArrayOf(42)",
@@ -77,7 +75,6 @@ class FullTextTests {
                     "fulltext.kt",
                     """
                         import io.realm.kotlin.types.MutableRealmInt
-                        import io.realm.kotlin.types.ObjectId
                         import io.realm.kotlin.types.RealmAny
                         import io.realm.kotlin.types.RealmInstant
                         import io.realm.kotlin.types.RealmObject

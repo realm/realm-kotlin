@@ -24,7 +24,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.platform.singleThreadDispatcher
 import io.realm.kotlin.internal.query.AggregatorQueryType
 import io.realm.kotlin.notifications.DeletedObject
@@ -48,7 +47,6 @@ import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TestChannel
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.test.util.receiveOrFail
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -145,7 +143,6 @@ class QueryTests {
                     doubleField = 1.0
                     decimal128Field = Decimal128("2.8446744073709551618E-6151")
                     timestampField = RealmInstant.from(100, 1001)
-                    objectIdField = ObjectId.from("507f191e810c19729de860eb")
                     bsonObjectIdField = BsonObjectId("507f191e810c19729de860eb")
                     uuidField = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d77")
                     binaryField = byteArrayOf(43)
@@ -202,34 +199,10 @@ class QueryTests {
                     checkQuery(QuerySample::timestampField, RealmInstant.from(100, 1001))
                 }
                 RealmStorageType.OBJECT_ID -> {
-                    val realmObjectId = ObjectId.from("507f191e810c19729de860eb")
                     val bsonObjectId = BsonObjectId("507f191e810c19729de860eb")
 
                     // Check matching types first
-                    checkQuery(QuerySample::objectIdField, realmObjectId)
                     checkQuery(QuerySample::bsonObjectIdField, bsonObjectId)
-
-                    // Check against equivalent types now - do it manually since the convenience
-                    // function forces the fields to have the same type as the query parameter
-                    realm.query<QuerySample>("bsonObjectIdField = $0", realmObjectId)
-                        .find()
-                        .single()
-                        .run {
-                            assertContentEquals(
-                                (realmObjectId as ObjectIdImpl).bytes,
-                                this.bsonObjectIdField.toByteArray()
-                            )
-                        }
-
-                    realm.query<QuerySample>("objectIdField = $0", bsonObjectId)
-                        .find()
-                        .single()
-                        .run {
-                            assertContentEquals(
-                                bsonObjectId.toByteArray(),
-                                (this.objectIdField as ObjectIdImpl).bytes
-                            )
-                        }
                 }
                 RealmStorageType.UUID -> {
                     checkQuery(
@@ -2064,12 +2037,10 @@ class QueryTests {
             .forEach { aggregator ->
                 listOf(
                     QuerySample::booleanListField.name,
-                    QuerySample::objectIdListField.name,
                     QuerySample::bsonObjectIdListField.name,
                     QuerySample::timestampListField.name,
                     QuerySample::binaryListField.name,
                     QuerySample::nullableBooleanListField.name,
-                    QuerySample::nullableObjectIdListField.name,
                     QuerySample::nullableBsonObjectIdListField.name,
                     QuerySample::nullableTimestampListField.name,
                     QuerySample::nullableBinaryListField.name,
@@ -2131,12 +2102,10 @@ class QueryTests {
             .forEach { aggregator ->
                 listOf(
                     QuerySample::booleanSetField.name,
-                    QuerySample::objectIdSetField.name,
                     QuerySample::bsonObjectIdSetField.name,
                     QuerySample::timestampSetField.name,
                     QuerySample::binaryListField.name,
                     QuerySample::nullableBooleanSetField.name,
-                    QuerySample::nullableObjectIdSetField.name,
                     QuerySample::nullableBsonObjectIdSetField.name,
                     QuerySample::nullableTimestampSetField.name,
                     QuerySample::nullableBinaryListField.name,
@@ -2198,12 +2167,10 @@ class QueryTests {
             .forEach { aggregator ->
                 listOf(
                     QuerySample::booleanDictionaryField.name,
-                    QuerySample::objectIdDictionaryField.name,
                     QuerySample::bsonObjectIdDictionaryField.name,
                     QuerySample::timestampDictionaryField.name,
                     QuerySample::binaryListField.name,
                     QuerySample::nullableBooleanDictionaryField.name,
-                    QuerySample::nullableObjectIdDictionaryField.name,
                     QuerySample::nullableBsonObjectIdDictionaryField.name,
                     QuerySample::nullableTimestampDictionaryField.name,
                     QuerySample::nullableBinaryListField.name,
@@ -3338,7 +3305,6 @@ class QuerySample() : RealmObject {
     var doubleField: Double = 0.0
     var decimal128Field: Decimal128 = Decimal128("1.84467440737095E-6157")
     var timestampField: RealmInstant = RealmInstant.from(100, 1000)
-    var objectIdField: ObjectId = ObjectId.from("507f191e810c19729de860ea")
     var bsonObjectIdField: BsonObjectId = BsonObjectId("507f191e810c19729de860ea")
     var uuidField: RealmUUID = RealmUUID.from("46423f1b-ce3e-4a7e-812f-004cf9c42d76")
     var binaryField: ByteArray = byteArrayOf(42)
@@ -3355,7 +3321,6 @@ class QuerySample() : RealmObject {
     var nullableDoubleField: Double? = null
     var nullableDecimal128Field: Decimal128? = null
     var nullableTimestampField: RealmInstant? = null
-    var nullableObjectIdField: ObjectId? = null
     var nullableBsonObjectIdField: BsonObjectId? = null
     var nullableBinaryField: ByteArray? = null
     var nullableRealmObject: QuerySample? = null
@@ -3371,7 +3336,6 @@ class QuerySample() : RealmObject {
     var doubleListField: RealmList<Double> = realmListOf()
     var decimal128ListField: RealmList<Decimal128> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
-    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
     var objectListField: RealmList<QuerySample> = realmListOf()
@@ -3387,7 +3351,6 @@ class QuerySample() : RealmObject {
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableDecimal128ListField: RealmList<Decimal128?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
-    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
 
@@ -3402,7 +3365,6 @@ class QuerySample() : RealmObject {
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var decimal128SetField: RealmSet<Decimal128> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
-    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
     var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
     var objectSetField: RealmSet<QuerySample> = realmSetOf()
@@ -3418,7 +3380,6 @@ class QuerySample() : RealmObject {
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableDecimal128SetField: RealmSet<Decimal128?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
-    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
 
@@ -3433,7 +3394,6 @@ class QuerySample() : RealmObject {
     var doubleDictionaryField: RealmDictionary<Double> = realmDictionaryOf()
     var decimal128DictionaryField: RealmDictionary<Decimal128> = realmDictionaryOf()
     var timestampDictionaryField: RealmDictionary<RealmInstant> = realmDictionaryOf()
-    var objectIdDictionaryField: RealmDictionary<ObjectId> = realmDictionaryOf()
     var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
 
@@ -3448,7 +3408,6 @@ class QuerySample() : RealmObject {
     var nullableDoubleDictionaryField: RealmDictionary<Double?> = realmDictionaryOf()
     var nullableDecimal128DictionaryField: RealmDictionary<Decimal128?> = realmDictionaryOf()
     var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
-    var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
     var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
     var nullableObjectDictionaryField: RealmDictionary<QuerySample?> = realmDictionaryOf()
