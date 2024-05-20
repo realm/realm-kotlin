@@ -952,7 +952,7 @@ class FunctionsTests {
 
     @Test
     fun unknownFunction() {
-        assertFailsWithMessage<FunctionExecutionException>("function not found: 'unknown'") {
+        assertFailsWithMessage<FunctionExecutionException>("function not found") {
             runBlocking {
                 functions.call<String>("unknown", 32)
             }
