@@ -7,6 +7,8 @@ This release will bump the Realm file format 24. Opening a file with an older fo
 * Removed property `RealmLog.level`. Log levels can be set with `RealmLog.setLevel`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
 * Removed `LogConfiguration`. Log levels and custom loggers can be set with `RealmLog`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
 * Removed deprecated `io.realm.kotlin.types.ObjectId`. Use `org.mongodb.kbson.BsonObjectId` or its type alias `org.mongodb.kbson.ObjectId` instead. (Issue [#1749](https://github.com/realm/realm-kotlin/issues/1749) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1082))
+* [Sync] Removed deprecated methods `User.identity` and `User.provider`, user identities can be accessed with the already existing `User.identities`. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
+* [Sync] `App.allUsers` does no longer return a map, but only a list of users known locally. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
 
 ### Enhancements
 * Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
