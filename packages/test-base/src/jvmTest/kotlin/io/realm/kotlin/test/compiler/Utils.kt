@@ -47,7 +47,6 @@ internal const val OBJECT_CLASS = "SampleClass"
 
 private val COLLECTION_CODE = """
 import io.realm.kotlin.types.EmbeddedRealmObject
-
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
