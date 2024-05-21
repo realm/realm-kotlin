@@ -32,7 +32,7 @@ This release will bump the Realm file format 24. Opening a file with an older fo
 * Minimum R8: 8.0.34.
 
 ### Internal
-* Updated to Realm Core 14.7.0 commit 1f2a4c74112c1988b00a862d348e3f91200c5c4b.
+* Updated to Realm Core 14.7.0 commit c280bdb17522323d5c30dc32a2b9efc9dc80ca3b.
 
 
 ## 1.16.0 (2024-05-01)
