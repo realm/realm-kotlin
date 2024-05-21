@@ -33,8 +33,6 @@ import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
-import kotlin.math.absoluteValue
-import kotlin.random.Random
 
 private typealias FieldDataFactory = (SyncObjectWithAllTypes) -> Unit
 private typealias FieldValidator = (SyncObjectWithAllTypes) -> Unit
