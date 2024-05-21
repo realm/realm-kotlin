@@ -15,7 +15,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Add support for filtering logs by category. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
 
 ### Fixed
-* None.
+* Typos [SubscriptionSetState.SUPERSEDED], [SyncTimeoutOptions.pingKeepalivePeriod] and [SyncTimeoutOptions.pongKeepalivePeriod]. (Issue [#1754](https://github.com/realm/realm-kotlin/pull/1754)
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).

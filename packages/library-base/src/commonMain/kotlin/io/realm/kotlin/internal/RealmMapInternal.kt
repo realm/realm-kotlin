@@ -797,7 +797,7 @@ internal class ManagedRealmDictionary<V> constructor(
     }
 
     override fun changeFlow(scope: ProducerScope<MapChange<String, V>>): ChangeFlow<ManagedRealmMap<String, V>, MapChange<String, V>> =
-        RealmDictonaryChangeFlow<V>(scope)
+        RealmDictionaryChangeFlow<V>(scope)
 
     override fun thaw(liveRealm: RealmReference): ManagedRealmDictionary<V>? {
         return RealmInterop.realm_dictionary_resolve_in(nativePointer, liveRealm.dbPointer)
@@ -820,7 +820,7 @@ internal class ManagedRealmDictionary<V> constructor(
     // TODO add equals and hashCode when https://github.com/realm/realm-kotlin/issues/1097 is fixed
 }
 
-internal class RealmDictonaryChangeFlow<V>(scope: ProducerScope<MapChange<String, V>>) :
+internal class RealmDictionaryChangeFlow<V>(scope: ProducerScope<MapChange<String, V>>) :
     ChangeFlow<ManagedRealmMap<String, V>, MapChange<String, V>>(scope) {
     override fun initial(frozenRef: ManagedRealmMap<String, V>): MapChange<String, V> =
         InitialDictionaryImpl(frozenRef)

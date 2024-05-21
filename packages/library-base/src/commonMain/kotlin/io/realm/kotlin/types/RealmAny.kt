@@ -87,7 +87,7 @@ import kotlin.reflect.KClass
  * `RealmAny` can contain other [RealmList] and [RealmDictionary] of [RealmAny]. This means that
  * you can build nested collections inside a `RealmAny`-field.
  * ```
- * realmObjct.realmAnyField = realmAnyListOf(
+ * realmObject.realmAnyField = realmAnyListOf(
  *     // Primitive values can be added in collections
  *     1,
  *     // Lists and dictionaries can contain other nested collection types
@@ -400,7 +400,7 @@ public interface RealmAny {
          *     ),
          *     realmDictionaryOf(
          *         "key1" to realmListOf(),
-         *         "key2" to realmDictioneryOf())
+         *         "key2" to realmDictionaryOf())
          * )
          * ```
          */
@@ -413,7 +413,7 @@ public interface RealmAny {
          * To create a [RealmAny] containing a [RealmDictionary] of arbitrary values wrapped in
          * [RealmAny]s use the [io.realm.kotlin.ext.realmAnyDictionaryOf].
          *
-         * A `RealmDictionery<RealmAny?>` can contain all [RealmAny] types, also other collection types:
+         * A `RealmDictionary<RealmAny?>` can contain all [RealmAny] types, also other collection types:
          * ```
          * class SampleObject() : RealmObject {
          *     val realmAnyField: RealmAny? = null
@@ -422,7 +422,7 @@ public interface RealmAny {
          *
          * // Dictionaries can contain other collections, but only `RealmList<RealmAny>` and
          * // `RealmDictionary<RealmAny>`.
-         * realmObjct.realmAnyField = realmAnyDictionaryOf(
+         * realmObject.realmAnyField = realmAnyDictionaryOf(
          *     "int" to 5,
          *     // Lists and dictionaries can contain other nested collection types
          *     "list" to realmListOf(
