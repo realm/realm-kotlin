@@ -391,13 +391,6 @@ class SyncClientResetIntegrationTests {
                     channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
                 }
 
-                override fun onError(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    fail("onError shouldn't be called: ${exception.message}")
-                }
-
                 override fun onManualResetFallback(
                     session: SyncSession,
                     exception: ClientResetRequiredException
@@ -483,13 +476,6 @@ class SyncClientResetIntegrationTests {
 
                     // Notify that this callback has been invoked
                     channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
-                }
-
-                override fun onError(
-                    session: SyncSession,
-                    exception: ClientResetRequiredException
-                ) {
-                    fail("onError shouldn't be called: ${exception.message}")
                 }
 
                 override fun onManualResetFallback(
@@ -584,14 +570,6 @@ class SyncClientResetIntegrationTests {
                 fail("Should not call onAfterReset")
             }
 
-            override fun onError(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
-                // Just notify the callback has been invoked, do the assertions in onManualResetFallback
-                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-            }
-
             override fun onManualResetFallback(
                 session: SyncSession,
                 exception: ClientResetRequiredException
@@ -619,8 +597,6 @@ class SyncClientResetIntegrationTests {
                 with(realm.syncSession as SyncSessionImpl) {
                     simulateSyncError(ErrorCode.RLM_ERR_AUTO_CLIENT_RESET_FAILED)
 
-                    // TODO Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
@@ -660,14 +636,6 @@ class SyncClientResetIntegrationTests {
                 fail("Should not call onAfterReset")
             }
 
-            override fun onError(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
-                // Just notify the callback has been invoked, do the assertions in onManualResetFallback
-                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-            }
-
             override fun onManualResetFallback(
                 session: SyncSession,
                 exception: ClientResetRequiredException
@@ -695,8 +663,6 @@ class SyncClientResetIntegrationTests {
                 with(realm.syncSession) {
                     downloadAllServerChanges(defaultTimeout)
                     app.triggerClientReset(syncMode, this, user.id)
-                    // Twice until the deprecated method is removed
-                    assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                     assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 }
             }
@@ -738,23 +704,6 @@ class SyncClientResetIntegrationTests {
                 channel.trySendOrFail(ClientResetEvents.ON_AFTER_RESET)
             }
 
-            override fun onError(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
-                // Notify that this callback has been invoked
-                assertEquals(
-                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
-                    exception.message
-                )
-                assertIs<IllegalStateException>(exception.cause)
-                assertEquals(
-                    "User exception",
-                    exception.cause?.message
-                )
-                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-            }
-
             override fun onManualResetFallback(
                 session: SyncSession,
                 exception: ClientResetRequiredException
@@ -781,7 +730,6 @@ class SyncClientResetIntegrationTests {
 
                 // Validate that the client reset was triggered successfully
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }
@@ -834,18 +782,6 @@ class SyncClientResetIntegrationTests {
                 throw IllegalStateException("User exception")
             }
 
-            override fun onError(
-                session: SyncSession,
-                exception: ClientResetRequiredException
-            ) {
-                // Notify that this callback has been invoked
-                assertEquals(
-                    "[Sync][AutoClientResetFailed(1028)] A fatal error occurred during client reset: 'User-provided callback failed'.",
-                    exception.message
-                )
-                channel.trySendOrFail(ClientResetEvents.ON_MANUAL_RESET_FALLBACK)
-            }
-
             override fun onManualResetFallback(
                 session: SyncSession,
                 exception: ClientResetRequiredException
@@ -868,9 +804,6 @@ class SyncClientResetIntegrationTests {
                 // Validate that the client reset was triggered successfully
                 assertEquals(ClientResetEvents.ON_BEFORE_RESET, channel.receiveOrFail())
                 assertEquals(ClientResetEvents.ON_AFTER_RESET, channel.receiveOrFail())
-
-                // TODO Twice until the deprecated method is removed
-                assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
                 assertEquals(ClientResetEvents.ON_MANUAL_RESET_FALLBACK, channel.receiveOrFail())
             }
         }

@@ -81,7 +81,7 @@ internal abstract class BaseScalarQuery<E : BaseRealmObject> constructor(
 }
 
 /**
- * Returns how many objects there are. The result is devliered as a [Long].
+ * Returns how many objects there are. The result is delivered as a [Long].
  */
 internal class CountQuery<E : BaseRealmObject> constructor(
     realmReference: RealmReference,
