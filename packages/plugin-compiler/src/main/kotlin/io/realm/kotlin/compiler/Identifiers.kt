@@ -156,7 +156,6 @@ object ClassIds {
     val REALM_INSTANT = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmInstant"))
     val REALM_BACKLINKS = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("BacklinksDelegate"))
     val REALM_EMBEDDED_BACKLINKS = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("EmbeddedBacklinksDelegate"))
-    val REALM_OBJECT_ID = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("ObjectId"))
     val KBSON_OBJECT_ID = ClassId(FqNames.PACKAGE_KBSON, Name.identifier("BsonObjectId"))
     val KBSON_DECIMAL128 = ClassId(FqNames.PACKAGE_KBSON, Name.identifier("BsonDecimal128"))
     val REALM_UUID = ClassId(FqNames.PACKAGE_TYPES, Name.identifier("RealmUUID"))

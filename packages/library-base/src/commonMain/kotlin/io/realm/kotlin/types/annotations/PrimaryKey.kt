@@ -29,7 +29,7 @@ import io.realm.kotlin.types.RealmUUID
  * identify the object.
  *
  * This annotation applies to the following primitive types: String, Byte, Char,
- * Short, Int, Long, [io.realm.kotlin.types.ObjectId], [org.mongodb.kbson.ObjectId] and [RealmUUID],
+ * Short, Int, Long, [org.mongodb.kbson.ObjectId] and [RealmUUID],
  * as well as their nullable variants.
  *
  * It cannot be applied on a property that also has a [FullText] annotation.
