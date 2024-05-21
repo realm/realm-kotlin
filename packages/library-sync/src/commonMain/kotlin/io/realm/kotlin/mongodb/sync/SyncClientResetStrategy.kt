@@ -113,7 +113,7 @@ public interface ManuallyRecoverUnsyncedChangesStrategy : SyncClientResetStrateg
  * the reset has concluded, [onAfterReset] will be invoked with both the instance before (read only)
  * an instance of the final realm (mutable).
  *
- * In the event that discarding the unsynced data is not enough to resolve the reset the [onError]
+ * In the event that discarding the unsynced data is not enough to resolve the reset the [onManualResetFallback]
  * callback will be invoked allowing to manually resolve the reset as it would be done in
  * [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
  */
@@ -127,16 +127,6 @@ public interface DiscardUnsyncedChangesStrategy : AutomaticClientResetStrategy {
      * @param after [MutableRealm] realm after the reset.
      */
     public fun onAfterReset(before: TypedRealm, after: MutableRealm)
-
-    /**
-     * Callback that indicates the seamless Client reset couldn't complete. It should be handled
-     * as in [ManuallyRecoverUnsyncedChangesStrategy.onClientReset].
-     *
-     * @param session [SyncSession] during which this error happened.
-     * @param exception [ClientResetRequiredException] the specific Client Reset error.
-     */
-    @Deprecated("Use onManualResetFallback()")
-    public fun onError(session: SyncSession, exception: ClientResetRequiredException)
 }
 
 /**
