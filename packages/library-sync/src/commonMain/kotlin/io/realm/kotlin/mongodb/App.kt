@@ -106,7 +106,7 @@ public interface App {
      * Returns all known users that are either [User.State.LOGGED_IN] or [User.State.LOGGED_OUT].
      * Only users that at some point logged into this device will be returned.
      *
-     * @return a list of users known locally.
+     * @return a list of locally known users.
      */
     public fun allUsers(): List<User>
 
