@@ -52,11 +52,11 @@ import io.realm.kotlin.test.util.TestHelper
 import io.realm.kotlin.test.util.TestHelper.getRandomKey
 import io.realm.kotlin.test.util.TestHelper.randomEmail
 import io.realm.kotlin.test.util.use
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
+import org.mongodb.kbson.BsonObjectId
 import kotlin.random.Random
 import kotlin.reflect.KClass
 import kotlin.test.AfterTest
@@ -417,8 +417,8 @@ class SyncConfigTests {
                     )
 
                     ValueType.OBJECT_ID -> listOf(
-                        ObjectId.from("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
-                        null as ObjectId? to "null",
+                        BsonObjectId("62aafc72b9c357695ac489a7") to "o_62aafc72b9c357695ac489a7",
+                        null as BsonObjectId? to "null",
                     )
 
                     ValueType.UUID -> listOf(
@@ -454,7 +454,7 @@ class SyncConfigTests {
         is String? -> SyncConfiguration.create(user, partitionValue, schema)
         is Int? -> SyncConfiguration.create(user, partitionValue, schema)
         is Long? -> SyncConfiguration.create(user, partitionValue, schema)
-        is ObjectId? -> SyncConfiguration.create(user, partitionValue, schema)
+        is BsonObjectId? -> SyncConfiguration.create(user, partitionValue, schema)
         is RealmUUID? -> SyncConfiguration.create(user, partitionValue, schema)
         else -> TODO("Undefined partition type")
     }
@@ -467,7 +467,7 @@ class SyncConfigTests {
         is String? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         is Int? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         is Long? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
-        is ObjectId? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
+        is BsonObjectId? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         is RealmUUID? -> SyncConfiguration.Builder(user, partitionValue, schema).build()
         else -> TODO("Undefined partition type")
     }
@@ -666,8 +666,8 @@ class SyncConfigTests {
                     validateConfig(SyncConfiguration.Builder(user, 1L, supportedSchemaTypes).build())
                 }
                 ValueType.OBJECT_ID -> {
-                    validateConfig(SyncConfiguration.create(user, ObjectId.create(), supportedSchemaTypes))
-                    validateConfig(SyncConfiguration.Builder(user, ObjectId.create(), supportedSchemaTypes).build())
+                    validateConfig(SyncConfiguration.create(user, BsonObjectId(), supportedSchemaTypes))
+                    validateConfig(SyncConfiguration.Builder(user, BsonObjectId(), supportedSchemaTypes).build())
                 }
                 ValueType.UUID -> {
                     validateConfig(SyncConfiguration.create(user, RealmUUID.random(), supportedSchemaTypes))

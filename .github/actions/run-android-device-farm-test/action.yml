@@ -41,6 +41,7 @@ runs:
         test_spec_file: test_spec-${{ inputs.app-id }}.yaml
         test_spec_type: APPIUM_PYTHON_TEST_SPEC
         remote_src: true
+        timeout: 3600
         test_spec: |
           version: 0.1
           phases:

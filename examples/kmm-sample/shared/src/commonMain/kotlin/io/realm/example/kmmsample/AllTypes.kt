@@ -19,11 +19,11 @@ package io.realm.example.kmmsample
 
 import io.realm.kotlin.ext.backlinks
 import io.realm.kotlin.ext.realmListOf
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmList
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.ObjectId
 
 // This class is included to make sure the compiler-plugin can handle various type, given the min/max
 // version of Kotlin this project is compiled against.
@@ -43,7 +43,7 @@ class AllTypes : RealmObject {
     var doubleField: Double = 0.0
     var floatField: Float = 0.0.toFloat()
     var realmInstantField: RealmInstant = RealmInstant.MIN
-    var objectIdField: ObjectId = ObjectId.create()
+    var objectIdField: ObjectId = ObjectId()
     var objectField: AllTypes? = null
 
     // Nullable types
@@ -81,7 +81,7 @@ class AllTypes : RealmObject {
     var floatRealmListNullable: RealmList<Float?> = realmListOf(null)
     var realmInstantRealmList: RealmList<RealmInstant> = realmListOf(RealmInstant.MIN)
     var realmInstantRealmListNullable: RealmList<RealmInstant?> = realmListOf(null)
-    var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId.create())
+    var objectIdRealmList: RealmList<ObjectId> = realmListOf(ObjectId())
     var objectIdRealmListNullable: RealmList<ObjectId?> = realmListOf(null)
     var objectRealmList: RealmList<AllTypes> = realmListOf()
 

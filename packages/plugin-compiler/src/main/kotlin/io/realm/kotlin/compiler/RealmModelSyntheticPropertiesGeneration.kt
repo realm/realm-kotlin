@@ -33,7 +33,6 @@ import io.realm.kotlin.compiler.ClassIds.PROPERTY_TYPE
 import io.realm.kotlin.compiler.ClassIds.REALM_ANY
 import io.realm.kotlin.compiler.ClassIds.REALM_INSTANT
 import io.realm.kotlin.compiler.ClassIds.REALM_MODEL_COMPANION
-import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERNAL_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.REALM_UUID
@@ -145,7 +144,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
 
     private val objectReferenceClass = pluginContext.lookupClassOrThrow(OBJECT_REFERENCE_CLASS)
     private val realmInstantType: IrType = pluginContext.lookupClassOrThrow(REALM_INSTANT).defaultType
-    private val realmObjectIdType: IrType = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID).defaultType
     private val objectIdType: IrType = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID).defaultType
     private val realmUUIDType: IrType = pluginContext.lookupClassOrThrow(REALM_UUID).defaultType
     private val realmAnyType: IrType = pluginContext.lookupClassOrThrow(REALM_ANY).defaultType
@@ -200,7 +198,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             longType,
             stringType,
             objectIdType,
-            realmObjectIdType,
             realmUUIDType
         )
     }
@@ -215,7 +212,6 @@ class RealmModelSyntheticPropertiesGeneration(private val pluginContext: IrPlugi
             stringType,
             realmInstantType,
             objectIdType,
-            realmObjectIdType,
             realmUUIDType,
             realmAnyType
         )

@@ -29,7 +29,6 @@ import io.realm.kotlin.compiler.ClassIds.REALM_INSTANT
 import io.realm.kotlin.compiler.ClassIds.REALM_LIST
 import io.realm.kotlin.compiler.ClassIds.REALM_MUTABLE_INTEGER
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_HELPER
-import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_ID
 import io.realm.kotlin.compiler.ClassIds.REALM_OBJECT_INTERFACE
 import io.realm.kotlin.compiler.ClassIds.REALM_SET
 import io.realm.kotlin.compiler.ClassIds.REALM_UUID
@@ -134,7 +133,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
 
     private val objectIdClass: IrClass = pluginContext.lookupClassOrThrow(KBSON_OBJECT_ID)
     private val decimal128Class: IrClass = pluginContext.lookupClassOrThrow(KBSON_DECIMAL128)
-    private val realmObjectIdClass: IrClass = pluginContext.lookupClassOrThrow(REALM_OBJECT_ID)
     private val realmUUIDClass: IrClass = pluginContext.lookupClassOrThrow(REALM_UUID)
     private val mutableRealmIntegerClass: IrClass = pluginContext.lookupClassOrThrow(REALM_MUTABLE_INTEGER)
     private val realmAnyClass: IrClass = pluginContext.lookupClassOrThrow(REALM_ANY)
@@ -208,8 +206,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
         pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToShort"))).first().owner
     private val longToInt: IrSimpleFunction =
         pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("longToInt"))).first().owner
-    private val objectIdToRealmObjectId: IrSimpleFunction =
-        pluginContext.referenceFunctions(CallableId(FqName("io.realm.kotlin.internal"), Name.identifier("objectIdToRealmObjectId"))).first().owner
 
     private lateinit var objectReferenceProperty: IrProperty
     private lateinit var objectReferenceType: IrType
@@ -599,24 +595,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
                             toRealmValue = null
                         )
                     }
-                    propertyType.isRealmObjectId() -> {
-                        logDebug("io.realm.kotlin.types.ObjectId property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
-                        var schemaProperty = SchemaProperty(
-                            propertyType = PropertyType.RLM_PROPERTY_TYPE_OBJECT_ID,
-                            declaration = declaration,
-                            collectionType = CollectionType.NONE
-                        )
-                        fields[name] = schemaProperty
-                        modifyAccessor(
-                            property = schemaProperty,
-                            getFunction = getObjectId,
-                            fromRealmValue = objectIdToRealmObjectId,
-                            toPublic = null,
-                            setFunction = setValue,
-                            fromPublic = null,
-                            toRealmValue = null
-                        )
-                    }
                     propertyType.isRealmUUID() -> {
                         logDebug("RealmUUID property named ${declaration.name} is ${if (nullable) "" else "not "}nullable")
                         val schemaProperty = SchemaProperty(
@@ -998,12 +976,6 @@ class AccessorModifierIrGeneration(private val pluginContext: IrPluginContext) {
     private fun IrType.isObjectId(): Boolean {
         val propertyClassId: ClassId = this.classIdOrFail()
         val objectIdClassId: ClassId? = objectIdClass.classId
-        return propertyClassId == objectIdClassId
-    }
-
-    private fun IrType.isRealmObjectId(): Boolean {
-        val propertyClassId: ClassId = this.classIdOrFail()
-        val objectIdClassId: ClassId? = realmObjectIdClass.classId
         return propertyClassId == objectIdClassId
     }
 
