@@ -185,6 +185,7 @@ class AppTests {
         allUsers = app.allUsers()
         assertEquals(2, allUsers.size)
         assertTrue(allUsers.contains(user3))
+        assertEquals(User.State.LOGGED_OUT, user3.state)
 
         // Logging out anonymous users will remove them completely
         user1.logOut()
