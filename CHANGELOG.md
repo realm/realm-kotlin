@@ -1,7 +1,7 @@
 ## 2.0.0-SNAPSHOT (YYYY-MM-DD)
 
 [!NOTE]
-This release will bump the Realm file format from version 23 to 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
+This release will bump the Realm file format 24. Opening a file with an older format will automatically upgrade it from file format v10. If you want to upgrade from an earlier file format version you will have to use Realm Kotlin v1.13.1 or earlier. Downgrading to a previous file format is not possible.
 
 ### Breaking changes
 * Removed property `RealmLog.level`. Log levels can be set with `RealmLog.setLevel`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
@@ -15,7 +15,8 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * [Sync] Sync progress notifications is now also supported for flexible sync configurations. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
 
 ### Fixed
-* None.
+* Inserting the same typed link to the same key in a dictionary more than once would incorrectly create multiple backlinks to the object. This did not appear to cause any crashes later, but would have affecting explicit backlink count queries (eg: `...@links.@count`) and possibly notifications (Core Issue [realm/realm-core#7676](https://github.com/realm/realm-core/issues/7676) since v1.16.0).
+* [Sync] Automatic client reset recovery would crash when recovering AddInteger instructions on a Mixed property if its type was changed to non-integer (Core issue [realm/realm-core#7683](https://github.com/realm/realm-core/pull/7683), since v0.11.0).
 
 ### Compatibility
 * File format: Generates Realms with file format v24 (reads and upgrades file format v10 or later).
@@ -33,7 +34,8 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * Minimum R8: 8.0.34.
 
 ### Internal
-* None.
+* Updated to Realm Core 14.7.0 commit c280bdb17522323d5c30dc32a2b9efc9dc80ca3b.
+
 
 ## 1.16.0 (2024-05-01)
 

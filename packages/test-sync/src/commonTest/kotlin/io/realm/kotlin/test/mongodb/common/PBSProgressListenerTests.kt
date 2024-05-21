@@ -33,7 +33,6 @@ import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -210,7 +209,6 @@ class PBSProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun triggerImmediatelyWhenRegistered() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             withTimeout(10.seconds) {
