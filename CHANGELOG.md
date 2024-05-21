@@ -6,6 +6,7 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 ### Breaking changes
 * Removed property `RealmLog.level`. Log levels can be set with `RealmLog.setLevel`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
 * Removed `LogConfiguration`. Log levels and custom loggers can be set with `RealmLog`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
+* Removed deprecated `RealmClass.isEmbedded`. Class embeddeness can be check with `RealmClassKind.EMBEDDED`. (Issue [#1753](https://github.com/realm/realm-kotlin/issues/1753) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1080))
 
 ### Enhancements
 * Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
