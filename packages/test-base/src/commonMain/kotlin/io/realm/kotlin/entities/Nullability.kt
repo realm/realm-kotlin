@@ -17,7 +17,6 @@
 package io.realm.kotlin.entities
 
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -40,7 +39,6 @@ class Nullability : RealmObject {
     var doubleField: Double? = null
     var decimal128Field: Decimal128? = null
     var timestampField: RealmInstant? = null
-    var objectIdField: ObjectId? = null
     var bsonObjectIdField: BsonObjectId? = null
     var uuidField: RealmUUID? = null
     var binaryField: ByteArray? = null

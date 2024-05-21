@@ -51,7 +51,6 @@ import io.realm.kotlin.test.mongodb.util.TestAppInitializer.VOID_FUNCTION
 import io.realm.kotlin.test.mongodb.util.TestAppInitializer.initializeDefault
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -239,7 +238,6 @@ class FunctionsTests {
                 .filterNot { classifier ->
                     classifier in listOf(
                         Decimal128::class,
-                        ObjectId::class, // BsonType
                         BsonObjectId::class //
                     )
                 }

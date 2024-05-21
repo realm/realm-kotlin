@@ -20,7 +20,6 @@ import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.RealmUserPointer
 import io.realm.kotlin.internal.interop.sync.CoreUserState
 import io.realm.kotlin.internal.util.use
-import io.realm.kotlin.mongodb.AuthenticationProvider
 import io.realm.kotlin.mongodb.Credentials
 import io.realm.kotlin.mongodb.Functions
 import io.realm.kotlin.mongodb.User
@@ -41,16 +40,11 @@ public class UserImpl(
     override val state: User.State
         get() = fromCoreState(RealmInterop.realm_user_get_state(nativePointer))
 
-    // TODO Can maybe fail, but we could also cache the return value?
-    override val identity: String
-        get() = id
     override val id: String
         get() = RealmInterop.realm_user_get_identity(nativePointer)
     override val loggedIn: Boolean
         get() = RealmInterop.realm_user_is_logged_in(nativePointer)
-    @Deprecated("Property not stable, users might have multiple providers.", ReplaceWith("User.identities"))
-    override val provider: AuthenticationProvider
-        get() = identities.first().provider
+
     override val accessToken: String
         get() = RealmInterop.realm_user_get_access_token(nativePointer)
     override val refreshToken: String
@@ -187,13 +181,13 @@ public class UserImpl(
         if (other == null || this::class != other::class) return false
 
         other as UserImpl
+        if (id != (other.id)) return false
 
-        if (identity != (other.identity)) return false
         return app.configuration == other.app.configuration
     }
 
     override fun hashCode(): Int {
-        var result = identity.hashCode()
+        var result = id.hashCode()
         result = 31 * result + app.configuration.appId.hashCode()
         return result
     }

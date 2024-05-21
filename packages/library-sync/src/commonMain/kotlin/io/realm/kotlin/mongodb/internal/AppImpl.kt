@@ -134,16 +134,11 @@ public class AppImpl(
             ?.let { UserImpl(it, this) }
     override val sync: Sync by lazy { SyncImpl(nativePointer) }
 
-    override fun allUsers(): Map<String, User> {
-        val nativeUsers: List<RealmUserPointer> =
-            RealmInterop.realm_app_get_all_users(nativePointer)
-        val map = mutableMapOf<String, User>()
-        nativeUsers.map { ptr: RealmUserPointer ->
-            val user = UserImpl(ptr, this)
-            map[user.identity] = user
-        }
-        return map
-    }
+    override fun allUsers(): List<User> =
+        RealmInterop.realm_app_get_all_users(nativePointer)
+            .map { ptr: RealmUserPointer ->
+                UserImpl(ptr, this)
+            }
 
     override suspend fun login(credentials: Credentials): User {
         // suspendCoroutine doesn't allow freezing callback capturing continuation

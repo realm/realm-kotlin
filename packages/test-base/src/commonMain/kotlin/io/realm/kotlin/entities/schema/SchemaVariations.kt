@@ -20,7 +20,6 @@ import io.realm.kotlin.entities.Sample
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -55,7 +54,6 @@ class SchemaVariations : RealmObject {
     @FullText
     var fulltext: String = "A very long string"
     var date: RealmInstant = RealmInstant.from(0, 0)
-    var objectId: ObjectId = ObjectId.create()
     var bsonObjectId: BsonObjectId = BsonObjectId()
     var decimal128: Decimal128 = Decimal128("1")
     var uuid: RealmUUID = RealmUUID.random()
@@ -78,7 +76,6 @@ class SchemaVariations : RealmObject {
     var decimal128List: RealmList<Decimal128> = realmListOf()
     var stringList: RealmList<String> = realmListOf()
     var dateList: RealmList<RealmInstant> = realmListOf()
-    var objectIdList: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdList: RealmList<BsonObjectId> = realmListOf()
     var uuidList: RealmList<RealmUUID> = realmListOf()
     var binaryList: RealmList<ByteArray> = realmListOf()
@@ -100,7 +97,6 @@ class SchemaVariations : RealmObject {
     var decimal128Set: RealmSet<Decimal128> = realmSetOf()
     var stringSet: RealmSet<String> = realmSetOf()
     var dateSet: RealmSet<RealmInstant> = realmSetOf()
-    var objectIdSet: RealmSet<ObjectId> = realmSetOf()
     var bsonObjectIdSet: RealmSet<BsonObjectId> = realmSetOf()
     var uuidSet: RealmSet<RealmUUID> = realmSetOf()
     var binarySet: RealmSet<ByteArray> = realmSetOf()
@@ -122,7 +118,6 @@ class SchemaVariations : RealmObject {
     var decimal128Map: RealmDictionary<Decimal128> = realmDictionaryOf()
     var stringMap: RealmDictionary<String> = realmDictionaryOf()
     var dateMap: RealmDictionary<RealmInstant> = realmDictionaryOf()
-    var objectIdMap: RealmDictionary<ObjectId> = realmDictionaryOf()
     var bsonObjectIdMap: RealmDictionary<BsonObjectId> = realmDictionaryOf()
     var uuidMap: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryMap: RealmDictionary<ByteArray> = realmDictionaryOf()

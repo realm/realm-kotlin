@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.entities.primarykey
 
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
@@ -85,16 +84,6 @@ class PrimaryKeyString : RealmObject {
 class PrimaryKeyStringNullable : RealmObject {
     @PrimaryKey
     var primaryKey: String? = Random.nextULong().toString()
-}
-
-class PrimaryKeyObjectId : RealmObject {
-    @PrimaryKey
-    var primaryKey: ObjectId = ObjectId.create()
-}
-
-class PrimaryKeyObjectIdNullable : RealmObject {
-    @PrimaryKey
-    var primaryKey: ObjectId? = ObjectId.from("507f191e810c19729de860ea")
 }
 
 class PrimaryKeyBsonObjectId : RealmObject {

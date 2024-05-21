@@ -17,13 +17,11 @@
 
 package io.realm.kotlin.test.mongodb.common.serializer
 
-import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.toDuration
 import io.realm.kotlin.mongodb.internal.BsonEncoder
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -63,7 +61,6 @@ class BsonEncoderTests {
     private val primitiveAsserters = TypeDescriptor.classifiers
         .filter { (key, _) ->
             key != RealmAny::class && // Tested by `realmAnyEncoding`
-                key != BsonObjectId::class && // Tested by `encodeBsonValueToBsonValue`
                 key != RealmObject::class // Non-primitives are not supported
         }.map { (key, _) ->
             when (key) {
@@ -143,13 +140,11 @@ class BsonEncoderTests {
                             bsonValue = BsonBinary(BsonBinarySubType.UUID_STANDARD, uuid.bytes),
                         )
                     }
-                ObjectId::class -> ObjectId.create().let { objectId ->
-                    DecoderAsserter(
-                        type = ObjectId::class,
-                        value = objectId,
-                        bsonValue = objectId.asBsonObjectId(),
-                    )
-                }
+                BsonObjectId::class -> DecoderAsserter(
+                    type = BsonObjectId::class,
+                    value = BsonObjectId("507f191e810c19729de860ea"),
+                    bsonValue = BsonObjectId("507f191e810c19729de860ea")
+                )
                 RealmInstant::class -> RealmInstant.from(
                     epochSeconds = 1668425451,
                     nanosecondAdjustment = 862000000

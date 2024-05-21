@@ -6,6 +6,9 @@ This release will bump the Realm file format 24. Opening a file with an older fo
 ### Breaking changes
 * Removed property `RealmLog.level`. Log levels can be set with `RealmLog.setLevel`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
 * Removed `LogConfiguration`. Log levels and custom loggers can be set with `RealmLog`. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
+* Removed deprecated `io.realm.kotlin.types.ObjectId`. Use `org.mongodb.kbson.BsonObjectId` or its type alias `org.mongodb.kbson.ObjectId` instead. (Issue [#1749](https://github.com/realm/realm-kotlin/issues/1749) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1082))
+* [Sync] Removed deprecated methods `User.identity` and `User.provider`, user identities can be accessed with the already existing `User.identities`. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
+* [Sync] `App.allUsers` does no longer return a map, but only a list of users known locally. (Issue [#1751](https://github.com/realm/realm-kotlin/issues/1751) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1083))
 * [Sync] Sync progress notifications now reports an estimate ranged from `0.0` to `1.0` with `Progress.estimate` instead of `transferredBytes` and `totalBytes`. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
 
 ### Enhancements
