@@ -195,11 +195,11 @@ public class AppConfigurationImpl @OptIn(ExperimentalKBsonSerializerApi::class) 
                 )
                 RealmInterop.realm_sync_client_config_set_ping_keepalive_period(
                     syncClientConfig,
-                    syncTimeoutOptions.pingKeepalivePeriod.inWholeMilliseconds.toULong()
+                    syncTimeoutOptions.pingKeepAlivePeriod.inWholeMilliseconds.toULong()
                 )
                 RealmInterop.realm_sync_client_config_set_pong_keepalive_timeout(
                     syncClientConfig,
-                    syncTimeoutOptions.pongKeepalivePeriod.inWholeMilliseconds.toULong()
+                    syncTimeoutOptions.pongKeepAlivePeriod.inWholeMilliseconds.toULong()
                 )
                 RealmInterop.realm_sync_client_config_set_fast_reconnect_limit(
                     syncClientConfig,

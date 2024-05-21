@@ -464,12 +464,6 @@ private class DiscardUnsyncedChangesHelper constructor(
         appPointer: RealmAppPointer,
         error: SyncError
     ) {
-        // If there is a user exception we appoint it as the cause of the client reset
-        strategy.onError(
-            session,
-            ClientResetRequiredException(appPointer, error)
-        )
-        // TODO call both onError and onManualResetFallback until the deprecated function is removed
         strategy.onManualResetFallback(
             session,
             ClientResetRequiredException(appPointer, error)

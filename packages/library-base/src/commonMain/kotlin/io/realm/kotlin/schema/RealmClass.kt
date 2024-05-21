@@ -37,12 +37,6 @@ public interface RealmClass {
     public val primaryKey: RealmProperty?
 
     /**
-     * Returns whether or not the class is embedded.
-     */
-    @Deprecated("This property has been deprecated.", ReplaceWith("kind == RealmClassKind.EMBEDDED", "io.realm.kotlin.schema.RealmClassKind"))
-    public val isEmbedded: Boolean
-
-    /**
      * Returns what type of Realm model class this is.
      */
     public val kind: RealmClassKind

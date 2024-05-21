@@ -71,7 +71,7 @@ public fun realmAnyListOf(vararg values: Any?): RealmAny =
 
 /**
  * Create a [RealmAny] containing a [RealmDictionary] with all argument values wrapped as
- * [RealmAnys]s.
+ * [RealmAny]s.
  * @param values entries of the dictionary.
  *
  * See [RealmAny.create] for [RealmDictionaries] constraints and examples of usage.

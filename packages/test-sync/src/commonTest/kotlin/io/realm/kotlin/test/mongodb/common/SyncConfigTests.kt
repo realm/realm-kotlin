@@ -1050,10 +1050,6 @@ class SyncConfigTests {
                 fail("Should not be called")
             }
 
-            override fun onError(session: SyncSession, exception: ClientResetRequiredException) {
-                fail("Should not be called")
-            }
-
             override fun onManualResetFallback(
                 session: SyncSession,
                 exception: ClientResetRequiredException
