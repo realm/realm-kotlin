@@ -31,6 +31,7 @@ import io.realm.kotlin.types.RealmObject
 import io.realm.kotlin.types.RealmSet
 import io.realm.kotlin.types.RealmUUID
 import io.realm.kotlin.types.annotations.PrimaryKey
+import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
 import kotlin.math.absoluteValue
 import kotlin.random.Random
@@ -43,7 +44,7 @@ class SyncObjectWithAllTypes : RealmObject {
     @PrimaryKey
 
     @Suppress("VariableNaming")
-    var _id: String = "id-${Random.nextLong().absoluteValue}"
+    var _id: String = "id-${BsonObjectId()}"
 
     // Non-nullable types
     var stringField: String = "hello world"
