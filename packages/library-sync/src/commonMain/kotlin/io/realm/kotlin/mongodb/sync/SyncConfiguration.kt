@@ -21,7 +21,6 @@ import io.realm.kotlin.Realm
 import io.realm.kotlin.TypedRealm
 import io.realm.kotlin.internal.ConfigurationImpl
 import io.realm.kotlin.internal.ContextLogger
-import io.realm.kotlin.internal.ObjectIdImpl
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.SchemaMode
 import io.realm.kotlin.internal.platform.PATH_SEPARATOR
@@ -35,7 +34,6 @@ import io.realm.kotlin.mongodb.exceptions.SyncException
 import io.realm.kotlin.mongodb.internal.SyncConfigurationImpl
 import io.realm.kotlin.mongodb.internal.UserImpl
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmUUID
 import org.mongodb.kbson.BsonBinary
 import org.mongodb.kbson.BsonBinarySubType
@@ -240,26 +238,6 @@ public interface SyncConfiguration : Configuration {
             user: User,
             schema: Set<KClass<out BaseRealmObject>>
         ) : this(user, schema, null)
-
-        /**
-         * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
-         * must be enabled on the server for this to work.
-         *
-         * **See:** [Partitions](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
-         *
-         * @param user user used to access server side data. This will define which data is
-         * available from the server.
-         * @param partitionValue the partition value to use data from. The server must have been
-         * configured with an [ObjectId](https://www.mongodb.com/docs/v4.4/reference/method/ObjectId/) partition key for this to work.
-         * @param schema the classes of the schema. The elements of the set must be direct class
-         * literals.
-         * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
-         */
-        public constructor(
-            user: User,
-            partitionValue: ObjectId?,
-            schema: Set<KClass<out BaseRealmObject>>
-        ) : this(user, schema, partitionValue?.let { BsonObjectId((it as ObjectIdImpl).bytes) } ?: BsonNull)
 
         /**
          * Creates a [SyncConfiguration.Builder] for Partition-Based Sync. Partition-Based Sync
@@ -670,7 +648,7 @@ public interface SyncConfiguration : Configuration {
          * @throws IllegalArgumentException if the user is not valid and logged in.
          * * **See:** [partition key](https://www.mongodb.com/docs/realm/sync/data-access-patterns/partitions/)
          */
-        public fun create(user: User, partitionValue: ObjectId?, schema: Set<KClass<out BaseRealmObject>>): SyncConfiguration =
+        public fun create(user: User, partitionValue: BsonObjectId?, schema: Set<KClass<out BaseRealmObject>>): SyncConfiguration =
             Builder(user, partitionValue, schema).build()
 
         /**

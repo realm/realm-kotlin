@@ -19,7 +19,6 @@ import io.realm.kotlin.internal.interop.CollectionType
 import io.realm.kotlin.internal.interop.PropertyType
 import io.realm.kotlin.internal.platform.returnType
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -286,7 +285,6 @@ object TypeDescriptor {
         Boolean::class to CoreFieldType.BOOL,
         String::class to CoreFieldType.STRING,
         RealmInstant::class to CoreFieldType.TIMESTAMP,
-        ObjectId::class to CoreFieldType.OBJECT_ID,
         BsonObjectId::class to CoreFieldType.OBJECT_ID,
         RealmUUID::class to CoreFieldType.UUID,
         ByteArray::class to CoreFieldType.BINARY,
@@ -297,7 +295,7 @@ object TypeDescriptor {
     // The deprecated variant of ObjectId is not allowed as it was already deprecated when RealmAny
     // was added
     val anyClassifiers =
-        classifiers.filter { it.value.anySupport && it.key != ObjectId::class }
+        classifiers.filter { it.value.anySupport }
 
     // Element type is the type of the element of either a singular field or the container element type.
     // Basically just a clone of KType but with the ability to create them from input parameters at

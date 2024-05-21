@@ -15,7 +15,6 @@
  */
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.internal.interop.ErrorCode
 import io.realm.kotlin.internal.interop.RealmInterop
 import io.realm.kotlin.internal.interop.sync.ApiKeyWrapper
@@ -23,7 +22,6 @@ import io.realm.kotlin.internal.util.use
 import io.realm.kotlin.mongodb.auth.ApiKey
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.ServiceException
-import io.realm.kotlin.types.ObjectId
 import kotlinx.coroutines.channels.Channel
 import org.mongodb.kbson.BsonObjectId
 
@@ -64,8 +62,6 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
         }
     }
 
-    override suspend fun delete(id: ObjectId) = delete(id.asBsonObjectId())
-
     override suspend fun delete(id: BsonObjectId) {
         try {
             Channel<Result<Unit>>(1).use { channel ->
@@ -87,8 +83,6 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
             }
         }
     }
-
-    override suspend fun disable(id: ObjectId) = disable(id.asBsonObjectId())
 
     override suspend fun disable(id: BsonObjectId) {
         try {
@@ -113,8 +107,6 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
         }
     }
 
-    override suspend fun enable(id: ObjectId) = enable(id.asBsonObjectId())
-
     override suspend fun enable(id: BsonObjectId) {
         try {
             Channel<Result<Unit>>(1).use { channel ->
@@ -137,8 +129,6 @@ internal class ApiKeyAuthImpl(override val app: AppImpl, override val user: User
             }
         }
     }
-
-    override suspend fun fetch(id: ObjectId): ApiKey? = fetch(id.asBsonObjectId())
 
     override suspend fun fetch(id: BsonObjectId): ApiKey? {
         try {

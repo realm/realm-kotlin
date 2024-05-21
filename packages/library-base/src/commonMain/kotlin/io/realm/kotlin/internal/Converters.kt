@@ -33,7 +33,6 @@ import io.realm.kotlin.internal.interop.RealmValue
 import io.realm.kotlin.internal.interop.Timestamp
 import io.realm.kotlin.internal.interop.ValueType
 import io.realm.kotlin.types.BaseRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmObject
@@ -99,8 +98,7 @@ public inline fun realmValueToFloat(transport: RealmValue): Float = transport.ge
 public inline fun realmValueToDouble(transport: RealmValue): Double = transport.getDouble()
 public inline fun realmValueToObjectId(transport: RealmValue): BsonObjectId =
     BsonObjectId(transport.getObjectIdBytes())
-public inline fun realmValueToRealmObjectId(transport: RealmValue): ObjectId =
-    ObjectIdImpl(transport.getObjectIdBytes())
+
 public inline fun realmValueToRealmUUID(transport: RealmValue): RealmUUID = RealmUUIDImpl(transport.getUUIDBytes())
 @OptIn(ExperimentalUnsignedTypes::class)
 public inline fun realmValueToDecimal128(transport: RealmValue): Decimal128 =
@@ -316,22 +314,7 @@ internal object ObjectIdConverter : PassThroughPublicConverter<BsonObjectId>() {
     override inline fun MemTrackingAllocator.toRealmValue(value: BsonObjectId?): RealmValue =
         objectIdTransport(value?.toByteArray())
 }
-
 // Top level methods to allow inlining from compiler plugin
-public inline fun objectIdToRealmObjectId(value: BsonObjectId?): ObjectId? =
-    value?.let { ObjectIdImpl(it.toByteArray()) }
-
-internal object RealmObjectIdConverter : PassThroughPublicConverter<ObjectId>() {
-    override inline fun fromRealmValue(realmValue: RealmValue): ObjectId? =
-        if (realmValue.isNull()) null else realmValueToRealmObjectId(realmValue)
-
-    override inline fun MemTrackingAllocator.toRealmValue(value: ObjectId?): RealmValue =
-        objectIdTransport(value?.let { it as ObjectIdImpl }?.bytes)
-}
-
-// Top level methods to allow inlining from compiler plugin
-public inline fun realmObjectIdToObjectId(value: ObjectId?): BsonObjectId? =
-    value?.let { BsonObjectId((it as ObjectIdImpl).bytes) }
 
 internal object RealmUUIDConverter : PassThroughPublicConverter<RealmUUID>() {
     override inline fun fromRealmValue(realmValue: RealmValue): RealmUUID? =
@@ -365,8 +348,6 @@ internal val primitiveTypeConverters: Map<KClass<*>, RealmValueConverter<*>> =
         RealmInstant::class to RealmInstantConverter,
         RealmInstantImpl::class to RealmInstantConverter,
         BsonObjectId::class to ObjectIdConverter,
-        ObjectId::class to RealmObjectIdConverter,
-        ObjectIdImpl::class to RealmObjectIdConverter,
         RealmUUID::class to RealmUUIDConverter,
         RealmUUIDImpl::class to RealmUUIDConverter,
         ByteArray::class to ByteArrayConverter,

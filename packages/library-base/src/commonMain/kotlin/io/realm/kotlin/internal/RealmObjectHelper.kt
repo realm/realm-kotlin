@@ -56,7 +56,6 @@ import io.realm.kotlin.schema.RealmStorageType
 import io.realm.kotlin.types.BaseRealmObject
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -211,11 +210,6 @@ internal object RealmObjectHelper {
                     obj,
                     key,
                     objectIdTransport(value.toByteArray())
-                )
-                is ObjectId -> setValueTransportByKey(
-                    obj,
-                    key,
-                    objectIdTransport((value as ObjectIdImpl).bytes)
                 )
                 is RealmUUID -> setValueTransportByKey(obj, key, uuidTransport(value.bytes))
                 is RealmObjectInterop -> setValueTransportByKey(
