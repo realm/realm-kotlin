@@ -48,7 +48,6 @@ import kotlinx.coroutines.withTimeout
 import kotlin.random.Random
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -59,7 +58,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class FLXProgressListenerTests {
 
-    private val TEST_SIZE = 2
+    private val TEST_SIZE = 10
     private val TIMEOUT = 30.seconds
 
     private lateinit var app: TestApp
@@ -171,7 +170,7 @@ class FLXProgressListenerTests {
 
             withTimeout(TIMEOUT) {
                 flow.takeWhile { completed -> completed < 3 }
-                    .collect { completed ->
+                    .collect { _ ->
                         realm.writeSampleData(TEST_SIZE)
                     }
             }
@@ -245,26 +244,6 @@ class FLXProgressListenerTests {
     }
 
     @Test
-    // Maybe not a guarantee that we can give for FLX. Monitor outcome of
-    // https://github.com/realm/realm-core/issues/7627
-    @Ignore
-    fun triggerImmediatelyWhenRegistered() = runBlocking {
-        Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
-            withTimeout(10.seconds) {
-                // Ensure that all data is already synced
-//                realm.syncSession.uploadAllLocalChangesOrFail()
-                assertTrue { realm.syncSession.downloadAllServerChanges() }
-                // Ensure that progress listeners are triggered at least one time even though there
-                // is no data
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.CURRENT_CHANGES).first()
-                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.CURRENT_CHANGES).first()
-                realm.syncSession.progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY).first()
-                realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY).first()
-            }
-        }
-    }
-
-    @Test
     fun completesOnClose() = runBlocking {
         val channel = TestChannel<Boolean>(capacity = 5, onBufferOverflow = BufferOverflow.DROP_OLDEST, failIfBufferIsEmptyOnCancel = false)
         TestApp("completesOnClose", TEST_APP_FLEX).use { app ->
@@ -312,8 +291,8 @@ class FLXProgressListenerTests {
 
     // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
-        buffer(10000)
-            .filter { it.isTransferComplete }
+        filter { it.isTransferComplete }
+            .buffer(5, onBufferOverflow = BufferOverflow.DROP_OLDEST)
             .scan(0) { accumulator, _ ->
                 accumulator + 1
             }

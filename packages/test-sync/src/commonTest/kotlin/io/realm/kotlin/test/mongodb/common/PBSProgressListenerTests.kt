@@ -42,7 +42,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class PBSProgressListenerTests {
-    private val TEST_SIZE = 2
+    private val TEST_SIZE = 10
     private val TIMEOUT = 30.seconds
 
     private lateinit var app: TestApp
@@ -70,7 +70,7 @@ class PBSProgressListenerTests {
             // - that all objects are available afterwards
             Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
                 // Ensure that we can do consecutive CURRENT_CHANGES registrations
-                for (i in 0 until 3) {
+                repeat(3) { iteration ->
                     val transferCompleteJob = async {
                         realm.syncSession.progressAsFlow(
                             Direction.DOWNLOAD,
@@ -92,7 +92,7 @@ class PBSProgressListenerTests {
                     // visible in the realm
                     realm.syncSession.downloadAllServerChanges(TIMEOUT)
                     assertEquals(
-                        TEST_SIZE * (i + 1),
+                        TEST_SIZE * (iteration + 1),
                         realm.query<SyncObjectWithAllTypes>().find().size
                     )
                 }
@@ -103,8 +103,6 @@ class PBSProgressListenerTests {
     @Test
     fun downloadProgressListener_indefinitely() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
-            uploadRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
-
             Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
                 val flow = realm.syncSession
                     .progressAsFlow(Direction.DOWNLOAD, ProgressMode.INDEFINITELY)
@@ -112,7 +110,6 @@ class PBSProgressListenerTests {
 
                 withTimeout(TIMEOUT) {
                     flow.takeWhile { completed -> completed < 3 }
-                        .buffer(10000)
                         .collect { completed ->
                             uploadRealm.writeSampleData(
                                 TEST_SIZE,
@@ -273,8 +270,8 @@ class PBSProgressListenerTests {
 
     // Operator that will return a flow that emits an increasing integer on each completion event
     private fun Flow<Progress>.completionCounter(): Flow<Int> =
-        buffer(10000)
-            .filter { it.isTransferComplete }
+        filter { it.isTransferComplete }
+            .buffer(2)
             .scan(0) { accumulator, _ ->
                 accumulator + 1
             }
