@@ -328,7 +328,7 @@ SDK supports. In the matrix below, you will find the minimum supported version f
 
 | Realm Version | Requirements                                                                                                                                                                                             |
 |---------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1.16.1-K2     | <ul><li>Kotlin 2.0.0-RC1+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 7.2 - 8.5</li><li>The new memory model only.</li></ul>         |
+| 1.16.1-K2     | <ul><li>Kotlin 2.0.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 7.2 - 8.5</li><li>The new memory model only.</li></ul>         |
 | 1.16.0        | <ul><li>Kotlin 1.9.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 8.5</li><li>The new memory model only.</li></ul>         |
 | 1.15.0        | <ul><li>Kotlin 1.9.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 8.5</li><li>The new memory model only.</li></ul>         |
 | 1.14.0        | <ul><li>Kotlin 1.9.0+</li><li>AtomicFu 0.18.3+.</li><li>Ktor 2.1.2+.</li><li>Coroutines 1.7.0+.</li><li>Gradle 6.8.3 - 8.5</li><li>The new memory model only.</li></ul>         |
