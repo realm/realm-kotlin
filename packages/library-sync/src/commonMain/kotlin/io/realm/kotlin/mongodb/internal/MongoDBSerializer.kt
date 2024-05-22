@@ -16,7 +16,6 @@
 
 package io.realm.kotlin.mongodb.internal
 
-import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
@@ -168,14 +167,7 @@ public class MongoDBSerializer internal constructor(
                     RealmStorageType.DOUBLE -> BsonDouble(value as Double)
                     RealmStorageType.DECIMAL128 -> value as Decimal128
                     RealmStorageType.TIMESTAMP -> (value as RealmInstant).asBsonDateTime()
-                    RealmStorageType.OBJECT_ID -> {
-                        @Suppress("DEPRECATION")
-                        when (value) {
-                            is ObjectId -> value
-                            is io.realm.kotlin.types.ObjectId -> value.asBsonObjectId()
-                            else -> sdkError("Unexpected value of type ${value::class.simpleName} for field with storage type $elementType")
-                        }
-                    }
+                    RealmStorageType.OBJECT_ID -> value as ObjectId
                     RealmStorageType.UUID -> (value as RealmUUID).asBsonBinary()
                     RealmStorageType.ANY -> { realmAnyToBsonValue(value as RealmAny) }
                 }
@@ -318,16 +310,7 @@ public class MongoDBSerializer internal constructor(
                 RealmStorageType.DOUBLE -> bsonValue.asDouble().value
                 RealmStorageType.DECIMAL128 -> bsonValue.asDecimal128()
                 RealmStorageType.TIMESTAMP -> bsonValue.asDateTime().asRealmInstant()
-                RealmStorageType.OBJECT_ID -> {
-                    @Suppress("DEPRECATION")
-                    when (kClass) {
-                        ObjectId::class -> bsonValue.asObjectId()
-                        io.realm.kotlin.types.ObjectId::class -> io.realm.kotlin.types.ObjectId.from(
-                            bsonValue.asObjectId().toByteArray()
-                        )
-                        else -> sdkError("Unexpected KClass ('${kClass.simpleName}') for element with storage type '$elementType'")
-                    }
-                }
+                RealmStorageType.OBJECT_ID -> bsonValue.asObjectId()
                 RealmStorageType.UUID -> bsonValue.asBinary().asRealmUUID()
                 RealmStorageType.ANY -> bsonValueToRealmAny(bsonValue)
             }

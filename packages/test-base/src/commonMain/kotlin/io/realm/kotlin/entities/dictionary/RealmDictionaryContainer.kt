@@ -18,7 +18,6 @@ package io.realm.kotlin.entities.dictionary
 
 import io.realm.kotlin.ext.realmDictionaryOf
 import io.realm.kotlin.types.EmbeddedRealmObject
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -43,7 +42,6 @@ class RealmDictionaryContainer : RealmObject {
     var floatDictionaryField: RealmDictionary<Float> = realmDictionaryOf()
     var doubleDictionaryField: RealmDictionary<Double> = realmDictionaryOf()
     var timestampDictionaryField: RealmDictionary<RealmInstant> = realmDictionaryOf()
-    var objectIdDictionaryField: RealmDictionary<ObjectId> = realmDictionaryOf()
     var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
     var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
@@ -59,7 +57,6 @@ class RealmDictionaryContainer : RealmObject {
     var nullableFloatDictionaryField: RealmDictionary<Float?> = realmDictionaryOf()
     var nullableDoubleDictionaryField: RealmDictionary<Double?> = realmDictionaryOf()
     var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
-    var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
     var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
     var nullableUUIDDictionaryField: RealmDictionary<RealmUUID?> = realmDictionaryOf()
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()
@@ -81,7 +78,6 @@ class RealmDictionaryContainer : RealmObject {
             Float::class to RealmDictionaryContainer::floatDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
             Double::class to RealmDictionaryContainer::doubleDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
             RealmInstant::class to RealmDictionaryContainer::timestampDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
-            ObjectId::class to RealmDictionaryContainer::objectIdDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
             BsonObjectId::class to RealmDictionaryContainer::bsonObjectIdDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
             RealmUUID::class to RealmDictionaryContainer::uuidDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
             ByteArray::class to RealmDictionaryContainer::binaryDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any>>,
@@ -100,7 +96,6 @@ class RealmDictionaryContainer : RealmObject {
             Float::class to RealmDictionaryContainer::nullableFloatDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             Double::class to RealmDictionaryContainer::nullableDoubleDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             RealmInstant::class to RealmDictionaryContainer::nullableTimestampDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
-            ObjectId::class to RealmDictionaryContainer::nullableObjectIdDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             BsonObjectId::class to RealmDictionaryContainer::nullableBsonObjectIdDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             RealmUUID::class to RealmDictionaryContainer::nullableUUIDDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,
             ByteArray::class to RealmDictionaryContainer::nullableBinaryDictionaryField as KMutableProperty1<RealmDictionaryContainer, RealmDictionary<Any?>>,

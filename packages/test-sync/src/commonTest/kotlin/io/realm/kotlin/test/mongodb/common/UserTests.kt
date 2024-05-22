@@ -135,10 +135,10 @@ class UserTests {
     fun getProviderType() = runBlocking {
         val email = randomEmail()
         val emailUser = createUserAndLogin(email, "123456")
-        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.provider)
+        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.identities.first().provider)
         emailUser.logOut()
         // AuthenticationProvider is not removed once user is logged out
-        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.provider)
+        assertEquals(AuthenticationProvider.EMAIL_PASSWORD, emailUser.identities.first().provider)
     }
 
     @Test

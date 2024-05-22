@@ -22,7 +22,6 @@ import io.realm.kotlin.ext.query
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.TypeDescriptor
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
@@ -122,7 +121,6 @@ class NullabilityTests {
                 testProperty(Nullability::decimal128Field, Decimal128("123.456"))
                 testProperty(Nullability::objectField, null)
                 testProperty(Nullability::timestampField, RealmInstant.from(42, 420))
-                testProperty(Nullability::objectIdField, ObjectId.from("507f191e810c19729de860ea"))
                 testProperty(Nullability::bsonObjectIdField, BsonObjectId("507f191e810c19729de860ea"))
                 testProperty(Nullability::uuidField, RealmUUID.random())
                 testProperty(Nullability::binaryField, byteArrayOf(42))

@@ -503,8 +503,8 @@ class AppConfigurationTests {
         with(config.syncTimeoutOptions) {
             assertEquals(2.minutes, connectTimeout)
             assertEquals(30.seconds, connectionLingerTime)
-            assertEquals(1.minutes, pingKeepalivePeriod)
-            assertEquals(2.minutes, pongKeepalivePeriod)
+            assertEquals(1.minutes, pingKeepAlivePeriod)
+            assertEquals(2.minutes, pongKeepAlivePeriod)
             assertEquals(1.minutes, fastReconnectLimit)
         }
     }
@@ -515,16 +515,16 @@ class AppConfigurationTests {
             .syncTimeouts {
                 connectTimeout = 10.seconds
                 connectionLingerTime = 10.seconds
-                pingKeepalivePeriod = 10.seconds
-                pongKeepalivePeriod = 10.seconds
+                pingKeepAlivePeriod = 10.seconds
+                pongKeepAlivePeriod = 10.seconds
                 fastReconnectLimit = 10.seconds
             }
             .build()
         with(config.syncTimeoutOptions) {
             assertEquals(10.seconds, connectTimeout)
             assertEquals(10.seconds, connectionLingerTime)
-            assertEquals(10.seconds, pingKeepalivePeriod)
-            assertEquals(10.seconds, pongKeepalivePeriod)
+            assertEquals(10.seconds, pingKeepAlivePeriod)
+            assertEquals(10.seconds, pongKeepAlivePeriod)
             assertEquals(10.seconds, fastReconnectLimit)
         }
     }
@@ -540,13 +540,13 @@ class AppConfigurationTests {
                     connectionLingerTime = 0.seconds
                 }
                 assertFailsWith<IllegalArgumentException> {
-                    pingKeepalivePeriod = 5.seconds
+                    pingKeepAlivePeriod = 5.seconds
                 }
                 assertFailsWith<IllegalArgumentException> {
-                    pongKeepalivePeriod = 5.seconds
+                    pongKeepAlivePeriod = 5.seconds
                 }
                 assertFailsWith<IllegalArgumentException> {
-                    pongKeepalivePeriod = 1.seconds
+                    pongKeepAlivePeriod = 1.seconds
                 }
             }
     }

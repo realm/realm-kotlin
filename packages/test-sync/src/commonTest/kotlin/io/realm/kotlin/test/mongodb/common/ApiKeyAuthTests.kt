@@ -23,7 +23,7 @@ import io.realm.kotlin.test.mongodb.TEST_APP_PARTITION
 import io.realm.kotlin.test.mongodb.TestApp
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
 import io.realm.kotlin.test.util.TestHelper
-import io.realm.kotlin.types.ObjectId
+import org.mongodb.kbson.BsonObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Ignore
@@ -102,7 +102,7 @@ class ApiKeyAuthTests {
 
     @Test
     fun fetch_nonExistingKeyThrows() = runBlocking {
-        assertNull(provider.fetch(ObjectId.create()))
+        assertNull(provider.fetch(BsonObjectId()))
     }
 
     @Test
@@ -134,7 +134,7 @@ class ApiKeyAuthTests {
         provider.create(TestHelper.randomString("key-"))
         val keys = provider.fetchAll()
         assertEquals(1, keys.size)
-        provider.delete(ObjectId.create())
+        provider.delete(BsonObjectId())
         val keysAfterInvalidDelete = provider.fetchAll()
         assertEquals(1, keysAfterInvalidDelete.size)
     }
@@ -163,7 +163,7 @@ class ApiKeyAuthTests {
     fun enable_nonExistingKeyThrows() {
         assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(4334)] API key not found.") {
             runBlocking {
-                provider.enable(ObjectId.create())
+                provider.enable(BsonObjectId())
             }
         }
     }
@@ -188,7 +188,7 @@ class ApiKeyAuthTests {
     fun disable_nonExistingKeyThrows() {
         assertFailsWithMessage<IllegalArgumentException>("[Service][ApiKeyNotFound(4334)] API key not found.") {
             runBlocking {
-                provider.disable(ObjectId.create())
+                provider.disable(BsonObjectId())
             }
         }
     }
@@ -203,11 +203,11 @@ class ApiKeyAuthTests {
                 runBlocking {
                     when (method) {
                         Method.CREATE -> provider.create(TestHelper.randomString("key-"))
-                        Method.FETCH_SINGLE -> provider.fetch(ObjectId.create())
+                        Method.FETCH_SINGLE -> provider.fetch(BsonObjectId())
                         Method.FETCH_ALL -> provider.fetchAll()
-                        Method.DELETE -> provider.delete(ObjectId.create())
-                        Method.ENABLE -> provider.enable(ObjectId.create())
-                        Method.DISABLE -> provider.disable(ObjectId.create())
+                        Method.DELETE -> provider.delete(BsonObjectId())
+                        Method.ENABLE -> provider.enable(BsonObjectId())
+                        Method.DISABLE -> provider.disable(BsonObjectId())
                     }
                 }
             }

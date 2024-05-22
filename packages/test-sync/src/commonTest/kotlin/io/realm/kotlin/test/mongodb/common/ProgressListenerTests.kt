@@ -54,7 +54,6 @@ import kotlinx.coroutines.withTimeout
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -85,7 +84,6 @@ class ProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun downloadProgressListener_changesOnly() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { uploadRealm ->
             // Verify that we:
@@ -175,7 +173,6 @@ class ProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun worksAfterExceptions() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
@@ -198,7 +195,6 @@ class ProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun worksAfterCancel() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
@@ -229,7 +225,6 @@ class ProgressListenerTests {
     }
 
     @Test
-    @Ignore // https://github.com/realm/realm-core/issues/7627
     fun triggerImmediatelyWhenRegistered() = runBlocking {
         Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
             withTimeout(10.seconds) {

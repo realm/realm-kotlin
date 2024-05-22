@@ -26,7 +26,7 @@ import io.realm.kotlin.query.find
 import io.realm.kotlin.test.platform.PlatformUtils
 import io.realm.kotlin.test.util.use
 import io.realm.kotlin.types.RealmInstant
-import kotlinx.coroutines.delay
+import kotlinx.datetime.Clock
 import org.mongodb.kbson.ObjectId
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
@@ -128,12 +128,10 @@ class BsonObjectIdTests {
 
     @Test
     fun queries() = runBlocking {
-        val objectId1 = ObjectId()
-        delay(100)
-        val objectId2 = ObjectId()
-        delay(100)
-        val objectId3 = ObjectId()
-        delay(100)
+        val timestamp = Clock.System.now().toEpochMilliseconds()
+        val objectId1 = ObjectId(timestamp)
+        val objectId2 = ObjectId(timestamp + 100)
+        val objectId3 = ObjectId(timestamp + 200)
 
         val config = RealmConfiguration.Builder(setOf(Sample::class))
             .directory(tmpDir)
@@ -159,7 +157,7 @@ class BsonObjectIdTests {
             }
 
             val ids: RealmResults<Sample> =
-                realm.query<Sample>().sort("objectIdField", Sort.ASCENDING).find()
+                realm.query<Sample>().sort("bsonObjectIdField", Sort.ASCENDING).find()
             assertEquals(3, ids.size)
 
             assertEquals("obj1", ids[0].stringField)

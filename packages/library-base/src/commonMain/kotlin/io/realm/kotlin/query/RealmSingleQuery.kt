@@ -32,7 +32,7 @@ public interface RealmSingleQuery<T : BaseRealmObject> : Deleteable {
      * fashion.
      *
      * It is not recommended launching heavy queries from the UI thread as it may result in a drop
-     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchroneously instead.
+     * of frames or even ANRs. Use [asFlow] to obtain results of such queries asynchronously instead.
      *
      * @return a [RealmObject] or [EmbeddedRealmObject] instance or `null` if no object matches the condition.
      */

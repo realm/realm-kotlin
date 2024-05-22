@@ -22,7 +22,7 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.types.EmbeddedRealmObject
 import io.realm.kotlin.types.MutableRealmInt
-import io.realm.kotlin.types.ObjectId
+
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmDictionary
 import io.realm.kotlin.types.RealmInstant
@@ -67,7 +67,6 @@ class Sample : RealmObject {
     var doubleField: Double? = 1.19840122
     var decimal128Field: Decimal128? = Decimal128("1.8446744073709551618E-6157")
     var timestampField: RealmInstant? = RealmInstant.from(0, 0)
-    var objectIdField: ObjectId? = ObjectId.create()
     var bsonObjectIdField: BsonObjectId? = BsonObjectId()
     var uuidField: RealmUUID? = RealmUUID.random()
     var byteArrayField: ByteArray? = null
@@ -87,7 +86,6 @@ class Sample : RealmObject {
     var floatListField: RealmList<Float> = realmListOf()
     var doubleListField: RealmList<Double> = realmListOf()
     var timestampListField: RealmList<RealmInstant> = realmListOf()
-    var objectIdListField: RealmList<ObjectId> = realmListOf()
     var bsonObjectIdListField: RealmList<BsonObjectId> = realmListOf()
     var uuidListField: RealmList<RealmUUID> = realmListOf()
     var binaryListField: RealmList<ByteArray> = realmListOf()
@@ -106,7 +104,6 @@ class Sample : RealmObject {
     var nullableFloatListField: RealmList<Float?> = realmListOf()
     var nullableDoubleListField: RealmList<Double?> = realmListOf()
     var nullableTimestampListField: RealmList<RealmInstant?> = realmListOf()
-    var nullableObjectIdListField: RealmList<ObjectId?> = realmListOf()
     var nullableBsonObjectIdListField: RealmList<BsonObjectId?> = realmListOf()
     var nullableUUIDListField: RealmList<RealmUUID?> = realmListOf()
     var nullableBinaryListField: RealmList<ByteArray?> = realmListOf()
@@ -124,7 +121,6 @@ class Sample : RealmObject {
     var floatSetField: RealmSet<Float> = realmSetOf()
     var doubleSetField: RealmSet<Double> = realmSetOf()
     var timestampSetField: RealmSet<RealmInstant> = realmSetOf()
-    var objectIdSetField: RealmSet<ObjectId> = realmSetOf()
     var bsonObjectIdSetField: RealmSet<BsonObjectId> = realmSetOf()
     var uuidSetField: RealmSet<RealmUUID> = realmSetOf()
     var binarySetField: RealmSet<ByteArray> = realmSetOf()
@@ -142,7 +138,6 @@ class Sample : RealmObject {
     var nullableFloatSetField: RealmSet<Float?> = realmSetOf()
     var nullableDoubleSetField: RealmSet<Double?> = realmSetOf()
     var nullableTimestampSetField: RealmSet<RealmInstant?> = realmSetOf()
-    var nullableObjectIdSetField: RealmSet<ObjectId?> = realmSetOf()
     var nullableBsonObjectIdSetField: RealmSet<BsonObjectId?> = realmSetOf()
     var nullableUUIDSetField: RealmSet<RealmUUID?> = realmSetOf()
     var nullableBinarySetField: RealmSet<ByteArray?> = realmSetOf()
@@ -161,7 +156,6 @@ class Sample : RealmObject {
     var floatDictionaryField: RealmDictionary<Float> = realmDictionaryOf()
     var doubleDictionaryField: RealmDictionary<Double> = realmDictionaryOf()
     var timestampDictionaryField: RealmDictionary<RealmInstant> = realmDictionaryOf()
-    var objectIdDictionaryField: RealmDictionary<ObjectId> = realmDictionaryOf()
     var bsonObjectIdDictionaryField: RealmDictionary<BsonObjectId> = realmDictionaryOf()
     var uuidDictionaryField: RealmDictionary<RealmUUID> = realmDictionaryOf()
     var binaryDictionaryField: RealmDictionary<ByteArray> = realmDictionaryOf()
@@ -178,7 +172,6 @@ class Sample : RealmObject {
     var nullableFloatDictionaryField: RealmDictionary<Float?> = realmDictionaryOf()
     var nullableDoubleDictionaryField: RealmDictionary<Double?> = realmDictionaryOf()
     var nullableTimestampDictionaryField: RealmDictionary<RealmInstant?> = realmDictionaryOf()
-    var nullableObjectIdDictionaryField: RealmDictionary<ObjectId?> = realmDictionaryOf()
     var nullableBsonObjectIdDictionaryField: RealmDictionary<BsonObjectId?> = realmDictionaryOf()
     var nullableUUIDDictionaryField: RealmDictionary<RealmUUID?> = realmDictionaryOf()
     var nullableBinaryDictionaryField: RealmDictionary<ByteArray?> = realmDictionaryOf()

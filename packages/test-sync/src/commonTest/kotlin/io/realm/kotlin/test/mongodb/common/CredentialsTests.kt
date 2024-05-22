@@ -72,7 +72,7 @@ class CredentialsTests {
 
     @Test
     fun allCredentials() {
-        AuthenticationProvider.values().flatMap {
+        AuthenticationProvider.entries.flatMap {
             when (it) {
                 AuthenticationProvider.ANONYMOUS -> listOf(it to anonymous())
                 AuthenticationProvider.EMAIL_PASSWORD -> listOf(it to emailPassword())
@@ -103,7 +103,7 @@ class CredentialsTests {
 
     @Test
     fun allCredentials_emptyInputThrows() {
-        for (value in AuthenticationProvider.values()) {
+        for (value in AuthenticationProvider.entries) {
             assertFailsWith<IllegalArgumentException>("$value failed") { // No arguments should be allow
                 when (value) {
                     AuthenticationProvider.ANONYMOUS -> throw IllegalArgumentException("Do nothing, no arguments")
@@ -267,29 +267,29 @@ class CredentialsTests {
             assertNotNull(firstUser)
             val reusedUser = app.login(Credentials.anonymous())
             assertNotNull(reusedUser)
-            assertEquals(firstUser.identity, reusedUser.identity)
+            assertEquals(firstUser, reusedUser)
 
             val newAnonymousUser1 = app.login(Credentials.anonymous(false))
             assertNotNull(newAnonymousUser1)
-            assertNotEquals(firstUser.identity, newAnonymousUser1.identity)
+            assertNotEquals(firstUser, newAnonymousUser1)
 
             val newAnonymousUser2 = app.login(Credentials.anonymous(false))
             assertNotNull(newAnonymousUser2)
-            assertNotEquals(newAnonymousUser1.identity, newAnonymousUser2.identity)
+            assertNotEquals(newAnonymousUser1, newAnonymousUser2)
         }
     }
 
     @Test
     fun loginUsingCredentials() {
         runBlocking {
-            AuthenticationProvider.values().forEach { provider ->
+            AuthenticationProvider.entries.forEach { provider ->
                 when (provider) {
                     AuthenticationProvider.ANONYMOUS -> {
                         val reusableUser = app.login(Credentials.anonymous())
                         assertNotNull(reusableUser)
                         val nonReusableUser = app.login(Credentials.anonymous(false))
                         assertNotNull(nonReusableUser)
-                        assertNotEquals(reusableUser.identity, nonReusableUser.identity)
+                        assertNotEquals(reusableUser, nonReusableUser)
                     }
                     AuthenticationProvider.API_KEY -> {
                         // Log in, create an API key, log out, log in with the key, compare users

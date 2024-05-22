@@ -57,14 +57,6 @@ public interface User {
 
     /**
      * The server id of the user.
-     *
-     * This property has been deprecated in favor of [id] and will be replaced in a future release.
-     */
-    @Deprecated("Use `User.id` instead", replaceWith = ReplaceWith("id"))
-    public val identity: String
-
-    /**
-     * The server id of the user.
      */
     public val id: String
 
@@ -81,13 +73,6 @@ public interface User {
      * @see UserIdentity
      */
     public val identities: List<UserIdentity>
-
-    /**
-     * Returns the provider type used to log the user in.
-     * If a user logs out, the authentication provider last used to log the user in will still be returned.
-     */
-    @Deprecated("Users might have multiple providers. This will return the provider of the first identity of the user", ReplaceWith("identities"))
-    public val provider: AuthenticationProvider
 
     /**
      * Returns the current access token for the user.

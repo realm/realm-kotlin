@@ -21,7 +21,6 @@ package io.realm.kotlin.test.mongodb.common.mongo
 import io.realm.kotlin.entities.sync.SyncObjectWithAllTypes
 import io.realm.kotlin.entities.sync.flx.FlexEmbeddedObject
 import io.realm.kotlin.entities.sync.flx.FlexParentObject
-import io.realm.kotlin.ext.asBsonObjectId
 import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.realmAnyDictionaryOf
 import io.realm.kotlin.ext.realmAnyListOf
@@ -30,13 +29,13 @@ import io.realm.kotlin.ext.realmListOf
 import io.realm.kotlin.ext.realmSetOf
 import io.realm.kotlin.mongodb.mongo.realmSerializerModule
 import io.realm.kotlin.test.mongodb.common.utils.assertFailsWithMessage
-import io.realm.kotlin.types.ObjectId
 import io.realm.kotlin.types.RealmInstant
 import io.realm.kotlin.types.RealmUUID
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.ObjectId
 import org.mongodb.kbson.serialization.EJson
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -188,7 +187,7 @@ private fun assertEqualWithoutWhitespace(a: String, b: String) {
 // Ensure test is reproducible by clearing random/time dependant values
 // EJSON cannot represent nano second precision, so nanosecond fraction must be 0
 private val date = RealmInstant.from(172, 0)
-private val objectId = ObjectId.from(byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11))
+private val objectId = ObjectId(byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11))
 private val uuid = RealmUUID.Companion.from(byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15))
 private val child = SyncObjectWithAllTypes().apply { _id = "CHILD" }
 
@@ -217,7 +216,7 @@ private val EXPECTED_EJSON_EMBEDDED = """
 """
 
 private val syncObjectWithEmbeddedObject = FlexParentObject().apply {
-    _id = objectId.asBsonObjectId()
+    _id = objectId
     embedded = FlexEmbeddedObject().apply {
         embeddedName = "EMBEDDED"
     }

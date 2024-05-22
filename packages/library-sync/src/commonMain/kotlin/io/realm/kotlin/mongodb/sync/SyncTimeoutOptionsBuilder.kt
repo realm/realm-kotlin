@@ -68,9 +68,9 @@ public class SyncTimeoutOptionsBuilder {
      *
      * @throws IllegalArgumentException if the duration is outside the allowed range.
      */
-    public var pingKeepalivePeriod: Duration = 1.minutes
+    public var pingKeepAlivePeriod: Duration = 1.minutes
         set(value) {
-            Validation.require(value > 5.seconds) { "pingKeepalivePeriod must be a positive duration > 5 seconds. This was: $value" }
+            Validation.require(value > 5.seconds) { "pingKeepAlivePeriod must be a positive duration > 5 seconds. This was: $value" }
             field = value
         }
 
@@ -83,9 +83,9 @@ public class SyncTimeoutOptionsBuilder {
      *
      * @throws IllegalArgumentException if the duration is outside the allowed range.
      */
-    public var pongKeepalivePeriod: Duration = 2.minutes
+    public var pongKeepAlivePeriod: Duration = 2.minutes
         set(value) {
-            Validation.require(value > 5.seconds) { "pongKeepalivePeriod must be a positive duration > 5 seconds. This was: $value" }
+            Validation.require(value > 5.seconds) { "pongKeepAlivePeriod must be a positive duration > 5 seconds. This was: $value" }
             field = value
         }
 
@@ -113,8 +113,8 @@ public class SyncTimeoutOptionsBuilder {
     internal fun build() = SyncTimeoutOptions(
         connectTimeout = this.connectTimeout,
         connectionLingerTime = this.connectionLingerTime,
-        pingKeepalivePeriod = this.pingKeepalivePeriod,
-        pongKeepalivePeriod = this.pongKeepalivePeriod,
+        pingKeepAlivePeriod = this.pingKeepAlivePeriod,
+        pongKeepAlivePeriod = this.pongKeepAlivePeriod,
         fastReconnectLimit = this.fastReconnectLimit
     )
 }
