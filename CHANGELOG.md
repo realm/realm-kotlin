@@ -17,6 +17,7 @@ This release will bump the Realm file format 24. Opening a file with an older fo
 * Support for RealmLists and RealmDictionaries in `RealmAny`. (Issue [#1434](https://github.com/realm/realm-kotlin/issues/1434))
 * Optimized `RealmList.indexOf()` and `RealmList.contains()` using Core implementation of operations instead of iterating elements and comparing them in Kotlin. (Issue [#1625](https://github.com/realm/realm-kotlin/pull/1666) [RKOTLIN-995](https://jira.mongodb.org/browse/RKOTLIN-995)).
 * Add support for filtering logs by category. (Issue [#1691](https://github.com/realm/realm-kotlin/issues/1691) [JIRA](https://jira.mongodb.org/browse/RKOTLIN-1038))
+* [Sync] Add Mongo Client API to access Atlas App Service collections. It can be accessed through `User.mongoClient`. (Issue [#972](https://github.com/realm/realm-kotlin/issues/972)/[RKOTLIN-612](https://jira.mongodb.org/browse/RKOTLIN-612))
 * [Sync] Sync progress notifications is now also supported for flexible sync configurations. (Issue [#1744](https://github.com/realm/realm-kotlin/issues/1744) [RKOTLIN-1079](https://jira.mongodb.org/browse/RKOTLIN-1079)).
 
 ### Fixed
@@ -179,9 +180,9 @@ This release will bump the Realm file format from version 23 to 24. Opening a fi
 * None.
 
 ### Enhancements
-* [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
-* `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
 * The Unpacking of JVM native library will use the current library version instead of a calculated hash for the path. (Issue [#1617](https://github.com/realm/realm-kotlin/issues/1617)).
+* [Sync] Added option to use managed WebSockets via OkHttp instead of Realm's built-in WebSocket client for Sync traffic (Only Android and JVM targets for now). Managed WebSockets offer improved support for proxies and firewalls that require authentication. This feature is currently opt-in and can be enabled by using `AppConfiguration.usePlatformNetworking()`. Managed WebSockets will become the default in a future version. (PR [#1528](https://github.com/realm/realm-kotlin/pull/1528)).
+* [Sync] `AutoClientResetFailed` exception now reports as the throwable cause any user exceptions that might occur during a client reset. (Issue [#1580](https://github.com/realm/realm-kotlin/issues/1580))
 
 ### Fixed
 * Cache notification callback JNI references at startup to ensure that symbols can be resolved in core callbacks. (Issue [#1577](https://github.com/realm/realm-kotlin/issues/1577))

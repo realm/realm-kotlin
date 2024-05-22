@@ -20,8 +20,8 @@ import io.realm.kotlin.internal.interop.CodeDescription
 
 /**
  * This exception is considered the top-level or "catch-all" for problems related to HTTP requests
- * made towards App Services. This covers both HTTP transport problems, problems passing JSON
- * or the server considering the request invalid, for whatever reason.
+ * made towards App Services. This covers both HTTP transport problems, or the server considering
+ * the request invalid, for whatever reason.
  *
  * Generally, reacting to this exception will be hard, except to log the error for further
  * analysis. But in many cases a more specific subtype will be thrown, which will be easier to
@@ -31,7 +31,7 @@ import io.realm.kotlin.internal.interop.CodeDescription
  * @see BadRequestException
  * @see AuthException
  */
-public open class ServiceException internal constructor(
+public open class ServiceException @PublishedApi internal constructor(
     message: String,
     internal val errorCode: CodeDescription? = null
 ) : AppException(message)

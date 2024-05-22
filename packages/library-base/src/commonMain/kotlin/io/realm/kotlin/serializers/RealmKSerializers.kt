@@ -19,8 +19,8 @@ import io.realm.kotlin.ext.asRealmObject
 import io.realm.kotlin.ext.toRealmDictionary
 import io.realm.kotlin.ext.toRealmList
 import io.realm.kotlin.ext.toRealmSet
-import io.realm.kotlin.internal.toDuration
-import io.realm.kotlin.internal.toRealmInstant
+import io.realm.kotlin.internal.asBsonDateTime
+import io.realm.kotlin.internal.asRealmInstant
 import io.realm.kotlin.types.MutableRealmInt
 import io.realm.kotlin.types.RealmAny
 import io.realm.kotlin.types.RealmAny.Type
@@ -46,7 +46,6 @@ import org.mongodb.kbson.BsonBinarySubType
 import org.mongodb.kbson.BsonDateTime
 import org.mongodb.kbson.BsonObjectId
 import org.mongodb.kbson.Decimal128
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * KSerializer implementation for [RealmList]. Serialization is done as a generic list structure,
@@ -250,12 +249,12 @@ public object RealmInstantKSerializer : KSerializer<RealmInstant> {
     override val descriptor: SerialDescriptor = serializer.descriptor
 
     override fun deserialize(decoder: Decoder): RealmInstant =
-        decoder.decodeSerializableValue(serializer).value.milliseconds.toRealmInstant()
+        decoder.decodeSerializableValue(serializer).asRealmInstant()
 
     override fun serialize(encoder: Encoder, value: RealmInstant) {
         encoder.encodeSerializableValue(
             serializer = serializer,
-            value = BsonDateTime(value.toDuration().inWholeMilliseconds)
+            value = value.asBsonDateTime()
         )
     }
 }
