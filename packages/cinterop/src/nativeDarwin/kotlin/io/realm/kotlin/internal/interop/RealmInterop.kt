@@ -3262,6 +3262,7 @@ actual object RealmInterop {
         app: RealmAppPointer,
         user: RealmUserPointer,
         name: String,
+        serviceName: String?,
         serializedEjsonArgs: String,
         callback: AppCallback<String>
     ) {
@@ -3270,7 +3271,7 @@ actual object RealmInterop {
             user.cptr(),
             name,
             serializedEjsonArgs,
-            null,
+            serviceName,
             staticCFunction { userData: CPointer<out CPointed>?, data: CPointer<ByteVarOf<Byte>>?, error: CPointer<realm_app_error_t>? ->
                 handleAppCallback(userData, error) {
                     data.safeKString()

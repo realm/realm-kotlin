@@ -27,7 +27,10 @@ import io.realm.kotlin.mongodb.UserIdentity
 import io.realm.kotlin.mongodb.auth.ApiKeyAuth
 import io.realm.kotlin.mongodb.exceptions.CredentialsCannotBeLinkedException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
+import io.realm.kotlin.mongodb.mongo.MongoClient
 import kotlinx.coroutines.channels.Channel
+import org.mongodb.kbson.ExperimentalKBsonSerializerApi
+import org.mongodb.kbson.serialization.EJson
 
 // TODO Public due to being a transitive dependency to SyncConfigurationImpl
 public class UserImpl(
@@ -174,6 +177,12 @@ public class UserImpl(
                 throw ex
             }
         }
+    }
+
+    @ExperimentalKBsonSerializerApi
+    override fun mongoClient(serviceName: String, eJson: EJson?): MongoClient {
+        if (!loggedIn) throw IllegalStateException("Cannot obtain a MongoClient from a logged out user")
+        return MongoClientImpl(this, serviceName, eJson ?: app.configuration.ejson)
     }
 
     override fun equals(other: Any?): Boolean {
