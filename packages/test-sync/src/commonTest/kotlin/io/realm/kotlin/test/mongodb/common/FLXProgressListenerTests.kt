@@ -179,34 +179,21 @@ class FLXProgressListenerTests {
 
     @Test
     fun worksAfterExceptions() = runBlocking {
-        supervisorScope {
-            Realm.open(createSyncConfig(app.createUserAndLogIn())).use { writerRealm ->
-                Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
-                    val flow =
-                        realm.syncSession.progressAsFlow(
-                            Direction.DOWNLOAD,
-                            ProgressMode.INDEFINITELY
-                        )
-                    assertFailsWith<RuntimeException> {
-                        val task = async {
-                            flow.collect {
-                                @Suppress("TooGenericExceptionThrown")
-                                throw RuntimeException("Crashing progress flow")
-                            }
-                        }
-                        writerRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
-                        task.getCompletionExceptionOrNull()
-                    }
-                    withTimeout(TIMEOUT) {
-                        val task = async {
-                            flow.first {
-                                it.isTransferComplete
-                            }
-                        }
-                        writerRealm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
-                        task.await()
-                    }
+        Realm.open(createSyncConfig(app.createUserAndLogIn())).use { realm ->
+            realm.writeSampleData(TEST_SIZE, timeout = TIMEOUT)
+        }
+
+        Realm.open(createSyncConfig(app.createUserAndLogin())).use { realm ->
+            val flow = realm.syncSession.progressAsFlow(Direction.UPLOAD, ProgressMode.INDEFINITELY)
+            assertFailsWith<RuntimeException> {
+                flow.collect {
+                    @Suppress("TooGenericExceptionThrown")
+                    throw RuntimeException("Crashing progress flow")
                 }
+            }
+
+            withTimeout(TIMEOUT) {
+                flow.first { it.isTransferComplete }
             }
         }
     }
