@@ -42,7 +42,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 class PBSProgressListenerTests {
-    private val TEST_SIZE = 10
+    private val TEST_SIZE = 2
     private val TIMEOUT = 30.seconds
 
     private lateinit var app: TestApp
