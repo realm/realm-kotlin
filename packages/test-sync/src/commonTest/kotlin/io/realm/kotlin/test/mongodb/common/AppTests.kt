@@ -33,7 +33,7 @@ import io.realm.kotlin.mongodb.LoggedOut
 import io.realm.kotlin.mongodb.Removed
 import io.realm.kotlin.mongodb.User
 import io.realm.kotlin.mongodb.annotations.ExperimentalEdgeServerApi
-import io.realm.kotlin.mongodb.exceptions.InvalidCredentialsException
+import io.realm.kotlin.mongodb.exceptions.AuthException
 import io.realm.kotlin.mongodb.exceptions.ServiceException
 import io.realm.kotlin.mongodb.sync.SyncConfiguration
 import io.realm.kotlin.test.mongodb.SyncServerConfig
@@ -144,7 +144,7 @@ class AppTests {
                     null
                 }
             }?.let { credentials: Credentials ->
-                assertFailsWith<InvalidCredentialsException> {
+                assertFailsWith<AuthException> {
                     app.login(credentials)
                 }
             }
